@@ -29,6 +29,7 @@
 #include <participant/implementations/auxiliar/DummyParticipant.hpp>
 #include <participant/implementations/auxiliar/EchoParticipant.hpp>
 #include <participant/implementations/auxiliar/BlankParticipant.hpp>
+#include <participant/implementations/recorder/RecorderParticipant.hpp>
 #include <participant/implementations/rtps/SimpleParticipant.hpp>
 #include <participant/implementations/rtps/InitialPeersParticipant.hpp>
 #include <participant/implementations/rtps/DiscoveryServerParticipant.hpp>
@@ -55,6 +56,10 @@ std::shared_ptr<IParticipant> ParticipantFactory::create_participant(
         case ParticipantKind::dummy:
             // DummyParticipant
             return std::make_shared<DummyParticipant>(participant_configuration, payload_pool, discovery_database);
+
+        case ParticipantKind::recorder:
+            // DummyParticipant
+            return std::make_shared<RecorderParticipant>(participant_configuration, payload_pool, discovery_database);
 
         case ParticipantKind::echo:
             // Echo Participant

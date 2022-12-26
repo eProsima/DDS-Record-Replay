@@ -20,6 +20,8 @@
 
 #include <fastrtps/rtps/participant/RTPSParticipant.h>
 #include <fastrtps/rtps/RTPSDomain.h>
+#include <fastrtps/types/DynamicTypePtr.h>
+#include <fastrtps/types/DynamicType.h>
 
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/utils.hpp>
@@ -28,13 +30,16 @@
 #include <ddsrecorder/types/dds/DomainId.hpp>
 #include <ddsrecorder/types/topic/rpc/RPCTopic.hpp>
 
-#include <writer/implementations/rtps/MultiWriter.hpp>
+#include <reader/implementations/auxiliar/InternalReader.hpp>
 #include <reader/implementations/rtps/SpecificQoSReader.hpp>
 #include <reader/implementations/rtps/SimpleReader.hpp>
+#include <writer/implementations/auxiliar/BlankWriter.hpp>
+#include <writer/implementations/rtps/MultiWriter.hpp>
 #include <writer/implementations/rtps/SimpleWriter.hpp>
 #include <writer/implementations/rtps/QoSSpecificWriter.hpp>
 #include <participant/implementations/auxiliar/BaseParticipant.hpp>
 #include <participant/implementations/rtps/CommonParticipant.hpp>
+#include <recorder/types.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -50,6 +55,10 @@ CommonParticipant::CommonParticipant(
     : BaseParticipant(participant_configuration, payload_pool, discovery_database)
     , domain_id_(domain_id)
     , participant_attributes_(participant_attributes)
+    , type_object_reader_(std::make_shared<InternalReader>(
+        this->id(),
+        recorder::type_object_topic(),
+        this->payload_pool_))
 {
     // Do nothing
 }
@@ -262,6 +271,17 @@ void CommonParticipant::onWriterDiscovery(
     }
 }
 
+void CommonParticipant::on_type_discovery(
+        fastrtps::rtps::RTPSParticipant* /* participant */,
+        const fastrtps::rtps::SampleIdentity& /* request_sample_id */,
+        const fastrtps::string_255& /* topic */,
+        const fastrtps::types::TypeIdentifier* /* identifier */,
+        const fastrtps::types::TypeObject* /* object */,
+        fastrtps::types::DynamicType_ptr dyn_type)
+{
+    internal_notify_type_object_(dyn_type);
+}
+
 void CommonParticipant::create_participant_(
         const types::DomainId& domain,
         const fastrtps::rtps::RTPSParticipantAttributes& participant_attributes)
@@ -292,56 +312,89 @@ void CommonParticipant::create_participant_(
 std::shared_ptr<IWriter> CommonParticipant::create_writer_(
         types::DdsTopic topic)
 {
-    if (topic.topic_qos.get_reference().has_partitions() || topic.topic_qos.get_reference().has_ownership())
+    if (recorder::is_type_object_topic(topic))
     {
-        // Notice that MultiWriter does not require an init call
-        return std::make_shared<MultiWriter>(
-            this->id(),
-            topic,
-            this->payload_pool_,
-            rtps_participant_,
-            this->configuration_->is_repeater);
+        // RTPS Participants has no type object writers
+        return std::make_shared<BlankWriter>();
     }
     else
     {
-        auto writer = std::make_shared<SimpleWriter>(
-            this->id(),
-            topic,
-            this->payload_pool_,
-            rtps_participant_,
-            this->configuration_->is_repeater);
-        writer->init();
+        if (topic.topic_qos.get_reference().has_partitions() || topic.topic_qos.get_reference().has_ownership())
+        {
+            // Notice that MultiWriter does not require an init call
+            return std::make_shared<MultiWriter>(
+                this->id(),
+                topic,
+                this->payload_pool_,
+                rtps_participant_,
+                this->configuration_->is_repeater);
+        }
+        else
+        {
+            auto writer = std::make_shared<SimpleWriter>(
+                this->id(),
+                topic,
+                this->payload_pool_,
+                rtps_participant_,
+                this->configuration_->is_repeater);
+            writer->init();
 
-        return writer;
+            return writer;
+        }
     }
 }
 
 std::shared_ptr<IReader> CommonParticipant::create_reader_(
         types::DdsTopic topic)
 {
-    if (topic.topic_qos.get_reference().has_partitions() || topic.topic_qos.get_reference().has_ownership())
+    if (recorder::is_type_object_topic(topic))
     {
-        auto reader = std::make_shared<SpecificQoSReader>(
-            this->id(),
-            topic,
-            this->payload_pool_,
-            rtps_participant_,
-            discovery_database_);
-        reader->init();
-
-        return reader;
+        // If type object reader requested, send the one already created
+        return type_object_reader_;
     }
     else
     {
-        auto reader = std::make_shared<SimpleReader>(
-            this->id(),
-            topic,
-            this->payload_pool_,
-            rtps_participant_);
-        reader->init();
+        if (topic.topic_qos.get_reference().has_partitions() || topic.topic_qos.get_reference().has_ownership())
+        {
+            auto reader = std::make_shared<SpecificQoSReader>(
+                this->id(),
+                topic,
+                this->payload_pool_,
+                rtps_participant_,
+                discovery_database_);
+            reader->init();
 
-        return reader;
+            return reader;
+        }
+        else
+        {
+            auto reader = std::make_shared<SimpleReader>(
+                this->id(),
+                topic,
+                this->payload_pool_,
+                rtps_participant_);
+            reader->init();
+
+            return reader;
+        }
     }
+}
+
+void CommonParticipant::internal_notify_type_object_(fastrtps::types::DynamicType_ptr dyn_type)
+{
+    logInfo(DDSRECORDER_RTPS_PARTICIPANT,
+        "Participant " << this->id_nts_() << " sending internally type object " << dyn_type->get_name()
+    );
+    logError(DDSRECORDER_RTPS_PARTICIPANT,
+        "Participant " << this->id_nts_() << " sending internally type object " << dyn_type->get_name()
+    ); // TODO(recorder) remove
+
+    // Store it so it is not destroyed
+    dyn_types_.push_back(dyn_type);
+
+    type_object_reader_->simulate_data_reception(
+        std::move(recorder::type_object_data_serialization(payload_pool_, dyn_type))
+    );
 }
 
 fastrtps::rtps::RTPSParticipantAttributes
