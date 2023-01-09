@@ -16,6 +16,9 @@
  * @file types.cpp
  */
 
+#include <fastcdr/FastBuffer.h>
+#include <fastcdr/Cdr.h>
+
 #include <fastrtps/types/DynamicTypePtr.h>
 #include <fastrtps/types/DynamicType.h>
 
@@ -81,6 +84,69 @@ std::unique_ptr<types::DataReceived> type_object_data_serialization(
     return data;
 }
 
+std::unique_ptr<types::DataReceived> actual_type_object_data_serialization(
+    std::shared_ptr<PayloadPool> payload_pool,
+    const eprosima::fastrtps::types::TypeObject* type_obj)
+{
+    std::unique_ptr<types::DataReceived> data = std::make_unique<types::DataReceived>();
+
+    // auto size_of_data = type_obj->getCdrSerializedSize(*type_obj);
+    auto size_of_data = fastrtps::types::TypeObject::getCdrSerializedSize(*type_obj) + eprosima::fastrtps::rtps::SerializedPayload_t::representation_header_size;
+
+    payload_pool->get_payload(size_of_data, data->payload);
+
+    data->payload.length = size_of_data;
+
+    // Object that manages the raw buffer.
+    eprosima::fastcdr::FastBuffer fastbuffer(reinterpret_cast<char*>(data->payload.data), data->payload.max_size);
+    // Object that serializes the data.
+    eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN, eprosima::fastcdr::Cdr::DDS_CDR);
+    data->payload.encapsulation = ser.endianness() == eprosima::fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
+    // Serialize encapsulation
+    ser.serialize_encapsulation();
+
+    try
+    {
+        // Serialize the object.
+        type_obj->serialize(ser);
+    }
+    catch (eprosima::fastcdr::exception::NotEnoughMemoryException& ex)
+    {
+        std::cout << "ERRORACO ON TYPE OBJECT SERIALIZATION: " << ex.what() << std::endl;
+    }
+
+    // // Get the serialized length
+    // // data->payload.length = static_cast<uint32_t>(ser.getSerializedDataLength());
+
+    //////////////////////////////////////////////////////////////////////////////////
+
+    // size_t size = fastrtps::types::TypeObject::getCdrSerializedSize(type_obj)
+    //         + eprosima::fastrtps::rtps::SerializedPayload_t::representation_header_size;
+    // fastrtps::rtps::SerializedPayload_t payload(static_cast<uint32_t>(size));
+    // eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
+
+    // eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN,
+    //         eprosima::fastcdr::Cdr::DDS_CDR); // Object that serializes the data.
+    // payload.encapsulation = ser.endianness() == eprosima::fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
+
+    // ser.serialize_encapsulation();
+
+    // type_obj.serialize(ser);
+    // payload.length = (uint32_t)ser.getSerializedDataLength(); //Get the serialized length
+    // size = (ser.getSerializedDataLength() + 3) & ~3;
+
+    // bool valid = fastrtps::rtps::CDRMessage::addUInt16(cdr_message, qos_policy.Pid);
+    // valid &= fastrtps::rtps::CDRMessage::addUInt16(cdr_message, static_cast<uint16_t>(size));
+    // valid &= fastrtps::rtps::CDRMessage::addData(cdr_message, payload.data, payload.length);
+
+    // for (uint32_t count = payload.length; count < size; ++count)
+    // {
+    //     valid &= fastrtps::rtps::CDRMessage::addOctet(cdr_message, 0);
+    // }
+
+    return data;
+}
+
 eprosima::fastrtps::types::DynamicType* type_object_data_deserialization(
     const std::unique_ptr<types::DataReceived>& data)
 {
@@ -88,6 +154,38 @@ eprosima::fastrtps::types::DynamicType* type_object_data_deserialization(
     // Get the Dyn ptr from "serialized" data
     eprosima::fastrtps::types::DynamicType* result;
     std::memcpy(&result, data->payload.data, data->payload.length);
+    return result;
+}
+
+
+eprosima::fastrtps::types::TypeObject* actual_type_object_data_deserialization(
+    const std::unique_ptr<types::DataReceived>& data)
+{
+    eprosima::fastrtps::types::TypeObject* result = nullptr;
+    // eprosima::fastrtps::types::TypeObject* result = new eprosima::fastrtps::types::TypeObject();
+    try
+    {
+        //Convert DATA to pointer of your type
+        result = static_cast<eprosima::fastrtps::types::TypeObject*>((void*)data->payload.data);
+
+        // Object that manages the raw buffer.
+        eprosima::fastcdr::FastBuffer fastbuffer(reinterpret_cast<char*>(data->payload.data), data->payload.length);
+
+        // Object that deserializes the data.
+        eprosima::fastcdr::Cdr deser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN, eprosima::fastcdr::Cdr::DDS_CDR);
+
+        // Deserialize encapsulation.
+        deser.read_encapsulation();
+        data->payload.encapsulation = deser.endianness() == eprosima::fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
+
+        // Deserialize the object.
+        result->deserialize(deser);
+    }
+    catch (eprosima::fastcdr::exception::NotEnoughMemoryException& /*exception*/)
+    {
+        std::cout << "ERRORACO ON TYPE OBJECT deSERIALIZATION" << std::endl;
+    }
+
     return result;
 }
 

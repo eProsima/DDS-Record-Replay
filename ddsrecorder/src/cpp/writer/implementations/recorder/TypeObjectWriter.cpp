@@ -34,16 +34,29 @@ utils::ReturnCode TypeObjectWriter::write_(
         std::unique_ptr<DataReceived>& data) noexcept
 {
     // TODO(recorder) Do something with the Dynamic type
-    eprosima::fastrtps::types::DynamicType* type = recorder::type_object_data_deserialization(data);
+    // eprosima::fastrtps::types::DynamicType* type = recorder::type_object_data_deserialization(data);
+    eprosima::fastrtps::types::TypeObject* type_obj = recorder::actual_type_object_data_deserialization(data);
+
+    // logInfo(DDSRECORDER_RECORDER_WRITER,
+    //     "Type Object received: "
+    //     << type->get_name()
+    // );
+    // logError(DDSRECORDER_RECORDER_WRITER,
+    //     "Type Object received: "
+    //     << type->get_name()
+    // ); // TODO(recorder) remove
 
     logInfo(DDSRECORDER_RECORDER_WRITER,
-        "Type Object received: "
-        << type->get_name()
-    );
+        "Type Object received");
     logError(DDSRECORDER_RECORDER_WRITER,
-        "Type Object received: "
-        << type->get_name()
-    ); // TODO(recorder) remove
+        "Type Object received");
+
+    if (type_obj == nullptr)
+    {
+        std::cout << "LLEGÓ PERO MAL" << std::endl;
+    }
+
+    // delete type_obj;
 
     // TODO(recorder) if DynamicType_ptr is required, fight yourself to achieve it.
     // But probably cant happen. Solutions:

@@ -276,10 +276,11 @@ void CommonParticipant::on_type_discovery(
         const fastrtps::rtps::SampleIdentity& /* request_sample_id */,
         const fastrtps::string_255& /* topic */,
         const fastrtps::types::TypeIdentifier* /* identifier */,
-        const fastrtps::types::TypeObject* /* object */,
-        fastrtps::types::DynamicType_ptr dyn_type)
+        const fastrtps::types::TypeObject* object,
+        fastrtps::types::DynamicType_ptr /* dyn_type */)
 {
-    internal_notify_type_object_(dyn_type);
+    // internal_notify_type_object_(dyn_type);
+    internal_notify_actual_type_object_(object);
 }
 
 void CommonParticipant::create_participant_(
@@ -394,6 +395,18 @@ void CommonParticipant::internal_notify_type_object_(fastrtps::types::DynamicTyp
 
     type_object_reader_->simulate_data_reception(
         std::move(recorder::type_object_data_serialization(payload_pool_, dyn_type))
+    );
+}
+
+void CommonParticipant::internal_notify_actual_type_object_(const fastrtps::types::TypeObject* type_obj)
+{
+    logInfo(DDSRECORDER_RTPS_PARTICIPANT,
+        "Participant " << this->id_nts_() << " sending internally type object.");
+    logError(DDSRECORDER_RTPS_PARTICIPANT,
+        "Participant " << this->id_nts_() << " sending internally type object.");
+
+    type_object_reader_->simulate_data_reception(
+        std::move(recorder::actual_type_object_data_serialization(payload_pool_, type_obj))
     );
 }
 

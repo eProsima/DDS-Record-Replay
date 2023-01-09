@@ -58,7 +58,7 @@ std::shared_ptr<IParticipant> ParticipantFactory::create_participant(
             return std::make_shared<DummyParticipant>(participant_configuration, payload_pool, discovery_database);
 
         case ParticipantKind::recorder:
-            // DummyParticipant
+            // Recorder Participant
             return std::make_shared<RecorderParticipant>(participant_configuration, payload_pool, discovery_database);
 
         case ParticipantKind::echo:

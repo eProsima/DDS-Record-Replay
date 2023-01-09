@@ -50,7 +50,7 @@ int main(
         core::types::ParticipantId("Simple0"),
         core::types::ParticipantKind::simple_rtps,
         false,
-        core::types::DomainId(0u)
+        core::types::DomainId(100u)
     );
     auto recorder_conf = std::make_shared<core::configuration::ParticipantConfiguration>(
         core::types::ParticipantId("Recorder"),

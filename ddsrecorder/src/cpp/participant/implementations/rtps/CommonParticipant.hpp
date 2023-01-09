@@ -154,6 +154,7 @@ protected:
             DiscoveryInfoKind& info);
 
     void internal_notify_type_object_(fastrtps::types::DynamicType_ptr dyn_type);
+    void internal_notify_actual_type_object_(const fastrtps::types::TypeObject* type_obj);
 
     /////
     // RTPS specific methods

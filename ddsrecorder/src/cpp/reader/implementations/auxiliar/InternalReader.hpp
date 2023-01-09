@@ -64,8 +64,8 @@ protected:
             std::unique_ptr<types::DataReceived>& data) noexcept override;
 
     //! Stores the data that must be retrieved with \c take() method
-    using DataReceviedType = utils::Atomicable<std::queue<std::unique_ptr<types::DataReceived>>>;
-    DataReceviedType data_to_send_;
+    using DataReceivedType = utils::Atomicable<std::queue<std::unique_ptr<types::DataReceived>>>;
+    DataReceivedType data_to_send_;
 };
 
 } /* namespace core */

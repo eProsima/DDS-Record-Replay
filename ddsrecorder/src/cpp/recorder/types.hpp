@@ -19,6 +19,7 @@
 #pragma once
 
 #include <fastrtps/types/DynamicTypePtr.h>
+#include <fastrtps/types/TypeObject.h>
 
 #include <ddsrecorder/types/dds/Data.hpp>
 #include <ddsrecorder/types/dds/Guid.hpp>
@@ -44,7 +45,14 @@ std::unique_ptr<types::DataReceived> type_object_data_serialization(
         std::shared_ptr<PayloadPool> payload_pool,
         eprosima::fastrtps::types::DynamicType_ptr dyn_type);
 
+std::unique_ptr<types::DataReceived> actual_type_object_data_serialization(
+        std::shared_ptr<PayloadPool> payload_pool,
+        const eprosima::fastrtps::types::TypeObject* type_obj);
+
 eprosima::fastrtps::types::DynamicType* type_object_data_deserialization(
+        const std::unique_ptr<types::DataReceived>& data);
+
+eprosima::fastrtps::types::TypeObject* actual_type_object_data_deserialization(
         const std::unique_ptr<types::DataReceived>& data);
 
 } /* namespace recorder */
