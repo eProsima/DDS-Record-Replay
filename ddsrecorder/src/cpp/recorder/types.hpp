@@ -40,12 +40,15 @@ bool is_type_object_topic(const types::DdsTopic& topic);
 
 types::Guid new_unique_guid();
 
-std::unique_ptr<types::DataReceived> type_object_data_serialization(
+std::unique_ptr<types::DataReceived> string_serialization(
         std::shared_ptr<PayloadPool> payload_pool,
-        eprosima::fastrtps::types::DynamicType_ptr dyn_type);
+        const std::string& str);
 
-eprosima::fastrtps::types::DynamicType* type_object_data_deserialization(
+std::string string_deserialization(
         const std::unique_ptr<types::DataReceived>& data);
+
+const fastrtps::types::TypeObject* type_object_from_name(
+        const std::string& type_name);
 
 } /* namespace recorder */
 } /* namespace core */

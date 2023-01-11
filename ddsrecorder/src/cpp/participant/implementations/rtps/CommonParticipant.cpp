@@ -22,6 +22,7 @@
 #include <fastrtps/rtps/RTPSDomain.h>
 #include <fastrtps/types/DynamicTypePtr.h>
 #include <fastrtps/types/DynamicType.h>
+#include <fastrtps/types/TypeObjectFactory.h>
 
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/utils.hpp>
@@ -275,11 +276,38 @@ void CommonParticipant::on_type_discovery(
         fastrtps::rtps::RTPSParticipant* /* participant */,
         const fastrtps::rtps::SampleIdentity& /* request_sample_id */,
         const fastrtps::string_255& /* topic */,
-        const fastrtps::types::TypeIdentifier* /* identifier */,
-        const fastrtps::types::TypeObject* /* object */,
+        const fastrtps::types::TypeIdentifier* identifier,
+        const fastrtps::types::TypeObject* object,
         fastrtps::types::DynamicType_ptr dyn_type)
 {
-    internal_notify_type_object_(dyn_type);
+    // Register type obj in singleton factory
+    eprosima::fastrtps::types::TypeObjectFactory::get_instance()->add_type_object(dyn_type->get_name(), identifier, object);
+    internal_notify_type_object_(dyn_type->get_name());
+}
+
+void CommonParticipant::on_type_information_received(
+        fastrtps::rtps::RTPSParticipant* participant,
+        const fastrtps::string_255& /* topic_name */,
+        const fastrtps::string_255& type_name,
+        const fastrtps::types::TypeInformation& type_information)
+{
+    // TODO
+    // Using the Type Object may fail in some occasions due to unexpected errors in TypeObject creation.
+    // Thus, type discovery is deprecated and information received is used to use Type Lookup Service.
+    // However Type Lookup Service is part of DDS and not RTPS, so there is no much we can do here
+
+    // std::function<void(const std::string&, const eprosima::fastrtps::types::DynamicType_ptr)> callback(
+    //     [this]
+    //     (const std::string& type_name, const eprosima::fastrtps::types::DynamicType_ptr /* type */)
+    //     {
+    //         this->internal_notify_type_object_exist_(type_name);
+    //     });
+
+    // // Registering type and creating reader
+    // participant->register_remote_type(
+    //     type_information,
+    //     type_name.to_string(),
+    //     callback);
 }
 
 void CommonParticipant::create_participant_(
@@ -380,20 +408,13 @@ std::shared_ptr<IReader> CommonParticipant::create_reader_(
     }
 }
 
-void CommonParticipant::internal_notify_type_object_(fastrtps::types::DynamicType_ptr dyn_type)
+void CommonParticipant::internal_notify_type_object_(const std::string& type_name)
 {
     logInfo(DDSRECORDER_RTPS_PARTICIPANT,
-        "Participant " << this->id_nts_() << " sending internally type object " << dyn_type->get_name()
-    );
-    logError(DDSRECORDER_RTPS_PARTICIPANT,
-        "Participant " << this->id_nts_() << " sending internally type object " << dyn_type->get_name()
-    ); // TODO(recorder) remove
-
-    // Store it so it is not destroyed
-    dyn_types_.push_back(dyn_type);
+        "Participant " << this->id_nts_() << " discovered type object " << type_name);
 
     type_object_reader_->simulate_data_reception(
-        std::move(recorder::type_object_data_serialization(payload_pool_, dyn_type))
+        std::move(recorder::string_serialization(payload_pool_, type_name))
     );
 }
 

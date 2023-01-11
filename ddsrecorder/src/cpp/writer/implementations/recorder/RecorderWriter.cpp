@@ -35,7 +35,7 @@ utils::ReturnCode RecorderWriter::write_(
         << topic_ << " received: "
         << data->payload
     );
-    logUser(DDSRECORDER_RECORDER_WRITER,
+    logError(DEBUG,
         "Data in topic: "
         << topic_ << " received: "
         << data->payload

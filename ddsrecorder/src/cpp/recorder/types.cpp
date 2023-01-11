@@ -16,8 +16,7 @@
  * @file types.cpp
  */
 
-#include <fastrtps/types/DynamicTypePtr.h>
-#include <fastrtps/types/DynamicType.h>
+#include <fastrtps/types/TypeObjectFactory.h>
 
 #include <ddsrecorder/types/dds/Data.hpp>
 
@@ -58,37 +57,47 @@ types::Guid new_unique_guid()
     return new_guid;
 }
 
-std::unique_ptr<types::DataReceived> type_object_data_serialization(
-    std::shared_ptr<PayloadPool> payload_pool,
-    eprosima::fastrtps::types::DynamicType_ptr dyn_type)
+std::unique_ptr<types::DataReceived> string_serialization(
+        std::shared_ptr<PayloadPool> payload_pool,
+        const std::string& str)
 {
-    // TODO(recorder)
-    // This moves the actual ptr for the type, serializing the ptr itself as it is not going destroyed (stored in Participant).
-    // This is very bad. Dont do this.
-
     // Create and data and serialize inside the string with the type name
-    auto ptr_ = dyn_type.get();
     std::unique_ptr<types::DataReceived> data = std::make_unique<types::DataReceived>();
-    auto size_of_data = sizeof(sizeof(dyn_type.get()));
+
+    auto size_of_data = str.size();
     payload_pool->get_payload(
         size_of_data,
         data->payload
     );
 
-    std::memcpy(data->payload.data, &ptr_, size_of_data);
     data->payload.length = size_of_data;
+    std::memcpy(data->payload.data, str.c_str(), size_of_data);
 
     return data;
 }
 
-eprosima::fastrtps::types::DynamicType* type_object_data_deserialization(
-    const std::unique_ptr<types::DataReceived>& data)
+std::string string_deserialization(
+        const std::unique_ptr<types::DataReceived>& data)
 {
-    // TODO(recorder)
-    // Get the Dyn ptr from "serialized" data
-    eprosima::fastrtps::types::DynamicType* result;
-    std::memcpy(&result, data->payload.data, data->payload.length);
-    return result;
+    return std::string(
+        const_cast<const char*>(
+            reinterpret_cast<char*>(
+                data->payload.data)),
+        data->payload.length);
+}
+
+const fastrtps::types::TypeObject* type_object_from_name(
+        const std::string& type_name)
+{
+    auto type_obj_factory = eprosima::fastrtps::types::TypeObjectFactory::get_instance();
+    auto type_id = type_obj_factory->get_type_identifier(type_name, true);
+
+    if (type_id == nullptr)
+    {
+        return nullptr;
+    }
+
+    return type_obj_factory->get_type_object(type_id);
 }
 
 } /* namespace recorder */

@@ -114,6 +114,12 @@ public:
             const fastrtps::types::TypeObject* object,
             fastrtps::types::DynamicType_ptr dyn_type) override;
 
+    virtual void on_type_information_received(
+        fastrtps::rtps::RTPSParticipant* participant,
+        const fastrtps::string_255& topic_name,
+        const fastrtps::string_255& type_name,
+        const fastrtps::types::TypeInformation& type_information) override;
+
 protected:
 
     /**
@@ -153,7 +159,7 @@ protected:
     types::Endpoint create_common_endpoint_from_info_(
             DiscoveryInfoKind& info);
 
-    void internal_notify_type_object_(fastrtps::types::DynamicType_ptr dyn_type);
+    void internal_notify_type_object_(const std::string& type_name);
 
     /////
     // RTPS specific methods

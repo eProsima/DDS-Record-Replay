@@ -16,9 +16,6 @@
  * @file TypeObjectWriter.cpp
  */
 
-#include <fastrtps/types/DynamicTypePtr.h>
-#include <fastrtps/types/DynamicType.h>
-
 #include <cpp_utils/Log.hpp>
 
 #include <writer/implementations/recorder/TypeObjectWriter.hpp>
@@ -34,21 +31,21 @@ utils::ReturnCode TypeObjectWriter::write_(
         std::unique_ptr<DataReceived>& data) noexcept
 {
     // TODO(recorder) Do something with the Dynamic type
-    eprosima::fastrtps::types::DynamicType* type = recorder::type_object_data_deserialization(data);
+    auto type_name = recorder::string_deserialization(data);
+    auto type_object = recorder::type_object_from_name(type_name);
+    if (nullptr == type_object){
+        logError(DDSRECORDER_DYNTYPES, "Type " << type_name << " is not present in TypeObjectFactory");
+        return utils::ReturnCode::RETCODE_PRECONDITION_NOT_MET;
+    }
 
     logInfo(DDSRECORDER_RECORDER_WRITER,
         "Type Object received: "
-        << type->get_name()
+        << type_name
     );
-    logError(DDSRECORDER_RECORDER_WRITER,
+    logError(DEBUG,
         "Type Object received: "
-        << type->get_name()
-    ); // TODO(recorder) remove
-
-    // TODO(recorder) if DynamicType_ptr is required, fight yourself to achieve it.
-    // But probably cant happen. Solutions:
-    // 1. Why inherit from shared_ptr, wtf dynamic types?
-    // 2. Why DynamicType has no copy constructor?
+        << type_name
+    );
 
     return utils::ReturnCode::RETCODE_OK;
 }
