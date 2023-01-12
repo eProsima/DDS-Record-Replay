@@ -41,7 +41,7 @@ public:
         const types::ParticipantId& participant_id,
         const types::DdsTopic& topic,
         std::shared_ptr<PayloadPool> payload_pool,
-        std::shared_ptr<recorder::McapHandler> mpca_handler);
+        std::shared_ptr<recorder::McapHandler> mcap_handler);
 
 protected:
 
@@ -54,7 +54,7 @@ protected:
     utils::ReturnCode write_(
             std::unique_ptr<types::DataReceived>& data) noexcept override;
 
-    std::shared_ptr<recorder::McapHandler> mpca_handler_;
+    std::shared_ptr<recorder::McapHandler> mcap_handler_;
 };
 
 } /* namespace core */

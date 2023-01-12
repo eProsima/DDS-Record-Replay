@@ -67,7 +67,7 @@ protected:
     std::shared_ptr<IReader> create_reader_(
             types::DdsTopic topic) override;
 
-    std::shared_ptr<recorder::McapHandler> mpca_handler_;
+    std::shared_ptr<recorder::McapHandler> mcap_handler_;
 
     static constexpr const char* MCAP_FILE = "output.mcap";
 };

@@ -32,9 +32,9 @@ TypeObjectWriter::TypeObjectWriter(
         const ParticipantId& participant_id,
         const DdsTopic& topic,
         std::shared_ptr<PayloadPool> payload_pool,
-        std::shared_ptr<recorder::McapHandler> mpca_handler)
+        std::shared_ptr<recorder::McapHandler> mcap_handler)
     : BaseWriter(participant_id, topic, payload_pool)
-    , mpca_handler_(mpca_handler)
+    , mcap_handler_(mcap_handler)
 {
     // Do nothing
 }
@@ -60,7 +60,7 @@ utils::ReturnCode TypeObjectWriter::write_(
 
     // TODO: this will call multiple times to generate_type_object_schema unnecesary
     // Add this type object as a new schema
-    mpca_handler_->add_schema(type_name, recorder::generate_type_object_schema(type_name, type_object));
+    mcap_handler_->add_schema(type_name, recorder::generate_type_object_schema(type_name, type_object));
 
     return utils::ReturnCode::RETCODE_OK;
 }

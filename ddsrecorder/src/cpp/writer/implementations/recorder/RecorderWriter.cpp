@@ -31,9 +31,9 @@ RecorderWriter::RecorderWriter(
         const ParticipantId& participant_id,
         const DdsTopic& topic,
         std::shared_ptr<PayloadPool> payload_pool,
-        std::shared_ptr<recorder::McapHandler> mpca_handler)
+        std::shared_ptr<recorder::McapHandler> mcap_handler)
     : BaseWriter(participant_id, topic, payload_pool)
-    , mpca_handler_(mpca_handler)
+    , mcap_handler_(mcap_handler)
 {
     // Do nothing
 }
@@ -55,7 +55,7 @@ utils::ReturnCode RecorderWriter::write_(
     // Add this data to the mcap handler
     try
     {
-        mpca_handler_->add_data(topic_, data);
+        mcap_handler_->add_data(topic_, data);
     }
     catch(const utils::InconsistencyException& e)
     {
