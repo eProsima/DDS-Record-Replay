@@ -92,7 +92,7 @@ enum optionIndex
 {
     UNKNOWN_OPT,
     HELP,
-    // TODO
+    // TODO(recorder)
 };
 
 /**

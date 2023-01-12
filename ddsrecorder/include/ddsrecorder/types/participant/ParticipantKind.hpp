@@ -41,9 +41,10 @@ enum class ParticipantKind : ParticipantKindType
     local_discovery_server,     //! Discovery Server RTPS Participant Kind
     wan_discovery_server,       //! Discovery Server Inter Router Participant Kind
     wan_initial_peers,          //! Initial Peers Inter Router Participant Kind
+    recorder,                   //! TODO(recorder)
 };
 
-static constexpr unsigned PARTICIPANT_KIND_COUNT = 8;
+static constexpr unsigned PARTICIPANT_KIND_COUNT = 9;
 
 /**
  * @brief All ParticipantKind enum values as a std::array.
@@ -57,6 +58,7 @@ constexpr std::array<ParticipantKind, PARTICIPANT_KIND_COUNT> ALL_PARTICIPANT_KI
     ParticipantKind::local_discovery_server,
     ParticipantKind::wan_discovery_server,
     ParticipantKind::wan_initial_peers,
+    ParticipantKind::recorder,
 };
 
 /**
@@ -71,6 +73,7 @@ constexpr std::array<ParticipantKind, PARTICIPANT_KIND_COUNT - 1> ALL_VALID_PART
     ParticipantKind::local_discovery_server,
     ParticipantKind::wan_discovery_server,
     ParticipantKind::wan_initial_peers,
+    ParticipantKind::recorder,
 };
 
 constexpr std::array<const char*, PARTICIPANT_KIND_COUNT> PARTICIPANT_KIND_STRINGS = {
@@ -82,6 +85,7 @@ constexpr std::array<const char*, PARTICIPANT_KIND_COUNT> PARTICIPANT_KIND_STRIN
     "local-discovery-server",
     "wan-ds",
     "wan-initial-peers",
+    "recorder",
 };
 
 static constexpr unsigned MAX_PARTICIPANT_KIND_ALIASES = 4;
@@ -100,6 +104,7 @@ constexpr std::array<ParticipantKindAliasesType, PARTICIPANT_KIND_COUNT> PARTICI
     ParticipantKindAliasesType({"discovery-server", "ds", "local-ds", "local-discovery-server"}),
     ParticipantKindAliasesType({"wan-ds", "wan-discovery-server", "", ""}),
     ParticipantKindAliasesType({"wan", "router", "initial-peers", ""}),
+    ParticipantKindAliasesType({"recorder", "ddsrecorder", "", ""}),
 };
 
 DDSRECORDER_DllAPI std::ostream& operator <<(
