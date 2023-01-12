@@ -22,7 +22,7 @@
 #include <reader/implementations/auxiliar/BlankReader.hpp>
 #include <writer/implementations/recorder/RecorderWriter.hpp>
 #include <writer/implementations/recorder/TypeObjectWriter.hpp>
-#include <recorder/types.hpp>
+#include <recorder/dynamic_types/types.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {

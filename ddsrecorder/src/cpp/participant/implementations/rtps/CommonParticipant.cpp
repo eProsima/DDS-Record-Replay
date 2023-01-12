@@ -40,7 +40,7 @@
 #include <writer/implementations/rtps/QoSSpecificWriter.hpp>
 #include <participant/implementations/auxiliar/BaseParticipant.hpp>
 #include <participant/implementations/rtps/CommonParticipant.hpp>
-#include <recorder/types.hpp>
+#include <recorder/dynamic_types/types.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {

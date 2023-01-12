@@ -19,8 +19,8 @@
 #include <cpp_utils/Log.hpp>
 
 #include <writer/implementations/recorder/TypeObjectWriter.hpp>
-#include <recorder/types.hpp>
-#include <recorder/mcap/schema.hpp>
+#include <recorder/dynamic_types/types.hpp>
+#include <recorder/dynamic_types/schema.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -43,17 +43,13 @@ utils::ReturnCode TypeObjectWriter::write_(
         std::unique_ptr<DataReceived>& data) noexcept
 {
     auto type_name = recorder::string_deserialization(data);
-    auto type_object = recorder::type_object_from_name(type_name);
-    if (nullptr == type_object){
+    auto dyn_type = recorder::dynamic_type_from_name(type_name);
+    if (nullptr == dyn_type){
         logError(DDSRECORDER_DYNTYPES, "Type " << type_name << " is not present in TypeObjectFactory");
         return utils::ReturnCode::RETCODE_PRECONDITION_NOT_MET;
     }
 
     logInfo(DDSRECORDER_RECORDER_WRITER,
-        "Type Object received: "
-        << type_name
-    );
-    logError(DEBUG,
         "Type Object received: "
         << type_name
     );
@@ -63,7 +59,7 @@ utils::ReturnCode TypeObjectWriter::write_(
     {
         // TODO: this will call multiple times to generate_type_object_schema unnecesary
         // Add this type object as a new schema
-        mcap_handler_->add_schema(type_name, recorder::generate_type_object_schema(type_name, type_object));
+        mcap_handler_->add_schema(type_name, recorder::generate_dyn_type_schema(dyn_type));
     }
     catch(const utils::Exception& e)
     {

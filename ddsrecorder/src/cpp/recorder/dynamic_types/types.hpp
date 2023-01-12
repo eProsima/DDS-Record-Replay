@@ -50,6 +50,9 @@ std::string string_deserialization(
 const fastrtps::types::TypeObject* type_object_from_name(
         const std::string& type_name);
 
+const fastrtps::types::DynamicType_ptr dynamic_type_from_name(
+        const std::string& type_name);
+
 } /* namespace recorder */
 } /* namespace core */
 } /* namespace ddsrecorder */
