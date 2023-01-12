@@ -36,7 +36,7 @@ class RecorderParticipant : public BaseParticipant
 public:
 
     /**
-     * @brief Construct a new Dummy Participant object
+     * @brief Construct a new Recorder Participant object
      *
      * It uses the \c BaseParticipant constructor.
      * Apart from BaseParticipant, it adds this new object to a static variable so it could be reached from outside
@@ -48,7 +48,7 @@ public:
             std::shared_ptr<DiscoveryDatabase> discovery_database);
 
     /**
-     * @brief Destroy the Dummy Participant object
+     * @brief Destroy the Recorder Participant object
      *
      * Remove its reference from the static map
      */

@@ -28,7 +28,7 @@ using namespace eprosima::ddsrecorder::core::types;
 void InternalReader::simulate_data_reception(
         std::unique_ptr<types::DataReceived>&& data) noexcept
 {
-    std::lock_guard<DataReceviedType> lock(data_to_send_);
+    std::lock_guard<DataReceivedType> lock(data_to_send_);
 
     // Even if disabled, the data will be stored
     data_to_send_.push(std::move(data));
@@ -41,7 +41,7 @@ void InternalReader::simulate_data_reception(
 utils::ReturnCode InternalReader::take_(
         std::unique_ptr<DataReceived>& data) noexcept
 {
-    std::lock_guard<DataReceviedType> lock(data_to_send_);
+    std::lock_guard<DataReceivedType> lock(data_to_send_);
 
     // Enable check is done in BaseReader
 

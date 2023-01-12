@@ -45,7 +45,7 @@ RecorderParticipant::RecorderParticipant(
     // NOTE: this could change for: in DDSRouter change that only readers create track
     discovery_database_->add_endpoint_discovered_callback(
         [this](types::Endpoint endpoint_discovered){
-            if (endpoint_discovered.discoverer_participant_id() != this->id())
+            if (endpoint_discovered.is_writer() && endpoint_discovered.discoverer_participant_id() != this->id())
             {
                 discovery_database_->add_endpoint(
                     simulate_endpoint_(endpoint_discovered.topic())
