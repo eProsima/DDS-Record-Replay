@@ -35,7 +35,7 @@ RecorderParticipant::RecorderParticipant(
         std::shared_ptr<PayloadPool> payload_pool,
         std::shared_ptr<DiscoveryDatabase> discovery_database)
     : BaseParticipant(participant_configuration, payload_pool, discovery_database)
-    , mcap_handler_(std::make_unique<recorder::McapHandler>(RecorderParticipant::MCAP_FILE, payload_pool_))
+    , mcap_handler_(std::make_shared<recorder::McapHandler>(RecorderParticipant::MCAP_FILE, payload_pool_))
 {
     // Simulate that there is a reader of type object to force this track creation
     discovery_database_->add_endpoint(

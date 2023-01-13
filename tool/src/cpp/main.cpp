@@ -69,14 +69,17 @@ int main(
     core::DDSRouter router(router_configuration);
     router.start();
 
-    std::cout << "Router Started" << std::endl;
+    std::cout << "DDS Recorder Started" << std::endl;
 
     // Wait N seconds and close
     eprosima::utils::event::SignalEventHandler<eprosima::utils::event::Signal::sigint> signal_handler;
     signal_handler.wait_for_event();
+
+    std::cout << "Signal received" << std::endl;
+
     router.stop();
 
-    std::cout << "Router Stopped" << std::endl;
+    std::cout << "DDS Recorder Stopped" << std::endl;
 
     // Force print every log before closing
     eprosima::utils::Log::Flush();

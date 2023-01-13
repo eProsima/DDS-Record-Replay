@@ -98,32 +98,35 @@ void McapHandler::add_data(
     }
 }
 
+mcap::ChannelId McapHandler::create_channel_id_nts_(
+        const types::DdsTopic& topic)
+{
+    // Find schema
+    auto schema_id = get_schema_id_(topic.type_name);
+
+    // Create new channel
+    mcap::Channel new_channel(topic.topic_name, "cdr", schema_id);
+    mcap_writer_.addChannel(new_channel);
+    auto channel_id = new_channel.id;
+    channels_.insert({topic.topic_name, std::move(new_channel)});
+    logInfo(DDSRECORDER_MCAP_HANDLER, "Channel created: " << topic << ".");
+    logError(DEBUG, "Channel created: " << topic << ".");
+
+    return channel_id;
+}
+
 mcap::ChannelId McapHandler::get_channel_id_(
         const types::DdsTopic& topic)
 {
-    // auxiliary variables to improve legibility
-    auto& topic_name = topic.topic_name;
-
     std::unique_lock<ChannelMapType> channels_lock(channels_);
-    auto it = channels_.find(topic_name);
+    auto it = channels_.find(topic.topic_name);
     if (it != channels_.end())
     {
         return it->second.id;
     }
 
-    // If it does not exist yet, create it
-    // Find schema
-    auto schema_id = get_schema_id_(topic.type_name);
-
-    // Create new channel
-    mcap::Channel new_channel(topic_name, "cdr", schema_id);
-    mcap_writer_.addChannel(new_channel);
-    auto channel_id = new_channel.id;
-    channels_.insert({topic_name, std::move(new_channel)});
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Channel created: " << topic << ".");
-    logError(DEBUG, "Channel created: " << topic << ".");
-
-    return channel_id;
+    // If it does not exist yet, create it (call it with mutex taken)
+    return create_channel_id_nts_(topic);
 }
 
 mcap::SchemaId McapHandler::get_schema_id_(

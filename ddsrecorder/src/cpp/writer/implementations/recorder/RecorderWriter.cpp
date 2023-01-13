@@ -57,11 +57,11 @@ utils::ReturnCode RecorderWriter::write_(
     {
         mcap_handler_->add_data(topic_, data);
     }
-    catch(const utils::InconsistencyException& e)
+    catch(const utils::Exception& e)
     {
         logError(
             DDSRECORDER_RECORDER_WRITER,
-            "Error storing data: " << e.what() << " . Continue recording.");
+            "Error storing data: <" << e.what() << ">.\nContinue recording...");
     }
 
     return utils::ReturnCode::RETCODE_OK;

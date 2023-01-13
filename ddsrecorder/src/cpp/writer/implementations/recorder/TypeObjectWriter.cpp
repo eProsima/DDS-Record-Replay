@@ -1,4 +1,4 @@
-// Copyright 2021 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+    // Copyright 2021 Proyectos y Sistemas de Mantenimiento SL (eProsima).
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -58,9 +58,19 @@ utils::ReturnCode TypeObjectWriter::write_(
         << type_name
     );
 
-    // TODO: this will call multiple times to generate_type_object_schema unnecesary
-    // Add this type object as a new schema
-    mcap_handler_->add_schema(type_name, recorder::generate_type_object_schema(type_name, type_object));
+    // Add schema
+    try
+    {
+        // TODO: this will call multiple times to generate_type_object_schema unnecesary
+        // Add this type object as a new schema
+        mcap_handler_->add_schema(type_name, recorder::generate_type_object_schema(type_name, type_object));
+    }
+    catch(const utils::Exception& e)
+    {
+        logError(
+            DDSRECORDER_RECORDER_WRITER,
+            "Error generating schema: <" << e.what() << ">.\nContinue recording...");
+    }
 
     return utils::ReturnCode::RETCODE_OK;
 }

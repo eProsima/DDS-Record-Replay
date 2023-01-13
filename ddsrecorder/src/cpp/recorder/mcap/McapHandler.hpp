@@ -54,6 +54,9 @@ public:
 
 protected:
 
+    mcap::ChannelId create_channel_id_nts_(
+            const types::DdsTopic& topic);
+
     mcap::ChannelId get_channel_id_(
             const types::DdsTopic& topic);
 
@@ -65,8 +68,8 @@ protected:
 
     std::shared_ptr<PayloadPool> payload_pool_;
 
+    // NOTE: it cannot be used with Atomicable because McapWriter is a final class
     mcap::McapWriter mcap_writer_;
-    // NOTE: it cannot be used with Atomicabl because McapWriter is a final class
     std::mutex write_mtx_;
 
     using SchemaMapType = utils::SharedAtomicable<std::map<std::string, mcap::Schema>>;
