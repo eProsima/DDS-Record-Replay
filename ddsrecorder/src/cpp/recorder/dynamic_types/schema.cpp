@@ -17,6 +17,7 @@
  */
 
 #include <ostream>
+#include <map>
 
 #include <fastrtps/types/DynamicType.h>
 #include <fastrtps/types/DynamicTypeMember.h>
@@ -64,32 +65,71 @@ fastrtps::types::DynamicType_ptr container_internal_type(
     return dyn_type->get_descriptor()->get_element_type();
 }
 
-unsigned int array_size(
-        const fastrtps::types::DynamicType_ptr& dyn_type)
+std::vector<uint32_t> array_size(
+        const fastrtps::types::DynamicType_ptr& dyn_type,
+        bool unidimensional=true)
 {
-    return dyn_type->get_descriptor()->get_total_bounds();
-}
-
-std::string container_kind_to_str(
-        const fastrtps::types::DynamicType_ptr& type)
-{
-    auto internal_type = container_internal_type(type);
-    auto this_array_size = array_size(type);
-
-    if (this_array_size == fastrtps::types::BOUND_UNLIMITED)
+    if (unidimensional)
     {
-        return type_kind_to_str(internal_type) + "[]";
+        return {dyn_type->get_descriptor()->get_total_bounds()};
     }
     else
     {
-        return type_kind_to_str(internal_type) + "[" + std::to_string(this_array_size) + "]";
+        std::vector<uint32_t> result;
+        for (int i=0; i<dyn_type->get_descriptor()->get_bounds_size(); i++)
+        {
+            result.push_back(dyn_type->get_descriptor()->get_bounds(i));
+        }
+        return result;
     }
 }
 
-std::string type_kind_to_str(
-        const fastrtps::types::DynamicType_ptr& type)
+std::vector<std::pair<std::string, fastrtps::types::DynamicType_ptr>> get_members_sorted(
+        const fastrtps::types::DynamicType_ptr& dyn_type)
 {
-    switch(type->get_kind())
+    std::vector<std::pair<std::string, fastrtps::types::DynamicType_ptr>> result;
+
+    std::map<fastrtps::types::MemberId, fastrtps::types::DynamicTypeMember*> members;
+    dyn_type->get_all_members(members);
+
+    for (const auto& member : members)
+    {
+        result.emplace_back(
+            std::make_pair<std::string, fastrtps::types::DynamicType_ptr>(
+                member.second->get_name(),
+                member.second->get_descriptor()->get_type()));
+    }
+    return result;
+}
+
+std::string container_kind_to_str(
+        const fastrtps::types::DynamicType_ptr& dyn_type)
+{
+    auto internal_type = container_internal_type(dyn_type);
+    auto this_array_size = array_size(dyn_type);
+
+    std::stringstream ss;
+    ss << type_kind_to_str(internal_type);
+
+    for (const auto& bound : this_array_size)
+    {
+        if (bound != fastrtps::types::BOUND_UNLIMITED)
+        {
+            ss << "[" << bound << "]";
+        }
+        else
+        {
+            ss << "[]";
+        }
+    }
+
+    return ss.str();
+}
+
+std::string type_kind_to_str(
+        const fastrtps::types::DynamicType_ptr& dyn_type)
+{
+    switch(dyn_type->get_kind())
     {
         case fastrtps::types::TK_BOOLEAN:
             return "bool";
@@ -132,10 +172,10 @@ std::string type_kind_to_str(
 
         case fastrtps::types::TK_ARRAY:
         case fastrtps::types::TK_SEQUENCE:
-            return container_kind_to_str(type);
+            return container_kind_to_str(dyn_type);
 
         case fastrtps::types::TK_STRUCTURE:
-            return type->get_name();
+            return dyn_type->get_name();
 
         case fastrtps::types::TK_FLOAT128:
         case fastrtps::types::TK_CHAR16:
@@ -145,11 +185,11 @@ std::string type_kind_to_str(
         case fastrtps::types::TK_UNION:
         case fastrtps::types::TK_NONE:
             throw utils::UnsupportedException(
-                STR_ENTRY << "Type " << type->get_name() << " is not supported in ROS2 msg.");
+                STR_ENTRY << "Type " << dyn_type->get_name() << " is not supported in ROS2 msg.");
 
         default:
             throw utils::InconsistencyException(
-                STR_ENTRY << "Type " << type->get_name() << " has not correct kind.");
+                STR_ENTRY << "Type " << dyn_type->get_name() << " has not correct kind.");
     }
 }
 
@@ -177,9 +217,9 @@ utils::TreeNode<TreeNodeType> generate_dyn_type_tree(
         auto internal_type = container_internal_type(type);
 
         // Create this node
-        utils::TreeNode<TreeNodeType> container(member_name, type_kind_to_str(internal_type));
+        utils::TreeNode<TreeNodeType> container(member_name, type_kind_to_str(type));
         // Add branch
-        container.add_branch(generate_dyn_type_tree(internal_type));
+        container.add_branch(generate_dyn_type_tree(internal_type, "CONTAINER_MEMBER"));
 
         return container;
     }
@@ -190,14 +230,13 @@ utils::TreeNode<TreeNodeType> generate_dyn_type_tree(
         utils::TreeNode<TreeNodeType> parent(member_name, type->get_name(), true);
 
         // Get all members of this struct
-        std::map<std::string, fastrtps::types::DynamicTypeMember*> members_by_name;
-        type->get_all_members_by_name(members_by_name);
+        std::vector<std::pair<std::string, fastrtps::types::DynamicType_ptr>> members_by_name = get_members_sorted(type);
 
         for (const auto& member : members_by_name)
         {
             // Add each member with its name as a new node in a branch (recursion)
             parent.add_branch(
-                generate_dyn_type_tree(member.second->get_descriptor()->get_type(), member.first));
+                generate_dyn_type_tree(member.second, member.first));
         }
         return parent;
     }

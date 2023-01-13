@@ -55,6 +55,9 @@ void McapHandler::add_schema(const std::string& schema_name, const std::string& 
         return;
     }
 
+    // TODO remove
+    logError(DEBUG, "\nAdding schema with name " << schema_name << " :\n" << schema_text << "\n");
+
     // Create schema and add it to writer and to schemas map
     mcap::Schema new_schema(schema_name, "ros2msg", schema_text);
 
