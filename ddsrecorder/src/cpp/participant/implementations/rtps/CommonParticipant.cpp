@@ -342,37 +342,6 @@ std::shared_ptr<IWriter> CommonParticipant::create_writer_(
 {
     // NOTE: The RTPS Participant in the Recorder does not require writers
     return std::make_shared<BlankWriter>();
-
-    // if (recorder::is_type_object_topic(topic))
-    // {
-    //     // RTPS Participants has no type object writers
-    //     return std::make_shared<BlankWriter>();
-    // }
-    // else
-    // {
-    //     if (topic.topic_qos.get_reference().has_partitions() || topic.topic_qos.get_reference().has_ownership())
-    //     {
-    //         // Notice that MultiWriter does not require an init call
-    //         return std::make_shared<MultiWriter>(
-    //             this->id(),
-    //             topic,
-    //             this->payload_pool_,
-    //             rtps_participant_,
-    //             this->configuration_->is_repeater);
-    //     }
-    //     else
-    //     {
-    //         auto writer = std::make_shared<SimpleWriter>(
-    //             this->id(),
-    //             topic,
-    //             this->payload_pool_,
-    //             rtps_participant_,
-    //             this->configuration_->is_repeater);
-    //         writer->init();
-
-    //         return writer;
-    //     }
-    // }
 }
 
 std::shared_ptr<IReader> CommonParticipant::create_reader_(
