@@ -20,6 +20,7 @@
 
 #include <writer/implementations/recorder/TypeObjectWriter.hpp>
 #include <recorder/types.hpp>
+#include <recorder/mcap/schema.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -27,10 +28,20 @@ namespace core {
 
 using namespace eprosima::ddsrecorder::core::types;
 
+TypeObjectWriter::TypeObjectWriter(
+        const ParticipantId& participant_id,
+        const DdsTopic& topic,
+        std::shared_ptr<PayloadPool> payload_pool,
+        std::shared_ptr<recorder::McapHandler> mcap_handler)
+    : BaseWriter(participant_id, topic, payload_pool)
+    , mcap_handler_(mcap_handler)
+{
+    // Do nothing
+}
+
 utils::ReturnCode TypeObjectWriter::write_(
         std::unique_ptr<DataReceived>& data) noexcept
 {
-    // TODO(recorder) Do something with the Dynamic type
     auto type_name = recorder::string_deserialization(data);
     auto type_object = recorder::type_object_from_name(type_name);
     if (nullptr == type_object){
@@ -46,6 +57,20 @@ utils::ReturnCode TypeObjectWriter::write_(
         "Type Object received: "
         << type_name
     );
+
+    // Add schema
+    try
+    {
+        // TODO: this will call multiple times to generate_type_object_schema unnecesary
+        // Add this type object as a new schema
+        mcap_handler_->add_schema(type_name, recorder::generate_type_object_schema(type_name, type_object));
+    }
+    catch(const utils::Exception& e)
+    {
+        logError(
+            DDSRECORDER_RECORDER_WRITER,
+            "Error generating schema: <" << e.what() << ">.\nContinue recording...");
+    }
 
     return utils::ReturnCode::RETCODE_OK;
 }

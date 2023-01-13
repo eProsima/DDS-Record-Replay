@@ -17,6 +17,7 @@
  */
 
 #include <cpp_utils/Log.hpp>
+#include <cpp_utils/exception/InconsistencyException.hpp>
 
 #include <writer/implementations/recorder/RecorderWriter.hpp>
 
@@ -26,10 +27,20 @@ namespace core {
 
 using namespace eprosima::ddsrecorder::core::types;
 
+RecorderWriter::RecorderWriter(
+        const ParticipantId& participant_id,
+        const DdsTopic& topic,
+        std::shared_ptr<PayloadPool> payload_pool,
+        std::shared_ptr<recorder::McapHandler> mcap_handler)
+    : BaseWriter(participant_id, topic, payload_pool)
+    , mcap_handler_(mcap_handler)
+{
+    // Do nothing
+}
+
 utils::ReturnCode RecorderWriter::write_(
         std::unique_ptr<DataReceived>& data) noexcept
 {
-    // TODO Do something with the serialized data
     logInfo(DDSRECORDER_RECORDER_WRITER,
         "Data in topic: "
         << topic_ << " received: "
@@ -40,6 +51,18 @@ utils::ReturnCode RecorderWriter::write_(
         << topic_ << " received: "
         << data->payload
     ); // TODO(recorder) remove
+
+    // Add this data to the mcap handler
+    try
+    {
+        mcap_handler_->add_data(topic_, data);
+    }
+    catch(const utils::Exception& e)
+    {
+        logError(
+            DDSRECORDER_RECORDER_WRITER,
+            "Error storing data: <" << e.what() << ">.\nContinue recording...");
+    }
 
     return utils::ReturnCode::RETCODE_OK;
 }

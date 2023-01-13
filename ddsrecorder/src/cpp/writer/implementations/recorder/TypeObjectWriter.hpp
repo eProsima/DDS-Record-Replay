@@ -24,6 +24,7 @@
 #include <cpp_utils/time/time_utils.hpp>
 
 #include <writer/implementations/auxiliar/BaseWriter.hpp>
+#include <recorder/mcap/McapHandler.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -36,8 +37,11 @@ class TypeObjectWriter : public BaseWriter
 {
 public:
 
-    //! Use parent constructors
-    using BaseWriter::BaseWriter;
+    TypeObjectWriter(
+        const types::ParticipantId& participant_id,
+        const types::DdsTopic& topic,
+        std::shared_ptr<PayloadPool> payload_pool,
+        std::shared_ptr<recorder::McapHandler> mcap_handler);
 
 protected:
 
@@ -49,6 +53,8 @@ protected:
      */
     utils::ReturnCode write_(
             std::unique_ptr<types::DataReceived>& data) noexcept override;
+
+    std::shared_ptr<recorder::McapHandler> mcap_handler_;
 };
 
 } /* namespace core */

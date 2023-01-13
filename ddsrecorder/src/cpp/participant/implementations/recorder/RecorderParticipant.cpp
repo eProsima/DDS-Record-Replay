@@ -35,6 +35,7 @@ RecorderParticipant::RecorderParticipant(
         std::shared_ptr<PayloadPool> payload_pool,
         std::shared_ptr<DiscoveryDatabase> discovery_database)
     : BaseParticipant(participant_configuration, payload_pool, discovery_database)
+    , mcap_handler_(std::make_shared<recorder::McapHandler>(RecorderParticipant::MCAP_FILE, payload_pool_))
 {
     // Simulate that there is a reader of type object to force this track creation
     discovery_database_->add_endpoint(
@@ -65,11 +66,11 @@ std::shared_ptr<IWriter> RecorderParticipant::create_writer_(
 {
     if (recorder::is_type_object_topic(topic))
     {
-        return std::make_shared<TypeObjectWriter>(id(), topic, payload_pool_);
+        return std::make_shared<TypeObjectWriter>(id(), topic, payload_pool_, mcap_handler_);
     }
     else
     {
-        return std::make_shared<RecorderWriter>(id(), topic, payload_pool_);
+        return std::make_shared<RecorderWriter>(id(), topic, payload_pool_, mcap_handler_);
     }
 }
 

@@ -19,6 +19,7 @@
 
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/time/time_utils.hpp>
+#include <cpp_utils/event/SignalEventHandler.hpp>
 
 #include <ddsrecorder/configuration/DDSRouterConfiguration.hpp>
 #include <ddsrecorder/configuration/participant/ParticipantConfiguration.hpp>
@@ -68,13 +69,17 @@ int main(
     core::DDSRouter router(router_configuration);
     router.start();
 
-    std::cout << "Router Started" << std::endl;
+    std::cout << "DDS Recorder Started" << std::endl;
 
     // Wait N seconds and close
-    eprosima::utils::sleep_for(10000);
+    eprosima::utils::event::SignalEventHandler<eprosima::utils::event::Signal::sigint> signal_handler;
+    signal_handler.wait_for_event();
+
+    std::cout << "Signal received" << std::endl;
+
     router.stop();
 
-    std::cout << "Router Stopped" << std::endl;
+    std::cout << "DDS Recorder Stopped" << std::endl;
 
     // Force print every log before closing
     eprosima::utils::Log::Flush();

@@ -23,6 +23,7 @@
 #include <participant/implementations/auxiliar/BaseParticipant.hpp>
 #include <reader/implementations/auxiliar/DummyReader.hpp>
 #include <writer/implementations/auxiliar/DummyWriter.hpp>
+#include <recorder/mcap/McapHandler.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -65,6 +66,10 @@ protected:
     //! Override create_reader_() BaseParticipant method
     std::shared_ptr<IReader> create_reader_(
             types::DdsTopic topic) override;
+
+    std::shared_ptr<recorder::McapHandler> mcap_handler_;
+
+    static constexpr const char* MCAP_FILE = "output.mcap";
 };
 
 } /* namespace core */

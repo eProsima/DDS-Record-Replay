@@ -27,8 +27,13 @@ set(MODULE_FIND_PACKAGES
     fastrtps
     cpp_utils)
 
+set(MODULE_THIRDPARTY_HEADERONLY
+    mcap)
+
 set(fastrtps_MINIMUM_VERSION "2.9")
 
 set(MODULE_DEPENDENCIES
+    lz4
+    zstd
     $<$<BOOL:${WIN32}>:iphlpapi$<SEMICOLON>Shlwapi>
     ${MODULE_FIND_PACKAGES})
