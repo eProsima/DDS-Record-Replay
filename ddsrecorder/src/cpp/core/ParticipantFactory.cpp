@@ -27,6 +27,7 @@
 
 #include <core/ParticipantFactory.hpp>
 #include <participant/implementations/auxiliar/DummyParticipant.hpp>
+#include <participant/implementations/rtps/DynTypesParticipant.hpp>
 #include <participant/implementations/auxiliar/EchoParticipant.hpp>
 #include <participant/implementations/auxiliar/BlankParticipant.hpp>
 #include <participant/implementations/recorder/RecorderParticipant.hpp>
@@ -144,6 +145,30 @@ std::shared_ptr<IParticipant> ParticipantFactory::create_participant(
             }
 
             auto participant =  std::make_shared<rtps::InitialPeersParticipant> (
+                conf_,
+                payload_pool,
+                discovery_database);
+
+            // Initialize Participant (this is needed as Participant is not RAII because of Listener)
+            participant->init();
+
+            return participant;
+        }
+
+        case ParticipantKind::dyn_type:
+            // Simple RTPS Participant
+        {
+            std::shared_ptr<configuration::SimpleParticipantConfiguration> conf_ =
+                    std::dynamic_pointer_cast<configuration::SimpleParticipantConfiguration>(
+                participant_configuration);
+            if (!conf_)
+            {
+                throw utils::ConfigurationException(
+                          utils::Formatter() << "Configuration from Participant: " << participant_configuration->id <<
+                              " is not for Participant Kind: " << participant_configuration->kind);
+            }
+
+            auto participant = std::make_shared<rtps::DynTypesParticipant> (
                 conf_,
                 payload_pool,
                 discovery_database);

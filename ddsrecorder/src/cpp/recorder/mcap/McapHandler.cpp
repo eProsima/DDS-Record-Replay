@@ -56,7 +56,7 @@ void McapHandler::add_schema(const std::string& schema_name, const std::string& 
     }
 
     // TODO remove
-    logError(DEBUG, "\nAdding schema with name " << schema_name << " :\n" << schema_text << "\n");
+    logWarning(DEBUG, "\nAdding schema with name " << schema_name << " :\n" << schema_text << "\n");
 
     // Create schema and add it to writer and to schemas map
     mcap::Schema new_schema(schema_name, "ros2msg", schema_text);
@@ -68,7 +68,7 @@ void McapHandler::add_schema(const std::string& schema_name, const std::string& 
 
     schemas_.insert({schema_name, std::move(new_schema)});
     logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << schema_name << ".");
-    logError(DEBUG, "Schema created: " << schema_name << ".");
+    logWarning(DEBUG, "Schema created: " << schema_name << ".");
 }
 
 void McapHandler::add_data(
@@ -113,7 +113,7 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     auto channel_id = new_channel.id;
     channels_.insert({topic.topic_name, std::move(new_channel)});
     logInfo(DDSRECORDER_MCAP_HANDLER, "Channel created: " << topic << ".");
-    logError(DEBUG, "Channel created: " << topic << ".");
+    logWarning(DEBUG, "Channel created: " << topic << ".");
 
     return channel_id;
 }

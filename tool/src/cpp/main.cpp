@@ -42,16 +42,16 @@ int main(
     // * signal handlers
     // * yaml?
 
-    // eprosima::utils::Log::SetVerbosity(eprosima::utils::Log::Kind::Info);
+    eprosima::utils::Log::SetVerbosity(eprosima::utils::Log::Kind::Warning);
 
     std::cout << "Starting DDS Recorder" << std::endl;
 
     // Generate Configuration with 2 participants, 1 simple in domain 0 and 1 recorder
     auto simple_conf = std::make_shared<core::configuration::SimpleParticipantConfiguration>(
-        core::types::ParticipantId("Simple0"),
-        core::types::ParticipantKind::simple_rtps,
+        core::types::ParticipantId("Simple+DynTypes"),
+        core::types::ParticipantKind::dyn_type,
         false,
-        core::types::DomainId(0u)
+        core::types::DomainId(1u)
     );
     auto recorder_conf = std::make_shared<core::configuration::ParticipantConfiguration>(
         core::types::ParticipantId("Recorder"),
