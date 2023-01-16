@@ -21,6 +21,7 @@
 #include <writer/implementations/recorder/TypeObjectWriter.hpp>
 #include <recorder/dynamic_types/types.hpp>
 #include <recorder/dynamic_types/schema.hpp>
+#include <recorder/dynamic_types/utils.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {

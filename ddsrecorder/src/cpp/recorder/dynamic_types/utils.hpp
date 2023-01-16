@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * @file types.hpp
+ * @file utils.hpp
  */
 
 #pragma once
@@ -31,21 +31,11 @@ namespace ddsrecorder {
 namespace core {
 namespace recorder {
 
-constexpr const char* TYPE_OBJECT_TOPIC_NAME = "__internal__/type_object";
-constexpr const char* TYPE_OBJECT_DATA_TYPE_NAME = "__internal__::type_object";
+const fastrtps::types::TypeObject* type_object_from_name(
+        const std::string& type_name);
 
-types::DdsTopic type_object_topic();
-
-bool is_type_object_topic(const types::DdsTopic& topic);
-
-types::Guid new_unique_guid();
-
-std::unique_ptr<types::DataReceived> string_serialization(
-        std::shared_ptr<PayloadPool> payload_pool,
-        const std::string& str);
-
-std::string string_deserialization(
-        const std::unique_ptr<types::DataReceived>& data);
+const fastrtps::types::DynamicType_ptr dynamic_type_from_name(
+        const std::string& type_name);
 
 } /* namespace recorder */
 } /* namespace core */

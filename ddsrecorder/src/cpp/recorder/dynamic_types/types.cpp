@@ -86,40 +86,6 @@ std::string string_deserialization(
         data->payload.length);
 }
 
-const fastrtps::types::TypeObject* type_object_from_name(
-        const std::string& type_name)
-{
-    auto type_obj_factory = eprosima::fastrtps::types::TypeObjectFactory::get_instance();
-    auto type_id = type_obj_factory->get_type_identifier(type_name, true);
-
-    if (type_id == nullptr)
-    {
-        return nullptr;
-    }
-
-    return type_obj_factory->get_type_object(type_id);
-}
-
-const fastrtps::types::DynamicType_ptr dynamic_type_from_name(
-        const std::string& type_name)
-{
-    auto type_obj_factory = eprosima::fastrtps::types::TypeObjectFactory::get_instance();
-
-    auto type_id = type_obj_factory->get_type_identifier(type_name, true);
-    if (type_id == nullptr)
-    {
-        return fastrtps::types::DynamicType_ptr();
-    }
-
-    auto type_obj = type_obj_factory->get_type_object(type_id);
-    if (type_obj == nullptr)
-    {
-        return fastrtps::types::DynamicType_ptr();
-    }
-
-    return type_obj_factory->build_dynamic_type(type_name, type_id, type_obj);
-}
-
 } /* namespace recorder */
 } /* namespace core */
 } /* namespace ddsrecorder */

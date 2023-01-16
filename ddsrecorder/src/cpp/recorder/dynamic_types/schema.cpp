@@ -277,15 +277,22 @@ std::string generate_dyn_type_schema_from_tree(
 
     // Write down main node
     generate_schema_from_node(ss, parent_node);
+    types_written.insert(parent_node.info.type_kind_name);
 
     // For every Node, check if it is a struct.
     // If it is, check if it is not yet written
     // If it is not, write it down
     for (const auto& node : parent_node.all_nodes())
     {
-        if (node.info.is_struct && types_written.find(node.info.type_kind_name) != types_written.end())
+        if (node.info.is_struct && types_written.find(node.info.type_kind_name) == types_written.end())
         {
+            // Add types separator
             ss << TYPE_SEPARATOR;
+
+            // Add types name
+            ss << "MSG: fastdds/" << node.info.type_kind_name << "\n";
+
+            // Add next type
             generate_schema_from_node(ss, node);
             types_written.insert(node.info.type_kind_name);
         }
