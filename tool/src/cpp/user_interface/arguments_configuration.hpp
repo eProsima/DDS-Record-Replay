@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef EPROSIMA_DDSRECORDER_USERINTERFACE_ARGUMENTSCONFIGURATION_HPP
-#define EPROSIMA_DDSRECORDER_USERINTERFACE_ARGUMENTSCONFIGURATION_HPP
+#ifndef EPROSIMA_DDSROUTER_USERINTERFACE_ARGUMENTSCONFIGURATION_HPP
+#define EPROSIMA_DDSROUTER_USERINTERFACE_ARGUMENTSCONFIGURATION_HPP
 
 #include <string>
 
@@ -92,7 +92,13 @@ enum optionIndex
 {
     UNKNOWN_OPT,
     HELP,
-    // TODO(recorder)
+    CONFIGURATION_FILE,
+    RELOAD_TIME,
+    ACTIVATE_DEBUG,
+    VERSION,
+    TIMEOUT,
+    LOG_FILTER,
+    LOG_VERBOSITY,
 };
 
 /**
@@ -101,6 +107,32 @@ enum optionIndex
  * @note : Extern used to initialize it in source file
  */
 extern const option::Descriptor usage[];
+
+/**
+ * @brief Parse process arguments
+ *
+ * Set variables given as arguments with the arguments given to the process
+ *
+ * @param [in] argc number of process arguments
+ * @param [in] argv process arguments array (with size \c argc )
+ * @param [out] file_path path to the configuration file
+ * @param [out] reload_time time in milliseconds to reload the configuration file
+ * @param [out] activate_debug activate log info
+ * @param [out] timeout time in milliseconds to maximum router execution time
+ *
+ * @return \c SUCCESS if everything OK
+ * @return \c INCORRECT_ARGUMENT if arguments were incorrect (unknown or incorrect value)
+ * @return \c HELP_ARGUMENT if arguments help given
+ * @return \c REQUIRED_ARGUMENT_FAILED if required arguments not given
+ */
+ProcessReturnCode parse_arguments(
+        int argc,
+        char** argv,
+        std::string& file_path,
+        utils::Duration_ms& reload_time,
+        utils::Duration_ms& timeout,
+        std::string& log_filter,
+        eprosima::fastdds::dds::Log::Kind& log_verbosity);
 
 //! \c Option to stream serializator
 std::ostream& operator <<(
@@ -123,4 +155,4 @@ ENUMERATION_BUILDER(
 } /* namespace ddsrecorder */
 } /* namespace eprosima */
 
-#endif /* EPROSIMA_DDSRECORDER_USERINTERFACE_ARGUMENTSCONFIGURATION_HPP */
+#endif /* EPROSIMA_DDSROUTER_USERINTERFACE_ARGUMENTSCONFIGURATION_HPP */
