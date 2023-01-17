@@ -52,7 +52,7 @@ int main(
     eprosima::utils::Duration_ms timeout = 0;
 
     // Debug options
-    std::string log_filter = "(DDSROUTER|DDSRECORDER)";
+    std::string log_filter = "(DDSROUTER|RECORDER)";
     eprosima::fastdds::dds::Log::Kind log_verbosity = eprosima::fastdds::dds::Log::Kind::Warning;
 
     // Parse arguments

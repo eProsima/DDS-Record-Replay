@@ -41,6 +41,8 @@ public:
     //! Use parent constructors
     using BaseReader::BaseReader;
 
+    ~InternalReader();
+
     /**
      * @brief Simulate data reception on Reader
      *

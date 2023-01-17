@@ -47,9 +47,17 @@ std::string RecorderConfiguration::cat_file_name_(
         const std::string& extension /* = ".mcap" */,
         bool use_timestamp /* = true */) noexcept
 {
-    return path + file_name + (use_timestamp ? utils::to_string(utils::now()) : std::string())   + extension;
-}
+    std::ostringstream os;
 
+    os << path << "/" << file_name;
+    if (use_timestamp)
+    {
+        os << "_" << utils::to_string(utils::now());
+    }
+    os << extension;
+
+    return os.str();
+}
 
 } /* namespace configuration */
 } /* namespace core */

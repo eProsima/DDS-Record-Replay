@@ -119,7 +119,7 @@ constexpr const char* PARTICIPANT_KIND_TAG_V1("type"); //! Participant Kind
 constexpr const char* RECORDER_PATH_FILE_TAG("path");
 constexpr const char* RECORDER_EXTENSION_FILE_TAG("extension");
 constexpr const char* RECORDER_USE_TIMESTAMP_FILE_NAME_TAG("use-timestamp");
-constexpr const char* RECORDER_FILE_NAME_TAG("file-name");
+constexpr const char* RECORDER_FILE_NAME_TAG("filename");
 
 } /* namespace yaml */
 } /* namespace ddsrecorder */

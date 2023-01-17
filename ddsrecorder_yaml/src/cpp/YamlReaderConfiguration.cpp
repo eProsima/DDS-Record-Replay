@@ -52,6 +52,10 @@ YamlReaderConfiguration::load_ddsrouter_configuration(
         {
             configuration.allowlist = utils::convert_set_to_shared<types::DdsFilterTopic, types::WildcardDdsFilterTopic>(
                 YamlReader::get_set<types::WildcardDdsFilterTopic>(yml, ALLOWLIST_TAG, version));
+
+            // Add to allowlist always the type object topic
+            configuration.allowlist.insert(
+                std::make_shared<types::WildcardDdsFilterTopic>("*__internal__*"));
         }
 
         /////
@@ -64,7 +68,13 @@ YamlReaderConfiguration::load_ddsrouter_configuration(
 
         /////
         // Get optional domain
-        std::shared_ptr<configuration::SimpleParticipantConfiguration> simple_configuration = std::make_shared<configuration::SimpleParticipantConfiguration>();
+        std::shared_ptr<configuration::SimpleParticipantConfiguration> simple_configuration =
+            std::make_shared<configuration::SimpleParticipantConfiguration>(
+                types::ParticipantId("SimpleRecorderParticipant"),
+                types::ParticipantKind::dyn_type,
+                false,
+                0u);
+
         // Set the domain in a SimplePart Config
         if (is_tag_present(yml, DOMAIN_ID_TAG))
         {
@@ -92,7 +102,7 @@ YamlReaderConfiguration::load_ddsrouter_configuration(
         bool use_timestamp = true;
         if (is_tag_present(yml, RECORDER_USE_TIMESTAMP_FILE_NAME_TAG))
         {
-            extension = get<bool>(yml, RECORDER_USE_TIMESTAMP_FILE_NAME_TAG, version);
+            use_timestamp = get<bool>(yml, RECORDER_USE_TIMESTAMP_FILE_NAME_TAG, version);
         }
 
         /////

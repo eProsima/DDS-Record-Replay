@@ -87,7 +87,7 @@ const option::Descriptor usage[] = {
         "config-path",
         Arg::Readable_File,
         "  -c \t--config-path\t  \t" \
-        "Path to the Configuration File (yaml format) [Default: ./DDS_ROUTER_CONFIGURATION.yaml]."
+        "Path to the Configuration File (yaml format) [Default: ./DDS_RECORDER_CONFIGURATION.yaml]."
     },
 
     {

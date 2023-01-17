@@ -38,6 +38,9 @@ McapHandler::McapHandler(
         throw utils::InitializationException(
             STR_ENTRY << "Failed to open MCAP file " << file_name << " for writing: " << status.message);
     }
+
+    logWarning(DEBUG,
+        "MCAP file <" << file_name << "> ."); // TODO(recorder) remove
 }
 
 McapHandler::~McapHandler()

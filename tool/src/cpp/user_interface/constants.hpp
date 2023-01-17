@@ -26,7 +26,7 @@ namespace ddsrecorder {
 namespace ui {
 
 //! Default DDSRouter configuration file
-constexpr const char* DEFAULT_CONFIGURATION_FILE_NAME("DDS_ROUTER_CONFIGURATION.yaml");
+constexpr const char* DEFAULT_CONFIGURATION_FILE_NAME("DDS_RECORDER_CONFIGURATION.yaml");
 
 } /* namespace ui */
 } /* namespace ddsrecorder */
