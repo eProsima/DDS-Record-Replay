@@ -19,7 +19,7 @@
 /*
  * USEFUL COMMAND
  *
- * for TYPE in hello_world numeric_array char_sequence basic_struct do; ${FASTDDSGEN_WS}/scripts/fastddsgen -replace -d ${WS}/src/recorder/ddsrecorder/test/unittest/dynamic_types/types/type_objects/ -typeobject -cs ${WS}/src/recorder/ddsrecorder/test/unittest/dynamic_types/types/idls/${TYPE}.idl; done
+ * for TYPE in hello_world numeric_array char_sequence basic_struct basic_array_struct do; ${FASTDDSGEN_WS}/scripts/fastddsgen -replace -d ${WS}/src/recorder/ddsrecorder/test/unittest/dynamic_types/types/type_objects/ -typeobject -cs ${WS}/src/recorder/ddsrecorder/test/unittest/dynamic_types/types/idls/${TYPE}.idl; done
  */
 
 #pragma once
@@ -31,6 +31,7 @@
 
 #include <recorder/dynamic_types/utils.hpp>
 
+#include "type_objects/basic_array_structTypeObject.h"
 #include "type_objects/basic_structTypeObject.h"
 #include "type_objects/char_sequenceTypeObject.h"
 #include "type_objects/hello_worldTypeObject.h"
@@ -43,7 +44,8 @@ ENUMERATION_BUILDER(
     hello_world,
     numeric_array,
     char_sequence,
-    basic_struct
+    basic_struct,
+    basic_array_struct
 );
 
 eprosima::fastrtps::types::DynamicType_ptr get_dynamic_type(SupportedType type)
@@ -52,6 +54,7 @@ eprosima::fastrtps::types::DynamicType_ptr get_dynamic_type(SupportedType type)
     registerchar_sequenceTypes();
     registerhello_worldTypes();
     registernumeric_arrayTypes();
+    registerbasic_array_structTypes();
 
     return eprosima::ddsrecorder::core::recorder::dynamic_type_from_name(to_string(type));
 }
