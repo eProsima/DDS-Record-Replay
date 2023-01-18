@@ -1,0 +1,7 @@
+
+# Simple Participant domain
+domain: 0
+
+# Recorder output file
+filename: "output"
+use-timestamp: false

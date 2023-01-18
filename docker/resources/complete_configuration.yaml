@@ -1,0 +1,16 @@
+
+# Allowed topics
+allowlist:
+  - name: "*"  # Allow all topics
+
+# Blocked topics
+blocklist:
+  - name: "add_blocked_topics_list_here"
+
+# Simple Participant domain
+domain: 0
+
+# Recorder output file
+extension: ".mcap"
+filename: "output"
+use-timestamp: true
