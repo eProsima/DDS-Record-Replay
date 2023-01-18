@@ -139,7 +139,7 @@ const option::Descriptor usage[] = {
         Arg::String,
         "  \t--log-filter\t  \t" \
         "Set a Regex Filter to filter by category the info and warning log entries. " \
-        "[Default = \"DDSROUTER\"]. "
+        "[Default = \"(DDSROUTER|RECORDER)\"]. "
     },
 
     {
@@ -248,7 +248,7 @@ ProcessReturnCode parse_arguments(
                     break;
 
                 case optionIndex::ACTIVATE_DEBUG:
-                    log_filter = "DDSROUTER";
+                    log_filter = "RECORDER";
                     log_verbosity = eprosima::fastdds::dds::Log::Kind::Info;
                     break;
 

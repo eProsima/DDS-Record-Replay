@@ -46,11 +46,6 @@ utils::ReturnCode RecorderWriter::write_(
         << topic_ << " received: "
         << data->payload
     );
-    logWarning(DEBUG,
-        "Data in topic: "
-        << topic_ << " received: "
-        << data->payload
-    ); // TODO(recorder) remove
 
     // Add this data to the mcap handler
     try
