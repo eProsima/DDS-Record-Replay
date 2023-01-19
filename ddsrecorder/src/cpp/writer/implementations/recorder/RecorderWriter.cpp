@@ -46,7 +46,7 @@ utils::ReturnCode RecorderWriter::write_(
         << topic_ << " received: "
         << data->payload
     );
-    logError(DEBUG,
+    logWarning(DEBUG,
         "Data in topic: "
         << topic_ << " received: "
         << data->payload

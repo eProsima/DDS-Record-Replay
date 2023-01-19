@@ -31,7 +31,6 @@
 #include <ddsrecorder/types/dds/DomainId.hpp>
 
 #include <participant/implementations/auxiliar/BaseParticipant.hpp>
-#include <reader/implementations/auxiliar/InternalReader.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -106,20 +105,6 @@ public:
             fastrtps::rtps::RTPSParticipant* participant,
             fastrtps::rtps::WriterDiscoveryInfo&& info) override;
 
-    virtual void on_type_discovery(
-            fastrtps::rtps::RTPSParticipant* participant,
-            const fastrtps::rtps::SampleIdentity& request_sample_id,
-            const fastrtps::string_255& topic,
-            const fastrtps::types::TypeIdentifier* identifier,
-            const fastrtps::types::TypeObject* object,
-            fastrtps::types::DynamicType_ptr dyn_type) override;
-
-    virtual void on_type_information_received(
-        fastrtps::rtps::RTPSParticipant* participant,
-        const fastrtps::string_255& topic_name,
-        const fastrtps::string_255& type_name,
-        const fastrtps::types::TypeInformation& type_information) override;
-
 protected:
 
     /**
@@ -159,8 +144,6 @@ protected:
     types::Endpoint create_common_endpoint_from_info_(
             DiscoveryInfoKind& info);
 
-    void internal_notify_type_object_(const std::string& type_name);
-
     /////
     // RTPS specific methods
 
@@ -182,14 +165,6 @@ protected:
 
     //! Participant attributes to create the internal RTPS Participant.
     fastrtps::rtps::RTPSParticipantAttributes participant_attributes_;
-
-    //! Type Object Internal Reader
-    std::shared_ptr<InternalReader> type_object_reader_;
-
-    // This vector is required now so no dyn type is destroyed
-    // In the future each type object must be sent (completely or better in a shared ptr)
-    // in the payload
-    std::vector<fastrtps::types::DynamicType_ptr> dyn_types_;
 };
 
 } /* namespace rtps */

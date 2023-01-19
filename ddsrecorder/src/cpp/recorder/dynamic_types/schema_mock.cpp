@@ -16,9 +16,12 @@
  * @file schema.cpp
  */
 
+#include <fastrtps/types/DynamicType.h>
+#include <fastrtps/types/DynamicTypePtr.h>
+
 #include <cpp_utils/exception/UnsupportedException.hpp>
 
-#include <recorder/mcap/schema.hpp>
+#include <recorder/dynamic_types/schema_mock.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -50,11 +53,10 @@ int32 y_member
 int32 z_member
 )";
 
-std::string generate_type_object_schema(
-        const std::string& type_name,
-        const eprosima::fastrtps::types::TypeObject* type_object)
+std::string generate_dyn_type_schema_mock(
+        const fastrtps::types::DynamicType_ptr& dynamic_type)
 {
-    // TODO create msg file from TypeObject
+    std::string type_name = dynamic_type->get_name();
 
     // WARNING: This is a temporal solution giving the schemas to the TypeIntrospectionExample types
     if (type_name == "HelloWorld_TypeIntrospectionExample")

@@ -18,16 +18,15 @@
 
 #pragma once
 
-#include <fastrtps/types/TypeObject.h>
+#include <fastrtps/types/DynamicTypePtr.h>
 
 namespace eprosima {
 namespace ddsrecorder {
 namespace core {
 namespace recorder {
 
-std::string generate_type_object_schema(
-        const std::string& type_name,
-        const eprosima::fastrtps::types::TypeObject* type_object);
+std::string generate_dyn_type_schema(
+        const fastrtps::types::DynamicType_ptr& dynamic_type);
 
 } /* namespace recorder */
 } /* namespace core */

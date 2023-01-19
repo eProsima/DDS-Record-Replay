@@ -47,9 +47,6 @@ std::unique_ptr<types::DataReceived> string_serialization(
 std::string string_deserialization(
         const std::unique_ptr<types::DataReceived>& data);
 
-const fastrtps::types::TypeObject* type_object_from_name(
-        const std::string& type_name);
-
 } /* namespace recorder */
 } /* namespace core */
 } /* namespace ddsrecorder */

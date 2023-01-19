@@ -20,7 +20,7 @@
 
 #include <ddsrecorder/types/dds/Data.hpp>
 
-#include <recorder/types.hpp>
+#include <recorder/dynamic_types/types.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -84,20 +84,6 @@ std::string string_deserialization(
             reinterpret_cast<char*>(
                 data->payload.data)),
         data->payload.length);
-}
-
-const fastrtps::types::TypeObject* type_object_from_name(
-        const std::string& type_name)
-{
-    auto type_obj_factory = eprosima::fastrtps::types::TypeObjectFactory::get_instance();
-    auto type_id = type_obj_factory->get_type_identifier(type_name, true);
-
-    if (type_id == nullptr)
-    {
-        return nullptr;
-    }
-
-    return type_obj_factory->get_type_object(type_id);
 }
 
 } /* namespace recorder */
