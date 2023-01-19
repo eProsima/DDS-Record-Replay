@@ -63,16 +63,35 @@ void execute_test_by_type(SupportedType type)
 
 } // namespace test
 
+class ParametrizedTests : public ::testing::TestWithParam<test::SupportedType>
+{
+public:
+    void SetUp()
+    {
+        type_ = GetParam();
+    }
+
+    test::SupportedType type_;
+};
+
 /**
  * TODO
  */
-TEST(dtypes_tests, msg_schema_generation)
+TEST_P(ParametrizedTests, msg_schema_generation)
 {
-    for (const auto& type : test::NAMES_SupportedType)
-    {
-        test::execute_test_by_type(test::from_string_SupportedType(type));
-    }
+    test::execute_test_by_type(type_);
 }
+
+INSTANTIATE_TEST_SUITE_P(dtypes_tests, ParametrizedTests, ::testing::Values(
+    test::SupportedType::hello_world,
+    test::SupportedType::numeric_array,
+    test::SupportedType::char_sequence,
+    test::SupportedType::basic_struct,
+    test::SupportedType::basic_array_struct,
+    test::SupportedType::float_bounded_sequence,
+    test::SupportedType::arrays_and_sequences,
+    test::SupportedType::complex_nested_arrays
+));
 
 int main(
         int argc,

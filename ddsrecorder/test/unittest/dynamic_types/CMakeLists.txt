@@ -24,7 +24,6 @@ set(TEST_SOURCES
     )
 
 set(TEST_LIST
-        msg_schema_generation
     )
 
 set(TEST_EXTRA_LIBRARIES

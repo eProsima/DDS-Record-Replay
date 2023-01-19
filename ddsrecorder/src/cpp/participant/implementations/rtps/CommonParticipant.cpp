@@ -309,7 +309,7 @@ std::shared_ptr<IReader> CommonParticipant::create_reader_(
 {
     if (recorder::is_type_object_topic(topic))
     {
-        // If type object reader requested, send the one already created
+        // This Participant does not work in type object topic
         return std::make_shared<BlankReader>();
     }
     else

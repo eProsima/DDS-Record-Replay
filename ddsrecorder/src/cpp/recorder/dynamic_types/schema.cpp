@@ -103,7 +103,8 @@ std::vector<std::pair<std::string, fastrtps::types::DynamicType_ptr>> get_member
 }
 
 std::string container_kind_to_str(
-        const fastrtps::types::DynamicType_ptr& dyn_type)
+        const fastrtps::types::DynamicType_ptr& dyn_type,
+        bool allow_bounded = false)
 {
     auto internal_type = container_internal_type(dyn_type);
     auto this_array_size = array_size(dyn_type);
@@ -115,7 +116,14 @@ std::string container_kind_to_str(
     {
         if (bound != fastrtps::types::BOUND_UNLIMITED)
         {
-            ss << "[" << bound << "]";
+            if (allow_bounded)
+            {
+                ss << "[<=" << bound << "]";
+            }
+            else
+            {
+                ss << "[" << bound << "]";
+            }
         }
         else
         {
@@ -171,8 +179,10 @@ std::string type_kind_to_str(
             return "wstring";
 
         case fastrtps::types::TK_ARRAY:
-        case fastrtps::types::TK_SEQUENCE:
             return container_kind_to_str(dyn_type);
+
+        case fastrtps::types::TK_SEQUENCE:
+            return container_kind_to_str(dyn_type, true);
 
         case fastrtps::types::TK_STRUCTURE:
             return dyn_type->get_name();

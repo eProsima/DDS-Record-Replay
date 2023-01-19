@@ -51,7 +51,7 @@ int main(
         core::types::ParticipantId("Simple+DynTypes"),
         core::types::ParticipantKind::dyn_type,
         false,
-        core::types::DomainId(1u)
+        core::types::DomainId(0u)
     );
     auto recorder_conf = std::make_shared<core::configuration::ParticipantConfiguration>(
         core::types::ParticipantId("Recorder"),
