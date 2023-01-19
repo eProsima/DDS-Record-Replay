@@ -1,4 +1,4 @@
 struct numeric_array
 {
-	long points[3];
+    long points[3];
 };
