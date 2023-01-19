@@ -52,7 +52,7 @@ std::string RecorderConfiguration::cat_file_name_(
     os << path << "/" << file_name;
     if (use_timestamp)
     {
-        os << "_" << utils::to_string(utils::now());
+        os << "_" << utils::timestamp_to_string(utils::now());
     }
     os << extension;
 
