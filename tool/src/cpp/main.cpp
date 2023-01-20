@@ -92,7 +92,7 @@ int main(
         return static_cast<int>(ui::ProcessReturnCode::required_argument_failed);
     }
 
-    logUser(DDSROUTER_EXECUTION, "Starting DDS Router Tool execution.");
+    logUser(DDSRECORDER_EXECUTION, "Starting DDS Router Tool execution.");
 
     // Debug
     {
@@ -169,7 +169,7 @@ int main(
                     }
                     catch (const std::exception& e)
                     {
-                        logWarning(DDSROUTER_EXECUTION,
+                        logWarning(DDSRECORDER_EXECUTION,
                                 "Error reloading configuration file " << file_name << " with error: " << e.what());
                     }
                 };
@@ -204,7 +204,7 @@ int main(
                         }
                         catch (const std::exception& e)
                         {
-                            logWarning(DDSROUTER_EXECUTION,
+                            logWarning(DDSRECORDER_EXECUTION,
                                     "Error reloading configuration file " << file_path << " with error: " << e.what());
                         }
                     };
@@ -216,12 +216,12 @@ int main(
         // Start Router
         router.start();
 
-        logUser(DDSROUTER_EXECUTION, "DDS Router running.");
+        logUser(DDSRECORDER_EXECUTION, "DDS Router running.");
 
         // Wait until signal arrives
         close_handler.wait_for_event();
 
-        logUser(DDSROUTER_EXECUTION, "Stopping DDS Router.");
+        logUser(DDSRECORDER_EXECUTION, "Stopping DDS Router.");
 
         // Before stopping the Router erase event handlers that reload configuration
         if (periodic_handler)
@@ -237,11 +237,11 @@ int main(
         // Stop Router
         router.stop();
 
-        logUser(DDSROUTER_EXECUTION, "DDS Router stopped correctly.");
+        logUser(DDSRECORDER_EXECUTION, "DDS Router stopped correctly.");
     }
     catch (const eprosima::utils::ConfigurationException& e)
     {
-        logError(DDSROUTER_ERROR,
+        logError(DDSRECORDER_ERROR,
                 "Error Loading DDS Router Configuration from file " << file_path <<
                 ". Error message:\n " <<
                 e.what());
@@ -249,13 +249,13 @@ int main(
     }
     catch (const eprosima::utils::InitializationException& e)
     {
-        logError(DDSROUTER_ERROR,
+        logError(DDSRECORDER_ERROR,
                 "Error Initializing DDS Router. Error message:\n " <<
                 e.what());
         return static_cast<int>(ui::ProcessReturnCode::execution_failed);
     }
 
-    logUser(DDSROUTER_EXECUTION, "Finishing DDS Router Tool execution correctly.");
+    logUser(DDSRECORDER_EXECUTION, "Finishing DDS Router Tool execution correctly.");
 
     // Force print every log before closing
     eprosima::utils::Log::Flush();

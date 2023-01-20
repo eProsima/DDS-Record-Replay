@@ -273,7 +273,7 @@ Address YamlReader::get<Address>(
     // If neither set, get default
     if (ip_set && domain_name_set)
     {
-        logWarning(DDSROUTER_YAML,
+        logWarning(DDSRECORDER_YAML,
                 "Tag <" << ADDRESS_DNS_TAG << "> will not be used as <" << ADDRESS_IP_TAG << "> is set.");
         domain_name_set = false;
     }
@@ -871,7 +871,7 @@ YamlReader::get<std::shared_ptr<core::configuration::ParticipantConfiguration>>(
     // Kind required
     types::ParticipantKind kind = YamlReader::get<types::ParticipantKind>(yml, PARTICIPANT_KIND_TAG, version);
 
-    logInfo(DDSROUTER_YAML_CONFIGURATION, "Loading Participant of kind " << kind << ".");
+    logInfo(DDSRECORDER_YAML_CONFIGURATION, "Loading Participant of kind " << kind << ".");
 
     switch (kind)
     {
