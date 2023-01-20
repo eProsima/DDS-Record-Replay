@@ -9,7 +9,7 @@ This module create an executable that runs a DDS Recorder configured via *yaml* 
 ```sh
 # Source installation first. In colcon workspace: :$ source install/setup.bash
 
-ddsrouter --help
+ddsrecorder --help
 
 # Usage: Fast DDS Recorder
 # Connect different DDS networks via DDS through LAN or WAN.
