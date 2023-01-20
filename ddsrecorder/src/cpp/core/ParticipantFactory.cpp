@@ -23,6 +23,7 @@
 
 #include <ddsrecorder/configuration/participant/ParticipantConfiguration.hpp>
 #include <ddsrecorder/configuration/participant/EchoParticipantConfiguration.hpp>
+#include <ddsrecorder/configuration/participant/recorder/RecorderConfiguration.hpp>
 #include <cpp_utils/utils.hpp>
 
 #include <core/ParticipantFactory.hpp>
@@ -60,7 +61,18 @@ std::shared_ptr<IParticipant> ParticipantFactory::create_participant(
 
         case ParticipantKind::recorder:
             // RecorderParticipant
-            return std::make_shared<RecorderParticipant>(participant_configuration, payload_pool, discovery_database);
+        {
+            std::shared_ptr<configuration::RecorderConfiguration> conf_ =
+                    std::dynamic_pointer_cast<configuration::RecorderConfiguration>(
+                participant_configuration);
+            if (!conf_)
+            {
+                throw utils::ConfigurationException(
+                          utils::Formatter() << "Configuration from Participant: " << participant_configuration->id <<
+                              " is not for Participant Kind: " << participant_configuration->kind);
+            }
+            return std::make_shared<RecorderParticipant>(conf_, payload_pool, discovery_database);
+        }
 
         case ParticipantKind::echo:
             // Echo Participant

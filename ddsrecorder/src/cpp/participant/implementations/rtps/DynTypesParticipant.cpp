@@ -145,8 +145,6 @@ void DynTypesParticipant::internal_notify_type_object_(const std::string& type_n
 {
     logInfo(DDSRECORDER_RTPS_PARTICIPANT,
         "Participant " << this->id_nts_() << " discovered type object " << type_name);
-    logWarning(DEBUG,
-        "Participant " << this->id_nts_() << " discovered type object " << type_name);
 
     type_object_reader_->simulate_data_reception(
         std::move(recorder::string_serialization(payload_pool_, type_name))

@@ -13,38 +13,22 @@
 # limitations under the License.
 
 ###############################################################################
-# Set settings for project ddsrouter_tool
+# Set settings for project ddsrecorder_yaml
 ###############################################################################
 
 set(MODULE_NAME
-    ddsrecorder_tool)
+    ddsrecorder_yaml)
 
 set(MODULE_SUMMARY
-    "C++ application to run a DDS Router from a YAML configuration file.")
+    "C++ library to create a DDS Router configuration from a YAML.")
 
 set(MODULE_FIND_PACKAGES
     yaml-cpp
     fastcdr
     fastrtps
     cpp_utils
-    ddsrecorder
-    ddsrecorder_yaml
-)
+    ddsrecorder)
 
 set(MODULE_DEPENDENCIES
+    $<$<BOOL:${WIN32}>:iphlpapi$<SEMICOLON>Shlwapi>
     ${MODULE_FIND_PACKAGES})
-
-set(MODULE_THIRDPARTY_HEADERONLY
-    optionparser)
-
-set(MODULE_THIRDPARTY_PATH
-    "../thirdparty")
-
-set(MODULE_LICENSE_FILE_PATH
-    "../LICENSE")
-
-set(MODULE_VERSION_FILE_PATH
-    "../VERSION")
-
-set(MODULE_TARGET_NAME
-    "ddsrecorder")

@@ -25,6 +25,21 @@ namespace core {
 
 using namespace eprosima::ddsrecorder::core::types;
 
+InternalReader::~InternalReader()
+{
+    std::lock_guard<DataReceivedType> lock(data_to_send_);
+
+    while (!data_to_send_.empty())
+    {
+        // Get first value
+        std::unique_ptr<types::DataReceived> next_data_to_send = std::move(data_to_send_.front());
+        data_to_send_.pop();
+
+        // Remove value correctly
+        payload_pool_->release_payload(next_data_to_send->payload);
+    }
+}
+
 void InternalReader::simulate_data_reception(
         std::unique_ptr<types::DataReceived>&& data) noexcept
 {

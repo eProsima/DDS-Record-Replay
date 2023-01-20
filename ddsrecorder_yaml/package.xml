@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>ddsrecorder_tool</name>
+  <name>ddsrecorder_yaml</name>
   <version>1.1.0</version>
   <description>
-     *eprosima DDS Recorder* Application to execute a DDS Recorder from a YAML configuration file.
+     *eprosima DDS Router* Yaml Module is a C++ implementation for handling events in multithreading executions as PeriodicTimers, Signals, FileWatchers, etc.
   </description>
   <maintainer email="RaulSanchezMateos@eprosima.com">Raul Sánchez-Mateos</maintainer>
   <maintainer email="javierparis@eprosima.com">Javier París</maintainer>
@@ -12,17 +12,16 @@
   <license file="LICENSE">Apache 2.0</license>
 
   <url type="website">https://www.eprosima.com/</url>
-  <url type="bugtracker">https://github.com/eProsima/DDS-Recorder/issues</url>
-  <url type="repository">https://github.com/eProsima/DDS-Recorder</url>
+  <url type="bugtracker">https://github.com/eProsima/DDS-Router/issues</url>
+  <url type="repository">https://github.com/eProsima/DDS-Router</url>
 
   <buildtool_depend>cmake</buildtool_depend>
 
   <depend>yamlcpp</depend>
   <depend>fastrtps</depend>
   <depend>cpp_utils</depend>
-
   <depend>ddsrecorder</depend>
-  <depend>ddsrecorder_yaml</depend>
+  <depend>cmake_utils</depend>
 
   <doc_depend>doxygen</doc_depend>
 

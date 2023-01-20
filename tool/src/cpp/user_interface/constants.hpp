@@ -13,29 +13,23 @@
 // limitations under the License.
 
 /**
- * @file ProcessReturnCode.hpp
+ * @file constants.hpp
  *
+ * This file contains constant values common for the whole project
  */
 
-#ifndef EPROSIMA_DDSROUTER_USERINTERFACE_PROCESSRETURNCODE_HPP
-#define EPROSIMA_DDSROUTER_USERINTERFACE_PROCESSRETURNCODE_HPP
+#ifndef _DDSROUTER_TYPES_CONSTANTS_HPP_
+#define _DDSROUTER_TYPES_CONSTANTS_HPP_
 
 namespace eprosima {
 namespace ddsrecorder {
 namespace ui {
 
-enum class ProcessReturnCode : int
-{
-    success = 0,
-    help_argument = 1,
-    version_argument = 2,
-    incorrect_argument = 10,
-    required_argument_failed = 11,
-    execution_failed = 20,
-};
+//! Default DDSRouter configuration file
+constexpr const char* DEFAULT_CONFIGURATION_FILE_NAME("DDS_RECORDER_CONFIGURATION.yaml");
 
 } /* namespace ui */
 } /* namespace ddsrecorder */
 } /* namespace eprosima */
 
-#endif /* EPROSIMA_DDSROUTER_USERINTERFACE_PROCESSRETURNCODE_HPP */
+#endif /* _DDSROUTER_TYPES_CONSTANTS_HPP_ */

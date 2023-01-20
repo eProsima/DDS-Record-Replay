@@ -1,4 +1,4 @@
-// Copyright 2021 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+// Copyright 2022 Proyectos y Sistemas de Mantenimiento SL (eProsima).
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,29 +13,34 @@
 // limitations under the License.
 
 /**
- * @file ProcessReturnCode.hpp
+ * @file YamlManager.cpp
  *
  */
 
-#ifndef EPROSIMA_DDSROUTER_USERINTERFACE_PROCESSRETURNCODE_HPP
-#define EPROSIMA_DDSROUTER_USERINTERFACE_PROCESSRETURNCODE_HPP
+#include <cpp_utils/exception/ConfigurationException.hpp>
+
+#include <ddsrecorder_yaml/YamlManager.hpp>
+#include <ddsrecorder_yaml/Yaml.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
-namespace ui {
+namespace yaml {
 
-enum class ProcessReturnCode : int
+Yaml YamlManager::load_file(
+        const std::string& file_path)
 {
-    success = 0,
-    help_argument = 1,
-    version_argument = 2,
-    incorrect_argument = 10,
-    required_argument_failed = 11,
-    execution_failed = 20,
-};
+    try
+    {
+        return YAML::LoadFile(file_path);
+    }
+    catch (const std::exception& e)
+    {
+        throw eprosima::utils::ConfigurationException(
+                  utils::Formatter() << "Error occured while loading yaml from file: "
+                                     << file_path << " : " << e.what());
+    }
+}
 
-} /* namespace ui */
+} /* namespace yaml */
 } /* namespace ddsrecorder */
 } /* namespace eprosima */
-
-#endif /* EPROSIMA_DDSROUTER_USERINTERFACE_PROCESSRETURNCODE_HPP */

@@ -63,8 +63,226 @@ const option::Descriptor usage[] = {
         "Print this help message."
     },
 
+    {
+        optionIndex::VERSION,
+        0,
+        "v",
+        "version",
+        Arg::None,
+        "  -v \t--version\t  \t" \
+        "Print version, branch and commit hash." \
+    },
+
+    ////////////////////
+    // Application options
+    {
+        optionIndex::UNKNOWN_OPT, 0, "", "", Arg::None,
+        "\nApplication parameters"
+    },
+
+    {
+        optionIndex::CONFIGURATION_FILE,
+        0,
+        "c",
+        "config-path",
+        Arg::Readable_File,
+        "  -c \t--config-path\t  \t" \
+        "Path to the Configuration File (yaml format) [Default: ./DDS_RECORDER_CONFIGURATION.yaml]."
+    },
+
+    {
+        optionIndex::RELOAD_TIME,
+        0,
+        "r",
+        "reload-time",
+        Arg::Numeric,
+        "  -r \t--reload-time\t  \t" \
+        "Time period in seconds to reload configuration file. " \
+        "This is needed when FileWatcher functionality is not available (e.g. config file is a symbolic link). " \
+        "Value 0 does not reload file. [Default: 0]."
+
+    },
+    {
+        optionIndex::TIMEOUT,
+        0,
+        "t",
+        "timeout",
+        Arg::Numeric,
+        "  -t \t--timeout\t  \t" \
+        "Set a maximum time in seconds for the Router to run. " \
+        "Value 0 does not set maximum. [Default: 0]."
+    },
+
+    ////////////////////
+    // Debug options
+    {
+        optionIndex::UNKNOWN_OPT, 0, "", "", Arg::None,
+        "\nDebug parameters"
+    },
+
+    {
+        optionIndex::ACTIVATE_DEBUG,
+        0,
+        "d",
+        "debug",
+        Arg::None,
+        "  -d \t--debug\t  \t" \
+        "Set log verbosity to Info \t" \
+        "(Using this option with --log-filter and/or --log-verbosity will head to undefined behaviour)."
+    },
+
+    {
+        optionIndex::LOG_FILTER,
+        0,
+        "",
+        "log-filter",
+        Arg::String,
+        "  \t--log-filter\t  \t" \
+        "Set a Regex Filter to filter by category the info and warning log entries. " \
+        "[Default = \"(DDSROUTER|RECORDER)\"]. "
+    },
+
+    {
+        optionIndex::LOG_VERBOSITY,
+        0,
+        "",
+        "log-verbosity",
+        Arg::Log_Kind_Correct_Argument,
+        "  \t--log-verbosity\t  \t" \
+        "Set a Log Verbosity Level higher or equal the one given. " \
+        "(Values accepted: \"info\",\"warning\",\"error\" no Case Sensitive) " \
+        "[Default = \"warning\"]. "
+    },
+
+    {
+        optionIndex::UNKNOWN_OPT, 0, "", "", Arg::None,
+        "\n"
+    },
+
     { 0, 0, 0, 0, 0, 0 }
 };
+
+void print_version()
+{
+    std::cout << "DDSRecorder prototype" << std::endl;
+}
+
+ProcessReturnCode parse_arguments(
+        int argc,
+        char** argv,
+        std::string& file_path,
+        utils::Duration_ms& reload_time,
+        utils::Duration_ms& timeout,
+        std::string& log_filter,
+        eprosima::fastdds::dds::Log::Kind& log_verbosity)
+{
+    // Variable to pretty print usage help
+    int columns;
+#if defined(_WIN32)
+    char* buf = nullptr;
+    size_t sz = 0;
+    if (_dupenv_s(&buf, &sz, "COLUMNS") == 0 && buf != nullptr)
+    {
+        columns = std::strtol(buf, nullptr, 10);
+        free(buf);
+    }
+    else
+    {
+        columns = 80;
+    }
+#else
+    columns = getenv("COLUMNS") ? atoi(getenv("COLUMNS")) : 180;
+#endif // if defined(_WIN32)
+
+    // Parse arguments
+    // No required arguments
+    if (argc > 0)
+    {
+        argc -= (argc > 0); // reduce arg count of program name if present
+        argv += (argc > 0); // skip program name argv[0] if present
+
+        option::Stats stats(usage, argc, argv);
+        std::vector<option::Option> options(stats.options_max);
+        std::vector<option::Option> buffer(stats.buffer_max);
+        option::Parser parse(usage, argc, argv, &options[0], &buffer[0]);
+
+        // Parsing error
+        if (parse.error())
+        {
+            option::printUsage(fwrite, stdout, usage, columns);
+            return ProcessReturnCode::incorrect_argument;
+        }
+
+        // Unknown args provided
+        if (parse.nonOptionsCount())
+        {
+            logError(DDSRECORDER_ARGS, "ERROR: Unknown argument: <" << parse.nonOption(0) << ">." );
+            option::printUsage(fwrite, stdout, usage, columns);
+            return ProcessReturnCode::incorrect_argument;
+        }
+
+        // Adding Help before every other check to show help in case an argument is incorrect
+        if (options[optionIndex::HELP])
+        {
+            option::printUsage(fwrite, stdout, usage, columns);
+            return ProcessReturnCode::help_argument;
+        }
+
+        if (options[optionIndex::VERSION])
+        {
+            print_version();
+            return ProcessReturnCode::version_argument;
+        }
+
+        for (int i = 0; i < parse.optionsCount(); ++i)
+        {
+            option::Option& opt = buffer[i];
+            switch (opt.index())
+            {
+                case optionIndex::CONFIGURATION_FILE:
+                    file_path = opt.arg;
+                    break;
+
+                case optionIndex::RELOAD_TIME:
+                    reload_time = std::stol(opt.arg) * 1000; // pass to milliseconds
+                    break;
+
+                case optionIndex::ACTIVATE_DEBUG:
+                    log_filter = "RECORDER";
+                    log_verbosity = eprosima::fastdds::dds::Log::Kind::Info;
+                    break;
+
+                case optionIndex::TIMEOUT:
+                    timeout = std::stol(opt.arg) * 1000; // pass to milliseconds
+                    break;
+
+                case optionIndex::LOG_FILTER:
+                    log_filter = opt.arg;
+                    break;
+
+                case optionIndex::LOG_VERBOSITY:
+                    log_verbosity = eprosima::fastdds::dds::Log::Kind(static_cast<int>(from_string_LogKind(opt.arg)));
+                    break;
+
+                case optionIndex::UNKNOWN_OPT:
+                    logError(DDSRECORDER_ARGS, opt << " is not a valid argument.");
+                    option::printUsage(fwrite, stdout, usage, columns);
+                    return ProcessReturnCode::incorrect_argument;
+                    break;
+
+                default:
+                    break;
+            }
+        }
+    }
+    else
+    {
+        option::printUsage(fwrite, stdout, usage, columns);
+        return ProcessReturnCode::incorrect_argument;
+    }
+
+    return ProcessReturnCode::success;
+}
 
 option::ArgStatus Arg::Unknown(
         const option::Option& option,
@@ -73,7 +291,7 @@ option::ArgStatus Arg::Unknown(
     if (msg)
     {
         logError(
-            DDSRECORDER_ARGS,
+            DDSROUTER_ARGS,
             "Unknown option '" << option << "'. Use -h to see this executable possible arguments.");
     }
     return option::ARG_ILLEGAL;

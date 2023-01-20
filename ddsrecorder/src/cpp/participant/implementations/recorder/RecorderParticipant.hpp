@@ -1,4 +1,4 @@
-// Copyright 2021 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+// Copyright 2023 Proyectos y Sistemas de Mantenimiento SL (eProsima).
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <ddsrecorder/configuration/participant/ParticipantConfiguration.hpp>
+#include <ddsrecorder/configuration/participant/recorder/RecorderConfiguration.hpp>
 
 #include <participant/implementations/auxiliar/BaseParticipant.hpp>
 #include <reader/implementations/auxiliar/DummyReader.hpp>
@@ -44,7 +44,7 @@ public:
      * the DDSRouter.
      */
     RecorderParticipant(
-            std::shared_ptr<configuration::ParticipantConfiguration> participant_configuration,
+            std::shared_ptr<configuration::RecorderConfiguration> participant_configuration,
             std::shared_ptr<PayloadPool> payload_pool,
             std::shared_ptr<DiscoveryDatabase> discovery_database);
 
@@ -68,6 +68,9 @@ protected:
             types::DdsTopic topic) override;
 
     std::shared_ptr<recorder::McapHandler> mcap_handler_;
+
+    //! Reference to the configuration to avoid cast every time is used.
+    std::shared_ptr<configuration::RecorderConfiguration>& participant_configuration_ref_;
 
     static constexpr const char* MCAP_FILE = "output.mcap";
 };
