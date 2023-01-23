@@ -54,7 +54,7 @@ utils::ReturnCode RecorderWriter::write_(
     }
     catch(const utils::Exception& e)
     {
-        logError(
+        logWarning(
             DDSRECORDER_RECORDER_WRITER,
             "Error storing data: <" << e.what() << ">.\nContinue recording...");
     }

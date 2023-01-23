@@ -14,4 +14,4 @@ repositories:
     dev-utils:
         type: git
         url: https://github.com/eProsima/dev-utils.git
-        version: feature/time_to_string
+        version: main

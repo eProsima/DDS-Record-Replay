@@ -61,6 +61,9 @@ utils::ReturnCode TypeObjectWriter::write_(
         // TODO: this will call multiple times to generate_type_object_schema unnecesary
         // Add this type object as a new schema
         mcap_handler_->add_schema(type_name, recorder::generate_dyn_type_schema(dyn_type));
+
+        logUser(DDSRECORDER_RECORDER_WRITER,
+            "Type Object " << type_name << " stored.");
     }
     catch(const utils::Exception& e)
     {
