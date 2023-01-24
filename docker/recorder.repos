@@ -10,8 +10,12 @@ repositories:
     fastdds:
         type: git
         url: https://github.com/eProsima/Fast-DDS.git
-        version: experimental/filthy/complex-dynamic-data
+        version: bugfix/complex-dynamic-types
     dev-utils:
         type: git
         url: https://github.com/eProsima/dev-utils.git
         version: main
+    ddsrecorder:
+        type: git
+        url: https://github.com/eProsima/DDS-Recorder.git
+        version: prototype

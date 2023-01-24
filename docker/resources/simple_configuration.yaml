@@ -1,7 +1,6 @@
-
-# Simple Participant domain
+# DDS Domain - Optional (Default: 0)
 domain: 0
 
 # Recorder output file
-filename: "output"
-use-timestamp: false
+filename: "output"    # Required
+use-timestamp: false  # Optional (Default: true)

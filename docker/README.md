@@ -16,7 +16,7 @@ Those schemas are generated when the tool has access to the Type Object or Type 
 ### How to retrieve Data Type to the tool
 
 Fast DDS does not send the Data Type information by default, it must be configured to do so.
-First of all, when generating the Types using Fast DDS Gen, it must be added the option `-typeobject` in order to generate the needed code to fill the TypeObject data.
+First of all, when generating the Types using Fast DDS Gen, the option `-typeobject` must be added in order to generate the needed code to fill the TypeObject data.
 
 For native types (Data Types that does not rely in other Data Types) this is enough, as Fast DDS will send the TypeObject by default.
 However, for more complex types, it is required to use `TypeInformation` mechanism.
@@ -31,37 +31,36 @@ pqos.wire_protocol().builtin.typelookup_config.use_server = true;
 
 ## Run DDS Recorder
 
-There are some configurations already available in the container under directory `/home/configurations/`
+There are some configurations already available in the container under directory `/ddsrecorder/resources/`
 
 - `simple_configuration.yaml` Configuration with just the basics to run the executable.
 - `complete_configuration.yaml` Configuration with all the possible configurations available.
-- `share_configuration.yaml` Ccondifureonfiguration to store the result files in a shared volume directory.
 
 In order to execute the `DDS Recorder` use the following command:
-> `ddsrecorder --config-path configurations/<configuration>.yaml`
+> `ddsrecorder --config-path resources/<configuration>.yaml`
 
 In order to know all the possible arguments supported by this tool, use the command:
 > `ddsrecorder --help` or `ddsrecorder -h`
 
 In order to see further information and debugging info about what the tool is executing, use the argument `--debug`:
-> `ddsrecorder --config-path configurations/<configuration>.yaml --debug`
+> `ddsrecorder --config-path resources/<configuration>.yaml --debug`
 
 ### Use Custom Configurations
 
 There are 2 ways to write a custom configuration:
 
-1. Using a text editor (e.g. nano) inside the container and modifying a `.yaml` file.
-2. Using Docker volumes and adding a `.yaml` file inside a container when running it.
+1. Modify a `.yaml` file within the container instance.
+2. Using shared volumes to share the `.yaml` configuration file.
 
 ### Run with shared volume
 
 In order to automatically retrieve every `.mcap` file generated inside the container, use a docker volume.
-First, have a folder `share_volume` in your current workspace (if not in this workspace, add the absolute path in the docker call).
+First, have a folder `shared_volume` in your current workspace (if not in this workspace, add the absolute path in the docker call).
 Then run the following command:
-> `docker run --rm --interactive -t --workdir /home --net=host --ipc=host --privileged --volume $(pwd)/share_volume/:/home/share_volume  ddsrecorder:figure`
+> `docker run -it --net=host --ipc=host --privileged --volume $(pwd)/shared_volume/:/shared_volume  ddsrecorder:v0.1.0`
 
 Launch the `DDS Recorder` with the following command
-> `ddsrecorder --config-path configurations/share_configuration.yaml`
+> `ddsrecorder --config-path resources/share_configuration.yaml`
 
 ### Connectivity issues
 
@@ -71,8 +70,6 @@ Launch the `DDS Recorder` with the following command
 If local Participants (same host) are unable to connect with the DDS Recorder inside a Docker, it may be because they try to use Shared Memory, but the docker has no access to the same shared segment.
 To avoid this, run the other participants as `root` or change the docker image user name to be the same as the external participants one.
 Other option may be to not using Shared Memory by disabling it by Fast DDS configuration (by XML or QoS in code) or by CMake option when compiling `-DSHM_TRANSPORT_DEFAULT=ON`.
-
-Once inside the docker, using configuration `share_configuration` the `.mcap` result files will be stored in the `share_volume` directory inside the container, and thus they will be accessible from the host.
 
 ---
 
