@@ -37,13 +37,19 @@ There are some configurations already available in the container under directory
 - `complete_configuration.yaml` Configuration with all the possible configurations available.
 
 In order to execute the `DDS Recorder` use the following command:
-> `ddsrecorder --config-path resources/<configuration>.yaml`
+```bash
+ddsrecorder --config-path /ddsrecorder/resources/<configuration>.yaml
+```
 
 In order to know all the possible arguments supported by this tool, use the command:
-> `ddsrecorder --help` or `ddsrecorder -h`
+```bash
+ddsrecorder --help` or `ddsrecorder -h
+```
 
 In order to see further information and debugging info about what the tool is executing, use the argument `--debug`:
-> `ddsrecorder --config-path resources/<configuration>.yaml --debug`
+```bash
+ddsrecorder --config-path /ddsrecorder/resources/<configuration>.yaml --debug
+```
 
 ### Use Custom Configurations
 
@@ -55,12 +61,12 @@ There are 2 ways to write a custom configuration:
 ### Run with shared volume
 
 In order to automatically retrieve every `.mcap` file generated inside the container, use a docker volume.
-First, have a folder `shared_volume` in your current workspace (if not in this workspace, add the absolute path in the docker call).
-Then run the following command:
-> `docker run -it --net=host --ipc=host --privileged --volume $(pwd)/shared_volume/:/shared_volume  ddsrecorder:v0.1.0`
+Run the following command to share your local `<shared/folder> and container `<shared/folder>`.
 
-Launch the `DDS Recorder` with the following command
-> `ddsrecorder --config-path resources/share_configuration.yaml`
+```bash
+docker run -it --net=host --ipc=host --privileged --volume $(pwd)/<shared/folder>/:<shared/folder>  ddsrecorder:v0.1.0
+```
+
 
 ### Connectivity issues
 
