@@ -55,7 +55,8 @@ on:
   pull_request:
   push:
     branches:
-      - main
+      # (TODO) Change to main branch when PR is merged
+      - feature/CI
   schedule:
     - cron: '0 1 * * *'
 
