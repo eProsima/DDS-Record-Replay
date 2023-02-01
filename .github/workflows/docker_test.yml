@@ -10,7 +10,7 @@ on:
       ddsrecorder_branch:
         description: 'Branch or tag of DDS Recorder repository (https://github.com/eProsima/DDS-Recorder)'
         required: true
-        default: 'feature/documentation'
+        default: 'feature/CI'
   pull_request:
   push:
     branches:
@@ -28,7 +28,7 @@ jobs:
 
     env:
       DEFAULT_FASTDDS_BRANCH: 'master'
-      DEFAULT_DDSRECORDER_BRANCH: 'feature/documentation'
+      DEFAULT_DDSRECORDER_BRANCH: 'feature/CI'
       DDSRECORDER_COMPOSE_TEST_DOCKER_IMAGE: "ddsrecorder:ci"
       DDSRECORDER_COMPOSE_TEST_ROS2_DOCKER_IMAGE: "vulcanexus:ci"
 

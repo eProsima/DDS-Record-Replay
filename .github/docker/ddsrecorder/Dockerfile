@@ -44,7 +44,7 @@ WORKDIR /ddsrecorder
 
 ARG fastdds_branch=master
 # (TODO) Change to main branch when PR is merged
-ARG ddsrecorder_branch=feature/documentation
+ARG ddsrecorder_branch=feature/CI
 
 RUN echo "DDS Recorder branch: <${ddsrecorder_branch}> ; Fast DDS branch: <${fastdds_branch}>"
 
