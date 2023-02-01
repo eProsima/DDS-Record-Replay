@@ -1,0 +1,583 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>1. Linux installation from sources &mdash; DDS Recorder .. documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/tabs.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/css/online_eprosima_rtd_theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="2. Windows installation from sources" href="windows.html" />
+    <link rel="prev" title="3. Nomenclature" href="../../../user_manual/user_manual_glossary.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> DDS Recorder
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                .
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Introduction</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../formalia/titlepage.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../formalia/titlepage.html#contacts-and-commercial-support">Contacts and Commercial support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../formalia/titlepage.html#contributing-to-the-documentation">Contributing to the documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../formalia/titlepage.html#structure-of-the-documentation">Structure of the documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Installation Manual</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation/windows.html">1. Windows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation/linux.html">2. Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation/docker.html">3. Docker Image</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/project_overview.html">1. Project Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/usage_example.html">2. Example of usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Manual</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_manual/user_interface.html">1. User Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_manual/configuration.html">2. DDS Recorder Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_manual/user_manual_glossary.html">3. Nomenclature</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Manual</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">1. Linux installation from sources</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#dependencies-installation">1.1. Dependencies installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirements">1.1.1. Requirements</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cmake-g-pip-wget-and-git">1.1.1.1. CMake, g++, pip, wget and git</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#colcon">1.1.1.2. Colcon</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gtest">1.1.1.3. Gtest</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyyaml">1.1.1.4. PyYAML</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#jsonschema">1.1.1.5. jsonschema</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#dependencies">1.1.2. Dependencies</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#asio-and-tinyxml2-libraries">1.1.2.1. Asio and TinyXML2 libraries</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openssl">1.1.2.2. OpenSSL</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#yaml-cpp">1.1.2.3. yaml-cpp</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#eprosima-dependencies">1.1.2.4. eProsima dependencies</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#colcon-installation">1.2. Colcon installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cmake-installation">1.3. CMake installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#local-installation">1.3.1. Local installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#global-installation">1.3.2. Global installation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#run-an-application">1.4. Run an application</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="windows.html">2. Windows installation from sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../configuration/cmake_options.html">3. CMake options</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Appendixes</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../appendixes/glossary.html">Glossary</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">DDS Recorder</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li><span class="section-number">1. </span>Linux installation from sources</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../../../_sources/rst/developer_manual/installation/sources/linux.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="linux-installation-from-sources">
+<span id="developer-manual-installation-sources-linux"></span><h1><span class="section-number">1. </span>Linux installation from sources<a class="headerlink" href="#linux-installation-from-sources" title="Permalink to this headline">¶</a></h1>
+<p>The instructions for installing the <em>DDS Recorder</em> application from sources and its required
+dependencies are provided in this page.
+It is organized as follows:</p>
+<div class="contents local topic" id="contents">
+<ul class="simple">
+<li><p><a class="reference internal" href="#dependencies-installation" id="id13">Dependencies installation</a></p>
+<ul>
+<li><p><a class="reference internal" href="#requirements" id="id14">Requirements</a></p></li>
+<li><p><a class="reference internal" href="#dependencies" id="id15">Dependencies</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#colcon-installation" id="id16">Colcon installation</a></p></li>
+<li><p><a class="reference internal" href="#cmake-installation" id="id17">CMake installation</a></p>
+<ul>
+<li><p><a class="reference internal" href="#local-installation" id="id18">Local installation</a></p></li>
+<li><p><a class="reference internal" href="#global-installation" id="id19">Global installation</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#run-an-application" id="id20">Run an application</a></p></li>
+</ul>
+</div>
+<div class="section" id="dependencies-installation">
+<h2><span class="section-number">1.1. </span>Dependencies installation<a class="headerlink" href="#dependencies-installation" title="Permalink to this headline">¶</a></h2>
+<p><em>DDS Recorder</em> depends on <em>eProsima Fast DDS</em> library and certain Debian packages.
+This section describes the instructions for installing <em>DDS Recorder</em> dependencies and requirements in a Linux
+environment from sources.
+The following packages will be installed:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">foonathan_memory_vendor</span></code>, an STL compatible C++ memory allocation library.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fastcdr</span></code>, a C++ library that serializes according to the standard CDR serialization mechanism.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fastrtps</span></code>, the core library of eProsima Fast DDS library.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cmake_utils</span></code>, an eProsima utils library for CMake.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cpp_utils</span></code>, an eProsima utils library for C++.</p></li>
+</ul>
+<p>First of all, the <a class="reference internal" href="#requirements"><span class="std std-ref">Requirements</span></a> and <a class="reference internal" href="#dependencies"><span class="std std-ref">Dependencies</span></a> detailed below need to be
+met.
+Afterwards, the user can choose whether to follow either the <a class="reference internal" href="#colcon-installation"><span class="std std-ref">colcon</span></a> or the
+<a class="reference internal" href="#cmake-installation"><span class="std std-ref">CMake</span></a> installation instructions.</p>
+<div class="section" id="requirements">
+<span id="id1"></span><h3><span class="section-number">1.1.1. </span>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h3>
+<p>The installation of <em>DDS Recorder</em> in a Linux environment from sources requires the following tools to be
+installed in the system:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#cmake-gcc-pip-wget-git-sl"><span class="std std-ref">CMake, g++, pip, wget and git</span></a></p></li>
+<li><p><a class="reference internal" href="#colcon-install"><span class="std std-ref">Colcon</span></a> [optional]</p></li>
+<li><p><a class="reference internal" href="#gtest-sl"><span class="std std-ref">Gtest</span></a> [for test only]</p></li>
+<li><p><a class="reference internal" href="#py-yaml"><span class="std std-ref">PyYAML</span></a> [for YAML Validator only]</p></li>
+<li><p><a class="reference internal" href="#json-schema"><span class="std std-ref">jsonschema</span></a> [for YAML Validator only]</p></li>
+</ul>
+<div class="section" id="cmake-g-pip-wget-and-git">
+<span id="cmake-gcc-pip-wget-git-sl"></span><h4><span class="section-number">1.1.1.1. </span>CMake, g++, pip, wget and git<a class="headerlink" href="#cmake-g-pip-wget-and-git" title="Permalink to this headline">¶</a></h4>
+<p>These packages provide the tools required to install <em>DDS Recorder</em> and its dependencies from command line.
+Install <a class="reference external" href="https://cmake.org">CMake</a>, <a class="reference external" href="https://gcc.gnu.org/">g++</a>, <a class="reference external" href="https://pypi.org/project/pip/">pip</a>, <a class="reference external" href="https://www.gnu.org/software/wget/">wget</a> and <a class="reference external" href="https://git-scm.com/">git</a> using the package manager of the appropriate
+Linux distribution. For example, on Ubuntu use the command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>cmake<span class="w"> </span>g++<span class="w"> </span>pip<span class="w"> </span>wget<span class="w"> </span>git
+</pre></div>
+</div>
+</div>
+<div class="section" id="colcon">
+<span id="colcon-install"></span><h4><span class="section-number">1.1.1.2. </span>Colcon<a class="headerlink" href="#colcon" title="Permalink to this headline">¶</a></h4>
+<p><a class="reference external" href="https://colcon.readthedocs.io/en/released/">colcon</a> is a command line tool based on <a class="reference external" href="https://cmake.org">CMake</a> aimed at building sets of software packages.
+Install the ROS 2 development tools (<a class="reference external" href="https://colcon.readthedocs.io/en/released/">colcon</a> and <a class="reference external" href="https://pypi.org/project/vcstool/">vcstool</a>) by executing the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip3<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>colcon-common-extensions<span class="w"> </span>vcstool
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If this fails due to an Environment Error, add the <code class="code docutils literal notranslate"><span class="pre">--user</span></code> flag to the <code class="code docutils literal notranslate"><span class="pre">pip3</span></code> installation command.</p>
+</div>
+</div>
+<div class="section" id="gtest">
+<span id="gtest-sl"></span><h4><span class="section-number">1.1.1.3. </span>Gtest<a class="headerlink" href="#gtest" title="Permalink to this headline">¶</a></h4>
+<p><a class="reference external" href="https://github.com/google/googletest">Gtest</a> is a unit testing library for C++.
+By default, <em>DDS Recorder</em> does not compile tests.
+It is possible to activate them with the opportune
+<a class="reference external" href="https://colcon.readthedocs.io/en/released/reference/verb/build.html#cmake-options">CMake options</a>
+when calling <a class="reference external" href="https://colcon.readthedocs.io/en/released/">colcon</a> or <a class="reference external" href="https://cmake.org">CMake</a>.
+For more details, please refer to the <a class="reference internal" href="../configuration/cmake_options.html#cmake-options"><span class="std std-ref">CMake options</span></a> section.
+For a detailed description of the <a class="reference external" href="https://github.com/google/googletest">Gtest</a> installation process, please refer to the
+<a class="reference external" href="https://github.com/google/googletest">Gtest Installation Guide</a>.</p>
+<p>It is also possible to clone the <a class="reference external" href="https://github.com/google/googletest">Gtest</a> Github repository into the <em>DDS Recorder</em> workspace and compile it with <a class="reference external" href="https://colcon.readthedocs.io/en/released/">colcon</a>
+as a dependency package.
+Use the following command to download the code:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>--branch<span class="w"> </span>release-1.11.0<span class="w"> </span>https://github.com/google/googletest<span class="w"> </span>src/googletest-distribution
+</pre></div>
+</div>
+</div>
+<div class="section" id="pyyaml">
+<span id="py-yaml"></span><h4><span class="section-number">1.1.1.4. </span>PyYAML<a class="headerlink" href="#pyyaml" title="Permalink to this headline">¶</a></h4>
+<p><a class="reference external" href="https://pyyaml.org/">PyYAML</a> is a YAML parser and emitter for Python.</p>
+<p>It is used by the DDS-Recorder <span class="xref std std-ref">yaml_validator</span> for loading the content of configuration files.</p>
+<p>Install <code class="docutils literal notranslate"><span class="pre">pyyaml</span></code> by executing the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip3<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>pyyaml
+</pre></div>
+</div>
+</div>
+<div class="section" id="jsonschema">
+<span id="json-schema"></span><h4><span class="section-number">1.1.1.5. </span>jsonschema<a class="headerlink" href="#jsonschema" title="Permalink to this headline">¶</a></h4>
+<p><a class="reference external" href="https://python-jsonschema.readthedocs.io/">jsonschema</a> is an implementation of the JSON Schema specification for
+Python.</p>
+<p>It is used by the DDS-Recorder <span class="xref std std-ref">yaml_validator</span> for performing validation of configuration files against a given
+JSON schema.</p>
+<p>Install <code class="docutils literal notranslate"><span class="pre">jsonschema</span></code> by executing the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip3<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>jsonschema
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="dependencies">
+<span id="id4"></span><h3><span class="section-number">1.1.2. </span>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h3>
+<p><em>DDS Recorder</em> has the following dependencies, when installed from sources in a Linux environment:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#asiotinyxml2-sl"><span class="std std-ref">Asio and TinyXML2 libraries</span></a></p></li>
+<li><p><a class="reference internal" href="#openssl-sl"><span class="std std-ref">OpenSSL</span></a></p></li>
+<li><p><a class="reference internal" href="#yaml-cpp"><span class="std std-ref">yaml-cpp</span></a></p></li>
+<li><p><a class="reference internal" href="#eprosima-dependencies"><span class="std std-ref">eProsima dependencies</span></a></p></li>
+</ul>
+<div class="section" id="asio-and-tinyxml2-libraries">
+<span id="asiotinyxml2-sl"></span><h4><span class="section-number">1.1.2.1. </span>Asio and TinyXML2 libraries<a class="headerlink" href="#asio-and-tinyxml2-libraries" title="Permalink to this headline">¶</a></h4>
+<p>Asio is a cross-platform C++ library for network and low-level I/O programming, which provides a consistent
+asynchronous model.
+TinyXML2 is a simple, small and efficient C++ XML parser.
+Install these libraries using the package manager of the appropriate Linux distribution.
+For example, on Ubuntu use the command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>libasio-dev<span class="w"> </span>libtinyxml2-dev
+</pre></div>
+</div>
+</div>
+<div class="section" id="openssl">
+<span id="openssl-sl"></span><h4><span class="section-number">1.1.2.2. </span>OpenSSL<a class="headerlink" href="#openssl" title="Permalink to this headline">¶</a></h4>
+<p>OpenSSL is a robust toolkit for the TLS and SSL protocols and a general-purpose cryptography library.
+Install <a class="reference external" href="https://www.openssl.org/">OpenSSL</a> using the package manager of the appropriate Linux distribution.
+For example, on Ubuntu use the command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>libssl-dev
+</pre></div>
+</div>
+</div>
+<div class="section" id="yaml-cpp">
+<span id="id5"></span><h4><span class="section-number">1.1.2.3. </span>yaml-cpp<a class="headerlink" href="#yaml-cpp" title="Permalink to this headline">¶</a></h4>
+<p>yaml-cpp is a YAML parser and emitter in C++ matching the YAML 1.2 spec, and is used by <em>DDS Recorder</em> application to
+parse the provided configuration files.
+Install yaml-cpp using the package manager of the appropriate Linux distribution.
+For example, on Ubuntu use the command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>libyaml-cpp-dev
+</pre></div>
+</div>
+</div>
+<div class="section" id="eprosima-dependencies">
+<span id="id6"></span><h4><span class="section-number">1.1.2.4. </span>eProsima dependencies<a class="headerlink" href="#eprosima-dependencies" title="Permalink to this headline">¶</a></h4>
+<p>If it already exists in the system an installation of <em>Fast DDS</em> library with version greater than <cite>2.4.0</cite>, just source
+this library when building the <em>DDS Recorder</em> application by using the command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>&lt;fastdds-installation-path&gt;/install/setup.bash
+</pre></div>
+</div>
+<p>In other case, just download <em>Fast DDS</em> project from sources and build it together with <em>DDS Recorder</em> using colcon
+as it is explained in section <a class="reference internal" href="#colcon-installation"><span class="std std-ref">Colcon installation</span></a>.</p>
+</div>
+</div>
+</div>
+<div class="section" id="colcon-installation">
+<span id="id7"></span><h2><span class="section-number">1.2. </span>Colcon installation<a class="headerlink" href="#colcon-installation" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic">
+<li><p>Create a <code class="code docutils literal notranslate"><span class="pre">DDS-Recorder</span></code> directory and download the <code class="code docutils literal notranslate"><span class="pre">.repos</span></code> file that will be used to install
+<em>DDS Recorder</em> and its dependencies:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>-p<span class="w"> </span>~/DDS-Recorder/src
+<span class="nb">cd</span><span class="w"> </span>~/DDS-Recorder
+wget<span class="w"> </span>https://raw.githubusercontent.com/eProsima/DDS-Recorder/main/ddsrecorder.repos
+vcs<span class="w"> </span>import<span class="w"> </span>src<span class="w"> </span>&lt;<span class="w"> </span>ddsrecorder.repos
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In case there is already a <em>Fast DDS</em> installation in the system it is not required to download and build
+every dependency in the <code class="code docutils literal notranslate"><span class="pre">.repos</span></code> file.
+It is just needed to download and build the <em>DDS Recorder</em> project having sourced its dependencies.
+Refer to section <a class="reference internal" href="#eprosima-dependencies"><span class="std std-ref">eProsima dependencies</span></a> in order to check how to source <em>Fast DDS</em> library.</p>
+</div>
+</li>
+<li><p>Build the packages:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>colcon<span class="w"> </span>build
+</pre></div>
+</div>
+</li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Being based on <a class="reference external" href="https://cmake.org">CMake</a>, it is possible to pass the CMake configuration options to the <code class="code docutils literal notranslate"><span class="pre">colcon</span> <span class="pre">build</span></code>
+command. For more information on the specific syntax, please refer to the
+<a class="reference external" href="https://colcon.readthedocs.io/en/released/reference/verb/build.html#cmake-specific-arguments">CMake specific arguments</a>
+page of the <a class="reference external" href="https://colcon.readthedocs.io/en/released/">colcon</a> manual.</p>
+</div>
+</div>
+<div class="section" id="cmake-installation">
+<span id="id8"></span><h2><span class="section-number">1.3. </span>CMake installation<a class="headerlink" href="#cmake-installation" title="Permalink to this headline">¶</a></h2>
+<p>This section explains how to compile <em>DDS Recorder</em> with <a class="reference external" href="https://cmake.org">CMake</a>, either
+<a class="reference internal" href="#local-installation-sl"><span class="std std-ref">locally</span></a> or <a class="reference internal" href="#global-installation-sl"><span class="std std-ref">globally</span></a>.</p>
+<div class="section" id="local-installation">
+<span id="local-installation-sl"></span><h3><span class="section-number">1.3.1. </span>Local installation<a class="headerlink" href="#local-installation" title="Permalink to this headline">¶</a></h3>
+<ol class="arabic">
+<li><p>Create a <code class="code docutils literal notranslate"><span class="pre">DDS-Recorder</span></code> directory where to download and build <em>DDS Recorder</em> and its dependencies:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>-p<span class="w"> </span>~/DDS-Recorder/src
+mkdir<span class="w"> </span>-p<span class="w"> </span>~/DDS-Recorder/build
+<span class="nb">cd</span><span class="w"> </span>~/DDS-Recorder
+wget<span class="w"> </span>https://raw.githubusercontent.com/eProsima/DDS-Recorder/main/ddsrecorder.repos
+vcs<span class="w"> </span>import<span class="w"> </span>src<span class="w"> </span>&lt;<span class="w"> </span>ddsrecorder.repos
+</pre></div>
+</div>
+</li>
+<li><p>Compile all dependencies using <a class="reference external" href="https://cmake.org">CMake</a>.</p>
+<ul>
+<li><p><a class="reference external" href="https://github.com/foonathan/memory">Foonathan memory</a></p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>~/DDS-Recorder
+mkdir<span class="w"> </span>build/foonathan_memory_vendor
+<span class="nb">cd</span><span class="w"> </span>build/foonathan_memory_vendor
+cmake<span class="w"> </span>~/DDS-Recorder/src/foonathan_memory_vendor<span class="w"> </span>-DCMAKE_INSTALL_PREFIX<span class="o">=</span>~/DDS-Recorder/install<span class="w"> </span>-DBUILD_SHARED_LIBS<span class="o">=</span>ON
+cmake<span class="w"> </span>--build<span class="w"> </span>.<span class="w"> </span>--target<span class="w"> </span>install
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p><a class="reference external" href="https://github.com/eProsima/Fast-CDR">Fast CDR</a></p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>~/DDS-Recorder
+mkdir<span class="w"> </span>build/fastcdr
+<span class="nb">cd</span><span class="w"> </span>build/fastcdr
+cmake<span class="w"> </span>~/DDS-Recorder/src/fastcdr<span class="w"> </span>-DCMAKE_INSTALL_PREFIX<span class="o">=</span>~/DDS-Recorder/install
+cmake<span class="w"> </span>--build<span class="w"> </span>.<span class="w"> </span>--target<span class="w"> </span>install
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p><a class="reference external" href="https://github.com/eProsima/Fast-DDS">Fast DDS</a></p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>~/DDS-Recorder
+mkdir<span class="w"> </span>build/fastdds
+<span class="nb">cd</span><span class="w"> </span>build/fastdds
+cmake<span class="w"> </span>~/DDS-Recorder/src/fastdds<span class="w"> </span>-DCMAKE_INSTALL_PREFIX<span class="o">=</span>~/DDS-Recorder/install<span class="w"> </span>-DCMAKE_PREFIX_PATH<span class="o">=</span>~/DDS-Recorder/install
+cmake<span class="w"> </span>--build<span class="w"> </span>.<span class="w"> </span>--target<span class="w"> </span>install
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p><a class="reference external" href="https://github.com/eProsima/dev-utils">Dev Utils</a></p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># CMake Utils</span>
+<span class="nb">cd</span><span class="w"> </span>~/DDS-Recorder
+mkdir<span class="w"> </span>build/cmake_utils
+<span class="nb">cd</span><span class="w"> </span>build/cmake_utils
+cmake<span class="w"> </span>~/DDS-Recorder/src/dev-utils/cmake_utils<span class="w"> </span>-DCMAKE_INSTALL_PREFIX<span class="o">=</span>~/DDS-Recorder/install<span class="w"> </span>-DCMAKE_PREFIX_PATH<span class="o">=</span>~/DDS-Recorder/install
+cmake<span class="w"> </span>--build<span class="w"> </span>.<span class="w"> </span>--target<span class="w"> </span>install
+
+<span class="c1"># C++ Utils</span>
+<span class="nb">cd</span><span class="w"> </span>~/DDS-Recorder
+mkdir<span class="w"> </span>build/cpp_utils
+<span class="nb">cd</span><span class="w"> </span>build/cpp_utils
+cmake<span class="w"> </span>~/DDS-Recorder/src/dev-utils/cpp_utils<span class="w"> </span>-DCMAKE_INSTALL_PREFIX<span class="o">=</span>~/DDS-Recorder/install<span class="w"> </span>-DCMAKE_PREFIX_PATH<span class="o">=</span>~/DDS-Recorder/install
+cmake<span class="w"> </span>--build<span class="w"> </span>.<span class="w"> </span>--target<span class="w"> </span>install
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+</li>
+<li><p>Once all dependencies are installed, install <em>DDS Recorder</em>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># ddsrecorder_core</span>
+<span class="nb">cd</span><span class="w"> </span>~/DDS-Recorder
+mkdir<span class="w"> </span>build/ddsrecorder_core
+<span class="nb">cd</span><span class="w"> </span>build/ddsrecorder_core
+cmake<span class="w"> </span>~/DDS-Recorder/src/ddsrecorder/ddsrecorder_core<span class="w"> </span>-DCMAKE_INSTALL_PREFIX<span class="o">=</span>~/DDS-Recorder/install<span class="w"> </span>-DCMAKE_PREFIX_PATH<span class="o">=</span>~/DDS-Recorder/install
+cmake<span class="w"> </span>--build<span class="w"> </span>.<span class="w"> </span>--target<span class="w"> </span>install
+
+<span class="c1"># ddsrecorder_yaml</span>
+<span class="nb">cd</span><span class="w"> </span>~/DDS-Recorder
+mkdir<span class="w"> </span>build/ddsrecorder_yaml
+<span class="nb">cd</span><span class="w"> </span>build/ddsrecorder_yaml
+cmake<span class="w"> </span>~/DDS-Recorder/src/ddsrecorder/ddsrecorder_yaml<span class="w"> </span>-DCMAKE_INSTALL_PREFIX<span class="o">=</span>~/DDS-Recorder/install<span class="w"> </span>-DCMAKE_PREFIX_PATH<span class="o">=</span>~/DDS-Recorder/install
+cmake<span class="w"> </span>--build<span class="w"> </span>.<span class="w"> </span>--target<span class="w"> </span>install
+
+<span class="c1"># ddsrecorder_tool</span>
+<span class="nb">cd</span><span class="w"> </span>~/DDS-Recorder
+mkdir<span class="w"> </span>build/ddsrecorder_tool
+<span class="nb">cd</span><span class="w"> </span>build/ddsrecorder_tool
+cmake<span class="w"> </span>~/DDS-Recorder/src/ddsrecorder/tools/ddsrecorder_tool<span class="w"> </span>-DCMAKE_INSTALL_PREFIX<span class="o">=</span>~/DDS-Recorder/install<span class="w"> </span>-DCMAKE_PREFIX_PATH<span class="o">=</span>~/DDS-Recorder/install
+cmake<span class="w"> </span>--build<span class="w"> </span>.<span class="w"> </span>--target<span class="w"> </span>install
+</pre></div>
+</div>
+</li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>By default, <em>DDS Recorder</em> does not compile tests.
+However, they can be activated by downloading and installing <a class="reference external" href="https://github.com/google/googletest">Gtest</a>
+and building with CMake option <code class="docutils literal notranslate"><span class="pre">-DBUILD_TESTS=ON</span></code>.</p>
+</div>
+</div>
+<div class="section" id="global-installation">
+<span id="global-installation-sl"></span><h3><span class="section-number">1.3.2. </span>Global installation<a class="headerlink" href="#global-installation" title="Permalink to this headline">¶</a></h3>
+<p>To install <em>DDS Recorder</em> system-wide instead of locally, remove all the flags that
+appear in the configuration steps of <code class="code docutils literal notranslate"><span class="pre">Fast-CDR</span></code>, <code class="code docutils literal notranslate"><span class="pre">Fast-DDS</span></code>, and
+<code class="code docutils literal notranslate"><span class="pre">DDS-Recorder</span></code>, and change the first in the configuration step of <code class="code docutils literal notranslate"><span class="pre">foonathan_memory_vendor</span></code> to the
+following:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>-DCMAKE_INSTALL_PREFIX<span class="o">=</span>/usr/local/<span class="w"> </span>-DBUILD_SHARED_LIBS<span class="o">=</span>ON
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="run-an-application">
+<span id="run-app-colcon-sl"></span><h2><span class="section-number">1.4. </span>Run an application<a class="headerlink" href="#run-an-application" title="Permalink to this headline">¶</a></h2>
+<p>To run the <em>DDS Recorder</em> application, source the <em>Fast DDS</em> library
+and execute the executable file that has been installed in <code class="code docutils literal notranslate"><span class="pre">&lt;install-path&gt;/ddsrecorder_tool/bin/ddsrecorder</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># If built has been done using colcon, all projects could be sourced as follows</span>
+<span class="nb">source</span><span class="w"> </span>install/setup.bash
+./&lt;install-path&gt;/ddsrecorder_tool/bin/ddsrecorder
+</pre></div>
+</div>
+<p>Be sure that this executable has execute permissions.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="windows.html" class="btn btn-neutral float-right" title="2. Windows installation from sources" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../../../user_manual/user_manual_glossary.html" class="btn btn-neutral float-left" title="3. Nomenclature" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, eProsima.
+
+    </p>
+  </div> 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
