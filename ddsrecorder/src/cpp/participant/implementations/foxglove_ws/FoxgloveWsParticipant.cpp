@@ -1,4 +1,4 @@
-// Copyright 2021 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+// Copyright 2023 Proyectos y Sistemas de Mantenimiento SL (eProsima).
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,14 +13,15 @@
 // limitations under the License.
 
 /**
- * @file RecorderParticipant.cpp
+ * @file FoxgloveWsParticipant.cpp
  */
 
 #include <ddsrecorder/types/participant/ParticipantKind.hpp>
 
-#include <participant/implementations/recorder/RecorderParticipant.hpp>
+#include <participant/implementations/foxglove_ws/FoxgloveWsParticipant.hpp>
 #include <reader/implementations/auxiliar/BlankReader.hpp>
 #include <writer/implementations/recorder/RecorderWriter.hpp>
+#include <writer/implementations/foxglove_ws/FoxgloveWsWriter.hpp>
 #include <writer/implementations/recorder/TypeObjectWriter.hpp>
 #include <recorder/dynamic_types/types.hpp>
 
@@ -30,12 +31,12 @@ namespace core {
 
 using namespace eprosima::ddsrecorder::core::types;
 
-RecorderParticipant::RecorderParticipant(
+FoxgloveWsParticipant::FoxgloveWsParticipant(
         std::shared_ptr<configuration::RecorderConfiguration> participant_configuration,
         std::shared_ptr<PayloadPool> payload_pool,
         std::shared_ptr<DiscoveryDatabase> discovery_database)
     : BaseParticipant(participant_configuration, payload_pool, discovery_database)
-    , mcap_handler_(std::make_shared<recorder::McapHandler>(participant_configuration->file_name().c_str(), payload_pool_))
+    , foxglove_ws_handler_(std::make_shared<recorder::FoxgloveWsHandler>(participant_configuration->file_name().c_str(), payload_pool_))
     , participant_configuration_ref_(participant_configuration)
 {
     // Simulate that there is a reader of type object to force this track creation
@@ -57,31 +58,31 @@ RecorderParticipant::RecorderParticipant(
     );
 }
 
-RecorderParticipant::~RecorderParticipant()
+FoxgloveWsParticipant::~FoxgloveWsParticipant()
 {
     // Do nothing
 }
 
-std::shared_ptr<IWriter> RecorderParticipant::create_writer_(
+std::shared_ptr<IWriter> FoxgloveWsParticipant::create_writer_(
         DdsTopic topic)
 {
-    // if (recorder::is_type_object_topic(topic))
-    // {
-    //     return std::make_shared<TypeObjectWriter>(id(), topic, payload_pool_, mcap_handler_);
-    // }
-    // else
-    // {
-        return std::make_shared<RecorderWriter>(id(), topic, payload_pool_, mcap_handler_);
-    // }
+    if (recorder::is_type_object_topic(topic))
+    {
+        return std::make_shared<TypeObjectWriter>(id(), topic, payload_pool_, foxglove_ws_handler_);
+    }
+    else
+    {
+        return std::make_shared<FoxgloveWsWriter>(id(), topic, payload_pool_, foxglove_ws_handler_);
+    }
 }
 
-std::shared_ptr<IReader> RecorderParticipant::create_reader_(
+std::shared_ptr<IReader> FoxgloveWsParticipant::create_reader_(
         DdsTopic topic)
 {
     return std::make_shared<BlankReader>();
 }
 
-types::Endpoint RecorderParticipant::simulate_endpoint_(const types::DdsTopic& topic) const
+types::Endpoint FoxgloveWsParticipant::simulate_endpoint_(const types::DdsTopic& topic) const
 {
     return types::Endpoint(
         types::EndpointKind::reader,

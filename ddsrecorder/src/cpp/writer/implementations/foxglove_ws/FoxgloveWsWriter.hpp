@@ -1,4 +1,4 @@
-// Copyright 2021 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+// Copyright 2023 Proyectos y Sistemas de Mantenimiento SL (eProsima).
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * @file TypeObjectWriter.hpp
+ * @file FoxgloveWsWriter.hpp
  */
 
 #pragma once
@@ -24,7 +24,6 @@
 #include <cpp_utils/time/time_utils.hpp>
 
 #include <writer/implementations/auxiliar/BaseWriter.hpp>
-#include <recorder/mcap/McapHandler.hpp>
 #include <recorder/foxglove_ws/FoxgloveWsHandler.hpp>
 
 namespace eprosima {
@@ -34,16 +33,15 @@ namespace core {
 /**
  * Writer implementation that allows to Read custom data produced internally.
  */
-class TypeObjectWriter : public BaseWriter
+class FoxgloveWsWriter : public BaseWriter
 {
 public:
 
-    TypeObjectWriter(
+    FoxgloveWsWriter(
         const types::ParticipantId& participant_id,
         const types::DdsTopic& topic,
         std::shared_ptr<PayloadPool> payload_pool,
-        // std::shared_ptr<recorder::McapHandler> mcap_handler);
-        std::shared_ptr<recorder::FoxgloveWsHandler> foxglove_ws_handler);
+        std::shared_ptr<recorder::FoxgloveWsHandler> FoxgloveWs_handler);
 
 protected:
 
@@ -56,7 +54,6 @@ protected:
     utils::ReturnCode write_(
             std::unique_ptr<types::DataReceived>& data) noexcept override;
 
-    // std::shared_ptr<recorder::McapHandler> mcap_handler_;
     std::shared_ptr<recorder::FoxgloveWsHandler> foxglove_ws_handler_;
 };
 

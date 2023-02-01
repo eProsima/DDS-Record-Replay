@@ -1,4 +1,4 @@
-// Copyright 2021 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+// Copyright 2023 Proyectos y Sistemas de Mantenimiento SL (eProsima).
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,15 +13,13 @@
 // limitations under the License.
 
 /**
- * @file TypeObjectWriter.cpp
+ * @file FoxgloveWsWriter.cpp
  */
 
 #include <cpp_utils/Log.hpp>
+#include <cpp_utils/exception/InconsistencyException.hpp>
 
-#include <writer/implementations/recorder/TypeObjectWriter.hpp>
-#include <recorder/dynamic_types/types.hpp>
-#include <recorder/dynamic_types/schema.hpp>
-#include <recorder/dynamic_types/utils.hpp>
+#include <writer/implementations/foxglove_ws/FoxgloveWsWriter.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -29,47 +27,36 @@ namespace core {
 
 using namespace eprosima::ddsrecorder::core::types;
 
-TypeObjectWriter::TypeObjectWriter(
+FoxgloveWsWriter::FoxgloveWsWriter(
         const ParticipantId& participant_id,
         const DdsTopic& topic,
         std::shared_ptr<PayloadPool> payload_pool,
-        // std::shared_ptr<recorder::McapHandler> mcap_handler)
         std::shared_ptr<recorder::FoxgloveWsHandler> foxglove_ws_handler)
     : BaseWriter(participant_id, topic, payload_pool)
-    // , mcap_handler_(mcap_handler)
     , foxglove_ws_handler_(foxglove_ws_handler)
 {
     // Do nothing
 }
 
-utils::ReturnCode TypeObjectWriter::write_(
+utils::ReturnCode FoxgloveWsWriter::write_(
         std::unique_ptr<DataReceived>& data) noexcept
 {
-    auto type_name = recorder::string_deserialization(data);
-    auto dyn_type = recorder::dynamic_type_from_name(type_name);
-    if (nullptr == dyn_type){
-        logError(DDSRECORDER_DYNTYPES, "Type " << type_name << " is not present in TypeObjectFactory");
-        return utils::ReturnCode::RETCODE_PRECONDITION_NOT_MET;
-    }
-
     logInfo(DDSRECORDER_RECORDER_WRITER,
-        "Type Object received: "
-        << type_name
+        "Data in topic: "
+        << topic_ << " received: "
+        << data->payload
     );
 
-    // Add schema
+    // Add this data to the mcap handler
     try
     {
-        // TODO: this will call multiple times to generate_type_object_schema unnecesary
-        // Add this type object as a new schema
-        // mcap_handler_->add_schema(type_name, recorder::generate_dyn_type_schema(dyn_type));
-        foxglove_ws_handler_->add_schema(type_name, recorder::generate_dyn_type_schema(dyn_type));
+        foxglove_ws_handler_->add_data(topic_, data);
     }
     catch(const utils::Exception& e)
     {
         logError(
             DDSRECORDER_RECORDER_WRITER,
-            "Error generating schema: <" << e.what() << ">.\nContinue recording...");
+            "Error storing data: <" << e.what() << ">.\nContinue recording...");
     }
 
     return utils::ReturnCode::RETCODE_OK;

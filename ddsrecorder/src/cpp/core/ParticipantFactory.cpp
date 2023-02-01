@@ -32,6 +32,7 @@
 #include <participant/implementations/auxiliar/EchoParticipant.hpp>
 #include <participant/implementations/auxiliar/BlankParticipant.hpp>
 #include <participant/implementations/recorder/RecorderParticipant.hpp>
+#include <participant/implementations/foxglove_ws/FoxgloveWsParticipant.hpp>
 #include <participant/implementations/rtps/SimpleParticipant.hpp>
 #include <participant/implementations/rtps/InitialPeersParticipant.hpp>
 #include <participant/implementations/rtps/DiscoveryServerParticipant.hpp>
@@ -71,7 +72,7 @@ std::shared_ptr<IParticipant> ParticipantFactory::create_participant(
                           utils::Formatter() << "Configuration from Participant: " << participant_configuration->id <<
                               " is not for Participant Kind: " << participant_configuration->kind);
             }
-            return std::make_shared<RecorderParticipant>(conf_, payload_pool, discovery_database);
+            return std::make_shared<FoxgloveWsParticipant>(conf_, payload_pool, discovery_database);
         }
 
         case ParticipantKind::echo:

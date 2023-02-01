@@ -28,7 +28,8 @@ set(MODULE_FIND_PACKAGES
     cpp_utils)
 
 set(MODULE_THIRDPARTY_HEADERONLY
-    mcap)
+    mcap
+    foxglove)
 
 set(fastrtps_MINIMUM_VERSION "2.9")
 
