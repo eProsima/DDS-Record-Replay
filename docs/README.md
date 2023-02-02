@@ -27,32 +27,15 @@ pip3 install -U -r src/ddsrecorder/docs/requirements.txt
 
 ### Build documentation
 
-#### Virtual environment
-
-This tutorial will create a python3 virtual environment to avoid polluting user's python installation.
-
+In order to install this package independently, use the following command:
 ```bash
-# Create a python3 virtual environment
-python3 -m venv recorder_venv
-# Activate the environment
-source recorder_venv/bin/activate
-# Install dependencies within the environment
-pip3 install -r docs/requirements.txt
+colcon build --packages-select ddsrouter_docs
 ```
-
-#### Generate HTML docs
+In order to compile and execute the package **tests**, a specific CMake option is required: `BUILD_DOCS_TESTS`.
 
 ```bash
-# Source the python virtual environment
-source recorder_venv/bin/activate
-# Change directories to the repository directory
-cd docs
-# Make sure that there are no build directories
-make clean
-# Generate HTML documentation
-make html
-# Open the documentation
-xdg-open build/html/index.html
+colcon build --packages-select ddsrouter_docs --cmake-args -DBUILD_DOCS_TESTS=ON
+colcon test --packages-select ddsrouter_docs --event-handler console_direct+
 ```
 
 ---
