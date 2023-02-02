@@ -30,6 +30,7 @@ The following packages will be installed:
 - ``fastrtps``, the core library of eProsima Fast DDS library.
 - ``cmake_utils``, an eProsima utils library for CMake.
 - ``cpp_utils``, an eProsima utils library for C++.
+- ``ddsrouter``, an eProsima end-user application that enables the connection of distributed DDS networks.
 
 First of all, the :ref:`Requirements <requirements>` and :ref:`Dependencies <dependencies>` detailed below need to be
 met.
@@ -112,8 +113,6 @@ PyYAML
 
 `PyYAML <https://pyyaml.org/>`_ is a YAML parser and emitter for Python.
 
-It is used by the DDS-Recorder :ref:`yaml_validator` for loading the content of configuration files.
-
 Install ``pyyaml`` by executing the following command:
 
 .. code-block:: bash
@@ -128,9 +127,6 @@ jsonschema
 
 `jsonschema <https://python-jsonschema.readthedocs.io/>`_ is an implementation of the JSON Schema specification for
 Python.
-
-It is used by the DDS-Recorder :ref:`yaml_validator` for performing validation of configuration files against a given
-JSON schema.
 
 Install ``jsonschema`` by executing the following command:
 
@@ -197,14 +193,15 @@ For example, on Ubuntu use the command:
 eProsima dependencies
 ^^^^^^^^^^^^^^^^^^^^^
 
-If it already exists in the system an installation of *Fast DDS* library with version greater than `2.4.0`, just source
-this library when building the |ddsrecorder| application by using the command:
+If it already exists in the system an installation of *Fast DDS* and *DDS Router* libraries, just source
+this libraries when building the |ddsrecorder| application by using the command:
 
 .. code-block:: bash
 
     source <fastdds-installation-path>/install/setup.bash
+    source <ddsrouter-installation-path>/install/setup.bash
 
-In other case, just download *Fast DDS* project from sources and build it together with |ddsrecorder| using colcon
+In other case, just download *Fast DDS* and *DDS Router* projects from sources and build it together with |ddsrecorder| using colcon
 as it is explained in section :ref:`colcon_installation`.
 
 
@@ -317,15 +314,40 @@ Local installation
             cmake ~/DDS-Recorder/src/dev-utils/cpp_utils -DCMAKE_INSTALL_PREFIX=~/DDS-Recorder/install -DCMAKE_PREFIX_PATH=~/DDS-Recorder/install
             cmake --build . --target install
 
+    * `DDS Router <https://github.com/eProsima/DDS-Router>`_
+
+        .. code-block:: bash
+
+            # ddsrouter_core
+            cd ~/DDS-Router
+            mkdir build/ddsrouter_core
+            cd build/ddsrouter_core
+            cmake ~/DDS-Router/src/ddsrouter/ddsrouter_core -DCMAKE_INSTALL_PREFIX=~/DDS-Router/install -DCMAKE_PREFIX_PATH=~/DDS-Router/install
+            cmake --build . --target install
+
+            # ddsrouter_yaml
+            cd ~/DDS-Router
+            mkdir build/ddsrouter_yaml
+            cd build/ddsrouter_yaml
+            cmake ~/DDS-Router/src/ddsrouter/ddsrouter_yaml -DCMAKE_INSTALL_PREFIX=~/DDS-Router/install -DCMAKE_PREFIX_PATH=~/DDS-Router/install
+            cmake --build . --target install
+
+            # ddsrouter_tool
+            cd ~/DDS-Router
+            mkdir build/ddsrouter_tool
+            cd build/ddsrouter_tool
+            cmake ~/DDS-Router/src/ddsrouter/tools/ddsrouter_tool -DCMAKE_INSTALL_PREFIX=~/DDS-Router/install -DCMAKE_PREFIX_PATH=~/DDS-Router/install
+            cmake --build . --target install
+
 #.  Once all dependencies are installed, install |ddsrecorder|:
 
     .. code-block:: bash
 
-        # ddsrecorder_core
+        # ddsrecorder
         cd ~/DDS-Recorder
-        mkdir build/ddsrecorder_core
-        cd build/ddsrecorder_core
-        cmake ~/DDS-Recorder/src/ddsrecorder/ddsrecorder_core -DCMAKE_INSTALL_PREFIX=~/DDS-Recorder/install -DCMAKE_PREFIX_PATH=~/DDS-Recorder/install
+        mkdir build/ddsrecorder
+        cd build/ddsrecorder
+        cmake ~/DDS-Recorder/src/ddsrecorder/ddsrecorder -DCMAKE_INSTALL_PREFIX=~/DDS-Recorder/install -DCMAKE_PREFIX_PATH=~/DDS-Recorder/install
         cmake --build . --target install
 
         # ddsrecorder_yaml
@@ -355,7 +377,7 @@ Global installation
 -------------------
 
 To install |ddsrecorder| system-wide instead of locally, remove all the flags that
-appear in the configuration steps of :code:`Fast-CDR`, :code:`Fast-DDS`, and
+appear in the configuration steps of :code:`Fast-CDR`, :code:`Fast-DDS`, :code:`Dev-Utils`, :code:`DDS-Router`, and
 :code:`DDS-Recorder`, and change the first in the configuration step of :code:`foonathan_memory_vendor` to the
 following:
 

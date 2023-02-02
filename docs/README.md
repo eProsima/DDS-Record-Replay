@@ -37,7 +37,7 @@ python3 -m venv recorder_venv
 # Activate the environment
 source recorder_venv/bin/activate
 # Install dependencies within the environment
-pip3 install -r recorder/docs/requirements.txt
+pip3 install -r docs/requirements.txt
 ```
 
 #### Generate HTML docs
@@ -46,7 +46,7 @@ pip3 install -r recorder/docs/requirements.txt
 # Source the python virtual environment
 source recorder_venv/bin/activate
 # Change directories to the repository directory
-cd recorder/docs
+cd docs
 # Make sure that there are no build directories
 make clean
 # Generate HTML documentation

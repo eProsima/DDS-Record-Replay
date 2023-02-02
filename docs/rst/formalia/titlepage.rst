@@ -21,9 +21,9 @@
 Overview
 ########
 
-Following are some of the key features of *eProsima DDS Recorder*:
+.. todo:
 
-  1. TODO
+    Add key features of *eProsima DDS Recorder*
 
 ###############################
 Contacts and Commercial support
@@ -55,7 +55,7 @@ This documentation is organized into the sections below.
 * :ref:`Installation Manual <installation_manual_linux>`
 * :ref:`Getting Started <getting_started>`
 * :ref:`User Manual <user_manual_user_interface>`
-* :ref:`Examples <examples_echo_example>`
-* :ref:`Use cases <ros_cloud>`
+* Examples
+* Use cases
 * :ref:`Developer Manual <developer_manual_installation_sources_linux>`
 * :ref:`Release Notes <release_notes>`
