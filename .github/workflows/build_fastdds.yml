@@ -44,6 +44,11 @@ jobs:
       - name: Install OpenSSL
         uses: ./DDS-Recorder/.github/actions/install-openssl-windows
 
+      - name: Install yaml-cpp
+        uses: ./DDS-Recorder/.github/actions/install-yamlcpp-windows
+        with:
+          cmake_build_type: ${{ matrix.cmake-config }}
+
       - name: Install eProsima dependencies
         uses: ./DDS-Recorder/.github/actions/install-eprosima-dependencies-windows
         env:
@@ -92,6 +97,7 @@ jobs:
           vcs import src <  src/DDS-Recorder/.github/workflows/ci.repos
           cd src/fastrtps && git checkout ${{ inputs.fastdds_branch }} && cd ../..
           cd src/dev-utils && git checkout ${{ inputs.utils_branch }} && cd ../..
+          cd src/ddsrouter && git checkout ${{ inputs.router_branch }} && cd ../..
 
       - name: Build workspace
         run: |
