@@ -55,7 +55,7 @@ This documentation is organized into the sections below.
 * :ref:`Installation Manual <installation_manual_linux>`
 * :ref:`Getting Started <getting_started>`
 * :ref:`User Manual <user_manual_user_interface>`
-* Examples
+* :ref:`Examples <examples_simple_example>`
 * Use cases
 * :ref:`Developer Manual <developer_manual_installation_sources_linux>`
 * :ref:`Release Notes <release_notes>`

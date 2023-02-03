@@ -47,6 +47,7 @@
    :hidden:
 
    /rst/user_manual/user_interface
+   Participant </rst/user_manual/participants/participant>
    /rst/user_manual/configuration
    /rst/user_manual/user_manual_glossary
 
@@ -59,6 +60,7 @@
    :numbered: 5
    :hidden:
 
+   /rst/examples/simple_example
 
 .. _index_use_cases:
 
@@ -68,6 +70,7 @@
    :numbered: 5
    :hidden:
 
+   /rst/use_cases/ros_cloud
 
 .. _index_developer_manual:
 

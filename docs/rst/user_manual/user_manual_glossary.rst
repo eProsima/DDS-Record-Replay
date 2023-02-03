@@ -10,8 +10,27 @@ Nomenclature
 DDS Recorder nomenclature
 =========================
 
-.. note::
-    This page is under maintenance and will be updated soon.
+Participant nomenclature
+------------------------
+
+.. glossary::
+
+    Participant
+        DDS Router communication Interface.
+        It is an abstraction over DDS DomainParticipant.
+
+        This term is explained :ref:`here <user_manual_participant_participant>`.
+
+    Participant Name
+        Unique identifier of a Participant.
+
+        This term is explained :ref:`here <user_manual_participant_participant_name>`.
+
+    Participant Kind
+        Element that identifies a Participant kind.
+        It can be set as a `string` that references an alias of an existing Participant Kind.
+
+        This term is explained :ref:`here <user_manual_participant_participant_kind>`.
 
 DDS nomenclature
 ================
