@@ -101,5 +101,5 @@ runs:
           -DCMAKE_CXX_FLAGS="/WX /EHsc" -DBUILD_TOOL_TESTS=ON -DBUILD_LIBRARY_TESTS=ON `
           ${{ env.W2019_CMAKE_EXTRA_ARGS }} `
           -Ax64 -T host=x64 `
-          -B build\ddsrouter_tool -S DDS-Router\ddsrouter_tool;
+          -B build\ddsrouter_tool -S DDS-Router\tools\ddsrouter_tool;
         cmake --build build\ddsrouter_tool --config ${{ inputs.cmake_build_type }} --target install;
