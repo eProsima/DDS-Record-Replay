@@ -11,7 +11,7 @@ on:
         description: 'Branch or tag of Dev Utils repository (https://github.com/eProsima/dev-utils)'
         required: true
         default: 'main'
-      router_branch:
+      ddsrouter_branch:
         description: 'Branch or tag of DDS Router repository (https://github.com/eProsima/DDS-Router)'
         required: true
         default: 'main'
@@ -54,12 +54,12 @@ jobs:
         env:
           DEFAULT_FASTDDS_BRANCH: 'master'
           DEFAULT_UTILS_BRANCH: 'main'
-          DEFAULT_ROUTER_BRANCH: 'main'
+          DEFAULT_DDSROUTER_BRANCH: 'main'
         with:
           cmake_build_type: ${{ matrix.cmake-config }}
           fastdds_branch: ${{ github.event.inputs.fastdds_branch || env.DEFAULT_FASTDDS_BRANCH }}
           utils_branch: ${{ github.event.inputs.utils_branch || env.DEFAULT_UTILS_BRANCH }}
-          router_branch: ${{ github.event.inputs.utils_branch || env.DEFAULT_UTILS_BRANCH }}
+          ddsrouter_branch: ${{ github.event.inputs.ddsrouter_branch || env.DEFAULT_DDSROUTER_BRANCH }}
 
       - name: Upload binaries
         uses: actions/upload-artifact@v3
