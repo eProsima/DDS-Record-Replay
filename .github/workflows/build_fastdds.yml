@@ -37,7 +37,7 @@ jobs:
 
     steps:
       - name: Sync eProsima/DDS-Recorder repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: DDS-Recorder
 
@@ -78,7 +78,7 @@ jobs:
 
     steps:
       - name: Sync eProsima/DDS-Recorder repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: src/DDS-Recorder
 
@@ -97,7 +97,7 @@ jobs:
           vcs import src <  src/DDS-Recorder/.github/workflows/ci.repos
           cd src/fastrtps && git checkout ${{ inputs.fastdds_branch }} && cd ../..
           cd src/dev-utils && git checkout ${{ inputs.utils_branch }} && cd ../..
-          cd src/ddsrouter && git checkout ${{ inputs.router_branch }} && cd ../..
+          cd src/ddsrouter && git checkout ${{ inputs.ddsrouter_branch }} && cd ../..
 
       - name: Build workspace
         run: |

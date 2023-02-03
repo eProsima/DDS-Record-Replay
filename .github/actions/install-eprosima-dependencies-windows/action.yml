@@ -80,26 +80,15 @@ runs:
       shell: pwsh
       run: >
         git clone https://github.com/eProsima/DDS-Router.git --branch ${{ inputs.ddsrouter_branch }};
-        cmake `
-          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\eprosima\install `
-          -DCMAKE_PREFIX_PATH=${{ github.workspace }}\eprosima\install `
-          -DCMAKE_CXX_FLAGS="/WX /EHsc" `
-          -Ax64 -T host=x64 `
-          -B build\ddsrouter_core -S DDS-Router\ddsrouter_core;
+        cmake -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\eprosima\install `
+          -DCMAKE_PREFIX_PATH='C:\Program Files\yamlcpp;C:\Program Files;${{ github.workspace }}\eprosima\install' `
+          -Ax64 -T host=x64 -B build\ddsrouter_core DDS-Router\ddsrouter_core;
         cmake --build build\ddsrouter_core --config ${{ inputs.cmake_build_type }} --target install;
-        cmake `
-          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\eprosima\install `
-          -DCMAKE_PREFIX_PATH=${{ github.workspace }}\eprosima\install `
-          -DCMAKE_CXX_FLAGS="/WX /EHsc" `
-          ${{ env.W2019_CMAKE_EXTRA_ARGS }} `
-          -Ax64 -T host=x64 `
-          -B build\ddsrouter_yaml -S DDS-Router\ddsrouter_yaml;
+        cmake -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\eprosima\install `
+          -DCMAKE_PREFIX_PATH='C:\Program Files\yamlcpp;C:\Program Files;${{ github.workspace }}\eprosima\install' `
+          -Ax64 -T host=x64 -B build\ddsrouter_yaml DDS-Router\ddsrouter_yaml;
         cmake --build build\ddsrouter_yaml --config ${{ inputs.cmake_build_type }} --target install;
-        cmake `
-          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\eprosima\install `
-          -DCMAKE_PREFIX_PATH=${{ github.workspace }}\eprosima\install `
-          -DCMAKE_CXX_FLAGS="/WX /EHsc" `
-          ${{ env.W2019_CMAKE_EXTRA_ARGS }} `
-          -Ax64 -T host=x64 `
-          -B build\ddsrouter_tool -S DDS-Router\ddsrouter_tool;
+        cmake -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\eprosima\install `
+          -DCMAKE_PREFIX_PATH='C:\Program Files\yamlcpp;C:\Program Files;${{ github.workspace }}\eprosima\install' `
+          -Ax64 -T host=x64 -B build\ddsrouter_tool DDS-Router\tools\ddsrouter_tool;
         cmake --build build\ddsrouter_tool --config ${{ inputs.cmake_build_type }} --target install;
