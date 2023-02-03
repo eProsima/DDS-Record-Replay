@@ -13,7 +13,7 @@ inputs:
     description: 'Branch or tag of Dev Utils repository (https://github.com/eProsima/dev-utils)'
     required: true
     default: 'main'
-  router_branch:
+  ddsrouter_branch:
         description: 'Branch or tag of DDS Router repository (https://github.com/eProsima/DDS-Router)'
         required: true
         default: 'main'
@@ -79,7 +79,7 @@ runs:
     - name: Install DDS Router
       shell: pwsh
       run: >
-        git clone https://github.com/eProsima/DDS-Router.git --branch ${{ inputs.router_branch }};
+        git clone https://github.com/eProsima/DDS-Router.git --branch ${{ inputs.ddsrouter_branch }};
         cmake `
           -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\eprosima\install `
           -DCMAKE_PREFIX_PATH=${{ github.workspace }}\eprosima\install `
