@@ -11,7 +11,7 @@ on:
         description: 'Branch or tag of Dev Utils repository (https://github.com/eProsima/dev-utils)'
         required: true
         default: 'main'
-      router_branch:
+      ddsrouter_branch:
         description: 'Branch or tag of DDS Router repository (https://github.com/eProsima/DDS-Router)'
         required: true
         default: 'main'
@@ -37,7 +37,7 @@ jobs:
 
     steps:
       - name: Sync eProsima/DDS-Recorder repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: DDS-Recorder
 
@@ -54,12 +54,12 @@ jobs:
         env:
           DEFAULT_FASTDDS_BRANCH: 'master'
           DEFAULT_UTILS_BRANCH: 'main'
-          DEFAULT_ROUTER_BRANCH: 'main'
+          DEFAULT_DDSROUTER_BRANCH: 'main'
         with:
           cmake_build_type: ${{ matrix.cmake-config }}
           fastdds_branch: ${{ github.event.inputs.fastdds_branch || env.DEFAULT_FASTDDS_BRANCH }}
           utils_branch: ${{ github.event.inputs.utils_branch || env.DEFAULT_UTILS_BRANCH }}
-          router_branch: ${{ github.event.inputs.utils_branch || env.DEFAULT_UTILS_BRANCH }}
+          ddsrouter_branch: ${{ github.event.inputs.ddsrouter_branch || env.DEFAULT_DDSROUTER_BRANCH }}
 
       - name: Upload binaries
         uses: actions/upload-artifact@v3
@@ -78,7 +78,7 @@ jobs:
 
     steps:
       - name: Sync eProsima/DDS-Recorder repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: src/DDS-Recorder
 
@@ -97,7 +97,7 @@ jobs:
           vcs import src <  src/DDS-Recorder/.github/workflows/ci.repos
           cd src/fastrtps && git checkout ${{ inputs.fastdds_branch }} && cd ../..
           cd src/dev-utils && git checkout ${{ inputs.utils_branch }} && cd ../..
-          cd src/ddsrouter && git checkout ${{ inputs.router_branch }} && cd ../..
+          cd src/ddsrouter && git checkout ${{ inputs.ddsrouter_branch }} && cd ../..
 
       - name: Build workspace
         run: |
