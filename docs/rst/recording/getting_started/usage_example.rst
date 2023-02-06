@@ -30,30 +30,30 @@ track messages if their associated topics match the filters contained in its ``a
 
 Following is an example of configuration file:
 
-.. literalinclude:: ../../../resources/configurations/conf-ddsrecorder.yaml
+.. literalinclude:: ../../../../resources/configurations/conf-ddsrecorder.yaml
     :language: yaml
 
 Let us first add all topics:
 
-.. literalinclude:: ../../../resources/configurations/conf-ddsrecorder.yaml
+.. literalinclude:: ../../../../resources/configurations/conf-ddsrecorder.yaml
     :language: yaml
     :lines: 2-3
 
 Let us block ``add_blocked_topics_list_here`` topic:
 
-.. literalinclude:: ../../../resources/configurations/conf-ddsrecorder.yaml
+.. literalinclude:: ../../../../resources/configurations/conf-ddsrecorder.yaml
     :language: yaml
     :lines: 6-7
 
 The only configuration required for simple participants is the DDS ``domain`` identifier.
 
-.. literalinclude:: ../../../resources/configurations/conf-ddsrecorder.yaml
+.. literalinclude:: ../../../../resources/configurations/conf-ddsrecorder.yaml
     :language: yaml
     :lines: 10
 
 The recorder output file does support the following configurations:
 
-.. literalinclude:: ../../../resources/configurations/conf-ddsrecorder.yaml
+.. literalinclude:: ../../../../resources/configurations/conf-ddsrecorder.yaml
     :language: yaml
     :lines: 13-16
 

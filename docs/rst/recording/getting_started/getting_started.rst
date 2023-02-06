@@ -7,7 +7,7 @@ Getting Started
 ###############
 
 .. toctree::
-    :hidden:
+    :maxdepth: 1
 
     project_overview
     usage_example

@@ -50,66 +50,57 @@ The |ddsrecorder| application supports several input arguments:
     :header-rows: 1
 
     *   - Command
+        - Description
         - Option
-        - Long option
         - Value
         - Default Value
-        - Description
 
     *   - Help Argument
-        - ``-h``
-        - ``--help``
-        -
-        -
         - It shows the usage information of the application.
+        - ``-h``, ``--help``
+        -
+        -
 
     *   - Version Argument
-        - ``-v``
-        - ``--version``
-        -
-        -
         - It shows the current version of the DDS Recorder and the hash of the last commit of the compiled code.
+        - ``-v``, ``--version``
+        -
+        -
 
 
     *   - Configuration File Argument
-        - ``-c``
-        - ``--config-path``
-        - Readable File Path
-        - ``./DDS_RECORDER_CONFIGURATION.yaml``
         - Configuration file path.
+        - ``-c``, ``--config-path``
+        -
+        - ``./DDS_RECORDER_CONFIGURATION.yaml``
 
     *   - Reload Timer
-        - ``-r``
-        - ``--reload-time``
+        - The configuration file will be automatically reloaded according to the specified time period.
+        - ``-r``, ``--reload-time``
         - Unsigned Integer
         - ``0``
-        - The configuration file will be automatically reloaded according to the specified time period.
 
     *   - Timeout Argument
-        - ``-r``
-        - ``--reload-time``
+        - Set a maximum time while the application will be running. `0`` means that the application will run forever (until kill via signal).
+        - ``-r``, ``--reload-time``
         - Unsigned Integer
         - ``0``
-        - Set a maximum time while the application will be running. `0`` means that the application will run forever (until kill via signal).
 
     *   - Debug Argument
-        - ``-d``
-        - ``--debug``
-        -
-        -
         - Enables the |ddsrecorder| logs so the execution can be followed by internal debugging information. Sets ``Log Verbosity Argument`` to ``info`` and
             ``Log Filter Argument`` to ``DDSRECORDER``.
+        - ``-d``, ``--debug``
+        -
+        -
 
     *   - Log Verbosity Argument
-        -
+        - Set the verbosity level so only log messages with equal or higher importance level are shown.
         - ``--log-verbosity``
         - ``info`` ``warning`` ``error``
         - ``warning``
-        - Set the verbosity level so only log messages with equal or higher importance level are shown.
 
     *   - Log Filter Argument
-        -
+        - Set a regex string as filter.
         - ``--log-filter``
         - String
         - ``"DDSRecorder"``
-        - Set a regex string as filter.
