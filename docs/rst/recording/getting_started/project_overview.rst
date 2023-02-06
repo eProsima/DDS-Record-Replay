@@ -1,6 +1,6 @@
 .. include:: ../../exports/alias.include
 
-.. _project_overview:
+.. _getting_started_project_overview:
 
 ################
 Project Overview

@@ -1,6 +1,6 @@
 .. include:: ../../exports/alias.include
 
-.. _user_manual_glossary:
+.. _user_interface_glossary:
 
 ############
 Nomenclature

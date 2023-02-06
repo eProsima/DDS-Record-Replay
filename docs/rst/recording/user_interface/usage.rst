@@ -1,6 +1,6 @@
 .. include:: ../../exports/alias.include
 
-.. _user_manual_user_interface:
+.. _user_interface_usage:
 
 #####
 Usage
@@ -39,7 +39,7 @@ Stopping Recording Application
 
 To stop |eddsrecorder|, press Ctrl-c. |eddsrecorder| will perform a clean shutdown.
 
-.. _user_manual_user_interface_application_arguments:
+.. _user_interface_usage_application_arguments:
 
 Recording Service Command-Line Parameters
 -----------------------------------------

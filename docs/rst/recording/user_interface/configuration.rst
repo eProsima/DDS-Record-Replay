@@ -1,6 +1,6 @@
 .. include:: ../../exports/alias.include
 
-.. _user_manual_configuration:
+.. _user_interface_configuration:
 
 #############
 Configuration
@@ -255,7 +255,7 @@ and ``AllowedTopic2`` regardless of its data type.
       - name: "*"
         type: HelloWorld
 
-.. _user_manual_configuration_domain_id:
+.. _user_interface_configuration_domain_id:
 
 Domain Id
 =========
@@ -268,7 +268,7 @@ Be aware that some Participants (e.g. Discovery Servers) does not need a Domain 
     domain: 101
 
 
-.. _user_manual_configuration_general_example:
+.. _user_interface_configuration_general_example:
 
 General Example
 ===============

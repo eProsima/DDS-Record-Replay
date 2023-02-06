@@ -1,6 +1,6 @@
 .. include:: ../../exports/alias.include
 
-.. _usage_example:
+.. _getting_started_usage_example:
 
 ################
 Example of usage
