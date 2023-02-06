@@ -10,7 +10,7 @@ Nomenclature
 DDS Recorder nomenclature
 =========================
 
-note::
+.. note::
     This section is under maintenance and will be updated soon.
 
 

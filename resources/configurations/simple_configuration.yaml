@@ -3,4 +3,3 @@ domain: 0
 
 # Recorder output file
 filename: "output"    # Required
-use-timestamp: false  # Optional (Default: true)

@@ -6,10 +6,6 @@
 Configuration
 #############
 
-A |ddsrecorder| is configured by a *.yaml* configuration file.
-This *.yaml* file contains all the information regarding the |ddsrecorder| configuration, such as topics filtering
-and :term:`Participants <Participant>` configurations.
-
 .. contents::
     :local:
     :backlinks: none
@@ -18,15 +14,18 @@ and :term:`Participants <Participant>` configurations.
 
 .. _thread_configuration:
 
-Specs Configuration
-===================
+DDS Recorder Configuration
+==========================
+
+A |ddsrecorder| is configured by a *.yaml* configuration file.
+This *.yaml* file contains all the information regarding the |ddsrecorder| configuration, such as topics filtering configuration.
 
 The YAML Configuration supports a ``specs`` **optional** tag that contains certain options related with the
 overall configuration of the DDS Recorder instance to run.
 The values available to configure are:
 
 Number of Threads
------------------
+^^^^^^^^^^^^^^^^^
 
 ``specs`` supports a ``threads`` **optional** value that allows the user to set a maximum number of threads
 for the internal :code:`ThreadPool`.
@@ -39,7 +38,7 @@ In case this value is not set, the default number of threads used is :code:`12`.
 .. _history_depth_configuration:
 
 Maximum History Depth
----------------------
+^^^^^^^^^^^^^^^^^^^^^
 
 ``specs`` supports a ``max-depth`` **optional** value that configures the history size
 of the Fast DDS internal entities.
@@ -54,7 +53,7 @@ enough memory is available.
 .. _topic_filtering:
 
 Built-in Topics
-===============
+---------------
 
 Apart from the dynamic creation of Endpoints in DDS Topics discovered,
 the discovery phase can be accelerated by using the builtin topic list (``builtin-topics``).
@@ -63,7 +62,7 @@ This feature also allows to manually force the QoS of a specific topic, so the e
 follows the specified QoS and not the one first discovered.
 
 Topic Quality of Service
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 For every topic contained in this list, both ``name`` and ``type`` must be specified and contain no wildcard
 characters. The entry ``keyed`` is optional, and defaults to ``false``.
@@ -123,7 +122,7 @@ Apart from these values, the tag ``qos`` under each topic allows to configure th
 
 
 Topic Filtering
-===============
+---------------
 
 |ddsrecorder| includes a mechanism to automatically detect which topics are being used in a DDS network.
 By automatically detecting these topics, a |ddsrecorder| creates internal DDS :term:`Writers<DataWriter>`
@@ -186,7 +185,7 @@ or not. See :term:`Topic` section for further information about the topic.
     characters must be enclosed by single or double quotation marks.
 
 Allow topic list (``allowlist``)
---------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 This is the list of topics that |ddsrecorder| will forward, i.e. the data published under the topics matching the
 expressions in the ``allowlist`` will be relayed by |ddsrecorder|.
 
@@ -196,7 +195,7 @@ expressions in the ``allowlist`` will be relayed by |ddsrecorder|.
 
 
 Block topic list (``blocklist``)
---------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 This is the list of topics that the |ddsrecorder| will block, that is, all data published under the topics matching the
 filters specified in the ``blocklist`` will be discarded by the |ddsrecorder| and therefore will not be relayed.
 
@@ -206,13 +205,13 @@ causing the data under this topic to be discarded.
 
 
 Examples of usage
------------------
+^^^^^^^^^^^^^^^^^
 
 The following is an example of how to use the ``allowlist``, ``blocklist`` and ``builtin-topics`` configurations to
 setup the |ddsrecorder| filtering rules.
 
 Dynamic topic discovery example
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""""""""""""
 
 This example shows how the |ddsrecorder| is initially configured to forward the ``rt/chatter`` topic (default ROS 2
 topic for ``talker`` and ``listener``) with type name ``std_msgs::msg::dds_::String_``, while the rest of the
@@ -232,7 +231,7 @@ Additionally, two rules are specified in the ``blocklist`` in order to filter ou
 
 
 Allowlist and blocklist collision
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""""""""""""""
 
 In the following example, the ``HelloWorldTopic`` topic is both in the ``allowlist`` and (implicitly) in the
 ``blocklist``, so according to the ``blocklist`` preference rule this topic is blocked.
@@ -258,7 +257,7 @@ and ``AllowedTopic2`` regardless of its data type.
 .. _user_interface_configuration_domain_id:
 
 Domain Id
-=========
+---------
 
 Tag ``domain`` configures the :term:`Domain Id` of a specific Participant.
 Be aware that some Participants (e.g. Discovery Servers) does not need a Domain Id configuration.
@@ -271,7 +270,7 @@ Be aware that some Participants (e.g. Discovery Servers) does not need a Domain 
 .. _user_interface_configuration_general_example:
 
 General Example
-===============
+---------------
 
 A complete example of all the configurations described on this page can be found below.
 
@@ -307,3 +306,17 @@ A complete example of all the configurations described on this page can be found
     # Simple DDS Participant in domain 3
 
     domain: 3                       # DomainId = 3
+
+Application DDS Configuration
+=============================
+
+Fast DDS does not send the Data Type information by default, it must be configured to do so.
+First of all, when generating the Types using Fast DDS Gen, the option `-typeobject` must be added in order to generate the needed code to fill the TypeObject data.
+
+For native types (Data Types that does not rely in other Data Types) this is enough, as Fast DDS will send the TypeObject by default.
+However, for more complex types, it is required to use `TypeInformation` mechanism.
+In the Fast DDS `DomainParticipant` set the following QoS in order to send this information:
+
+.. code-block::
+  DomainParticipantQos pqos;
+  pqos.wire_protocol().builtin.typelookup_config.use_server = true;

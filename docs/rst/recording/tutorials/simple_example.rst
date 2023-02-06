@@ -6,26 +6,30 @@
 Simple Example
 ##############
 
-The following YAML configuration file configures a DDS Recorder to create a
-:ref:`Simple Participant <user_manual_participants_simple>` in :term:`Domain Id` ``0``.
-
-.. literalinclude:: ../../../resources/configurations/simple_configuration.yaml
-    :language: yaml
-
 Configuration
 =============
 
-Simple Participant
-------------------
+The following YAML configuration file configures a DDS Recorder in :term:`Domain Id` ``0``.
 
-This Participant is configured with a name, a kind and the Domain Id, which is ``0`` in this case.
-
-.. literalinclude:: ../../../resources/configurations/simple_configuration.yaml
+.. literalinclude:: ../../../../resources/configurations/simple_configuration.yaml
     :language: yaml
-    :lines: 2
 
 Execute example
 ===============
 
-.. note::
-    This page is under maintenance and will be updated soon.
+Execute a Fast DDS TypeLookup example:
+
+.. code-block:: bash
+
+    ./TypeLookupExample publisher
+
+Run DDS Recorder
+================
+
+In order to execute the ``DDS Recorder`` use the following command:
+
+.. code-block:: bash
+
+    ddsrecorder --config-path /ddsrecorder/resources/configurations/simple_configuration.yaml
+
+.. figure:: /rst/figures/simple_example.png
