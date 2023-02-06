@@ -31,3 +31,8 @@ In order to execute the ``DDS Recorder`` use the following command:
 .. code-block:: bash
 
     ddsrecorder --config-path /ddsrecorder/resources/configurations/ros2_configuration.yaml
+
+Visualizing with FoxGlove Studio
+================================
+
+Open `FoxGlove Studio <https://studio.foxglove.dev/>_` with the given ``output.mcap`` file.
