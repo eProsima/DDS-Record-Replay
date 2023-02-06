@@ -1,4 +1,4 @@
-.. include:: ../exports/alias.include
+.. include:: ../../exports/alias.include
 
 .. _tutorials_simple_example:
 

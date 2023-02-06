@@ -7,6 +7,9 @@
 Docker image
 ############
 
+.. note::
+    Docker image of |ddsrecorder| is under maintenance and will be updated soon in `eProsima Downloads website <https://www.eprosima.com/index.php/downloads-all>`_.
+
 eProsima distributes a Docker image of |ddsrecorder| with Ubuntu 22.04 as base image.
 This image launches an instance of |ddsrecorder| that is configured using a *YAML* configuration file provided by the user
 and shared with the Docker container.
@@ -57,6 +60,3 @@ The steps to run |ddsrecorder| in a Docker container are explained below.
     After executing the previous command you should be able to see the initialization traces from the |ddsrecorder|
     running in the Docker container.
     If you want to terminate the application gracefully, just press ``Ctrl+C`` to stop the execution of |ddsrecorder|.
-
-.. note::
-    This page is under maintenance and will be updated soon.
