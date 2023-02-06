@@ -51,7 +51,7 @@ The |ddsrecorder| application supports several input arguments:
 
     *   - Command
         - Description
-        - Option
+        - Posible Values
         - Value
         - Default Value
 
@@ -62,7 +62,8 @@ The |ddsrecorder| application supports several input arguments:
         -
 
     *   - Version Argument
-        - It shows the current version of the DDS Recorder and the hash of the last commit of the compiled code.
+        - It shows the current version of the DDS Recorder and |br|
+          the hash of the last commit of the compiled code.
         - ``-v``, ``--version``
         -
         -
@@ -75,26 +76,32 @@ The |ddsrecorder| application supports several input arguments:
         - ``./DDS_RECORDER_CONFIGURATION.yaml``
 
     *   - Reload Timer
-        - The configuration file will be automatically reloaded according to the specified time period.
+        - The configuration file will be automatically reloaded |br|
+          according to the specified time period.
         - ``-r``, ``--reload-time``
         - Unsigned Integer
         - ``0``
 
     *   - Timeout Argument
-        - Set a maximum time while the application will be running. `0`` means that the application will run forever (until kill via signal).
+        - Set a maximum time while the application will be running. |br|
+          `0`` means that the application will run forever |br|
+          (until kill via signal).
         - ``-r``, ``--reload-time``
         - Unsigned Integer
         - ``0``
 
     *   - Debug Argument
-        - Enables the |ddsrecorder| logs so the execution can be followed by internal debugging information. Sets ``Log Verbosity Argument`` to ``info`` and
+        - Enables the |ddsrecorder| logs so the execution can be |br|
+          followed by internal debugging information. Sets |br|
+          ``Log Verbosity Argument`` to ``info`` and |br|
             ``Log Filter Argument`` to ``DDSRECORDER``.
         - ``-d``, ``--debug``
         -
         -
 
     *   - Log Verbosity Argument
-        - Set the verbosity level so only log messages with equal or higher importance level are shown.
+        - Set the verbosity level so only log messages with equal |br|
+          or higher importance level are shown.
         - ``--log-verbosity``
         - ``info`` ``warning`` ``error``
         - ``warning``

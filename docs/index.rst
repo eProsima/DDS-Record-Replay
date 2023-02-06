@@ -21,8 +21,8 @@
    :numbered: 5
    :hidden:
 
-   Windows </rst/installation/windows.rst>
    Linux </rst/installation/linux.rst>
+   Windows </rst/installation/windows.rst>
    Docker Image </rst/installation/docker.rst>
 
 
@@ -38,8 +38,7 @@
    /rst/recording/user_interface/usage
    /rst/recording/user_interface/configuration
    /rst/recording/user_interface/user_manual_glossary
-   /rst/recording/tutorials/simple_example
-   /rst/recording/tutorials/ros_cloud
+   /rst/recording/tutorials/tutorials
 
 
 .. _index_developer_manual:

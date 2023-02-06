@@ -74,6 +74,6 @@ In order to know all the possible arguments supported by this tool, use the comm
 
 .. figure:: /rst/figures/shapesdemo_exec.png
 
-Please feel free to explore sections Tutorials and :ref:`Use Cases <ros_cloud>` for more
+Please feel free to explore section :ref:`Tutorials <tutorials_simple_example>` for more
 information on how to configure and set up a recorder, as well as to discover multiple scenarios where |ddsrecorder| may
 serve as a useful tool.
