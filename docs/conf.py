@@ -217,7 +217,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = PROJECT_NAME
-copyright = '2021, eProsima'
+copyright = '2023, eProsima'
 author = 'eProsima'
 
 # The version info for the project you're documenting, acts as replacement for
