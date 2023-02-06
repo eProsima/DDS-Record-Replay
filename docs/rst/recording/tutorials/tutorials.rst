@@ -11,5 +11,6 @@ This section will provide a collection of tutorials both on the use and applicat
 .. toctree::
     :maxdepth: 1
 
-    simple_example
+    basic_example
+    custom_config
     ros_cloud

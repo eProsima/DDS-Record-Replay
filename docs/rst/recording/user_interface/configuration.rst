@@ -20,6 +20,9 @@ DDS Recorder Configuration
 A |ddsrecorder| is configured by a *.yaml* configuration file.
 This *.yaml* file contains all the information regarding the |ddsrecorder| configuration, such as topics filtering configuration.
 
+Specs Configuration
+-------------------
+
 The YAML Configuration supports a ``specs`` **optional** tag that contains certain options related with the
 overall configuration of the DDS Recorder instance to run.
 The values available to configure are:

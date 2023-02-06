@@ -1,10 +1,10 @@
 .. include:: ../../exports/alias.include
 
-.. _tutorials_simple_example:
+.. _tutorials_basic_example:
 
-##############
-Simple Example
-##############
+###################
+Basic Configuration
+###################
 
 Configuration
 =============
@@ -32,4 +32,4 @@ In order to execute the ``DDS Recorder`` use the following command:
 
     ddsrecorder --config-path /ddsrecorder/resources/configurations/simple_configuration.yaml
 
-.. figure:: /rst/figures/simple_example.png
+.. figure:: /rst/figures/basic_example.png

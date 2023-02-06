@@ -15,7 +15,7 @@ Usage
     :depth: 1
 
 Starting Recording Application
----------------------------
+------------------------------
 
 |eddsrecorder| depends on |fastdds| ``fastrtps``, ``fastcdr`` and ``ddsrecorder`` libraries.
 In order to correctly execute the Recorder, make sure that ``fastrtps``, ``fastcdr`` and ``ddsrecorder`` are properly sourced.
@@ -38,7 +38,20 @@ To start |eddsrecorder| with a default configuration, enter:
 Stopping Recording Application
 ------------------------------
 
-To stop |eddsrecorder|, press Ctrl-c. |eddsrecorder| will perform a clean shutdown.
+SIGINT
+^^^^^^
+
+To stop |eddsrecorder|, press ``Ctrl-c``. |eddsrecorder| will perform a clean shutdown.
+
+SIGTERM
+^^^^^^^
+
+Write command ``kill <pid>`` in a different terminal, where ``<pid>`` is the id of the process running the DDS Router. Use ``ps`` or ``top`` programs to check the process ids.
+
+TIMEOUT
+^^^^^^^
+
+Setting a maximum amount of seconds that the application will work using argument ``--timeout`` will close the application once the time has expired.
 
 .. _user_interface_usage_application_arguments:
 
@@ -95,7 +108,7 @@ The |ddsrecorder| application supports several input arguments:
         - Enables the |ddsrecorder| logs so the execution can be |br|
           followed by internal debugging information. Sets |br|
           ``Log Verbosity Argument`` to ``info`` and |br|
-            ``Log Filter Argument`` to ``DDSRECORDER``.
+          ``Log Filter Argument`` to ``DDSRECORDER``.
         - ``-d``, ``--debug``
         -
         -
