@@ -259,8 +259,7 @@ and ``AllowedTopic2`` regardless of its data type.
 Domain Id
 ---------
 
-Tag ``domain`` configures the :term:`Domain Id` of a specific Participant.
-Be aware that some Participants (e.g. Discovery Servers) does not need a Domain Id configuration.
+Tag ``domain`` configures the :term:`Domain Id`.
 
 .. code-block:: yaml
 

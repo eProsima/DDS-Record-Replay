@@ -45,7 +45,7 @@ Let us block ``add_blocked_topics_list_here`` topic:
     :language: yaml
     :lines: 6-7
 
-The only configuration required for simple participants is the DDS ``domain`` identifier.
+Configure the DDS ``domain`` identifier.
 
 .. literalinclude:: ../../../../resources/configurations/conf-ddsrecorder.yaml
     :language: yaml

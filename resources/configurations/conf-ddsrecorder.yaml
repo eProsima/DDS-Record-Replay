@@ -6,7 +6,7 @@ allowlist:
 blocklist:
   - name: "add_blocked_topics_list_here"
 
-# Simple Participant domain
+# Domain ID
 domain: 100
 
 # Recorder output file
