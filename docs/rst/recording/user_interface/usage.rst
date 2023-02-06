@@ -1,4 +1,5 @@
 .. include:: ../../exports/alias.include
+.. include:: ../../../exports/roles.include
 
 .. _user_interface_usage:
 
@@ -51,8 +52,8 @@ The |ddsrecorder| application supports several input arguments:
 
     *   - Command
         - Description
+        - Option
         - Posible Values
-        - Value
         - Default Value
 
     *   - Help Argument
