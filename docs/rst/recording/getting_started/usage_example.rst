@@ -9,14 +9,18 @@ Example of usage
 This example will serve as a hands-on tutorial, aimed at introducing some of the key concepts and features that
 |eddsrecorder| has to offer.
 
-Running Fast DDS Publisher
-==========================
+Start ShapesDemo
+================
 
-Run the Fast DDS Type Introspection Publisher executing the following commands:
+`ShapesDemo <https://www.eprosima.com/index.php/products-all/eprosima-shapes-demo>`_ is an application that publishes
+and subscribes to shapes of different colors and sizes moving on a board. This is nothing more than a graphical tool to
+test the correctness of a specific DDS protocol implementation, as well as to prove interoperability with other
+implementations.
 
-.. code-block:: bash
+Let us launch a ShapesDemo instance and start publishing in topics ``Square`` with default settings.
 
-    ./dds/TypeIntrospectionExample/bin/TypeIntrospectionExample publisher -o
+.. figure:: /rst/figures/shapesdemo_publisher.png
+    :scale: 75 %
 
 Recorder configuration
 ======================
@@ -66,9 +70,10 @@ In order to know all the possible arguments supported by this tool, use the comm
 
 .. code-block:: bash
 
-    ddsrecorder     ddsrecorder --help` or `ddsrecorder -h
+    ddsrecorder --help or ddsrecorder -h
 
+.. figure:: /rst/figures/shapesdemo_exec.png
 
-Please feel free to explore sections Examples and :ref:`Use Cases <ros_cloud>` for more
+Please feel free to explore sections Tutorials and :ref:`Use Cases <ros_cloud>` for more
 information on how to configure and set up a recorder, as well as to discover multiple scenarios where |ddsrecorder| may
 serve as a useful tool.

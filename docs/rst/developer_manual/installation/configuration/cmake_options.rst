@@ -89,3 +89,13 @@ These options allow the developer to enable/disable certain *DDS Recorder* setti
           ``ON``
         - ``ON`` if ``Debug`` |br|
           ``OFF`` otherwise
+    *   - :class:`ASAN_BUILD`
+        - Activate address sanitizer build.
+        - ``OFF`` |br|
+          ``ON``
+        - ``OFF``
+    *   - :class:`TSAN_BUILD`
+        - Activate thread sanitizer build.
+        - ``OFF`` |br|
+          ``ON``
+        - ``OFF``

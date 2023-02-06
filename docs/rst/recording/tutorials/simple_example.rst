@@ -1,6 +1,6 @@
 .. include:: ../exports/alias.include
 
-.. _examples_simple_example:
+.. _tutorials_simple_example:
 
 ##############
 Simple Example

@@ -26,51 +26,22 @@
    Docker Image </rst/installation/docker.rst>
 
 
-.. _index_getting_started:
+.. _index_recording_application:
 
 .. toctree::
-   :caption: Getting Started
+   :caption: Recording application
    :maxdepth: 2
    :numbered: 5
    :hidden:
 
-   /rst/getting_started/project_overview
-   /rst/getting_started/usage_example
+   /rst/recording/getting_started/project_overview
+   /rst/recording/getting_started/usage_example
+   /rst/recording/user_interface/usage
+   /rst/recording/user_interface/configuration
+   /rst/recording/user_interface/user_manual_glossary
+   /rst/recording/tutorials/simple_example
+   /rst/recording/tutorials/ros_cloud
 
-
-.. _index_user_manual:
-
-.. toctree::
-   :caption: User Manual
-   :maxdepth: 2
-   :numbered: 5
-   :hidden:
-
-   /rst/user_manual/user_interface
-   Participant </rst/user_manual/participants/participant>
-   /rst/user_manual/configuration
-   /rst/user_manual/user_manual_glossary
-
-
-.. _index_examples:
-
-.. toctree::
-   :caption: Examples
-   :maxdepth: 2
-   :numbered: 5
-   :hidden:
-
-   /rst/examples/simple_example
-
-.. _index_use_cases:
-
-.. toctree::
-   :caption: Use Cases
-   :maxdepth: 2
-   :numbered: 5
-   :hidden:
-
-   /rst/use_cases/ros_cloud
 
 .. _index_developer_manual:
 

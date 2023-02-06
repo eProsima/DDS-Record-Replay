@@ -1,6 +1,6 @@
 .. include:: ../exports/alias.include
 
-.. _ros_cloud:
+.. _tutorials_ros_cloud:
 
 ##################
 ROS 2 and FoxGlove

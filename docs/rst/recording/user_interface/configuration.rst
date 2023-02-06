@@ -2,9 +2,9 @@
 
 .. _user_manual_configuration:
 
-##########################
-DDS Recorder Configuration
-##########################
+#############
+Configuration
+#############
 
 A |ddsrecorder| is configured by a *.yaml* configuration file.
 This *.yaml* file contains all the information regarding the |ddsrecorder| configuration, such as topics filtering
@@ -14,46 +14,6 @@ and :term:`Participants <Participant>` configurations.
     :local:
     :backlinks: none
     :depth: 2
-
-Configuration version
-=====================
-
-The YAML Configuration support a ``version`` value to identify the configuration version to parse the file.
-In future releases could be common to change the YAML format (some key words,
-fields, etc.).
-This value allow to keep using the same YAML file using an old configuration format, maintaining compatibility
-with future releases.
-
-.. list-table::
-    :header-rows: 1
-
-    *   - Configuration Versions
-        - String in ``version`` tag
-        - |ddsrecorder| activation release
-
-    *   - version 1.0
-        - ``v1.0``
-        - *v0.1.0*
-
-    *   - version 2.0
-        - ``v2.0``
-        - *v0.2.0*
-
-    *   - version 3.0
-        - ``v3.0``
-        - *v0.3.0*
-
-**Current configuration version is v3.0**.
-This is the configuration version that is described along this page.
-
-.. note::
-
-    The current default version when tag ``version`` is not set is *v1.0*.
-
-.. warning::
-
-    **Deprecation Warning**.
-    In future releases tag ``version`` will be mandatory.
 
 
 .. _thread_configuration:
@@ -295,56 +255,10 @@ and ``AllowedTopic2`` regardless of its data type.
       - name: "*"
         type: HelloWorld
 
-
-Participant Configuration
-=========================
-
-At the yaml base level, along with ``builtin-topics`` tag, there will be the tag ``participants``.
-``participants`` handles an array of :term:`Participant` configurations.
-Each Participant is identified by a unique :term:`Participant Name` and requires to set the ``kind`` of the Participant.
-There could be any number of Participants, and Participant kinds could be repeated.
-
-Each Participant has its specific configuration.
-Please, refer to :ref:`user_manual_participant_participant_kinds` in order to see each of the
-:term:`Participant Kinds<Participant Kind>` requirements.
-
-.. warning::
-
-    Do not configure two Participants in a way that they can communicate to each other (e.g. two Simple participants
-    in the same domain).
-    This will lead to an infinite feedback loop between each other.
-
-In the following configuration example, the |ddsrecorder| will create two
-:ref:`Simple Participants <user_manual_participants_simple>`, one for ``domain 0`` and one for ``domain 1``.
-The topics allowed in the two domains will start communicating to each other.
-Note that the communication is not P2P performed between the end-user DDS entities,
-i.e. the data must reach the |ddsrecorder| and this will forward the data.
-
-.. code-block:: yaml
-
-    participants:              # Tag to introduce the participants configurations array
-
-    ################
-
-      - name: Participant0     # Participant Name = Participant0
-        kind: local            # Participant Kind = simple
-        domain: 0              # DomainId = 0
-
-    ################
-
-      - name: my_custom_part   # Participant Name = my_custom_part
-        kind: simple           # Participant Kind = echo
-        domain: 1              # DomainId = 1
-
-The first Participant `Participant0` has Participant Name *Participant0* and is configured to be of the *simple*
-Participant Kind, and to communicate locally in domain 0.
-The second Participant has Participant Name *simple* and it is configured to be of the *simple* kind and to communicate
-locally with domain 1.
-
 .. _user_manual_configuration_domain_id:
 
 Domain Id
----------
+=========
 
 Tag ``domain`` configures the :term:`Domain Id` of a specific Participant.
 Be aware that some Participants (e.g. Discovery Servers) does not need a Domain Id configuration.
@@ -390,15 +304,6 @@ A complete example of all the configurations described on this page can be found
       - name: "rr/*"
       - name: "rq/*"
 
-
-    participants:
-
-    ####################
-
     # Simple DDS Participant in domain 3
 
-      - name: Participant0              # Participant Name = Participant0
-
-        kind: local                     # Participant Kind = local (= simple)
-
-        domain: 3                       # DomainId = 3
+    domain: 3                       # DomainId = 3
