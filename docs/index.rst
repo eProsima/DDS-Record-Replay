@@ -34,8 +34,7 @@
    :numbered: 5
    :hidden:
 
-   /rst/recording/getting_started/project_overview
-   /rst/recording/getting_started/usage_example
+   /rst/recording/getting_started/getting_started
    /rst/recording/user_interface/usage
    /rst/recording/user_interface/configuration
    /rst/recording/user_interface/user_manual_glossary
