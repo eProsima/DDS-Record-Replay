@@ -35,4 +35,4 @@ In order to execute the ``DDS Recorder`` use the following command:
 Visualizing with FoxGlove Studio
 ================================
 
-Open `FoxGlove Studio <https://studio.foxglove.dev/>_` with the given ``output.mcap`` file.
+Open `FoxGlove Studio <https://studio.foxglove.dev/>`_ with the given ``output.mcap`` file.

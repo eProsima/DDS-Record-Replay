@@ -276,9 +276,6 @@ A complete example of all the configurations described on this page can be found
 
 .. code-block:: yaml
 
-    # Version Latest
-    version: v3.0
-
     specs:
       threads: 10
       max-depth: 1000
@@ -317,6 +314,7 @@ For native types (Data Types that does not rely in other Data Types) this is eno
 However, for more complex types, it is required to use `TypeInformation` mechanism.
 In the Fast DDS `DomainParticipant` set the following QoS in order to send this information:
 
-.. code-block::
-  DomainParticipantQos pqos;
-  pqos.wire_protocol().builtin.typelookup_config.use_server = true;
+.. code-block:: c
+
+    DomainParticipantQos pqos;
+    pqos.wire_protocol().builtin.typelookup_config.use_server = true;
