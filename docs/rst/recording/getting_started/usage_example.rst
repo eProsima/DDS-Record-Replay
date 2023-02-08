@@ -22,9 +22,9 @@ Additionally, `ShapesDemo <https://www.eprosima.com/index.php/products-all/epros
 Also, ShapesDemo is already prepared to use DynamicTypes, which is requiered when using the DDS Recorder.
 Install it by following any of the methods described in the given links:
 
- * `Windows installation from binaries <https://eprosima-shapes-demo.readthedocs.io/en/latest/installation/windows_binaries.html>`_
- * `Linux installation from sources <https://eprosima-shapes-demo.readthedocs.io/en/latest/installation/linux_sources.html>`_
- * `Docker Image <https://eprosima-shapes-demo.readthedocs.io/en/latest/installation/docker_image.html>`_
+* `Windows installation from binaries <https://eprosima-shapes-demo.readthedocs.io/en/latest/installation/windows_binaries.html>`_
+* `Linux installation from sources <https://eprosima-shapes-demo.readthedocs.io/en/latest/installation/linux_sources.html>`_
+* `Docker Image <https://eprosima-shapes-demo.readthedocs.io/en/latest/installation/docker_image.html>`_
 
 Start ShapesDemo
 ================

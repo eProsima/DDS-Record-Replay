@@ -131,7 +131,9 @@ The |ddsrecorder| application supports several input arguments:
           or higher importance level |br|
           are shown.
         - ``--log-verbosity``
-        - ``info`` ``warning`` ``error``
+        - ``info`` |br|
+          ``warning`` |br|
+          ``error``
         - ``warning``
 
     *   - Log Filter Argument
