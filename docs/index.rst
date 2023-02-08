@@ -21,8 +21,8 @@
    :numbered: 5
    :hidden:
 
-   Linux </rst/installation/linux.rst>
    Windows </rst/installation/windows.rst>
+   Linux </rst/installation/linux.rst>
    Docker Image </rst/installation/docker.rst>
 
 

@@ -17,12 +17,13 @@ Usage
 Starting Recording Application
 ------------------------------
 
-|eddsrecorder| depends on |fastdds| ``fastrtps``, ``fastcdr`` and ``ddsrecorder`` libraries.
-In order to correctly execute the Recorder, make sure that ``fastrtps``, ``fastcdr`` and ``ddsrecorder`` are properly sourced.
+|eddsrecorder| depends on ``fastrtps``, ``fastcdr`` and ``ddsrouter`` libraries.
+In order to correctly execute the Recorder, make sure that ``fastrtps``, ``fastcdr`` and ``ddsrouter`` are properly sourced.
 
 .. code-block:: bash
 
     source <path-to-fastdds-installation>/install/setup.bash
+    source <path-to-ddsrouter-installation>/install/setup.bash
     source <path-to-ddsrecorder-installation>/install/setup.bash
 
 .. note::
@@ -70,14 +71,17 @@ The |ddsrecorder| application supports several input arguments:
         - Default Value
 
     *   - Help Argument
-        - It shows the usage information of the application.
+        - It shows the usage information |br|
+          of the application.
         - ``-h``, ``--help``
         -
         -
 
     *   - Version Argument
-        - It shows the current version of the DDS Recorder and |br|
-          the hash of the last commit of the compiled code.
+        - It shows the current version |br|
+          of the DDS Recorder and the hash |br|
+          of the last commit of the compiled |br|
+          code.
         - ``-v``, ``--version``
         -
         -
@@ -90,31 +94,37 @@ The |ddsrecorder| application supports several input arguments:
         - ``./DDS_RECORDER_CONFIGURATION.yaml``
 
     *   - Reload Timer
-        - The configuration file will be automatically reloaded |br|
-          according to the specified time period.
+        - The configuration file will be |br|
+          automatically reloaded according |br|
+          to the specified time period.
         - ``-r``, ``--reload-time``
         - Unsigned Integer
         - ``0``
 
     *   - Timeout Argument
-        - Set a maximum time while the application will be running. |br|
-          `0`` means that the application will run forever |br|
-          (until kill via signal).
+        - Set a maximum time while the |br|
+          application will be running. |br|
+          `0`` means that the application |br|
+          will run forever (until kill |br|
+          via signal).
         - ``-r``, ``--reload-time``
         - Unsigned Integer
         - ``0``
 
     *   - Debug Argument
-        - Enables the |ddsrecorder| logs so the execution can be |br|
-          followed by internal debugging information. Sets |br|
-          ``Log Verbosity Argument`` to ``info`` and |br|
-          ``Log Filter Argument`` to ``DDSRECORDER``.
+        - Enables the |ddsrecorder| logs |br|
+          so the execution can be followed |br|
+          by internal debugging information. |br|
+          Sets ``Log Verbosity Argument`` to |br|
+          ``info`` and ``Log Filter Argument`` |br|
+          to ``DDSRECORDER``.
         - ``-d``, ``--debug``
         -
         -
 
     *   - Log Verbosity Argument
-        - Set the verbosity level so only log messages with equal |br|
+        - Set the verbosity level so |br|
+          only log messages with equal |br|
           or higher importance level are shown.
         - ``--log-verbosity``
         - ``info`` ``warning`` ``error``

@@ -7,8 +7,8 @@
 Docker image
 ############
 
-.. note::
-    Docker image of |ddsrecorder| is under maintenance and will be updated soon in `eProsima Downloads website <https://www.eprosima.com/index.php/downloads-all>`_.
+.. warning::
+    Docker image of |ddsrecorder| will be updated soon in `eProsima Downloads website <https://www.eprosima.com/index.php/downloads-all>`_.
 
 eProsima distributes a Docker image of |ddsrecorder| with Ubuntu 22.04 as base image.
 This image launches an instance of |ddsrecorder| that is configured using a *YAML* configuration file provided by the user

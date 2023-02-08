@@ -306,8 +306,8 @@ A complete example of all the configurations described on this page can be found
 
     domain: 3                       # DomainId = 3
 
-Application DDS Configuration
-=============================
+Fast DDS Configuration
+======================
 
 Fast DDS does not send the Data Type information by default, it must be configured to do so.
 First of all, when generating the Types using Fast DDS Gen, the option `-typeobject` must be added in order to generate the needed code to fill the TypeObject data.
