@@ -113,12 +113,12 @@ The |ddsrecorder| application supports several input arguments:
         - ``0``
 
     *   - Debug Argument
-        - Enables the |ddsrecorder| logs |br|
-          so the execution can be followed |br|
-          by internal debugging  |br|
-          information. Sets |br|
-          ``Log Verbosity Argument`` to |br|
-          ``info`` and |br|
+        - Enables the |ddsrecorder| |br|
+          logs so the execution can be |br|
+          followed by internal |br|
+          debugging information. |br|
+          Sets ``Log Verbosity Argument`` |br|
+          to ``info`` and |br|
           ``Log Filter Argument`` |br|
           to ``DDSRECORDER``.
         - ``-d``, ``--debug``
