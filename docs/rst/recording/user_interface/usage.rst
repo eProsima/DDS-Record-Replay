@@ -73,7 +73,8 @@ The |ddsrecorder| application supports several input arguments:
     *   - Help Argument
         - It shows the usage information |br|
           of the application.
-        - ``-h``, ``--help``
+        - ``-h`` |br|
+          ``--help``
         -
         -
 
@@ -82,14 +83,16 @@ The |ddsrecorder| application supports several input arguments:
           of the DDS Recorder and the |br|
           hash of the last commit of |br|
           the compiled code.
-        - ``-v``, ``--version``
+        - ``-v`` |br|
+          ``--version``
         -
         -
 
 
     *   - Configuration File Argument
         - Configuration file path.
-        - ``-c``, ``--config-path``
+        - ``-c`` |br|
+          ``--config-path``
         -
         - ``./DDS_RECORDER_CONFIGURATION.yaml``
 
@@ -98,7 +101,8 @@ The |ddsrecorder| application supports several input arguments:
           automatically reloaded |br|
           according to the specified |br|
           time period.
-        - ``-r``, ``--reload-time``
+        - ``-r`` |br|
+          ``--reload-time``
         - Unsigned Integer
         - ``0``
 
@@ -108,7 +112,8 @@ The |ddsrecorder| application supports several input arguments:
           `0`` means that the application |br|
           will run forever (until kill |br|
           via signal).
-        - ``-r``, ``--reload-time``
+        - ``-r`` |br|
+          ``--reload-time``
         - Unsigned Integer
         - ``0``
 
@@ -121,7 +126,8 @@ The |ddsrecorder| application supports several input arguments:
           to ``info`` and |br|
           ``Log Filter Argument`` |br|
           to ``DDSRECORDER``.
-        - ``-d``, ``--debug``
+        - ``-d`` |br|
+          ``--debug``
         -
         -
 
