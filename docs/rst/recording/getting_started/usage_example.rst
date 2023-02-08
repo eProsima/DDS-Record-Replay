@@ -14,9 +14,9 @@ Prerequisites
 
 It is required to have |eddsrecorder| previously installed using one of the following installation methods:
 
-* :ref:`linux_binary_installation`
-* :ref:`linux_source_installation`
-* :ref:`docker_installation`
+* :ref:`installation_manual_windows`
+* :ref:`installation_manual_linux`
+* :ref:`docker`
 
 Additionally, `ShapesDemo <https://www.eprosima.com/index.php/products-all/eprosima-shapes-demo>`_ is required to publish and subscribe shapes of different colors and sizes.
 Also, ShapesDemo is already prepared to use DynamicTypes, which is requiered when using the DDS Recorder.

@@ -79,9 +79,9 @@ The |ddsrecorder| application supports several input arguments:
 
     *   - Version Argument
         - It shows the current version |br|
-          of the DDS Recorder and the hash |br|
-          of the last commit of the compiled |br|
-          code.
+          of the DDS Recorder and the |br|
+          hash of the last commit of |br|
+          the compiled code.
         - ``-v``, ``--version``
         -
         -
@@ -95,8 +95,9 @@ The |ddsrecorder| application supports several input arguments:
 
     *   - Reload Timer
         - The configuration file will be |br|
-          automatically reloaded according |br|
-          to the specified time period.
+          automatically reloaded |br|
+          according to the specified |br|
+          time period.
         - ``-r``, ``--reload-time``
         - Unsigned Integer
         - ``0``
@@ -114,9 +115,11 @@ The |ddsrecorder| application supports several input arguments:
     *   - Debug Argument
         - Enables the |ddsrecorder| logs |br|
           so the execution can be followed |br|
-          by internal debugging information. |br|
-          Sets ``Log Verbosity Argument`` to |br|
-          ``info`` and ``Log Filter Argument`` |br|
+          by internal debugging  |br|
+          information. Sets |br|
+          ``Log Verbosity Argument`` to |br|
+          ``info`` and |br|
+          ``Log Filter Argument`` |br|
           to ``DDSRECORDER``.
         - ``-d``, ``--debug``
         -
@@ -125,7 +128,8 @@ The |ddsrecorder| application supports several input arguments:
     *   - Log Verbosity Argument
         - Set the verbosity level so |br|
           only log messages with equal |br|
-          or higher importance level are shown.
+          or higher importance level |br|
+          are shown.
         - ``--log-verbosity``
         - ``info`` ``warning`` ``error``
         - ``warning``
