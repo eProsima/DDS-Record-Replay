@@ -38,7 +38,7 @@ Let us launch a ShapesDemo instance and start publishing in topics ``Square`` wi
 Recorder configuration
 ======================
 
-DDS Recorder can runs with a configuration settings. This default configuration records all messages of all DDS Topics found in DDS Domain ``0`` in the ``output_YYYY-MM-DD-DD_hh-mm-ss.mcap`` file.
+DDS Recorder runs with default configuration settings. This default configuration records all messages of all DDS Topics found in DDS Domain ``0`` in the ``output_YYYY-MM-DD-DD_hh-mm-ss.mcap`` file.
 
 Additionally, it is possible to change the default configuration parameters by means of a YAML configuration file.
 

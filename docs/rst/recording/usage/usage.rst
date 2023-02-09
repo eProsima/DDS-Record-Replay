@@ -18,7 +18,7 @@ Starting Recording Application
 ------------------------------
 
 |eddsrecorder| depends on ``fastrtps``, ``fastcdr`` and ``ddsrouter`` libraries.
-In order to correctly execute the Recorder, make sure that ``fastrtps``, ``fastcdr`` and ``ddsrouter`` are properly sourced.
+In order to correctly execute the recorder, make sure that ``fastrtps``, ``fastcdr`` and ``ddsrouter`` are properly sourced.
 
 .. code-block:: bash
 
@@ -28,7 +28,7 @@ In order to correctly execute the Recorder, make sure that ``fastrtps``, ``fastc
 
 .. note::
 
-    If Fast DDS and DDS Recorder have been installed in the system, these libraries would be sourced by default.
+    If Fast DDS, DDS Router and DDS Recorder have been installed in the system, these libraries would be sourced by default.
 
 To start |eddsrecorder| with a default configuration, enter:
 
