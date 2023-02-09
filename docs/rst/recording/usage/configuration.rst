@@ -1,6 +1,6 @@
 .. include:: ../../exports/alias.include
 
-.. _user_interface_configuration:
+.. _usage_configuration:
 
 #############
 Configuration
@@ -19,6 +19,51 @@ DDS Recorder Configuration
 
 A |ddsrecorder| is configured by a *.yaml* configuration file.
 This *.yaml* file contains all the information regarding the |ddsrecorder| configuration, such as topics filtering configuration.
+
+Output File
+-----------
+
+The recorder output file does support the folllowing configurations:
+
+Extension
+^^^^^^^^^
+Tag ``extension`` configures the file extension for the result file.
+
+Path
+^^^^
+Tag ``path`` configures the path to save the result file.
+
+Filename
+^^^^^^^^
+Tag ``filename`` configures the name of the result file.
+
+Use-timestamp
+^^^^^^^^^^^^^
+The entry ``use-timestamp`` determines whether to add or not the timestamp to the result file name.
+
+.. list-table::
+    :header-rows: 1
+
+    *   - File entries
+        - Data type
+        - Default value
+
+    *   - ``extension``
+        - ``string``
+        - ``.mcap``
+
+    *   - ``path``
+        - ``string``
+        - ``.``
+
+    *   - ``filename``
+        - ``string``
+        -
+
+    *   - ``use-timestamp``
+        - ``bool``
+        - ``true``
+
 
 Specs Configuration
 -------------------
@@ -257,7 +302,7 @@ and ``AllowedTopic2`` regardless of its data type.
       - name: "*"
         type: HelloWorld
 
-.. _user_interface_configuration_domain_id:
+.. _usage_configuration_domain_id:
 
 Domain Id
 ---------
@@ -269,7 +314,7 @@ Tag ``domain`` configures the :term:`Domain Id`.
     domain: 101
 
 
-.. _user_interface_configuration_general_example:
+.. _usage_configuration_general_example:
 
 General Example
 ---------------
@@ -282,29 +327,23 @@ A complete example of all the configurations described on this page can be found
       threads: 10
       max-depth: 1000
 
-    # Relay topic rt/chatter and type std_msgs::msg::dds_::String_
-    # Relay topic HelloWorldTopic and type HelloWorld
+    # Allowed topics
+    allowlist:
+      - name: "*"
 
-    builtin-topics:
-
-      - name: rt/chatter
-        type: std_msgs::msg::dds_::String_
-
-      - name: HelloWorldTopic
-        type: HelloWorld
-        qos:
-          reliability: true
-          durability: true
-
-    # Do not allow ROS2 services
-
+    # Do not allow ROS 2 topics
     blocklist:
       - name: "rr/*"
       - name: "rq/*"
 
-    # Simple DDS Participant in domain 3
+    # Domain Id
+    domain: 3
 
-    domain: 3                       # DomainId = 3
+    # Recorder output file
+    extension: ".mcap"
+    path: "."
+    filename: "output"
+    use-timestamp: true
 
 Fast DDS Configuration
 ======================

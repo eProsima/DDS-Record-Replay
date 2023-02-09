@@ -35,9 +35,9 @@
    :hidden:
 
    /rst/recording/getting_started/getting_started
-   /rst/recording/user_interface/usage
-   /rst/recording/user_interface/configuration
-   /rst/recording/user_interface/user_manual_glossary
+   /rst/recording/usage/usage
+   /rst/recording/usage/configuration
+   /rst/recording/usage/user_manual_glossary
    /rst/recording/tutorials/tutorials
 
 

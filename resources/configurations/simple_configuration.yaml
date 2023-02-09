@@ -2,4 +2,4 @@
 domain: 0
 
 # Recorder output file
-filename: "output"    # Required
+filename: "output"

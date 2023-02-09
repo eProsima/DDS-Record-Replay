@@ -19,7 +19,7 @@ It is required to have |eddsrecorder| previously installed using one of the foll
 * :ref:`docker`
 
 Additionally, `ShapesDemo <https://www.eprosima.com/index.php/products-all/eprosima-shapes-demo>`_ is required to publish and subscribe shapes of different colors and sizes.
-Also, ShapesDemo is already prepared to use DynamicTypes, which is requiered when using the DDS Recorder.
+ShapesDemo application is already prepared to use Fast DDS DynamicTypes, which is required when using the DDS Recorder.
 Install it by following any of the methods described in the given links:
 
 * `Windows installation from binaries <https://eprosima-shapes-demo.readthedocs.io/en/latest/installation/windows_binaries.html>`_
@@ -38,12 +38,12 @@ Let us launch a ShapesDemo instance and start publishing in topics ``Square`` wi
 Recorder configuration
 ======================
 
-A |ddsrecorder| requires one YAML configuration file as the operation of this application is configured via this YAML configuration file.
-|ddsrecorder| provide a configutation file named ``DDS_RECORDER_CONFIGURATION.yaml`` used by default if no configuration file is provided as argument, that must be in the same directory where the application is executed.
-Therefore, the only argument required in the YAML config file right now is the ``filename`` which will be fixed to ``output`` by default.
+DDS Recorder can runs with a configuration settings. This default configuration records all messages of all DDS Topics found in DDS Domain ``0`` in the ``output_YYYY-MM-DD-DD_hh-mm-ss.mcap`` file.
+
+Additionally, it is possible to change the default configuration parameters by means of a YAML configuration file.
 
 .. note::
-    Please refer to :ref:`Configuration <user_interface_configuration>` for more information on how to configure a recorder.
+    Please refer to :ref:`Configuration <usage_configuration>` for more information on how to configure a DDS Recorder.
 
 Recorder execution
 ==================
@@ -58,7 +58,7 @@ In order to know all the possible arguments supported by this tool, use the comm
 
 .. code-block:: bash
 
-    ddsrecorder --help or ddsrecorder -h
+    ddsrecorder --help
 
 .. figure:: /rst/figures/shapesdemo_exec.png
 

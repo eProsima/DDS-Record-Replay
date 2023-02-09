@@ -1,7 +1,7 @@
 .. include:: ../../exports/alias.include
 .. include:: ../../exports/roles.include
 
-.. _user_interface_usage:
+.. _usage_usage:
 
 #####
 Usage
@@ -34,7 +34,7 @@ To start |eddsrecorder| with a default configuration, enter:
 
 .. code-block:: bash
 
-    ddsrecorder --config-path /ddsrecorder/resources/configurations/conf-ddsrecorder.yaml
+    ddsrecorder
 
 Stopping Recording Application
 ------------------------------
@@ -42,7 +42,7 @@ Stopping Recording Application
 SIGINT
 ^^^^^^
 
-To stop |eddsrecorder|, press ``Ctrl-c``. |eddsrecorder| will perform a clean shutdown.
+To stop |eddsrecorder|, press ``Ctrl+C``. |eddsrecorder| will perform a clean shutdown.
 
 SIGTERM
 ^^^^^^^
@@ -54,7 +54,7 @@ TIMEOUT
 
 Setting a maximum amount of seconds that the application will work using argument ``--timeout`` will close the application once the time has expired.
 
-.. _user_interface_usage_application_arguments:
+.. _usage_usage_application_arguments:
 
 Recording Service Command-Line Parameters
 -----------------------------------------
@@ -70,7 +70,7 @@ The |ddsrecorder| application supports several input arguments:
         - Posible Values
         - Default Value
 
-    *   - Help Argument
+    *   - Help
         - It shows the usage information |br|
           of the application.
         - ``-h`` |br|
@@ -78,7 +78,7 @@ The |ddsrecorder| application supports several input arguments:
         -
         -
 
-    *   - Version Argument
+    *   - Version
         - It shows the current version |br|
           of the DDS Recorder and the |br|
           hash of the last commit of |br|
@@ -89,7 +89,7 @@ The |ddsrecorder| application supports several input arguments:
         -
 
 
-    *   - Configuration File Argument
+    *   - Configuration File
         - Configuration file path.
         - ``-c`` |br|
           ``--config-path``
@@ -106,7 +106,7 @@ The |ddsrecorder| application supports several input arguments:
         - Unsigned Integer
         - ``0``
 
-    *   - Timeout Argument
+    *   - Timeout
         - Set a maximum time while the |br|
           application will be running. |br|
           `0`` means that the application |br|
@@ -117,21 +117,21 @@ The |ddsrecorder| application supports several input arguments:
         - Unsigned Integer
         - ``0``
 
-    *   - Debug Argument
+    *   - Debug
         - Enables the |ddsrecorder| |br|
           logs so the execution can be |br|
           followed by internal |br|
           debugging information. |br|
-          Sets ``Log Verbosity Argument`` |br|
+          Sets ``Log Verbosity`` |br|
           to ``info`` and |br|
-          ``Log Filter Argument`` |br|
+          ``Log Filter`` |br|
           to ``DDSRECORDER``.
         - ``-d`` |br|
           ``--debug``
         -
         -
 
-    *   - Log Verbosity Argument
+    *   - Log Verbosity
         - Set the verbosity level so |br|
           only log messages with equal |br|
           or higher importance level |br|
@@ -142,7 +142,7 @@ The |ddsrecorder| application supports several input arguments:
           ``error``
         - ``warning``
 
-    *   - Log Filter Argument
+    *   - Log Filter
         - Set a regex string as filter.
         - ``--log-filter``
         - String

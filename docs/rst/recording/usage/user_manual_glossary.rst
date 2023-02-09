@@ -1,6 +1,6 @@
 .. include:: ../../exports/alias.include
 
-.. _user_interface_glossary:
+.. _usage_glossary:
 
 ############
 Nomenclature
@@ -10,9 +10,10 @@ Nomenclature
 DDS Recorder nomenclature
 =========================
 
-.. note::
-    This section is under maintenance and will be updated soon.
+.. glossary::
 
+    MCAP
+        Modular container file format for heterogeneous timestamped data.
 
 DDS nomenclature
 ================
