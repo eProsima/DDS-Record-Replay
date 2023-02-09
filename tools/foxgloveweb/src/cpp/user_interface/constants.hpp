@@ -13,22 +13,20 @@
 // limitations under the License.
 
 /**
- * @file schema.hpp
+ * @file constants.hpp
+ *
+ * This file contains constant values common for the whole project
  */
 
 #pragma once
 
-#include <fastrtps/types/DynamicTypePtr.h>
-
 namespace eprosima {
-namespace ddsrecorder {
-namespace participants {
-namespace detail {
+namespace foxgloveweb {
+namespace ui {
 
-std::string generate_dyn_type_schema(
-        const fastrtps::types::DynamicType_ptr& dynamic_type);
+//! Default Foxgloveweb Websocket configuration file
+constexpr const char* DEFAULT_CONFIGURATION_FILE_NAME("FOXGLOVE_WEBSOCKET_CONFIGURATION.yaml");
 
-} /* namespace detail */
-} /* namespace participants */
-} /* namespace ddsrecorder */
+} /* namespace ui */
+} /* namespace foxgloveweb */
 } /* namespace eprosima */

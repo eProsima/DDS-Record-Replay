@@ -28,7 +28,7 @@ using namespace eprosima::ddsrouter::participants;
 
 RecorderParticipantConfiguration::RecorderParticipantConfiguration(
         const std::string& file_name,
-        const std::string& path /* = "./" */,
+        const std::string& path /* = "." */,
         const std::string& extension /* = ".mcap" */,
         bool use_timestamp /* = true */) noexcept
     : ParticipantConfiguration(file_name, false)
@@ -44,7 +44,7 @@ std::string RecorderParticipantConfiguration::file_name() const noexcept
 
 std::string RecorderParticipantConfiguration::cat_file_name_(
         const std::string& file_name,
-        const std::string& path /* = "./" */,
+        const std::string& path /* = "." */,
         const std::string& extension /* = ".mcap" */,
         bool use_timestamp /* = true */) noexcept
 {

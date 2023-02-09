@@ -13,28 +13,26 @@
 // limitations under the License.
 
 /**
- * @file utils.hpp
+ * @file ProcessReturnCode.hpp
+ *
  */
 
 #pragma once
 
-#include <string>
-
-#include <fastrtps/types/DynamicTypePtr.h>
-#include <fastrtps/types/TypeObject.h>
-
 namespace eprosima {
-namespace ddsrecorder {
-namespace participants {
-namespace detail {
+namespace foxgloveweb {
+namespace ui {
 
-const fastrtps::types::TypeObject* type_object_from_name(
-        const std::string& type_name);
+enum class ProcessReturnCode : int
+{
+    success = 0,
+    help_argument = 1,
+    version_argument = 2,
+    incorrect_argument = 10,
+    required_argument_failed = 11,
+    execution_failed = 20,
+};
 
-const fastrtps::types::DynamicType_ptr dynamic_type_from_name(
-        const std::string& type_name);
-
-} /* namespace detail */
-} /* namespace participants */
-} /* namespace ddsrecorder */
+} /* namespace ui */
+} /* namespace foxgloveweb */
 } /* namespace eprosima */

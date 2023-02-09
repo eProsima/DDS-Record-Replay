@@ -13,28 +13,27 @@
 # limitations under the License.
 
 ###############################################################################
-# Set settings for project ddsrecorder_participants
+# Set settings for project foxgloveweb_yaml
 ###############################################################################
 
 set(MODULE_NAME
-    ddsrecorder_participants)
+    foxgloveweb_yaml)
 
 set(MODULE_SUMMARY
-    "DDS Recorder Participants implementation.")
+    "C++ library to create a Foxglove Websocket configuration from a YAML.")
 
 set(MODULE_FIND_PACKAGES
+    yaml-cpp
     fastcdr
     fastrtps
     cpp_utils
-    ddsrouter_core)
+    ddsrouter_core
+    ddsrouter_participants
+    ddsrouter_yaml
+    foxgloveweb_participants)
 
-set(MODULE_THIRDPARTY_HEADERONLY
-    mcap)
-
-set(fastrtps_MINIMUM_VERSION "2.8")
+set(ddsrouter_core_MINIMUM_VERSION "1.0")
 
 set(MODULE_DEPENDENCIES
-    lz4
-    zstd
     $<$<BOOL:${WIN32}>:iphlpapi$<SEMICOLON>Shlwapi>
     ${MODULE_FIND_PACKAGES})

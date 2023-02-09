@@ -13,27 +13,20 @@
 // limitations under the License.
 
 /**
- * @file schema.hpp
+ * @file yaml_configuration_tags.hpp
  */
 
 #pragma once
 
-#include <fastrtps/types/DynamicTypePtr.h>
+#include <set>
+#include <string>
 
 namespace eprosima {
-namespace ddsrecorder {
-namespace participants {
-namespace detail {
+namespace foxgloveweb {
+namespace yaml {
 
-/**
- * @brief Generate schema strings for types of IntrospectionHelloWorldExample types.
- *
- * @note this is an old Mock implementation for testing only.
- */
-std::string generate_dyn_type_schema_mock(
-        const fastrtps::types::DynamicType_ptr& dynamic_type);
+// Foxglove Websocket related tags
 
-} /* namespace detail */
-} /* namespace participants */
-} /* namespace ddsrecorder */
+} /* namespace yaml */
+} /* namespace foxgloveweb */
 } /* namespace eprosima */

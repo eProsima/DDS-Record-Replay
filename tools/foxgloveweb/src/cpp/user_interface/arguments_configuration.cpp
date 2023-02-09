@@ -29,7 +29,7 @@
 #include "arguments_configuration.hpp"
 
 namespace eprosima {
-namespace ddsrecorder {
+namespace foxgloveweb {
 namespace ui {
 
 const option::Descriptor usage[] = {
@@ -140,7 +140,7 @@ const option::Descriptor usage[] = {
         Arg::String,
         "  \t--log-filter\t  \t" \
         "Set a Regex Filter to filter by category the info and warning log entries. " \
-        "[Default = \"(DDSROUTER|DDSRECORDER)\"]. "
+        "[Default = \"(DDSROUTER|FOXGLOVEWEB)\"]. "
     },
 
     {
@@ -165,7 +165,7 @@ const option::Descriptor usage[] = {
 
 void print_version()
 {
-    std::cout << "DDSRecorder prototype" << std::endl;
+    std::cout << "TODO" << std::endl;
 }
 
 ProcessReturnCode parse_arguments(
@@ -217,7 +217,7 @@ ProcessReturnCode parse_arguments(
         // Unknown args provided
         if (parse.nonOptionsCount())
         {
-            logError(DDSRECORDER_ARGS, "ERROR: Unknown argument: <" << parse.nonOption(0) << ">." );
+            logError(FOXGLOVEWEB_ARGS, "ERROR: Unknown argument: <" << parse.nonOption(0) << ">." );
             option::printUsage(fwrite, stdout, usage, columns);
             return ProcessReturnCode::incorrect_argument;
         }
@@ -249,7 +249,7 @@ ProcessReturnCode parse_arguments(
                     break;
 
                 case optionIndex::ACTIVATE_DEBUG:
-                    log_filter = "DDSRECORDER";
+                    log_filter = "FOXGLOVEWEB";
                     log_verbosity = eprosima::fastdds::dds::Log::Kind::Info;
                     break;
 
@@ -266,7 +266,7 @@ ProcessReturnCode parse_arguments(
                     break;
 
                 case optionIndex::UNKNOWN_OPT:
-                    logError(DDSRECORDER_ARGS, opt << " is not a valid argument.");
+                    logError(FOXGLOVEWEB_ARGS, opt << " is not a valid argument.");
                     option::printUsage(fwrite, stdout, usage, columns);
                     return ProcessReturnCode::incorrect_argument;
                     break;
@@ -292,7 +292,7 @@ option::ArgStatus Arg::Unknown(
     if (msg)
     {
         logError(
-            DDSROUTER_ARGS,
+            FOXGLOVEWEB_ARGS,
             "Unknown option '" << option << "'. Use -h to see this executable possible arguments.");
     }
     return option::ARG_ILLEGAL;
@@ -309,7 +309,7 @@ option::ArgStatus Arg::Required(
 
     if (msg)
     {
-        logError(DDSRECORDER_ARGS, "Option '" << option << "' required.");
+        logError(FOXGLOVEWEB_ARGS, "Option '" << option << "' required.");
     }
     return option::ARG_ILLEGAL;
 }
@@ -329,7 +329,7 @@ option::ArgStatus Arg::Numeric(
 
     if (msg)
     {
-        logError(DDSRECORDER_ARGS, "Option '" << option << "' requires a numeric argument.");
+        logError(FOXGLOVEWEB_ARGS, "Option '" << option << "' requires a numeric argument.");
     }
     return option::ARG_ILLEGAL;
 }
@@ -349,7 +349,7 @@ option::ArgStatus Arg::Float(
 
     if (msg)
     {
-        logError(DDSRECORDER_ARGS, "Option '" << option << "' requires a float argument.");
+        logError(FOXGLOVEWEB_ARGS, "Option '" << option << "' requires a float argument.");
     }
     return option::ARG_ILLEGAL;
 }
@@ -364,7 +364,7 @@ option::ArgStatus Arg::String(
     }
     if (msg)
     {
-        logError(DDSRECORDER_ARGS, "Option '" << option << "' requires a text argument.");
+        logError(FOXGLOVEWEB_ARGS, "Option '" << option << "' requires a text argument.");
     }
     return option::ARG_ILLEGAL;
 }
@@ -383,7 +383,7 @@ option::ArgStatus Arg::Readable_File(
     }
     if (msg)
     {
-        logError(DDSRECORDER_ARGS, "Option '" << option << "' requires an existing readable file as argument.");
+        logError(FOXGLOVEWEB_ARGS, "Option '" << option << "' requires an existing readable file as argument.");
     }
     return option::ARG_ILLEGAL;
 }
@@ -404,7 +404,7 @@ option::ArgStatus Arg::Valid_Options(
     {
         if (msg)
         {
-            logError(DDSRECORDER_ARGS, "Option '" << option.name << "' requires a text argument.");
+            logError(FOXGLOVEWEB_ARGS, "Option '" << option.name << "' requires a text argument.");
         }
         return option::ARG_ILLEGAL;
     }
@@ -423,7 +423,7 @@ option::ArgStatus Arg::Valid_Options(
         }
         error_msg << "}.";
 
-        logError(DDSRECORDER_ARGS, error_msg);
+        logError(FOXGLOVEWEB_ARGS, error_msg);
     }
 
     return option::ARG_ILLEGAL;
@@ -438,5 +438,5 @@ std::ostream& operator <<(
 }
 
 } /* namespace ui */
-} /* namespace ddsrecorder */
+} /* namespace foxgloveweb */
 } /* namespace eprosima */

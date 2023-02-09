@@ -37,16 +37,16 @@
 #include <ddsrouter_core/participants/participant/auxiliar/SchemaParticipant.hpp>
 #include <ddsrouter_core/participants/participant/rtps/DynTypesParticipant.hpp>
 
-#include <ddsrecorder_participants/auxiliar/mcap/McapHandler.hpp>
+#include <foxgloveweb_participants/auxiliar/foxglove_ws/FoxgloveWsHandler.hpp>
 
-#include <ddsrecorder_yaml/YamlReaderConfiguration.hpp>
+#include <foxgloveweb_yaml/YamlReaderConfiguration.hpp>
 
 #include "user_interface/constants.hpp"
 #include "user_interface/arguments_configuration.hpp"
 #include "user_interface/ProcessReturnCode.hpp"
 
 using namespace eprosima::ddsrouter;
-using namespace eprosima::ddsrecorder;
+using namespace eprosima::foxgloveweb;
 
 int main(
         int argc,
@@ -62,7 +62,7 @@ int main(
     eprosima::utils::Duration_ms timeout = 0;
 
     // Debug options
-    std::string log_filter = "(DDSROUTER|DDSRECORDER)";
+    std::string log_filter = "(DDSROUTER|FOXGLOVEWEB)";
     eprosima::fastdds::dds::Log::Kind log_verbosity = eprosima::fastdds::dds::Log::Kind::Warning;
 
     // Parse arguments
@@ -88,7 +88,7 @@ int main(
         file_path = ui::DEFAULT_CONFIGURATION_FILE_NAME;
 
         logUser(
-            DDSRECORDER_EXECUTION,
+            FOXGLOVEWEB_EXECUTION,
             "Not configuration file given, using default file " << file_path << ".");
     }
 
@@ -97,12 +97,12 @@ int main(
     if (!is_file_accessible(file_path.c_str(), eprosima::utils::FileAccessMode::read))
     {
         logError(
-            DDSRECORDER_ARGS,
+            FOXGLOVEWEB_ARGS,
             "File '" << file_path << "' does not exist or it is not accessible.");
         return static_cast<int>(ui::ProcessReturnCode::required_argument_failed);
     }
 
-    logUser(DDSRECORDER_EXECUTION, "Starting DDS Recorder execution.");
+    logUser(FOXGLOVEWEB_EXECUTION, "Starting Foxglove Websocket execution.");
 
     // Debug
     {
@@ -120,13 +120,13 @@ int main(
         // in non debug or with LOG_NO_INFO=ON.
         // This is the easiest way to allow to see Warnings and Errors from Fast DDS.
         // Change it when Log Module is independent and with more extensive API.
-        // eprosima::utils::Log::SetCategoryFilter(std::regex("(DDSROUTER|DDSRECORDER)"));
+        // eprosima::utils::Log::SetCategoryFilter(std::regex("(DDSROUTER|FOXGLOVEWEB)"));
     }
 
     // Encapsulating execution in block to erase all memory correctly before closing process
     try
     {
-        // Create a multiple event handler that handles all events that make the recorder stop
+        // Create a multiple event handler that handles all events that make the application stop
         eprosima::utils::event::MultipleEventHandler close_handler;
 
         // First of all, create signal handler so SIGINT and SIGTERM do not break the program while initializing
@@ -149,10 +149,10 @@ int main(
         }
 
         /////
-        // DDS Recorder Initialization
+        // Foxglove Websocket Initialization
 
         // Load configuration from YAML
-        eprosima::ddsrecorder::yaml::Configuration configuration(file_path);
+        eprosima::foxgloveweb::yaml::Configuration configuration(file_path);
         core::configuration::DDSRouterConfiguration router_configuration = configuration.configuration;
 
         // Create Payload Pool
@@ -168,9 +168,9 @@ int main(
             std::make_shared<eprosima::ddsrouter::participants::rtps::DynTypesParticipant>(configuration.simple_configuration, payload_pool, discovery_database);
         dyn_participant->init();
 
-        // Create Recorder Participant
-        std::shared_ptr<eprosima::ddsrouter::participants::SchemaParticipant> recorder_participant =
-            std::make_shared<eprosima::ddsrouter::participants::SchemaParticipant>(configuration.recorder_configuration, payload_pool, discovery_database, std::make_shared<eprosima::ddsrecorder::participants::McapHandler>(configuration.recorder_configuration->file_name().c_str()));
+        // Create Foxglove Websocket Participant
+        std::shared_ptr<eprosima::ddsrouter::participants::SchemaParticipant> foxglove_websocket_participant =
+            std::make_shared<eprosima::ddsrouter::participants::SchemaParticipant>(configuration.foxglove_ws_configuration, payload_pool, discovery_database, std::make_shared<eprosima::foxgloveweb::participants::FoxgloveWsHandler>());
 
         // Create and populate Participant Database
         std::shared_ptr<core::ParticipantsDatabase> participant_database =
@@ -182,12 +182,11 @@ int main(
             dyn_participant
         );
         participant_database->add_participant(
-            // recorder_participant->id(), //TODO: this (as well as configuration id) is always "output"
-            "RecorderParticipant",
-            recorder_participant
+            foxglove_websocket_participant->id(),
+            foxglove_websocket_participant
         );
 
-        // Create DDS Recorder
+        // Create router
         core::DDSRouter router(
             router_configuration,
             discovery_database,
@@ -205,17 +204,17 @@ int main(
                     (std::string file_name)
                 {
                     logUser(
-                        DDSRECORDER_EXECUTION,
+                        FOXGLOVEWEB_EXECUTION,
                         "FileWatcher notified changes in file " << file_name << ". Reloading configuration");
 
                     try
                     {
-                        eprosima::ddsrecorder::yaml::Configuration new_configuration(file_path);
+                        eprosima::foxgloveweb::yaml::Configuration new_configuration(file_path);
                         router.reload_configuration(new_configuration.configuration);
                     }
                     catch (const std::exception& e)
                     {
-                        logWarning(DDSRECORDER_EXECUTION,
+                        logWarning(FOXGLOVEWEB_EXECUTION,
                                 "Error reloading configuration file " << file_name << " with error: " << e.what());
                     }
                 };
@@ -239,17 +238,17 @@ int main(
                         ()
                     {
                         logUser(
-                            DDSRECORDER_EXECUTION,
+                            FOXGLOVEWEB_EXECUTION,
                             "Periodic Timer raised. Reloading configuration from file " << file_path << ".");
 
                         try
                         {
-                            eprosima::ddsrecorder::yaml::Configuration new_configuration(file_path);
+                            eprosima::foxgloveweb::yaml::Configuration new_configuration(file_path);
                             router.reload_configuration(new_configuration.configuration);
                         }
                         catch (const std::exception& e)
                         {
-                            logWarning(DDSRECORDER_EXECUTION,
+                            logWarning(FOXGLOVEWEB_EXECUTION,
                                     "Error reloading configuration file " << file_path << " with error: " << e.what());
                         }
                     };
@@ -258,17 +257,17 @@ int main(
                             reload_time);
         }
 
-        // Start Recorder
+        // Start Foxglove Websocket
         router.start();
 
-        logUser(DDSRECORDER_EXECUTION, "DDS Recorder running.");
+        logUser(FOXGLOVEWEB_EXECUTION, "Foxglove Websocket running.");
 
         // Wait until signal arrives
         close_handler.wait_for_event();
 
-        logUser(DDSRECORDER_EXECUTION, "Stopping DDS Recorder.");
+        logUser(FOXGLOVEWEB_EXECUTION, "Stopping Foxglove Websocket.");
 
-        // Before stopping the Recorder erase event handlers that reload configuration
+        // Before stopping the Foxglove Websocket erase event handlers that reload configuration
         if (periodic_handler)
         {
             periodic_handler.reset();
@@ -279,28 +278,28 @@ int main(
             file_watcher_handler.reset();
         }
 
-        // Stop Recorder
+        // Stop Foxglove Websocket
         router.stop();
 
-        logUser(DDSRECORDER_EXECUTION, "DDS Recorder stopped correctly.");
+        logUser(FOXGLOVEWEB_EXECUTION, "Foxglove Websocket stopped correctly.");
     }
     catch (const eprosima::utils::ConfigurationException& e)
     {
-        logError(DDSRECORDER_ERROR,
-                "Error Loading DDS Recorder Configuration from file " << file_path <<
+        logError(FOXGLOVEWEB_ERROR,
+                "Error Loading Foxglove Websocket Configuration from file " << file_path <<
                 ". Error message:\n " <<
                 e.what());
         return static_cast<int>(ui::ProcessReturnCode::execution_failed);
     }
     catch (const eprosima::utils::InitializationException& e)
     {
-        logError(DDSRECORDER_ERROR,
-                "Error Initializing DDS Recorder. Error message:\n " <<
+        logError(FOXGLOVEWEB_ERROR,
+                "Error Initializing Foxglove Websocket. Error message:\n " <<
                 e.what());
         return static_cast<int>(ui::ProcessReturnCode::execution_failed);
     }
 
-    logUser(DDSRECORDER_EXECUTION, "Finishing DDS Recorder execution correctly.");
+    logUser(FOXGLOVEWEB_EXECUTION, "Finishing Foxglove Websocket execution correctly.");
 
     // Force print every log before closing
     eprosima::utils::Log::Flush();

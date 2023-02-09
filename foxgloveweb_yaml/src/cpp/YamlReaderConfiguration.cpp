@@ -28,16 +28,14 @@
 #include <ddsrouter_yaml/YamlManager.hpp>
 #include <ddsrouter_yaml/YamlReader.hpp>
 
-#include <ddsrecorder_participants/configuration/RecorderParticipantConfiguration.hpp>
-#include <ddsrecorder_yaml/yaml_configuration_tags.hpp>
+#include <foxgloveweb_yaml/yaml_configuration_tags.hpp>
 
-#include <ddsrecorder_yaml/YamlReaderConfiguration.hpp>
+#include <foxgloveweb_yaml/YamlReaderConfiguration.hpp>
 
 namespace eprosima {
-namespace ddsrecorder {
+namespace foxgloveweb {
 namespace yaml {
 
-using namespace eprosima::ddsrecorder::participants;
 using namespace eprosima::ddsrouter::core;
 using namespace eprosima::ddsrouter::participants;
 using namespace eprosima::ddsrouter::yaml;
@@ -82,7 +80,7 @@ void Configuration::load_ddsrouter_configuration_(
         /////
         // Create Simple Participant Configuration
         simple_configuration = std::make_shared<SimpleParticipantConfiguration>(
-                "SimpleRecorderParticipant",
+                "SimpleFoxgloveParticipant",
                 false,
                 0u);
 
@@ -93,41 +91,10 @@ void Configuration::load_ddsrouter_configuration_(
         }
 
         /////
-        // Get optional file path
-        std::string path = ".";
-        if (YamlReader::is_tag_present(yml, RECORDER_PATH_FILE_TAG))
-        {
-            path = YamlReader::get<std::string>(yml, RECORDER_PATH_FILE_TAG, version);
-        }
-
-        /////
-        // Get optional file extension
-        std::string extension = ".mcap";
-        if (YamlReader::is_tag_present(yml, RECORDER_EXTENSION_FILE_TAG))
-        {
-            extension = YamlReader::get<std::string>(yml, RECORDER_EXTENSION_FILE_TAG, version);
-        }
-
-        /////
-        // Get optional file use timestamp
-        bool use_timestamp = true;
-        if (YamlReader::is_tag_present(yml, RECORDER_USE_TIMESTAMP_FILE_NAME_TAG))
-        {
-            use_timestamp = YamlReader::get<bool>(yml, RECORDER_USE_TIMESTAMP_FILE_NAME_TAG, version);
-        }
-
-        /////
-        // Get mandatory file name
-        std::string filename = YamlReader::get<std::string>(yml, RECORDER_FILE_NAME_TAG, version);
-
-        /////
-        // Create Recorder Participant Configuration
-        recorder_configuration = std::make_shared<RecorderParticipantConfiguration>(
-            filename,
-            path,
-            extension,
-            use_timestamp
-        );
+        // Create Foxglove Websocket Participant Configuration
+        foxglove_ws_configuration = std::make_shared<ParticipantConfiguration>(
+                "FoxgloveWebsocketParticipant",
+                false);
     }
     catch (const std::exception& e)
     {
@@ -157,5 +124,5 @@ void Configuration::load_ddsrouter_configuration_from_file_(
 }
 
 } /* namespace yaml */
-} /* namespace ddsrecorder */
+} /* namespace foxgloveweb */
 } /* namespace eprosima */

@@ -12,29 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-###############################################################################
-# Set settings for project ddsrecorder_participants
-###############################################################################
-
-set(MODULE_NAME
-    ddsrecorder_participants)
-
-set(MODULE_SUMMARY
-    "DDS Recorder Participants implementation.")
-
-set(MODULE_FIND_PACKAGES
-    fastcdr
-    fastrtps
-    cpp_utils
-    ddsrouter_core)
-
-set(MODULE_THIRDPARTY_HEADERONLY
-    mcap)
-
-set(fastrtps_MINIMUM_VERSION "2.8")
-
-set(MODULE_DEPENDENCIES
-    lz4
-    zstd
-    $<$<BOOL:${WIN32}>:iphlpapi$<SEMICOLON>Shlwapi>
-    ${MODULE_FIND_PACKAGES})
+# TODO add tests

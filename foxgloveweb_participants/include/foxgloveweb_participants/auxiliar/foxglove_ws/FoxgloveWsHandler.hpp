@@ -13,12 +13,12 @@
 // limitations under the License.
 
 /**
- * @file McapHandler.hpp
+ * @file FoxgloveWsHandler.hpp
  */
 
 #pragma once
 
-#include <mcap/writer.hpp>
+#include <websocket/server.hpp>
 
 #include <cpp_utils/types/Atomicable.hpp>
 
@@ -28,20 +28,19 @@
 #include <ddsrouter_core/participants/auxiliar/schema/ISchemaHandler.hpp>
 
 namespace eprosima {
-namespace ddsrecorder {
+namespace foxgloveweb {
 namespace participants {
 
 /**
  * TODO
  */
-class McapHandler : public ddsrouter::participants::ISchemaHandler
+class FoxgloveWsHandler : public ddsrouter::participants::ISchemaHandler
 {
 public:
 
-    McapHandler(
-            const char* file_name);
+    FoxgloveWsHandler();
 
-    ~McapHandler();
+    ~FoxgloveWsHandler();
 
     void add_schema(
             const std::string& schema_name,
@@ -53,33 +52,32 @@ public:
 
 protected:
 
-    mcap::ChannelId create_channel_id_nts_(
+    void run_server_();
+
+    foxglove::websocket::ChannelId create_channel_id_nts_(
             const ddsrouter::core::types::DdsTopic& topic);
 
-    mcap::ChannelId get_channel_id_(
+    foxglove::websocket::ChannelId get_channel_id_(
             const ddsrouter::core::types::DdsTopic& topic);
 
-    mcap::SchemaId get_schema_id_(
+    std::string get_schema_text_(
             const std::string& schema_name);
 
-    mcap::Timestamp now();
-    mcap::Timestamp fastdds_timestamp_to_mcap_timestamp(const ddsrouter::core::types::DataTime& time);
+    uint64_t fastdds_timestamp_to_nanoseconds_since_epoch(const ddsrouter::core::types::DataTime& time);
 
-    // NOTE: it cannot be used with Atomicable because McapWriter is a final class
-    mcap::McapWriter mcap_writer_;
-    std::mutex write_mtx_;
+    // NOTE: it cannot be used with Atomicable because Server is a final class
+    foxglove::websocket::Server server_{8765, "C++ Fast DDS example server"};
+    std::mutex server_mtx_;
 
-    using SchemaMapType = utils::SharedAtomicable<std::map<std::string, mcap::Schema>>;
+    using SchemaMapType = utils::SharedAtomicable<std::map<std::string, std::string>>;
     SchemaMapType schemas_;
 
-    using ChannelMapType = utils::SharedAtomicable<std::map<std::string, mcap::Channel>>;
+    using ChannelMapType = utils::SharedAtomicable<std::map<std::string, foxglove::websocket::ChannelId>>;
     ChannelMapType channels_;
 
-    std::atomic<unsigned int> unique_sequence_number_{0};
-
-    static constexpr const char* MCAP_FILE = "output.mcap";
+    std::thread server_thread_;
 };
 
 } /* namespace participants */
-} /* namespace ddsrecorder */
+} /* namespace foxgloveweb */
 } /* namespace eprosima */

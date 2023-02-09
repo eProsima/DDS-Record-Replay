@@ -34,7 +34,7 @@ struct RecorderParticipantConfiguration : public ddsrouter::participants::Partic
 
     DDSRECORDER_PARTICIPANTS_DllAPI RecorderParticipantConfiguration(
             const std::string& file_name,
-            const std::string& path = "./",
+            const std::string& path = ".",
             const std::string& extension = ".mcap",
             bool use_timestamp = true) noexcept;
 
@@ -52,7 +52,7 @@ protected:
 
     static std::string cat_file_name_(
             const std::string& file_name,
-            const std::string& path = "./",
+            const std::string& path = ".",
             const std::string& extension = ".mcap",
             bool use_timestamp = true) noexcept;
 
