@@ -37,19 +37,19 @@ These options allow the developer to enable/disable certain *DDS Recorder* setti
           ``ON``
         - ``OFF``
     *   - :class:`BUILD_LIBRARY`
-        - Build the *DDS Recorder* documentation.
+        - Build the *DDS Recorder* documentation. |br|
           It is set to ``ON`` if :class:`BUILD_ALL` is set to ``ON``.
         - ``OFF`` |br|
           ``ON``
         - ``ON``
     *   - :class:`BUILD_TOOL`
-        - Build the *DDS Recorder* documentation.
+        - Build the *DDS Recorder* documentation. |br|
           It is set to ``ON`` if :class:`BUILD_ALL` is set to ``ON``.
         - ``OFF`` |br|
           ``ON``
         - ``ON``
     *   - :class:`BUILD_DOCS`
-        - Build the *DDS Recorder* documentation.
+        - Build the *DDS Recorder* documentation. |br|
           It is set to ``ON`` if :class:`BUILD_ALL` is set to ``ON``.
         - ``OFF`` |br|
           ``ON``
