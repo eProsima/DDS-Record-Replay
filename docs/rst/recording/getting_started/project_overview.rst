@@ -1,9 +1,9 @@
-.. include:: ../exports/alias.include
+.. include:: ../../exports/alias.include
 
-.. _usage_example:
+.. _getting_started_project_overview:
 
 ################
-Example of usage
+Project Overview
 ################
 
 .. note::

@@ -13,7 +13,7 @@
 
 ## Documentation
 
-You can access the documentation online, which is hosted on [Read the Docs](https://eprosima-dds-recorder.readthedocs.io).
+You can access the documentation online, which is hosted on [Read the Docs](https://dds-recorder.readthedocs.io/).
 
 * [Introduction](https://eprosima-dds-recorder.readthedocs.io/en/latest/rst/formalia/titlepage.html)
 * [Getting Started](https://eprosima-dds-recorder.readthedocs.io/en/latest/rst/getting_started/project_overview.html)

@@ -1,0 +1,13 @@
+# Allowed topics
+allowlist:
+  - name: rt/chatter
+    type: std_msgs::msg::dds_::String_
+
+# Simple Participant domain
+domain: 100
+
+# Recorder output file
+extension: ".mcap"
+filename: "output"
+use-timestamp: true
+path: "./"

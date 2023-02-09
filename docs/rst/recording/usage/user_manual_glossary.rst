@@ -1,6 +1,6 @@
-.. include:: ../exports/alias.include
+.. include:: ../../exports/alias.include
 
-.. _user_manual_glossary:
+.. _usage_glossary:
 
 ############
 Nomenclature
@@ -10,8 +10,10 @@ Nomenclature
 DDS Recorder nomenclature
 =========================
 
-.. note::
-    This page is under maintenance and will be updated soon.
+.. glossary::
+
+    MCAP
+        Modular container file format for heterogeneous timestamped data.
 
 DDS nomenclature
 ================
@@ -30,14 +32,6 @@ DDS nomenclature
         It belong to one and only one Participant, and it is uniquely identified by a Guid.
 
         See `Fast DDS documentation <https://fast-dds.docs.eprosima.com/en/v2.4.1/fastdds/dds_layer/publisher/dataWriter/dataWriter.html>`__
-        for further information.
-
-    Discovery Server
-        Discovery Server Discovery Protocol is a Fast DDS feature that enables a new Discovery mechanism based on a
-        Server that filters and distribute the discovery information.
-        This is highly recommended in networks where multicast is not available (e.g. WAN).
-
-        See `Fast DDS documentation <https://fast-dds.docs.eprosima.com/en/v2.4.1/fastdds/discovery/discovery_server.html>`__
         for further information.
 
     Domain Id
@@ -68,14 +62,6 @@ DDS nomenclature
     GuidPrefix
         Global Unique Identifier shared by a Participant and all its sub-entities.
         Identifies uniquely a DDS Participant.
-
-    Initial Peers
-        It is a Fast DDS Discovery Protocol that allows to send the discovery information directly
-        to the participants configured.
-        This is highly recommended for static networks where multicast is not available (e.g. WAN).
-
-        See `Fast DDS documentation <https://fast-dds.docs.eprosima.com/en/latest/fastdds/discovery/simple.html#initial-peers>`__
-        for further information.
 
     Topic
         DDS isolation abstraction to encapsulate subscriptions and publications.

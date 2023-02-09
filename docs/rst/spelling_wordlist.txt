@@ -18,6 +18,7 @@ executables
 fastcdr
 fastdds
 fastrtps
+Foxglove
 github
 gMock
 Gtest

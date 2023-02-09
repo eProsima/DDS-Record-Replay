@@ -1,0 +1,5 @@
+# DDS Domain - Optional (Default: 0)
+domain: 0
+
+# Recorder output file
+filename: "output"
