@@ -33,9 +33,6 @@
 #include "TypeLookupServiceSubscriber.h"
 
 using namespace eprosima::fastdds::dds;
-using namespace eprosima::fastdds::rtps;
-using namespace eprosima::fastrtps::rtps;
-using namespace eprosima::fastrtps;
 
 std::atomic<bool> TypeLookupServiceSubscriber::type_discovered_(false);
 std::atomic<bool> TypeLookupServiceSubscriber::type_registered_(false);
@@ -51,24 +48,24 @@ TypeLookupServiceSubscriber::TypeLookupServiceSubscriber(
     : participant_(nullptr)
     , subscriber_(nullptr)
     , topic_(nullptr)
-    , reader_(nullptr)
+    , datareader_(nullptr)
     , topic_name_(topic_name)
     , samples_(0)
 {
+    ///////////////////////////////
+    // Create the DomainParticipant
     DomainParticipantQos pqos;
     pqos.name("TypeLookupService_Participant_Subscriber");
 
-    pqos.wire_protocol().builtin.typelookup_config.use_server = false;
     pqos.wire_protocol().builtin.typelookup_config.use_client = true;
+    pqos.wire_protocol().builtin.typelookup_config.use_server = false;
 
     // Create listener mask so the data do not go to on_data_on_readers from subscriber
     StatusMask mask;
-    mask.any();
     mask << StatusMask::data_available();
     mask << StatusMask::subscription_matched();
     // No mask for type_information_received
 
-    // CREATE THE PARTICIPANT
     participant_ = DomainParticipantFactory::get_instance()->create_participant(domain, pqos, this, mask);
 
     if (participant_ == nullptr)
@@ -76,7 +73,8 @@ TypeLookupServiceSubscriber::TypeLookupServiceSubscriber(
         throw std::runtime_error("Error creating participant");
     }
 
-    // CREATE THE SUBSCRIBER
+    ////////////////////////
+    // Create the Subscriber
     subscriber_ = participant_->create_subscriber(SUBSCRIBER_QOS_DEFAULT, nullptr);
 
     if (subscriber_ == nullptr)
@@ -87,9 +85,27 @@ TypeLookupServiceSubscriber::TypeLookupServiceSubscriber(
     std::cout <<
         "Participant < " << participant_->guid() << "> created...\n" <<
         "\t- DDS Domain: " << participant_->get_domain_id() << "\n" <<
-        "\t- DataReader: " << reader_->guid() << "\n" <<
-        "\t- Topic name: " << topic_name <<
         std::endl;
+}
+
+TypeLookupServiceSubscriber::~TypeLookupServiceSubscriber()
+{
+    if (participant_ != nullptr)
+    {
+        if (topic_ != nullptr)
+        {
+            participant_->delete_topic(topic_);
+        }
+        if (subscriber_ != nullptr)
+        {
+            if (datareader_ != nullptr)
+            {
+                subscriber_->delete_datareader(datareader_);
+            }
+            participant_->delete_subscriber(subscriber_);
+        }
+        DomainParticipantFactory::get_instance()->delete_participant(participant_);
+    }
 }
 
 bool TypeLookupServiceSubscriber::is_stopped()
@@ -105,47 +121,17 @@ void TypeLookupServiceSubscriber::stop()
     terminate_cv_.notify_all();
 }
 
-TypeLookupServiceSubscriber::~TypeLookupServiceSubscriber()
-{
-    if (participant_ != nullptr)
-    {
-        if (topic_ != nullptr)
-        {
-            participant_->delete_topic(topic_);
-        }
-        if (subscriber_ != nullptr)
-        {
-            if (reader_ != nullptr)
-            {
-                subscriber_->delete_datareader(reader_);
-            }
-            participant_->delete_subscriber(subscriber_);
-        }
-        DomainParticipantFactory::get_instance()->delete_participant(participant_);
-    }
-}
-
-void TypeLookupServiceSubscriber::on_participant_discovery(
-        eprosima::fastdds::dds::DomainParticipant*,
-        eprosima::fastrtps::rtps::ParticipantDiscoveryInfo&& info)
-{
-    if (info.status == eprosima::fastrtps::rtps::ParticipantDiscoveryInfo::DISCOVERED_PARTICIPANT)
-    {
-        std::cout << "Participant found with guid: " << info.info.m_guid << std::endl;
-    }
-}
-
 void TypeLookupServiceSubscriber::on_subscription_matched(
         DataReader*,
         const SubscriptionMatchedStatus& info)
 {
     if (info.current_count_change == 1)
     {
-        std::cout << "Subscriber matched with Writer: " << info.last_publication_handle << std::endl;
+        std::cout << "DataReader matched with DataWriter: " << info.last_publication_handle << std::endl;
     }
     else if (info.current_count_change == -1)
     {
-        std::cout << "Subscriber unmatched with Writer: " << info.last_publication_handle << std::endl;
+        std::cout << "DataReader unmatched with DataWriter: " << info.last_publication_handle << std::endl;
     }
     else
     {
@@ -157,24 +143,22 @@ void TypeLookupServiceSubscriber::on_subscription_matched(
 void TypeLookupServiceSubscriber::on_data_available(
         DataReader* reader)
 {
-    // Dynamic DataType
-    types::DynamicData_ptr new_data;
-    new_data = types::DynamicDataFactory::get_instance()->create_data(dyn_type_);
+    // Create a new DynamicData to read the sample
+    eprosima::fastrtps::types::DynamicData_ptr new_data;
+    new_data = eprosima::fastrtps::types::DynamicDataFactory::get_instance()->create_data(dynamic_type_);
 
     SampleInfo info;
 
+    // Take next sample until we've read all samples or the application stopped
     while ((reader->take_next_sample(new_data.get(), &info) == ReturnCode_t::RETCODE_OK) && !is_stopped())
     {
         if (info.instance_state == ALIVE_INSTANCE_STATE)
         {
-            // Add instance to the set of instances
-            instances_.insert(info.instance_handle);
-
             samples_++;
 
-            std::cout << "Message number " << samples_ << " RECEIVED:\n" << new_data << std::endl;
+            std::cout << samples_ << " messages received:\n" << new_data << std::endl;
 
-            // Stop if max messages has already been read
+            // Stop if all expecting messages has been received (max_messages number reached)
             if (max_messages_ > 0 && (samples_ >= max_messages_))
             {
                 stop();
@@ -189,14 +173,16 @@ void TypeLookupServiceSubscriber::on_type_information_received(
         const eprosima::fastrtps::string_255 type_name,
         const eprosima::fastrtps::types::TypeInformation& type_information)
 {
+    // First check if the topic received is the one we are expecting
     if (topic_name.to_string() != topic_name_)
     {
         std::cout <<
-            "Discovered Type information from Topic < " << topic_name.to_string() <<
-            " > . Not the one expecting, Skipping." << std::endl;
+            "Discovered type information from topic < " << topic_name.to_string() <<
+            " > while expecting < " << topic_name_ << " >. Skipping..." << std::endl;
         return;
     }
 
+    // Set the topic type as discovered
     bool already_discovered = type_discovered_.exchange(true);
     if (already_discovered)
     {
@@ -208,14 +194,15 @@ void TypeLookupServiceSubscriber::on_type_information_received(
         " > with name < " << type_name.to_string() <<
         " > by lookup service. Registering..." << std::endl;
 
+    // Create the callback to register the remote dynamic type
     std::function<void(const std::string&, const eprosima::fastrtps::types::DynamicType_ptr)> callback(
-        [this]
-        (const std::string& , const eprosima::fastrtps::types::DynamicType_ptr type)
-        {
-            this->on_type_discovered_and_registered_(type);
-        });
+            [this]
+            (const std::string& name, const eprosima::fastrtps::types::DynamicType_ptr type)
+            {
+                this->register_remote_type_callback_(name, type);
+            });
 
-    // Registering type and creating reader
+    // Register the discovered type and create a DataReader on this topic
     participant_->register_remote_type(
         type_information,
         type_name.to_string(),
@@ -228,18 +215,19 @@ void TypeLookupServiceSubscriber::run(
     stop_ = false;
     max_messages_ = samples;
 
+    // Ctrl+C (SIGINT) termination signal handler
     signal(SIGINT, [](int signum)
             {
-                std::cout << "SIGINT received, stopping Subscriber execution." << std::endl;
+                std::cout << "\nSIGINT received, stopping Subscriber execution." << std::endl;
                 static_cast<void>(signum);
                 TypeLookupServiceSubscriber::stop();
             });
 
-    // WAIT FOR TYPE DISCOVERY
+    // Wait for type discovery
     std::cout << "Subscriber waiting to discover type for topic < " << topic_name_
-        << " > . Please press CTRL+C to stop the Subscriber." << std::endl;
+        << " >. Press CTRL+C to stop the Subscriber..." << std::endl;
 
-    // Wait for type discovered
+    // Wait until the type is discovered and registered
     {
         std::unique_lock<std::mutex> lck(type_discovered_cv_mtx_);
         type_discovered_cv_.wait(lck, []
@@ -248,29 +236,29 @@ void TypeLookupServiceSubscriber::run(
                 });
     }
 
+    // Check if the application has already been stopped
     if (is_stopped())
     {
         return;
     }
 
     std::cout <<
-        "Subscriber < " << reader_->guid() <<
+        "Subscriber < " << datareader_->guid() <<
         " > listening for data in topic < " << topic_name_ <<
-        " > found data type < " << dyn_type_->get_name() <<
+        " > found data type < " << dynamic_type_->get_name() <<
         " >" << std::endl;
 
-    // WAIT FOR SAMPLES READ
+    // Wait for expected samples or the user stops the execution
     if (samples > 0)
     {
         std::cout << "Running until " << samples <<
-            " samples have been received. Please press CTRL+C to stop the Subscriber at any time." << std::endl;
+            " samples have been received. Press CTRL+C to stop the Subscriber at any time." << std::endl;
     }
     else
     {
-        std::cout << "Please press CTRL+C to stop the Subscriber." << std::endl;
+        std::cout << "Press CTRL+C to stop the Subscriber." << std::endl;
     }
 
-    // Wait for signal or thread max samples received
     {
         std::unique_lock<std::mutex> lck(terminate_cv_mtx_);
         terminate_cv_.wait(lck, []
@@ -279,24 +267,26 @@ void TypeLookupServiceSubscriber::run(
                 });
     }
 
-    // Print number of data receive
+    // Print number of data received
     std::cout <<
         "Subscriber received " << samples_ <<
-        " samples from " << instances_.size() <<
-        " instances." << std::endl;
+        " samples." << std::endl;
 }
 
-void TypeLookupServiceSubscriber::on_type_discovered_and_registered_(
-        const eprosima::fastrtps::types::DynamicType_ptr type)
+void TypeLookupServiceSubscriber::register_remote_type_callback_(
+        const std::string&,
+        const eprosima::fastrtps::types::DynamicType_ptr dynamic_type)
 {
-    // Register type
-    TypeSupport m_type(new eprosima::fastrtps::types::DynamicPubSubType(type));
-    m_type.register_type(participant_);
+    ////////////////////
+    // Register the type
+    TypeSupport type(new eprosima::fastrtps::types::DynamicPubSubType(dynamic_type));
+    type.register_type(participant_);
 
-    // Create topic
+    ///////////////////////
+    // Create the DDS Topic
     topic_ = participant_->create_topic(
             topic_name_,
-            type->get_name(),
+            dynamic_type->get_name(),
             TOPIC_QOS_DEFAULT);
 
     if (topic_ == nullptr)
@@ -304,8 +294,9 @@ void TypeLookupServiceSubscriber::on_type_discovered_and_registered_(
         return;
     }
 
-    // Create DataReader
-    reader_ = subscriber_->create_datareader(
+    ////////////////////////
+    // Create the DataReader
+    datareader_ = subscriber_->create_datareader(
             topic_,
             DATAREADER_QOS_DEFAULT,
             this);
@@ -313,17 +304,15 @@ void TypeLookupServiceSubscriber::on_type_discovered_and_registered_(
     std::cout <<
         "Participant < " << participant_->guid() <<
         " > in domain < " << participant_->get_domain_id() <<
-        " > created reader < " << reader_->guid() <<
+        " > created reader < " << datareader_->guid() <<
         " > in topic < " << topic_name_ <<
-        " > with data type < " << type->get_name() << " > " <<
-        ((reader_->type()->m_isGetKeyDefined) ? ". Topic with @key ." : "") <<
+        " > with data type < " << dynamic_type->get_name() << " > " <<
         std::endl;
 
-    std::cout << "Data Type for this Subscriber is: " << type << std::endl;
-
-    dyn_type_ = type;
-
+    // Update TypeLookupServiceSubscriber members
+    dynamic_type_ = dynamic_type;
     type_discovered_.store(true);
     type_registered_.store(true);
+    // Notify that the type has been discovered and registered
     type_discovered_cv_.notify_all();
 }

@@ -50,6 +50,7 @@ TypeLookupServicePublisher::TypeLookupServicePublisher(
     , publisher_(nullptr)
     , topic_(nullptr)
     , datawriter_(nullptr)
+    , topic_name_(topic_name)
     , data_type_kind_(data_type_kind)
 {
     ///////////////////////////////
@@ -104,15 +105,15 @@ TypeLookupServicePublisher::TypeLookupServicePublisher(
 
     ///////////////////////
     // Create the DDS Topic
-    topic_ = participant_->create_topic(topic_name, data_type_name_, TOPIC_QOS_DEFAULT);
+    topic_ = participant_->create_topic(topic_name_, data_type_name_, TOPIC_QOS_DEFAULT);
 
     if (topic_ == nullptr)
     {
         throw std::runtime_error("Error creating topic");
     }
 
-    ////////////////////////
-    // Create the DataWriter
+    ///////////////////////
+    // Create the DDS Topic
     datawriter_ = publisher_->create_datawriter(topic_, DATAWRITER_QOS_DEFAULT, this);
 
     if (datawriter_ == nullptr)
@@ -124,7 +125,7 @@ TypeLookupServicePublisher::TypeLookupServicePublisher(
         "Participant < " << participant_->guid() << "> created...\n" <<
         "\t- DDS Domain: " << participant_->get_domain_id() << "\n" <<
         "\t- DataWriter: " << datawriter_->guid() << "\n" <<
-        "\t- Topic name: " << topic_name << "\n" <<
+        "\t- Topic name: " << topic_name_ << "\n" <<
         "\t- Topic data type: " << data_type_name_ <<
         std::endl;
 }
@@ -208,7 +209,7 @@ void TypeLookupServicePublisher::run(
     else
     {
         std::cout << "Publisher running for " << samples <<
-            " samples. Please press CTRL+C to stop the Publisher at any time." << std::endl;
+            " samples. Press CTRL+C to stop the Publisher at any time..." << std::endl;
     }
 
     // Ctrl+C (SIGINT) termination signal handler
@@ -376,8 +377,6 @@ eprosima::fastrtps::types::DynamicData_ptr
         // message
         array_elem->set_string_value("message #" + std::to_string(i), 1);
         messages_array->return_loaned_value(array_elem);
-
-        array_elem->return_loaned_value(sub_elem);
     }
 
     new_data->return_loaned_value(messages_array);

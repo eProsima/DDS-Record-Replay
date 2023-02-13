@@ -21,7 +21,7 @@
 
 #include "arg_configuration.h"
 #include "TypeLookupServicePublisher.h"
-// #include "TypeLookupServiceSubscriber.h"
+#include "TypeLookupServiceSubscriber.h"
 
 //! Enumeration to define the DDS entity type to be executed in the example
 enum EntityType
@@ -58,7 +58,7 @@ int main(
 
     // Examples parameter definition
     EntityType entity_type = EntityType::PUBLISHER;
-    std::string topic_name = "DDSTopic";
+    std::string topic_name = "/dds/topic";
     DataTypeKind data_type = DataTypeKind::HELLO_WORLD;
     int samples = 0;
     int domain = 0;
@@ -90,7 +90,7 @@ int main(
         switch (opt.index())
         {
             case optionIndex::HELP:
-                // not possible, because handled further above and exits the program
+                // Not possible as this argument has been already handled and it exits the program
                 break;
 
             case optionIndex::ENTITY_TYPE:
@@ -107,6 +107,7 @@ int main(
                     std::cerr << "ERROR: incorrect entity type. Only <publisher|subscriber> accepted." << std::endl;
                     return 1;
                 }
+                break;
 
             case optionIndex::TOPIC_NAME:
                 topic_name = std::string(opt.arg);
@@ -167,18 +168,18 @@ int main(
                 break;
             }
 
-            // case SUBSCRIBER:
-            // {
-            //     // Create Subscriber
-            //     TypeLookupServiceSubscriber mysub(
-            //         topic_name,
-            //         static_cast<uint32_t>(domain));
+            case SUBSCRIBER:
+            {
+                // Create Subscriber
+                TypeLookupServiceSubscriber mysub(
+                    topic_name,
+                    static_cast<uint32_t>(domain));
 
-            //     // Run Participant
-            //     mysub.run(static_cast<uint32_t>(samples));
+                // Run Participant
+                mysub.run(static_cast<uint32_t>(samples));
 
-            //     break;
-            // }
+                break;
+            }
         }
     }
     catch(const std::exception& e)

@@ -23,6 +23,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
+#include <functional>
 
 #include <fastdds/dds/core/status/SubscriptionMatchedStatus.hpp>
 #include <fastdds/dds/domain/DomainParticipant.hpp>
@@ -31,22 +32,51 @@
 #include <fastdds/dds/subscriber/DataReader.hpp>
 
 /**
- * Class used to group into a single working unit a Subscriber with a DataReader, its listener, and a TypeSupport member
- * corresponding to the HelloWorld datatype
+ * @brief Class used to group into a single working unit a Subscriber with a DataReader and its listener.
+ *
  */
 class TypeLookupServiceSubscriber : public eprosima::fastdds::dds::DomainParticipantListener
 {
 public:
 
+    /**
+     * @brief Construct a new Type Lookup Service Subscriber object
+     *
+     * @param topic_name Name of the DDS Topic
+     * @param domain DDS Domain of the DomainParticipant
+     */
     TypeLookupServiceSubscriber(
             const std::string& topic_name,
             uint32_t domain);
 
+    /**
+     * @brief Destroy the Type Lookup Service Publisher object
+     *
+     */
     virtual ~TypeLookupServiceSubscriber();
 
-    //! RUN the subscriber until number samples are received
-    void run(
+    /**
+     * @brief Run the subscriber until "number" samples are received
+     *
+     * @param number Number of samples to be published
+     */    void run(
             uint32_t number);
+
+    //! DataReader callback executed when a new sample is received
+    void on_data_available(
+            eprosima::fastdds::dds::DataReader* reader) override;
+
+    //! DataReader callback to inform new matches/unmatches with other DataWriters
+    void on_subscription_matched(
+            eprosima::fastdds::dds::DataReader* reader,
+            const eprosima::fastdds::dds::SubscriptionMatchedStatus& info) override;
+
+    //! Callback to receive the remote data type information
+    virtual void on_type_information_received(
+            eprosima::fastdds::dds::DomainParticipant* participant,
+            const eprosima::fastrtps::string_255 topic_name,
+            const eprosima::fastrtps::string_255 type_name,
+            const eprosima::fastrtps::types::TypeInformation& type_information) override;
 
     //! Return the current state of execution
     static bool is_stopped();
@@ -54,85 +84,53 @@ public:
     //! Trigger the end of execution
     static void stop();
 
-    //! Callback executed when a new sample is received
-    void on_data_available(
-            eprosima::fastdds::dds::DataReader* reader) override;
-
-    //! Callback executed when a DataWriter is matched or unmatched
-    void on_subscription_matched(
-            eprosima::fastdds::dds::DataReader* reader,
-            const eprosima::fastdds::dds::SubscriptionMatchedStatus& info) override;
-
-    void on_participant_discovery(
-            eprosima::fastdds::dds::DomainParticipant* participant,
-            eprosima::fastrtps::rtps::ParticipantDiscoveryInfo&& info) override;
-
-    void on_type_discovery(
-            eprosima::fastdds::dds::DomainParticipant* participant,
-            const eprosima::fastrtps::rtps::SampleIdentity& request_sample_id,
-            const eprosima::fastrtps::string_255& topic,
-            const eprosima::fastrtps::types::TypeIdentifier* identifier,
-            const eprosima::fastrtps::types::TypeObject* object,
-            eprosima::fastrtps::types::DynamicType_ptr dyn_type) override;
-
-    virtual void on_type_information_received(
-            eprosima::fastdds::dds::DomainParticipant* participant,
-            const eprosima::fastrtps::string_255 topic_name,
-            const eprosima::fastrtps::string_255 type_name,
-            const eprosima::fastrtps::types::TypeInformation& type_information) override;
-
 protected:
 
-    void on_type_discovered_and_registered_(
-            const eprosima::fastrtps::types::DynamicType_ptr type);
+    /**
+     * @brief Custom callback to register the type, create the topic and create the DataReader once the data
+     * type information is received.
+     *
+     */
+    void register_remote_type_callback_(
+            const std::string& name,
+            const eprosima::fastrtps::types::DynamicType_ptr dynamic_type);
 
+    // Fast DDS entities
     eprosima::fastdds::dds::DomainParticipant* participant_;
-
     eprosima::fastdds::dds::Subscriber* subscriber_;
-
     eprosima::fastdds::dds::Topic* topic_;
-
-    eprosima::fastdds::dds::DataReader* reader_;
-
+    eprosima::fastdds::dds::DataReader* datareader_;
     eprosima::fastdds::dds::TypeSupport type_;
 
+    //! Name of the DDS Topic
     std::string topic_name_;
-
+    //! Name of the received DDS Topic type
     std::string type_name_;
+    //! DynamicType generated with the received type information
+    eprosima::fastrtps::types::DynamicType_ptr dynamic_type_;
 
-    //! Number of DataWriters matched to the associated DataReader
-    int matched_;
-
-    //! Number of samples received
-    uint32_t samples_;
-
-    //! Number of messages to be received before triggering termination of execution
-    uint32_t max_messages_;
-
-    //! Whether the type has been discovered
+    //! Atomic variables to check whether the type has been discovered and registered
     static std::atomic<bool> type_discovered_;
     static std::atomic<bool> type_registered_;
 
+    //! Number of DataWriters matched to the associated DataReader
+    int matched_;
+    //! Number of samples received
+    uint32_t samples_;
+    //! Number of messages to be received before triggering termination of execution
+    uint32_t max_messages_;
+
     //! Protects type_discovered condition variable
     static std::mutex type_discovered_cv_mtx_;
-
     //! Waits until a type has been discovered
     static std::condition_variable type_discovered_cv_;
 
-    //! Member used for control flow purposes
+    //! Indicates if the application is still running
     static std::atomic<bool> stop_;
-
     //! Protects terminate condition variable
     static std::mutex terminate_cv_mtx_;
-
     //! Waits during execution until SIGINT or max_messages_ samples are received
     static std::condition_variable terminate_cv_;
-
-    // Dynamic data information
-    eprosima::fastrtps::types::DynamicType_ptr dyn_type_;
-
-    // Instances count received
-    std::set<eprosima::fastdds::dds::InstanceHandle_t> instances_;
 };
 
 #endif /* _EPROSIMA_DDSRECORDER_RESOURCES_DDS_TYPELOOKUPSERVICE_TYPELOOKUPSERVICESUBSCRIBER_H_ */

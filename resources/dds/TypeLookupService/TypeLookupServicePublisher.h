@@ -136,9 +136,11 @@ protected:
     eprosima::fastdds::dds::Topic* topic_;
     eprosima::fastdds::dds::DataWriter* datawriter_;
 
+    //! Name of the DDS Topic
+    std::string topic_name_;
     //! The user can choose between HelloWorld and Complete types so this defines the chosen type
     DataTypeKind data_type_kind_;
-    //! Name of the type according to the DataTypeKind
+    //! Name of the DDS Topic type according to the DataTypeKind
     std::string data_type_name_;
     //! Actual DynamicType generated according to the DataTypeKind
     eprosima::fastrtps::types::DynamicType_ptr dynamic_type_;
