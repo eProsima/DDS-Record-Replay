@@ -1,104 +1,164 @@
-# Basic Configuration Example
+# Fast DDS Type Lookup Service (DynamicTypes) example
 
-This example shows two different features of Fast DDS related with Dynamic Types:
+This examples configures a DDS Publisher using DynamicTypes for the data type definition.
+Thus, the user will be able to record the published data using the *eProsima DDS Recorder* tool.
+Moreover, the example implements a DDS Subscriber that will receive any kind of data published by the Publisher
+as long as the Publisher sends the data type information.
 
-* How to use different kind of Data Types from a Publisher point of view.
-  In order to publish messages with specific data type, there are several ways to define the type:
-  * Using IDL file defining the type and autogenerating code using Fast-DDS-Gen
-  * Using XML type definition and loading type with `XMLProfileManager`
-  * Defining type by code using Dynamic Types API
+This example covers the following points:
 
-* How to create a generic Subscriber that is able to create a DataReader independently the Data Type.
-  In order to do this, the type must be registered in the Participant, and this only possible if the Publisher
-  is configured to share the Data Type information.
-  The Dynamic Types API provides methods to introspect a data type to get data members names and values.
+* How to configure DynamicTypes on Fast DDS.
+* How to instantiate a DynamicType on the publisher side.
+* How to fill the DynamicData on the publisher side with valuable information.
+* How to use IDL files to define the type and use Fast-DDS-Gen to generate the C++ source code to work with the type.
+* How to create a generic Subscriber able to subscribe to any incoming data type using DynamicTypes.
 
-## Execution instructions
 
-To launch this test open two different consoles:
+## Building the example
 
-In the first one launch: ./TypeIntrospectionExample publisher (or TypeIntrospectionExample.exe publisher on windows).
-In the second one: ./TypeIntrospectionExample subscriber (or TypeIntrospectionExample.exe subscriber on windows).
+To build the example, install Fast DDS following one of the [installation methods](https://fast-dds.docs.eprosima.com/en/latest/installation/binaries/binaries_linux.html) described in its documentation, or by [installing DDS Recorder](https://dds-recorder.readthedocs.io/en/latest/rst/installation/windows.html) together with eProsima dependencies, i.e. Fast DDS, Fast CDR and DDS Router.
+
+Once Fast DDS is installed, source Fast DDS or make the libraries accessible to be used by CMake.
+
+Finally, go to this same folder and run:
+
+```bash
+mkdir build
+cd build
+cmake .. && make -j8
+```
+
+## Recording samples with DDS Recorder
+
+1.  Open to terminals
+1.  In the first terminal, run this example
+
+    ```bash
+    ./TypeLookupService
+    ```
+
+1.  In the second terminal, run the DDS Recorder.
+    Please, go to [DDS Recorder documentation](https://dds-recorder.readthedocs.io/en/latest/index.html) to learn how to properly install and run DDS Recorder.
+
+    ```bash
+    ddsrecorder
+    ```
+
+## Publisher <-> Subscriber example
+
+1.  Open two different terminals:
+
+1.  In the first terminal, run:
+
+    ```bash
+    ./TypeLookupService --entity publisher
+    ```
+
+1.  In the second terminal, run:
+
+    ```bash
+    ./TypeLookupService --entity subscriber
+    ```
 
 ## Arguments
 
-First argument is `publisher` or `subscriber` and then the rest of arguments are read unordered
-
-TODO refactor with this example arguments
+See the output of running the executable with `--help` argument to check the example valid configurations.
 
 ```sh
-Usage: TypeIntrospectionExample <publisher|subscriber>
+Usage: TypeIntrospectionExample
 
 General options:
-  -h              --help
-                    Produce help message.
+  -h, --help                        Produce help message.
+  -e, --entity <dds_entity>         DDS Entity type (Default: publisher).
+                                    Allowed options:
+                                    • publisher -> Run a DDS Publisher.
+                                    • subscriber -> Run a DDS Subscriber.
 
 Publisher options:
-  -t <topic_name> --topic=<topic_name>
-                    Topic name (Default: HelloWorldTopic).
-  -d <id>         --domain=<id>
-                    DDS domain ID (Default: 0).
-  -w <num>        --wait=<num>
-                    Number of matched subscribers required to publish (Default:
-                    0 => does not wait).
-  -s <num>        --samples=<num>
-                    Number of samples to send (Default: 0 => infinite samples).
-  -i <num>        --interval=<num>
-                    Time between samples in milliseconds (Default: 100).
-  -a              --async
-                    Asynchronous publish mode (synchronous by default).
-                  --transport=<shm|udp|udpv6>
-                    Use only shared-memory, UDPv4, or UDPv6 transport.If not
-                    set, use Fast DDS default transports (depending on the
-                    scenario it will use the most efficient one:  data-sharing
-                    delivery mechanism > shared-memory > UDP ).
+  -t, --topic <topic_name>          Topic name (Default: DDSTopic).
+  -x, --type <data_type_name>       Topic Data Type name (Default: helloworld).
+                                    • helloworld -> HelloWorld data type
+                                    (one string and one integer).
+                                    • complete -> Complex data type composed of
+                                    several of the other types at multiple levels.
+  -d, --domain <id>                 DDS domain ID (Default: 0).
+  -s, --samples <num>               Number of samples to send (Default: 0 => infinite).
+  -i, --interval <num>              Time between samples in milliseconds (Default: 1000).
 
 Subscriber options:
-  -t <topic_name> --topic=<topic_name>
-                    Topic name (Default: HelloWorldTopic).
-  -d <id>         --domain=<id>
-                    DDS domain ID (Default: 0).
-  -s <num>        --samples=<num>
-                    Number of samples to wait for (Default: 0 => infinite
-                    samples).
-                  --transport=<shm|udp|udpv6>
-                    Use only shared-memory, UDPv4, or UDPv6 transport.If not
-                    set, use Fast DDS default transports (depending on the
-                    scenario it will use the most efficient one:  data-sharing
-                    delivery mechanism > shared-memory > UDP ).
+  -t, --topic <topic_name>          Topic name (Default: DDSTopic).
+  -d, --domain <id>                 DDS domain ID (Default: 0).
+  -s, --samples <num>               Number of samples to wait for (Default: 0 => infinite).
 
-QoS options:
-  -r              --reliable
-                    Set reliability to reliable (best-effort by default).
-                  --transient
-                    Set durability to transient local (volatile by default,
-                    ineffective when not reliable).
 ```
 
 ### Publisher Data Type
 
-The Publisher has an argument `type`.
-Depending on this argument, the Publisher will create a DataWriter using different Data Types.
-Each of the types available are registered in the Participant in different ways, to illustrate how this could
-be done.
+This example allows the user to configure the type of the data published.
+At the moment, there are two data types that can be used in this example:
 
-This Data Types are:
+*   `helloworld`
 
-TODO
+    ```idl
+    struct HelloWorld
+    {
+        unsigned long index;
+        string message;
+    };
+    ```
+
+*   `complete`
+
+    ```bash
+    struct Timestamp
+    {
+        long seconds;
+        long milliseconds;
+    };
+
+    struct Point
+    {
+        long x;
+        long y;
+        long z;
+    };
+
+    struct MessageDescriptor
+    {
+        unsigned long id;
+        string topic;
+        Timestamp time;
+    };
+
+    struct Message
+    {
+        MessageDescriptor descriptor;
+        string message;
+    };
+
+    struct CompleteData
+    {
+        unsigned long index;
+        Point main_point;
+        sequence<Point> internal_data;
+        Message messages[2];
+    };
+    ```
 
 ### Subscriber Data Type
 
-The Subscriber will detect the data type name and will register the type by the information sent by the
-publisher, so the subscriber does not need to know the type.
-In order to introspect a Data Type, just launch the Subscriber with the topic name and the domain ID of a Data Writer
-that uses this Data Type (be sure the DataWriter is configured to transmit Data Type introspection information).
+The Subscriber will detect the data type name and will register it using the type information sent by the
+publisher. Thus, the subscriber does not need to know the type.
+In order to look-up a data type, just launch the Subscriber setting the same topic name as the one configured in the
+publisher side.
 
 ---
 
 ## Useful Commands
 
-### Generate autogenerated code from Fast DDS Gen
+### Generate type information code using Fast DDS Gen
 
 ```sh
-./src/fastddsgen/scripts/fastddsgen -replace  -d src/fastdds/examples/cpp/dds/TypeIntrospectionExample/types/hello_world/gen/ -typeobject -cs src/fastdds/examples/cpp/dds/TypeIntrospectionExample/types/hello_world/HelloWorld.idl
+fastddsgen -typeobject MyType.idl
 ```
+Please, find more Fast-DDS-Gen options [here](https://fast-dds.docs.eprosima.com/en/latest/fastddsgen/usage/usage.html).

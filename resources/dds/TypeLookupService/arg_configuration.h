@@ -27,6 +27,9 @@
 
 namespace option = eprosima::option;
 
+constexpr const char* PUBLISHER_ENTITY_KIND_ARG = "publisher";
+constexpr const char* SUBSCRIBER_ENTITY_KIND_ARG = "subscriber";
+
 constexpr const char* HELLO_WORLD_DATA_TYPE_ARG = "helloworld";
 constexpr const char* COMPLETE_DATA_TYPE_ARG = "complete";
 
@@ -128,49 +131,83 @@ struct Arg : public option::Arg
         }
         return option::ARG_ILLEGAL;
     }
+
+    static option::ArgStatus EntityKind(
+            const option::Option& option,
+            bool msg)
+    {
+        if (option.arg != 0)
+        {
+            std::string data_type = std::string(option.arg);
+            if (data_type != PUBLISHER_ENTITY_KIND_ARG &&
+                data_type != SUBSCRIBER_ENTITY_KIND_ARG)
+            {
+                if (msg)
+                {
+                    print_error("Option '", option, "' only accepts <publisher|subscriber> values\n");
+                }
+                return option::ARG_ILLEGAL;
+            }
+            return option::ARG_OK;
+        }
+        if (msg)
+        {
+            print_error("Option '", option, "' requires a string argument\n");
+        }
+        return option::ARG_ILLEGAL;
+    }
 };
 
 enum optionIndex
 {
     UNKNOWN_OPT,
+    ENTITY_TYPE,
     HELP,
     TOPIC_NAME,
     DOMAIN_ID,
     DATA_TYPE,
-    SAMPLES
+    SAMPLES,
+    INTERVAL
 };
 
 const option::Descriptor usage[] = {
-    { UNKNOWN_OPT, 0, "", "",                Arg::None,
-      "Usage: TypeIntrospectionExample <publisher|subscriber>\n\nGeneral options:" },
-    { HELP, 0, "h", "help",                  Arg::None,
+    { UNKNOWN_OPT, 0, "", "",               Arg::None,
+      "Usage: TypeIntrospectionExample \n\nGeneral options:" },
+    { HELP, 0, "h", "help",                 Arg::None,
       "  -h, --help  \tProduce help message." },
+    { ENTITY_TYPE, 0, "e", "entity",       Arg::EntityKind,
+      "  -e, --entity <dds_entity>  \tDDS Entity type (Default: publisher). Allowed options:\n \
+                                    \t• publisher -> Run a DDS Publisher.\n \
+                                    \t• subscriber -> Run a DDS Subscriber. " },
 
     // Publisher options
-    { UNKNOWN_OPT, 0, "", "",                Arg::None,
+    { UNKNOWN_OPT, 0, "", "",               Arg::None,
       "\nPublisher options:"},
 
-    { TOPIC_NAME, 0, "t", "topic",           Arg::String,
+    { TOPIC_NAME, 0, "t", "topic",          Arg::String,
       "  -t, --topic <topic_name>  \tTopic name (Default: DDSTopic)." },
-    { DATA_TYPE, 0, "x", "type",             Arg::DataType,
-      "  -x, --type <data_type_name>  \tTopic Data Type name (Default: helloworld). "
-      "\thelloworld -> HelloWorld data type (one string and one integer). "
-      "\tcomplete -> Complex data type composed of several of the other types at multiple levels. " },
-    { DOMAIN_ID, 0, "d", "domain",           Arg::Numeric,
+    { DATA_TYPE, 0, "x", "type",            Arg::DataType,
+      "  -x, --type <data_type_name>    \tTopic Data Type name (Default: helloworld).\n \
+                                        \t• helloworld -> HelloWorld data type (one string and one integer). \
+                                        \t• complete -> Complex data type composed of several of the other types at"
+                                        " multiple levels." },
+    { DOMAIN_ID, 0, "d", "domain",          Arg::Numeric,
       "  -d, --domain <id>  \tDDS domain ID (Default: 0)." },
-    { SAMPLES, 0, "s", "samples",            Arg::Numeric,
-      "  -s, --samples <num>  \tNumber of samples to send (Default: 0 => infinite samples)." },
+    { SAMPLES, 0, "s", "samples",           Arg::Numeric,
+      "  -s, --samples <num>  \tNumber of samples to send (Default: 0 == infinite)." },
+    { INTERVAL, 0, "i", "interval",         Arg::Numeric,
+      "  -i, --interval <num>  \tTime between samples in milliseconds (Default: 1000)." },
 
     // Subscriber options
-    { UNKNOWN_OPT, 0, "", "",                Arg::None,
+    { UNKNOWN_OPT, 0, "", "",               Arg::None,
       "\nSubscriber options:"},
 
-    { TOPIC_NAME, 0, "t", "topic",           Arg::String,
+    { TOPIC_NAME, 0, "t", "topic",          Arg::String,
       "  -t, --topic <topic_name>  \tTopic name (Default: DDSTopic)." },
-    { DOMAIN_ID, 0, "d", "domain",           Arg::Numeric,
+    { DOMAIN_ID, 0, "d", "domain",          Arg::Numeric,
       "  -d, --domain <id>  \tDDS domain ID (Default: 0)." },
-    { SAMPLES, 0, "s", "samples",            Arg::Numeric,
-      "  -s, --samples <num>  \tNumber of samples to wait for (Default: 0 => infinite samples)." },
+    { SAMPLES, 0, "s", "samples",           Arg::Numeric,
+      "  -s, --samples <num>  \tNumber of samples to wait for (Default: 0 == infinite)." },
 
     { 0, 0, 0, 0, 0, 0 }
 };

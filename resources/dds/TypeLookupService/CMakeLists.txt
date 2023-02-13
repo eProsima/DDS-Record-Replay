@@ -59,5 +59,3 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
 )
 target_link_libraries(${PROJECT_NAME} fastrtps fastcdr fastdds::optionparser)
-install(TARGETS ${PROJECT_NAME}
-    RUNTIME DESTINATION dds/${PROJECT_NAME}/${BIN_INSTALL_DIR})

@@ -78,7 +78,7 @@ public:
             uint32_t number,
             uint32_t sleep);
 
-    // DataWriter callback to inform new matches/unmatches with other DataReaders
+    //! DataWriter callback to inform new matches/unmatches with other DataReaders
     void on_publication_matched(
             eprosima::fastdds::dds::DataWriter* writer,
             const eprosima::fastdds::dds::PublicationMatchedStatus& info) override;

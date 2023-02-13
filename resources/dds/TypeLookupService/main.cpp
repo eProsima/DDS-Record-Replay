@@ -23,6 +23,7 @@
 #include "TypeLookupServicePublisher.h"
 // #include "TypeLookupServiceSubscriber.h"
 
+//! Enumeration to define the DDS entity type to be executed in the example
 enum EntityType
 {
     PUBLISHER,
@@ -33,6 +34,7 @@ int main(
         int argc,
         char** argv)
 {
+    // Help message formatting settings
     int columns;
 
 #if defined(_WIN32)
@@ -51,115 +53,106 @@ int main(
     columns = getenv("COLUMNS") ? atoi(getenv("COLUMNS")) : 80;
 #endif // if defined(_WIN32)
 
+    // Set Fast DDS logging verbosity level to Warning
     eprosima::fastdds::dds::Log::SetVerbosity(eprosima::fastdds::dds::Log::Kind::Warning);
 
-    EntityType type = PUBLISHER;
+    // Examples parameter definition
+    EntityType entity_type = EntityType::PUBLISHER;
     std::string topic_name = "DDSTopic";
     DataTypeKind data_type = DataTypeKind::HELLO_WORLD;
-    int count = 0;
+    int samples = 0;
     int domain = 0;
+    long sleep = 1000;
 
-    long sleep = 1000; // This is not set by configuration
+    // Parse example options
+    argc -= (argc > 0);
+    argv += (argc > 0); // skip program name argv[0] if present
+    option::Stats stats(usage, argc, argv);
+    std::vector<option::Option> options(stats.options_max);
+    std::vector<option::Option> buffer(stats.buffer_max);
+    option::Parser parse(usage, argc, argv, &options[0], &buffer[0]);
 
-    if (argc > 1)
+    if (parse.error())
     {
-        if (!strcmp(argv[1], "publisher"))
-        {
-            type = PUBLISHER;
-        }
-        else if (!strcmp(argv[1], "subscriber"))
-        {
-            type = SUBSCRIBER;
-        }
-        // check if first argument is help, needed because we skip it when parsing
-        else if (!(strcmp(argv[1], "-h") && strcmp(argv[1], "--help")))
-        {
-            option::printUsage(fwrite, stdout, usage, columns);
-            return 0;
-        }
-        else
-        {
-            std::cerr << "ERROR: first argument can only be <publisher|subscriber>" << std::endl;
-            option::printUsage(fwrite, stdout, usage, columns);
-            return 1;
-        }
-
-        argc -= (argc > 0);
-        argv += (argc > 0); // skip program name argv[0] if present
-        --argc; ++argv; // skip pub/sub argument
-        option::Stats stats(usage, argc, argv);
-        std::vector<option::Option> options(stats.options_max);
-        std::vector<option::Option> buffer(stats.buffer_max);
-        option::Parser parse(usage, argc, argv, &options[0], &buffer[0]);
-
-        if (parse.error())
-        {
-            option::printUsage(fwrite, stdout, usage, columns);
-            return 1;
-        }
-
-        if (options[optionIndex::HELP])
-        {
-            option::printUsage(fwrite, stdout, usage, columns);
-            return 0;
-        }
-
-        for (int i = 0; i < parse.optionsCount(); ++i)
-        {
-            option::Option& opt = buffer[i];
-            switch (opt.index())
-            {
-                case optionIndex::HELP:
-                    // not possible, because handled further above and exits the program
-                    break;
-
-                case optionIndex::TOPIC_NAME:
-                    topic_name = std::string(opt.arg);
-                    break;
-
-                case optionIndex::DATA_TYPE:
-                    if (strcmp(opt.arg, HELLO_WORLD_DATA_TYPE_ARG) == 0)
-                    {
-                        data_type = DataTypeKind::HELLO_WORLD;
-                    }
-                    else if (strcmp(opt.arg, COMPLETE_DATA_TYPE_ARG) == 0)
-                    {
-                        data_type = DataTypeKind::COMPLETE;
-                    }
-                    else
-                    {
-                        std::cerr << "ERROR: incorrect Data Type." << std::endl;
-                        return 1;
-                    }
-
-                    break;
-
-                case optionIndex::DOMAIN_ID:
-                    domain = strtol(opt.arg, nullptr, 10);
-                    break;
-
-                case optionIndex::SAMPLES:
-                    count = strtol(opt.arg, nullptr, 10);
-                    break;
-
-                case optionIndex::UNKNOWN_OPT:
-                    std::cerr << "ERROR: " << opt.name << " is not a valid argument." << std::endl;
-                    option::printUsage(fwrite, stdout, usage, columns);
-                    return 1;
-                    break;
-            }
-        }
-    }
-    else
-    {
-        std::cerr << "ERROR: <publisher|subscriber> argument is required." << std::endl;
         option::printUsage(fwrite, stdout, usage, columns);
         return 1;
     }
 
+    if (options[optionIndex::HELP])
+    {
+        option::printUsage(fwrite, stdout, usage, columns);
+        return 0;
+    }
+
+    for (int i = 0; i < parse.optionsCount(); ++i)
+    {
+        option::Option& opt = buffer[i];
+        switch (opt.index())
+        {
+            case optionIndex::HELP:
+                // not possible, because handled further above and exits the program
+                break;
+
+            case optionIndex::ENTITY_TYPE:
+                if (strcmp(opt.arg, PUBLISHER_ENTITY_KIND_ARG) == 0)
+                {
+                    entity_type = EntityType::PUBLISHER;
+                }
+                else if (strcmp(opt.arg, SUBSCRIBER_ENTITY_KIND_ARG) == 0)
+                {
+                    entity_type = EntityType::SUBSCRIBER;
+                }
+                else
+                {
+                    std::cerr << "ERROR: incorrect entity type. Only <publisher|subscriber> accepted." << std::endl;
+                    return 1;
+                }
+
+            case optionIndex::TOPIC_NAME:
+                topic_name = std::string(opt.arg);
+                break;
+
+            case optionIndex::DATA_TYPE:
+                if (strcmp(opt.arg, HELLO_WORLD_DATA_TYPE_ARG) == 0)
+                {
+                    data_type = DataTypeKind::HELLO_WORLD;
+                }
+                else if (strcmp(opt.arg, COMPLETE_DATA_TYPE_ARG) == 0)
+                {
+                    data_type = DataTypeKind::COMPLETE;
+                }
+                else
+                {
+                    std::cerr << "ERROR: incorrect data type. Only <helloworld|complete> accepted." << std::endl;
+                    return 1;
+                }
+
+                break;
+
+            case optionIndex::DOMAIN_ID:
+                domain = strtol(opt.arg, nullptr, 10);
+                break;
+
+            case optionIndex::SAMPLES:
+                samples = strtol(opt.arg, nullptr, 10);
+                break;
+
+            case optionIndex::INTERVAL:
+                sleep = strtol(opt.arg, nullptr, 10);
+                break;
+
+            case optionIndex::UNKNOWN_OPT:
+                std::cerr << "ERROR: " << opt.name << " is not a valid argument." << std::endl;
+                option::printUsage(fwrite, stdout, usage, columns);
+                return 1;
+                break;
+        }
+    }
+
+    // Build and run the publisher or subscriber examples
     try
     {
-        switch (type)
+        switch (entity_type)
         {
             case PUBLISHER:
             {
@@ -170,7 +163,7 @@ int main(
                     data_type);
 
                 // Run Participant
-                mypub.run(static_cast<uint32_t>(count), static_cast<uint32_t>(sleep));
+                mypub.run(static_cast<uint32_t>(samples), static_cast<uint32_t>(sleep));
                 break;
             }
 
@@ -182,7 +175,7 @@ int main(
             //         static_cast<uint32_t>(domain));
 
             //     // Run Participant
-            //     mysub.run(static_cast<uint32_t>(count));
+            //     mysub.run(static_cast<uint32_t>(samples));
 
             //     break;
             // }

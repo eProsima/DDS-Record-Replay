@@ -182,7 +182,7 @@ void TypeLookupServicePublisher::publisher_thread(
         uint32_t samples,
         uint32_t sleep)
 {
-    // Publish samples until the samle limit is reached or the user stops the application (Ctrl+C)
+    // Publish samples until the sample limit is reached or the user stops the application (Ctrl+C)
     unsigned int samples_sent = 0;
     while (!is_stopped() && (samples == 0 || samples_sent < samples))
     {
