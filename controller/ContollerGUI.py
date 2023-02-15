@@ -17,17 +17,21 @@ import sys
 
 from Controller import Controller
 
-from PyQt6.QtCore import QDateTime, Qt
-from PyQt6.QtGui import QAction
+from PyQt6.QtCore import QDateTime, Qt, QUrl
+from PyQt6.QtGui import QAction, QDesktopServices
 from PyQt6.QtWidgets import (
-    QApplication, QDialog, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMainWindow, QMenuBar,
-    QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, QDialogButtonBox, QSpinBox)
+    QApplication, QDialog, QDialogButtonBox, QHBoxLayout, QHeaderView,
+    QLabel, QMainWindow, QMenuBar, QPushButton, QSpinBox, QTableWidget,
+    QTableWidgetItem, QVBoxLayout, QWidget)
 
 from utils.Logger import Logger
 
 
 class DdsDomainDialog(QDialog):
+    """Class that implements the a dialog to set the DDS Domain."""
+
     def __init__(self, current_dds_domain):
+        """Construct the dialog to set the DDS Domain."""
         super().__init__()
 
         self.label = QLabel('Enter DDS Domain:')
@@ -54,7 +58,10 @@ class DdsDomainDialog(QDialog):
 
 
 class MenuWidget(QMenuBar):
+    """Class that implements the menu of DDS Recorder controller GUI."""
+
     def __init__(self, main_window):
+        """Construct the Controller GUI menu bar."""
         super().__init__()
 
         self.main_window = main_window
@@ -66,8 +73,35 @@ class MenuWidget(QMenuBar):
         dds_domain_action.triggered.connect(self.main_window.dds_domain_dialog)
         file_menu.addAction(dds_domain_action)
 
-        save_logs_action = QAction('Save Logs', self)
-        file_menu.addAction(save_logs_action)
+        docs_action = QAction('Documentation', self)
+        docs_action.triggered.connect(
+            lambda: QDesktopServices.openUrl(
+                QUrl("https://dds-recorder.readthedocs.io/en/latest/")))
+        help_menu.addAction(docs_action)
+
+        release_notes_action = QAction('Release Notes', self)
+        release_notes_action.triggered.connect(
+            lambda: QDesktopServices.openUrl(
+                QUrl("https://github.com/eProsima/DDS-Recorder/releases")))
+        help_menu.addAction(release_notes_action)
+
+        twitter_action = QAction('Join Us on Twitter', self)
+        twitter_action.triggered.connect(
+            lambda: QDesktopServices.openUrl(
+                QUrl("https://twitter.com/EProsima")))
+        help_menu.addAction(twitter_action)
+
+        feature_request_action = QAction('Search Feature Requests', self)
+        feature_request_action.triggered.connect(
+            lambda: QDesktopServices.openUrl(
+                QUrl("https://github.com/eProsima/DDS-Recorder/releases")))
+        help_menu.addAction(feature_request_action)
+
+        issue_action = QAction('Report Issue', self)
+        issue_action.triggered.connect(
+            lambda: QDesktopServices.openUrl(
+                QUrl("https://github.com/eProsima/DDS-Recorder/releases/new")))
+        help_menu.addAction(issue_action)
 
         about_action = QAction('About', self)
         help_menu.addAction(about_action)
@@ -87,6 +121,7 @@ class ControllerGUI(QMainWindow):
         self.dds_domain = 0
 
     def restart_controller(self, dds_domain=0):
+        """Restart the DDS Controller if the DDS Domain changes."""
         if (dds_domain != self.dds_domain):
             self.dds_controller.delete()
             self.dds_controller = Controller(
@@ -95,55 +130,54 @@ class ControllerGUI(QMainWindow):
 
     def init_gui(self):
         """Initialize the graphical interface and its widgets."""
-
         # Create the menu widget
         menu_widget = MenuWidget(self)
         self.setMenuBar(menu_widget)
 
-        # Create a vertical layout for the main window
-        vbox = QVBoxLayout()
+        # Vertical layout for the main window
+        main_vertical_layout = QVBoxLayout()
+
+        # Status section
+        status_box = QHBoxLayout()
 
         # Label for status bar
         self.label = QLabel(self)
-        self.label.setText('eProsima DDS Recorder status')
-        vbox.addWidget(self.label)
+        self.label.setText('eProsima DDS Recorder status:')
+        status_box.addWidget(self.label)
 
-        # Create the status label box
+        # Status label box
         self.status_box = QLabel(self)
         self.status_box.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.status_box.setStyleSheet('background-color: gray')
-        vbox.addWidget(self.status_box)
+        status_box.addWidget(self.status_box, 1)
 
-        # Create a horizontal layout for the buttons
+        main_vertical_layout.addLayout(status_box)
+
+        # Horizontal layout for the buttons
         buttons_box = QHBoxLayout()
 
-        # Create the start button
         start_button = QPushButton('Start', self)
         start_button.clicked.connect(self.start_clicked)
         buttons_box.addWidget(start_button)
 
-        # Create the pause button
         pause_button = QPushButton('Pause', self)
         pause_button.clicked.connect(self.pause_clicked)
         buttons_box.addWidget(pause_button)
 
-        # Create the stop button
         stop_button = QPushButton('Stop', self)
         stop_button.clicked.connect(self.stop_clicked)
         buttons_box.addWidget(stop_button)
 
-        # Create the event button
         event_button = QPushButton('Event', self)
         event_button.clicked.connect(self.event_clicked)
         buttons_box.addWidget(event_button)
 
-        # Create the resume button
         close_button = QPushButton('Close', self)
         close_button.clicked.connect(self.close_clicked)
         buttons_box.addWidget(close_button)
 
         # Add the horizontal layout to the vertical layout
-        vbox.addLayout(buttons_box)
+        main_vertical_layout.addLayout(buttons_box)
 
         # Create a text box for displaying the log
         self.log_box = QTableWidget(self)
@@ -154,12 +188,12 @@ class ControllerGUI(QMainWindow):
         header.resizeSection(0, 200)
         header.resizeSection(1, 100)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
-        vbox.addWidget(self.log_box)
+        main_vertical_layout.addWidget(self.log_box)
 
         # Add the layout to a widget and set it as the central
         # widget of the window
         central_widget = QWidget()
-        central_widget.setLayout(vbox)
+        central_widget.setLayout(main_vertical_layout)
         self.setCentralWidget(central_widget)
 
         # Set the window title and show the window
@@ -168,12 +202,12 @@ class ControllerGUI(QMainWindow):
         self.show()
 
     def dds_domain_dialog(self):
+        """Create a dialog to update the DDS Domain."""
         dialog = DdsDomainDialog(self.dds_domain)
         if dialog.exec():
             domain = dialog.get_dds_domain()
             if (self.dds_controller.is_valid_dds_domain(domain)):
                 self.restart_controller(dds_domain=domain)
-
 
     def start_clicked(self):
         """Publish START command."""
