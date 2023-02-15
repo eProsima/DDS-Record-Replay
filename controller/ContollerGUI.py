@@ -18,11 +18,59 @@ import sys
 from Controller import Controller
 
 from PyQt6.QtCore import QDateTime, Qt
+from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
-    QApplication, QHBoxLayout, QLabel, QMainWindow, QPushButton,
-    QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
+    QApplication, QDialog, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMainWindow, QMenuBar,
+    QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, QDialogButtonBox, QSpinBox)
 
 from utils.Logger import Logger
+
+
+class DdsDomainDialog(QDialog):
+    def __init__(self, current_dds_domain):
+        super().__init__()
+
+        self.label = QLabel('Enter DDS Domain:')
+        self.spin_box = QSpinBox(self)
+        self.spin_box.setMinimum(0)
+        self.spin_box.setMaximum(255)
+        self.spin_box.setValue(current_dds_domain)
+
+        self.buttonBox = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Save
+            | QDialogButtonBox.StandardButton.Cancel)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.label)
+        layout.addWidget(self.spin_box)
+        layout.addWidget(self.buttonBox)
+
+        self.setLayout(layout)
+
+    def get_dds_domain(self):
+        return int(self.spin_box.value())
+
+
+class MenuWidget(QMenuBar):
+    def __init__(self, main_window):
+        super().__init__()
+
+        self.main_window = main_window
+
+        file_menu = self.addMenu('File')
+        help_menu = self.addMenu('Help')
+
+        dds_domain_action = QAction('DDS Domain', self)
+        dds_domain_action.triggered.connect(self.main_window.dds_domain_dialog)
+        file_menu.addAction(dds_domain_action)
+
+        save_logs_action = QAction('Save Logs', self)
+        file_menu.addAction(save_logs_action)
+
+        about_action = QAction('About', self)
+        help_menu.addAction(about_action)
 
 
 class ControllerGUI(QMainWindow):
@@ -31,13 +79,27 @@ class ControllerGUI(QMainWindow):
     def __init__(self):
         """Construct the Controller GUI."""
         super().__init__()
+
         self.dds_controller = Controller()
         self.logger = Logger()
         self.logger.debug('Initializing controller GUI...')
         self.init_gui()
+        self.dds_domain = 0
+
+    def restart_controller(self, dds_domain=0):
+        if (dds_domain != self.dds_domain):
+            self.dds_controller.delete()
+            self.dds_controller = Controller(
+                dds_domain=dds_domain)
+            self.dds_domain = dds_domain
 
     def init_gui(self):
-        """Initialize the graphical interface and elements."""
+        """Initialize the graphical interface and its widgets."""
+
+        # Create the menu widget
+        menu_widget = MenuWidget(self)
+        self.setMenuBar(menu_widget)
+
         # Create a vertical layout for the main window
         vbox = QVBoxLayout()
 
@@ -52,43 +114,46 @@ class ControllerGUI(QMainWindow):
         self.status_box.setStyleSheet('background-color: gray')
         vbox.addWidget(self.status_box)
 
+        # Create a horizontal layout for the buttons
+        buttons_box = QHBoxLayout()
+
+        # Create the start button
+        start_button = QPushButton('Start', self)
+        start_button.clicked.connect(self.start_clicked)
+        buttons_box.addWidget(start_button)
+
+        # Create the pause button
+        pause_button = QPushButton('Pause', self)
+        pause_button.clicked.connect(self.pause_clicked)
+        buttons_box.addWidget(pause_button)
+
+        # Create the stop button
+        stop_button = QPushButton('Stop', self)
+        stop_button.clicked.connect(self.stop_clicked)
+        buttons_box.addWidget(stop_button)
+
+        # Create the event button
+        event_button = QPushButton('Event', self)
+        event_button.clicked.connect(self.event_clicked)
+        buttons_box.addWidget(event_button)
+
+        # Create the resume button
+        close_button = QPushButton('Close', self)
+        close_button.clicked.connect(self.close_clicked)
+        buttons_box.addWidget(close_button)
+
+        # Add the horizontal layout to the vertical layout
+        vbox.addLayout(buttons_box)
+
         # Create a text box for displaying the log
         self.log_box = QTableWidget(self)
         self.log_box.setColumnCount(3)
         self.log_box.setHorizontalHeaderLabels(
             ['Timestamp', 'Source', 'Message'])
-
-        # Create a horizontal layout for the buttons
-        hbox = QHBoxLayout()
-
-        # Create the start button
-        start_button = QPushButton('Start', self)
-        start_button.clicked.connect(self.start_clicked)
-        hbox.addWidget(start_button)
-
-        # Create the pause button
-        pause_button = QPushButton('Pause', self)
-        pause_button.clicked.connect(self.pause_clicked)
-        hbox.addWidget(pause_button)
-
-        # Create the stop button
-        stop_button = QPushButton('Stop', self)
-        stop_button.clicked.connect(self.stop_clicked)
-        hbox.addWidget(stop_button)
-
-        # Create the event button
-        event_button = QPushButton('Event', self)
-        event_button.clicked.connect(self.event_clicked)
-        hbox.addWidget(event_button)
-
-        # Create the resume button
-        close_button = QPushButton('Close', self)
-        close_button.clicked.connect(self.close_clicked)
-        hbox.addWidget(close_button)
-
-        # Add the horizontal layout to the vertical layout
-        vbox.addLayout(hbox)
-
+        header = self.log_box.horizontalHeader()
+        header.resizeSection(0, 200)
+        header.resizeSection(1, 100)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         vbox.addWidget(self.log_box)
 
         # Add the layout to a widget and set it as the central
@@ -99,7 +164,16 @@ class ControllerGUI(QMainWindow):
 
         # Set the window title and show the window
         self.setWindowTitle('DDS Recorder controller')
+        self.resize(700, 400)
         self.show()
+
+    def dds_domain_dialog(self):
+        dialog = DdsDomainDialog(self.dds_domain)
+        if dialog.exec():
+            domain = dialog.get_dds_domain()
+            if (self.dds_controller.is_valid_dds_domain(domain)):
+                self.restart_controller(dds_domain=domain)
+
 
     def start_clicked(self):
         """Publish START command."""
@@ -109,7 +183,7 @@ class ControllerGUI(QMainWindow):
         self.status_box.setText('Recording')
         self.status_box.setStyleSheet('background-color: green')
         # Print log
-        self.add_log_entry('Controller', 'Start button pressed')
+        self.add_log_entry('Controller', 'START command sent')
 
     def pause_clicked(self):
         """Publish PAUSE command."""
@@ -119,7 +193,7 @@ class ControllerGUI(QMainWindow):
         self.status_box.setText('Paused')
         self.status_box.setStyleSheet('background-color: orange')
         # Print log
-        self.add_log_entry('Controller', 'Pause button pressed')
+        self.add_log_entry('Controller', 'PAUSE command sent')
 
     def stop_clicked(self):
         """Publish STOP command."""
@@ -129,14 +203,14 @@ class ControllerGUI(QMainWindow):
         self.status_box.setText('Stopped')
         self.status_box.setStyleSheet('background-color: red')
         # Print log
-        self.add_log_entry('Controller', 'Event button pressed')
+        self.add_log_entry('Controller', 'EVENT command sent')
 
     def event_clicked(self):
         """Publish EVENT command."""
         # Publish event command
         self.dds_controller.event()
         # Print log
-        self.add_log_entry('Controller', 'Event button pressed')
+        self.add_log_entry('Controller', 'EVENT command sent')
 
     def close_clicked(self):
         """Publish CLOSE command."""
@@ -146,7 +220,7 @@ class ControllerGUI(QMainWindow):
         self.status_box.setText('Closed')
         self.status_box.setStyleSheet('background-color: gray')
         # Print log
-        self.add_log_entry('Controller', 'Close button pressed')
+        self.add_log_entry('Controller', 'CLOSE command sent')
 
     def add_log_entry(self, source, message):
         """Add log entry to the logging table."""
@@ -163,8 +237,6 @@ class ControllerGUI(QMainWindow):
 
     def closeEvent(self, event):
         """Update close event to close the application properly."""
-        # Delete DDS entities properly
-        self.dds_controller.delete()
         # Call the parent closeEvent to close the application
         super().closeEvent(event)
 

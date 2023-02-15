@@ -52,11 +52,21 @@ class Controller(object):
         self.logger.debug('Initializing DDS Recorder controller...')
 
         # Check DDS Domain
-        if((dds_domain < 0) or (dds_domain > 255)):
+        if (not self.is_valid_dds_domain(dds_domain)):
             raise ValueError(
-                'DDS Domain should be a number between 0 and 255.')
+                'DDS Domain must be a number between 0 and 255.')
 
-        # Initialize DDS entities
+        self.init_dds(dds_domain)
+
+    def __del__(self):
+        """Remove all dds entities in an orderly manner."""
+        self.delete()
+
+    def is_valid_dds_domain(self, dds_domain):
+        return ((dds_domain >= 0) and (dds_domain <= 255))
+
+    def init_dds(self, dds_domain):
+        """Initialize DDS entities."""
         factory = fastdds.DomainParticipantFactory.get_instance()
         participant_qos = fastdds.DomainParticipantQos()
         factory.get_default_participant_qos(participant_qos)
@@ -90,6 +100,10 @@ class Controller(object):
         self.writer = self.publisher.create_datawriter(
             self.topic, writer_qos, self.listener)
 
+        subscriber_qos = fastdds.SubscriberQos()
+        self.participant.get_default_subscriber_qos(subscriber_qos)
+        self.subscriber = self.participant.create_subscriber(subscriber_qos)
+
     def publish_command(self, command, args=''):
         """
         Publish a command.
@@ -100,10 +114,8 @@ class Controller(object):
         data = ControllerCommand()
         data.command(command)
         data.args(args)
-        if(self.writer.write(data)):
-            self.logger.error('Sending data')
-        else:
-            self.logger.error('Write failed')
+        if(not self.writer.write(data)):
+            self.logger.error('Publish failed')
 
     def start(self):
         """Publish START command."""
