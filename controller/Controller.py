@@ -13,48 +13,58 @@
 # limitations under the License.
 """Script implementing a remote controller for the DDS Recorder."""
 
-import logging
+from ddstypes.ControllerCommand.ControllerCommand import (
+    ControllerCommand, ControllerCommandPubSubType)
 
 import fastdds
 
-from type.ControllerCommand import ControllerCommand
+from utils.Logger import Logger
 
 
 class WriterListener (fastdds.DataWriterListener):
+    """Fast DDS DataWriter listener class."""
+
     def __init__(self, writer):
+        """Construct a WriterListener object."""
         self._writer = writer
         super().__init__()
 
     def on_publication_matched(self, datawriter, info):
+        """Raise when there has been a match/unmatch event."""
         if (0 < info.current_count_change):
-            print('DDS Recorder found!')
+            self.logger.debug('DDS Recorder found!')
         else:
-            print('DDS Recorder lost!')
+            self.logger.debug('DDS Recorder lost!')
 
 
 class Controller(object):
-    """
-    TODO
-    """
+    """DDS Controller class."""
 
     def __init__(
         self,
+        dds_domain=0,
         debug=False,
         logger=None
     ):
-        """
-        TODO
-        """
-        self.set_logger(logger, debug)
+        """Construct a DDS Controller."""
+        # Initialize logger
+        self.logger = Logger(debug, logger)
         self.logger.debug('Initializing DDS Recorder controller...')
+
+        # Check DDS Domain
+        if((dds_domain < 0) or (dds_domain > 255)):
+            raise ValueError(
+                'DDS Domain should be a number between 0 and 255.')
 
         # Initialize DDS entities
         factory = fastdds.DomainParticipantFactory.get_instance()
         participant_qos = fastdds.DomainParticipantQos()
         factory.get_default_participant_qos(participant_qos)
-        self.participant = factory.create_participant(0, participant_qos)
+        participant_qos.name('DDSRecorderController')
+        self.participant = factory.create_participant(
+            dds_domain, participant_qos)
 
-        self.topic_data_type = ControllerCommand.ControllerCommandPubSubType()
+        self.topic_data_type = ControllerCommandPubSubType()
         self.topic_data_type.setName('ControllerCommand')
         type_support = fastdds.TypeSupport(self.topic_data_type)
         self.participant.register_type(type_support)
@@ -73,36 +83,49 @@ class Controller(object):
         self.listener = WriterListener(self)
         writer_qos = fastdds.DataWriterQos()
         self.publisher.get_default_datawriter_qos(writer_qos)
+        writer_qos.reliability().kind = fastdds.RELIABLE_RELIABILITY_QOS
+        writer_qos.durability().kind = fastdds.TRANSIENT_LOCAL_DURABILITY_QOS
+        writer_qos.history().kind = fastdds.KEEP_LAST_HISTORY_QOS
+        writer_qos.history().size = 10
         self.writer = self.publisher.create_datawriter(
             self.topic, writer_qos, self.listener)
 
-
-    def set_logger(self, logger, debug):
+    def publish_command(self, command, args=''):
         """
-        Instance the class logger.
+        Publish a command.
 
-        :param logger: The logging object. CONTROLLER if None
-            logger is provided.
-        :param debug: True/False to activate/deactivate debug logger.
+        :param command: The command to be published.
+        :param debug: The arguments of the command to be published.
         """
-        if isinstance(logger, logging.Logger):
-            self.logger = logger
+        data = ControllerCommand()
+        data.command(command)
+        data.args(args)
+        if(self.writer.write(data)):
+            self.logger.error('Sending data')
         else:
-            if isinstance(logger, str):
-                self.logger = logging.getLogger(logger)
-            else:
-                self.logger = logging.getLogger('CONTROLLER')
+            self.logger.error('Write failed')
 
-            if not self.logger.hasHandlers():
-                l_handler = logging.StreamHandler()
-                l_format = '[%(asctime)s][%(name)s][%(levelname)s] %(message)s'
-                l_format = logging.Formatter(l_format)
-                l_handler.setFormatter(l_format)
-                self.logger.addHandler(l_handler)
+    def start(self):
+        """Publish START command."""
+        self.publish_command('START')
 
-        if debug:
-            self.logger.setLevel(logging.DEBUG)
-        else:
-            self.logger.setLevel(logging.INFO)
+    def pause(self):
+        """Publish PAUSE command."""
+        self.publish_command('PAUSE')
 
+    def stop(self):
+        """Publish STOP command."""
+        self.publish_command('STOP')
 
+    def event(self):
+        """Publish EVENT command."""
+        self.publish_command('EVENT')
+
+    def close(self):
+        """Publish CLOSE command."""
+        self.publish_command('CLOSE')
+
+    def delete(self):
+        factory = fastdds.DomainParticipantFactory.get_instance()
+        self.participant.delete_contained_entities()
+        factory.delete_participant(self.participant)
