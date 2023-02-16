@@ -6,5 +6,5 @@ CXX_FLAGS = -fPIC
 
 CXX_DEFINES = -DControllerCommand_EXPORTS -DFOONATHAN_MEMORY=1 -DFOONATHAN_MEMORY_VERSION_MAJOR=0 -DFOONATHAN_MEMORY_VERSION_MINOR=7 -DFOONATHAN_MEMORY_VERSION_PATCH=3
 
-CXX_INCLUDES = -I/usr/include/python3.10 -I/home/raul/ddsrecorder/src/ddsrecorder/controller/type -isystem /home/raul/fastdds/install/fastcdr/include -isystem /home/raul/fastdds/install/fastrtps/include -isystem /home/raul/fastdds/install/foonathan_memory_vendor/include/foonathan_memory 
+CXX_INCLUDES = -I/usr/include/python3.10 -I/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand -isystem /home/raul/fastdds_python_ws/install/fastcdr/include -isystem /home/raul/fastdds_python_ws/install/fastrtps/include -isystem /home/raul/fastdds_python_ws/install/foonathan_memory_vendor/include/foonathan_memory 
 

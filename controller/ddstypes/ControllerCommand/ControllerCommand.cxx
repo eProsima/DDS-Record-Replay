@@ -36,9 +36,9 @@ using namespace eprosima::fastcdr::exception;
 
 ControllerCommand::ControllerCommand()
 {
-    // m_command com.eprosima.idl.parser.typecode.StringTypeCode@e720b71
+    // m_command com.eprosima.idl.parser.typecode.StringTypeCode@1b26f7b2
     m_command ="";
-    // m_args com.eprosima.idl.parser.typecode.StringTypeCode@1b26f7b2
+    // m_args com.eprosima.idl.parser.typecode.StringTypeCode@491cc5c9
     m_args ="";
 
 }

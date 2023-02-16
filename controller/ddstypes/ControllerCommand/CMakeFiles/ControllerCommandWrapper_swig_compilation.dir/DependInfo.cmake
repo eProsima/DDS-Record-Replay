@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/raul/ddsrecorder/src/ddsrecorder/controller/type/ControllerCommand.i" "/home/raul/ddsrecorder/src/ddsrecorder/controller/type/CMakeFiles/ControllerCommandWrapper.dir/ControllerCommandPYTHON.stamp"
+  "/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/ControllerCommand.i" "/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/CMakeFiles/ControllerCommandWrapper.dir/ControllerCommandPYTHON.stamp"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

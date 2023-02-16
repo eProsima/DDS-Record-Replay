@@ -6,7 +6,7 @@ CXX_FLAGS = -fPIC
 
 CXX_DEFINES = -DControllerCommandWrapper_EXPORTS -DFOONATHAN_MEMORY=1 -DFOONATHAN_MEMORY_VERSION_MAJOR=0 -DFOONATHAN_MEMORY_VERSION_MINOR=7 -DFOONATHAN_MEMORY_VERSION_PATCH=3
 
-CXX_INCLUDES = -I/home/raul/ddsrecorder/src/ddsrecorder/controller/type -isystem /usr/include/python3.10 -isystem /home/raul/fastdds/install/fastrtps/include -isystem /home/raul/fastdds/install/fastcdr/include -isystem /home/raul/fastdds/install/foonathan_memory_vendor/include/foonathan_memory 
+CXX_INCLUDES = -I/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand -isystem /usr/include/python3.10 -isystem /home/raul/fastdds_python_ws/install/fastrtps/include -isystem /home/raul/fastdds_python_ws/install/fastcdr/include -isystem /home/raul/fastdds_python_ws/install/foonathan_memory_vendor/include/foonathan_memory 
 
 # Custom options: CMakeFiles/ControllerCommandWrapper.dir/CMakeFiles/ControllerCommandWrapper.dir/ControllerCommandPYTHON_wrap.cxx.o_OPTIONS = 
 

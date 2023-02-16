@@ -4,8 +4,8 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/raul/ddsrecorder/src/ddsrecorder/controller/type/ControllerCommand.cxx" "/home/raul/ddsrecorder/src/ddsrecorder/controller/type/CMakeFiles/ControllerCommand.dir/ControllerCommand.cxx.o"
-  "/home/raul/ddsrecorder/src/ddsrecorder/controller/type/ControllerCommandPubSubTypes.cxx" "/home/raul/ddsrecorder/src/ddsrecorder/controller/type/CMakeFiles/ControllerCommand.dir/ControllerCommandPubSubTypes.cxx.o"
+  "/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/ControllerCommand.cxx" "/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/CMakeFiles/ControllerCommand.dir/ControllerCommand.cxx.o"
+  "/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/ControllerCommandPubSubTypes.cxx" "/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/CMakeFiles/ControllerCommand.dir/ControllerCommandPubSubTypes.cxx.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 
@@ -22,9 +22,9 @@ set(CMAKE_TARGET_DEFINITIONS_CXX
 set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "/usr/include/python3.10"
   "."
-  "/home/raul/fastdds/install/fastcdr/include"
-  "/home/raul/fastdds/install/fastrtps/include"
-  "/home/raul/fastdds/install/foonathan_memory_vendor/include/foonathan_memory"
+  "/home/raul/fastdds_python_ws/install/fastcdr/include"
+  "/home/raul/fastdds_python_ws/install/fastrtps/include"
+  "/home/raul/fastdds_python_ws/install/foonathan_memory_vendor/include/foonathan_memory"
   )
 
 # Targets to which this target links.

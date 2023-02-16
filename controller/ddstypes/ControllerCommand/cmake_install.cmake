@@ -1,4 +1,4 @@
-# Install script for directory: /home/raul/ddsrecorder/src/ddsrecorder/controller/type
+# Install script for directory: /home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -44,12 +44,12 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
          FILE "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libControllerCommand.so"
          RPATH "")
   endif()
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE SHARED_LIBRARY FILES "/home/raul/ddsrecorder/src/ddsrecorder/controller/type/libControllerCommand.so")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE SHARED_LIBRARY FILES "/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/libControllerCommand.so")
   if(EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libControllerCommand.so" AND
      NOT IS_SYMLINK "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libControllerCommand.so")
     file(RPATH_CHANGE
          FILE "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libControllerCommand.so"
-         OLD_RPATH "/home/raul/fastdds/install/fastrtps/lib:/home/raul/fastdds/install/fastcdr/lib:"
+         OLD_RPATH "/home/raul/fastdds_python_ws/install/fastrtps/lib:/home/raul/fastdds_python_ws/install/fastcdr/lib:"
          NEW_RPATH "")
     if(CMAKE_INSTALL_DO_STRIP)
       execute_process(COMMAND "/usr/bin/strip" "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libControllerCommand.so")
@@ -67,12 +67,12 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
          FILE "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/python3/dist-packages/_ControllerCommandWrapper.so"
          RPATH "")
   endif()
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/python3/dist-packages" TYPE SHARED_LIBRARY FILES "/home/raul/ddsrecorder/src/ddsrecorder/controller/type/_ControllerCommandWrapper.so")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/python3/dist-packages" TYPE SHARED_LIBRARY FILES "/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/_ControllerCommandWrapper.so")
   if(EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/python3/dist-packages/_ControllerCommandWrapper.so" AND
      NOT IS_SYMLINK "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/python3/dist-packages/_ControllerCommandWrapper.so")
     file(RPATH_CHANGE
          FILE "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/python3/dist-packages/_ControllerCommandWrapper.so"
-         OLD_RPATH "/home/raul/ddsrecorder/src/ddsrecorder/controller/type:/home/raul/fastdds/install/fastrtps/lib:/home/raul/fastdds/install/fastcdr/lib:"
+         OLD_RPATH "/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand:/home/raul/fastdds_python_ws/install/fastrtps/lib:/home/raul/fastdds_python_ws/install/fastcdr/lib:"
          NEW_RPATH "")
     if(CMAKE_INSTALL_DO_STRIP)
       execute_process(COMMAND "/usr/bin/strip" "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/python3/dist-packages/_ControllerCommandWrapper.so")
@@ -84,7 +84,7 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/python3/dist-packages" TYPE FILE FILES "/home/raul/ddsrecorder/src/ddsrecorder/controller/type/ControllerCommand.py")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/python3/dist-packages" TYPE FILE FILES "/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/ControllerCommand.py")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)
@@ -95,5 +95,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/raul/ddsrecorder/src/ddsrecorder/controller/type/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

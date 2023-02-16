@@ -15,9 +15,9 @@
 
 import sys
 
-from Controller import Controller
+from Controller import Controller, DdsRecorderStatus
 
-from PyQt6.QtCore import QDateTime, Qt, QUrl
+from PyQt6.QtCore import QDateTime, QUrl, Qt
 from PyQt6.QtGui import QAction, QDesktopServices
 from PyQt6.QtWidgets import (
     QApplication, QDialog, QDialogButtonBox, QHBoxLayout, QHeaderView,
@@ -25,6 +25,9 @@ from PyQt6.QtWidgets import (
     QTableWidgetItem, QVBoxLayout, QWidget)
 
 from utils.Logger import Logger
+
+DDS_RECORDER = 'DDS Recorder'
+CONTROLLER = 'Controller'
 
 
 class DdsDomainDialog(QDialog):
@@ -114,11 +117,44 @@ class ControllerGUI(QMainWindow):
         """Construct the Controller GUI."""
         super().__init__()
 
-        self.dds_controller = Controller()
         self.logger = Logger()
         self.logger.debug('Initializing controller GUI...')
-        self.init_gui()
+
+        self.dds_controller = Controller()
         self.dds_domain = 0
+
+        self.status2color = {
+            DdsRecorderStatus.RECORDING.name: 'green',
+            DdsRecorderStatus.PAUSED.name: 'orange',
+            DdsRecorderStatus.STOPPED.name: 'red',
+            DdsRecorderStatus.UNKNOWN.name: 'gray'
+        }
+
+        self.init_gui()
+
+        # Connect controller signals to UI functions
+        self.dds_controller.on_ddsrecorder_discovered.connect(
+            self.on_ddsrecorder_discovered)
+        self.dds_controller.on_ddsrecorder_status.connect(
+            self.on_ddsrecorder_status)
+
+    def on_ddsrecorder_discovered(self, message):
+        self.add_log_entry(CONTROLLER, message)
+
+    def on_ddsrecorder_status(self, previous_status, current_status, info):
+        self.add_log_entry(
+            DDS_RECORDER,
+            f'Update from {previous_status} to {current_status}')
+        self.add_log_entry(DDS_RECORDER, f'Status information: {info}')
+
+        if (current_status.upper() not in DdsRecorderStatus):
+            self.status_box.setText(DdsRecorderStatus.UNKNOWN.name)
+            self.status_box.setStyleSheet('background-color: gray')
+        else:
+            self.status_box.setText(current_status.upper())
+            self.status_box.setStyleSheet(
+                'background-color: '
+                f'{self.status2color[current_status.upper()]}')
 
     def restart_controller(self, dds_domain=0):
         """Restart the DDS Controller if the DDS Domain changes."""
@@ -212,49 +248,32 @@ class ControllerGUI(QMainWindow):
     def start_clicked(self):
         """Publish START command."""
         # Publish start command
-        self.dds_controller.start()
-        # Update status box
-        self.status_box.setText('Recording')
-        self.status_box.setStyleSheet('background-color: green')
-        # Print log
-        self.add_log_entry('Controller', 'START command sent')
+        if (self.dds_controller.start()):
+            self.add_log_entry(CONTROLLER, 'START command sent')
 
     def pause_clicked(self):
         """Publish PAUSE command."""
         # Publish pause command
-        self.dds_controller.pause()
-        # Update status box
-        self.status_box.setText('Paused')
-        self.status_box.setStyleSheet('background-color: orange')
-        # Print log
-        self.add_log_entry('Controller', 'PAUSE command sent')
+        if (self.dds_controller.pause()):
+            self.add_log_entry(CONTROLLER, 'PAUSE command sent')
 
     def stop_clicked(self):
         """Publish STOP command."""
         # Publish stop command
-        self.dds_controller.stop()
-        # Update status box
-        self.status_box.setText('Stopped')
-        self.status_box.setStyleSheet('background-color: red')
-        # Print log
-        self.add_log_entry('Controller', 'EVENT command sent')
+        if (self.dds_controller.stop()):
+            self.add_log_entry(CONTROLLER, 'EVENT command sent')
 
     def event_clicked(self):
         """Publish EVENT command."""
         # Publish event command
-        self.dds_controller.event()
-        # Print log
-        self.add_log_entry('Controller', 'EVENT command sent')
+        if (self.dds_controller.event()):
+            self.add_log_entry(CONTROLLER, 'EVENT command sent')
 
     def close_clicked(self):
         """Publish CLOSE command."""
         # Publish close command
-        self.dds_controller.close()
-        # Update status box
-        self.status_box.setText('Closed')
-        self.status_box.setStyleSheet('background-color: gray')
-        # Print log
-        self.add_log_entry('Controller', 'CLOSE command sent')
+        if (self.dds_controller.close()):
+            self.add_log_entry(CONTROLLER, 'CLOSE command sent')
 
     def add_log_entry(self, source, message):
         """Add log entry to the logging table."""

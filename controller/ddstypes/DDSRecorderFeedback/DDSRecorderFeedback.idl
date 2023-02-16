@@ -1,5 +1,0 @@
-struct DDSRecorderFeedback
-{
-    string status;
-    string feedback;
-}

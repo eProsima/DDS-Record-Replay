@@ -63,10 +63,10 @@ RM = /usr/local/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/raul/ddsrecorder/src/ddsrecorder/controller/type
+CMAKE_SOURCE_DIR = /home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/raul/ddsrecorder/src/ddsrecorder/controller/type
+CMAKE_BINARY_DIR = /home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand
 
 # Utility rule file for ControllerCommandWrapper_swig_compilation.
 
@@ -78,10 +78,10 @@ CMakeFiles/ControllerCommandWrapper_swig_compilation: CMakeFiles/ControllerComma
 
 CMakeFiles/ControllerCommandWrapper.dir/ControllerCommandPYTHON.stamp: ControllerCommand.i
 CMakeFiles/ControllerCommandWrapper.dir/ControllerCommandPYTHON.stamp: ControllerCommand.i
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/raul/ddsrecorder/src/ddsrecorder/controller/type/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Swig compile ControllerCommand.i for python"
-	/usr/local/bin/cmake -E make_directory /home/raul/ddsrecorder/src/ddsrecorder/controller/type /home/raul/ddsrecorder/src/ddsrecorder/controller/type/CMakeFiles/ControllerCommandWrapper.dir
-	/usr/local/bin/cmake -E touch /home/raul/ddsrecorder/src/ddsrecorder/controller/type/CMakeFiles/ControllerCommandWrapper.dir/ControllerCommandPYTHON.stamp
-	/usr/local/bin/cmake -E env SWIG_LIB=/usr/share/swig4.0 /usr/bin/swig4.0 -python -I/usr/include/python3.10 -I/home/raul/ddsrecorder/src/ddsrecorder/controller/type -I/usr/include/python3.10 -I/home/raul/fastdds/install/fastrtps/include -I/home/raul/fastdds/install/fastcdr/include -I/home/raul/fastdds/install/foonathan_memory_vendor/include/foonathan_memory -I/usr/include -I/usr/include -DSWIGWORDSIZE64 -outdir /home/raul/ddsrecorder/src/ddsrecorder/controller/type -c++ -interface _ControllerCommandWrapper -I/usr/include/python3.10 -I/home/raul/ddsrecorder/src/ddsrecorder/controller/type -o /home/raul/ddsrecorder/src/ddsrecorder/controller/type/CMakeFiles/ControllerCommandWrapper.dir/ControllerCommandPYTHON_wrap.cxx /home/raul/ddsrecorder/src/ddsrecorder/controller/type/ControllerCommand.i
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Swig compile ControllerCommand.i for python"
+	/usr/local/bin/cmake -E make_directory /home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand /home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/CMakeFiles/ControllerCommandWrapper.dir
+	/usr/local/bin/cmake -E touch /home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/CMakeFiles/ControllerCommandWrapper.dir/ControllerCommandPYTHON.stamp
+	/usr/local/bin/cmake -E env SWIG_LIB=/usr/share/swig4.0 /usr/bin/swig4.0 -python -I/usr/include/python3.10 -I/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand -I/usr/include/python3.10 -I/home/raul/fastdds_python_ws/install/fastrtps/include -I/home/raul/fastdds_python_ws/install/fastcdr/include -I/home/raul/fastdds_python_ws/install/foonathan_memory_vendor/include/foonathan_memory -I/usr/include -I/usr/include -DSWIGWORDSIZE64 -outdir /home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand -c++ -interface _ControllerCommandWrapper -I/usr/include/python3.10 -I/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand -o /home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/CMakeFiles/ControllerCommandWrapper.dir/ControllerCommandPYTHON_wrap.cxx /home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/ControllerCommand.i
 
 ControllerCommandWrapper_swig_compilation: CMakeFiles/ControllerCommandWrapper_swig_compilation
 ControllerCommandWrapper_swig_compilation: CMakeFiles/ControllerCommandWrapper.dir/ControllerCommandPYTHON.stamp
@@ -99,6 +99,6 @@ CMakeFiles/ControllerCommandWrapper_swig_compilation.dir/clean:
 .PHONY : CMakeFiles/ControllerCommandWrapper_swig_compilation.dir/clean
 
 CMakeFiles/ControllerCommandWrapper_swig_compilation.dir/depend:
-	cd /home/raul/ddsrecorder/src/ddsrecorder/controller/type && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/raul/ddsrecorder/src/ddsrecorder/controller/type /home/raul/ddsrecorder/src/ddsrecorder/controller/type /home/raul/ddsrecorder/src/ddsrecorder/controller/type /home/raul/ddsrecorder/src/ddsrecorder/controller/type /home/raul/ddsrecorder/src/ddsrecorder/controller/type/CMakeFiles/ControllerCommandWrapper_swig_compilation.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand /home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand /home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand /home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand /home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/CMakeFiles/ControllerCommandWrapper_swig_compilation.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/ControllerCommandWrapper_swig_compilation.dir/depend
 
