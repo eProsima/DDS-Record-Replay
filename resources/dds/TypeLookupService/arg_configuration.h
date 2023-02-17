@@ -1,4 +1,4 @@
-// Copyright 2022 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+// Copyright 2023 Proyectos y Sistemas de Mantenimiento SL (eProsima).
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -185,7 +185,7 @@ const option::Descriptor usage[] = {
       "\nPublisher options:"},
 
     { TOPIC_NAME, 0, "t", "topic",          Arg::String,
-      "  -t, --topic <topic_name>  \tTopic name (Default: DDSTopic)." },
+      "  -t, --topic <topic_name>  \tTopic name (Default: /dds/topic)." },
     { DATA_TYPE, 0, "x", "type",            Arg::DataType,
       "  -x, --type <data_type_name>    \tTopic Data Type name (Default: helloworld).\n \
                                         \t• helloworld -> HelloWorld data type (one string and one integer). \
@@ -203,7 +203,7 @@ const option::Descriptor usage[] = {
       "\nSubscriber options:"},
 
     { TOPIC_NAME, 0, "t", "topic",          Arg::String,
-      "  -t, --topic <topic_name>  \tTopic name (Default: DDSTopic)." },
+      "  -t, --topic <topic_name>  \tTopic name (Default: /dds/topic)." },
     { DOMAIN_ID, 0, "d", "domain",          Arg::Numeric,
       "  -d, --domain <id>  \tDDS domain ID (Default: 0)." },
     { SAMPLES, 0, "s", "samples",           Arg::Numeric,

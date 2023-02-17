@@ -20,7 +20,7 @@ To build the example, install Fast DDS following one of the [installation method
 
 Once Fast DDS is installed, source Fast DDS or make the libraries accessible to be used by CMake.
 
-Finally, go to this same folder and run:
+Finally, go to this folder and run:
 
 ```bash
 mkdir build
@@ -30,7 +30,7 @@ cmake .. && make -j8
 
 ## Recording samples with DDS Recorder
 
-1.  Open to terminals
+1.  Open two terminals
 1.  In the first terminal, run this example
 
     ```bash
@@ -75,7 +75,7 @@ General options:
                                     • subscriber -> Run a DDS Subscriber.
 
 Publisher options:
-  -t, --topic <topic_name>          Topic name (Default: DDSTopic).
+  -t, --topic <topic_name>          Topic name (Default: /dds/topic).
   -x, --type <data_type_name>       Topic Data Type name (Default: helloworld).
                                     • helloworld -> HelloWorld data type
                                     (one string and one integer).
@@ -86,7 +86,7 @@ Publisher options:
   -i, --interval <num>              Time between samples in milliseconds (Default: 1000).
 
 Subscriber options:
-  -t, --topic <topic_name>          Topic name (Default: DDSTopic).
+  -t, --topic <topic_name>          Topic name (Default: /dds/topic).
   -d, --domain <id>                 DDS domain ID (Default: 0).
   -s, --samples <num>               Number of samples to wait for (Default: 0 => infinite).
 

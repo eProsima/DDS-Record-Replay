@@ -112,8 +112,8 @@ TypeLookupServicePublisher::TypeLookupServicePublisher(
         throw std::runtime_error("Error creating topic");
     }
 
-    ///////////////////////
-    // Create the DDS Topic
+    ///////////////////////////
+    // Create the DDS Publisher
     datawriter_ = publisher_->create_datawriter(topic_, DATAWRITER_QOS_DEFAULT, this);
 
     if (datawriter_ == nullptr)
@@ -211,6 +211,8 @@ void TypeLookupServicePublisher::run(
         std::cout << "Publisher running for " << samples <<
             " samples. Press CTRL+C to stop the Publisher at any time..." << std::endl;
     }
+
+
 
     // Ctrl+C (SIGINT) termination signal handler
     signal(SIGINT, [](int signum)

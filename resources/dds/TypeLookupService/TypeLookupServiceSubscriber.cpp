@@ -1,4 +1,4 @@
-// Copyright 2022 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+// Copyright 2023 Proyectos y Sistemas de Mantenimiento SL (eProsima).
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -144,19 +144,21 @@ void TypeLookupServiceSubscriber::on_data_available(
         DataReader* reader)
 {
     // Create a new DynamicData to read the sample
-    eprosima::fastrtps::types::DynamicData_ptr new_data;
-    new_data = eprosima::fastrtps::types::DynamicDataFactory::get_instance()->create_data(dynamic_type_);
+    eprosima::fastrtps::types::DynamicData_ptr new_dynamic_data;
+    new_dynamic_data = eprosima::fastrtps::types::DynamicDataFactory::get_instance()->create_data(dynamic_type_);
 
     SampleInfo info;
 
     // Take next sample until we've read all samples or the application stopped
-    while ((reader->take_next_sample(new_data.get(), &info) == ReturnCode_t::RETCODE_OK) && !is_stopped())
+    while ((reader->take_next_sample(new_dynamic_data.get(), &info) == ReturnCode_t::RETCODE_OK) && !is_stopped())
     {
         if (info.instance_state == ALIVE_INSTANCE_STATE)
         {
             samples_++;
 
-            std::cout << samples_ << " messages received:\n" << new_data << std::endl;
+            std::cout << "Message " << samples_ << " received:\n" << std::endl;
+            eprosima::fastrtps::types::DynamicDataHelper::print(new_dynamic_data);
+            std::cout << "-----------------------------------------------------" << std::endl;
 
             // Stop if all expecting messages has been received (max_messages number reached)
             if (max_messages_ > 0 && (samples_ >= max_messages_))
