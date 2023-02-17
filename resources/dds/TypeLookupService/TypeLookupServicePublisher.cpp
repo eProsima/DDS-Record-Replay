@@ -112,8 +112,8 @@ TypeLookupServicePublisher::TypeLookupServicePublisher(
         throw std::runtime_error("Error creating topic");
     }
 
-    ///////////////////////////
-    // Create the DDS Publisher
+    ////////////////////////////
+    // Create the DDS DataWriter
     datawriter_ = publisher_->create_datawriter(topic_, DATAWRITER_QOS_DEFAULT, this);
 
     if (datawriter_ == nullptr)
