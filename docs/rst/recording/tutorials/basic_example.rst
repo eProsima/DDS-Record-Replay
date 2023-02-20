@@ -46,12 +46,12 @@ Creating the workspace
 Configure DynamicTypes in Fast DDS
 **********************************
 
-Fast DDS does not send the Data Type information by default, it must be configured to do so.
+*eProsima Fast DDS* does not send the Data Type information by default, it must be configured to do so.
 
 Complex types
 ============
 
-For more complex types, it is required to use ``TypeInformation`` mechanism. In the Fast DDS ``DomainParticipant`` set the following QoS in order to send this information:
+For complex types, it is required to use ``TypeInformation`` mechanism. In the *eProsima Fast DDS* ``DomainParticipant`` set the following QoS in order to send this information:
 
 .. code-block:: bash
 
@@ -80,16 +80,14 @@ At the moment, there are two data types that can be used in this example:
 
 * ``HelloWorld``
 
-.. literalinclude:: /../../../../../resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl
-    :language: IDL
+.. literalinclude:: ./../../../../../resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl
 
 * ``Complete``
 
-.. literalinclude:: /../../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
-    :language: IDL
+.. literalinclude:: ./../../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
 
 
-This tutorial will use the ``HelloWorld`` message.
+This tutorial files are generated using use the ``HelloWorld`` message.
 
 *********************
 DynamicType Publisher
@@ -114,18 +112,25 @@ Running the application
 
 At this point the project is ready for building, compiling and running the application.
 
+.. code-block:: bash
+
+    source install/setup.bash
+    colcon build
+
 Recording samples with DDS Recorder
 ===================================
 
 Open two terminals:
+
 In the first terminal, run:
 
 .. code-block:: bash
 
     source install/setup.bash
+    cd DDS-Recorder/build/TypeLookupService
     ./TypeLookupService
 
-In the second terminal, run the DDS Recorder:
+In the second terminal, run the ddsrecorder:
 
 .. code-block:: bash
 
@@ -136,16 +141,21 @@ Publisher <-> Subscriber example
 ================================
 
 Open two terminals:
-In the first terminal, run:
+
+In the first terminal, run the DDS Recorder Publisher:
 
 .. code-block:: bash
 
     source install/setup.bash
+    cd DDS-Recorder/build/TypeLookupService
     ./TypeLookupService --entity publisher
 
-In the second terminal, run the DDS Recorder:
+In the second terminal, run the DDS Recorder Subscriber:
 
 .. code-block:: bash
 
     source install/setup.bash
+    cd DDS-Recorder/build/TypeLookupService
     ./TypeLookupService --entity subscriber
+
+.. figure:: /resources/tutorials/basic_publisher_subscriber.png
