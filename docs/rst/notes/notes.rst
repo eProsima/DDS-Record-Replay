@@ -1,6 +1,10 @@
 .. include:: ../exports/alias.include
 
-.. _release_notes:
+.. _notes:
+
+#####
+Notes
+#####
 
 .. note::
     This page is under maintenance and will be updated soon.

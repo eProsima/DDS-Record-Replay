@@ -12,5 +12,3 @@ This section will provide a collection of tutorials both on the use and applicat
     :maxdepth: 1
 
     basic_example
-    custom_config
-    ros_cloud

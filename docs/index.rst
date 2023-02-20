@@ -63,7 +63,6 @@
 
    /rst/notes/notes
 
-
 .. _index_appendix:
 
 .. toctree::
