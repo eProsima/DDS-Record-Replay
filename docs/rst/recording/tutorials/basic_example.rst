@@ -2,9 +2,9 @@
 
 .. _tutorials_basic_example:
 
-#####################################
-Recording data from a DDS application
-#####################################
+#################################################
+Recording DynamicType data from a DDS application
+#################################################
 
 .. contents::
     :local:
@@ -62,12 +62,12 @@ Native types
 ============
 
 For native types Fast DDS will send the ``TypeObject`` by default.
-When generating the Types using Fast DDS Gen, the option ``-typeobject`` must be added in order to generate the needed code to fill the ``TypeObject`` data.
 
 IDL file
---------
+========
 
 `eProsima Fast DDS-Gen <https://fast-dds.docs.eprosima.com/en/latest/fastddsgen/introduction/introduction.html>`_ is a Java application that generates *eProsima Fast DDS* source code using the data types defined in an IDL (Interface Definition Language) file.
+When generating the Types using Fast DDS Gen, the option ``-typeobject`` must be added in order to generate the needed code to fill the ``TypeObject`` data.
 
 The expected argument list of the application is:
 
@@ -80,20 +80,20 @@ At the moment, there are two data types that can be used in this example:
 
 * ``HelloWorld``
 
-.. literalinclude:: /../resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl
+.. literalinclude:: /../../../../../resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl
     :language: IDL
 
 * ``Complete``
 
-.. literalinclude:: /../resources/dds/TypeLookupService/types/complete/Complete.idl
+.. literalinclude:: /../../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
     :language: IDL
 
 
 This tutorial will use the ``HelloWorld`` message.
 
-*********************************
+*********************
 DynamicType Publisher
-*********************************
+*********************
 
 This is the C++ source code for the application. This source code can also be found `here <https://github.com/eProsima/DDS-Recorder/blob/main/resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp>`_.
 
@@ -112,11 +112,10 @@ publisher side.
 Running the application
 ***********************
 
-At this point the project is ready for building, compiling and running the application. From the base workspace directory (recorder_ws), run the following command:
+At this point the project is ready for building, compiling and running the application.
 
-.. code-block:: bash
-
-    source install/setup.bash
+Recording samples with DDS Recorder
+===================================
 
 Open two terminals:
 In the first terminal, run:
@@ -132,3 +131,21 @@ In the second terminal, run the DDS Recorder:
 
     source install/setup.bash
     ddsrecorder
+
+Publisher <-> Subscriber example
+================================
+
+Open two terminals:
+In the first terminal, run:
+
+.. code-block:: bash
+
+    source install/setup.bash
+    ./TypeLookupService --entity publisher
+
+In the second terminal, run the DDS Recorder:
+
+.. code-block:: bash
+
+    source install/setup.bash
+    ./TypeLookupService --entity subscriber
