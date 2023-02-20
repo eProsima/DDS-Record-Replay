@@ -80,7 +80,7 @@ At the moment, there are two data types that can be used in this example:
 
 * ``HelloWorld``
 
-.. literalinclude:: ./../../../../../resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl
+.. literalinclude:: ../resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl
 
 * ``Complete``
 
@@ -137,8 +137,8 @@ In the second terminal, run the ddsrecorder:
     source install/setup.bash
     ddsrecorder
 
-Publisher <-> Subscriber example
-================================
+Publisher <-> Subscriber
+========================
 
 Open two terminals:
 
