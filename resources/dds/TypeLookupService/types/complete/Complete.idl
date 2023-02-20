@@ -1,0 +1,33 @@
+struct Timestamp
+{
+    long seconds;
+    long milliseconds;
+};
+
+struct Point
+{
+    long x;
+    long y;
+    long z;
+};
+
+struct MessageDescriptor
+{
+    unsigned long id;
+    string topic;
+    Timestamp time;
+};
+
+struct Message
+{
+    MessageDescriptor descriptor;
+    string message;
+};
+
+struct CompleteData
+{
+	unsigned long index;
+    Point main_point;
+    sequence<Point> internal_data;
+    Message messages[2];
+};
