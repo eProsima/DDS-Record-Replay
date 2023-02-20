@@ -78,11 +78,11 @@ The expected argument list of the application is:
 This example allows the user to configure the type of the data published.
 At the moment, there are two data types that can be used in this example:
 
-* ``HelloWorld``
+* `HelloWorld <https://github.com/eProsima/DDS-Recorder/blob/main/resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl>`_
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl
 
-* ``Complete``
+* `Complete <https://github.com/eProsima/DDS-Recorder/blob/main/resources/dds/TypeLookupService/types/complete/Complete.idl>`_
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
 
@@ -114,8 +114,8 @@ At this point the project is ready for building, compiling and running the appli
 
 .. code-block:: bash
 
-    source install/setup.bash
     colcon build
+    source install/setup.bash
 
 Recording samples with DDS Recorder
 ===================================
@@ -142,7 +142,7 @@ Publisher <-> Subscriber
 
 Open two terminals:
 
-In the first terminal, run the DDS Recorder Publisher:
+In the first terminal, run the DDS Publisher:
 
 .. code-block:: bash
 
@@ -150,7 +150,7 @@ In the first terminal, run the DDS Recorder Publisher:
     cd DDS-Recorder/build/TypeLookupService
     ./TypeLookupService --entity publisher
 
-In the second terminal, run the DDS Recorder Subscriber:
+In the second terminal, run the DDS Subscriber:
 
 .. code-block:: bash
 
