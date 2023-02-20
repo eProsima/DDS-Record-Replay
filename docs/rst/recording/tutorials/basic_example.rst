@@ -37,26 +37,35 @@ Also, remember to source the environment in every terminal in this tutorial.
 Creating the workspace
 **********************
 
-mkdir -p recorder_ws/src
-cd recorder_ws/src
+.. code-block:: bash
 
-***********************************
-Configure Dynamic Types in Fast DDS
-***********************************
+    mkdir -p recorder_ws/src
+    cd recorder_ws/src
+
+**********************************
+Configure DynamicTypes in Fast DDS
+**********************************
 
 Fast DDS does not send the Data Type information by default, it must be configured to do so.
 
-For native types (Data Types that does not rely in other Data Types) this is enough, as Fast DDS will send the ``TypeObject`` by default. However, for more complex types, it is required to use ``TypeInformation`` mechanism. In the Fast DDS ``DomainParticipant`` set the following QoS in order to send this information:
+Complex types
+============
+
+For more complex types, it is required to use ``TypeInformation`` mechanism. In the Fast DDS ``DomainParticipant`` set the following QoS in order to send this information:
 
 .. code-block:: bash
 
     DomainParticipantQos pqos;
     pqos.wire_protocol().builtin.typelookup_config.use_server = true;
 
+Native types
+============
+
+For native types Fast DDS will send the ``TypeObject`` by default.
 When generating the Types using Fast DDS Gen, the option ``-typeobject`` must be added in order to generate the needed code to fill the ``TypeObject`` data.
 
 IDL file
-========
+--------
 
 `eProsima Fast DDS-Gen <https://fast-dds.docs.eprosima.com/en/latest/fastddsgen/introduction/introduction.html>`_ is a Java application that generates *eProsima Fast DDS* source code using the data types defined in an IDL (Interface Definition Language) file.
 
@@ -69,11 +78,13 @@ The expected argument list of the application is:
 This example allows the user to configure the type of the data published.
 At the moment, there are two data types that can be used in this example:
 
-``HelloWorld``
+* ``HelloWorld``
+
 .. literalinclude:: /../resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl
     :language: IDL
 
-``Complete``
+* ``Complete``
+
 .. literalinclude:: /../resources/dds/TypeLookupService/types/complete/Complete.idl
     :language: IDL
 
@@ -81,14 +92,14 @@ At the moment, there are two data types that can be used in this example:
 This tutorial will use the ``HelloWorld`` message.
 
 *********************************
-Writing the DynamicType Publisher
+DynamicType Publisher
 *********************************
 
 This is the C++ source code for the application. This source code can also be found `here <https://github.com/eProsima/DDS-Recorder/blob/main/resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp>`_.
 
-**********************************
-Writing the DynamicType Subscriber
-**********************************
+**********************
+DynamicType Subscriber
+**********************
 
 This is the C++ source code for the application. This source code can also be found `here <https://github.com/eProsima/DDS-Recorder/blob/main/resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp>`_.
 
@@ -104,17 +115,20 @@ Running the application
 At this point the project is ready for building, compiling and running the application. From the base workspace directory (recorder_ws), run the following command:
 
 .. code-block:: bash
+
     source install/setup.bash
 
 Open two terminals:
 In the first terminal, run:
 
 .. code-block:: bash
+
     source install/setup.bash
     ./TypeLookupService
 
 In the second terminal, run the DDS Recorder:
 
 .. code-block:: bash
+
     source install/setup.bash
     ddsrecorder
