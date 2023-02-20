@@ -80,11 +80,11 @@ At the moment, there are two data types that can be used in this example:
 
 * ``HelloWorld``
 
-.. literalinclude:: ../resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl
+.. literalinclude:: ../../../../resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl
 
 * ``Complete``
 
-.. literalinclude:: ./../../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
+.. literalinclude:: ../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
 
 
 This tutorial files are generated using use the ``HelloWorld`` message.
