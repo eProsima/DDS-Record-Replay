@@ -12,3 +12,4 @@ This section will provide a collection of tutorials both on the use and applicat
     :maxdepth: 1
 
     basic_example
+    foxglove_tutorial

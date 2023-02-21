@@ -7,10 +7,13 @@ blocklist:
   - name: "add_blocked_topics_list_here"
 
 # Domain ID
-domain: 100
+dds:
+  domain: 0
 
 # Recorder output file
-extension: ".mcap"
-filename: "output"
-use-timestamp: true
-path: "./"
+recorder:
+  output:
+    extension: ".mcap"
+    filename: "output"
+    use-timestamp: true
+    path: "."
