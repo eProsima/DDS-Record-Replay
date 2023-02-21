@@ -32,14 +32,14 @@ Configuration
 DDS
 ===
 
-.. literalinclude:: ../../../../configurations/conf-foxglove.yaml
+.. literalinclude:: ../../../../resources/configurations/conf-foxglove.yaml
     :language: yaml
     :lines: 1-2
 
 Recorder output file
 ====================
 
-.. literalinclude:: ../../../../configurations/conf-foxglove.yaml
+.. literalinclude:: ../../../../resources/configurations/conf-foxglove.yaml
     :language: yaml
     :lines: 4-9
 
@@ -70,12 +70,12 @@ Launch the *eProsima DDS Recorder* instance with the configuration file as an ar
 
     ddsrecorder -c /resources/configurations/conf-foxglove.yaml
 
-.. figure:: /resources/tutorials/foxglove_recorder.png
+.. figure:: /resources/tutorials/foxglove_ddsrecorder.png
 
 Visualize with Foxglove
 =======================
 
-1. Open `Foxglove Studio<https://studio.foxglove.dev/>`_ .
+1. Open `Foxglove Studio <https://studio.foxglove.dev/>`_ .
 2. Click in ``Òpen local file`` and select the ``mcap`` file previously created ``view_foxglove.macp``.
 
 .. figure:: /resources/tutorials/foxglove_foxglove.png

@@ -5,5 +5,5 @@ recorder:
   output:
     extension: ".mcap"
     filename: "view_foxglove"
-    use-timestamp: true
+    use-timestamp: false
     path: "."
