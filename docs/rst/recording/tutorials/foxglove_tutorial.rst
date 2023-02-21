@@ -29,7 +29,7 @@ It is required to have |eddsrecordreplay| previously installed using one of the 
 * :ref:`docker`
 
 Additionally, `ShapesDemo <https://www.eprosima.com/index.php/products-all/eprosima-shapes-demo>`_ is required to publish and subscribe shapes of different colors and sizes.
-The ShapesDemo application is already prepared to use Fast DDS DynamicTypes, which is required when using the DDS Recorder tool.
+The *ShapesDemo* application is already prepared to use Fast DDS DynamicTypes, which is required when using the DDS Recorder tool.
 Install it by following any of the methods described in the given links:
 
 * `Windows installation from binaries <https://eprosima-shapes-demo.readthedocs.io/en/latest/installation/windows_binaries.html>`_
@@ -70,7 +70,7 @@ Initiate *eProsima Shapes Demo* running the following command:
 
     ShapesDemo
 
-Let us launch a *eProsima Shapes Demo* instance in one of the DDS networks, and start publishing in topics ``Square`` and ``Triangle`` with default settings.
+Start publishing in topics ``Square`` and ``Triangle`` with default settings:
 
 .. figure:: /resources/tutorials/foxglove_shapes_demo.png
     :align: center
@@ -78,7 +78,7 @@ Let us launch a *eProsima Shapes Demo* instance in one of the DDS networks, and 
 Recorder execution
 ==================
 
-Launch the *eProsima DDS Recorder* instance with the configuration file as an argument executing the following command:
+Launch the DDS Recorder tool instance with the configuration file as an argument executing the following command:
 
 .. code-block:: bash
 
@@ -90,6 +90,6 @@ Visualize with Foxglove
 =======================
 
 1. Open `Foxglove Studio <https://studio.foxglove.dev/>`_ .
-2. Click ``Òpen local file`` and select the ``mcap`` file previously created: ``view_foxglove.macp``.
+2. Click ``Òpen local file`` and select the ``mcap`` file previously created: ``view_foxglove.mcap``.
 
 .. figure:: /resources/tutorials/foxglove_foxglove.png
