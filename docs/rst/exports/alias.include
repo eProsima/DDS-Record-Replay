@@ -7,6 +7,6 @@
 
 .. |eddsrouter| replace:: *eProsima DDS Router*
 .. |efastdds| replace:: *eProsima Fast DDS*
-.. |eddsrecorder| replace:: *eProsima DDS Recorder*
+.. |eddsrecord| replace:: *eProsima DDS Record*
 
 .. |k8s| replace:: *K8s*

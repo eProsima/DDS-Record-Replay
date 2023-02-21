@@ -37,6 +37,7 @@
    /rst/recording/getting_started/getting_started
    /rst/recording/usage/usage
    /rst/recording/usage/configuration
+   /rst/recording/remote_control/remote_control
    /rst/recording/usage/user_manual_glossary
    /rst/recording/tutorials/tutorials
 

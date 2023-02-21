@@ -345,6 +345,8 @@ A complete example of all the configurations described on this page can be found
     filename: "output"
     use-timestamp: true
 
+.. _usage_fastdds_configuration:
+
 Fast DDS Configuration
 ======================
 

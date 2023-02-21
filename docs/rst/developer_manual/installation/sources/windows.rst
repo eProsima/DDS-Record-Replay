@@ -7,8 +7,7 @@
 Windows installation from sources
 #################################
 
-The instructions for installing the |ddsrecorder| application from sources and its required
-dependencies are provided in this page.
+The instructions for installing the |eddsrecord| application from sources and its required dependencies are provided in this page.
 It is organized as follows:
 
 .. contents::
@@ -20,9 +19,8 @@ It is organized as follows:
 Dependencies installation
 =========================
 
-|ddsrecorder| depends on *eProsima Fast DDS* library and certain Debian packages.
-This section describes the instructions for installing |ddsrecorder| dependencies and requirements in a Windows
-environment from sources.
+|eddsrecord| depends on *eProsima Fast DDS* library and certain Debian packages.
+This section describes the instructions for installing |eddsrecord| dependencies and requirements in a Windows environment from sources.
 The following packages will be installed:
 
 - ``foonathan_memory_vendor``, an STL compatible C++ memory allocation library.
@@ -32,10 +30,8 @@ The following packages will be installed:
 - ``cpp_utils``, an eProsima utils library for C++.
 - ``ddsrouter``, an eProsima end-user application that enables the connection of distributed DDS networks.
 
-First of all, the :ref:`Requirements <windows_sources_requirements>` and
-:ref:`Dependencies <windows_sources_dependencies>` detailed below need to be met.
-Afterwards, the user can choose whether to follow either the :ref:`colcon <windows_sources_colcon_installation>` or the
-:ref:`CMake <windows_sources_cmake_installation>` installation instructions.
+First of all, the :ref:`Requirements <windows_sources_requirements>` and :ref:`Dependencies <windows_sources_dependencies>` detailed below need to be met.
+Afterwards, the user can choose whether to follow either the :ref:`colcon <windows_sources_colcon_installation>` or the :ref:`CMake <windows_sources_cmake_installation>` installation instructions.
 
 
 .. _windows_sources_requirements:
@@ -43,29 +39,23 @@ Afterwards, the user can choose whether to follow either the :ref:`colcon <windo
 Requirements
 ------------
 
-The installation of *eProsima Fast DDS* in a Windows environment from sources requires the following tools to be
-installed in the system:
+The installation of *eProsima Fast DDS* in a Windows environment from sources requires the following tools to be installed in the system:
 
 * :ref:`windows_sources_visual_studio`
 * :ref:`windows_sources_chocolatey`
 * :ref:`windows_sources_cmake_pip3_wget_git`
 * :ref:`windows_sources_colcon_install` [optional]
 * :ref:`windows_sources_gtest` [for test only]
-* :ref:`windows_py_yaml` [for YAML Validator only]
-* :ref:`windows_json_schema` [for YAML Validator only]
 
 .. _windows_sources_visual_studio:
 
 Visual Studio
 ^^^^^^^^^^^^^
 
-`Visual Studio <https://visualstudio.microsoft.com/>`_ is required to
-have a C++ compiler in the system. For this purpose, make sure to check the
-:code:`Desktop development with C++` option during the Visual Studio installation process.
+`Visual Studio <https://visualstudio.microsoft.com/>`_ is required to have a C++ compiler in the system. For this purpose, make sure to check the :code:`Desktop development with C++` option during the Visual Studio installation process.
 
-If Visual Studio is already installed but the Visual C++ Redistributable packages are not,
-open Visual Studio and go to :code:`Tools` -> :code:`Get Tools and Features` and in the :code:`Workloads` tab enable
-:code:`Desktop development with C++`. Finally, click :code:`Modify` at the bottom right.
+If Visual Studio is already installed but the Visual C++ Redistributable packages are not, open Visual Studio and go to :code:`Tools` -> :code:`Get Tools and Features` and in the :code:`Workloads` tab enable :code:`Desktop development with C++`.
+Finally, click :code:`Modify` at the bottom right.
 
 .. _windows_sources_chocolatey:
 
@@ -81,10 +71,8 @@ CMake, pip3, wget and git
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 These packages provide the tools required to install *eProsima Fast DDS* and its dependencies from command line.
-Download and install CMake_, pip3_, wget_ and git_ by following the instructions detailed in the respective
-websites.
-Once installed, add the path to the executables to the :code:`PATH` from the
-*Edit the system environment variables* control panel.
+Download and install CMake_, pip3_, wget_ and git_ by following the instructions detailed in the respective websites.
+Once installed, add the path to the executables to the :code:`PATH` from the *Edit the system environment variables* control panel.
 
 .. _windows_sources_colcon_install:
 
@@ -109,10 +97,8 @@ Gtest
 ^^^^^
 
 Gtest is a unit testing library for C++.
-By default, |ddsrecorder| does not compile tests.
-It is possible to activate them with the opportune
-`CMake options <https://colcon.readthedocs.io/en/released/reference/verb/build.html#cmake-options>`_
-when calling colcon_ or CMake_.
+By default, |eddsrecord| does not compile tests.
+It is possible to activate them with the opportune `CMake options <https://colcon.readthedocs.io/en/released/reference/verb/build.html#cmake-options>`_ when calling colcon_ or CMake_.
 For more details, please refer to the :ref:`cmake_options` section.
 
 Run the following commands on your workspace to install Gtest.
@@ -124,45 +110,15 @@ Run the following commands on your workspace to install Gtest.
         -B build\gtest -A x64 -T host=x64 googletest
     cmake --build build\gtest --config Release --target install
 
-or refer to the
-`Gtest Installation Guide <https://github.com/google/googletest>`_ for a detailed description of the Gtest installation
-process.
+or refer to the `Gtest Installation Guide <https://github.com/google/googletest>`_ for a detailed description of the Gtest installation process.
 
-
-.. _windows_py_yaml:
-
-PyYAML
-^^^^^^
-
-`PyYAML <https://pyyaml.org/>`_ is a YAML parser and emitter for Python.
-
-Install ``pyyaml`` by executing the following command:
-
-.. code-block:: bash
-
-    pip3 install -U pyyaml
-
-
-.. _windows_json_schema:
-
-jsonschema
-^^^^^^^^^^
-
-`jsonschema <https://python-jsonschema.readthedocs.io/>`_ is an implementation of the JSON Schema specification for
-Python.
-
-Install ``jsonschema`` by executing the following command:
-
-.. code-block:: bash
-
-    pip3 install -U jsonschema
 
 .. _windows_sources_dependencies:
 
 Dependencies
 ------------
 
-|ddsrecorder| has the following dependencies, when installed from sources in a Windows environment:
+|eddsrecord| has the following dependencies, when installed from sources in a Windows environment:
 
 * :ref:`windows_sources_asiotinyxml2`
 * :ref:`windows_sources_openssl`
@@ -174,8 +130,7 @@ Dependencies
 Asio and TinyXML2 libraries
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Asio is a cross-platform C++ library for network and low-level I/O programming, which provides a consistent
-asynchronous model.
+Asio is a cross-platform C++ library for network and low-level I/O programming, which provides a consistent asynchronous model.
 TinyXML2 is a simple, small and efficient C++ XML parser.
 They can be downloaded directly from the links below:
 
@@ -196,8 +151,7 @@ OpenSSL
 ^^^^^^^
 
 OpenSSL is a robust toolkit for the TLS and SSL protocols and a general-purpose cryptography library.
-Download and install the latest OpenSSL version for Windows at this
-`link <https://slproweb.com/products/Win32OpenSSL.html>`_.
+Download and install the latest OpenSSL version for Windows at this `link <https://slproweb.com/products/Win32OpenSSL.html>`_.
 After installing, add the environment variable :code:`OPENSSL_ROOT_DIR` pointing to the installation root directory.
 
 For example:
@@ -211,10 +165,8 @@ For example:
 yaml-cpp
 ^^^^^^^^
 
-yaml-cpp is a YAML parser and emitter in C++ matching the YAML 1.2 spec, and is used by *DDS Recorder* application to
-parse the provided configuration files.
-From an administrative shell with *PowerShell*, execute the following commands in order to download and install yaml-cpp
-for Windows:
+``yaml-cpp`` is a YAML parser and emitter in C++ matching the YAML 1.2 spec, and is used by *DDS Recorder* application to parse the provided configuration files.
+From an administrative shell with *PowerShell*, execute the following commands in order to download and install ``yaml-cpp`` for Windows:
 
 .. code-block:: bash
 
@@ -227,30 +179,28 @@ for Windows:
 eProsima dependencies
 ^^^^^^^^^^^^^^^^^^^^^
 
-If it already exists in the system an installation of *Fast DDS* and *DDS Router* libraries, just source
-this libraries when building the |ddsrecorder| application by using the command:
+If it already exists in the system an installation of *Fast DDS* and *DDS Router* libraries, just source this libraries when building the |eddsrecord| application by using the command:
 
 .. code-block:: bash
 
     source <fastdds-installation-path>/install/setup.bash
     source <ddsrouter-installation-path>/install/setup.bash
 
-In other case, just download *Fast DDS* and *DDS Router* projects from sources and build it together with |ddsrecorder| using colcon
-as it is explained in section :ref:`colcon_installation`.
+In other case, just skip this step.
 
 
 .. _windows_sources_colcon_installation:
 
-Colcon installation
-===================
+Colcon installation (recomended)
+================================
 
 .. important::
 
-    Run colcon within a Visual Studio prompt. To do so, launch a *Developer Command Prompt* from the
-    search engine.
+    Run colcon within a Visual Studio prompt.
+    To do so, launch a *Developer Command Prompt* from the search engine.
 
 #.  Create a :code:`DDS-Recorder` directory and download the :code:`.repos` file that will be used to install
-    |ddsrecorder| and its dependencies:
+    |eddsrecord| and its dependencies:
 
     .. code-block:: bash
 
@@ -264,7 +214,7 @@ Colcon installation
 
         In case there is already a *Fast DDS* installation in the system it is not required to download and build
         every dependency in the :code:`.repos` file.
-        It is just needed to download and build the |ddsrecorder| project having sourced its dependencies.
+        It is just needed to download and build the |eddsrecord| project having sourced its dependencies.
         Refer to section :ref:`eprosima_dependencies` in order to check how to source *Fast DDS* library.
 
 #.  Build the packages:
@@ -275,10 +225,8 @@ Colcon installation
 
 .. note::
 
-    Being based on CMake_, it is possible to pass the CMake configuration options to the :code:`colcon build`
-    command. For more information on the specific syntax, please refer to the
-    `CMake specific arguments <https://colcon.readthedocs.io/en/released/reference/verb/build.html#cmake-specific-arguments>`_
-    page of the colcon_ manual.
+    Being based on CMake_, it is possible to pass the CMake configuration options to the :code:`colcon build` command.
+    For more information on the specific syntax, please refer to the `CMake specific arguments <https://colcon.readthedocs.io/en/released/reference/verb/build.html#cmake-specific-arguments>`_ page of the colcon_ manual.
 
 
 .. _windows_sources_cmake_installation:
@@ -286,23 +234,21 @@ Colcon installation
 CMake installation
 ==================
 
-This section explains how to compile |ddsrecorder| with CMake_, either
-:ref:`locally <windows_sources_local_installation>` or :ref:`globally <windows_sources_global_installation>`.
+This section explains how to compile |eddsrecord| with CMake_, either :ref:`locally <windows_sources_local_installation>` or :ref:`globally <windows_sources_global_installation>`.
 
 .. _windows_sources_local_installation:
 
 Local installation
 ------------------
 
-#.  Open a command prompt, and create a :code:`DDS-Recorder` directory where to download and build |ddsrecorder| and
-    its dependencies:
+#.  Open a command prompt, and create a :code:`DDS-Record` directory where to download and build |eddsrecord| and its dependencies:
 
     .. code-block:: bash
 
-        mkdir <path\to\user\workspace>\DDS-Recorder
-        mkdir <path\to\user\workspace>\DDS-Recorder\src
-        mkdir <path\to\user\workspace>\DDS-Recorder\build
-        cd <path\to\user\workspace>\DDS-Recorder
+        mkdir <path\to\user\workspace>\DDS-Record
+        mkdir <path\to\user\workspace>\DDS-Record\src
+        mkdir <path\to\user\workspace>\DDS-Record\build
+        cd <path\to\user\workspace>\DDS-Record
         wget https://raw.githubusercontent.com/eProsima/DDS-Recorder/main/ddsrecorder.repos
         vcs import src < ddsrecorder.repos
 
@@ -312,10 +258,10 @@ Local installation
 
         .. code-block:: bash
 
-            cd <path\to\user\workspace>\DDS-Recorder
+            cd <path\to\user\workspace>\DDS-Record
             mkdir build\foonathan_memory_vendor
             cd build\foonathan_memory_vendor
-            cmake <path\to\user\workspace>\DDS-Recorder\src\foonathan_memory_vendor -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Recorder\install ^
+            cmake <path\to\user\workspace>\DDS-Record\src\foonathan_memory_vendor -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
                 -DBUILD_SHARED_LIBS=ON
             cmake --build . --config Release --target install
 
@@ -323,21 +269,21 @@ Local installation
 
         .. code-block:: bash
 
-            cd <path\to\user\workspace>\DDS-Recorder
+            cd <path\to\user\workspace>\DDS-Record
             mkdir build\fastcdr
             cd build\fastcdr
-            cmake <path\to\user\workspace>\DDS-Recorder\src\fastcdr -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Recorder\install
+            cmake <path\to\user\workspace>\DDS-Record\src\fastcdr -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install
             cmake --build . --config Release --target install
 
     *  `Fast DDS <https://github.com/eProsima/Fast-DDS>`_
 
         .. code-block:: bash
 
-            cd <path\to\user\workspace>\DDS-Recorder
+            cd <path\to\user\workspace>\DDS-Record
             mkdir build\fastdds
             cd build\fastdds
-            cmake <path\to\user\workspace>\DDS-Recorder\src\fastdds -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Recorder\install ^
-                -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Recorder\install
+            cmake <path\to\user\workspace>\DDS-Record\src\fastdds -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
+                -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
             cmake --build . --config Release --target install
 
     * `Dev Utils <https://github.com/eProsima/dev-utils>`_
@@ -345,78 +291,78 @@ Local installation
         .. code-block:: bash
 
             # CMake Utils
-            cd <path\to\user\workspace>\DDS-Recorder
+            cd <path\to\user\workspace>\DDS-Record
             mkdir build\cmake_utils
             cd build\cmake_utils
-            cmake <path\to\user\workspace>\DDS-Recorder\src\dev-utils\cmake_utils -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Recorder\install ^
-                -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Recorder\install
+            cmake <path\to\user\workspace>\DDS-Record\src\dev-utils\cmake_utils -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
+                -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
             cmake --build . --config Release --target install
 
             # C++ Utils
-            cd <path\to\user\workspace>\DDS-Recorder
+            cd <path\to\user\workspace>\DDS-Record
             mkdir build\cpp_utils
             cd build\cpp_utils
-            cmake <path\to\user\workspace>\DDS-Recorder\src\dev-utils\cpp_utils -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Recorder\install ^
-                -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Recorder\install
+            cmake <path\to\user\workspace>\DDS-Record\src\dev-utils\cpp_utils -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
+                -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
             cmake --build . --config Release --target install
 
-    * `DDS Router <https://github.com/eProsima/DDS-Router>`_
+    * `DDS Pipe <https://github.com/eProsima/DDS-Pipe>`_
 
         .. code-block:: bash
 
-            # ddsrouter_core
-            cd ~/DDS-Router
-            mkdir build/ddsrouter_core
-            cd build/ddsrouter_core
-            cmake ~/DDS-Router/src/ddsrouter/ddsrouter_core -DCMAKE_INSTALL_PREFIX=~/DDS-Router/install -DCMAKE_PREFIX_PATH=~/DDS-Router/install
+            # ddspipe_core
+            cd <path\to\user\workspace>\DDS-Record
+            mkdir build\ddspipe_core
+            cd build\ddspipe_core
+            cmake cd <path\to\user\workspace>\DDS-Record\src\ddspipe\ddspipe_core -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
             cmake --build . --target install
 
-            # ddsrouter_yaml
-            cd ~/DDS-Router
-            mkdir build/ddsrouter_yaml
-            cd build/ddsrouter_yaml
-            cmake ~/DDS-Router/src/ddsrouter/ddsrouter_yaml -DCMAKE_INSTALL_PREFIX=~/DDS-Router/install -DCMAKE_PREFIX_PATH=~/DDS-Router/install
+            # ddspipe_yaml
+            cd <path\to\user\workspace>\DDS-Record
+            mkdir build\ddspipe_yaml
+            cd build\ddspipe_yaml
+            cmake <path\to\user\workspace>\DDS-Record\src\ddspipe\ddspipe_yaml -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
             cmake --build . --target install
 
-            # ddsrouter_tool
-            cd ~/DDS-Router
-            mkdir build/ddsrouter_tool
-            cd build/ddsrouter_tool
-            cmake ~/DDS-Router/src/ddsrouter/tools/ddsrouter_tool -DCMAKE_INSTALL_PREFIX=~/DDS-Router/install -DCMAKE_PREFIX_PATH=~/DDS-Router/install
+            # ddspipe_participants
+            cd <path\to\user\workspace>\DDS-Record
+            mkdir build\ddspipe_participants
+            cd build\ddspipe_participants
+            cmake <path\to\user\workspace>\DDS-Record\src\ddspipe\ddspipe_participants -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
             cmake --build . --target install
 
-#.  Once all dependencies are installed, install |ddsrecorder|:
+#.  Once all dependencies are installed, install |eddsrecord|:
 
     .. code-block:: bash
 
-        # ddsrecorder
-        cd <path\to\user\workspace>\DDS-Recorder
-        mkdir build\ddsrecorder
-        cd build\ddsrecorder
-        cmake <path\to\user\workspace>\DDS-Recorder\src\ddsrecorder\ddsrecorder ^
-            -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Recorder\install -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Recorder\install
+        # ddsrecorder_participants
+        cd <path\to\user\workspace>\DDS-Record
+        mkdir build\ddsrecorder_participants
+        cd build\ddsrecorder_participants
+        cmake <path\to\user\workspace>\DDS-Record\src\ddsrecorder\ddsrecorder_participants ^
+            -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
         cmake --build . --config Release --target install
 
         # ddsrecorder_yaml
-        cd <path\to\user\workspace>\DDS-Recorder
+        cd <path\to\user\workspace>\DDS-Record
         mkdir build\ddsrecorder_yaml
         cd build\ddsrecorder_yaml
-        cmake <path\to\user\workspace>\DDS-Recorder\src\ddsrecorder\ddsrecorder_yaml -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Recorder\install ^
-            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Recorder\install
+        cmake <path\to\user\workspace>\DDS-Record\src\ddsrecorder\ddsrecorder_yaml -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
+            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
         cmake --build . --config Release --target install
 
         # ddsrecorder_tool
-        cd <path\to\user\workspace>\DDS-Recorder
+        cd <path\to\user\workspace>\DDS-Record
         mkdir build\ddsrecorder_tool
         cd build\ddsrecorder_tool
-        cmake <path\to\user\workspace>\DDS-Recorder\src\ddsrecorder\tools\ddsrecorder_tool -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Recorder\install ^
-            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Recorder\install
+        cmake <path\to\user\workspace>\DDS-Record\src\ddsrecorder\tools\ddsrecorder_tool -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
+            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
         cmake --build . --config Release --target install
 
 
 .. note::
 
-    By default, |ddsrecorder| does not compile tests.
+    By default, |eddsrecord| does not compile tests.
     However, they can be activated by downloading and installing `Gtest <https://github.com/google/googletest>`_
     and building with CMake option ``-DBUILD_TESTS=ON``.
 
@@ -426,36 +372,30 @@ Local installation
 Global installation
 -------------------
 
-To install |ddsrecorder| system-wide instead of locally, remove all the flags that
-appear in the configuration steps of :code:`Fast-CDR`, :code:`Fast-DDS`, :code:`Dev-Utils`, :code:`DDS-Router`, and
-:code:`DDS-Recorder`
+To install |eddsrecord| system-wide instead of locally, remove all the flags that appear in the configuration steps of :code:`Fast-CDR`, :code:`Fast-DDS`, :code:`Dev-Utils`, :code:`DDS-Pipe`, and :code:`DDS-Recorder`
 
 
 Run an application
 ==================
 
-If the |ddsrecorder| was compiled using colcon, when running an instance of a |ddsrecorder|, the colcon overlay built in the
-dedicated :code:`DDS-Recorder` directory must be sourced.
+If the |eddsrecord| was compiled using colcon, when running an instance of a |ddsrecorder|, the colcon overlay built in the dedicated :code:`DDS-Recorder` directory must be sourced.
 There are two possibilities:
 
-* Every time a new shell is opened, prepare the environment locally by typing the
-  command:
+* Every time a new shell is opened, prepare the environment locally by typing the command:
 
   .. code-block:: bash
 
       setup.bat
 
-* Add the sourcing of the colcon overlay permanently, by opening the
-  *Edit the system environment variables* control panel, and adding :code:`~/Fast-DDS/install/setup.bat`
-  to the :code:`PATH`.
+* Add the sourcing of the colcon overlay permanently, by opening the *Edit the system environment variables* control panel, and adding the installation path to the :code:`PATH`.
 
-However, when running an instance of a |ddsrecorder| compiled using CMake, it must be linked with its dependencies where
-the packages have been installed. This can be done by opening the *Edit system environment variables* control panel and
-adding to the ``PATH`` the |ddsrecorder|, *Fast DDS* and *Fast CDR* installation directories:
+However, when running an instance of a |ddsrecorder| compiled using CMake, it must be linked with its dependencies where the packages have been installed.
+This can be done by opening the *Edit system environment variables* control panel and adding to the ``PATH`` the |eddsrecord|, *Fast DDS*, *Fast CDR*, *DDS Pipe* installation directories:
 
 *   *Fast DDS*: C:\\Program Files\\fastrtps
 *   *Fast CDR*: C:\\Program Files\\fastcdr
-*   |ddsrecorder|: C:\\Program Files\\ddsrecorder
+*   *DDS Pipe*: C:\\Program Files\\ddspipe
+*   |eddsrecord|: C:\\Program Files\\ddsrecord
 
 
 .. External links

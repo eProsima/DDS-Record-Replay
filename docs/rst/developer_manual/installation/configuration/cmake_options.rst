@@ -7,14 +7,11 @@
 CMake options
 #############
 
-*eProsima DDS Recorder* provides numerous CMake options for changing the behavior and configuration of
-*DDS Recorder*.
-These options allow the developer to enable/disable certain *DDS Recorder* settings by defining these options to
-``ON``/``OFF`` at the CMake execution, or set the required path to certain dependencies.
+|eddsrecord| provides numerous CMake options for changing the behavior and configuration of |eddsrecord|.
+These options allow the developer to enable/disable certain |eddsrecord| settings by defining these options to ``ON``/``OFF`` at the CMake execution, or set the required path to certain dependencies.
 
 .. warning::
-    These options are only for developers who installed *eProsima DDS Recorder* following the compilation steps
-    described in :ref:`developer_manual_installation_sources_linux`.
+    These options are only for developers who installed |eddsrecord| following the compilation steps described in :ref:`developer_manual_installation_sources_linux`.
 
 .. list-table::
     :header-rows: 1
@@ -28,61 +25,19 @@ These options allow the developer to enable/disable certain *DDS Recorder* setti
         - ``Release`` |br|
           ``Debug``
         - ``Release``
-    *   - :class:`BUILD_ALL`
-        - Build the *DDS Recorder* application tool `ddsrecorder`. |br|
-          Setting to ``ON`` sets to ``ON`` |br|
-          :class:`BUILD_TOOL`, :class:`BUILD_LIBRARY`, and |br|
-          :class:`BUILD_DOCS`.
-        - ``OFF`` |br|
-          ``ON``
-        - ``OFF``
-    *   - :class:`BUILD_LIBRARY`
-        - Build the *DDS Recorder* documentation. |br|
-          It is set to ``ON`` if :class:`BUILD_ALL` is set to ``ON``.
-        - ``OFF`` |br|
-          ``ON``
-        - ``ON``
-    *   - :class:`BUILD_TOOL`
-        - Build the *DDS Recorder* documentation. |br|
-          It is set to ``ON`` if :class:`BUILD_ALL` is set to ``ON``.
-        - ``OFF`` |br|
-          ``ON``
-        - ``ON``
     *   - :class:`BUILD_DOCS`
-        - Build the *DDS Recorder* documentation. |br|
-          It is set to ``ON`` if :class:`BUILD_ALL` is set to ``ON``.
+        - Build the |eddsrecord| documentation. |br|
         - ``OFF`` |br|
           ``ON``
         - ``OFF``
     *   - :class:`BUILD_TESTS`
-        - Build the *DDS Recorder* application and documentation |br|
-          tests. Setting :class:`BUILD_TESTS` to ``ON`` sets |br|
-          :class:`BUILD_ALL`, :class:`BUILD_LIBRARY_TESTS`, |br|
-          :class:`BUILD_TOOL_TESTS`, and :class:`BUILD_DOCS_TESTS` |br|
-          to ``ON``.
-        - ``OFF`` |br|
-          ``ON``
-        - ``OFF``
-    *   - :class:`BUILD_LIBRARY_TESTS`
-        - Build the *DDS Recorder* library tests. It is |br|
-          set to ``ON`` if :class:`BUILD_TESTS` is set to ``ON``. |br|
-        - ``OFF`` |br|
-          ``ON``
-        - ``OFF``
-    *   - :class:`BUILD_TOOL_TESTS`
-        - Build the *DDS Recorder* application tests. It is |br|
-          set to ``ON`` if :class:`BUILD_TESTS` is set to ``ON``. |br|
-        - ``OFF`` |br|
-          ``ON``
-        - ``OFF``
-    *   - :class:`BUILD_DOCS_TESTS`
-        - Build the *DDS Recorder* documentation tests. It is |br|
-          set to ``ON`` if :class:`BUILD_TESTS` is set to ``ON``. |br|
+        - Build the |eddsrecord| tools and documentation |br|
+          tests.
         - ``OFF`` |br|
           ``ON``
         - ``OFF``
     *   - :class:`LOG_INFO`
-        - Activate *DDS Recorder* execution logs. It is |br|
+        - Activate |eddsrecord| logs. It is |br|
           set to ``ON`` if :class:`CMAKE_BUILD_TYPE` is set |br|
           to ``Debug``.
         - ``OFF`` |br|
