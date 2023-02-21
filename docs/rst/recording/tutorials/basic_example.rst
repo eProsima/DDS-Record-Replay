@@ -9,7 +9,7 @@ Recording DynamicType data from a DDS application
 .. contents::
     :local:
     :backlinks: none
-    :depth: 1
+    :depth: 2
 
 **********
 Background
@@ -61,7 +61,7 @@ For complex types, it is required to use ``TypeInformation`` mechanism. In the *
 Native types
 ============
 
-For native types Fast DDS will send the ``TypeObject`` by default.
+For native types *eProsima Fast DDS* will send the ``TypeObject`` by default.
 
 IDL file
 ========
@@ -76,7 +76,7 @@ The expected argument list of the application is:
     fastddsgen -typeobject MyType.idl
 
 This example allows the user to configure the type of the data published.
-At the moment, there are two data types that can be used in this example:
+At the moment, there are two data types that can be used:
 
 * `HelloWorld.idl <https://github.com/eProsima/DDS-Recorder/blob/main/resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl>`_
 
@@ -97,7 +97,10 @@ This is the C++ source code for the application. This source code can also be fo
 
 This tutorial is focus on DynamicTypes , for more information about the DDS Publisher, please refer to `Writing a simple C++ publisher and subscriber application <https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html>`_ .
 
-The next line creates the TypeLookupServicePublisher class that implements the publisher.
+Examining the code
+==================
+
+The next line creates the ``TypeLookupServicePublisher`` class that implements the publisher.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
     :lines: 45-54
@@ -108,12 +111,12 @@ Inside the TypeLookupServicePublisher is defined the register of the type in the
     :lines: 73-95
 
 To make the publication, the public member function ``publish()`` is implemented.
-Depending on the data type fill the data to publish with ``fill_helloworld_data_(msg)`` or ``fill_complete_data_(msg)`` , explained below.
+Depending on the data type, fill the data to publish with ``fill_helloworld_data_(msg)`` or ``fill_complete_data_(msg)`` , explained below.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
     :lines: 229-254
 
-The function ``generate_helloworld_type_()`` return a Dynamic Type with the name, ``HELLO_WORLD_DATA_TYPE_NAME``, the type object and the type id, created using methods from Fast DDS Gen.
+The function ``generate_helloworld_type_()`` return a DynamicType_ptr with the name, ``HELLO_WORLD_DATA_TYPE_NAME``, the type object and the type id, created using methods from Fast DDS Gen.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
         :lines: 256-271
@@ -142,7 +145,10 @@ This is the C++ source code for the application. This source code can also be fo
 
 This tutorial is focus on DynamicType and , for more information about the DDS Subscriber, please refer to `Writing a simple C++ publisher and subscriber application <https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html>`_ .
 
-The next line creates the TypeLookupServiceSubscriber class that implements the subscriber.
+Examining the code
+==================
+
+The next line creates the ``TypeLookupServiceSubscriber`` class that implements the subscriber.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
     :lines: 45-53
