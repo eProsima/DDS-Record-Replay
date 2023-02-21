@@ -92,3 +92,5 @@ Visualize with Foxglove
 2. Click ``Òpen local file`` and select the ``mcap`` file previously created: ``view_foxglove.mcap``.
 
 .. figure:: /resources/tutorials/foxglove_foxglove.png
+
+Feel free to further explore the number of possibilities that |eddsrecordreplay| and *Foxglove* together have to offer.
