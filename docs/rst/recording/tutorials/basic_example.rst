@@ -97,40 +97,40 @@ This is the C++ source code for the application. This source code can also be fo
 
 This tutorial is focus on DynamicTypes , for more information about the DDS Publisher, please refer to `Writing a simple C++ publisher and subscriber application <https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html>`_ .
 
-The next line creates the TypeLookupServicePublisher class that implements a publisher.
+The next line creates the TypeLookupServicePublisher class that implements the publisher.
 
-.. literalinclude:: ../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
+.. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
     :lines: 45-54
 
 Inside the TypeLookupServicePublisher is defined the register of the type in the participant that uses the function ``generate_helloworld_type_()`` or ``generate_complete_type_()`` explained below.
 
-    .. literalinclude:: ../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
+    .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
         :lines: 73-95
 
 To make the publication, the public member function ``publish()`` is implemented.
 Depending on the data type fill the data to publish with ``fill_helloworld_data_(msg)`` or ``fill_complete_data_(msg)`` , explained below.
 
-    .. literalinclude:: ../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
+    .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
         :lines: 229-254
 
 The function ``generate_helloworld_type_()`` return a Dynamic Type with the name, ``HELLO_WORLD_DATA_TYPE_NAME``, the type object and the type id, created using methods from Fast DDS Gen.
 
-    .. literalinclude:: ../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
+    .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
             :lines: 256-271
 
 The function ``generate_complete_type_()`` return the same as the function above but with different name, in this case ``COMPLETE_DATA_TYPE_NAME``.
 
-    .. literalinclude:: ../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
+    .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
             :lines: 273-291
 
 The function ``fill_helloworld_data_()`` return the created and initialized dynamic data.
 
-    .. literalinclude:: ../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
+    .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
             :lines: 293-307
 
 The function ``fill_complete_data_()`` return the same as the function above but initializing the data with the corresponding values for that data type.
 
-    .. literalinclude:: ../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
+    .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
             :lines: 309-387
 
 
