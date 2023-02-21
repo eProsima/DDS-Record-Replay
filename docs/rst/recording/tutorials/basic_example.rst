@@ -67,7 +67,7 @@ IDL file
 ========
 
 `eProsima Fast DDS-Gen <https://fast-dds.docs.eprosima.com/en/latest/fastddsgen/introduction/introduction.html>`_ is a Java application that generates *eProsima Fast DDS* source code using the data types defined in an IDL (Interface Definition Language) file.
-When generating the Types using Fast DDS Gen, the option ``-typeobject`` must be added in order to generate the needed code to fill the ``TypeObject`` data.
+When generating the Types using *eProsima Fast DDS Gen*, the option ``-typeobject`` must be added in order to generate the needed code to fill the ``TypeObject`` data.
 
 The expected argument list of the application is:
 
@@ -103,38 +103,45 @@ Examining the code
 The next line creates the ``TypeLookupServicePublisher`` class that implements the publisher.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
+    :language: C++
     :lines: 45-54
 
-Inside the TypeLookupServicePublisher is defined the register of the type in the participant that uses the function ``generate_helloworld_type_()`` or ``generate_complete_type_()`` explained below.
+Inside the ``TypeLookupServicePublisher`` is defined the register of the type in the participant that uses the function ``generate_helloworld_type_()`` or ``generate_complete_type_()`` explained below.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
+    :language: C++
     :lines: 73-95
 
 To make the publication, the public member function ``publish()`` is implemented.
 Depending on the data type, fill the data to publish with ``fill_helloworld_data_(msg)`` or ``fill_complete_data_(msg)`` , explained below.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
+    :language: C++
     :lines: 229-254
 
-The function ``generate_helloworld_type_()`` return a DynamicType_ptr with the name, ``HELLO_WORLD_DATA_TYPE_NAME``, the type object and the type id, created using methods from Fast DDS Gen.
+The function ``generate_helloworld_type_()`` return a ``DynamicType_ptr`` with the name, ``HELLO_WORLD_DATA_TYPE_NAME``, the type object and the type id, created using methods from *eProsima Fast DDS Gen*.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
-        :lines: 256-271
+    :language: C++
+    :lines: 256-271
 
 The function ``generate_complete_type_()`` return the same as the function above but with different name, in this case ``COMPLETE_DATA_TYPE_NAME``.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
-        :lines: 273-291
+    :language: C++
+    :lines: 273-291
 
 The function ``fill_helloworld_data_()`` return the created and initialized dynamic data.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
-        :lines: 293-307
+    :language: C++
+    :lines: 293-307
 
 The function ``fill_complete_data_()`` return the same as the function above but initializing the data with the corresponding values for that data type.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
-        :lines: 309-387
+    :language: C++
+    :lines: 309-387
 
 
 **********************
@@ -151,36 +158,41 @@ Examining the code
 The next line creates the ``TypeLookupServiceSubscriber`` class that implements the subscriber.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
+    :language: C++
     :lines: 45-53
 
-TODO
+.. todo:
+
+    .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
+        :language: C++
+        :lines: 60-61
+
+Inside the ``on_data_available()`` function it is created the ``DynamicData_ptr`` where the samples received will be read.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
-    :lines: 60-61
-
-Inside the ``on_data_available()`` function it is created the DynamicData where the samples received will be read.
-
-.. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
+    :language: C++
     :lines: 143-170
 
 The function ``on_type_information_received()`` detect the topic and the data type received and create the callback using the function explained below.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
+    :language: C++
     :lines: 172-212
 
 Finally, the function ``register_remote_type_callback_()`` is in charge of create a callback that register the topic received.
 This function performs several actions:
 
-1. Register the type from the topic.
-2. Create a DDS Topic with the same topic name as the one received from the publisher.
-3. Create a DataReader that identifies the data to be read and accesses that data.
-4. Update the TypeLookupServiceSubscriber members and notify all that the type has been discovered and registered.
+1. Register the type from the topic received.
+2. Create a ``DDS Topic`` with the same topic name as the one received from the publisher.
+3. Create a ``DataReader`` that identifies the data to be read and accesses that data.
+4. Update the ``TypeLookupServiceSubscriber`` members and notify all that the type has been discovered and registered.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
+    :language: C++
     :lines: 278-320
 
 Thus, the subscriber does not need to know the type.
-In order to look-up a data type, just launch the Subscriber setting the same topic name as the one configured in the
+In order to look-up a data type, just launch the subscriber setting the same topic name as the one configured in the
 publisher side.
 
 
