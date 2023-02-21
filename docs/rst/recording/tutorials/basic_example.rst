@@ -78,16 +78,16 @@ The expected argument list of the application is:
 This example allows the user to configure the type of the data published.
 At the moment, there are two data types that can be used in this example:
 
-* `HelloWorld <https://github.com/eProsima/DDS-Recorder/blob/main/resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl>`_
+* `HelloWorld.idl <https://github.com/eProsima/DDS-Recorder/blob/main/resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl>`_
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl
 
-* `Complete <https://github.com/eProsima/DDS-Recorder/blob/main/resources/dds/TypeLookupService/types/complete/Complete.idl>`_
+* `Complete.idl <https://github.com/eProsima/DDS-Recorder/blob/main/resources/dds/TypeLookupService/types/complete/Complete.idl>`_
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
 
 
-This tutorial files are generated using use the ``HelloWorld`` message.
+This tutorial files are generated using the ``HelloWorld`` message.
 
 *********************
 DynamicType Publisher
@@ -95,16 +95,58 @@ DynamicType Publisher
 
 This is the C++ source code for the application. This source code can also be found `here <https://github.com/eProsima/DDS-Recorder/blob/main/resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp>`_.
 
+This tutorial is focus on DynamicTypes , for more information about the DDS Publisher, please refer to `Writing a simple C++ publisher and subscriber application <https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html>`_ .
+
+The next line creates the TypeLookupServicePublisher class that implements a publisher.
+
+.. literalinclude:: ../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
+    :lines: 45-54
+
+Inside the TypeLookupServicePublisher is defined the register of the type in the participant that uses the function ``generate_helloworld_type_()`` or ``generate_complete_type_()`` explained below.
+
+    .. literalinclude:: ../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
+        :lines: 73-95
+
+To make the publication, the public member function ``publish()`` is implemented.
+Depending on the data type fill the data to publish with ``fill_helloworld_data_(msg)`` or ``fill_complete_data_(msg)`` , explained below.
+
+    .. literalinclude:: ../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
+        :lines: 229-254
+
+The function ``generate_helloworld_type_()`` return a Dynamic Type with the name, ``HELLO_WORLD_DATA_TYPE_NAME``, the type object and the type id, created using methods from Fast DDS Gen.
+
+    .. literalinclude:: ../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
+            :lines: 256-271
+
+The function ``generate_complete_type_()`` return the same as the function above but with different name, in this case ``COMPLETE_DATA_TYPE_NAME``.
+
+    .. literalinclude:: ../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
+            :lines: 273-291
+
+The function ``fill_helloworld_data_()`` return the created and initialized dynamic data.
+
+    .. literalinclude:: ../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
+            :lines: 293-307
+
+The function ``fill_complete_data_()`` return the same as the function above but initializing the data with the corresponding values for that data type.
+
+    .. literalinclude:: ../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
+            :lines: 309-387
+
+
 **********************
 DynamicType Subscriber
 **********************
 
 This is the C++ source code for the application. This source code can also be found `here <https://github.com/eProsima/DDS-Recorder/blob/main/resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp>`_.
 
+This tutorial is focus on DynamicType and , for more information about the DDS Subscriber, please refer to `Writing a simple C++ publisher and subscriber application <https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html>`_ .
+
 The Subscriber will detect the data type name and will register it using the type information sent by the
 publisher. Thus, the subscriber does not need to know the type.
 In order to look-up a data type, just launch the Subscriber setting the same topic name as the one configured in the
 publisher side.
+
 
 ***********************
 Running the application
