@@ -15,8 +15,7 @@ Visualize recorded data with Foxglove
 Background
 **********
 
-.. note::
-    This page is under maintenance and will be updated soon.
+This tutorial explains how to record data with DDS Recorder tool and visualize it with `Foxglove <https://foxglove.dev/>`_.
 
 *************
 Prerequisites
