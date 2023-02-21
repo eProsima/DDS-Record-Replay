@@ -161,7 +161,7 @@ TODO
 Inside the ``on_data_available()`` function it is created the DynamicData where the samples received will be read.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
-    :lines: 60-61
+    :lines: 143-170
 
 The function ``on_type_information_received()`` detect the topic and the data type received and create the callback using the function explained below.
 
