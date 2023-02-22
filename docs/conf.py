@@ -25,15 +25,16 @@ import re
 import requests
 
 
-PROJECT_NAME = 'DDS Recorder'
-COMPRESS_PROJECT_NAME = 'ddsrecorder'
+PROJECT_NAME = 'DDS Record'
+COMPRESS_PROJECT_NAME = 'ddsrecord'
 
 
 def get_version(version_file='VERSION'):
     """
     Get the project version from a version file.
 
-    This method get the VERSION file in this directory and read the version from it.
+    This method get the VERSION file in this directory and read the version
+    from it.
 
     :param version_file: The file to scan the version (Default: VERSION)
     :return: A dict in the manner:

@@ -7,12 +7,12 @@ Example of usage
 ################
 
 This example will serve as a hands-on tutorial, aimed at introducing some of the key concepts and features that
-|eddsrecorder| has to offer.
+|eddsrecord| recording application (|ddsrecorder| or ``ddsrecorder``) has to offer.
 
 Prerequisites
 =============
 
-It is required to have |eddsrecorder| previously installed using one of the following installation methods:
+It is required to have |eddsrecord| previously installed using one of the following installation methods:
 
 * :ref:`installation_manual_windows`
 * :ref:`installation_manual_linux`
@@ -38,12 +38,13 @@ Let us launch a ShapesDemo instance and start publishing in topics ``Square`` wi
 Recorder configuration
 ======================
 
-DDS Recorder runs with default configuration settings. This default configuration records all messages of all DDS Topics found in DDS Domain ``0`` in the ``output_YYYY-MM-DD-DD_hh-mm-ss.mcap`` file.
+|ddsrecorder| runs with default configuration settings.
+This default configuration records all messages of all DDS Topics found in DDS Domain ``0`` in the ``output_YYYY-MM-DD-DD_hh-mm-ss.mcap`` file.
 
 Additionally, it is possible to change the default configuration parameters by means of a YAML configuration file.
 
 .. note::
-    Please refer to :ref:`Configuration <usage_configuration>` for more information on how to configure a DDS Recorder.
+    Please refer to :ref:`Configuration <usage_configuration>` for more information on how to configure a |ddsrecorder|.
 
 Recorder execution
 ==================

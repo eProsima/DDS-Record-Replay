@@ -15,6 +15,13 @@ DDS Recorder nomenclature
     MCAP
         Modular container file format for heterogeneous timestamped data.
 
+    DynamicTypes
+        The dynamic topic types offer the possibility to work over DDS without the restrictions related to the IDLs.
+        Using them, the users can declare the different types that they need and manage the information directly, avoiding the additional step of updating the IDL file and the generation of C++ classes.
+
+        See `Fast DDS documentation <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dynamic_types/dynamic_types.html>`__
+        for further information.
+
 DDS nomenclature
 ================
 

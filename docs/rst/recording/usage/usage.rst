@@ -7,7 +7,7 @@
 Usage
 #####
 
-|eddsrecorder| is a user application executed from command line.
+|eddsrecord| is a user application executed from command line.
 
 .. contents::
     :local:
@@ -17,24 +17,47 @@ Usage
 Starting Recording Application
 ------------------------------
 
-|eddsrecorder| depends on ``fastrtps``, ``fastcdr`` and ``ddsrouter`` libraries.
-In order to correctly execute the recorder, make sure that ``fastrtps``, ``fastcdr`` and ``ddsrouter`` are properly sourced.
+Docker Image
+^^^^^^^^^^^^
+
+The recommended method to run the |ddsrecorder| is to instantiate a Docker container of the |ddsrecorder| image.
+:ref:`Here <docker>` are the instructions to download the compressed |ddsrecorder| Docker image and load it locally.
+
+To run the |ddsrecorder| from a Docker container execute the following command:
+
+.. code-block:: bash
+
+    docker run -it \
+        --net=host \
+        --ipc=host \
+        -v /<dds_recorder_ws>/DDS_RECORDER_CONFIGURATION.yaml:/root/DDS_RECORDER_CONFIGURATION.yaml \
+        ubuntu-ddsrecorder:v<X.X.X> ddsrecorder
+
+
+Installation from sources
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+|eddsrecord| depends on ``fastrtps``, ``fastcdr`` and ``ddspipe`` libraries.
+In order to correctly execute the recorder, make sure that ``fastrtps``, ``fastcdr`` and ``ddspipe`` are properly sourced.
 
 .. code-block:: bash
 
     source <path-to-fastdds-installation>/install/setup.bash
-    source <path-to-ddsrouter-installation>/install/setup.bash
+    source <path-to-ddspipe-installation>/install/setup.bash
     source <path-to-ddsrecorder-installation>/install/setup.bash
 
 .. note::
 
     If Fast DDS, DDS Router and DDS Recorder have been installed in the system, these libraries would be sourced by default.
 
-To start |eddsrecorder| with a default configuration, enter:
+To start |eddsrecord| with a default configuration, enter:
 
 .. code-block:: bash
 
     ddsrecorder
+
+
+.. _usage_stop_recording:
 
 Stopping Recording Application
 ------------------------------
@@ -42,12 +65,13 @@ Stopping Recording Application
 SIGINT
 ^^^^^^
 
-To stop |eddsrecorder|, press ``Ctrl+C``. |eddsrecorder| will perform a clean shutdown.
+To stop |eddsrecord|, press ``Ctrl+C``. |eddsrecord| will perform a clean shutdown.
 
 SIGTERM
 ^^^^^^^
 
-Write command ``kill <pid>`` in a different terminal, where ``<pid>`` is the id of the process running the DDS Router. Use ``ps`` or ``top`` programs to check the process ids.
+Write command ``kill <pid>`` in a different terminal, where ``<pid>`` is the id of the process running the |ddsrecorder|.
+Use ``ps`` or ``top`` programs to check the process ids.
 
 TIMEOUT
 ^^^^^^^
@@ -112,8 +136,8 @@ The |ddsrecorder| application supports several input arguments:
           `0`` means that the application |br|
           will run forever (until kill |br|
           via signal).
-        - ``-r`` |br|
-          ``--reload-time``
+        - ``-t`` |br|
+          ``--timeout``
         - Unsigned Integer
         - ``0``
 
