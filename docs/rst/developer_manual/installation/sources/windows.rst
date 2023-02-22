@@ -28,7 +28,7 @@ The following packages will be installed:
 - ``fastrtps``, the core library of eProsima Fast DDS library.
 - ``cmake_utils``, an eProsima utils library for CMake.
 - ``cpp_utils``, an eProsima utils library for C++.
-- ``ddsrouter``, an eProsima end-user application that enables the connection of distributed DDS networks.
+- ``ddspipe``, an eProsima internal library that enables the communication of DDS interfaces.
 
 First of all, the :ref:`Requirements <windows_sources_requirements>` and :ref:`Dependencies <windows_sources_dependencies>` detailed below need to be met.
 Afterwards, the user can choose whether to follow either the :ref:`colcon <windows_sources_colcon_installation>` or the :ref:`CMake <windows_sources_cmake_installation>` installation instructions.
@@ -179,12 +179,12 @@ From an administrative shell with *PowerShell*, execute the following commands i
 eProsima dependencies
 ^^^^^^^^^^^^^^^^^^^^^
 
-If it already exists in the system an installation of *Fast DDS* and *DDS Router* libraries, just source this libraries when building the |eddsrecord| application by using the command:
+If it already exists in the system an installation of *Fast DDS* and *DDS Pipe* libraries, just source this libraries when building the |eddsrecord| application by using the command:
 
 .. code-block:: bash
 
     source <fastdds-installation-path>/install/setup.bash
-    source <ddsrouter-installation-path>/install/setup.bash
+    source <ddspipe-installation-path>/install/setup.bash
 
 In other case, just skip this step.
 
@@ -372,13 +372,13 @@ Local installation
 Global installation
 -------------------
 
-To install |eddsrecord| system-wide instead of locally, remove all the flags that appear in the configuration steps of :code:`Fast-CDR`, :code:`Fast-DDS`, :code:`Dev-Utils`, :code:`DDS-Pipe`, and :code:`DDS-Recorder`
+To install |eddsrecord| system-wide instead of locally, remove all the flags that appear in the configuration steps of :code:`Fast-CDR`, :code:`Fast-DDS`, :code:`Dev-Utils`, :code:`DDS-Pipe`, and :code:`DDS-Record`
 
 
 Run an application
 ==================
 
-If the |eddsrecord| was compiled using colcon, when running an instance of a |ddsrecorder|, the colcon overlay built in the dedicated :code:`DDS-Recorder` directory must be sourced.
+If the |eddsrecord| was compiled using colcon, when running an instance of a |ddsrecorder|, the colcon overlay built in the dedicated :code:`DDS-Record` directory must be sourced.
 There are two possibilities:
 
 * Every time a new shell is opened, prepare the environment locally by typing the command:

@@ -70,7 +70,7 @@ To stop |eddsrecord|, press ``Ctrl+C``. |eddsrecord| will perform a clean shutdo
 SIGTERM
 ^^^^^^^
 
-Write command ``kill <pid>`` in a different terminal, where ``<pid>`` is the id of the process running the DDS Router.
+Write command ``kill <pid>`` in a different terminal, where ``<pid>`` is the id of the process running the |ddsrecorder|.
 Use ``ps`` or ``top`` programs to check the process ids.
 
 TIMEOUT

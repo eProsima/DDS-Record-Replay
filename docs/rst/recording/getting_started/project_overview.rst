@@ -33,7 +33,7 @@ whose format is very intuitive and human-readable.
   Please, read this :ref:`section <usage_configuration>` to apply a specific configuration, and this :ref:`section <usage_usage_application_arguments>` to see the supported arguments.
 * **Interact**:
   Once the |ddsrecorder| application is running, the allowlist and blocklist topic lists could be changed in runtime by just changing the YAML configuration file.
-  It is also possible to change the status of the DDS Recorder (running, paused or stopped) by remote control of the application.
+  It is also possible to change the status of the recorder (running, paused or stopped) by remote control of the application.
   This remote control is done by sending commands via DDS or by using the graphical remote control application provided with the |eddsrecord| sofware tool (see :ref:`Remote control <remote_control>`).
 * **Stop**:
   To stop the |ddsrecorder| application just send a `Ctrl+C` signal to stop de process gracefully (see :ref:`Close DDS Recorder <usage_stop_recording>`) or close it remotely using the remote control application (see :ref:`Remote control <remote_control>`).
@@ -41,5 +41,5 @@ whose format is very intuitive and human-readable.
 Common Use cases
 ================
 
-To get started with the DDS Recorder, please visit section :ref:`getting_started_usage_example`.
-In addition, this documentation provides several tutorials on how to set up the |ddsrecorder|, a comprehensive Fast DDS application using DynamicTypes and how to read the generated MCAP file.
+To get started with the |ddsrecorder|, please visit section :ref:`getting_started_usage_example`.
+In addition, this documentation provides several tutorials on how to set up a |ddsrecorder|, a comprehensive Fast DDS application using DynamicTypes and how to read the generated MCAP file.

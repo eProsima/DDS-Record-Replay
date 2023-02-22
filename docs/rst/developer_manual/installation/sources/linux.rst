@@ -39,7 +39,7 @@ Afterwards, the user can choose whether to follow either the :ref:`colcon <colco
 Requirements
 ------------
 
-The installation of |ddsrecorder| in a Linux environment from sources requires the following tools to be installed in the system:
+The installation of |eddsrecord| in a Linux environment from sources requires the following tools to be installed in the system:
 
 * :ref:`cmake_gcc_pip_wget_git_sl`
 * :ref:`colcon_install` [optional]
@@ -88,7 +88,7 @@ It is possible to activate them with the opportune `CMake options <https://colco
 For more details, please refer to the :ref:`cmake_options` section.
 For a detailed description of the Gtest_ installation process, please refer to the `Gtest Installation Guide <https://github.com/google/googletest>`_.
 
-It is also possible to clone the Gtest_ Github repository into the |ddsrecorder| workspace and compile it with colcon_ as a dependency package.
+It is also possible to clone the Gtest_ Github repository into the |eddsrecord| workspace and compile it with colcon_ as a dependency package.
 Use the following command to download the code:
 
 .. code-block:: bash
@@ -159,7 +159,7 @@ In other case, just skip this step.
 .. code-block:: bash
 
     source <fastdds-installation-path>/install/setup.bash
-    source <ddsrouter-installation-path>/install/setup.bash
+    source <ddspipe-installation-path>/install/setup.bash
 
 
 
@@ -180,7 +180,7 @@ Colcon installation (recomended)
     .. note::
 
         In case there is already a *Fast DDS* installation in the system it is not required to download and build every dependency in the :code:`.repos` file.
-        It is just needed to download and build the |ddsrecorder| project having sourced its dependencies.
+        It is just needed to download and build the |eddsrecord| project having sourced its dependencies.
         Refer to section :ref:`eprosima_dependencies` in order to check how to source *Fast DDS* library.
 
 #.  Build the packages:
@@ -329,7 +329,7 @@ Local installation
 Global installation
 -------------------
 
-To install |eddsrecord| system-wide instead of locally, remove all the flags that appear in the configuration steps of :code:`Fast-CDR`, :code:`Fast-DDS`, :code:`Dev-Utils`, :code:`DDS-Pipe`, and :code:`DDS-Recorder`, and change the first in the configuration step of :code:`foonathan_memory_vendor` to the following:
+To install |eddsrecord| system-wide instead of locally, remove all the flags that appear in the configuration steps of :code:`Fast-CDR`, :code:`Fast-DDS`, :code:`Dev-Utils`, :code:`DDS-Pipe`, and :code:`DDS-Record`, and change the first in the configuration step of :code:`foonathan_memory_vendor` to the following:
 
 .. code-block:: bash
 
