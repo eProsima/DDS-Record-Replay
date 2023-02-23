@@ -16,21 +16,21 @@ Background
 **********
 
 This examples configures a DDS Publisher using DynamicTypes for the data type definition.
-Thus, the user will be able to record the published data using the *eProsima DDS Recorder* tool.
-Moreover, the example implements a DDS Subscriber that will receive any kind of data published by the Publisher
-as long as the Publisher sends the data type information.
+Thus, the user will be able to record the published data using the |ddsrecorder| tool of the |eddsrecord| software.
+Moreover, the example implements a DDS Subscriber that will receive any kind of data published by the Publisher as long as the Publisher sends the data type information.
 
 *************
 Prerequisites
 *************
 
-Ensure that *eProsima DDS Recorder* is installed together with *eProsima* dependencies, i.e. *Fast DDS*, *Fast CDR* and *DDS Router*.
-Also, remember to source the environment in every terminal in this tutorial.
+Ensure that |eddsrecord| is installed together with *eProsima* dependencies, i.e. *Fast DDS*, *Fast CDR* and *DDS Pipe*.
+
+If |eddsrecord| was installed from sources, just remember to source the environment in every terminal in this tutorial.
 
 .. code-block:: bash
 
     source <path-to-fastdds-installation>/install/setup.bash
-    source <path-to-ddsrouter-installation>/install/setup.bash
+    source <path-to-ddspipe-installation>/install/setup.bash
     source <path-to-ddsrecorder-installation>/install/setup.bash
 
 **********************
@@ -42,32 +42,12 @@ Creating the workspace
     mkdir -p recorder_ws/src
     cd recorder_ws/src
 
-**********************************
-Configure DynamicTypes in Fast DDS
-**********************************
-
-*eProsima Fast DDS* does not send the Data Type information by default, it must be configured to do so.
-
-Complex types
-============
-
-For complex types, it is required to use ``TypeInformation`` mechanism. In the *eProsima Fast DDS* ``DomainParticipant`` set the following QoS in order to send this information:
-
-.. code-block:: bash
-
-    DomainParticipantQos pqos;
-    pqos.wire_protocol().builtin.typelookup_config.use_server = true;
-
-Native types
-============
-
-For native types *eProsima Fast DDS* will send the ``TypeObject`` by default.
-
-IDL file
-========
+*************************
+Generating the data types
+*************************
 
 `eProsima Fast DDS-Gen <https://fast-dds.docs.eprosima.com/en/latest/fastddsgen/introduction/introduction.html>`_ is a Java application that generates *eProsima Fast DDS* source code using the data types defined in an IDL (Interface Definition Language) file.
-When generating the Types using *eProsima Fast DDS Gen*, the option ``-typeobject`` must be added in order to generate the needed code to fill the ``TypeObject`` data.
+When generating the Types using *eProsima Fast DDS Gen*, the option ``-typeobject`` must be added in order to generate the needed code to fill the ``TypeInformation`` data.
 
 The expected argument list of the application is:
 
@@ -86,16 +66,29 @@ At the moment, there are two data types that can be used:
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
 
+*************
+DDS Publisher
+*************
 
-This tutorial files are generated using the ``HelloWorld`` message.
+Complex types
+============
 
-*********************
-DynamicType Publisher
-*********************
+For complex types, it is required to use ``TypeInformation`` mechanism. In the *eProsima Fast DDS* ``DomainParticipant`` set the following QoS in order to send this information:
 
-This is the C++ source code for the application. This source code can also be found `here <https://github.com/eProsima/DDS-Recorder/blob/main/resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp>`_.
+.. code-block:: bash
 
-This tutorial is focus on DynamicTypes , for more information about the DDS Publisher, please refer to `Writing a simple C++ publisher and subscriber application <https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html>`_ .
+    DomainParticipantQos pqos;
+    pqos.wire_protocol().builtin.typelookup_config.use_server = true;
+
+Native types
+============
+
+For native types *eProsima Fast DDS* will send the ``TypeObject`` by default.
+
+This section explains the C++ source code of the DDS Publisher, which can also be found `here <https://github.com/eProsima/DDS-Recorder/blob/main/resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp>`_.
+
+This tutorial focuses on how to send the data type information using Fast DDS DynamicTypes and other relevant aspects of DynamicTypes as how to create the  dynamic type and how to fill the dynamic data to be published.
+For more information about how to implement a basic DDS Publisher using Fast DDS, please refer to `Writing a simple C++ publisher and subscriber application <https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html>`_ .
 
 Examining the code
 ==================
@@ -144,13 +137,14 @@ The function ``fill_complete_data_()`` return the same as the function above but
     :lines: 309-387
 
 
-**********************
-DynamicType Subscriber
-**********************
+**************
+DDS Subscriber
+**************
 
-This is the C++ source code for the application. This source code can also be found `here <https://github.com/eProsima/DDS-Recorder/blob/main/resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp>`_.
+This section explains the C++ source code of the DDS Publisher, which can also be found `here <https://github.com/eProsima/DDS-Recorder/blob/main/resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp>`_.
 
-This tutorial is focus on DynamicType and , for more information about the DDS Subscriber, please refer to `Writing a simple C++ publisher and subscriber application <https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html>`_ .
+This tutorial focuses on how to send the data type information using Fast DDS DynamicTypes and other relevant aspects of DynamicTypes as how to create the  dynamic type and how to fill the dynamic data to be published.
+For more information about how to implement a basic DDS Subscriber using Fast DDS, please refer to `Writing a simple C++ publisher and subscriber application <https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html>`_ .
 
 Examining the code
 ==================
