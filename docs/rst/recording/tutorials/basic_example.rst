@@ -36,6 +36,7 @@ If |eddsrecord| was installed using the `recommended installation <https://dds-r
     source <path-to-ddsrecorder-installation>/install/setup.bash
 
 This tutorial focuses on how to send the data type information using Fast DDS DynamicTypes and other relevant aspects of DynamicTypes.
+
 For more information about how to create the workspace with a basic DDS Publisher and a basic DDS Subscriber, please refer to `Writing a simple C++ publisher and subscriber application <https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html>`_ .
 
 *********************
@@ -57,7 +58,7 @@ DDS Publisher
 
 The DDS publisher is acting as a server of types.
 
-Fast DDS does not send the Data Type information by default, it must be configured to do so.
+Fast DDS does not send the DataType information by default, it must be configured to do so.
 
 Complex types
 ============
@@ -74,6 +75,9 @@ Native types
 
 For native types *eProsima Fast DDS* will send the ``TypeObject`` by default.
 
+Data types
+==========
+
 At the moment, there are two data types that can be used:
 
 * `HelloWorld.idl <https://github.com/eProsima/DDS-Recorder/blob/main/resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl>`_
@@ -89,7 +93,7 @@ Examining the code
 
 This section explains the C++ source code of the DDS Publisher, which can also be found `here <https://github.com/eProsima/DDS-Recorder/blob/main/resources/dds/TypeLookupService>`_.
 
-For simplicity is going to be explain the code related to the ``HelloWorld``type.
+For simplicity is going to be explain the code related to the ``HelloWorld`` type.
 
 The private data members of the class defines the DDS Topic, data type, DDS Topic type and DynamicType.
 
@@ -153,61 +157,61 @@ DDS Subscriber
 
 The DDS Subscriber is acting as a client of types.
 Thus, the subscriber does not need to know the type.
-In order to look-up a data type, just launch the subscriber setting the same topic name as the one configured in the
-publisher side.
 
 Examining the code
 ==================
 
 This section explains the C++ source code of the DDS Publisher, which can also be found `here <https://github.com/eProsima/DDS-Recorder/blob/main/resources/dds/TypeLookupService>`_.
 
+The private data members of the class defines the DDS Topic, DDS Topic type and DynamicType.
 
-The next line creates the ``TypeLookupServiceSubscriber`` class that implements the subscriber.
+.. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.h
+    :language: C++
+    :lines: 105-110
+
+The next line creates the ``TypeLookupServiceSubscriber`` class that implements the subscriber setting the topic name as the one configured in the
+publisher side.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
     :language: C++
     :lines: 45-53
 
-.. todo:
+Inside the ``TypeLookupServiceSubscriber`` are defined the QoS.
+As the publisher act as a client of types, the qos set ``use_client`` to ``true`` and ``use_server`` to ``false``.
 
-    .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
-        :language: C++
-        :lines: 60-61
+.. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
+    :language: C++
+    :lines: 57-61
 
-Inside the ``on_data_available()`` function it is created the ``DynamicData_ptr`` where the samples received will be read.
+Then is initialized the Subscriber.
+
+Inside ``on_data_available()`` it is created the ``DynamicData_ptr`` where the samples received will be read.
+As in publisher, it is used ``DynamicDataFactory`` for the creation of the data that corresponds to our data type.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
     :language: C++
     :lines: 143-170
 
-The function ``on_type_information_received()`` detect the topic and the data type received and create the callback using the function explained below.
+The function ``on_type_information_received()`` detect the topics received and discover it if they have the same as the topic that we are waiting for.
+Discover the topic means set the topic as discover and register it using the function ``register_remote_type_callback_()`` explained below.
+Once the topic has been discovered and registered, it is created a DataReader on this topic.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
     :language: C++
     :lines: 172-212
 
-Finally, the function ``register_remote_type_callback_()`` is in charge of create a callback that register the topic received.
-This function performs several actions:
-
-1. Register the type from the topic received.
-2. Create a ``DDS Topic`` with the same topic name as the one received from the publisher.
-3. Create a ``DataReader`` that identifies the data to be read and accesses that data.
-4. Update the ``TypeLookupServiceSubscriber`` members and notify all that the type has been discovered and registered.
+Finally, the function ``register_remote_type_callback_()`` is in charge of register the topic received.
+First of all, it creates a ``TypeSupport`` with the corresponding type and register it into the participant.
+Then, it creates the DDS Topic with the topic name set in the creation of the Subscriber and the topic type previously register.
+Finally, it creates the DataReader of that topic.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
     :language: C++
-    :lines: 278-320
+    :lines: 278-304
 
 ***********************
 Running the application
 ***********************
-
-At this point the project is ready for building, compiling and running the application.
-
-.. code-block:: bash
-
-    colcon build
-    source install/setup.bash
 
 Recording samples with DDS Recorder
 ===================================
