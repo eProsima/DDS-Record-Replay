@@ -21,23 +21,22 @@ Moreover, the example implements a DDS Subscriber that will receive any kind of 
 
 The source code of this tutorial is provided `here <https://github.com/eProsima/DDS-Recorder/tree/main/resources/dds/TypeLookupService>`_ with an explanation of how to build and run it.
 
+This tutorial focuses on how to send the data type information using Fast DDS DynamicTypes and other relevant aspects of DynamicTypes.
+For more information about how to create the workspace with a basic DDS Publisher and a basic DDS Subscriber, please refer to `Writing a simple C++ publisher and subscriber application <https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html>`_ .
+
 *************
 Prerequisites
 *************
 
 Ensure that |eddsrecord| is installed together with *eProsima* dependencies, i.e. *Fast DDS*, *Fast CDR* and *DDS Pipe*.
 
-If |eddsrecord| was installed using the `recommended installation <https://dds-recorder.readthedocs.io/en/latest/rst/installation/docker.html>`_ the environment is source by default, otherwise, just remember to source it in every terminal in this tutorial.
+If |eddsrecord| was installed using the `recommended installation <https://dds-recorder.readthedocs.io/en/latest/rst/installation/docker.html>`_ the environment is source by default, otherwise, just remember to source it in every terminal in this tutorial:
 
 .. code-block:: bash
 
     source <path-to-fastdds-installation>/install/setup.bash
     source <path-to-ddspipe-installation>/install/setup.bash
     source <path-to-ddsrecorder-installation>/install/setup.bash
-
-This tutorial focuses on how to send the data type information using Fast DDS DynamicTypes and other relevant aspects of DynamicTypes.
-
-For more information about how to create the workspace with a basic DDS Publisher and a basic DDS Subscriber, please refer to `Writing a simple C++ publisher and subscriber application <https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html>`_ .
 
 *********************
 Generating data types
@@ -93,22 +92,22 @@ Examining the code
 
 This section explains the C++ source code of the DDS Publisher, which can also be found `here <https://github.com/eProsima/DDS-Recorder/blob/main/resources/dds/TypeLookupService>`_.
 
-For simplicity is going to be explain the code related to the ``HelloWorld`` type.
+For simplicity is going to be explain just the code related to the ``HelloWorld`` type.
 
-The private data members of the class defines the DDS Topic, data type, DDS Topic type and DynamicType.
+The private data members of the class defines the DDS Topic, DataTypeKind, DDS Topic type and DynamicType.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.h
     :language: C++
     :lines: 139-146
 
-The next line creates the ``TypeLookupServicePublisher`` class that implements the publisher.
+The next lines show the constructor of the ``TypeLookupServicePublisher`` class that implements the publisher.
 The publisher is created with the topic and data type to use.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
     :language: C++
     :lines: 45-54
 
-Inside the ``TypeLookupServicePublisher`` are defined the QoS.
+Inside the ``TypeLookupServicePublisher`` constructor are defined the DomainParticipantQos.
 As the publisher act as a server of types, the qos set ``use_client`` to ``false`` and ``use_server`` to ``true``.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
@@ -116,6 +115,7 @@ As the publisher act as a server of types, the qos set ``use_client`` to ``false
     :lines: 58-62
 
 Next, we register the type in the participant:
+
 1. Generate the dynamic type through ``generate_helloworld_type_()`` explained below.
 2. Set the data type.
 3. Create the ``TypeSupport`` with the dynamic type previously created.
@@ -169,14 +169,14 @@ The private data members of the class defines the DDS Topic, DDS Topic type and 
     :language: C++
     :lines: 105-110
 
-The next line creates the ``TypeLookupServiceSubscriber`` class that implements the subscriber setting the topic name as the one configured in the
+The next lines show the constructor of the ``TypeLookupServiceSubscriber`` class that implements the subscriber setting the topic name as the one configured in the
 publisher side.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
     :language: C++
     :lines: 45-53
 
-Inside the ``TypeLookupServiceSubscriber`` are defined the QoS.
+Inside the ``TypeLookupServiceSubscriber`` constructor are defined the DomainParticipantQos.
 As the publisher act as a client of types, the qos set ``use_client`` to ``true`` and ``use_server`` to ``false``.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
