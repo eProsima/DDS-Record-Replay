@@ -15,9 +15,10 @@ Recording DynamicType data from a DDS application
 Background
 **********
 
-This examples configures a DDS Publisher using DynamicTypes for the data type definition.
+Since the DDS Recorder only supports dynamic types, DDS Publisher using DynamicTypes for the data type definition.
 Thus, the user will be able to record the published data using the |ddsrecorder| tool of the |eddsrecord| software.
-Moreover, the example implements a DDS Subscriber that will receive any kind of data published by the Publisher as long as the Publisher sends the data type information.
+Moreover, the example implements a DDS Subscriber that will receive any kind of data published by the Publisher.
+For that task, the DDS Publisher and the DDS Subscriber implement a TypeLookupService that send the TypeInformation of the data types used by the publisher.
 
 The source code of this tutorial is provided `here <https://github.com/eProsima/DDS-Recorder/tree/main/resources/dds/TypeLookupService>`_ with an explanation of how to build and run it.
 
@@ -121,7 +122,8 @@ Next, we register the type in the participant:
 2. Set the data type.
 3. Create the ``TypeSupport`` with the dynamic type previously created.
 4. Set the ``type`` to ``TypeInformation`` and not to ``TypeObject`` since we want to send the information of the type and not the object.
-    * This answer `DDS-XTypes 1.2. <https://www.omg.org/spec/DDS-XTypes/1.2>`_
+
+* This answer `DDS-XTypes 1.2. <https://www.omg.org/spec/DDS-XTypes/1.2>`_
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
     :language: C++
@@ -135,9 +137,9 @@ The function ``generate_helloworld_type_()`` returns the dynamic type generated 
 
 Then are initialized the Publisher, DDS Topic and DDS DataWriter.
 
-To make the publication, the public member function ``publish()`` is implemented.
+To make the publication, the public member function ``publish()`` is implemented:
 
-1. It is created the variable that will contain the user data, ``dynamic_data_``.
+1. It create the variable that will contain the user data, ``dynamic_data_``.
 2. Fill that variable with the function ``fill_helloworld_data_(msg)``, explained below.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
@@ -146,10 +148,8 @@ To make the publication, the public member function ``publish()`` is implemented
 
 The function ``fill_helloworld_data_()`` returns the data to be sent with the information filled in.
 
-First it is created the ``Dynamic_ptr`` that will be filled in and return.
-
-Then, with the use of the ``DynamicDataFactory`` we create the data that corresponds to our data type.
-
+First, it is created the ``Dynamic_ptr`` that will be filled in and return.
+With the use of ``DynamicDataFactory`` we create the data that corresponds to our data type.
 Finally, data variables are assigned, in this case, ``index`` and ``message``.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
