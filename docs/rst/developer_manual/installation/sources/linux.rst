@@ -278,25 +278,25 @@ Local installation
             cmake ~/DDS-Record/ddspipe_core -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
             cmake --build . --target install
 
-            # ddsrouter_yaml
+            # ddspipe_yaml
             cd ~/DDS-Record
-            mkdir build/ddsrouter_yaml
-            cd build/ddsrouter_yaml
-            cmake ~/DDS-Record/ddsrouter_yaml -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
+            mkdir build/ddspipe_yaml
+            cd build/ddspipe_yaml
+            cmake ~/DDS-Record/ddspipe_yaml -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
             cmake --build . --target install
 
-            # ddsrouter_participants
+            # ddspipe_participants
             cd ~/DDS-Record
-            mkdir build/ddsrouter_participants
-            cd build/ddsrouter_participants
-            cmake ~/DDS-Record/ddsrouter_participants -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
+            mkdir build/ddspipe_participants
+            cd build/ddspipe_participants
+            cmake ~/DDS-Record/ddspipe_participants -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
             cmake --build . --target install
 
 #.  Once all dependencies are installed, install |eddsrecord|:
 
     .. code-block:: bash
 
-        # ddsrecorder
+        # ddsrecorder_participants
         cd ~/DDS-Record
         mkdir build/ddsrecorder_participants
         cd build/ddsrecorder_participants
@@ -310,11 +310,11 @@ Local installation
         cmake ~/DDS-Record/src/ddsrecorder_yaml -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
         cmake --build . --target install
 
-        # ddsrecorder_tool
+        # ddsrecorder
         cd ~/DDS-Record
-        mkdir build/ddsrecorder_tool
-        cd build/ddsrecorder_tool
-        cmake ~/DDS-Record/src/ddsrecorder/tools/ddsrecorder_tool -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
+        mkdir build/ddsrecorder
+        cd build/ddsrecorder
+        cmake ~/DDS-Record/src/ddsrecorder/ddsrecorder -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
         cmake --build . --target install
 
 .. note::

@@ -351,11 +351,11 @@ Local installation
             -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
         cmake --build . --config Release --target install
 
-        # ddsrecorder_tool
+        # ddsrecorder
         cd <path\to\user\workspace>\DDS-Record
-        mkdir build\ddsrecorder_tool
-        cd build\ddsrecorder_tool
-        cmake <path\to\user\workspace>\DDS-Record\src\ddsrecorder\tools\ddsrecorder_tool -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
+        mkdir build\ddsrecorder
+        cd build\ddsrecorder
+        cmake <path\to\user\workspace>\DDS-Record\src\ddsrecorder\ddsrecorder -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
             -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
         cmake --build . --config Release --target install
 
