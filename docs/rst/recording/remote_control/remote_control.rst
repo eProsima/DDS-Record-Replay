@@ -1,9 +1,10 @@
 .. include:: ../../exports/alias.include
+.. include:: ../../exports/roles.include
 
 .. _remote_control:
 
 ##############
-Remote control
+Remote Control
 ##############
 
 The |ddsrecorder| application from |eddsrecord| allows remote control and monitoring of the tool via DDS.
@@ -13,7 +14,8 @@ Moreover, eProsima provides a remote controlling tool that allows to visualize t
 
 This section explains the different execution states of the |ddsrecorder|, how to create your own tool using the DDS topics that the application defines to control its behaviour, and the presentation of the eProsima user application for the remote control of the |ddsrecorder|.
 
-DDS Recorder statuses
+
+DDS Recorder Statuses
 =====================
 
 The |ddsrecorder| application may have the following states:
@@ -35,11 +37,122 @@ The commands that the application accepts are as follows:
 * **PAUSE**: Changes to the Pause state if it was not in it.
 * **STOP**: Changes to the Stop state if it was not in it.
 * **EVENT**: Triggers a recording event to save the data of the time window prior to the event.
+  This command can take the next state as an argument, so it is possible to trigger an event and change the state with the same command.
+  This is useful when the recorder is in a paused state, the user wants to record all the data collected in the current time window and then immediately switch to the Running state to start recording data.
+  It could also be the case that the user wants to capture the event, save the data and then stop the recorder to inspect the output file.
+  The arguments are sent as a serialized `json` in string format.
 * **CLOSE**: Closes the |ddsrecorder| application.
 
 The following is the state diagram of the |ddsrecorder| application with all available commands and the state change effect they cause.
 
 .. figure:: /rst/figures/recorder_state_diagram.png
     :align: center
+
+
+DDS Controller Data Types
+=========================
+
+The |ddsrecorder| contains a DDS subscriber in the ``ddsrecorder/command`` topic and a DDS publisher in the ``ddsrecorder/status`` topic.
+Therefore, any user can create his own application to control the |ddsrecorder| remotely by creating a publisher in the ``ddsrecorder/command`` topic, which sends commands to the recorder, and a subscriber in the ``ddsrecorder/status`` topic to monitor its the status.
+
+The following is a description of the aforementioned control topics.
+
+* Command topic:
+
+  * Topic name: ``ddsrecorder/command``
+  * Topic type name: ``ControllerCommand``
+  * Type description:
+
+    * IDL definition
+
+    .. code::
+
+        struct ControllerCommand
+        {
+            string command;
+            string args;
+        };
+
+    * ControllerCommand type description:
+
+      .. list-table::
+            :header-rows: 1
+
+            *   - Argument
+                - Description
+                - Data type
+                - Possible values
+            *   - ``command``
+                - Command to send.
+                - ``string``
+                - ``START`` |br|
+                  ``PAUSE`` |br|
+                  ``STOP`` |br|
+                  ``EVENT`` |br|
+                  ``CLOSE``
+            *   - ``args``
+                - Argumets of the command. This arguments |br|
+                  should contain a JSON serialized string.
+                - ``string``
+                - * ``EVENT`` command: |br|
+                    ``{"next_state": "running"}`` |br|
+                    ``{"next_state": "stopped"}``
+
+* Status topic:
+
+  * Topic name: ``ddsrecorder/status``
+  * Topic type name: ``Status``
+  * Type description:
+
+    * IDL definition
+
+    .. code::
+
+        struct Status
+        {
+            string previous;
+            string current;
+            string info;
+        };
+
+    * Status type description:
+
+      .. list-table::
+            :header-rows: 1
+
+            *   - Argument
+                - Description
+                - Data type
+                - Possible values
+            *   - ``previous``
+                - Previous status of the |ddsrecorder|.
+                - ``string``
+                - ``Running`` |br|
+                  ``Paused`` |br|
+                  ``Stopped``
+            *   - ``previous``
+                - Current status of the |ddsrecorder|.
+                - ``string``
+                - ``Running`` |br|
+                  ``Paused`` |br|
+                  ``Stopped``
+            *   - ``info``
+                - Additional information related to the state change. (Unused)
+                - ``string``
+                - \-
+
+
+DDS Recorder remote controller application
+==========================================
+
+|eddsrecord| provides a graphical user application that implements a remote controller for the DDS Recorder.
+Thus the user can control the DDS Recorder using this application without having to implement their own.
+
+
+.. note::
+
+    This application is currently under development.
+
+
 
 
