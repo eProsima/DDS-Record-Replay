@@ -108,7 +108,8 @@ The publisher is created with the topic and data type to use.
     :lines: 45-54
 
 Inside the ``TypeLookupServicePublisher`` constructor are defined the DomainParticipantQos.
-As the publisher act as a server of types, the qos set ``use_client`` to ``false`` and ``use_server`` to ``true``.
+As the publisher act as a server of types, set the QoS in order to send this information.
+Set ``use_client`` to ``false`` and ``use_server`` to ``true``.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
     :language: C++
@@ -120,7 +121,7 @@ Next, we register the type in the participant:
 2. Set the data type.
 3. Create the ``TypeSupport`` with the dynamic type previously created.
 4. Set the ``type`` to ``TypeInformation`` and not to ``TypeObject`` since we want to send the information of the type and not the object.
-* This answer `DDS-XTypes 1.2. <https://www.omg.org/spec/DDS-XTypes/1.2>`_
+    * This answer `DDS-XTypes 1.2. <https://www.omg.org/spec/DDS-XTypes/1.2>`_
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
     :language: C++
@@ -135,16 +136,20 @@ The function ``generate_helloworld_type_()`` returns the dynamic type generated 
 Then are initialized the Publisher, DDS Topic and DDS DataWriter.
 
 To make the publication, the public member function ``publish()`` is implemented.
-It is created the variable that will contain the user data, ``dynamic_data_``.
-To fill that variable it is used ``fill_helloworld_data_(msg)``, explained below.
+
+1. It is created the variable that will contain the user data, ``dynamic_data_``.
+2. Fill that variable with the function ``fill_helloworld_data_(msg)``, explained below.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
     :language: C++
     :lines: 229-254
 
 The function ``fill_helloworld_data_()`` returns the data to be sent with the information filled in.
+
 First it is created the ``Dynamic_ptr`` that will be filled in and return.
+
 Then, with the use of the ``DynamicDataFactory`` we create the data that corresponds to our data type.
+
 Finally, data variables are assigned, in this case, ``index`` and ``message``.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
@@ -177,7 +182,8 @@ publisher side.
     :lines: 45-53
 
 Inside the ``TypeLookupServiceSubscriber`` constructor are defined the DomainParticipantQos.
-As the publisher act as a client of types, the qos set ``use_client`` to ``true`` and ``use_server`` to ``false``.
+As the publisher act as a client of types, set the QoS in order to receive this information.
+Set ``use_client`` to ``true`` and ``use_server`` to ``false``.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
     :language: C++
@@ -186,7 +192,8 @@ As the publisher act as a client of types, the qos set ``use_client`` to ``true`
 Then is initialized the Subscriber.
 
 Inside ``on_data_available()`` it is created the ``DynamicData_ptr`` where the samples received will be read.
-As in publisher, it is used ``DynamicDataFactory`` for the creation of the data that corresponds to our data type.
+
+As in the publisher, it is used ``DynamicDataFactory`` for the creation of the data that corresponds to our data type.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
     :language: C++
