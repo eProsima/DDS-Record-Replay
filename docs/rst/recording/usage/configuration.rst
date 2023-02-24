@@ -302,7 +302,7 @@ The supported configurations are:
         - DDS Domain of the DDS |br|
           remote control system.
         - ``string``
-        - ``.``
+        - ``0``
         - From ``0`` to ``255``
 
     *   - Initial state
