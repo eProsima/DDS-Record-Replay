@@ -4,7 +4,7 @@
     eProsima DDS Record Documentation
   </h1>
 
-.. image:: /rst/figures/logo.png
+.. image:: /rst/figures/eprosima_logo.svg
   :height: 100px
   :width: 100px
   :align: left

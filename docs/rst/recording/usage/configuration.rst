@@ -1,4 +1,5 @@
 .. include:: ../../exports/alias.include
+.. include:: ../../exports/roles.include
 
 .. _usage_configuration:
 
@@ -267,6 +268,9 @@ Thus, when the |ddsrecorder| receives the event from the remote controller, it w
 In other words, the ``event-duration`` acts as a sliding time window that allows to save the collected samples in this time window only when the remote controller event is received.
 This way, a |ddsrecorder| is working in pause mode, recording samples in the database only when the event from the remote controller occurs.
 
+
+.. _usage_configuration_remote_controller:
+
 Remote Controller
 -----------------
 
@@ -282,19 +286,33 @@ The supported configurations are:
         - Description
         - Data type
         - Default value
+        - Possible values
 
     *   - Enable
         - ``enable``
-        - Enable DDS remote control system topics.
+        - Enable DDS remote |br|
+          control system topics.
         - ``boolean``
         - ``false``
+        - ``true`` |br|
+          ``false``
 
     *   - DDS Domain
         - ``domain``
-        - DDS Domain of the DDS remote control system.
+        - DDS Domain of the DDS |br|
+          remote control system.
         - ``string``
-        - ``.``
+        - ``0``
+        - From ``0`` to ``255``
 
+    *   - Initial state
+        - ``initial-state``
+        - Initial state of |ddsrecorder|.
+        - ``string``
+        - ``Running``
+        - ``Running`` |br|
+          ``Paused`` |br|
+          ``Stopped``
 
 Specs Configuration
 -------------------
@@ -374,6 +392,7 @@ A complete example of all the configurations described on this page can be found
     remote-controller:
       enable: true
       domain: 10
+      init-state: "paused"
 
     specs:
       threads: 8
