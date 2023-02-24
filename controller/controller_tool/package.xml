@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>controller_tool</name>
+  <version>1.1.0</version>
+  <description>Tool used for externally controlling a running DDS Recorder</description>
+  <maintainer email="raul@eprosima.com">Raúl Sánchez-Mateos</maintainer>
+  <maintainer email="javierparis@eprosima.com">Javier París</maintainer>
+  <maintainer email="juanlopez@eprosima.com">Juan López</maintainer>
+  <license>Apache License, Version 2.0</license>
+
+  <depend>cmake_utils</depend>
+  <depend>fastdds_python</depend>
+
+  <export>
+    <build_type>cmake</build_type>
+  </export>
+</package>

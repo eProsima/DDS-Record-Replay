@@ -1,9 +1,0 @@
-/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/CMakeFiles/install/local.dir
-/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/CMakeFiles/install.dir
-/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/CMakeFiles/list_install_components.dir
-/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/CMakeFiles/rebuild_cache.dir
-/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/CMakeFiles/edit_cache.dir
-/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/CMakeFiles/ControllerCommandWrapper_swig_compilation.dir
-/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/CMakeFiles/ControllerCommandWrapper.dir
-/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/CMakeFiles/install/strip.dir
-/home/raul/ddsrecorder/src/ddsrecorder/controller/ddstypes/ControllerCommand/CMakeFiles/ControllerCommand.dir
