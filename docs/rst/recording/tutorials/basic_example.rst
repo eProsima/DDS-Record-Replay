@@ -18,8 +18,6 @@ Background
 Currently, the DDS Recorder only stores DDS data whose data type is set as a DynamicType.
 The reason for this is that, without the need for the user to set the data type in the DDS Recorder, the DDS Recorder can access it via the type lookup service.
 Thus, the user will be able to record the published data using the |ddsrecorder| tool of the |eddsrecord| software.
-Moreover, the example implements a DDS Subscriber that will receive any kind of data published by the Publisher.
-For that task, the DDS Publisher and the DDS Subscriber implement a TypeLookupService that send the TypeInformation of the data types used by the publisher.
 
 The source code of this tutorial is provided `here <https://github.com/eProsima/DDS-Recorder/tree/main/resources/dds/TypeLookupService>`_ with an explanation of how to build and run it.
 
