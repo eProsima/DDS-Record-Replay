@@ -1,0 +1,22 @@
+dds:
+  domain: 100
+
+recorder:
+  output:
+    filename: "my_output"
+    path: "."
+
+  downsampling: 3
+  buffer-size: 5             # Store elements in disk when buffer full
+  event-window: 10           # Keep in memory messages received in time frame, to be stored when event triggered
+
+remote-controller:
+  enable: false
+  domain: 200
+  initial-state: stopped
+
+specs:
+  threads: 8
+  max-depth: 100
+  max-pending-samples: 10    # Max number of messages to store in memory when schema not yet available
+  cleanup-period: 3
