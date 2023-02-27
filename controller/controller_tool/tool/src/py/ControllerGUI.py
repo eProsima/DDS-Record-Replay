@@ -153,8 +153,10 @@ class ControllerGUI(QMainWindow):
         self.dds_controller.on_ddsrecorder_status.connect(
             self.on_ddsrecorder_status)
 
-    def on_ddsrecorder_discovered(self, message):
+    def on_ddsrecorder_discovered(self, discovered, message):
         """Inform that a new DDS Recorder has been discovered."""
+        if not discovered:
+            self.update_status(DdsRecorderStatus.DISCONNECTED)
         self.add_log_entry(CONTROLLER, message)
 
     def on_ddsrecorder_status(self, previous_status, current_status, info):
@@ -169,10 +171,7 @@ class ControllerGUI(QMainWindow):
             self.add_log_entry(DDS_RECORDER, f'Status information: {info}')
 
         # Change status bar
-        self.status_box.setText(current_status)
-        self.status_box.setStyleSheet(
-            'background-color: '
-            f'{status_to_color(current_status)}')
+        self.update_status(current_status)
 
     def restart_controller(self, dds_domain=0):
         """Restart the DDS Controller if the DDS Domain changes."""
@@ -202,8 +201,8 @@ class ControllerGUI(QMainWindow):
         # Status label box
         self.status_box = QLabel(self)
         self.status_box.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.status_box.setText(DdsRecorderStatus.DISCONNECTED.name)
-        self.status_box.setStyleSheet('background-color: gray')
+        self.update_status(DdsRecorderStatus.DISCONNECTED)
+
         status_box.addWidget(self.status_box, 1)
 
         main_vertical_layout.addLayout(status_box)
@@ -282,6 +281,13 @@ class ControllerGUI(QMainWindow):
         self.setWindowTitle('DDS Recorder controller')
         self.resize(700, 400)
         self.show()
+
+    def update_status(self, status: DdsRecorderStatus):
+        """Update status box."""
+        self.status_box.setText(status_to_text(status))
+        self.status_box.setStyleSheet(
+            'background-color: '
+            f'{status_to_color(status)}')
 
     def dds_domain_dialog(self):
         """Create a dialog to update the DDS Domain."""

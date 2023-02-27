@@ -69,11 +69,11 @@ class CommandWriterListener(fastdds.DataWriterListener):
         if (0 < info.current_count_change):
             logger.debug('DDS Recorder found!')
             self._controller.on_ddsrecorder_discovered.emit(
-                'DDS Recorder found!')
+                True, 'DDS Recorder found!')
         else:
             logger.debug('DDS Recorder lost!')
             self._controller.on_ddsrecorder_discovered.emit(
-                'DDS Recorder lost!')
+                False, 'DDS Recorder lost!')
 
 
 class StatusReaderListener(fastdds.DataReaderListener):
@@ -118,7 +118,7 @@ class Controller(QObject):
         """Remove all dds entities in an orderly manner."""
         self.delete()
 
-    on_ddsrecorder_discovered = pyqtSignal(str)
+    on_ddsrecorder_discovered = pyqtSignal(bool, str)
     on_ddsrecorder_status = pyqtSignal(str, str, str)
 
     def is_valid_dds_domain(self, dds_domain):
