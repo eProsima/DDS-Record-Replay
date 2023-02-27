@@ -230,6 +230,12 @@ class ControllerGUI(QMainWindow):
                 DdsRecorderControllerCommand.STOP))
         buttons_box.addWidget(stop_button)
 
+        event_button = QPushButton('Event', self)
+        event_button.clicked.connect(
+            lambda: self.simple_button_clicked(
+                DdsRecorderControllerCommand.EVENT))
+        buttons_box.addWidget(event_button)
+
         event_start_button = QPushButton('Event + Start', self)
         event_start_button.clicked.connect(
             lambda: self.event_start_button_clicked())
