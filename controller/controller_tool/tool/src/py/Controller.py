@@ -32,6 +32,7 @@ MAX_DDS_DOMAIN_ID = 232
 
 class DdsRecorderStatus(Enum):
     """Possible Status values from a DDS Recorder."""
+
     DISCONNECTED = 0
     RECORDING = 1
     PAUSED = 2
@@ -47,6 +48,7 @@ class DdsRecorderControllerCommand(Enum):
     Commands can have arguments in a format of a json with name of argument
     and value in strings.
     """
+
     START = 0
     STOP = 1
     PAUSE = 2
@@ -120,6 +122,7 @@ class Controller(QObject):
     on_ddsrecorder_status = pyqtSignal(str, str, str)
 
     def is_valid_dds_domain(self, dds_domain):
+        """Check if DDS Domain is valid."""
         return ((dds_domain >= 0) and (dds_domain <= MAX_DDS_DOMAIN_ID))
 
     def init_dds(self, dds_domain):
@@ -166,7 +169,7 @@ class Controller(QObject):
         writer_qos = fastdds.DataWriterQos()
         self.publisher.get_default_datawriter_qos(writer_qos)
         writer_qos.reliability().kind = fastdds.RELIABLE_RELIABILITY_QOS
-        writer_qos.durability().kind = fastdds.TRANSIENT_LOCAL_DURABILITY_QOS
+        writer_qos.durability().kind = fastdds.VOLATILE_DURABILITY_QOS
         writer_qos.history().kind = fastdds.KEEP_LAST_HISTORY_QOS
         writer_qos.history().size = 10
         self.command_writer = self.publisher.create_datawriter(
@@ -183,7 +186,7 @@ class Controller(QObject):
         reader_qos.reliability().kind = fastdds.RELIABLE_RELIABILITY_QOS
         reader_qos.durability().kind = fastdds.TRANSIENT_LOCAL_DURABILITY_QOS
         reader_qos.history().kind = fastdds.KEEP_LAST_HISTORY_QOS
-        reader_qos.history().size = 1
+        reader_qos.history().size = 10
         self.status_reader = self.subscriber.create_datareader(
             self.status_topic, reader_qos, self.status_reader_listener)
 
