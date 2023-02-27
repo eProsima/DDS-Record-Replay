@@ -251,6 +251,7 @@ Downsampling
 ^^^^^^^^^^^^
 
 Reduces the sampling rate of the received data by keeping the first sample and then all *n-th* samples after the first sample, where *n* is the value specified in ``downsampling``.
+This parameter only accepts integer values.
 
 Buffer size
 ^^^^^^^^^^^
@@ -385,7 +386,7 @@ A complete example of all the configurations described on this page can be found
         filename: "output"
         path: "."
 
-      downsampling: 0.1
+      downsampling: 3
       buffer-size: 50
       event-duration: 60
 
