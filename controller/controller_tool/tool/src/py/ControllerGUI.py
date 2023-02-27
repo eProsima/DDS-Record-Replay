@@ -14,8 +14,10 @@
 """GUI for the DDS Recorder remote controller."""
 
 from Controller import (
-    Controller, DdsRecorderStatus,
-    MAX_DDS_DOMAIN_ID, DdsRecorderControllerCommand)
+    Controller, DdsRecorderControllerCommand, DdsRecorderStatus,
+    MAX_DDS_DOMAIN_ID)
+
+from Logger import logger
 
 from PyQt6.QtCore import QDateTime, QUrl, Qt
 from PyQt6.QtGui import QAction, QDesktopServices
@@ -24,11 +26,8 @@ from PyQt6.QtWidgets import (
     QLabel, QMainWindow, QMenuBar, QPushButton, QSpinBox, QTableWidget,
     QTableWidgetItem, QVBoxLayout, QWidget)
 
-from Logger import logger
-
 DDS_RECORDER = 'DDS Recorder'
 CONTROLLER = 'Controller'
-
 
 status_to_color_values__ = {
     DdsRecorderStatus.DISCONNECTED: 'gray',
@@ -40,6 +39,7 @@ status_to_color_values__ = {
 
 
 def status_to_color(status: DdsRecorderStatus):
+    """Get the color associated with each DDSRecorderStatus."""
     if status in status_to_color_values__:
         return status_to_color_values__[status]
     else:
@@ -47,6 +47,7 @@ def status_to_color(status: DdsRecorderStatus):
 
 
 def status_to_text(status: DdsRecorderStatus):
+    """Convert DDSRecorderStatus enum value to string."""
     return status.name
 
 
@@ -77,6 +78,7 @@ class DdsDomainDialog(QDialog):
         self.setLayout(layout)
 
     def get_dds_domain(self):
+        """Return DDS Domain from spin box as integer value."""
         return int(self.spin_box.value())
 
 
@@ -99,31 +101,31 @@ class MenuWidget(QMenuBar):
         docs_action = QAction('Documentation', self)
         docs_action.triggered.connect(
             lambda: QDesktopServices.openUrl(
-                QUrl("https://dds-recorder.readthedocs.io/en/latest/")))
+                QUrl('https://dds-recorder.readthedocs.io/en/latest/')))
         help_menu.addAction(docs_action)
 
         release_notes_action = QAction('Release Notes', self)
         release_notes_action.triggered.connect(
             lambda: QDesktopServices.openUrl(
-                QUrl("https://github.com/eProsima/DDS-Recorder/releases")))
+                QUrl('https://github.com/eProsima/DDS-Recorder/releases')))
         help_menu.addAction(release_notes_action)
 
         twitter_action = QAction('Join Us on Twitter', self)
         twitter_action.triggered.connect(
             lambda: QDesktopServices.openUrl(
-                QUrl("https://twitter.com/EProsima")))
+                QUrl('https://twitter.com/EProsima')))
         help_menu.addAction(twitter_action)
 
         feature_request_action = QAction('Search Feature Requests', self)
         feature_request_action.triggered.connect(
             lambda: QDesktopServices.openUrl(
-                QUrl("https://github.com/eProsima/DDS-Recorder/releases")))
+                QUrl('https://github.com/eProsima/DDS-Recorder/releases')))
         help_menu.addAction(feature_request_action)
 
         issue_action = QAction('Report Issue', self)
         issue_action.triggered.connect(
             lambda: QDesktopServices.openUrl(
-                QUrl("https://github.com/eProsima/DDS-Recorder/releases/new")))
+                QUrl('https://github.com/eProsima/DDS-Recorder/releases/new')))
         help_menu.addAction(issue_action)
 
         # TODO add something in about
@@ -152,9 +154,11 @@ class ControllerGUI(QMainWindow):
             self.on_ddsrecorder_status)
 
     def on_ddsrecorder_discovered(self, message):
+        """Inform that a new DDS Recorder has been discovered."""
         self.add_log_entry(CONTROLLER, message)
 
     def on_ddsrecorder_status(self, previous_status, current_status, info):
+        """Inform the status of remote DDS Recorder."""
         # Log entry with new status
         self.add_log_entry(
             DDS_RECORDER,
@@ -210,17 +214,20 @@ class ControllerGUI(QMainWindow):
         # Add a button per command
         start_button = QPushButton('Start', self)
         start_button.clicked.connect(
-            lambda: self.simple_button_clicked(DdsRecorderControllerCommand.START))
+            lambda: self.simple_button_clicked(
+                DdsRecorderControllerCommand.START))
         buttons_box.addWidget(start_button)
 
         pause_button = QPushButton('Pause', self)
         pause_button.clicked.connect(
-            lambda: self.simple_button_clicked(DdsRecorderControllerCommand.PAUSE))
+            lambda: self.simple_button_clicked(
+                DdsRecorderControllerCommand.PAUSE))
         buttons_box.addWidget(pause_button)
 
         stop_button = QPushButton('Stop', self)
         stop_button.clicked.connect(
-            lambda: self.simple_button_clicked(DdsRecorderControllerCommand.STOP))
+            lambda: self.simple_button_clicked(
+                DdsRecorderControllerCommand.STOP))
         buttons_box.addWidget(stop_button)
 
         event_start_button = QPushButton('Event + Start', self)
@@ -235,7 +242,8 @@ class ControllerGUI(QMainWindow):
 
         close_button = QPushButton('Close', self)
         close_button.clicked.connect(
-            lambda: self.simple_button_clicked(DdsRecorderControllerCommand.CLOSE))
+            lambda: self.simple_button_clicked(
+                DdsRecorderControllerCommand.CLOSE))
         buttons_box.addWidget(close_button)
 
         # Add the horizontal layout to the vertical layout
@@ -294,7 +302,8 @@ class ControllerGUI(QMainWindow):
     def send_command(self, command, args=''):
         """Publish command."""
         if (self.dds_controller.publish_command(command, args)):
-            self.add_log_entry(CONTROLLER, f'{command.name} [{args}] command sent')
+            self.add_log_entry(
+                CONTROLLER, f'{command.name} [{args}] command sent')
 
     def add_log_entry(self, source, message):
         """Add log entry to the logging table."""
@@ -306,9 +315,12 @@ class ControllerGUI(QMainWindow):
         row_count = self.log_box.rowCount()
         self.log_box.insertRow(row_count)
 
-        self.log_box.setItem(row_count, 0, CustomNonEditableQTableWidgetItem(timestamp))
-        self.log_box.setItem(row_count, 1, CustomNonEditableQTableWidgetItem(source))
-        self.log_box.setItem(row_count, 2, CustomNonEditableQTableWidgetItem(message))
+        self.log_box.setItem(
+            row_count, 0, CustomNonEditableQTableWidgetItem(timestamp))
+        self.log_box.setItem(
+            row_count, 1, CustomNonEditableQTableWidgetItem(source))
+        self.log_box.setItem(
+            row_count, 2, CustomNonEditableQTableWidgetItem(message))
 
     def closeEvent(self, event):
         """Update close event to close the application properly."""
@@ -317,7 +329,9 @@ class ControllerGUI(QMainWindow):
 
 
 class CustomNonEditableQTableWidgetItem(QTableWidgetItem):
+    """Class that implements a non editable QTableWidgetItem."""
 
     def __init__(self, arg):
+        """Construct a CustomNonEditableQTableWidgetItem."""
         super().__init__(arg)
         self.setFlags(self.flags() & ~Qt.ItemFlag.ItemIsEditable)

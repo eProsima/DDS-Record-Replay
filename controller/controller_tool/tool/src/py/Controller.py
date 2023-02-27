@@ -15,15 +15,16 @@
 
 from enum import Enum
 
-from PyQt6.QtCore import QObject, pyqtSignal
-
 from ControllerCommand import (
     ControllerCommand, ControllerCommandPubSubType)
+
+from Logger import logger
+
+from PyQt6.QtCore import QObject, pyqtSignal
+
 from Status import Status, StatusPubSubType
 
 import fastdds
-
-from Logger import logger
 
 
 MAX_DDS_DOMAIN_ID = 232
@@ -43,7 +44,8 @@ class DdsRecorderControllerCommand(Enum):
     Possible commands from a Controller to a DDS Recorder.
 
     Each command is represented by a string (same as enum name).
-    Commands can have arguments in a format of a json with name of argument and value in strings.
+    Commands can have arguments in a format of a json with name of argument
+    and value in strings.
     """
     START = 0
     STOP = 1
@@ -185,7 +187,10 @@ class Controller(QObject):
         self.status_reader = self.subscriber.create_datareader(
             self.status_topic, reader_qos, self.status_reader_listener)
 
-    def publish_command(self, command: DdsRecorderControllerCommand, args: str = ''):
+    def publish_command(
+            self,
+            command: DdsRecorderControllerCommand,
+            args: str = ''):
         """
         Publish a command.
 
@@ -202,13 +207,16 @@ class Controller(QObject):
         return True
 
     def delete(self):
+        """Delete DDS instances."""
         factory = fastdds.DomainParticipantFactory.get_instance()
         self.participant.delete_contained_entities()
         factory.delete_participant(self.participant)
 
     def command_arguments_to_string(args: dict):
+        """Serialize json object to string."""
         # TODO convert to json string
         return str(args)
 
     def argument_change_state(next_state: DdsRecorderStatus):
-        return {"next_state": f"{next_state.name}"}
+        """Set next state EVENT command argument."""
+        return {'next_state': f'{next_state.name}'}
