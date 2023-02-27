@@ -209,7 +209,7 @@ Recording samples with DDS Recorder
 
 Open two terminals:
 
-* In the first terminal, run an instance of the described publisher.
+* In the first terminal, run an instance of the described publisher:
 
     .. code-block:: bash
 
