@@ -1,6 +1,10 @@
 .. include:: ../exports/alias.include
 
-.. _release_notes:
+.. _notes:
+
+#####
+Notes
+#####
 
 .. include:: forthcoming_version.rst
 
