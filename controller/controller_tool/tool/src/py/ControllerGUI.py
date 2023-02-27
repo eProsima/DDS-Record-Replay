@@ -208,8 +208,11 @@ class ControllerGUI(QMainWindow):
 
         main_vertical_layout.addLayout(status_box)
 
+        # Horizontal layout for buttons and logs
+        buttons_logs_box = QHBoxLayout()
+
         # Horizontal layout for the buttons
-        buttons_box = QHBoxLayout()
+        buttons_box = QVBoxLayout()
 
         # Add a button per command
         start_button = QPushButton('Start', self)
@@ -236,12 +239,12 @@ class ControllerGUI(QMainWindow):
                 DdsRecorderControllerCommand.EVENT))
         buttons_box.addWidget(event_button)
 
-        event_start_button = QPushButton('Event + Start', self)
+        event_start_button = QPushButton('Event & Start', self)
         event_start_button.clicked.connect(
             lambda: self.event_start_button_clicked())
         buttons_box.addWidget(event_start_button)
 
-        event_stop_button = QPushButton('Event + Stop', self)
+        event_stop_button = QPushButton('Event & Stop', self)
         event_stop_button.clicked.connect(
             lambda: self.event_stop_button_clicked())
         buttons_box.addWidget(event_stop_button)
@@ -251,9 +254,10 @@ class ControllerGUI(QMainWindow):
             lambda: self.simple_button_clicked(
                 DdsRecorderControllerCommand.CLOSE))
         buttons_box.addWidget(close_button)
+        buttons_box.addStretch()
 
         # Add the horizontal layout to the vertical layout
-        main_vertical_layout.addLayout(buttons_box)
+        buttons_logs_box.addLayout(buttons_box)
 
         # Create a text box for displaying the log
         self.log_box = QTableWidget(self)
@@ -264,7 +268,9 @@ class ControllerGUI(QMainWindow):
         header.resizeSection(0, 200)
         header.resizeSection(1, 100)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
-        main_vertical_layout.addWidget(self.log_box)
+        buttons_logs_box.addWidget(self.log_box)
+
+        main_vertical_layout.addLayout(buttons_logs_box)
 
         # Add the layout to a widget and set it as the central
         # widget of the window
