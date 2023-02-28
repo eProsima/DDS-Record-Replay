@@ -54,9 +54,25 @@ void Configuration::load_ddsrecorder_configuration_(
     {
         YamlReaderVersion version = LATEST;
 
-        types::DomainId dds_domain;
+        // Default path and output values ("./output")
         std::string path = ".";
         std::string filename = "output";
+
+        ////////////////////////////////////////
+        // Create participants configurations //
+        ////////////////////////////////////////
+
+        /////
+        // Create Simple Participant Configuration
+        simple_configuration = std::make_shared<SimpleParticipantConfiguration>();
+        simple_configuration->id = "SimpleRecorderParticipant";
+        simple_configuration->is_repeater = false;
+
+        /////
+        // Create Recorder Participant Configuration
+        recorder_configuration = std::make_shared<ParticipantConfiguration>();
+        recorder_configuration->id = "RecorderRecorderParticipant";
+        recorder_configuration->is_repeater = false;
 
         /////
         // Get optional DDS configuration options
@@ -67,7 +83,7 @@ void Configuration::load_ddsrecorder_configuration_(
             // Get optional DDS domain
             if (YamlReader::is_tag_present(dds_yml, DOMAIN_ID_TAG))
             {
-                dds_domain = YamlReader::get<types::DomainId>(dds_yml, DOMAIN_ID_TAG, version);
+                simple_configuration->domain = YamlReader::get<types::DomainId>(dds_yml, DOMAIN_ID_TAG, version);
             }
 
             /////
@@ -89,6 +105,15 @@ void Configuration::load_ddsrecorder_configuration_(
             {
                 blocklist = YamlReader::get_set<utils::Heritable<types::IFilterTopic>>(dds_yml, BLOCKLIST_TAG, version);
             }
+
+            // Block controller's status and command topics
+            types::WildcardDdsFilterTopic status_topic, command_topic;
+            status_topic.type_name.set_value("Status");
+            command_topic.type_name.set_value("ControllerCommand");
+            blocklist.insert(
+                utils::Heritable<types::WildcardDdsFilterTopic>::make_heritable(status_topic));
+            blocklist.insert(
+                utils::Heritable<types::WildcardDdsFilterTopic>::make_heritable(command_topic));
 
             /////
             // Get optional builtin topics
@@ -127,21 +152,21 @@ void Configuration::load_ddsrecorder_configuration_(
             // Get optional buffer size
             if (YamlReader::is_tag_present(recorder_yml, RECORDER_BUFFER_SIZE_TAG))
             {
-                buffer_size = YamlReader::get<unsigned int>(recorder_yml, RECORDER_BUFFER_SIZE_TAG, version);
+                buffer_size = YamlReader::get_positive_int(recorder_yml, RECORDER_BUFFER_SIZE_TAG);
             }
 
             /////
             // Get optional downsampling factor
             if (YamlReader::is_tag_present(recorder_yml, RECORDER_DOWNSAMPLING_TAG))
             {
-                downsampling = YamlReader::get<unsigned int>(recorder_yml, RECORDER_DOWNSAMPLING_TAG, version);
+                downsampling = YamlReader::get_positive_int(recorder_yml, RECORDER_DOWNSAMPLING_TAG);
             }
 
             /////
             // Get optional event window length
             if (YamlReader::is_tag_present(recorder_yml, RECORDER_EVENT_WINDOW_TAG))
             {
-                event_window = YamlReader::get<unsigned int>(recorder_yml, RECORDER_EVENT_WINDOW_TAG, version);
+                event_window = YamlReader::get_positive_int(recorder_yml, RECORDER_EVENT_WINDOW_TAG);
             }
         }
 
@@ -151,6 +176,7 @@ void Configuration::load_ddsrecorder_configuration_(
         {
             auto controller_yml = YamlReader::get_value_in_tag(yml, RECORDER_REMOTE_CONTROLLER_TAG);
 
+            // Get optional enable remote controller
             if (YamlReader::is_tag_present(controller_yml, RECORDER_REMOTE_CONTROLLER_ENABLE_TAG))
             {
                 enable_remote_controller = YamlReader::get<bool>(controller_yml, RECORDER_REMOTE_CONTROLLER_ENABLE_TAG, version);
@@ -165,7 +191,14 @@ void Configuration::load_ddsrecorder_configuration_(
             {
                 // Use same domain as the one being recorded
                 // WARNING: dds tag must have been parsed beforehand
-                controller_domain = dds_domain;
+                controller_domain = simple_configuration->domain;
+            }
+
+            // Get optional initial command
+            if (YamlReader::is_tag_present(controller_yml, RECORDER_REMOTE_CONTROLLER_INITIAL_COMMAND_TAG))
+            {
+                // Convert to enum value and check valid whereever used to avoid upper dependency
+                initial_command = YamlReader::get<std::string>(controller_yml, RECORDER_REMOTE_CONTROLLER_INITIAL_COMMAND_TAG, version);
             }
         }
 
@@ -178,38 +211,32 @@ void Configuration::load_ddsrecorder_configuration_(
             // Get number of threads
             if (YamlReader::is_tag_present(specs_yml, NUMBER_THREADS_TAG))
             {
-                n_threads = YamlReader::get<unsigned int>(specs_yml, NUMBER_THREADS_TAG, version);
+                n_threads = YamlReader::get_positive_int(specs_yml, NUMBER_THREADS_TAG);
             }
 
             // Get maximum history depth
             if (YamlReader::is_tag_present(specs_yml, MAX_HISTORY_DEPTH_TAG))
             {
-                max_history_depth = YamlReader::get<unsigned int>(specs_yml, MAX_HISTORY_DEPTH_TAG, version);
+                max_history_depth = YamlReader::get_positive_int(specs_yml, MAX_HISTORY_DEPTH_TAG);
             }
 
             // Get max pending samples
             if (YamlReader::is_tag_present(specs_yml, RECORDER_SPECS_MAX_PENDING_SAMPLES_TAG))
             {
-                max_pending_samples = YamlReader::get<unsigned int>(specs_yml, RECORDER_SPECS_MAX_PENDING_SAMPLES_TAG, version);
+                max_pending_samples = YamlReader::get_positive_int(specs_yml, RECORDER_SPECS_MAX_PENDING_SAMPLES_TAG);
+            }
+
+            // Get cleanup period
+            if (YamlReader::is_tag_present(specs_yml, RECORDER_SPECS_CLEANUP_PERIOD_TAG))
+            {
+                cleanup_period = YamlReader::get_positive_int(specs_yml, RECORDER_SPECS_CLEANUP_PERIOD_TAG);
+            }
+            else
+            {
+                // WARNING: event_window tag (under recorder tag) must have been parsed beforehand
+                cleanup_period = 2 * event_window;
             }
         }
-
-        ////////////////////////////////////////
-        // Create participants configurations //
-        ////////////////////////////////////////
-
-        /////
-        // Create Simple Participant Configuration
-        simple_configuration = std::make_shared<SimpleParticipantConfiguration>();
-        simple_configuration->id = "SimpleRecorderParticipant";
-        simple_configuration->is_repeater = false;
-        simple_configuration->domain = dds_domain;
-
-        /////
-        // Create Recorder Participant Configuration
-        recorder_configuration = std::make_shared<ParticipantConfiguration>();
-        recorder_configuration->id = "RecorderRecorderParticipant";
-        recorder_configuration->is_repeater = false;
 
         // Generate complete output file name
         recorder_output_file = path + "/" + filename;

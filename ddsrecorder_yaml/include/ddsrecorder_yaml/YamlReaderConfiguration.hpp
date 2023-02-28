@@ -58,19 +58,20 @@ public:
 
     // Recording params
     std::string recorder_output_file;
-    unsigned int buffer_size = 20;
-    unsigned int downsampling = 0;
-    unsigned int event_window = 0;
+    unsigned int buffer_size = 100;
+    unsigned int downsampling = 1;
+    unsigned int event_window = 20;
 
     // Remote controller configuration
     bool enable_remote_controller = true;
     ddspipe::core::types::DomainId controller_domain;
-    // StateCode initial_state;
+    std::string initial_command = "START";
 
     // Specs
     unsigned int n_threads = 12;
     unsigned int max_history_depth = 5000;
-    unsigned int max_pending_samples = 5;
+    unsigned int max_pending_samples = 5000;
+    unsigned int cleanup_period;
 
 protected:
 

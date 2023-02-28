@@ -50,11 +50,13 @@ constexpr const char* RECORDER_EVENT_WINDOW_TAG("event-window");
 ////////////////////////////////////
 constexpr const char* RECORDER_REMOTE_CONTROLLER_TAG("remote-controller");
 constexpr const char* RECORDER_REMOTE_CONTROLLER_ENABLE_TAG("enable");
+constexpr const char* RECORDER_REMOTE_CONTROLLER_INITIAL_COMMAND_TAG("initial-command");
 
 ////////////////
 // Specs tags //
 ////////////////
 constexpr const char* RECORDER_SPECS_MAX_PENDING_SAMPLES_TAG("max-pending-samples");
+constexpr const char* RECORDER_SPECS_CLEANUP_PERIOD_TAG("cleanup-period");
 
 } /* namespace yaml */
 } /* namespace ddsrecorder */

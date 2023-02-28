@@ -1,4 +1,3 @@
-<!-- TODO: revisit -->
 # eProsima DDS Recorder Yaml Module
 
 This library implements the required functions to translate a DDS Recorder configuration written in *yaml*
@@ -16,10 +15,8 @@ It provides methods:
 ## Example of usage
 
 ```cpp
-// LOAD DDS ROUTER CONFIGURATION FROM FILE
-
-core::configuration::DDSRouterConfiguration router_configuration =
-                yaml::YamlReaderConfiguration::load_ddsrouter_configuration_from_file("configuration.yaml");
+// LOAD DDS RECORDER CONFIGURATION FROM FILE
+eprosima::ddsrecorder::yaml::Configuration configuration("configuration.yaml");
 ```
 
 ---
@@ -28,10 +25,10 @@ core::configuration::DDSRouterConfiguration router_configuration =
 
 * `yaml-cpp`
 * `cpp_utils`
-* `ddsrouter_core`
-* `ddsrouter_yaml`
+* `ddspipe_core`
+* `ddspipe_participants`
+* `ddspipe_yaml`
 * `ddsrecorder_participants`
-
 
 ---
 
