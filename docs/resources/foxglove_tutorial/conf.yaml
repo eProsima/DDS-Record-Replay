@@ -1,0 +1,8 @@
+dds:
+  domain: 0
+
+recorder:
+  output:
+    filename: "shapesdemo_data"
+    path: "."
+

@@ -1,0 +1,19 @@
+# DDS configuration
+dds:
+  # Domain ID
+  domain: 0
+
+  # Allowed topics
+  allowlist:
+    - name: "*"
+
+  # Blocked topics
+  blocklist:
+    - name: "add_blocked_topics_list_here"
+
+# Recorder configuration
+recorder:
+  # Output file settings
+  output:
+    filename: "output"
+    path: "."

@@ -1,9 +1,0 @@
-dds:
-  domain: 0
-
-recorder:
-  output:
-    extension: ".mcap"
-    filename: "view_foxglove"
-    use-timestamp: false
-    path: "."
