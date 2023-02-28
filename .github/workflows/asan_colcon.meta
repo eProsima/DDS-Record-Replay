@@ -19,7 +19,7 @@
                 "-DASAN_BUILD=ON",
             ]
         },
-        "ddsrecorder_tool":
+        "ddsrecorder_participants":
         {
             "cmake-args":
             [

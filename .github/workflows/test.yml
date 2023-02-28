@@ -78,7 +78,7 @@ jobs:
 
     steps:
       - name: Sync eProsima/DDS-Recorder repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: DDS-Recorder
 
@@ -119,12 +119,12 @@ jobs:
           name: ${{ matrix.windows-version }}_${{ matrix.cmake-config }}_fastdds_install
           run_id: ${{ env.fastdds_job_id }}
 
-      - name: Install ddsrecorder_core
+      - name: Install ddsrecorder_participants
         uses: ./DDS-Recorder/.github/actions/install-recorder-subpackage-windows
         with:
           cmake_build_type: ${{ matrix.cmake-config }}
-          subpackage: ddsrecorder_core
-          subpackage_dir: ddsrecorder_core
+          subpackage: ddsrecorder_participants
+          subpackage_dir: ddsrecorder_participants
 
       - name: Install ddsrecorder_yaml
         uses: ./DDS-Recorder/.github/actions/install-recorder-subpackage-windows
@@ -133,17 +133,17 @@ jobs:
           subpackage: ddsrecorder_yaml
           subpackage_dir: ddsrecorder_yaml
 
-      - name: Install ddsrecorder_tool
+      - name: Install ddsrecorder
         uses: ./DDS-Recorder/.github/actions/install-recorder-subpackage-windows
         with:
           cmake_build_type: ${{ matrix.cmake-config }}
-          subpackage: ddsrecorder_tool
-          subpackage_dir: tools/ddsrecorder_tool
+          subpackage: ddsrecorder
+          subpackage_dir: tools/ddsrecorder
 
-      - name: Run tests ddsrecorder_core
+      - name: Run tests ddsrecorder_participants
         uses: ./DDS-Recorder/.github/actions/run-test-windows
         with:
-          package_name: ddsrecorder_core
+          package_name: ddsrecorder_participants
           cmake_build_type: ${{ matrix.cmake-config }}
         if: always()
 
@@ -154,10 +154,10 @@ jobs:
           cmake_build_type: ${{ matrix.cmake-config }}
         if: always()
 
-      - name: Run tests ddsrecorder_tool
+      - name: Run tests ddsrecorder
         uses: ./DDS-Recorder/.github/actions/run-test-windows
         with:
-          package_name: ddsrecorder_tool
+          package_name: ddsrecorder
           cmake_build_type: ${{ matrix.cmake-config }}
         if: always()
 
@@ -169,7 +169,7 @@ jobs:
 
     steps:
       - name: Sync eProsima/DDS-Recorder repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: src/DDS-Recorder
 
@@ -213,10 +213,10 @@ jobs:
             --metas src/DDS-Recorder/.github/workflows/test_colcon.meta \
             --mixin coverage-gcc asan-gcc
 
-      - name: Run tests ddsrecorder_core
+      - name: Run tests ddsrecorder_participants
         uses: ./src/DDS-Recorder/.github/actions/run-test-ubuntu
         with:
-          package_name: ddsrecorder_core
+          package_name: ddsrecorder_participants
 
       - name: Run tests ddsrecorder_yaml
         uses: ./src/DDS-Recorder/.github/actions/run-test-ubuntu
@@ -224,16 +224,10 @@ jobs:
           package_name: ddsrecorder_yaml
         if: always()
 
-      - name: Run tests ddsrecorder_yaml_validator
+      - name: Run tests ddsrecorder
         uses: ./src/DDS-Recorder/.github/actions/run-test-ubuntu
         with:
-          package_name: ddsrecorder_yaml_validator
-        if: always()
-
-      - name: Run tests ddsrecorder_tool
-        uses: ./src/DDS-Recorder/.github/actions/run-test-ubuntu
-        with:
-          package_name: ddsrecorder_tool
+          package_name: ddsrecorder
         if: always()
 
       - name: Run tests ddsrecorder_docs
@@ -242,39 +236,39 @@ jobs:
           package_name: ddsrecorder_docs
         if: always()
 
-      - name: Generate coverage report
-        run: |
-          cp src/DDS-Recorder/codecov.yml .
-          mkdir coverage-report
-          mkdir build/ddsrecorder
-          cp --recursive build/ddsrecorder_* build/ddsrecorder
-          gcovr \
-            --root src/DDS-Recorder/ \
-            --output coverage-report/coverage.xml \
-            --xml-pretty \
-            --exclude='.*docs/.*' \
-            --exclude='.*test/.*' \
-            --exclude='.*github/.*' \
-            --exclude='.*common/.*' \
-            --exclude='.*dev/.*' \
-            --exclude='.*thirdparty/.*' \
-            --exclude='.*resources/.*' \
-            --exclude-unreachable-branches \
-            build/ddsrecorder_*
+      # - name: Generate coverage report
+      #   run: |
+      #     cp src/DDS-Recorder/codecov.yml .
+      #     mkdir coverage-report
+      #     mkdir build/ddsrecorder
+      #     cp --recursive build/ddsrecorder_* build/ddsrecorder
+      #     gcovr \
+      #       --root src/DDS-Recorder/ \
+      #       --output coverage-report/coverage.xml \
+      #       --xml-pretty \
+      #       --exclude='.*docs/.*' \
+      #       --exclude='.*test/.*' \
+      #       --exclude='.*github/.*' \
+      #       --exclude='.*common/.*' \
+      #       --exclude='.*dev/.*' \
+      #       --exclude='.*thirdparty/.*' \
+      #       --exclude='.*resources/.*' \
+      #       --exclude-unreachable-branches \
+      #       build/ddsrecorder_*
 
-      - name: Upload coverage
-        uses: actions/upload-artifact@v1
-        with:
-          name: coverage-report
-          path: coverage-report/
+      # - name: Upload coverage
+      #   uses: actions/upload-artifact@v1
+      #   with:
+      #     name: coverage-report
+      #     path: coverage-report/
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          file: coverage-report/coverage.xml
-          root_dir: src/DDS-Recorder
-          fail_ci_if_error: true
+      # - name: Upload coverage to Codecov
+      #   uses: codecov/codecov-action@v1
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+      #     file: coverage-report/coverage.xml
+      #     root_dir: src/DDS-Recorder
+      #     fail_ci_if_error: true
 
       - name: Upload documentation
         uses: actions/upload-artifact@v1
@@ -308,7 +302,7 @@ jobs:
 
     steps:
       - name: Sync eProsima/DDS-Recorder repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: src/DDS-Recorder
 
@@ -351,11 +345,11 @@ jobs:
             --event-handlers=console_direct+ \
             --cmake-args -DBUILD_TESTS=ON
 
-      - name: Run tests ddsrecorder_core
+      - name: Run tests ddsrecorder_participants
         run: |
           source install/setup.bash && \
           colcon test \
-            --packages-select ddsrecorder_core \
+            --packages-select ddsrecorder_participants \
             --event-handlers=console_direct+ \
             --return-code-on-test-failure \
             --ctest-args \
@@ -375,11 +369,11 @@ jobs:
               --timeout 60
         if: always()
 
-      - name: Run tests ddsrecorder_tool
+      - name: Run tests ddsrecorder
         run: |
           source install/setup.bash && \
           colcon test \
-            --packages-select-regex ddsrecorder_tool \
+            --packages-select-regex ddsrecorder \
             --event-handlers=console_direct+ \
             --return-code-on-test-failure \
             --ctest-args \
@@ -412,7 +406,7 @@ jobs:
 
     steps:
       - name: Sync eProsima/DDS-Recorder repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: src/DDS-Recorder
 
@@ -438,13 +432,6 @@ jobs:
           name: ubuntu-20.04_fastdds_install
           run_id: ${{ env.fastdds_job_id }}
 
-      - name: Update colcon mixin
-        run: |
-          colcon mixin add default \
-            https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml
-          colcon mixin update default
-        continue-on-error: true
-
       - name: Build workspace
         run: |
           cat src/DDS-Recorder/.github/workflows/test_colcon.meta
@@ -454,11 +441,11 @@ jobs:
             --metas src/DDS-Recorder/.github/workflows/test_colcon.meta \
             --mixin coverage-gcc asan-gcc
 
-      - name: Run tests ddsrecorder_core
+      - name: Run tests ddsrecorder_participants
         run: |
           source install/setup.bash && \
           colcon test \
-            --packages-select ddsrecorder_core \
+            --packages-select ddsrecorder_participants \
             --event-handlers=console_direct+ \
             --return-code-on-test-failure \
             --ctest-args \
@@ -478,11 +465,11 @@ jobs:
               --timeout 60
         if: always()
 
-      - name: Run tests ddsrecorder_tool
+      - name: Run tests ddsrecorder
         run: |
           source install/setup.bash && \
           colcon test \
-            --packages-select-regex ddsrecorder_tool \
+            --packages-select-regex ddsrecorder \
             --event-handlers=console_direct+ \
             --return-code-on-test-failure \
             --ctest-args \
@@ -495,7 +482,7 @@ jobs:
 
     steps:
       - name: Sync eProsima/DDS-Recorder repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: src/DDS-Recorder
 
@@ -538,10 +525,10 @@ jobs:
             --event-handlers=console_direct+ \
             --metas src/DDS-Recorder/.github/workflows/asan_colcon.meta
 
-      - name: Run tests ddsrecorder_core
+      - name: Run tests ddsrecorder_participants
         uses: ./src/DDS-Recorder/.github/actions/run-test-ubuntu
         with:
-          package_name: ddsrecorder_core
+          package_name: ddsrecorder_participants
 
       - name: Run tests ddsrecorder_yaml
         uses: ./src/DDS-Recorder/.github/actions/run-test-ubuntu
@@ -549,10 +536,10 @@ jobs:
           package_name: ddsrecorder_yaml
         if: always()
 
-      - name: Run tests ddsrecorder_tool
+      - name: Run tests ddsrecorder
         uses: ./src/DDS-Recorder/.github/actions/run-test-ubuntu
         with:
-          package_name: ddsrecorder_tool
+          package_name: ddsrecorder
         if: always()
 
       - name: Upload Logs
@@ -567,7 +554,7 @@ jobs:
 
     steps:
       - name: Sync eProsima/DDS-Recorder repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: src/DDS-Recorder
 
@@ -594,13 +581,6 @@ jobs:
           name: ubuntu-20.04_fastdds_install
           run_id: ${{ env.fastdds_job_id }}
 
-      - name: Update colcon mixin
-        run: |
-          colcon mixin add default \
-            https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml
-          colcon mixin update default
-        continue-on-error: true
-
       - name: Build workspace
         run: |
           source /home/runner/work/fastdds/install/setup.bash
@@ -608,11 +588,11 @@ jobs:
             --event-handlers=console_direct+ \
             --metas src/DDS-Recorder/.github/workflows/tsan_colcon.meta
 
-      - name: Run tests ddsrecorder_core
+      - name: Run tests ddsrecorder_participants
         run: |
           source install/setup.bash && \
           colcon test \
-            --packages-select ddsrecorder_core \
+            --packages-select ddsrecorder_participants \
             --event-handlers=console_direct+ \
             --return-code-on-test-failure \
             --ctest-args \
@@ -632,11 +612,11 @@ jobs:
               --timeout 60
         if: always()
 
-      - name: Run tests ddsrecorder_tool
+      - name: Run tests ddsrecorder
         run: |
           source install/setup.bash && \
           colcon test \
-            --packages-select ddsrecorder_tool \
+            --packages-select ddsrecorder \
             --event-handlers=console_direct+ \
             --return-code-on-test-failure \
             --ctest-args \
@@ -655,7 +635,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Sync eProsima/DDS-Recorder repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: src/DDS-Recorder
 
@@ -706,7 +686,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Sync eProsima/DDS-Recorder repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: src/DDS-Recorder
 

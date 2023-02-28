@@ -21,7 +21,7 @@
                 "-DCMAKE_CXX_FLAGS='-Werror'"
             ]
         },
-        "ddsrecorder_tool":
+        "ddsrecorder_participants":
         {
             "cmake-args":
             [

@@ -11,8 +11,13 @@ on:
         description: 'Branch or tag of Dev Utils repository (https://github.com/eProsima/dev-utils)'
         required: true
         default: 'main'
+<<<<<<< HEAD
       ddsrouter_branch:
         description: 'Branch or tag of DDS Router repository (https://github.com/eProsima/DDS-Router)'
+=======
+      ddspipe_branch:
+        description: 'Branch or tag of DDS Pipe repository (https://github.com/eProsima/DDS-Pipe)'
+>>>>>>> 712cefb (Update to use ddspipe)
         required: true
         default: 'main'
   schedule:
@@ -54,12 +59,20 @@ jobs:
         env:
           DEFAULT_FASTDDS_BRANCH: 'master'
           DEFAULT_UTILS_BRANCH: 'main'
+<<<<<<< HEAD
           DEFAULT_DDSROUTER_BRANCH: 'main'
+=======
+          DEFAULT_DDSPIPE_BRANCH: 'main'
+>>>>>>> 712cefb (Update to use ddspipe)
         with:
           cmake_build_type: ${{ matrix.cmake-config }}
           fastdds_branch: ${{ github.event.inputs.fastdds_branch || env.DEFAULT_FASTDDS_BRANCH }}
           utils_branch: ${{ github.event.inputs.utils_branch || env.DEFAULT_UTILS_BRANCH }}
+<<<<<<< HEAD
           ddsrouter_branch: ${{ github.event.inputs.ddsrouter_branch || env.DEFAULT_DDSROUTER_BRANCH }}
+=======
+          ddspipe_branch: ${{ github.event.inputs.ddspipe_branch || env.DEFAULT_DDSPIPE_BRANCH }}
+>>>>>>> 712cefb (Update to use ddspipe)
 
       - name: Upload binaries
         uses: actions/upload-artifact@v3
@@ -97,7 +110,11 @@ jobs:
           vcs import src <  src/DDS-Recorder/.github/workflows/ci.repos
           cd src/fastrtps && git checkout ${{ inputs.fastdds_branch }} && cd ../..
           cd src/dev-utils && git checkout ${{ inputs.utils_branch }} && cd ../..
+<<<<<<< HEAD
           cd src/ddsrouter && git checkout ${{ inputs.ddsrouter_branch }} && cd ../..
+=======
+          cd src/ddspipe && git checkout ${{ inputs.ddspipe_branch }} && cd ../..
+>>>>>>> 712cefb (Update to use ddspipe)
 
       - name: Build workspace
         run: |
