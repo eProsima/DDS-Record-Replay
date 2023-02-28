@@ -55,15 +55,15 @@ ENUMERATION_BUILDER(
 eProsima_ENUMERATION_BUILDER(
     CommandCodeBuilder,
     CommandCode,
-    {
-        { CommandCode::NONE COMMA { "NONE" } } COMMA
-        { CommandCode::START COMMA { "START" } } COMMA
-        { CommandCode::PAUSE COMMA { "PAUSE" } } COMMA
-        { CommandCode::EVENT COMMA { "EVENT" } } COMMA
-        { CommandCode::STOP COMMA { "STOP" } } COMMA
-        { CommandCode::CLOSE COMMA { "CLOSE" } } COMMA
-        { CommandCode::UNKNOWN COMMA { "UNKNOWN" } }
-    }
+            {
+                { CommandCode::NONE COMMA { "NONE" } } COMMA
+                { CommandCode::START COMMA { "START" } } COMMA
+                { CommandCode::PAUSE COMMA { "PAUSE" } } COMMA
+                { CommandCode::EVENT COMMA { "EVENT" } } COMMA
+                { CommandCode::STOP COMMA { "STOP" } } COMMA
+                { CommandCode::CLOSE COMMA { "CLOSE" } } COMMA
+                { CommandCode::UNKNOWN COMMA { "UNKNOWN" } }
+            }
     );
 
 class CommandReceiver : public eprosima::fastdds::dds::DataReaderListener
@@ -93,7 +93,10 @@ public:
 
     CommandCode command_received();
 
-    void publish_status(CommandCode current, CommandCode previous, std::string info = "");
+    void publish_status(
+            CommandCode current,
+            CommandCode previous,
+            std::string info = "");
 
     void on_data_available(
             eprosima::fastdds::dds::DataReader* reader) override;
@@ -104,7 +107,8 @@ public:
 
 private:
 
-    std::string command_to_status_string_(CommandCode command);
+    std::string command_to_status_string_(
+            CommandCode command);
 
     std::atomic<CommandCode> command_received_;
 

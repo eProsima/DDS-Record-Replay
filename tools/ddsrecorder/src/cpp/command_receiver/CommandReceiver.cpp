@@ -190,7 +190,10 @@ CommandCode CommandReceiver::command_received()
     return command_received_.load();
 }
 
-void CommandReceiver::publish_status(CommandCode current, CommandCode previous, std::string info)
+void CommandReceiver::publish_status(
+        CommandCode current,
+        CommandCode previous,
+        std::string info)
 {
     Status status;
     status.current(command_to_status_string_(current));
@@ -201,7 +204,8 @@ void CommandReceiver::publish_status(CommandCode current, CommandCode previous, 
     }
     logInfo(
         DDSRECORDER_COMMAND_RECEIVER,
-        "Publishing status: " << status.previous() << " ---> " << status.current() <<  " with info [" << status.info() << " ].");
+        "Publishing status: " << status.previous() << " ---> " << status.current() <<  " with info [" << status.info() <<
+            " ].");
     status_writer_->write(&status);
 }
 
@@ -234,7 +238,8 @@ void CommandReceiver::on_data_available(
 {
     SampleInfo info;
     ControllerCommand controller_command;
-    while ((reader->take_next_sample(&controller_command, &info)) == (ReturnCode_t::RETCODE_OK && info.instance_state == ALIVE_INSTANCE_STATE))
+    while ((reader->take_next_sample(&controller_command,
+            &info)) == (ReturnCode_t::RETCODE_OK && info.instance_state == ALIVE_INSTANCE_STATE))
     {
         std::string command = controller_command.command();
         std::string args = controller_command.args();
@@ -264,7 +269,8 @@ void CommandReceiver::on_data_available(
     }
 }
 
-std::string CommandReceiver::command_to_status_string_(CommandCode command)
+std::string CommandReceiver::command_to_status_string_(
+        CommandCode command)
 {
     switch (command)
     {

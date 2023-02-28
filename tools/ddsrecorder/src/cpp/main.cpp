@@ -67,18 +67,19 @@ std::unique_ptr<core::DdsPipe> create_recorder(
 
     // Create Discovery Database
     std::shared_ptr<core::DiscoveryDatabase> discovery_database =
-        std::make_shared<core::DiscoveryDatabase>();
+            std::make_shared<core::DiscoveryDatabase>();
 
     // Create Payload Pool
     std::shared_ptr<core::PayloadPool> payload_pool =
-        std::make_shared<core::FastPayloadPool>();
+            std::make_shared<core::FastPayloadPool>();
 
     // Create Thread Pool
     std::shared_ptr<eprosima::utils::SlotThreadPool> thread_pool =
-        std::make_shared<eprosima::utils::SlotThreadPool>(configuration.n_threads);
+            std::make_shared<eprosima::utils::SlotThreadPool>(configuration.n_threads);
 
     // Create MCAP Handler configuration
-    std::string file_name = configuration.recorder_output_file + "_" + eprosima::utils::timestamp_to_string(eprosima::utils::now()) + ".mcap";
+    std::string file_name = configuration.recorder_output_file + "_" + eprosima::utils::timestamp_to_string(
+        eprosima::utils::now()) + ".mcap";
     eprosima::ddsrecorder::participants::McapHandlerConfiguration handler_config(
         file_name,
         configuration.max_pending_samples,
@@ -109,17 +110,17 @@ std::unique_ptr<core::DdsPipe> create_recorder(
 
     // Create and populate Participant Database
     std::shared_ptr<core::ParticipantsDatabase> participant_database =
-        std::make_shared<core::ParticipantsDatabase>();
+            std::make_shared<core::ParticipantsDatabase>();
 
     // Populate Participant Database
     participant_database->add_participant(
         dyn_participant->id(),
         dyn_participant
-    );
+        );
     participant_database->add_participant(
         recorder_participant->id(),
         recorder_participant
-    );
+        );
 
     return std::make_unique<core::DdsPipe>(
         allowed_topics,
@@ -129,7 +130,7 @@ std::unique_ptr<core::DdsPipe> create_recorder(
         thread_pool,
         configuration.builtin_topics,
         true
-    );
+        );
 }
 
 std::unique_ptr<core::DdsPipe> create_recorder(
@@ -428,7 +429,8 @@ int main(
                             catch (const std::exception& e)
                             {
                                 logWarning(DDSRECORDER_EXECUTION,
-                                        "Error reloading configuration file " << file_name << " with error: " << e.what());
+                                        "Error reloading configuration file " << file_name << " with error: " <<
+                                        e.what());
                             }
                         };
 
@@ -466,7 +468,8 @@ int main(
                                 catch (const std::exception& e)
                                 {
                                     logWarning(DDSRECORDER_EXECUTION,
-                                            "Error reloading configuration file " << file_path << " with error: " << e.what());
+                                            "Error reloading configuration file " << file_path << " with error: " <<
+                                            e.what());
                                 }
                             };
 
@@ -604,7 +607,8 @@ int main(
                             catch (const std::exception& e)
                             {
                                 logWarning(DDSRECORDER_EXECUTION,
-                                        "Error reloading configuration file " << file_path << " with error: " << e.what());
+                                        "Error reloading configuration file " << file_path << " with error: " <<
+                                        e.what());
                             }
                         };
 
