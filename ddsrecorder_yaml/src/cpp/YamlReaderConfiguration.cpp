@@ -106,15 +106,6 @@ void Configuration::load_ddsrecorder_configuration_(
                 blocklist = YamlReader::get_set<utils::Heritable<types::IFilterTopic>>(dds_yml, BLOCKLIST_TAG, version);
             }
 
-            // Block controller's status and command topics
-            types::WildcardDdsFilterTopic status_topic, command_topic;
-            status_topic.type_name.set_value("Status");
-            command_topic.type_name.set_value("ControllerCommand");
-            blocklist.insert(
-                utils::Heritable<types::WildcardDdsFilterTopic>::make_heritable(status_topic));
-            blocklist.insert(
-                utils::Heritable<types::WildcardDdsFilterTopic>::make_heritable(command_topic));
-
             /////
             // Get optional builtin topics
             if (YamlReader::is_tag_present(dds_yml, BUILTIN_TAG))
@@ -122,6 +113,15 @@ void Configuration::load_ddsrecorder_configuration_(
                 builtin_topics = YamlReader::get_set<utils::Heritable<types::DistributedTopic>>(dds_yml, BUILTIN_TAG, version);
             }
         }
+
+        // Block controller's status and command topics
+        types::WildcardDdsFilterTopic status_topic, command_topic;
+        status_topic.type_name.set_value("Status");
+        command_topic.type_name.set_value("ControllerCommand");
+        blocklist.insert(
+            utils::Heritable<types::WildcardDdsFilterTopic>::make_heritable(status_topic));
+        blocklist.insert(
+            utils::Heritable<types::WildcardDdsFilterTopic>::make_heritable(command_topic));
 
         /////
         // Get optional Recorder configuration options
@@ -197,7 +197,7 @@ void Configuration::load_ddsrecorder_configuration_(
             // Get optional initial command
             if (YamlReader::is_tag_present(controller_yml, RECORDER_REMOTE_CONTROLLER_INITIAL_COMMAND_TAG))
             {
-                // Convert to enum value and check valid whereever used to avoid upper dependency
+                // Convert to enum value and check valid wherever used to avoid upper dependency
                 initial_command = YamlReader::get<std::string>(controller_yml, RECORDER_REMOTE_CONTROLLER_INITIAL_COMMAND_TAG, version);
             }
         }
