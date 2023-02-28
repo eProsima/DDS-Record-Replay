@@ -37,12 +37,14 @@ using namespace eprosima::ddspipe::core;
 using namespace eprosima::ddspipe::participants;
 using namespace eprosima::ddspipe::yaml;
 
-Configuration::Configuration(const Yaml& yml)
+Configuration::Configuration(
+        const Yaml& yml)
 {
     load_ddsrecorder_configuration_(yml);
 }
 
-Configuration::Configuration(const std::string& file_path)
+Configuration::Configuration(
+        const std::string& file_path)
 {
     load_ddsrecorder_configuration_from_file_(file_path);
 }
@@ -110,7 +112,8 @@ void Configuration::load_ddsrecorder_configuration_(
             // Get optional builtin topics
             if (YamlReader::is_tag_present(dds_yml, BUILTIN_TAG))
             {
-                builtin_topics = YamlReader::get_set<utils::Heritable<types::DistributedTopic>>(dds_yml, BUILTIN_TAG, version);
+                builtin_topics = YamlReader::get_set<utils::Heritable<types::DistributedTopic>>(dds_yml, BUILTIN_TAG,
+                                version);
             }
         }
 
@@ -179,7 +182,8 @@ void Configuration::load_ddsrecorder_configuration_(
             // Get optional enable remote controller
             if (YamlReader::is_tag_present(controller_yml, RECORDER_REMOTE_CONTROLLER_ENABLE_TAG))
             {
-                enable_remote_controller = YamlReader::get<bool>(controller_yml, RECORDER_REMOTE_CONTROLLER_ENABLE_TAG, version);
+                enable_remote_controller = YamlReader::get<bool>(controller_yml, RECORDER_REMOTE_CONTROLLER_ENABLE_TAG,
+                                version);
             }
 
             // Get optional DDS domain
@@ -198,7 +202,8 @@ void Configuration::load_ddsrecorder_configuration_(
             if (YamlReader::is_tag_present(controller_yml, RECORDER_REMOTE_CONTROLLER_INITIAL_COMMAND_TAG))
             {
                 // Convert to enum value and check valid wherever used to avoid upper dependency
-                initial_command = YamlReader::get<std::string>(controller_yml, RECORDER_REMOTE_CONTROLLER_INITIAL_COMMAND_TAG, version);
+                initial_command = YamlReader::get<std::string>(controller_yml,
+                                RECORDER_REMOTE_CONTROLLER_INITIAL_COMMAND_TAG, version);
             }
         }
 
