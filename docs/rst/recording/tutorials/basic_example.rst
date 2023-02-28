@@ -19,7 +19,7 @@ Currently, the DDS Recorder only stores DDS data whose data type is set as a Dyn
 The reason for this is that, without the need for the user to set the data type in the DDS Recorder, the DDS Recorder can access it via the type lookup service.
 Thus, the user will be able to record the published data using the |ddsrecorder| tool of the |eddsrecord| software.
 
-The source code of this tutorial is provided `here <https://github.com/eProsima/DDS-Recorder/tree/main/resources/dds/TypeLookupService>`_ with an explanation of how to build and run it.
+The source code of this tutorial can be found in the public |eddsrecord| `GitHub repository <https://github.com/eProsima/DDS-Recorder/tree/main/resources/dds/TypeLookupService>`_ with an explanation of how to build and run it.
 
 This tutorial focuses on how to send the data type information using Fast DDS DynamicTypes and other relevant aspects of DynamicTypes.
 More specifically, this tutorial implements a DDS Publisher configured to send its data type, a DDS Subscriber that collects the data type and is able to read the incoming data, and a DDS Recorder is launched to save all the data published on the network.
@@ -247,4 +247,4 @@ Open two terminals:
 
 At this point, we observe that the data published reach the subscriber and it can access to the content of the sample received.
 
-.. figure:: /resources/tutorials/basic_publisher_subscriber.png
+.. figure:: /rst/figures/basic_publisher_subscriber.png
