@@ -1,0 +1,6 @@
+struct Status
+{
+    string previous;
+    string current;
+    string info;
+};

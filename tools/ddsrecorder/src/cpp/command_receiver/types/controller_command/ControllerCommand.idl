@@ -1,0 +1,5 @@
+struct ControllerCommand
+{
+    string command;
+    string args;
+};
