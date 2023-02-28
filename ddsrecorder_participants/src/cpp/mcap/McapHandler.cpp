@@ -408,8 +408,7 @@ void McapHandler::add_pending_samples_nts_(
 
 void McapHandler::event_thread_routine_()
 {
-    event_flag_ = EventCode::untriggered;
-    while (state_ == StateCode::paused)
+    while (true)
     {
         bool timeout;
         {
@@ -423,6 +422,7 @@ void McapHandler::event_thread_routine_()
 
             std::unique_lock<std::mutex> lock(event_cv_mutex_);
 
+            event_flag_ = EventCode::untriggered;
             timeout = !event_cv_.wait_until(
                 lock,
                 exit_time,
@@ -436,7 +436,6 @@ void McapHandler::event_thread_routine_()
                 logInfo(DDSRECORDER_MCAP_HANDLER, "Finishing event thread routine.");
                 return;
             }
-            event_flag_ = EventCode::untriggered;
         }
 
         std::lock_guard<std::mutex> lock(mtx_);
