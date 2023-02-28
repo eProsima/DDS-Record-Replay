@@ -13,11 +13,7 @@ inputs:
     description: 'Branch or tag of Dev Utils repository (https://github.com/eProsima/dev-utils)'
     required: true
     default: 'main'
-<<<<<<< HEAD
-  ddsrouter_branch:
-=======
   pipe_branch:
->>>>>>> 712cefb (Update to use ddspipe)
         description: 'Branch or tag of DDS Router repository (https://github.com/eProsima/DDS-Router)'
         required: true
         default: 'main'
@@ -83,21 +79,6 @@ runs:
     - name: Install DDS Pipe
       shell: pwsh
       run: >
-<<<<<<< HEAD
-        git clone https://github.com/eProsima/DDS-Router.git --branch ${{ inputs.ddsrouter_branch }};
-        cmake -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\eprosima\install `
-          -DCMAKE_PREFIX_PATH='C:\Program Files\yamlcpp;C:\Program Files;${{ github.workspace }}\eprosima\install' `
-          -Ax64 -T host=x64 -B build\ddsrouter_core DDS-Router\ddsrouter_core;
-        cmake --build build\ddsrouter_core --config ${{ inputs.cmake_build_type }} --target install;
-        cmake -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\eprosima\install `
-          -DCMAKE_PREFIX_PATH='C:\Program Files\yamlcpp;C:\Program Files;${{ github.workspace }}\eprosima\install' `
-          -Ax64 -T host=x64 -B build\ddsrouter_yaml DDS-Router\ddsrouter_yaml;
-        cmake --build build\ddsrouter_yaml --config ${{ inputs.cmake_build_type }} --target install;
-        cmake -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\eprosima\install `
-          -DCMAKE_PREFIX_PATH='C:\Program Files\yamlcpp;C:\Program Files;${{ github.workspace }}\eprosima\install' `
-          -Ax64 -T host=x64 -B build\ddsrouter_tool DDS-Router\tools\ddsrouter_tool;
-        cmake --build build\ddsrouter_tool --config ${{ inputs.cmake_build_type }} --target install;
-=======
         git clone https://github.com/eProsima/DDS-Pipe.git --branch ${{ inputs.pipe_branch }};
         cmake `
           -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\eprosima\install `
@@ -122,4 +103,3 @@ runs:
           -Ax64 -T host=x64 `
           -B build\ddspipe_participants -S DDS-Pipe\ddspipe_participants;
         cmake --build build\ddspipe_participants --config ${{ inputs.cmake_build_type }} --target install;
->>>>>>> 712cefb (Update to use ddspipe)
