@@ -23,7 +23,7 @@ namespace ddsrecorder {
 namespace participants {
 
 /**
- * TODO
+ * Structure encapsulating all of \c McapHandler configuration options.
  */
 struct McapHandlerConfiguration
 {
@@ -43,16 +43,22 @@ struct McapHandlerConfiguration
     {
     }
 
+    //! Name of MCAP file where data is to be written
     std::string file_name;
 
+    //! Max number of messages to store in memory when schema not yet available
     unsigned int max_pending_samples;
 
+    //! Max number of elements to keep in memory prior to writting in disk (applies to started state)
     unsigned int buffer_size;
 
+    //! Downsampling rate: keep 1 out of every *downsampling* samples received (downsampling=1 <=> no downsampling)
     unsigned int downsampling;
 
+    //! Keep in memory samples received in time frame [s], to be stored when event triggered (applies to paused state)
     unsigned int event_window;
 
+    //! Remove from buffer samples older than *now - event_window* with this period [s] (applies to paused state)
     unsigned int cleanup_period;
 };
 
