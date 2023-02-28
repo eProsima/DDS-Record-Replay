@@ -41,11 +41,12 @@ Message::Message(
 {
     this->payload_owner = msg.payload_owner;
     auto payload_owner_ =
-        const_cast<eprosima::fastrtps::rtps::IPayloadPool*>((eprosima::fastrtps::rtps::IPayloadPool*)msg.payload_owner);
+            const_cast<eprosima::fastrtps::rtps::IPayloadPool*>((eprosima::fastrtps::rtps::IPayloadPool*)msg.
+                    payload_owner);
     this->payload_owner->get_payload(
-            msg.payload,
-            payload_owner_,
-            this->payload);
+        msg.payload,
+        payload_owner_,
+        this->payload);
 }
 
 Message::~Message()
@@ -67,13 +68,14 @@ McapHandler::McapHandler(
 {
     std::string tmp_filename = tmp_filename_(config.file_name);
     auto status = mcap_writer_.open(tmp_filename.c_str(), mcap::McapWriterOptions("ros2"));
-    if (!status.ok()) {
+    if (!status.ok())
+    {
         throw utils::InitializationException(
-            STR_ENTRY << "Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
+                  STR_ENTRY << "Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
     }
 
     logInfo(DDSRECORDER_MCAP_HANDLER,
-        "MCAP file <" << config.file_name << "> .");
+            "MCAP file <" << config.file_name << "> .");
 
     if (init_state == StateCode::started)
     {
@@ -105,7 +107,8 @@ McapHandler::~McapHandler()
     }
 }
 
-void McapHandler::add_schema(const fastrtps::types::DynamicType_ptr& dynamic_type)
+void McapHandler::add_schema(
+        const fastrtps::types::DynamicType_ptr& dynamic_type)
 {
     std::lock_guard<std::mutex> lock(mtx_);
 
@@ -185,7 +188,8 @@ void McapHandler::add_data(
     if (data.payload.length > 0)
     {
         auto payload_owner =
-            const_cast<eprosima::fastrtps::rtps::IPayloadPool*>((eprosima::fastrtps::rtps::IPayloadPool*)data.payload_owner);
+                const_cast<eprosima::fastrtps::rtps::IPayloadPool*>((eprosima::fastrtps::rtps::IPayloadPool*)data.
+                        payload_owner);
 
         if (payload_owner)
         {
@@ -200,15 +204,15 @@ void McapHandler::add_data(
         else
         {
             throw utils::InconsistencyException(
-                STR_ENTRY << "Payload owner not found in data received."
-            );
+                      STR_ENTRY << "Payload owner not found in data received."
+                      );
         }
     }
     else
     {
         throw utils::InconsistencyException(
-            STR_ENTRY << "Received sample with no payload."
-        );
+                  STR_ENTRY << "Received sample with no payload."
+                  );
     }
 
     try
@@ -216,7 +220,7 @@ void McapHandler::add_data(
         auto channel_id = get_channel_id_nts_(topic);
         msg.channelId = channel_id;
     }
-    catch(const utils::Exception& e)
+    catch (const utils::Exception& e)
     {
         logWarning(
             DDSRECORDER_MCAP_HANDLER,
@@ -235,11 +239,11 @@ void McapHandler::add_data(
     {
         add_data_nts_(msg);
     }
-    catch(const utils::Exception& e)
+    catch (const utils::Exception& e)
     {
         throw utils::InconsistencyException(
-            STR_ENTRY << "Error writting in MCAP a message in topic " << topic.m_topic_name
-        );
+                  STR_ENTRY << "Error writting in MCAP a message in topic " << topic.m_topic_name
+                  );
     }
 }
 
@@ -346,14 +350,16 @@ void McapHandler::trigger_event()
     }
 }
 
-mcap::Timestamp McapHandler::fastdds_timestamp_to_mcap_timestamp(const DataTime& time)
+mcap::Timestamp McapHandler::fastdds_timestamp_to_mcap_timestamp(
+        const DataTime& time)
 {
     uint64_t mcap_time = time.seconds();
     mcap_time *= 1000000000;
     return mcap_time + time.nanosec();
 }
 
-mcap::Timestamp McapHandler::std_timepoint_to_mcap_timestamp(const utils::Timestamp& time)
+mcap::Timestamp McapHandler::std_timepoint_to_mcap_timestamp(
+        const utils::Timestamp& time)
 {
     return mcap::Timestamp(std::chrono::duration_cast<std::chrono::nanoseconds>(time.time_since_epoch()).count());
 }
@@ -396,11 +402,11 @@ void McapHandler::add_pending_samples_nts_(
         {
             add_data_nts_(msg);
         }
-        catch(const utils::Exception& e)
+        catch (const utils::Exception& e)
         {
             throw utils::InconsistencyException(
-                STR_ENTRY << "Error writting in MCAP a message in topic " << sample.first
-            );
+                      STR_ENTRY << "Error writting in MCAP a message in topic " << sample.first
+                      );
         }
         pending_queue.pop();
     }
@@ -460,7 +466,10 @@ void McapHandler::remove_outdated_samples_nts_()
     logInfo(DDSRECORDER_MCAP_HANDLER, "Removing outdated samples.");
 
     auto threshold = std_timepoint_to_mcap_timestamp(utils::now() - std::chrono::seconds(configuration_.event_window));
-    samples_buffer_.remove_if([&](auto& sample){ return sample.logTime < threshold; });
+    samples_buffer_.remove_if([&](auto& sample)
+            {
+                return sample.logTime < threshold;
+            });
 }
 
 void McapHandler::stop_event_thread_nts_()
@@ -503,8 +512,8 @@ void McapHandler::dump_data_nts_()
         if (!status.ok())
         {
             throw utils::InconsistencyException(
-                STR_ENTRY << "Error writting in MCAP"
-            );
+                      STR_ENTRY << "Error writting in MCAP"
+                      );
         }
         samples_buffer_.pop_front();
     }
@@ -550,11 +559,12 @@ mcap::SchemaId McapHandler::get_schema_id_nts_(
     else
     {
         throw utils::InconsistencyException(
-                STR_ENTRY << "Schema " << schema_name << " is not registered.");
+                  STR_ENTRY << "Schema " << schema_name << " is not registered.");
     }
 }
 
-std::string McapHandler::tmp_filename_(const std::string& filename)
+std::string McapHandler::tmp_filename_(
+        const std::string& filename)
 {
     static const std::string TMP_SUFFIX = ".tmp~";
     return filename + TMP_SUFFIX;

@@ -57,7 +57,8 @@ struct Message : public mcap::Message
      * free the newly constructed sample (payload's data attribute), thus rendering the latter useless.
      *
      */
-    Message(const Message& msg);
+    Message(
+            const Message& msg);
 
     /**
      * Message destructor
@@ -185,7 +186,8 @@ public:
      * @param [in] time Timestamp to be converted
      * @return Timestamp in mcap format
      */
-    static mcap::Timestamp fastdds_timestamp_to_mcap_timestamp(const ddspipe::core::types::DataTime& time);
+    static mcap::Timestamp fastdds_timestamp_to_mcap_timestamp(
+            const ddspipe::core::types::DataTime& time);
 
     /**
      * @brief This method converts a timestamp in standard format to its mcap equivalent.
@@ -193,7 +195,8 @@ public:
      * @param [in] time Timestamp to be converted
      * @return Timestamp in mcap format
      */
-    static mcap::Timestamp std_timepoint_to_mcap_timestamp(const utils::Timestamp& time);
+    static mcap::Timestamp std_timepoint_to_mcap_timestamp(
+            const utils::Timestamp& time);
 
     /**
      * @brief Get current time point in mcap format.
@@ -289,7 +292,8 @@ protected:
      *
      * @param [in] filename Filename to be converted.
      */
-    static std::string tmp_filename_(const std::string& filename);
+    static std::string tmp_filename_(
+            const std::string& filename);
 
     //! Handler configuration
     McapHandlerConfiguration configuration_;
