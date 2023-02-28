@@ -18,14 +18,15 @@
 
 #pragma once
 
-#include <atomic>
 #include <condition_variable>
+#include <list>
+#include <map>
 #include <queue>
 #include <thread>
 
 #include <mcap/writer.hpp>
 
-#include <cpp_utils/types/Atomicable.hpp>
+#include <cpp_utils/time/time_utils.hpp>
 
 #include <fastrtps/types/DynamicTypePtr.h>
 
@@ -34,6 +35,7 @@
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
 #include <ddspipe_participants/participant/dynamic_types/ISchemaHandler.hpp>
+#include <ddsrecorder_participants/mcap/McapHandlerConfiguration.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -43,27 +45,27 @@ struct Message : public mcap::Message
 {
     Message() = default;
 
-    Message(
-            const Message& msg)
-    : mcap::Message(msg)
-    {
-        this->payload_owner = msg.payload_owner;
-        auto payload_owner_ =
-            const_cast<eprosima::fastrtps::rtps::IPayloadPool*>((eprosima::fastrtps::rtps::IPayloadPool*)msg.payload_owner);
-        this->payload_owner->get_payload(
-                msg.payload,
-                payload_owner_,
-                this->payload);
-    }
+    /**
+     * Message copy constructor
+     *
+     * Copy message without copying payload through PayloadPool API (copy reference and increment counter).
+     *
+     * @note If using instead the default destructor and copy constructor, the destruction of the copied message would
+     * free the newly constructed sample (payload's data attribute), thus rendering the latter useless.
+     *
+     */
+    Message(const Message& msg);
 
-    ~Message()
-    {
-        // If payload owner exists and payload has size, release it correctly in pool
-        if (payload_owner && payload.length > 0)
-        {
-            payload_owner->release_payload(payload);
-        }
-    }
+    /**
+     * Message destructor
+     *
+     * Releases internal payload, decrementing its reference count and freeing only when no longer referenced.
+     *
+     * @note Releasing the payload correctly sets payload's internal data attribute to \c nullptr , which eludes
+     * the situation described in copy constructor's note.
+     *
+     */
+    ~Message();
 
     ddspipe::core::types::Payload payload{};
     ddspipe::core::PayloadPool* payload_owner{nullptr};
@@ -76,14 +78,17 @@ class McapHandler : public ddspipe::participants::ISchemaHandler
 {
 public:
 
+    enum class StateCode
+    {
+        stopped = 0,
+        started,
+        paused,
+    };
+
     McapHandler(
-            const char* file_name,
-            std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
-            unsigned int max_pending_samples,
-            unsigned int buffer_size,
-            unsigned int downsampling,
-            unsigned int event_window);
-            // bool autostart = false);
+            const McapHandlerConfiguration& config,
+            const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
+            const StateCode& init_state = StateCode::started);
 
     ~McapHandler();
 
@@ -96,78 +101,80 @@ public:
 
     void start();
 
+    void stop();
+
     void pause();
 
     void trigger_event();
 
+    static mcap::Timestamp fastdds_timestamp_to_mcap_timestamp(const ddspipe::core::types::DataTime& time);
+
+    static mcap::Timestamp std_timepoint_to_mcap_timestamp(const utils::Timestamp& time);
+
+    static mcap::Timestamp now();
+
 protected:
 
-    // enum StateCode
-    // {
-    //     UNSTARTED = 0,
-    //     STARTED,
-    //     PAUSED,
-    // };
+    enum class EventCode
+    {
+        untriggered = 0,
+        triggered,
+        stopped,
+    };
 
-    void add_data_(
+    void add_data_nts_(
             const Message& msg);
 
-    void add_pending_samples_(
+    void add_pending_samples_nts_(
             const std::string& schema_name);
 
     void event_thread_routine_();
 
-    void stop_event_thread_();
+    void remove_outdated_samples_nts_();
 
-    void clear_all_();
+    void stop_event_thread_nts_();
 
-    void dump_data_();
+    void clear_all_nts_();
 
     void dump_data_nts_();
 
     mcap::ChannelId create_channel_id_nts_(
             const ddspipe::core::types::DdsTopic& topic);
 
-    mcap::ChannelId get_channel_id_(
+    mcap::ChannelId get_channel_id_nts_(
             const ddspipe::core::types::DdsTopic& topic);
 
-    mcap::SchemaId get_schema_id_(
+    mcap::SchemaId get_schema_id_nts_(
             const std::string& schema_name);
 
-    mcap::Timestamp now();
-    mcap::Timestamp fastdds_timestamp_to_mcap_timestamp(const ddspipe::core::types::DataTime& time);
+    static std::string tmp_filename_(const std::string& filename);
 
-    // StateCode state_ = {UNSTARTED};
+    McapHandlerConfiguration configuration_;
 
-    // NOTE: it cannot be used with Atomicable because McapWriter is a final class
+    std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;
+
+    StateCode state_;
+
+    std::mutex mtx_;
+
     mcap::McapWriter mcap_writer_;
-    std::mutex write_mtx_;
 
-    using SchemaMapType = utils::SharedAtomicable<std::map<std::string, mcap::Schema>>;
-    SchemaMapType schemas_;
+    std::map<std::string, mcap::Schema> schemas_;
 
-    using ChannelMapType = utils::SharedAtomicable<std::map<std::string, mcap::Channel>>;
-    ChannelMapType channels_;
+    std::map<std::string, mcap::Channel> channels_;
 
-    using PendingSamplesMapType = utils::SharedAtomicable<std::map<std::string, std::queue<std::pair<std::string, Message>>>>;
-    PendingSamplesMapType pending_samples_;
-    unsigned int max_pending_samples_;
+    std::list<Message> samples_buffer_;
 
-    std::queue<Message> samples_buffer_;
-    unsigned int buffer_size_;
+    std::map<std::string, std::queue<std::pair<std::string, Message>>> pending_samples_;
 
-    unsigned int downsampling_;
-
-    std::atomic<bool> paused_ = {false};
-    unsigned int event_window_;
     std::thread event_thread_;
-    bool event_triggered_ = false;
+    EventCode event_flag_ = EventCode::stopped;
     std::condition_variable event_cv_;
     std::mutex event_cv_mutex_;
 
-    std::atomic<unsigned int> unique_sequence_number_{0};
+    unsigned int unique_sequence_number_{0};
 
-    std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;
+    unsigned int downsampling_idx_{0};
 };
 
 } /* namespace participants */

@@ -18,6 +18,8 @@
 
 #define MCAP_IMPLEMENTATION  // Define this in exactly one .cpp file
 
+#include <cstdio>
+
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/exception/InconsistencyException.hpp>
 
@@ -33,53 +35,92 @@ namespace participants {
 
 using namespace eprosima::ddspipe::core::types;
 
-McapHandler::McapHandler(
-        const char* file_name,
-        std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
-        unsigned int max_pending_samples,
-        unsigned int buffer_size,
-        unsigned int downsampling,
-        unsigned int event_window)
-        // bool autostart /* = false */)
-    : payload_pool_(payload_pool)
-    , max_pending_samples_(max_pending_samples)
-    , buffer_size_(buffer_size)
-    , downsampling_(downsampling)
-    , event_window_(event_window)
+Message::Message(
+        const Message& msg)
+    : mcap::Message(msg)
 {
-    auto status = mcap_writer_.open(file_name, mcap::McapWriterOptions("ros2"));
+    this->payload_owner = msg.payload_owner;
+    auto payload_owner_ =
+        const_cast<eprosima::fastrtps::rtps::IPayloadPool*>((eprosima::fastrtps::rtps::IPayloadPool*)msg.payload_owner);
+    this->payload_owner->get_payload(
+            msg.payload,
+            payload_owner_,
+            this->payload);
+}
+
+Message::~Message()
+{
+    // If payload owner exists and payload has size, release it correctly in pool
+    if (payload_owner && payload.length > 0)
+    {
+        payload_owner->release_payload(payload);
+    }
+}
+
+McapHandler::McapHandler(
+        const McapHandlerConfiguration& config,
+        const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
+        const StateCode& init_state /* = StateCode::started */)
+    : configuration_(config)
+    , payload_pool_(payload_pool)
+    , state_(StateCode::stopped)
+{
+    std::string tmp_filename = tmp_filename_(config.file_name);
+    auto status = mcap_writer_.open(tmp_filename.c_str(), mcap::McapWriterOptions("ros2"));
     if (!status.ok()) {
         throw utils::InitializationException(
-            STR_ENTRY << "Failed to open MCAP file " << file_name << " for writing: " << status.message);
+            STR_ENTRY << "Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
     }
 
     logInfo(DDSRECORDER_MCAP_HANDLER,
-        "MCAP file <" << file_name << "> .");
+        "MCAP file <" << config.file_name << "> .");
+
+    if (init_state == StateCode::started)
+    {
+        start();
+    }
+    else if (init_state == StateCode::paused)
+    {
+        pause();
+    }
 }
 
 McapHandler::~McapHandler()
 {
     logInfo(DDSRECORDER_MCAP_HANDLER, "Destroying handler.");
 
-    if (paused_)
-    {
-        stop_event_thread_();
-    }
-    else
-    {
-        dump_data_();
-    }
+    // Stop handler prior to destruction
+    stop();
+
+    // Close writer and output file
     mcap_writer_.close();
+
+    // Rename temp file to configuration file_name
+    std::string tmp_filename = tmp_filename_(configuration_.file_name);
+    if (std::rename(tmp_filename.c_str(), configuration_.file_name.c_str()))
+    {
+        logError(
+            DDSRECORDER_MCAP_HANDLER,
+            "Failed to rename " << tmp_filename << " into " << configuration_.file_name << " on handler destruction.");
+    }
 }
 
 void McapHandler::add_schema(const fastrtps::types::DynamicType_ptr& dynamic_type)
 {
+    std::lock_guard<std::mutex> lock(mtx_);
+
+    if (state_ == StateCode::stopped)
+    {
+        logWarning(
+            DDSRECORDER_MCAP_HANDLER,
+            "Attempting to add schema through a stopped handler, dropping...");
+        return;
+    }
+
     assert(nullptr != dynamic_type);
     std::string type_name = dynamic_type->get_name();
     {
         // Check if it exists already
-        // NOTE: must be unique mutex taken because it could write afterwards
-        std::unique_lock<SchemaMapType> lock(schemas_);
         if (schemas_.find(type_name) != schemas_.end())
         {
             return;
@@ -88,28 +129,22 @@ void McapHandler::add_schema(const fastrtps::types::DynamicType_ptr& dynamic_typ
         // Schema not found, generate from dynamic type and store
         std::string schema_text = generate_ros2_schema(dynamic_type);
 
-        // TODO remove
         logInfo(DDSRECORDER_MCAP_HANDLER, "\nAdding schema with name " << type_name << " :\n" << schema_text << "\n");
 
         // Create schema and add it to writer and to schemas map
         mcap::Schema new_schema(type_name, "ros2msg", schema_text);
-
-        {
-            std::lock_guard<std::mutex> guard(write_mtx_);
-            mcap_writer_.addSchema(new_schema);
-        }
-
+        // WARNING: passing as non-const to MCAP library
+        mcap_writer_.addSchema(new_schema);
         schemas_.insert({type_name, std::move(new_schema)});
     }
 
     logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << type_name << ".");
 
-    std::lock_guard<PendingSamplesMapType> lock(pending_samples_);
-
+    // Check if there are any pending samples for this new schema. If so, add them to buffer.
     auto it = pending_samples_.find(type_name);
     if (it != pending_samples_.end())
     {
-        add_pending_samples_(type_name);
+        add_pending_samples_nts_(type_name);
         pending_samples_.erase(it);
     }
 }
@@ -118,8 +153,27 @@ void McapHandler::add_data(
         const DdsTopic& topic,
         RtpsPayloadData& data)
 {
-    // Check if channel exists
-    // NOTE: must be unique mutex taken because it could write afterwards
+    std::lock_guard<std::mutex> lock(mtx_);
+
+    logInfo(
+        DDSRECORDER_MCAP_HANDLER,
+        "Adding data in topic " << topic);
+
+    if (state_ == StateCode::stopped)
+    {
+        logWarning(
+            DDSRECORDER_MCAP_HANDLER,
+            "Attempting to add sample through a stopped handler, dropping...");
+        return;
+    }
+
+    if (downsampling_idx_ = (downsampling_idx_ + 1) % configuration_.downsampling)
+    {
+        logInfo(
+            DDSRECORDER_MCAP_HANDLER,
+            "Downsampling: dropping received sample.");
+        return;
+    }
 
     // Add data to channel
     Message msg;
@@ -145,21 +199,21 @@ void McapHandler::add_data(
         }
         else
         {
-            logWarning(
-                DDSRECORDER_MCAP_HANDLER,
-                "Payload owner not found in data received.");
+            throw utils::InconsistencyException(
+                STR_ENTRY << "Payload owner not found in data received."
+            );
         }
     }
     else
     {
-        logWarning(
-            DDSRECORDER_MCAP_HANDLER,
-            "Received sample with no payload.");
+        throw utils::InconsistencyException(
+            STR_ENTRY << "Received sample with no payload."
+        );
     }
 
     try
     {
-        auto channel_id = get_channel_id_(topic);
+        auto channel_id = get_channel_id_nts_(topic);
         msg.channelId = channel_id;
     }
     catch(const utils::Exception& e)
@@ -168,9 +222,7 @@ void McapHandler::add_data(
             DDSRECORDER_MCAP_HANDLER,
             "Schema for topic " << topic << " not yet available, inserting to pending samples queue.");
 
-        std::lock_guard<PendingSamplesMapType> lock(pending_samples_);
-
-        if (pending_samples_[topic.type_name].size() == max_pending_samples_)
+        if (pending_samples_[topic.type_name].size() == configuration_.max_pending_samples)
         {
             pending_samples_[topic.type_name].pop();
         }
@@ -181,7 +233,7 @@ void McapHandler::add_data(
 
     try
     {
-        add_data_(msg);
+        add_data_nts_(msg);
     }
     catch(const utils::Exception& e)
     {
@@ -193,7 +245,13 @@ void McapHandler::add_data(
 
 void McapHandler::start()
 {
-    if (!paused_)
+    std::lock_guard<std::mutex> lock(mtx_);
+
+    // Store previous state to act differently depending on its value
+    StateCode prev_state = state_;
+    state_ = StateCode::started;
+
+    if (prev_state == StateCode::started)
     {
         logWarning(
             DDSRECORDER_MCAP_HANDLER,
@@ -205,14 +263,42 @@ void McapHandler::start()
             DDSRECORDER_MCAP_HANDLER,
             "Starting handler.");
 
-        paused_.store(false);
-        stop_event_thread_();
+        if (prev_state == StateCode::paused)
+        {
+            // Stop event routine (cleans buffer)
+            stop_event_thread_nts_();
+        }
+    }
+}
+
+void McapHandler::stop()
+{
+    std::lock_guard<std::mutex> lock(mtx_);
+
+    // Store previous state to act differently depending on its value
+    StateCode prev_state = state_;
+    state_ = StateCode::stopped;
+
+    if (prev_state == StateCode::started)
+    {
+        dump_data_nts_();
+    }
+    else if (prev_state == StateCode::paused)
+    {
+        // Stop event routine (cleans buffer)
+        stop_event_thread_nts_();
     }
 }
 
 void McapHandler::pause()
 {
-    if (paused_)
+    std::lock_guard<std::mutex> lock(mtx_);
+
+    // Store previous state to act differently depending on its value
+    StateCode prev_state = state_;
+    state_ = StateCode::paused;
+
+    if (prev_state == StateCode::paused)
     {
         logWarning(
             DDSRECORDER_MCAP_HANDLER,
@@ -224,16 +310,24 @@ void McapHandler::pause()
             DDSRECORDER_MCAP_HANDLER,
             "Pausing handler.");
 
-        dump_data_();
+        if (prev_state == StateCode::started)
+        {
+            // Write data stored in buffer
+            dump_data_nts_();
+            // Remove pending samples
+            clear_all_nts_();
+        }
 
-        paused_.store(true);
+        // Launch event thread routine
         event_thread_ = std::thread(&McapHandler::event_thread_routine_, this);
     }
 }
 
 void McapHandler::trigger_event()
 {
-    if (!paused_)
+    std::lock_guard<std::mutex> lock(mtx_);
+
+    if (state_ != StateCode::paused)
     {
         logWarning(
             DDSRECORDER_MCAP_HANDLER,
@@ -246,26 +340,41 @@ void McapHandler::trigger_event()
             "Triggering event.");
         {
             std::lock_guard<std::mutex> lock(event_cv_mutex_);
-            event_triggered_ = true;
+            event_flag_ = EventCode::triggered;
         }
         event_cv_.notify_one();
     }
 }
 
-void McapHandler::add_data_(
+mcap::Timestamp McapHandler::fastdds_timestamp_to_mcap_timestamp(const DataTime& time)
+{
+    uint64_t mcap_time = time.seconds();
+    mcap_time *= 1000000000;
+    return mcap_time + time.nanosec();
+}
+
+mcap::Timestamp McapHandler::std_timepoint_to_mcap_timestamp(const utils::Timestamp& time)
+{
+    return mcap::Timestamp(std::chrono::duration_cast<std::chrono::nanoseconds>(time.time_since_epoch()).count());
+}
+
+mcap::Timestamp McapHandler::now()
+{
+    return std_timepoint_to_mcap_timestamp(utils::now());
+}
+
+void McapHandler::add_data_nts_(
         const Message& msg)
 {
-    std::lock_guard<std::mutex> guard(write_mtx_);
-
-    samples_buffer_.push(msg);
-    if (!paused_ && samples_buffer_.size() == buffer_size_)
+    samples_buffer_.push_back(msg);
+    if (state_ == StateCode::started && samples_buffer_.size() == configuration_.buffer_size)
     {
         logInfo(DDSRECORDER_MCAP_HANDLER, "Full buffer, writting to disk...");
         dump_data_nts_();
     }
 }
 
-void McapHandler::add_pending_samples_(
+void McapHandler::add_pending_samples_nts_(
         const std::string& schema_name)
 {
     assert(pending_samples_.find(schema_name) != pending_samples_.end());
@@ -273,18 +382,19 @@ void McapHandler::add_pending_samples_(
 
     logInfo(DDSRECORDER_MCAP_HANDLER, "Sending pending samples of type: " << schema_name << ".");
 
+    DdsTopic sample_topic;
+    mcap::ChannelId channel_id;
     while (!pending_queue.empty())
     {
         auto& sample = pending_queue.front();
-        DdsTopic sample_topic;
         sample_topic.m_topic_name = sample.first;
         sample_topic.type_name = schema_name;
-        auto channel_id = get_channel_id_(sample_topic);
+        channel_id = get_channel_id_nts_(sample_topic);
         auto& msg = sample.second;
         msg.channelId = channel_id;
         try
         {
-            add_data_(msg);
+            add_data_nts_(msg);
         }
         catch(const utils::Exception& e)
         {
@@ -298,23 +408,41 @@ void McapHandler::add_pending_samples_(
 
 void McapHandler::event_thread_routine_()
 {
-    while (paused_)
+    event_flag_ = EventCode::untriggered;
+    while (state_ == StateCode::paused)
     {
-        clear_all_();
-
         bool timeout;
         {
+            auto exit_time = std::chrono::time_point<std::chrono::system_clock>::max();
+            auto cleanup_period_ = std::chrono::seconds(configuration_.cleanup_period);
+            if (cleanup_period_ < std::chrono::seconds::max())
+            {
+                auto now = std::chrono::system_clock::now();
+                exit_time = now + cleanup_period_;
+            }
+
             std::unique_lock<std::mutex> lock(event_cv_mutex_);
 
-            timeout = !event_cv_.wait_for(
+            timeout = !event_cv_.wait_until(
                 lock,
-                std::chrono::seconds(event_window_),
+                exit_time,
                 [&]
                 {
-                    return event_triggered_;
+                    return event_flag_ != EventCode::untriggered;
                 });
-            event_triggered_ = false;
+
+            if (event_flag_ == EventCode::stopped)
+            {
+                logInfo(DDSRECORDER_MCAP_HANDLER, "Finishing event thread routine.");
+                return;
+            }
+            event_flag_ = EventCode::untriggered;
         }
+
+        std::lock_guard<std::mutex> lock(mtx_);
+
+        // Delete outdated samples if timeout, and also before dumping (event triggered case)
+        remove_outdated_samples_nts_();
 
         if (timeout)
         {
@@ -322,59 +450,47 @@ void McapHandler::event_thread_routine_()
         }
         else
         {
-            if (paused_)
-            {
-                logInfo(DDSRECORDER_MCAP_HANDLER, "Event triggered: dumping buffered data.");
-                dump_data_();
-
-            }
-            else
-            {
-                logInfo(DDSRECORDER_MCAP_HANDLER, "Finishing event thread routine.");
-                clear_all_();
-                break;
-            }
+            logInfo(DDSRECORDER_MCAP_HANDLER, "Event triggered: dumping buffered data.");
+            dump_data_nts_();
         }
     }
 }
 
-void McapHandler::stop_event_thread_()
+void McapHandler::remove_outdated_samples_nts_()
 {
+    logInfo(DDSRECORDER_MCAP_HANDLER, "Removing outdated samples.");
+
+    auto threshold = std_timepoint_to_mcap_timestamp(utils::now() - std::chrono::seconds(configuration_.event_window));
+    samples_buffer_.remove_if([&](auto& sample){ return sample.logTime < threshold; });
+}
+
+void McapHandler::stop_event_thread_nts_()
+{
+    // WARNING: state must have been set different to paused before calling this method
+    assert(state_ != StateCode::paused);
+
     logInfo(DDSRECORDER_MCAP_HANDLER, "Stopping event thread.");
-    paused_.store(false);
     if (event_thread_.joinable())
     {
         {
             std::lock_guard<std::mutex> lock(event_cv_mutex_);
-            event_triggered_ = true;
+            event_flag_ = EventCode::stopped;
         }
         event_cv_.notify_one();
         event_thread_.join();
     }
+    clear_all_nts_();
 }
 
-void McapHandler::clear_all_()
+void McapHandler::clear_all_nts_()
 {
     logInfo(DDSRECORDER_MCAP_HANDLER, "Cleaning all buffers.");
 
-    {
-        // Clear samples buffer
-        std::lock_guard<std::mutex> guard(write_mtx_);
-        std::queue<Message> empty;
-        std::swap(samples_buffer_, empty);
-    }
+    // Clear samples buffer
+    samples_buffer_.clear();
 
-    {
-        // Clear pending samples
-        std::lock_guard<PendingSamplesMapType> lock(pending_samples_);
-        pending_samples_.clear();
-    }
-}
-
-void McapHandler::dump_data_()
-{
-    std::lock_guard<std::mutex> guard(write_mtx_);
-    dump_data_nts_();
+    // Clear pending samples
+    pending_samples_.clear();
 }
 
 void McapHandler::dump_data_nts_()
@@ -391,7 +507,7 @@ void McapHandler::dump_data_nts_()
                 STR_ENTRY << "Error writting in MCAP"
             );
         }
-        samples_buffer_.pop();
+        samples_buffer_.pop_front();
     }
 }
 
@@ -399,7 +515,7 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
         const DdsTopic& topic)
 {
     // Find schema
-    auto schema_id = get_schema_id_(topic.type_name);
+    auto schema_id = get_schema_id_nts_(topic.type_name);
 
     // Create new channel
     mcap::Channel new_channel(topic.m_topic_name, "cdr", schema_id);
@@ -411,10 +527,9 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     return channel_id;
 }
 
-mcap::ChannelId McapHandler::get_channel_id_(
+mcap::ChannelId McapHandler::get_channel_id_nts_(
         const DdsTopic& topic)
 {
-    std::unique_lock<ChannelMapType> channels_lock(channels_);
     auto it = channels_.find(topic.m_topic_name);
     if (it != channels_.end())
     {
@@ -425,10 +540,9 @@ mcap::ChannelId McapHandler::get_channel_id_(
     return create_channel_id_nts_(topic);
 }
 
-mcap::SchemaId McapHandler::get_schema_id_(
+mcap::SchemaId McapHandler::get_schema_id_nts_(
         const std::string& schema_name)
 {
-    std::unique_lock<SchemaMapType> lock(schemas_);
     auto it = schemas_.find(schema_name);
     if (it != schemas_.end())
     {
@@ -441,18 +555,10 @@ mcap::SchemaId McapHandler::get_schema_id_(
     }
 }
 
-mcap::Timestamp McapHandler::now()
+std::string McapHandler::tmp_filename_(const std::string& filename)
 {
-  return mcap::Timestamp(std::chrono::duration_cast<std::chrono::nanoseconds>(
-                           std::chrono::system_clock::now().time_since_epoch())
-                           .count());
-}
-
-mcap::Timestamp McapHandler::fastdds_timestamp_to_mcap_timestamp(const DataTime& time)
-{
-    uint64_t mcap_time = time.seconds();
-    mcap_time *= 1000000000;
-    return mcap_time + time.nanosec();
+    static const std::string TMP_SUFFIX = ".tmp~";
+    return filename + TMP_SUFFIX;
 }
 
 } /* namespace participants */
