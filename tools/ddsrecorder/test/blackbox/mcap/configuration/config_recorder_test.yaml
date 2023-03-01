@@ -1,5 +1,5 @@
 dds:
-  domain: 222
+  domain: 100
 
 recorder:
   downsampling: 3

@@ -24,8 +24,8 @@ set(TEST_SOURCES
 set(TEST_LIST
         # mcap_data_equal
         mcap_data_msgs
-        # mcap_data_topic
-        # mcap_data_num_msgs
+        mcap_data_topic
+        mcap_data_num_msgs
     )
 
 set(TEST_NEEDED_SOURCES

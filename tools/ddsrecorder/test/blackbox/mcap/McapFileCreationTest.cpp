@@ -17,6 +17,8 @@
 #include <cpp_utils/testing/gtest_aux.hpp>
 #include <gtest/gtest.h>
 
+#include <cpp_utils/logging/CustomStdLogConsumer.hpp>
+
 #include <ddspipe_core/core/DdsPipe.hpp>
 #include <ddspipe_core/efficiency/payload/FastPayloadPool.hpp>
 
@@ -77,9 +79,9 @@ eprosima::fastrtps::types::DynamicType_ptr dynamic_type_;
 
 } // test
 
-void create_recorder()
+std::unique_ptr<core::DdsPipe> create_recorder(std::string file_name)
 {
-    eprosima::ddsrecorder::yaml::Configuration configuration("/home/irenebm/annapurna/DDS-Recorder/src/ddsrecorder/conf-recorder.yaml");
+    eprosima::ddsrecorder::yaml::Configuration configuration("/home/irenebm/annapurna/DDS-Recorder/src/ddsrecorder/tools/ddsrecorder/test/blackbox/mcap/configuration/config_recorder_test.yaml");
 
     // Create allowed topics list
     auto allowed_topics = std::make_shared<core::AllowedTopicList>(
@@ -96,8 +98,6 @@ void create_recorder()
         std::make_shared<eprosima::utils::SlotThreadPool>(configuration.n_threads);
 
     // Create MCAP Handler
-    // std::string file_name = "/home/irenebm/annapurna/DDS-Recorder/my_output.mcap";
-    std::string file_name = configuration.recorder_output_file + "_" + eprosima::utils::timestamp_to_string(eprosima::utils::now()) + ".mcap";
     std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler> mcap_handler =
     std::make_shared<eprosima::ddsrecorder::participants::McapHandler>(
         file_name.c_str(),
@@ -135,7 +135,7 @@ void create_recorder()
         recorder_participant
     );
 
-    std::make_unique<core::DdsPipe>(
+    return std::make_unique<core::DdsPipe>(
         allowed_topics,
         discovery_database,
         payload_pool,
@@ -195,7 +195,7 @@ void send_sample(uint32_t index) {
     dynamic_data_->set_string_value(test::send_message, 1);
     test::writer_->write(dynamic_data_.get());
 
-    usleep(1000000);   // microsecond intervals - dont change
+    usleep(100000);   // microsecond intervals - dont change
 
     logUser(DDSRECORDER_EXECUTION, "Message published.");
 }
@@ -206,7 +206,8 @@ TEST(McapFileCreationTest, mcap_data_msgs)
     logUser(DDSRECORDER_EXECUTION, "Starting DDS Recorder execution.");
 
     // Create Recorder
-    create_recorder();
+    std::string file_name = "output_1_" + eprosima::utils::timestamp_to_string(eprosima::utils::now()) + ".mcap";
+    auto recorder = create_recorder(file_name);
 
     // Create Publisher
     create_publisher(
@@ -219,7 +220,7 @@ TEST(McapFileCreationTest, mcap_data_msgs)
 
     // Read MCAP file
     mcap::McapReader mcap_reader_;
-    auto status = mcap_reader_.open("/home/irenebm/annapurna/DDS-Recorder/my_output_2023-03-01_10-47-01.mcap");
+    auto status = mcap_reader_.open(file_name);
     if (!status.ok()) {
         std::cerr << "! " << status.message << "\n";
         return;
@@ -244,7 +245,8 @@ TEST(McapFileCreationTest, mcap_data_topic)
     // DDS Recorder Initialization
     logUser(DDSRECORDER_EXECUTION, "Starting DDS Recorder execution.");
 
-    create_recorder();
+    std::string file_name = "output_2_" + eprosima::utils::timestamp_to_string(eprosima::utils::now()) + ".mcap";
+    auto recorder = create_recorder(file_name);
 
     // Create Publisher
     create_publisher(
@@ -256,9 +258,8 @@ TEST(McapFileCreationTest, mcap_data_topic)
     send_sample(static_cast<uint32_t>(test::index));
 
     // Read MCAP file
-    //! MCAP reader
     mcap::McapReader mcap_reader_;
-    auto status = mcap_reader_.open("/home/irenebm/annapurna/DDS-Recorder/my_output_2023-03-01_10-47-01.mcap");
+    auto status = mcap_reader_.open(file_name);
 
     if (!status.ok()) {
         std::cerr << "! " << status.message << "\n";
@@ -288,7 +289,8 @@ TEST(McapFileCreationTest, mcap_data_num_msgs)
     // DDS Recorder Initialization
     logUser(DDSRECORDER_EXECUTION, "Starting DDS Recorder execution.");
 
-    create_recorder();
+    std::string file_name = "output_3_" + eprosima::utils::timestamp_to_string(eprosima::utils::now()) + ".mcap";
+    auto recorder = create_recorder(file_name);
 
     // Create Publisher
     create_publisher(
@@ -302,9 +304,8 @@ TEST(McapFileCreationTest, mcap_data_num_msgs)
     }
 
     // Read MCAP file
-    //! MCAP reader
     mcap::McapReader mcap_reader_;
-    auto status = mcap_reader_.open("/home/irenebm/annapurna/DDS-Recorder/my_output_2023-03-01_10-47-01.mcap");
+    auto status = mcap_reader_.open(file_name);
 
     if (!status.ok()) {
         std::cerr << "! " << status.message << "\n";
