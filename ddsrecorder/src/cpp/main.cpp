@@ -53,12 +53,13 @@ using namespace eprosima::ddspipe;
 using namespace eprosima::ddsrecorder;
 
 using CommandCode = eprosima::ddsrecorder::receiver::CommandCode;
+using CommandCodeBuilder = eprosima::ddsrecorder::receiver::CommandCodeBuilder;
 using McapHandlerState = eprosima::ddsrecorder::participants::McapHandler::StateCode;
 
 std::unique_ptr<core::DdsPipe> create_recorder(
         const eprosima::ddsrecorder::yaml::Configuration& configuration,
         std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler>& mcap_handler,
-        McapHandlerState init_state = McapHandlerState::started)
+        McapHandlerState init_state)
 {
     // Create allowed topics list
     auto allowed_topics = std::make_shared<core::AllowedTopicList>(
@@ -287,20 +288,20 @@ int main(
     try
     {
         // Create a multiple event handler that handles all events that make the recorder stop
-        eprosima::utils::event::MultipleEventHandler close_handler;
+        auto close_handler = std::make_shared<eprosima::utils::event::MultipleEventHandler>();
 
         // First of all, create signal handler so SIGINT and SIGTERM do not break the program while initializing
-        close_handler.register_event_handler<eprosima::utils::event::EventHandler<eprosima::utils::event::Signal>,
+        close_handler->register_event_handler<eprosima::utils::event::EventHandler<eprosima::utils::event::Signal>,
                 eprosima::utils::event::Signal>(
             std::make_unique<eprosima::utils::event::SignalEventHandler<eprosima::utils::event::Signal::sigint>>());     // Add SIGINT
-        close_handler.register_event_handler<eprosima::utils::event::EventHandler<eprosima::utils::event::Signal>,
+        close_handler->register_event_handler<eprosima::utils::event::EventHandler<eprosima::utils::event::Signal>,
                 eprosima::utils::event::Signal>(
             std::make_unique<eprosima::utils::event::SignalEventHandler<eprosima::utils::event::Signal::sigterm>>());    // Add SIGTERM
 
         // If it must be a maximum time, register a periodic handler to finish handlers
         if (timeout > 0)
         {
-            close_handler.register_event_handler<eprosima::utils::event::PeriodicEventHandler>(
+            close_handler->register_event_handler<eprosima::utils::event::PeriodicEventHandler>(
                 std::make_unique<eprosima::utils::event::PeriodicEventHandler>(
                     []()
                     {
@@ -319,25 +320,16 @@ int main(
         if (configuration.enable_remote_controller)
         {
             logUser(DDSRECORDER_EXECUTION, "Waiting for instructions...");
-            eprosima::ddsrecorder::receiver::CommandReceiver receiver(configuration.controller_domain, &close_handler);
+            eprosima::ddsrecorder::receiver::CommandReceiver receiver(configuration.controller_domain, close_handler);
             receiver.init();
 
             // TODO: store CommandCode in YAML configuration, handle invalid option there
-            CommandCode command;
             CommandCode prev = CommandCode::CLOSE;
-            if (configuration.initial_command == "START")
-            {
-                command = CommandCode::START;
-            }
-            else if (configuration.initial_command == "PAUSE")
-            {
-                command = CommandCode::PAUSE;
-            }
-            else if (configuration.initial_command == "STOP")
-            {
-                command = CommandCode::STOP;
-            }
-            else
+            CommandCode command;
+            bool found = CommandCodeBuilder::get_instance()->string_to_enumeration(configuration.initial_command,
+                            command);
+            if (!found ||
+                    (command != CommandCode::START && command != CommandCode::PAUSE && command != CommandCode::STOP))
             {
                 logWarning(DDSRECORDER_EXECUTION,
                         "Command " << configuration.initial_command <<
@@ -512,7 +504,7 @@ int main(
             }
 
             // Wait until signal arrives
-            close_handler.wait_for_event();
+            close_handler->wait_for_event();
         }
 
         logUser(DDSRECORDER_EXECUTION, "Stopping DDS Recorder.");

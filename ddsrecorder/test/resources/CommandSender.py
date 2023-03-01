@@ -30,7 +30,7 @@ class CommandSender:
 
         self.topic_qos = fastdds.TopicQos()
         self.participant.get_default_topic_qos(self.topic_qos)
-        self.topic = self.participant.create_topic("ControllerCommand", self.topic_data_type.getName(), self.topic_qos)
+        self.topic = self.participant.create_topic("/ddsrecorder/command", self.topic_data_type.getName(), self.topic_qos)
 
         self.publisher_qos = fastdds.PublisherQos()
         self.participant.get_default_publisher_qos(self.publisher_qos)

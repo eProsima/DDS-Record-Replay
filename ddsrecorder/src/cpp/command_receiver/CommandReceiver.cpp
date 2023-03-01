@@ -35,7 +35,7 @@ using namespace eprosima::fastdds::rtps;
 
 CommandReceiver::CommandReceiver(
         uint32_t domain,
-        eprosima::utils::event::MultipleEventHandler* event_handler)
+        std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler)
     : command_received_(CommandCode::NONE)
     , domain_(domain)
     , event_handler_(event_handler)
@@ -80,7 +80,7 @@ bool CommandReceiver::init()
 
     // CREATE THE TOPIC
     command_topic_ = participant_->create_topic(
-        "ddsrecorder/command",
+        "/ddsrecorder/command",
         "ControllerCommand",
         TOPIC_QOS_DEFAULT);
 
@@ -120,7 +120,7 @@ bool CommandReceiver::init()
 
     // CREATE THE TOPIC
     status_topic_ = participant_->create_topic(
-        "ddsrecorder/status",
+        "/ddsrecorder/status",
         "Status",
         TOPIC_QOS_DEFAULT);
 
@@ -150,14 +150,6 @@ CommandReceiver::~CommandReceiver()
 {
     if (participant_ != nullptr)
     {
-        if (command_topic_ != nullptr)
-        {
-            participant_->delete_topic(command_topic_);
-        }
-        if (status_topic_ != nullptr)
-        {
-            participant_->delete_topic(status_topic_);
-        }
         if (command_subscriber_ != nullptr)
         {
             if (command_reader_ != nullptr)
@@ -166,6 +158,10 @@ CommandReceiver::~CommandReceiver()
             }
             participant_->delete_subscriber(command_subscriber_);
         }
+        if (command_topic_ != nullptr)
+        {
+            participant_->delete_topic(command_topic_);
+        }
         if (status_publisher_ != nullptr)
         {
             if (status_writer_ != nullptr)
@@ -173,6 +169,10 @@ CommandReceiver::~CommandReceiver()
                 status_publisher_->delete_datawriter(status_writer_);
             }
             participant_->delete_publisher(status_publisher_);
+        }
+        if (status_topic_ != nullptr)
+        {
+            participant_->delete_topic(status_topic_);
         }
         DomainParticipantFactory::get_instance()->delete_participant(participant_);
     }

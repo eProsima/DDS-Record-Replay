@@ -72,7 +72,7 @@ public:
 
     CommandReceiver(
             uint32_t domain,
-            eprosima::utils::event::MultipleEventHandler* event_handler);
+            std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler);
 
     virtual ~CommandReceiver();
 
@@ -117,7 +117,7 @@ private:
     eprosima::fastdds::dds::DataWriter* status_writer_;
     eprosima::fastdds::dds::TypeSupport status_type_;
 
-    eprosima::utils::event::MultipleEventHandler* event_handler_;
+    std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler_;
 };
 
 } /* namespace receiver */
