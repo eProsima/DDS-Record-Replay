@@ -107,7 +107,7 @@ public:
 
 private:
 
-    std::string command_to_status_string_(
+    static std::string command_to_status_string_(
             CommandCode command);
 
     std::atomic<CommandCode> command_received_;

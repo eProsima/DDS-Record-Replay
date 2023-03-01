@@ -140,6 +140,76 @@ std::unique_ptr<core::DdsPipe> create_recorder(
     return create_recorder(configuration, mcap_handler, McapHandlerState::started);
 }
 
+std::unique_ptr<eprosima::utils::event::FileWatcherHandler> create_filewatcher(
+        const std::unique_ptr<core::DdsPipe>& recorder,
+        const std::string& file_path)
+{
+    // Callback will reload configuration and pass it to DdsPipe
+    // WARNING: it is needed to pass file_path, as FileWatcher only retrieves file_name
+    std::function<void(std::string)> filewatcher_callback =
+            [&recorder, &file_path]
+                (std::string file_name)
+            {
+                logUser(
+                    DDSRECORDER_EXECUTION,
+                    "FileWatcher notified changes in file " << file_name << ". Reloading configuration");
+
+                try
+                {
+                    eprosima::ddsrecorder::yaml::Configuration new_configuration(file_path);
+                    // Create new allowed topics list
+                    auto new_allowed_topics = std::make_shared<core::AllowedTopicList>(
+                        new_configuration.allowlist,
+                        new_configuration.blocklist);
+                    recorder->reload_allowed_topics(new_allowed_topics);
+                }
+                catch (const std::exception& e)
+                {
+                    logWarning(DDSRECORDER_EXECUTION,
+                            "Error reloading configuration file " << file_name << " with error: " <<
+                            e.what());
+                }
+            };
+
+    // Creating FileWatcher event handler
+    return std::make_unique<eprosima::utils::event::FileWatcherHandler>(filewatcher_callback, file_path);
+}
+
+std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> create_periodic_handler(
+        const std::unique_ptr<core::DdsPipe>& recorder,
+        const std::string& file_path,
+        const eprosima::utils::Duration_ms& reload_time)
+{
+    // Callback will reload configuration and pass it to DdsPipe
+    std::function<void()> periodic_callback =
+            [&recorder, &file_path]
+                ()
+            {
+                logUser(
+                    DDSRECORDER_EXECUTION,
+                    "Periodic Timer raised. Reloading configuration from file " << file_path << ".");
+
+                try
+                {
+                    eprosima::ddsrecorder::yaml::Configuration new_configuration(file_path);
+                    // Create new allowed topics list
+                    auto new_allowed_topics = std::make_shared<core::AllowedTopicList>(
+                        new_configuration.allowlist,
+                        new_configuration.blocklist);
+                    recorder->reload_allowed_topics(new_allowed_topics);
+                }
+                catch (const std::exception& e)
+                {
+                    logWarning(DDSRECORDER_EXECUTION,
+                            "Error reloading configuration file " << file_path << " with error: " <<
+                            e.what());
+                }
+            };
+
+    // Creating periodic handler
+    return std::make_unique<eprosima::utils::event::PeriodicEventHandler>(periodic_callback, reload_time);
+}
+
 int main(
         int argc,
         char** argv)
@@ -244,77 +314,6 @@ int main(
         // Load configuration from YAML
         eprosima::ddsrecorder::yaml::Configuration configuration(file_path);
 
-        // /////
-        // // File Watcher Handler
-
-        // // Callback will reload configuration and pass it to DdsPipe
-        // // WARNING: it is needed to pass file_path, as FileWatcher only retrieves file_name
-        // std::function<void(std::string)> filewatcher_callback =
-        //         [&recorder, file_path]
-        //             (std::string file_name)
-        //         {
-        //             logUser(
-        //                 DDSRECORDER_EXECUTION,
-        //                 "FileWatcher notified changes in file " << file_name << ". Reloading configuration");
-
-        //             try
-        //             {
-        //                 eprosima::ddsrecorder::yaml::Configuration new_configuration(file_path);
-        //                 // Create new allowed topics list
-        //                 auto new_allowed_topics = std::make_shared<core::AllowedTopicList>(
-        //                     new_configuration.allowlist,
-        //                     new_configuration.blocklist);
-        //                 recorder->reload_allowed_topics(new_allowed_topics);
-        //             }
-        //             catch (const std::exception& e)
-        //             {
-        //                 logWarning(DDSRECORDER_EXECUTION,
-        //                         "Error reloading configuration file " << file_name << " with error: " << e.what());
-        //             }
-        //         };
-
-        // // Creating FileWatcher event handler
-        // std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler =
-        //         std::make_unique<eprosima::utils::event::FileWatcherHandler>(filewatcher_callback, file_path);
-
-        // /////
-        // // Periodic Handler for reload configuration in periodic time
-
-        // // It must be a ptr, so the object is only created when required by a specific configuration
-        // std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> periodic_handler;
-
-        // // If reload time is higher than 0, create a periodic event to reload configuration
-        // if (reload_time > 0)
-        // {
-        //     // Callback will reload configuration and pass it to DdsPipe
-        //     std::function<void()> periodic_callback =
-        //             [&recorder, file_path]
-        //                 ()
-        //             {
-        //                 logUser(
-        //                     DDSRECORDER_EXECUTION,
-        //                     "Periodic Timer raised. Reloading configuration from file " << file_path << ".");
-
-        //                 try
-        //                 {
-        //                     eprosima::ddsrecorder::yaml::Configuration new_configuration(file_path);
-        //                     // Create new allowed topics list
-        //                     auto new_allowed_topics = std::make_shared<core::AllowedTopicList>(
-        //                         new_configuration.allowlist,
-        //                         new_configuration.blocklist);
-        //                     recorder->reload_allowed_topics(new_allowed_topics);
-        //                 }
-        //                 catch (const std::exception& e)
-        //                 {
-        //                     logWarning(DDSRECORDER_EXECUTION,
-        //                             "Error reloading configuration file " << file_path << " with error: " << e.what());
-        //                 }
-        //             };
-
-        //     periodic_handler = std::make_unique<eprosima::utils::event::PeriodicEventHandler>(periodic_callback,
-        //                     reload_time);
-        // }
-
         logUser(DDSRECORDER_EXECUTION, "DDS Recorder running.");
 
         if (configuration.enable_remote_controller)
@@ -323,10 +322,14 @@ int main(
             eprosima::ddsrecorder::receiver::CommandReceiver receiver(configuration.controller_domain, &close_handler);
             receiver.init();
 
-            // TODO: store CommandCode/StatusCode in YAML configuration, handle invalid option there
+            // TODO: store CommandCode in YAML configuration, handle invalid option there
             CommandCode command;
             CommandCode prev = CommandCode::CLOSE;
-            if (configuration.initial_command == "PAUSE")
+            if (configuration.initial_command == "START")
+            {
+                command = CommandCode::START;
+            }
+            else if (configuration.initial_command == "PAUSE")
             {
                 command = CommandCode::PAUSE;
             }
@@ -334,8 +337,11 @@ int main(
             {
                 command = CommandCode::STOP;
             }
-            else // "started" or unknown
+            else
             {
+                logWarning(DDSRECORDER_EXECUTION,
+                        "Command " << configuration.initial_command <<
+                        " is not a valid initial command (only START/PAUSE/STOP). Using instead default START initial command...");
                 command = CommandCode::START;
             }
 
@@ -366,7 +372,8 @@ int main(
 
                         case CommandCode::EVENT:
                         case CommandCode::STOP:
-                            // logWarning Ignoring X command, recorder not active yet.
+                            logWarning(DDSRECORDER_EXECUTION,
+                                    "Ignoring " << command << " command, recorder not active yet.");
                             command = CommandCode::STOP;  // Stay in STOPPED state
                             continue;
 
@@ -375,13 +382,9 @@ int main(
                             // CLOSE command or signal received -> exit
                             continue;
 
-                        case CommandCode::UNKNOWN:
-                            // TODO: move warning here
-                            command = CommandCode::STOP;  // Stay in STOPPED state
-                            continue;
-
                         default:
-                            // logWarning
+                        case CommandCode::UNKNOWN:
+                            command = CommandCode::STOP;  // Stay in STOPPED state
                             continue;
                     }
                 }
@@ -399,82 +402,34 @@ int main(
                 {
                     initial_state = McapHandlerState::paused;
                 }
+                else
+                {
+                    // Unreachable
+                    eprosima::utils::tsnh(
+                        eprosima::utils::Formatter() << "Trying to initiate McapHandler with invalid " << command <<
+                            " command.");
+                }
+
+                // Reload YAML configuration file, in case it changed during STOPPED state
+                // NOTE: Changes to all (but controller specific) recorder configuration options are taken into account
+                configuration = eprosima::ddsrecorder::yaml::Configuration(file_path);
 
                 // Create DDS Recorder
                 std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler> mcap_handler;
                 auto recorder = create_recorder(configuration, mcap_handler, initial_state);
 
-                /////
-                // File Watcher Handler
-
-                // Callback will reload configuration and pass it to DdsPipe
-                // WARNING: it is needed to pass file_path, as FileWatcher only retrieves file_name
-                std::function<void(std::string)> filewatcher_callback =
-                        [&recorder, file_path]
-                            (std::string file_name)
-                        {
-                            logUser(
-                                DDSRECORDER_EXECUTION,
-                                "FileWatcher notified changes in file " << file_name << ". Reloading configuration");
-
-                            try
-                            {
-                                eprosima::ddsrecorder::yaml::Configuration new_configuration(file_path);
-                                // Create new allowed topics list
-                                auto new_allowed_topics = std::make_shared<core::AllowedTopicList>(
-                                    new_configuration.allowlist,
-                                    new_configuration.blocklist);
-                                recorder->reload_allowed_topics(new_allowed_topics);
-                            }
-                            catch (const std::exception& e)
-                            {
-                                logWarning(DDSRECORDER_EXECUTION,
-                                        "Error reloading configuration file " << file_name << " with error: " <<
-                                        e.what());
-                            }
-                        };
-
-                // Creating FileWatcher event handler
-                std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler =
-                        std::make_unique<eprosima::utils::event::FileWatcherHandler>(filewatcher_callback, file_path);
-
-                /////
-                // Periodic Handler for reload configuration in periodic time
-
-                // It must be a ptr, so the object is only created when required by a specific configuration
-                std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> periodic_handler;
-
-                // If reload time is higher than 0, create a periodic event to reload configuration
-                if (reload_time > 0)
+                // Create File Watcher Handler
+                std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;
+                if (file_path != "")
                 {
-                    // Callback will reload configuration and pass it to DdsPipe
-                    std::function<void()> periodic_callback =
-                            [&recorder, file_path]
-                                ()
-                            {
-                                logUser(
-                                    DDSRECORDER_EXECUTION,
-                                    "Periodic Timer raised. Reloading configuration from file " << file_path << ".");
+                    file_watcher_handler = create_filewatcher(recorder, file_path);
+                }
 
-                                try
-                                {
-                                    eprosima::ddsrecorder::yaml::Configuration new_configuration(file_path);
-                                    // Create new allowed topics list
-                                    auto new_allowed_topics = std::make_shared<core::AllowedTopicList>(
-                                        new_configuration.allowlist,
-                                        new_configuration.blocklist);
-                                    recorder->reload_allowed_topics(new_allowed_topics);
-                                }
-                                catch (const std::exception& e)
-                                {
-                                    logWarning(DDSRECORDER_EXECUTION,
-                                            "Error reloading configuration file " << file_path << " with error: " <<
-                                            e.what());
-                                }
-                            };
-
-                    periodic_handler = std::make_unique<eprosima::utils::event::PeriodicEventHandler>(periodic_callback,
-                                    reload_time);
+                // Create Periodic Handler
+                std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> periodic_handler;
+                if (reload_time > 0 && file_path != "")
+                {
+                    periodic_handler = create_periodic_handler(recorder, file_path, reload_time);
                 }
 
                 // Use flag to avoid ugly warning (start/pause an already started/paused instance)
@@ -518,14 +473,12 @@ int main(
                         case CommandCode::CLOSE:
                         case CommandCode::NONE:
                             // Unreachable
-                            // TODO: tsnh
+                            logError(DDSRECORDER_EXECUTION,
+                                    "Reached an unstable execution state: command " << command << " case.");
                             continue;
 
-                        case CommandCode::UNKNOWN:
-                            break; // TODO: move warning here
-
                         default:
-                            // logWarning
+                        case CommandCode::UNKNOWN:
                             break;
                     }
                     receiver.wait_for_command();
@@ -544,76 +497,18 @@ int main(
             // Start recording right away
             auto recorder = create_recorder(configuration);
 
-            /////
-            // File Watcher Handler
-
-            // Callback will reload configuration and pass it to DdsPipe
-            // WARNING: it is needed to pass file_path, as FileWatcher only retrieves file_name
-            std::function<void(std::string)> filewatcher_callback =
-                    [&recorder, file_path]
-                        (std::string file_name)
-                    {
-                        logUser(
-                            DDSRECORDER_EXECUTION,
-                            "FileWatcher notified changes in file " << file_name << ". Reloading configuration");
-
-                        try
-                        {
-                            eprosima::ddsrecorder::yaml::Configuration new_configuration(file_path);
-                            // Create new allowed topics list
-                            auto new_allowed_topics = std::make_shared<core::AllowedTopicList>(
-                                new_configuration.allowlist,
-                                new_configuration.blocklist);
-                            recorder->reload_allowed_topics(new_allowed_topics);
-                        }
-                        catch (const std::exception& e)
-                        {
-                            logWarning(DDSRECORDER_EXECUTION,
-                                    "Error reloading configuration file " << file_name << " with error: " << e.what());
-                        }
-                    };
-
-            // Creating FileWatcher event handler
-            std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler =
-                    std::make_unique<eprosima::utils::event::FileWatcherHandler>(filewatcher_callback, file_path);
-
-            /////
-            // Periodic Handler for reload configuration in periodic time
-
-            // It must be a ptr, so the object is only created when required by a specific configuration
-            std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> periodic_handler;
-
-            // If reload time is higher than 0, create a periodic event to reload configuration
-            if (reload_time > 0)
+            // Create File Watcher Handler
+            std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;
+            if (file_path != "")
             {
-                // Callback will reload configuration and pass it to DdsPipe
-                std::function<void()> periodic_callback =
-                        [&recorder, file_path]
-                            ()
-                        {
-                            logUser(
-                                DDSRECORDER_EXECUTION,
-                                "Periodic Timer raised. Reloading configuration from file " << file_path << ".");
+                file_watcher_handler = create_filewatcher(recorder, file_path);
+            }
 
-                            try
-                            {
-                                eprosima::ddsrecorder::yaml::Configuration new_configuration(file_path);
-                                // Create new allowed topics list
-                                auto new_allowed_topics = std::make_shared<core::AllowedTopicList>(
-                                    new_configuration.allowlist,
-                                    new_configuration.blocklist);
-                                recorder->reload_allowed_topics(new_allowed_topics);
-                            }
-                            catch (const std::exception& e)
-                            {
-                                logWarning(DDSRECORDER_EXECUTION,
-                                        "Error reloading configuration file " << file_path << " with error: " <<
-                                        e.what());
-                            }
-                        };
-
-                periodic_handler = std::make_unique<eprosima::utils::event::PeriodicEventHandler>(periodic_callback,
-                                reload_time);
+            // Create Periodic Handler
+            std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> periodic_handler;
+            if (reload_time > 0 && file_path != "")
+            {
+                periodic_handler = create_periodic_handler(recorder, file_path, reload_time);
             }
 
             // Wait until signal arrives
