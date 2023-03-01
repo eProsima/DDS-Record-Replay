@@ -275,7 +275,7 @@ std::string CommandReceiver::command_to_status_string_(
     switch (command)
     {
         case CommandCode::START:
-            return "STARTED";
+            return "RUNNING";
 
         case CommandCode::PAUSE:
             return "PAUSED";
