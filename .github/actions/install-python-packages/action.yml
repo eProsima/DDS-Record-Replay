@@ -19,5 +19,6 @@ runs:
           setuptools==58.2.0 \
           gcovr==5.0 \
           pyyaml \
-          jsonschema
+          jsonschema \
+          PyQt5
       shell: bash
