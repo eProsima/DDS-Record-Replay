@@ -9,9 +9,12 @@ cpp
 dataflow
 datagram
 ddsrecorder
+ddspipe
 ddsrouter
+deserialization
 Diffie
 Dockerfile
+downsampling
 entrypoint
 eProsima
 executables

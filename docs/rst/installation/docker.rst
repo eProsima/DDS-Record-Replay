@@ -4,7 +4,7 @@
 .. _docker:
 
 #########################
-Docker Image (recomended)
+Docker Image (recommended)
 #########################
 
 .. warning::

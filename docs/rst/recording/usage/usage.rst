@@ -91,7 +91,7 @@ The |ddsrecorder| application supports several input arguments:
     *   - Command
         - Description
         - Option
-        - Posible Values
+        - Possible Values
         - Default Value
 
     *   - Help

@@ -87,7 +87,7 @@ Finally, we will show how to load the generated MCAP file into Foxglove Studio i
 1. Open `Foxglove Studio <https://studio.foxglove.dev/>`__ web application using Google Chrome or download the desktop application from their `Foxglove website <https://foxglove.dev/>`_.
    We recommend to use the web application as the it is usually up to date with the latest features.
 2. Click ``Open local file`` and load the *.mcap* file previously created: ``shapesdemo_data.mcap``.
-3. Once the *.mcap* file is loaded, create your own layout with custom panels to visualise the recorded data.
+3. Once the *.mcap* file is loaded, create your own layout with custom panels to visualize the recorded data.
    The image below shows an example of a dashboard with several panels for data introspection.
 
 .. figure:: /rst/figures/foxglove_studio_shapesdemo.png

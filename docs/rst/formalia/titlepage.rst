@@ -26,7 +26,7 @@ Overview
 
 * **DDS Recorder tool**.
   The main functionality of this tool is to save the data in a `MCAP <https://mcap.dev/>`_ database.
-  The database contains the records of the publication timestamp of the data, the serialised data, and the definition of the data serialization type and format.
+  The database contains the records of the publication timestamp of the data, the serialized data, and the definition of the data serialization type and format.
   The output MCAP file can be read with any user tool compatible with MCAP file reading since it contains all the necessary information for reading and reproducing the data.
 
   .. figure:: /rst/figures/ddsrecord_overview.png
