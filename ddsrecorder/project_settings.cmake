@@ -52,3 +52,6 @@ set(MODULE_VERSION_FILE_PATH
 
 set(MODULE_TARGET_NAME
     "ddsrecorder")
+
+set(MODULE_CPP_VERSION
+    C++17)

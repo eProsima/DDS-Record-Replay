@@ -38,7 +38,9 @@ ddsrecorder --help
 ## Dependencies
 
 * `cpp_utils`
-* `ddsrouter_core`
+* `ddspipe_core`
+* `ddspipe_participants`
+* `ddspipe_yaml`
 * `ddsrecorder_participants`
 * `ddsrecorder_yaml`
 
