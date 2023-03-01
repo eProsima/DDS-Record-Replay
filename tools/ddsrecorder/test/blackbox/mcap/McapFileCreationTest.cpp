@@ -58,8 +58,8 @@ namespace test {
 
 unsigned int domain = 100;
 
-std::string topic_pub = "TypeIntrospectionTopic";
-std::string topic_pub_name = "HelloWorld";
+std::string topic = "TypeIntrospectionTopic";
+std::string data_type_name = "HelloWorld";
 
 unsigned int n_msgs = 2;
 std::string send_message = "Hello World";
@@ -182,9 +182,8 @@ void create_publisher(
 
     // Register the type
     registerHelloWorldTypes();
-    std::string data_type_name_ = test::topic_pub_name;
     test::dynamic_type_ = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->build_dynamic_type(
-            data_type_name_,
+            test::data_type_name,
             GetHelloWorldIdentifier(true),
             GetHelloWorldObject(true));
 
@@ -199,7 +198,7 @@ void create_publisher(
     eprosima::fastdds::dds::Publisher* publisher_ = participant_->create_publisher(PUBLISHER_QOS_DEFAULT, nullptr);
 
     // Create the DDS Topic
-    eprosima::fastdds::dds::Topic* topic_ = participant_->create_topic(topic_name, data_type_name_, TOPIC_QOS_DEFAULT);
+    eprosima::fastdds::dds::Topic* topic_ = participant_->create_topic(topic_name, test::data_type_name, TOPIC_QOS_DEFAULT);
 
     // Create the DDS DataWriter
     test::writer_ = publisher_->create_datawriter(topic_, DATAWRITER_QOS_DEFAULT, nullptr);
@@ -216,7 +215,7 @@ void send_sample(uint32_t index) {
     dynamic_data_->set_string_value(test::send_message, 1);
     test::writer_->write(dynamic_data_.get());
 
-    usleep(1000000);   // microsecond intervals - dont change
+    usleep(100000);   // microsecond intervals - dont change
 
     logUser(DDSRECORDER_EXECUTION, "Message published.");
 }
@@ -232,7 +231,7 @@ TEST(McapFileCreationTest, mcap_data_msgs)
 
         // Create Publisher
         create_publisher(
-            test::topic_pub,
+            test::topic,
             test::domain,
             DataTypeKind::HELLO_WORLD);
 
@@ -269,7 +268,7 @@ TEST(McapFileCreationTest, mcap_data_topic)
 
         // Create Publisher
         create_publisher(
-            test::topic_pub,
+            test::topic,
             test::domain,
             DataTypeKind::HELLO_WORLD);
 
@@ -285,17 +284,17 @@ TEST(McapFileCreationTest, mcap_data_topic)
     auto messages = mcap_reader_.readMessages();
 
     std::string received_topic;
-    std::string received_topic_name;
+    std::string received_data_type_name;
 
     for (auto it = messages.begin(); it != messages.end(); it++) {
         received_topic = it->channel->topic;
-        received_topic_name = it->schema->name;
+        received_data_type_name = it->schema->name;
     }
     mcap_reader_.close();
 
     // Test data
-    ASSERT_EQ(received_topic, test::topic_pub);
-    ASSERT_EQ(received_topic_name, test::topic_pub_name);
+    ASSERT_EQ(received_topic, test::topic);
+    ASSERT_EQ(received_data_type_name, test::data_type_name);
 
 }
 
@@ -310,7 +309,7 @@ TEST(McapFileCreationTest, mcap_data_num_msgs)
 
         // Create Publisher
         create_publisher(
-            test::topic_pub,
+            test::topic,
             test::domain,
             DataTypeKind::HELLO_WORLD);
 
