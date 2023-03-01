@@ -22,6 +22,7 @@
 
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/exception/InconsistencyException.hpp>
+#include <cpp_utils/math/math_extension.hpp>
 
 #include <fastrtps/types/DynamicType.h>
 
@@ -170,7 +171,7 @@ void McapHandler::add_data(
         return;
     }
 
-    if (downsampling_idx_ = (downsampling_idx_ + 1) % configuration_.downsampling)
+    if (utils::fast_module(downsampling_idx_++, configuration_.downsampling) != 0)
     {
         logInfo(
             DDSRECORDER_MCAP_HANDLER,
