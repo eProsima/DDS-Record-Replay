@@ -16,18 +16,29 @@ set(TEST_NAME McapFileCreationTest)
 
 set(TEST_SOURCES
         McapFileCreationTest.cpp
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world/HelloWorld.cxx
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world/HelloWorldPubSubTypes.cxx
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world/HelloWorldTypeObject.cxx
     )
 
 set(TEST_LIST
-        mock_communication_trivial
+        # mcap_data_equal
+        mcap_data_msgs
+        # mcap_data_topic
+        # mcap_data_num_msgs
     )
 
 set(TEST_NEEDED_SOURCES
     )
 
+set(TEST_EXTRA_HEADERS
+    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world
+    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types)
+
 add_blackbox_executable(
-        "${TEST_NAME}"
-        "${TEST_SOURCES}"
-        "${TEST_LIST}"
-        "${TEST_NEEDED_SOURCES}"
-    )
+    "${TEST_NAME}"
+    "${TEST_SOURCES}"
+    "${TEST_LIST}"
+    "${TEST_NEEDED_SOURCES}"
+    "${TEST_EXTRA_HEADERS}"
+)
