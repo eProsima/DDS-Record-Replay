@@ -311,7 +311,9 @@ jobs:
 
       - name: Get build eProsima dependencies Job Id
         run: |
-          export JOB_ID=$(curl -sL $GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/build_fastdds.yml/runs | jq -r '.workflow_runs[0].id?')
+          export JOB_ID=$(curl -sL $GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/build_fastdds.yml/runs | \
+            jq '.workflow_runs[] | select(.status == "completed") | .id' | \
+            head -n 1)
           echo "fastdds_job_id=${JOB_ID}" >> $GITHUB_ENV
 
       - name: Download eProsima dependencies

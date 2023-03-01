@@ -12,7 +12,7 @@ Thus it is possible both to monitor the execution status of the |ddsrecorder| an
 
 Moreover, eProsima provides a remote controlling tool that allows to visualize the status of the |ddsrecorder| and to send commands to it to change its current status.
 
-This section explains the different execution states of the |ddsrecorder|, how to create your own tool using the DDS topics that the application defines to control its behaviour, and the presentation of the eProsima user application for the remote control of the |ddsrecorder|.
+This section explains the different execution states of the |ddsrecorder|, how to create your own tool using the DDS topics that the application defines to control its behavior, and the presentation of the eProsima user application for the remote control of the |ddsrecorder|.
 
 
 DDS Recorder Statuses
@@ -91,7 +91,7 @@ The following is a description of the aforementioned control topics.
                   ``EVENT`` |br|
                   ``CLOSE``
             *   - ``args``
-                - Argumets of the command. This arguments |br|
+                - Arguments of the command. This arguments |br|
                   should contain a JSON serialized string.
                 - ``string``
                 - * ``EVENT`` command: |br|
@@ -152,7 +152,3 @@ Thus the user can control the |ddsrecorder| using this application without havin
 .. note::
 
     This application is currently under development.
-
-
-
-

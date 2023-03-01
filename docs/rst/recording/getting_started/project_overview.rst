@@ -12,7 +12,7 @@ Among these tools is a recording application, called |ddsrecorder|, which allows
 The |ddsrecorder| application automatically discovers all topics in the DDS network and saves the data published in each topic with the publication timestamp of the data.
 Furthermore, by using the `DynamicTypes <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dynamic_types/dynamic_types.html>`_ feature of *Fast DDS*, it is possible to record the type of the data in the MCAP file.
 The benefit of this comes from the fact that the data is saved serialized according to the CDR format.
-The registration of the data type in the file allows the reading of the data (deserialisation) when loading the file.
+The registration of the data type in the file allows the reading of the data (deserialization) when loading the file.
 
 Since the |ddsrecorder| needs to record the data types of the data to be saved in the database, the user application must communicate the data types with which it is working by means of the type lookup service.
 This can be easily achieved by applying the configuration described in :ref:`this section <usage_fastdds_configuration>`.
@@ -34,9 +34,9 @@ whose format is very intuitive and human-readable.
 * **Interact**:
   Once the |ddsrecorder| application is running, the allowlist and blocklist topic lists could be changed in runtime by just changing the YAML configuration file.
   It is also possible to change the status of the recorder (running, paused or stopped) by remote control of the application.
-  This remote control is done by sending commands via DDS or by using the graphical remote control application provided with the |eddsrecord| sofware tool (see :ref:`Remote control <remote_control>`).
+  This remote control is done by sending commands via DDS or by using the graphical remote control application provided with the |eddsrecord| software tool (see :ref:`Remote control <remote_control>`).
 * **Stop**:
-  To stop the |ddsrecorder| application just send a `Ctrl+C` signal to stop de process gracefully (see :ref:`Close DDS Recorder <usage_stop_recording>`) or close it remotely using the remote control application (see :ref:`Remote control <remote_control>`).
+  To stop the |ddsrecorder| application just send a `Ctrl+C` signal to stop the process gracefully (see :ref:`Close DDS Recorder <usage_stop_recording>`) or close it remotely using the remote control application (see :ref:`Remote control <remote_control>`).
 
 Common Use cases
 ================

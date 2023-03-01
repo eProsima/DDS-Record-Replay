@@ -175,7 +175,7 @@ Then, the Subscriber is initialized.
 
 Inside ``on_data_available()`` callback function the ``DynamicData_ptr`` is created, which will be filled with the actual data received.
 
-As in the subscriber, the``DynamicDataFactory`` is used for the creation of the data that corresponds to our data type.
+As in the subscriber, the ``DynamicDataFactory`` is used for the creation of the data that corresponds to our data type.
 
 .. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
     :language: C++

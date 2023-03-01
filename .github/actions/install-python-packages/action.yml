@@ -20,4 +20,5 @@ runs:
           gcovr==5.0 \
           pyyaml \
           jsonschema
+        python3 -m pip install pip setuptools --upgrade && pip3 install PyQt6
       shell: bash

@@ -191,8 +191,8 @@ In other case, just skip this step.
 
 .. _windows_sources_colcon_installation:
 
-Colcon installation (recomended)
-================================
+Colcon installation (recommended)
+=================================
 
 .. important::
 
@@ -392,10 +392,10 @@ There are two possibilities:
 However, when running an instance of a |ddsrecorder| compiled using CMake, it must be linked with its dependencies where the packages have been installed.
 This can be done by opening the *Edit system environment variables* control panel and adding to the ``PATH`` the |eddsrecord|, *Fast DDS*, *Fast CDR*, *DDS Pipe* installation directories:
 
-*   *Fast DDS*: C:\\Program Files\\fastrtps
-*   *Fast CDR*: C:\\Program Files\\fastcdr
-*   *DDS Pipe*: C:\\Program Files\\ddspipe
-*   |eddsrecord|: C:\\Program Files\\ddsrecord
+*   *Fast DDS*: ``C:\\Program Files\\fastrtps``
+*   *Fast CDR*: ``C:\\Program Files\\fastcdr``
+*   *DDS Pipe*: ``C:\\Program Files\\ddspipe``
+*   |eddsrecord|: ``C:\\Program Files\\ddsrecord``
 
 
 .. External links

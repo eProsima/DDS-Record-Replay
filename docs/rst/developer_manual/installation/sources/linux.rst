@@ -165,8 +165,8 @@ In other case, just skip this step.
 
 .. _colcon_installation:
 
-Colcon installation (recomended)
-================================
+Colcon installation (recommended)
+=================================
 
 #.  Create a :code:`DDS-Record` directory and download the :code:`.repos` file that will be used to install |eddsrecord| and its dependencies:
 

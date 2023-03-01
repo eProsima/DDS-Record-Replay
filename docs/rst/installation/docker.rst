@@ -3,9 +3,9 @@
 
 .. _docker:
 
-#########################
-Docker Image (recomended)
-#########################
+##########################
+Docker Image (recommended)
+##########################
 
 .. warning::
     Docker image of |ddsrecorder| will be updated soon in `eProsima Downloads website <https://www.eprosima.com/index.php/downloads-all>`_.
