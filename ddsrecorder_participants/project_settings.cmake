@@ -39,3 +39,6 @@ set(MODULE_DEPENDENCIES
     zstd
     $<$<BOOL:${WIN32}>:iphlpapi$<SEMICOLON>Shlwapi>
     ${MODULE_FIND_PACKAGES})
+
+set(MODULE_CPP_VERSION
+    C++17)

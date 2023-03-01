@@ -23,5 +23,7 @@ runs:
           software-properties-common \
           wget \
           swig \
-          libpython3-dev
+          libpython3-dev \
+          liblz4-dev \
+          libzstd-dev
       shell: bash
