@@ -30,8 +30,8 @@ DDS_RECORDER = 'DDS Recorder'
 CONTROLLER = 'Controller'
 
 status_to_color_values__ = {
-    DdsRecorderStatus.DISCONNECTED: 'gray',
-    DdsRecorderStatus.RECORDING: 'green',
+    DdsRecorderStatus.CLOSED: 'gray',
+    DdsRecorderStatus.RUNNING: 'green',
     DdsRecorderStatus.PAUSED: 'yellow',
     DdsRecorderStatus.STOPPED: 'red',
     DdsRecorderStatus.UNKNOWN: 'gray'
@@ -156,7 +156,7 @@ class ControllerGUI(QMainWindow):
     def on_ddsrecorder_discovered(self, discovered, message):
         """Inform that a new DDS Recorder has been discovered."""
         if not discovered:
-            self.update_status(DdsRecorderStatus.DISCONNECTED)
+            self.update_status(DdsRecorderStatus.CLOSED)
         self.add_log_entry(CONTROLLER, message)
 
     def on_ddsrecorder_status(self, previous_status, current_status, info):
@@ -171,7 +171,7 @@ class ControllerGUI(QMainWindow):
             self.add_log_entry(DDS_RECORDER, f'Status information: {info}')
 
         # Change status bar
-        self.update_status(current_status)
+        self.update_status(DdsRecorderStatus[current_status.upper()])
 
     def restart_controller(self, dds_domain=0):
         """Restart the DDS Controller if the DDS Domain changes."""
@@ -201,7 +201,7 @@ class ControllerGUI(QMainWindow):
         # Status label box
         self.status_box = QLabel(self)
         self.status_box.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.update_status(DdsRecorderStatus.DISCONNECTED)
+        self.update_status(DdsRecorderStatus.CLOSED)
 
         status_box.addWidget(self.status_box, 1)
 
@@ -303,7 +303,7 @@ class ControllerGUI(QMainWindow):
         """Publish command."""
         command = DdsRecorderControllerCommand.EVENT
         args = Controller.command_arguments_to_string(
-            Controller.argument_change_state(DdsRecorderStatus.RECORDING))
+            Controller.argument_change_state(DdsRecorderStatus.STARTED))
         self.send_command(command, args)
 
     def event_stop_button_clicked(self):

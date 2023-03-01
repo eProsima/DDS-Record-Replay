@@ -33,8 +33,8 @@ MAX_DDS_DOMAIN_ID = 232
 class DdsRecorderStatus(Enum):
     """Possible Status values from a DDS Recorder."""
 
-    DISCONNECTED = 0
-    RECORDING = 1
+    CLOSED = 0
+    RUNNING = 1
     PAUSED = 2
     STOPPED = 3
     UNKNOWN = 4
@@ -90,7 +90,7 @@ class StatusReaderListener(fastdds.DataReaderListener):
         data = Status()
         reader.take_next_sample(data, info)
         self._controller.on_ddsrecorder_status.emit(
-            data.previous, data.current, data.info)
+            data.previous(), data.current(), data.info())
 
 
 class Controller(QObject):
