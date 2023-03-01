@@ -192,7 +192,7 @@ In other case, just skip this step.
 .. _windows_sources_colcon_installation:
 
 Colcon installation (recommended)
-================================
+=================================
 
 .. important::
 

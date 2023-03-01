@@ -36,7 +36,7 @@ whose format is very intuitive and human-readable.
   It is also possible to change the status of the recorder (running, paused or stopped) by remote control of the application.
   This remote control is done by sending commands via DDS or by using the graphical remote control application provided with the |eddsrecord| software tool (see :ref:`Remote control <remote_control>`).
 * **Stop**:
-  To stop the |ddsrecorder| application just send a `Ctrl+C` signal to stop de process gracefully (see :ref:`Close DDS Recorder <usage_stop_recording>`) or close it remotely using the remote control application (see :ref:`Remote control <remote_control>`).
+  To stop the |ddsrecorder| application just send a `Ctrl+C` signal to stop the process gracefully (see :ref:`Close DDS Recorder <usage_stop_recording>`) or close it remotely using the remote control application (see :ref:`Remote control <remote_control>`).
 
 Common Use cases
 ================
