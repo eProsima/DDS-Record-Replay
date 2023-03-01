@@ -62,6 +62,7 @@ on:
 jobs:
 
   windows-build-test:
+    if: ${{ false }}  # Disable Windows CI until LZ4 and ZSTD libraries can be installed
     runs-on: ${{ matrix.windows-version }}
     strategy:
       fail-fast: false
