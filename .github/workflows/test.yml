@@ -82,6 +82,12 @@ jobs:
         with:
           path: DDS-Recorder
 
+      - name: Install 7zip-zstd
+        shell: pwsh
+        run: |
+          choco install 7zip-zstd
+          "C:\Program Files\7-Zip\Codecs " | Out-File -Append $Env:GITHUB_PATH
+
       - name: Install OpenSSL
         uses: ./DDS-Recorder/.github/actions/install-openssl-windows
 
