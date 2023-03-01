@@ -15,8 +15,7 @@
 
 from enum import Enum
 
-from ControllerCommand import (
-    ControllerCommand, ControllerCommandPubSubType)
+from ControllerCommand import ControllerCommand, ControllerCommandPubSubType
 
 from Logger import logger
 
@@ -61,8 +60,8 @@ class CommandWriterListener(fastdds.DataWriterListener):
 
     def __init__(self, controller):
         """Construct a WriterListener object."""
-        super().__init__()
         self._controller = controller
+        super().__init__()
 
     def on_publication_matched(self, writer, info):
         """Raise when there has been a match/unmatch event."""
@@ -81,8 +80,8 @@ class StatusReaderListener(fastdds.DataReaderListener):
 
     def __init__(self, controller):
         """Construct a WriterListener object."""
-        super().__init__()
         self._controller = controller
+        super().__init__()
 
     def on_data_available(self, reader):
         """Raise when there is new Status data available."""
@@ -128,67 +127,67 @@ class Controller(QObject):
     def init_dds(self, dds_domain):
         """Initialize DDS entities."""
         factory = fastdds.DomainParticipantFactory.get_instance()
-        participant_qos = fastdds.DomainParticipantQos()
-        factory.get_default_participant_qos(participant_qos)
-        participant_qos.name('DDSRecorderController')
+        self.participant_qos = fastdds.DomainParticipantQos()
+        factory.get_default_participant_qos(self.participant_qos)
+        self.participant_qos.name('DDSRecorderController')
         self.participant = factory.create_participant(
-            dds_domain, participant_qos)
+            dds_domain, self.participant_qos)
 
         # Initialize command topic
         self.command_topic_data_type = ControllerCommandPubSubType()
         self.command_topic_data_type.setName('ControllerCommand')
-        type_support = fastdds.TypeSupport(self.command_topic_data_type)
-        self.participant.register_type(type_support)
+        self.command_type_support = fastdds.TypeSupport(self.command_topic_data_type)
+        self.participant.register_type(self.command_type_support)
 
-        topic_qos = fastdds.TopicQos()
-        self.participant.get_default_topic_qos(topic_qos)
+        self.command_topic_qos = fastdds.TopicQos()
+        self.participant.get_default_topic_qos(self.command_topic_qos)
         self.command_topic = self.participant.create_topic(
-            'ddsrecorder/controller',
+            '/ddsrecorder/command',
             self.command_topic_data_type.getName(),
-            topic_qos)
+            self.command_topic_qos)
 
         # Initialize status topic
         self.status_topic_data_type = StatusPubSubType()
         self.status_topic_data_type.setName('Status')
-        type_support = fastdds.TypeSupport(self.status_topic_data_type)
-        self.participant.register_type(type_support)
+        self.status_type_support = fastdds.TypeSupport(self.status_topic_data_type)
+        self.participant.register_type(self.status_type_support)
 
-        topic_qos = fastdds.TopicQos()
-        self.participant.get_default_topic_qos(topic_qos)
+        self.status_topic_qos = fastdds.TopicQos()
+        self.participant.get_default_topic_qos(self.status_topic_qos)
         self.status_topic = self.participant.create_topic(
-            'ddsrecorder/status',
+            '/ddsrecorder/status',
             self.status_topic_data_type.getName(),
-            topic_qos)
+            self.status_topic_qos)
 
         # Initialize Command writer
-        publisher_qos = fastdds.PublisherQos()
-        self.participant.get_default_publisher_qos(publisher_qos)
-        self.publisher = self.participant.create_publisher(publisher_qos)
+        self.publisher_qos = fastdds.PublisherQos()
+        self.participant.get_default_publisher_qos(self.publisher_qos)
+        self.publisher = self.participant.create_publisher(self.publisher_qos)
 
         self.command_writer_listener = CommandWriterListener(self)
-        writer_qos = fastdds.DataWriterQos()
-        self.publisher.get_default_datawriter_qos(writer_qos)
-        writer_qos.reliability().kind = fastdds.RELIABLE_RELIABILITY_QOS
-        writer_qos.durability().kind = fastdds.VOLATILE_DURABILITY_QOS
-        writer_qos.history().kind = fastdds.KEEP_LAST_HISTORY_QOS
-        writer_qos.history().size = 10
+        self.writer_qos = fastdds.DataWriterQos()
+        self.publisher.get_default_datawriter_qos(self.writer_qos)
+        self.writer_qos.reliability().kind = fastdds.RELIABLE_RELIABILITY_QOS
+        self.writer_qos.durability().kind = fastdds.VOLATILE_DURABILITY_QOS
+        self.writer_qos.history().kind = fastdds.KEEP_LAST_HISTORY_QOS
+        self.writer_qos.history().size = 10
         self.command_writer = self.publisher.create_datawriter(
-            self.command_topic, writer_qos, self.command_writer_listener)
+            self.command_topic, self.writer_qos, self.command_writer_listener)
 
         # Initialize Status reader
-        subscriber_qos = fastdds.SubscriberQos()
-        self.participant.get_default_subscriber_qos(subscriber_qos)
-        self.subscriber = self.participant.create_subscriber(subscriber_qos)
+        self.subscriber_qos = fastdds.SubscriberQos()
+        self.participant.get_default_subscriber_qos(self.subscriber_qos)
+        self.subscriber = self.participant.create_subscriber(self.subscriber_qos)
 
         self.status_reader_listener = StatusReaderListener(self)
-        reader_qos = fastdds.DataReaderQos()
-        self.subscriber.get_default_datareader_qos(reader_qos)
-        reader_qos.reliability().kind = fastdds.RELIABLE_RELIABILITY_QOS
-        reader_qos.durability().kind = fastdds.TRANSIENT_LOCAL_DURABILITY_QOS
-        reader_qos.history().kind = fastdds.KEEP_LAST_HISTORY_QOS
-        reader_qos.history().size = 10
+        self.reader_qos = fastdds.DataReaderQos()
+        self.subscriber.get_default_datareader_qos(self.reader_qos)
+        self.reader_qos.reliability().kind = fastdds.RELIABLE_RELIABILITY_QOS
+        self.reader_qos.durability().kind = fastdds.TRANSIENT_LOCAL_DURABILITY_QOS
+        self.reader_qos.history().kind = fastdds.KEEP_LAST_HISTORY_QOS
+        self.reader_qos.history().size = 10
         self.status_reader = self.subscriber.create_datareader(
-            self.status_topic, reader_qos, self.status_reader_listener)
+            self.status_topic, self.reader_qos, self.status_reader_listener)
 
     def publish_command(
             self,
