@@ -27,6 +27,7 @@
 
 #include <ddsrecorder_participants/mcap/McapHandler.hpp>
 #include <ddsrecorder_yaml/YamlReaderConfiguration.hpp>
+#include <ddsrecorder_yaml/yaml_configuration_tags.hpp>
 
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastrtps/types/DynamicDataPtr.h>
@@ -40,23 +41,11 @@
 
 #include "types/hello_world/HelloWorldTypeObject.h"
 
-// #include <google/protobuf/descriptor.pb.h>
-// #include <google/protobuf/descriptor_database.h>
-// #include <google/protobuf/dynamic_message.h>
+#include<iostream>
 
 using namespace eprosima::fastdds::dds;
-// using namespace eprosima::fastdds::rtps;
-// using namespace eprosima::fastrtps::rtps;
-// using namespace eprosima::fastrtps;
-// using namespace eprosima::fastrtps::types;
-
-// using namespace eprosima;
 using namespace eprosima::ddspipe;
 using namespace eprosima::ddsrecorder;
-// using namespace eprosima::ddspipe::participants;
-// using namespace eprosima::ddsrecorder::participants;
-
-// #include <nlohmann/json.hpp>
 
 enum class DataTypeKind
 {
@@ -64,24 +53,56 @@ enum class DataTypeKind
 };
 
 namespace test {
+
+// Publisher
+
 unsigned int domain = 100;
 
 std::string topic_pub = "TypeIntrospectionTopic";
-std::string topic_pub_name = "HelloWorld_TypeIntrospectionExample";
+std::string topic_pub_name = "HelloWorld";
 
-unsigned int n_msgs = 11;
+unsigned int n_msgs = 2;
 std::string send_message = "Hello World";
 unsigned int index = 6;
 
-// Publisher
 eprosima::fastdds::dds::DataWriter* writer_;
 eprosima::fastrtps::types::DynamicType_ptr dynamic_type_;
+
+// Configuration
+
+std::vector<const char*> yml_configurations =
+{
+    R"(
+    dds:
+        domain: 100
+    recorder:
+        downsampling: 3
+        buffer-size: 5
+        event-window: 10
+    remote-controller:
+        enable: false
+        domain: 200
+        initial-state: stopped
+    specs:
+        threads: 8
+        max-depth: 100
+        max-pending-samples: 10
+        cleanup-period: 3
+
+    )",
+};
+
+YAML::Node yml;
 
 } // test
 
 std::unique_ptr<core::DdsPipe> create_recorder(std::string file_name)
 {
-    eprosima::ddsrecorder::yaml::Configuration configuration("/home/irenebm/annapurna/DDS-Recorder/src/ddsrecorder/tools/ddsrecorder/test/blackbox/mcap/configuration/config_recorder_test.yaml");
+    for (const char* yml_configuration : test::yml_configurations)
+    {
+        test::yml = YAML::Load(yml_configuration);
+    }
+    eprosima::ddsrecorder::yaml::Configuration configuration(test::yml);
 
     // Create allowed topics list
     auto allowed_topics = std::make_shared<core::AllowedTopicList>(
@@ -161,7 +182,7 @@ void create_publisher(
 
     // Register the type
     registerHelloWorldTypes();
-    std::string data_type_name_ = "HelloWorld";
+    std::string data_type_name_ = test::topic_pub_name;
     test::dynamic_type_ = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->build_dynamic_type(
             data_type_name_,
             GetHelloWorldIdentifier(true),
@@ -195,38 +216,36 @@ void send_sample(uint32_t index) {
     dynamic_data_->set_string_value(test::send_message, 1);
     test::writer_->write(dynamic_data_.get());
 
-    usleep(100000);   // microsecond intervals - dont change
+    usleep(1000000);   // microsecond intervals - dont change
 
     logUser(DDSRECORDER_EXECUTION, "Message published.");
 }
 
 TEST(McapFileCreationTest, mcap_data_msgs)
 {
-    // DDS Recorder Initialization
-    logUser(DDSRECORDER_EXECUTION, "Starting DDS Recorder execution.");
 
-    // Create Recorder
     std::string file_name = "output_1_" + eprosima::utils::timestamp_to_string(eprosima::utils::now()) + ".mcap";
-    auto recorder = create_recorder(file_name);
 
-    // Create Publisher
-    create_publisher(
-        test::topic_pub,
-        test::domain,
-        DataTypeKind::HELLO_WORLD);
+    {
+        // Create Recorder
+        auto recorder = create_recorder(file_name);
 
-    // Send data
-    send_sample(static_cast<uint32_t>(test::index));
+        // Create Publisher
+        create_publisher(
+            test::topic_pub,
+            test::domain,
+            DataTypeKind::HELLO_WORLD);
+
+        // Send data
+        send_sample(static_cast<uint32_t>(test::index));
+    }
 
     // Read MCAP file
     mcap::McapReader mcap_reader_;
     auto status = mcap_reader_.open(file_name);
-    if (!status.ok()) {
-        std::cerr << "! " << status.message << "\n";
-        return;
-    }
 
     auto messageView = mcap_reader_.readMessages();
+
     std::string received_message;
     for (auto it = messageView.begin(); it != messageView.end(); it++) {
         std::string data(reinterpret_cast<char const*>(it->message.data),  it->message.dataSize-1);
@@ -237,34 +256,31 @@ TEST(McapFileCreationTest, mcap_data_msgs)
     // Test data
     ASSERT_EQ(received_message, test::send_message);
 
-    logUser(DDSRECORDER_EXECUTION, "Finishing DDS Recorder execution correctly.");
 }
 
 TEST(McapFileCreationTest, mcap_data_topic)
 {
-    // DDS Recorder Initialization
-    logUser(DDSRECORDER_EXECUTION, "Starting DDS Recorder execution.");
 
     std::string file_name = "output_2_" + eprosima::utils::timestamp_to_string(eprosima::utils::now()) + ".mcap";
-    auto recorder = create_recorder(file_name);
 
-    // Create Publisher
-    create_publisher(
-        test::topic_pub,
-        test::domain,
-        DataTypeKind::HELLO_WORLD);
+    {
+        // Create recorder
+        auto recorder = create_recorder(file_name);
 
-    // Send data
-    send_sample(static_cast<uint32_t>(test::index));
+        // Create Publisher
+        create_publisher(
+            test::topic_pub,
+            test::domain,
+            DataTypeKind::HELLO_WORLD);
+
+        // Send data
+        send_sample(static_cast<uint32_t>(test::index));
+    }
+
 
     // Read MCAP file
     mcap::McapReader mcap_reader_;
-    auto status = mcap_reader_.open(file_name);
-
-    if (!status.ok()) {
-        std::cerr << "! " << status.message << "\n";
-        return;
-    }
+    auto status = mcap_reader_.open(std::string(file_name));
 
     auto messages = mcap_reader_.readMessages();
 
@@ -281,36 +297,32 @@ TEST(McapFileCreationTest, mcap_data_topic)
     ASSERT_EQ(received_topic, test::topic_pub);
     ASSERT_EQ(received_topic_name, test::topic_pub_name);
 
-    logUser(DDSRECORDER_EXECUTION, "Finishing DDS Recorder execution correctly.");
 }
 
 TEST(McapFileCreationTest, mcap_data_num_msgs)
 {
-    // DDS Recorder Initialization
-    logUser(DDSRECORDER_EXECUTION, "Starting DDS Recorder execution.");
 
-    std::string file_name = "output_3_" + eprosima::utils::timestamp_to_string(eprosima::utils::now()) + ".mcap";
-    auto recorder = create_recorder(file_name);
+    std::string file_name = "/home/irenebm/annapurna/output_3_" + eprosima::utils::timestamp_to_string(eprosima::utils::now()) + ".mcap";
 
-    // Create Publisher
-    create_publisher(
-        test::topic_pub,
-        test::domain,
-        DataTypeKind::HELLO_WORLD);
+   {
+        // Create Recorder
+        auto recorder = create_recorder(file_name);
 
-    // Send data
-    for(int i = 0; i < test::n_msgs; i++) {
-        send_sample(static_cast<uint32_t>(test::index));
-    }
+        // Create Publisher
+        create_publisher(
+            test::topic_pub,
+            test::domain,
+            DataTypeKind::HELLO_WORLD);
+
+        // Send data
+        for(int i = 0; i < test::n_msgs; i++) {
+            send_sample(static_cast<uint32_t>(test::index));
+        }
+   }
 
     // Read MCAP file
     mcap::McapReader mcap_reader_;
     auto status = mcap_reader_.open(file_name);
-
-    if (!status.ok()) {
-        std::cerr << "! " << status.message << "\n";
-        return;
-    }
 
     auto messages = mcap_reader_.readMessages();
 
@@ -323,7 +335,6 @@ TEST(McapFileCreationTest, mcap_data_num_msgs)
     // Test data
     ASSERT_EQ(test::n_msgs, n_received_msgs);
 
-    logUser(DDSRECORDER_EXECUTION, "Finishing DDS Recorder execution correctly.");
 }
 
 
