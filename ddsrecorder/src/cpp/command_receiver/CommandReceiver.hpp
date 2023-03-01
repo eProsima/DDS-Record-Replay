@@ -70,17 +70,6 @@ class CommandReceiver : public eprosima::fastdds::dds::DataReaderListener
 {
 public:
 
-    // enum CommandCode
-    // {
-    //     NONE = 0,
-    //     START,
-    //     PAUSE,
-    //     EVENT,
-    //     STOP,
-    //     CLOSE,
-    //     UNKNOWN
-    // };
-
     CommandReceiver(
             uint32_t domain,
             eprosima::utils::event::MultipleEventHandler* event_handler);
