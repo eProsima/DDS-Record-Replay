@@ -19,6 +19,6 @@ runs:
           setuptools==58.2.0 \
           gcovr==5.0 \
           pyyaml \
-          jsonschema \
-          PyQt5
+          jsonschema
+        python3 -m pip install pip setuptools --upgrade && pip3 install PyQt6
       shell: bash
