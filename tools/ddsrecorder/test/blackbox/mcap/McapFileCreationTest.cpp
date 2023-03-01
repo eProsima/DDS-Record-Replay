@@ -224,7 +224,7 @@ void send_sample(uint32_t index) {
 TEST(McapFileCreationTest, mcap_data_msgs)
 {
 
-    std::string file_name = "output_1_" + eprosima::utils::timestamp_to_string(eprosima::utils::now()) + ".mcap";
+    std::string file_name = "output_1_.mcap";
 
     {
         // Create Recorder
@@ -261,7 +261,7 @@ TEST(McapFileCreationTest, mcap_data_msgs)
 TEST(McapFileCreationTest, mcap_data_topic)
 {
 
-    std::string file_name = "output_2_" + eprosima::utils::timestamp_to_string(eprosima::utils::now()) + ".mcap";
+    std::string file_name = "output_2_.mcap";
 
     {
         // Create recorder
@@ -302,7 +302,7 @@ TEST(McapFileCreationTest, mcap_data_topic)
 TEST(McapFileCreationTest, mcap_data_num_msgs)
 {
 
-    std::string file_name = "/home/irenebm/annapurna/output_3_" + eprosima::utils::timestamp_to_string(eprosima::utils::now()) + ".mcap";
+    std::string file_name = "output_3_.mcap";
 
    {
         // Create Recorder
