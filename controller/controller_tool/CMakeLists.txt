@@ -39,23 +39,30 @@ project(
         ${MODULE_VERSION}
     DESCRIPTION
         ${MODULE_DESCRIPTION}
-    LANGUAGES
-        CXX
 )
 
-###############################################################################
-# Build and install types
-###############################################################################
-add_subdirectory(ddstypes/ControllerCommand)
-add_subdirectory(ddstypes/Status)
+option(BUILD_DDSRECORDER_CONTROLLER "Whether to build or not the Controller tool" OFF)
+if (BUILD_DDSRECORDER_CONTROLLER)
 
-###############################################################################
-# Install Tool
-###############################################################################
-add_subdirectory(tool)
+    message(STATUS "Building DDS Recorder controller tool")
 
-###############################################################################
-# Packaging
-###############################################################################
-# Install package
-eprosima_packaging()
+    ###############################################################################
+    # Build and install types
+    ###############################################################################
+    add_subdirectory(ddstypes/ControllerCommand)
+    add_subdirectory(ddstypes/Status)
+
+    ###############################################################################
+    # Install Tool
+    ###############################################################################
+    add_subdirectory(tool)
+
+    ###############################################################################
+    # Packaging
+    ###############################################################################
+    # Install package
+    eprosima_packaging()
+
+else()
+    message(STATUS "Not building DDS Recorder controller tool")
+endif()
