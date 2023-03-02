@@ -42,6 +42,7 @@
 #include "command_receiver/CommandReceiver.hpp"
 
 #include "types/hello_world/HelloWorldTypeObject.h"
+#include "types/hello_world/HelloWorldPubSubTypes.h"
 
 #include<iostream>
 
@@ -243,7 +244,7 @@ void create_publisher(
     test::writer_ = publisher_->create_datawriter(topic_, DATAWRITER_QOS_DEFAULT, nullptr);
 }
 
-void send_sample(uint32_t index) {
+eprosima::fastrtps::types::DynamicData_ptr send_sample(uint32_t index) {
     // Create and initialize new dynamic data
     eprosima::fastrtps::types::DynamicData_ptr dynamic_data_;
     dynamic_data_ = eprosima::fastrtps::types::DynamicDataFactory::get_instance()->create_data(test::dynamic_type_);
@@ -257,13 +258,15 @@ void send_sample(uint32_t index) {
     usleep(100000);   // microsecond intervals - dont change
 
     logUser(DDSRECORDER_EXECUTION, "Message published.");
+
+    return dynamic_data_;
 }
 
 TEST(McapFileCreationTest, mcap_data_msgs)
 {
 
     std::string file_name = "output_1_.mcap";
-
+    eprosima::fastrtps::types::DynamicData_ptr sended_data;
     {
         // Create Recorder
         auto recorder = create_recorder(file_name, false);
@@ -275,24 +278,33 @@ TEST(McapFileCreationTest, mcap_data_msgs)
             DataTypeKind::HELLO_WORLD);
 
         // Send data
-        send_sample(static_cast<uint32_t>(test::index));
+        sended_data = send_sample(static_cast<uint32_t>(test::index));
     }
+
+    eprosima::fastrtps::types::DynamicPubSubType pubsubType;
+    eprosima::fastrtps::rtps::SerializedPayload_t payload;
+    payload.reserve(
+        pubsubType.getSerializedSizeProvider(
+            sended_data.get()
+        )()
+    );
+    pubsubType.serialize(sended_data.get(), &payload);
 
     // Read MCAP file
     mcap::McapReader mcap_reader_;
     auto status = mcap_reader_.open(file_name);
 
+    // Test data
     auto messageView = mcap_reader_.readMessages();
 
-    std::string received_message;
     for (auto it = messageView.begin(); it != messageView.end(); it++) {
-        std::string data(reinterpret_cast<char const*>(it->message.data),  it->message.dataSize-1);
-        received_message = data.substr(it->message.dataSize/2);
+        auto received_msg = reinterpret_cast<unsigned char const*>(it->message.data);
+        for (int i = 0; i < payload.length; i++) {
+            ASSERT_EQ(payload.data[i], received_msg[i]) << "wrong data ¡¡";
+        }
+        ASSERT_EQ(payload.length, it->message.dataSize) << "length fails !!";
     }
     mcap_reader_.close();
-
-    // Test data
-    ASSERT_EQ(received_message, test::send_message);
 
 }
 
