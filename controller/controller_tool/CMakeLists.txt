@@ -41,8 +41,8 @@ project(
         ${MODULE_DESCRIPTION}
 )
 
-option(DDSRECORDER_BUILD_CONTROLLER "Whether to build or not the Controller tool" OFF)
-if (DDSRECORDER_BUILD_CONTROLLER)
+option(BUILD_DDSRECORDER_CONTROLLER "Whether to build or not the Controller tool" OFF)
+if (BUILD_DDSRECORDER_CONTROLLER)
 
     message(STATUS "Building DDS Recorder controller tool")
 
