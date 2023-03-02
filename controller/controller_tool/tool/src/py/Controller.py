@@ -15,8 +15,7 @@
 
 from enum import Enum
 
-from ControllerCommand import (
-    ControllerCommand, ControllerCommandPubSubType)
+from ControllerCommand import ControllerCommand, ControllerCommandPubSubType
 
 from Logger import logger
 
@@ -33,8 +32,8 @@ MAX_DDS_DOMAIN_ID = 232
 class DdsRecorderStatus(Enum):
     """Possible Status values from a DDS Recorder."""
 
-    DISCONNECTED = 0
-    RECORDING = 1
+    CLOSED = 0
+    RUNNING = 1
     PAUSED = 2
     STOPPED = 3
     UNKNOWN = 4
@@ -61,8 +60,8 @@ class CommandWriterListener(fastdds.DataWriterListener):
 
     def __init__(self, controller):
         """Construct a WriterListener object."""
-        super().__init__()
         self._controller = controller
+        super().__init__()
 
     def on_publication_matched(self, writer, info):
         """Raise when there has been a match/unmatch event."""
@@ -81,8 +80,8 @@ class StatusReaderListener(fastdds.DataReaderListener):
 
     def __init__(self, controller):
         """Construct a WriterListener object."""
-        super().__init__()
         self._controller = controller
+        super().__init__()
 
     def on_data_available(self, reader):
         """Raise when there is new Status data available."""
@@ -90,7 +89,7 @@ class StatusReaderListener(fastdds.DataReaderListener):
         data = Status()
         reader.take_next_sample(data, info)
         self._controller.on_ddsrecorder_status.emit(
-            data.previous, data.current, data.info)
+            data.previous(), data.current(), data.info())
 
 
 class Controller(QObject):
@@ -116,7 +115,8 @@ class Controller(QObject):
 
     def __del__(self):
         """Remove all dds entities in an orderly manner."""
-        self.delete()
+        self.delete_dds()
+        super().__del_()
 
     on_ddsrecorder_discovered = pyqtSignal(bool, str)
     on_ddsrecorder_status = pyqtSignal(str, str, str)
@@ -137,28 +137,28 @@ class Controller(QObject):
         # Initialize command topic
         self.command_topic_data_type = ControllerCommandPubSubType()
         self.command_topic_data_type.setName('ControllerCommand')
-        type_support = fastdds.TypeSupport(self.command_topic_data_type)
-        self.participant.register_type(type_support)
+        self.command_type_support = fastdds.TypeSupport(self.command_topic_data_type)
+        self.participant.register_type(self.command_type_support)
 
-        topic_qos = fastdds.TopicQos()
-        self.participant.get_default_topic_qos(topic_qos)
+        command_topic_qos = fastdds.TopicQos()
+        self.participant.get_default_topic_qos(command_topic_qos)
         self.command_topic = self.participant.create_topic(
-            'ddsrecorder/controller',
+            '/ddsrecorder/command',
             self.command_topic_data_type.getName(),
-            topic_qos)
+            command_topic_qos)
 
         # Initialize status topic
         self.status_topic_data_type = StatusPubSubType()
         self.status_topic_data_type.setName('Status')
-        type_support = fastdds.TypeSupport(self.status_topic_data_type)
-        self.participant.register_type(type_support)
+        self.status_type_support = fastdds.TypeSupport(self.status_topic_data_type)
+        self.participant.register_type(self.status_type_support)
 
-        topic_qos = fastdds.TopicQos()
-        self.participant.get_default_topic_qos(topic_qos)
+        status_topic_qos = fastdds.TopicQos()
+        self.participant.get_default_topic_qos(status_topic_qos)
         self.status_topic = self.participant.create_topic(
-            'ddsrecorder/status',
+            '/ddsrecorder/status',
             self.status_topic_data_type.getName(),
-            topic_qos)
+            status_topic_qos)
 
         # Initialize Command writer
         publisher_qos = fastdds.PublisherQos()
@@ -176,9 +176,9 @@ class Controller(QObject):
             self.command_topic, writer_qos, self.command_writer_listener)
 
         # Initialize Status reader
-        subscriber_qos = fastdds.SubscriberQos()
-        self.participant.get_default_subscriber_qos(subscriber_qos)
-        self.subscriber = self.participant.create_subscriber(subscriber_qos)
+        self.subscriber_qos = fastdds.SubscriberQos()
+        self.participant.get_default_subscriber_qos(self.subscriber_qos)
+        self.subscriber = self.participant.create_subscriber(self.subscriber_qos)
 
         self.status_reader_listener = StatusReaderListener(self)
         reader_qos = fastdds.DataReaderQos()
@@ -209,7 +209,7 @@ class Controller(QObject):
 
         return True
 
-    def delete(self):
+    def delete_dds(self):
         """Delete DDS instances."""
         factory = fastdds.DomainParticipantFactory.get_instance()
         self.participant.delete_contained_entities()
