@@ -68,6 +68,7 @@ std::string data_type_name = "HelloWorld";
 unsigned int n_msgs = 3;
 std::string send_message = "Hello World";
 unsigned int index = 6;
+unsigned int downsampling = 3;  // should get from yaml
 
 eprosima::fastdds::dds::DataWriter* writer_;
 eprosima::fastrtps::types::DynamicType_ptr dynamic_type_;
@@ -95,16 +96,46 @@ std::vector<const char*> yml_configurations =
     )",
 };
 
+std::vector<const char*> yml_configurations_downsampling =
+{
+    R"(
+    dds:
+        domain: 222
+    recorder:
+        downsampling: 3
+        buffer-size: 5
+        event-window: 10
+    remote-controller:
+        enable: false
+        domain: 200
+        initial-state: stopped
+    specs:
+        threads: 8
+        max-depth: 100
+        max-pending-samples: 10
+        cleanup-period: 3
+
+    )",
+};
+
 YAML::Node yml;
 
 } // test
 
-std::unique_ptr<core::DdsPipe> create_recorder(std::string file_name)
+std::unique_ptr<core::DdsPipe> create_recorder(std::string file_name, bool downsampling)
 {
-    for (const char* yml_configuration : test::yml_configurations)
-    {
-        test::yml = YAML::Load(yml_configuration);
+    if (downsampling) {
+        for (const char* yml_configuration : test::yml_configurations_downsampling)
+        {
+            test::yml = YAML::Load(yml_configuration);
+        }
+    } else {
+        for (const char* yml_configuration : test::yml_configurations)
+        {
+            test::yml = YAML::Load(yml_configuration);
+        }
     }
+
     eprosima::ddsrecorder::yaml::Configuration configuration(test::yml);
 
     // Create allowed topics list
@@ -235,7 +266,7 @@ TEST(McapFileCreationTest, mcap_data_msgs)
 
     {
         // Create Recorder
-        auto recorder = create_recorder(file_name);
+        auto recorder = create_recorder(file_name, false);
 
         // Create Publisher
         create_publisher(
@@ -272,7 +303,7 @@ TEST(McapFileCreationTest, mcap_data_topic)
 
     {
         // Create recorder
-        auto recorder = create_recorder(file_name);
+        auto recorder = create_recorder(file_name, false);
 
         // Create Publisher
         create_publisher(
@@ -313,7 +344,7 @@ TEST(McapFileCreationTest, mcap_data_num_msgs)
 
    {
         // Create Recorder
-        auto recorder = create_recorder(file_name);
+        auto recorder = create_recorder(file_name, false);
 
         // Create Publisher
         create_publisher(
@@ -341,6 +372,48 @@ TEST(McapFileCreationTest, mcap_data_num_msgs)
 
     // Test data
     ASSERT_EQ(test::n_msgs, n_received_msgs);
+
+}
+
+TEST(McapFileCreationTest, mcap_data_num_msgs_downsampling)
+{
+
+    std::string file_name = "output_3_.mcap";
+
+   {
+        // Create Recorder
+        auto recorder = create_recorder(file_name, true);
+
+        // Create Publisher
+        create_publisher(
+            test::topic,
+            test::domain,
+            DataTypeKind::HELLO_WORLD);
+
+        // Send data
+        for(int i = 0; i < test::n_msgs; i++) {
+            send_sample(static_cast<uint32_t>(test::index));
+        }
+   }
+
+    // Read MCAP file
+    mcap::McapReader mcap_reader_;
+    auto status = mcap_reader_.open(file_name);
+
+    auto messages = mcap_reader_.readMessages();
+
+    unsigned int n_received_msgs = 0;
+    for (auto it = messages.begin(); it != messages.end(); it++) {
+        n_received_msgs++;
+    }
+    mcap_reader_.close();
+
+    // Test data
+    unsigned int expected_msgs = test::n_msgs / test::downsampling;
+    if (test::n_msgs % test::downsampling) {
+        expected_msgs++;
+    }
+    ASSERT_EQ(expected_msgs, n_received_msgs);
 
 }
 

@@ -25,6 +25,7 @@ set(TEST_LIST
         mcap_data_msgs
         mcap_data_topic
         mcap_data_num_msgs
+        mcap_data_num_msgs_downsampling
     )
 
 set(TEST_NEEDED_SOURCES
