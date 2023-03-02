@@ -26,6 +26,8 @@
 #include <ddspipe_participants/participant/dynamic_types/SchemaParticipant.hpp>
 
 #include <ddsrecorder_participants/mcap/McapHandler.hpp>
+#include <ddsrecorder_participants/mcap/McapHandlerConfiguration.hpp>
+
 #include <ddsrecorder_yaml/YamlReaderConfiguration.hpp>
 #include <ddsrecorder_yaml/yaml_configuration_tags.hpp>
 
@@ -47,6 +49,8 @@ using namespace eprosima::fastdds::dds;
 using namespace eprosima::ddspipe;
 using namespace eprosima::ddsrecorder;
 
+using McapHandlerState = eprosima::ddsrecorder::participants::McapHandler::StateCode;
+
 enum class DataTypeKind
 {
     HELLO_WORLD,
@@ -56,12 +60,12 @@ namespace test {
 
 // Publisher
 
-unsigned int domain = 100;
+unsigned int domain = 222;
 
 std::string topic = "TypeIntrospectionTopic";
 std::string data_type_name = "HelloWorld";
 
-unsigned int n_msgs = 2;
+unsigned int n_msgs = 3;
 std::string send_message = "Hello World";
 unsigned int index = 6;
 
@@ -74,9 +78,8 @@ std::vector<const char*> yml_configurations =
 {
     R"(
     dds:
-        domain: 100
+        domain: 222
     recorder:
-        downsampling: 3
         buffer-size: 5
         event-window: 10
     remote-controller:
@@ -119,14 +122,19 @@ std::unique_ptr<core::DdsPipe> create_recorder(std::string file_name)
         std::make_shared<eprosima::utils::SlotThreadPool>(configuration.n_threads);
 
     // Create MCAP Handler
-    std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler> mcap_handler =
-    std::make_shared<eprosima::ddsrecorder::participants::McapHandler>(
-        file_name.c_str(),
-        payload_pool,
+    eprosima::ddsrecorder::participants::McapHandlerConfiguration handler_config(
+        file_name,
         configuration.max_pending_samples,
         configuration.buffer_size,
         configuration.downsampling,
-        configuration.event_window);
+        configuration.event_window,
+        configuration.cleanup_period);
+
+    std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler> mcap_handler =
+    std::make_shared<eprosima::ddsrecorder::participants::McapHandler>(
+        handler_config,
+        payload_pool,
+        McapHandlerState::started);
 
     // Create DynTypes Participant
     auto dyn_participant = std::make_shared<eprosima::ddspipe::participants::DynTypesParticipant>(

@@ -1,8 +1,7 @@
 dds:
-  domain: 100
+  domain: 222
 
 recorder:
-  downsampling: 3
   buffer-size: 5             # Store elements in disk when buffer full
   event-window: 10           # Keep in memory messages received in time frame, to be stored when event triggered
 
