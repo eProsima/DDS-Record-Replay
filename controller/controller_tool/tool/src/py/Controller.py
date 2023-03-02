@@ -115,7 +115,8 @@ class Controller(QObject):
 
     def __del__(self):
         """Remove all dds entities in an orderly manner."""
-        self.delete()
+        self.delete_dds()
+        super().__del_()
 
     on_ddsrecorder_discovered = pyqtSignal(bool, str)
     on_ddsrecorder_status = pyqtSignal(str, str, str)
@@ -127,11 +128,11 @@ class Controller(QObject):
     def init_dds(self, dds_domain):
         """Initialize DDS entities."""
         factory = fastdds.DomainParticipantFactory.get_instance()
-        self.participant_qos = fastdds.DomainParticipantQos()
-        factory.get_default_participant_qos(self.participant_qos)
-        self.participant_qos.name('DDSRecorderController')
+        participant_qos = fastdds.DomainParticipantQos()
+        factory.get_default_participant_qos(participant_qos)
+        participant_qos.name('DDSRecorderController')
         self.participant = factory.create_participant(
-            dds_domain, self.participant_qos)
+            dds_domain, participant_qos)
 
         # Initialize command topic
         self.command_topic_data_type = ControllerCommandPubSubType()
@@ -139,12 +140,12 @@ class Controller(QObject):
         self.command_type_support = fastdds.TypeSupport(self.command_topic_data_type)
         self.participant.register_type(self.command_type_support)
 
-        self.command_topic_qos = fastdds.TopicQos()
-        self.participant.get_default_topic_qos(self.command_topic_qos)
+        command_topic_qos = fastdds.TopicQos()
+        self.participant.get_default_topic_qos(command_topic_qos)
         self.command_topic = self.participant.create_topic(
             '/ddsrecorder/command',
             self.command_topic_data_type.getName(),
-            self.command_topic_qos)
+            command_topic_qos)
 
         # Initialize status topic
         self.status_topic_data_type = StatusPubSubType()
@@ -152,27 +153,27 @@ class Controller(QObject):
         self.status_type_support = fastdds.TypeSupport(self.status_topic_data_type)
         self.participant.register_type(self.status_type_support)
 
-        self.status_topic_qos = fastdds.TopicQos()
-        self.participant.get_default_topic_qos(self.status_topic_qos)
+        status_topic_qos = fastdds.TopicQos()
+        self.participant.get_default_topic_qos(status_topic_qos)
         self.status_topic = self.participant.create_topic(
             '/ddsrecorder/status',
             self.status_topic_data_type.getName(),
-            self.status_topic_qos)
+            status_topic_qos)
 
         # Initialize Command writer
-        self.publisher_qos = fastdds.PublisherQos()
-        self.participant.get_default_publisher_qos(self.publisher_qos)
-        self.publisher = self.participant.create_publisher(self.publisher_qos)
+        publisher_qos = fastdds.PublisherQos()
+        self.participant.get_default_publisher_qos(publisher_qos)
+        self.publisher = self.participant.create_publisher(publisher_qos)
 
         self.command_writer_listener = CommandWriterListener(self)
-        self.writer_qos = fastdds.DataWriterQos()
-        self.publisher.get_default_datawriter_qos(self.writer_qos)
-        self.writer_qos.reliability().kind = fastdds.RELIABLE_RELIABILITY_QOS
-        self.writer_qos.durability().kind = fastdds.VOLATILE_DURABILITY_QOS
-        self.writer_qos.history().kind = fastdds.KEEP_LAST_HISTORY_QOS
-        self.writer_qos.history().size = 10
+        writer_qos = fastdds.DataWriterQos()
+        self.publisher.get_default_datawriter_qos(writer_qos)
+        writer_qos.reliability().kind = fastdds.RELIABLE_RELIABILITY_QOS
+        writer_qos.durability().kind = fastdds.VOLATILE_DURABILITY_QOS
+        writer_qos.history().kind = fastdds.KEEP_LAST_HISTORY_QOS
+        writer_qos.history().size = 10
         self.command_writer = self.publisher.create_datawriter(
-            self.command_topic, self.writer_qos, self.command_writer_listener)
+            self.command_topic, writer_qos, self.command_writer_listener)
 
         # Initialize Status reader
         self.subscriber_qos = fastdds.SubscriberQos()
@@ -180,14 +181,14 @@ class Controller(QObject):
         self.subscriber = self.participant.create_subscriber(self.subscriber_qos)
 
         self.status_reader_listener = StatusReaderListener(self)
-        self.reader_qos = fastdds.DataReaderQos()
-        self.subscriber.get_default_datareader_qos(self.reader_qos)
-        self.reader_qos.reliability().kind = fastdds.RELIABLE_RELIABILITY_QOS
-        self.reader_qos.durability().kind = fastdds.TRANSIENT_LOCAL_DURABILITY_QOS
-        self.reader_qos.history().kind = fastdds.KEEP_LAST_HISTORY_QOS
-        self.reader_qos.history().size = 10
+        reader_qos = fastdds.DataReaderQos()
+        self.subscriber.get_default_datareader_qos(reader_qos)
+        reader_qos.reliability().kind = fastdds.RELIABLE_RELIABILITY_QOS
+        reader_qos.durability().kind = fastdds.TRANSIENT_LOCAL_DURABILITY_QOS
+        reader_qos.history().kind = fastdds.KEEP_LAST_HISTORY_QOS
+        reader_qos.history().size = 10
         self.status_reader = self.subscriber.create_datareader(
-            self.status_topic, self.reader_qos, self.status_reader_listener)
+            self.status_topic, reader_qos, self.status_reader_listener)
 
     def publish_command(
             self,
@@ -208,7 +209,7 @@ class Controller(QObject):
 
         return True
 
-    def delete(self):
+    def delete_dds(self):
         """Delete DDS instances."""
         factory = fastdds.DomainParticipantFactory.get_instance()
         self.participant.delete_contained_entities()

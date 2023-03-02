@@ -175,11 +175,15 @@ class ControllerGUI(QMainWindow):
 
     def restart_controller(self, dds_domain=0):
         """Restart the DDS Controller if the DDS Domain changes."""
-        if (dds_domain != self.dds_domain):
-            self.dds_controller.delete()
-            self.dds_controller = Controller(
-                dds_domain=dds_domain)
-            self.dds_domain = dds_domain
+        if dds_domain != self.dds_domain:
+            if self.dds_controller.is_valid_dds_domain(dds_domain):
+                # Delete DDS entities in previous domain
+                self.dds_controller.delete_dds()
+                # Reset status
+                self.update_status(DdsRecorderStatus.CLOSED)
+                # Create DDS entities in new domain
+                self.dds_controller.init_dds(dds_domain)
+                self.dds_domain = dds_domain
 
     def init_gui(self):
         """Initialize the graphical interface and its widgets."""
@@ -303,7 +307,7 @@ class ControllerGUI(QMainWindow):
         """Publish command."""
         command = DdsRecorderControllerCommand.EVENT
         args = Controller.command_arguments_to_string(
-            Controller.argument_change_state(DdsRecorderStatus.STARTED))
+            Controller.argument_change_state(DdsRecorderStatus.RUNNING))
         self.send_command(command, args)
 
     def event_stop_button_clicked(self):
