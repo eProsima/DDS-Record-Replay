@@ -31,11 +31,27 @@ set(MODULE_FIND_PACKAGES
     ddspipe_participants
     ddspipe_yaml
     ddsrecorder_participants
-    ddsrecorder_yaml
-)
+    ddsrecorder_yaml)
+
+if(WIN32)
+    set(MODULE_FIND_PACKAGES
+        ${MODULE_FIND_PACKAGES}
+        lz4
+        zstd)
+endif()
 
 set(MODULE_DEPENDENCIES
-    ${MODULE_FIND_PACKAGES})
+    yaml-cpp
+    fastcdr
+    fastrtps
+    cpp_utils
+    ddspipe_core
+    ddspipe_participants
+    ddspipe_yaml
+    ddsrecorder_participants
+    ddsrecorder_yaml
+    $<IF:$<BOOL:${WIN32}>,lz4::lz4,lz4>
+    $<IF:$<BOOL:${WIN32}>,$<IF:$<TARGET_EXISTS:zstd::libzstd_shared>,zstd::libzstd_shared,zstd::libzstd_static>,zstd>)
 
 set(MODULE_THIRDPARTY_HEADERONLY
     filewatch

@@ -15,11 +15,15 @@ inputs:
   subpackage_dir:
     description: 'Specifies the path of the subpackage to install'
     required: true
+  cmake_prefix_path:
+    description: 'Sets CMAKE_PREFIX_PATH used for searching by FIND_XXX().'
+    required: false
+    default: ''
 runs:
   using: composite
   steps:
   - run: >
-      cmake -DCMAKE_PREFIX_PATH='C:\Program Files\gtest;C:\Program Files\yamlcpp;C:\Program Files;${{ github.workspace }}\..\fastdds\install' `
+      cmake -DCMAKE_PREFIX_PATH="${{ inputs.cmake_prefix_path }}" `
         -DCMAKE_CXX_FLAGS="/WX /EHsc" -DBUILD_TOOL_TESTS=ON -DBUILD_LIBRARY_TESTS=ON `
         ${{ inputs.cmake_extra_args }} `
         -B build\${{ inputs.subpackage }} -A x64 -T host=x64 DDS-Recorder/${{ inputs.subpackage_dir }};

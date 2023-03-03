@@ -62,7 +62,6 @@ on:
 jobs:
 
   windows-build-test:
-    if: ${{ false }}  # Disable Windows CI until LZ4 and ZSTD libraries can be installed
     runs-on: ${{ matrix.windows-version }}
     strategy:
       fail-fast: false
@@ -96,6 +95,23 @@ jobs:
         with:
           cmake_build_type: ${{ matrix.cmake-config }}
 
+      - name: Download vcpkg
+        shell: pwsh
+        run: |
+          git clone https://github.com/Microsoft/vcpkg.git ${{ github.workspace }}\vcpkg
+
+      - name: Install vcpkg
+        uses: lukka/run-vcpkg@v10
+        with:
+          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+          vcpkgGitCommitId: '64fabc9401d9296273ed67cd8c39f92c113f9ea5'
+
+      - name: Install lz4 and zstd
+        shell: pwsh
+        run: |
+          vcpkg install lz4 zstd --triplet x64-windows --vcpkg-root ${{ env.VCPKG_ROOT }}
+          echo "vcpkg_install_path=${{ github.workspace }}\vcpkg\installed\x64-windows" | Out-File -FilePath $env:GITHUB_ENV -Append
+
       - name: Get build eProsima dependencies Job Id
         shell: pwsh
         run: |
@@ -126,6 +142,7 @@ jobs:
           cmake_build_type: ${{ matrix.cmake-config }}
           subpackage: ddsrecorder_participants
           subpackage_dir: ddsrecorder_participants
+          cmake_prefix_path: 'C:\Program Files\gtest;C:\Program Files\yamlcpp;${{ github.workspace }}\..\fastdds\install;${{ env.vcpkg_install_path }}'
 
       - name: Install ddsrecorder_yaml
         uses: ./DDS-Recorder/.github/actions/install-recorder-subpackage-windows
@@ -133,6 +150,7 @@ jobs:
           cmake_build_type: ${{ matrix.cmake-config }}
           subpackage: ddsrecorder_yaml
           subpackage_dir: ddsrecorder_yaml
+          cmake_prefix_path: 'C:\Program Files\gtest;C:\Program Files\yamlcpp;${{ github.workspace }}\..\fastdds\install;${{ env.vcpkg_install_path }}'
 
       - name: Install ddsrecorder
         uses: ./DDS-Recorder/.github/actions/install-recorder-subpackage-windows
@@ -140,6 +158,7 @@ jobs:
           cmake_build_type: ${{ matrix.cmake-config }}
           subpackage: ddsrecorder
           subpackage_dir: tools/ddsrecorder
+          cmake_prefix_path: 'C:\Program Files\gtest;C:\Program Files\yamlcpp;${{ github.workspace }}\..\fastdds\install;${{ env.vcpkg_install_path }}'
 
 
   ubuntu-main-test:

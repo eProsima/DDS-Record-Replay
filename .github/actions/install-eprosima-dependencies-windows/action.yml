@@ -13,8 +13,8 @@ inputs:
     description: 'Branch or tag of Dev Utils repository (https://github.com/eProsima/dev-utils)'
     required: true
     default: 'main'
-  pipe_branch:
-        description: 'Branch or tag of DDS Router repository (https://github.com/eProsima/DDS-Router)'
+  ddspipe_branch:
+        description: 'Branch or tag of DDS Pipe repository (https://github.com/eProsima/DDS-Pipe)'
         required: true
         default: 'main'
 runs:
@@ -79,7 +79,7 @@ runs:
     - name: Install DDS Pipe
       shell: pwsh
       run: >
-        git clone https://github.com/eProsima/DDS-Pipe.git --branch ${{ inputs.pipe_branch }};
+        git clone https://github.com/eProsima/DDS-Pipe.git --branch ${{ inputs.ddspipe_branch }};
         cmake `
           -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\eprosima\install `
           -DCMAKE_PREFIX_PATH='C:\Program Files\yamlcpp;${{ github.workspace }}\eprosima\install' `
@@ -93,13 +93,13 @@ runs:
           -DCMAKE_CXX_FLAGS="/WX /EHsc" `
           ${{ env.W2019_CMAKE_EXTRA_ARGS }} `
           -Ax64 -T host=x64 `
-          -B build\ddspipe_yaml -S DDS-Pipe\ddspipe_yaml;
-        cmake --build build\ddspipe_yaml --config ${{ inputs.cmake_build_type }} --target install;
+          -B build\ddspipe_participants -S DDS-Pipe\ddspipe_participants;
+        cmake --build build\ddspipe_participants --config ${{ inputs.cmake_build_type }} --target install;
         cmake `
           -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\eprosima\install `
           -DCMAKE_PREFIX_PATH='C:\Program Files\yamlcpp;${{ github.workspace }}\eprosima\install' `
           -DCMAKE_CXX_FLAGS="/WX /EHsc" `
           ${{ env.W2019_CMAKE_EXTRA_ARGS }} `
           -Ax64 -T host=x64 `
-          -B build\ddspipe_participants -S DDS-Pipe\ddspipe_participants;
-        cmake --build build\ddspipe_participants --config ${{ inputs.cmake_build_type }} --target install;
+          -B build\ddspipe_yaml -S DDS-Pipe\ddspipe_yaml;
+        cmake --build build\ddspipe_yaml --config ${{ inputs.cmake_build_type }} --target install;

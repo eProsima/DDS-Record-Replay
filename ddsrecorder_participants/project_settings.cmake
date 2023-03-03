@@ -29,16 +29,27 @@ set(MODULE_FIND_PACKAGES
     ddspipe_core
     ddspipe_participants)
 
+if(WIN32)
+    set(MODULE_FIND_PACKAGES
+        ${MODULE_FIND_PACKAGES}
+        lz4
+        zstd)
+endif()
+
 set(MODULE_THIRDPARTY_HEADERONLY
     mcap)
 
 set(fastrtps_MINIMUM_VERSION "2.8")
 
 set(MODULE_DEPENDENCIES
-    lz4
-    zstd
     $<$<BOOL:${WIN32}>:iphlpapi$<SEMICOLON>Shlwapi>
-    ${MODULE_FIND_PACKAGES})
+    fastcdr
+    fastrtps
+    cpp_utils
+    ddspipe_core
+    ddspipe_participants
+    $<IF:$<BOOL:${WIN32}>,lz4::lz4,lz4>
+    $<IF:$<BOOL:${WIN32}>,$<IF:$<TARGET_EXISTS:zstd::libzstd_shared>,zstd::libzstd_shared,zstd::libzstd_static>,zstd>)
 
 set(MODULE_CPP_VERSION
     C++17)
