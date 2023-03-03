@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+########################
+# McapFileCreationTest #
+########################
+
 set(TEST_NAME McapFileCreationTest)
 
 set(TEST_SOURCES
@@ -26,6 +30,43 @@ set(TEST_LIST
         mcap_data_topic
         mcap_data_num_msgs
         mcap_data_num_msgs_downsampling
+    )
+
+set(TEST_NEEDED_SOURCES
+    )
+
+set(TEST_EXTRA_HEADERS
+    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world
+    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types)
+
+add_blackbox_executable(
+    "${TEST_NAME}"
+    "${TEST_SOURCES}"
+    "${TEST_LIST}"
+    "${TEST_NEEDED_SOURCES}"
+    "${TEST_EXTRA_HEADERS}"
+)
+
+######################################
+# McapFileCreationTestWithController #
+######################################
+
+set(TEST_NAME McapFileCreationTestWithController)
+
+set(TEST_SOURCES
+        McapFileCreationTestWithController.cpp
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world/HelloWorld.cxx
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world/HelloWorldPubSubTypes.cxx
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world/HelloWorldTypeObject.cxx
+    )
+
+set(TEST_LIST
+        controller_paused_running
+        controller_running_paused
+        controller_running_stopped
+        controller_stopped_running
+        controller_close_running_max_buf
+        controller_close_running_not_max_buf
     )
 
 set(TEST_NEEDED_SOURCES
