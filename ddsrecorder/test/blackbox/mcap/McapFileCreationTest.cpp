@@ -390,7 +390,7 @@ TEST(McapFileCreationTest, mcap_data_num_msgs)
 TEST(McapFileCreationTest, mcap_data_num_msgs_downsampling)
 {
 
-    std::string file_name = "output_3_.mcap";
+    std::string file_name = "output_4_.mcap";
 
    {
         // Create Recorder

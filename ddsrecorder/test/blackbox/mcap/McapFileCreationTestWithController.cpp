@@ -299,7 +299,7 @@ unsigned int record(
 
 TEST(McapFileCreationTestWithController, controller_paused_running)
 {
-    std::string file_name = "output_4_.mcap";
+    std::string file_name = "output_5_.mcap";
 
     int n_data_1 = 10;
     int n_data_2 = 5;
@@ -317,7 +317,7 @@ TEST(McapFileCreationTestWithController, controller_paused_running)
 
 TEST(McapFileCreationTestWithController, controller_running_paused)
 {
-    std::string file_name = "output_5_.mcap";
+    std::string file_name = "output_6_.mcap";
 
     int n_data_1 = 10;
     int n_data_2 = 5;
@@ -335,7 +335,7 @@ TEST(McapFileCreationTestWithController, controller_running_paused)
 
 TEST(McapFileCreationTestWithController, controller_running_stopped)
 {
-    std::string file_name = "output_6_.mcap";
+    std::string file_name = "output_7_.mcap";
 
     int n_data_1 = 10;
     int n_data_2 = 5;
@@ -353,7 +353,7 @@ TEST(McapFileCreationTestWithController, controller_running_stopped)
 
 TEST(McapFileCreationTestWithController, controller_stopped_running)
 {
-    std::string file_name = "output_7_.mcap";
+    std::string file_name = "output_8_.mcap";
 
     int n_data_1 = 10;
     int n_data_2 = 5;
@@ -371,7 +371,7 @@ TEST(McapFileCreationTestWithController, controller_stopped_running)
 
 TEST(McapFileCreationTestWithController, controller_running_max_buf)
 {
-    std::string file_name = "output_8_.mcap";
+    std::string file_name = "output_9_.mcap";
 
     int n_data_1 = 6;
     int n_data_2 = 6;
@@ -389,7 +389,7 @@ TEST(McapFileCreationTestWithController, controller_running_max_buf)
 
 TEST(McapFileCreationTestWithController, controller_running_not_max_buf)
 {
-        std::string file_name = "output_9_.mcap";
+    std::string file_name = "output_10_.mcap";
 
     int n_data_1 = 1;
     int n_data_2 = 1;
