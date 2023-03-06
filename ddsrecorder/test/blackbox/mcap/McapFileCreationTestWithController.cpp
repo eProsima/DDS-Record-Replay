@@ -84,7 +84,7 @@ std::vector<const char*> yml_configurations =
         domain: 223
     recorder:
         buffer-size: 3
-        event-window: 2
+        event-window: 3
     remote-controller:
         enable: true
         domain: 222
@@ -295,6 +295,9 @@ std::tuple<unsigned int, double> record(
             }
         }
 
+        if (!time_sleep) {
+            time_sleep = rand() % 2;
+        }
         sleep(time_sleep);
 
         for (int i = 0; i < secound_round; i++)
@@ -538,7 +541,7 @@ TEST(McapFileCreationTestWithController, controller_paused_event_less_window)
         McapHandlerState::paused,
         n_data_1, n_data_2,
         McapHandlerState::paused,
-        1);
+        1, 1);
 
     unsigned int n_received_msgs = std::get<0>(recording);
     double max_timestamp = std::get<1>(recording);
@@ -561,7 +564,7 @@ TEST(McapFileCreationTestWithController, controller_paused_event_max_window)
         McapHandlerState::paused,
         n_data_1, n_data_2,
         McapHandlerState::paused,
-        1, 2);
+        1, 3);
 
     unsigned int n_received_msgs = std::get<0>(recording);
     double max_timestamp = std::get<1>(recording);
