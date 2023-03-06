@@ -530,7 +530,7 @@ TEST(McapFileCreationTestWithController, controller_paused_event_less_window)
     unsigned int n_received_msgs = std::get<0>(recording);
     double max_timestamp = std::get<1>(recording);
     unsigned int event_window = test::yml["recorder"]["event-window"].as<uint64_t>();
-    std::cout << " data1 " << n_data_1 << " data 2 " << n_data_2 << std::endl;
+
     ASSERT_EQ(n_received_msgs, (n_data_1+n_data_2));
     ASSERT_LE(max_timestamp, event_window);
 
