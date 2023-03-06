@@ -47,14 +47,14 @@ add_blackbox_executable(
     "${TEST_EXTRA_HEADERS}"
 )
 
-######################################
-# McapFileCreationTestWithController #
-######################################
+###########################################
+# McapFileCreationStateTransitionTest.cpp #
+###########################################
 
-set(TEST_NAME McapFileCreationTestWithController)
+set(TEST_NAME McapFileCreationStateTransitionTest)
 
 set(TEST_SOURCES
-        McapFileCreationTestWithController.cpp
+        McapFileCreationStateTransitionTest.cpp
         ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world/HelloWorld.cxx
         ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world/HelloWorldPubSubTypes.cxx
         ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world/HelloWorldTypeObject.cxx

@@ -36,14 +36,14 @@
 #include <ddsrecorder_yaml/yaml_configuration_tags.hpp>
 
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
+#include <fastdds/dds/publisher/DataWriter.hpp>
+#include <fastdds/dds/publisher/Publisher.hpp>
 #include <fastrtps/types/DynamicDataPtr.h>
 #include <fastrtps/types/DynamicType.h>
 #include <fastrtps/types/DynamicDataFactory.h>
 #include <fastrtps/types/TypeObjectFactory.h>
 
 #include <mcap/reader.hpp>
-
-#include "command_receiver/CommandReceiver.hpp"
 
 #include "types/hello_world/HelloWorldTypeObject.h"
 #include "types/hello_world/HelloWorldPubSubTypes.h"
@@ -54,8 +54,6 @@ using namespace eprosima::fastdds::dds;
 using namespace eprosima::ddspipe;
 using namespace eprosima::ddsrecorder;
 
-using CommandCode = eprosima::ddsrecorder::receiver::CommandCode;
-using CommandCodeBuilder = eprosima::ddsrecorder::receiver::CommandCodeBuilder;
 using McapHandlerState = eprosima::ddsrecorder::participants::McapHandler::StateCode;
 
 enum class DataTypeKind
@@ -350,7 +348,7 @@ std::tuple<unsigned int, double> record(
     return std::tuple<unsigned int, double>{n_received_msgs, max_timestamp};
 }
 
-TEST(McapFileCreationTestWithController, controller_paused_running)
+TEST(McapFileCreationStateTransitionTest, controller_paused_running)
 {
     std::string file_name = "output_5_.mcap";
 
@@ -370,7 +368,7 @@ TEST(McapFileCreationTestWithController, controller_paused_running)
 
 }
 
-TEST(McapFileCreationTestWithController, controller_running_paused)
+TEST(McapFileCreationStateTransitionTest, controller_running_paused)
 {
     std::string file_name = "output_6_.mcap";
 
@@ -390,7 +388,7 @@ TEST(McapFileCreationTestWithController, controller_running_paused)
 
 }
 
-TEST(McapFileCreationTestWithController, controller_running_stopped)
+TEST(McapFileCreationStateTransitionTest, controller_running_stopped)
 {
     std::string file_name = "output_7_.mcap";
 
@@ -410,7 +408,7 @@ TEST(McapFileCreationTestWithController, controller_running_stopped)
 
 }
 
-TEST(McapFileCreationTestWithController, controller_stopped_running)
+TEST(McapFileCreationStateTransitionTest, controller_stopped_running)
 {
     std::string file_name = "output_8_.mcap";
 
@@ -430,7 +428,7 @@ TEST(McapFileCreationTestWithController, controller_stopped_running)
 
 }
 
-TEST(McapFileCreationTestWithController, controller_paused_stopped)
+TEST(McapFileCreationStateTransitionTest, controller_paused_stopped)
 {
     std::string file_name = "output_9_.mcap";
 
@@ -450,7 +448,7 @@ TEST(McapFileCreationTestWithController, controller_paused_stopped)
 
 }
 
-TEST(McapFileCreationTestWithController, controller_stopped_paused)
+TEST(McapFileCreationStateTransitionTest, controller_stopped_paused)
 {
     std::string file_name = "output_10_.mcap";
 
@@ -470,7 +468,7 @@ TEST(McapFileCreationTestWithController, controller_stopped_paused)
 
 }
 
-TEST(McapFileCreationTestWithController, controller_running)
+TEST(McapFileCreationStateTransitionTest, controller_running)
 {
     std::string file_name = "output_12_.mcap";
 
@@ -490,7 +488,7 @@ TEST(McapFileCreationTestWithController, controller_running)
 
 }
 
-TEST(McapFileCreationTestWithController, controller_paused)
+TEST(McapFileCreationStateTransitionTest, controller_paused)
 {
     std::string file_name = "output_13_.mcap";
 
@@ -510,7 +508,7 @@ TEST(McapFileCreationTestWithController, controller_paused)
 
 }
 
-TEST(McapFileCreationTestWithController, controller_stopped)
+TEST(McapFileCreationStateTransitionTest, controller_stopped)
 {
     std::string file_name = "output_14_.mcap";
 
@@ -530,7 +528,7 @@ TEST(McapFileCreationTestWithController, controller_stopped)
 
 }
 
-TEST(McapFileCreationTestWithController, controller_paused_event_less_window)
+TEST(McapFileCreationStateTransitionTest, controller_paused_event_less_window)
 {
     std::string file_name = "output_15_.mcap";
 
@@ -553,7 +551,7 @@ TEST(McapFileCreationTestWithController, controller_paused_event_less_window)
 
 }
 
-TEST(McapFileCreationTestWithController, controller_paused_event_max_window)
+TEST(McapFileCreationStateTransitionTest, controller_paused_event_max_window)
 {
     std::string file_name = "output_16_.mcap";
 

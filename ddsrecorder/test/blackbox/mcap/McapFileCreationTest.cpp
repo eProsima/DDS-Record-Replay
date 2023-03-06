@@ -32,6 +32,8 @@
 #include <ddsrecorder_yaml/yaml_configuration_tags.hpp>
 
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
+#include <fastdds/dds/publisher/DataWriter.hpp>
+#include <fastdds/dds/publisher/Publisher.hpp>
 #include <fastrtps/types/DynamicDataPtr.h>
 #include <fastrtps/types/DynamicType.h>
 #include <fastrtps/types/DynamicDataFactory.h>
@@ -39,12 +41,12 @@
 
 #include <mcap/reader.hpp>
 
-#include "command_receiver/CommandReceiver.hpp"
-
 #include "types/hello_world/HelloWorldTypeObject.h"
 #include "types/hello_world/HelloWorldPubSubTypes.h"
 
 #include <iostream>
+#include <thread>
+#include <chrono>
 
 using namespace eprosima::fastdds::dds;
 using namespace eprosima::ddspipe;
@@ -84,16 +86,6 @@ std::vector<const char*> yml_configurations =
     recorder:
         buffer-size: 5
         event-window: 10
-    remote-controller:
-        enable: false
-        domain: 200
-        initial-state: stopped
-    specs:
-        threads: 8
-        max-depth: 100
-        max-pending-samples: 10
-        cleanup-period: 3
-
     )",
 };
 
@@ -106,16 +98,6 @@ std::vector<const char*> yml_configurations_downsampling =
         downsampling: 3
         buffer-size: 5
         event-window: 10
-    remote-controller:
-        enable: false
-        domain: 200
-        initial-state: stopped
-    specs:
-        threads: 8
-        max-depth: 100
-        max-pending-samples: 10
-        cleanup-period: 3
-
     )",
 };
 
@@ -252,7 +234,8 @@ void create_publisher(
 }
 
 eprosima::fastrtps::types::DynamicData_ptr send_sample(
-        uint32_t index)
+        uint32_t index
+        )
 {
     // Create and initialize new dynamic data
     eprosima::fastrtps::types::DynamicData_ptr dynamic_data_;
@@ -264,40 +247,53 @@ eprosima::fastrtps::types::DynamicData_ptr send_sample(
     dynamic_data_->set_string_value(test::send_message, 1);
     test::writer_->write(dynamic_data_.get());
 
-    usleep(100000);   // microsecond intervals - dont change
+    logInfo(DDSRECORDER_EXECUTION, "Message published.");
 
-    logUser(DDSRECORDER_EXECUTION, "Message published.");
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     return dynamic_data_;
+}
+
+eprosima::fastrtps::types::DynamicData_ptr record(
+    std::string file_name,
+    unsigned int num_msgs = 1,
+    bool downsampling = false)
+{
+    eprosima::fastrtps::types::DynamicData_ptr send_data;
+
+    // Create Recorder
+    auto recorder = create_recorder(file_name, downsampling);
+
+    // Create Publisher
+    create_publisher(
+        test::topic,
+        test::domain,
+        DataTypeKind::HELLO_WORLD);
+
+    // Send data
+    for (unsigned int i = 0; i < num_msgs; i++)
+    {
+        send_data = send_sample(static_cast<uint32_t>(test::index));
+    }
+
+    return send_data;
 }
 
 TEST(McapFileCreationTest, mcap_data_msgs)
 {
 
     std::string file_name = "output_1_.mcap";
-    eprosima::fastrtps::types::DynamicData_ptr sended_data;
-    {
-        // Create Recorder
-        auto recorder = create_recorder(file_name, false);
-
-        // Create Publisher
-        create_publisher(
-            test::topic,
-            test::domain,
-            DataTypeKind::HELLO_WORLD);
-
-        // Send data
-        sended_data = send_sample(static_cast<uint32_t>(test::index));
-    }
+    eprosima::fastrtps::types::DynamicData_ptr send_data;
+    send_data = record(file_name);
 
     eprosima::fastrtps::types::DynamicPubSubType pubsubType;
     eprosima::fastrtps::rtps::SerializedPayload_t payload;
     payload.reserve(
         pubsubType.getSerializedSizeProvider(
-            sended_data.get()
+            send_data.get()
             )()
         );
-    pubsubType.serialize(sended_data.get(), &payload);
+    pubsubType.serialize(send_data.get(), &payload);
 
     // Read MCAP file
     mcap::McapReader mcap_reader_;
@@ -311,7 +307,7 @@ TEST(McapFileCreationTest, mcap_data_msgs)
         auto received_msg = reinterpret_cast<unsigned char const*>(it->message.data);
         for (int i = 0; i < payload.length; i++)
         {
-            ASSERT_EQ(payload.data[i], received_msg[i]) << "wrong data ¡¡";
+            ASSERT_EQ(payload.data[i], received_msg[i]) << "wrong data !!";
         }
         ASSERT_EQ(payload.length, it->message.dataSize) << "length fails !!";
     }
@@ -324,20 +320,7 @@ TEST(McapFileCreationTest, mcap_data_topic)
 
     std::string file_name = "output_2_.mcap";
 
-    {
-        // Create recorder
-        auto recorder = create_recorder(file_name, false);
-
-        // Create Publisher
-        create_publisher(
-            test::topic,
-            test::domain,
-            DataTypeKind::HELLO_WORLD);
-
-        // Send data
-        send_sample(static_cast<uint32_t>(test::index));
-    }
-
+    record(file_name);
 
     // Read MCAP file
     mcap::McapReader mcap_reader_;
@@ -366,22 +349,7 @@ TEST(McapFileCreationTest, mcap_data_num_msgs)
 
     std::string file_name = "output_3_.mcap";
 
-    {
-        // Create Recorder
-        auto recorder = create_recorder(file_name, false);
-
-        // Create Publisher
-        create_publisher(
-            test::topic,
-            test::domain,
-            DataTypeKind::HELLO_WORLD);
-
-        // Send data
-        for (int i = 0; i < test::n_msgs; i++)
-        {
-            send_sample(static_cast<uint32_t>(test::index));
-        }
-    }
+    record(file_name, test::n_msgs);
 
     // Read MCAP file
     mcap::McapReader mcap_reader_;
@@ -406,22 +374,7 @@ TEST(McapFileCreationTest, mcap_data_num_msgs_downsampling)
 
     std::string file_name = "output_4_.mcap";
 
-    {
-        // Create Recorder
-        auto recorder = create_recorder(file_name, true);
-
-        // Create Publisher
-        create_publisher(
-            test::topic,
-            test::domain,
-            DataTypeKind::HELLO_WORLD);
-
-        // Send data
-        for (int i = 0; i < test::n_msgs; i++)
-        {
-            send_sample(static_cast<uint32_t>(test::index));
-        }
-    }
+    record(file_name, test::n_msgs, true);
 
     // Read MCAP file
     mcap::McapReader mcap_reader_;
