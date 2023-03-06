@@ -48,7 +48,7 @@
 #include "types/hello_world/HelloWorldTypeObject.h"
 #include "types/hello_world/HelloWorldPubSubTypes.h"
 
-#include<iostream>
+#include <iostream>
 
 using namespace eprosima::fastdds::dds;
 using namespace eprosima::ddspipe;
@@ -102,10 +102,10 @@ YAML::Node yml;
 } // test
 
 std::unique_ptr<core::DdsPipe> create_recorder(
-    eprosima::ddsrecorder::yaml::Configuration configuration,
-    std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler>& mcap_handler,
-    std::string file_name,
-    McapHandlerState mcap_handler_state)
+        eprosima::ddsrecorder::yaml::Configuration configuration,
+        std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler>& mcap_handler,
+        std::string file_name,
+        McapHandlerState mcap_handler_state)
 {
 
     // Create allowed topics list
@@ -114,13 +114,13 @@ std::unique_ptr<core::DdsPipe> create_recorder(
         configuration.blocklist);
     // Create Discovery Database
     std::shared_ptr<core::DiscoveryDatabase> discovery_database =
-        std::make_shared<core::DiscoveryDatabase>();
+            std::make_shared<core::DiscoveryDatabase>();
     // Create Payload Pool
     std::shared_ptr<core::PayloadPool> payload_pool =
-        std::make_shared<core::FastPayloadPool>();
+            std::make_shared<core::FastPayloadPool>();
     // Create Thread Pool
     std::shared_ptr<eprosima::utils::SlotThreadPool> thread_pool =
-        std::make_shared<eprosima::utils::SlotThreadPool>(configuration.n_threads);
+            std::make_shared<eprosima::utils::SlotThreadPool>(configuration.n_threads);
 
     // Create MCAP Handler
     eprosima::ddsrecorder::participants::McapHandlerConfiguration handler_config(
@@ -152,17 +152,17 @@ std::unique_ptr<core::DdsPipe> create_recorder(
 
     // Create and populate Participant Database
     std::shared_ptr<core::ParticipantsDatabase> participant_database =
-        std::make_shared<core::ParticipantsDatabase>();
+            std::make_shared<core::ParticipantsDatabase>();
 
     // Populate Participant Database
     participant_database->add_participant(
         dyn_participant->id(),
         dyn_participant
-    );
+        );
     participant_database->add_participant(
         recorder_participant->id(),
         recorder_participant
-    );
+        );
 
     return std::make_unique<core::DdsPipe>(
         allowed_topics,
@@ -172,13 +172,13 @@ std::unique_ptr<core::DdsPipe> create_recorder(
         thread_pool,
         configuration.builtin_topics,
         true
-    );
+        );
 }
 
 void create_publisher(
-    std::string topic_name,
-    uint32_t domain,
-    DataTypeKind data_type_kind)
+        std::string topic_name,
+        uint32_t domain,
+        DataTypeKind data_type_kind)
 {
     eprosima::fastdds::dds::DomainParticipantQos pqos;
     pqos.name("TypeIntrospectionExample_Participant_Publisher");
@@ -186,14 +186,15 @@ void create_publisher(
     pqos.wire_protocol().builtin.typelookup_config.use_server = true;
 
     // Create the Participant
-    eprosima::fastdds::dds::DomainParticipant* participant_ = DomainParticipantFactory::get_instance()->create_participant(domain, pqos);
+    eprosima::fastdds::dds::DomainParticipant* participant_ =
+            DomainParticipantFactory::get_instance()->create_participant(domain, pqos);
 
     // Register the type
     registerHelloWorldTypes();
     test::dynamic_type_ = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->build_dynamic_type(
-            test::data_type_name,
-            GetHelloWorldIdentifier(true),
-            GetHelloWorldObject(true));
+        test::data_type_name,
+        GetHelloWorldIdentifier(true),
+        GetHelloWorldObject(true));
 
     TypeSupport type(new eprosima::fastrtps::types::DynamicPubSubType(test::dynamic_type_));
     // Set type so introspection info is sent
@@ -206,13 +207,15 @@ void create_publisher(
     eprosima::fastdds::dds::Publisher* publisher_ = participant_->create_publisher(PUBLISHER_QOS_DEFAULT, nullptr);
 
     // Create the DDS Topic
-    eprosima::fastdds::dds::Topic* topic_ = participant_->create_topic(topic_name, test::data_type_name, TOPIC_QOS_DEFAULT);
+    eprosima::fastdds::dds::Topic* topic_ = participant_->create_topic(topic_name, test::data_type_name,
+                    TOPIC_QOS_DEFAULT);
 
     // Create the DDS DataWriter
     test::writer_ = publisher_->create_datawriter(topic_, DATAWRITER_QOS_DEFAULT, nullptr);
 }
 
-eprosima::fastrtps::types::DynamicData_ptr send_sample() {
+eprosima::fastrtps::types::DynamicData_ptr send_sample()
+{
     // Create and initialize new dynamic data
     eprosima::fastrtps::types::DynamicData_ptr dynamic_data_;
     dynamic_data_ = eprosima::fastrtps::types::DynamicDataFactory::get_instance()->create_data(test::dynamic_type_);
@@ -231,13 +234,13 @@ eprosima::fastrtps::types::DynamicData_ptr send_sample() {
 }
 
 std::tuple<unsigned int, double> record(
-    std::string file_name,
-    McapHandlerState init_state,
-    int first_round,
-    int secound_round,
-    McapHandlerState current_state,
-    bool event,
-    int time_sleep = 0)
+        std::string file_name,
+        McapHandlerState init_state,
+        int first_round,
+        int secound_round,
+        McapHandlerState current_state,
+        bool event,
+        int time_sleep = 0)
 {
     {
         // Configuration
@@ -257,44 +260,52 @@ std::tuple<unsigned int, double> record(
         std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler> mcap_handler;
 
         std::unique_ptr<core::DdsPipe> recorder;
-        if (init_state == McapHandlerState::stopped) {
+        if (init_state == McapHandlerState::stopped)
+        {
             recorder = create_recorder(configuration, mcap_handler, file_name, McapHandlerState::started);
             usleep(100000);
             mcap_handler->stop();
-        } else {
+        }
+        else
+        {
             recorder = create_recorder(configuration, mcap_handler, file_name, init_state);
         }
 
         // Send data
-        for(int i = 0; i < first_round; i++) {
+        for (int i = 0; i < first_round; i++)
+        {
             send_sample();
         }
 
-        if (init_state != current_state) {
+        if (init_state != current_state)
+        {
             switch (current_state)
             {
-            case McapHandlerState::started:
-                mcap_handler->start();
-                break;
-            case McapHandlerState::stopped:
-                mcap_handler->stop();
-                break;
-            case McapHandlerState::paused:
-                mcap_handler->pause();
-                break;
-            default:
-                break;
+                case McapHandlerState::started:
+                    mcap_handler->start();
+                    break;
+                case McapHandlerState::stopped:
+                    mcap_handler->stop();
+                    break;
+                case McapHandlerState::paused:
+                    mcap_handler->pause();
+                    break;
+                default:
+                    break;
             }
         }
 
         sleep(time_sleep);
 
-        for(int i = 0; i < secound_round; i++) {
+        for (int i = 0; i < secound_round; i++)
+        {
             send_sample();
         }
 
-        if (event && init_state == McapHandlerState::paused) {
-            if (init_state == current_state){
+        if (event && init_state == McapHandlerState::paused)
+        {
+            if (init_state == current_state)
+            {
                 mcap_handler->trigger_event();
             }
             // else {
@@ -319,12 +330,14 @@ std::tuple<unsigned int, double> record(
 
     unsigned int n_received_msgs = 0;
     uint64_t actual_time = std::chrono::duration_cast<std::chrono::nanoseconds>
-              (std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+                (std::chrono::high_resolution_clock::now().time_since_epoch()).count();
     double max_timestamp = 0;
-    for (auto it = messages.begin(); it != messages.end(); it++) {
+    for (auto it = messages.begin(); it != messages.end(); it++)
+    {
         n_received_msgs++;
-        double time_seconds = ((actual_time)-(it->message.publishTime)) * pow(10.0, -9.0);
-        if (time_seconds > max_timestamp) {
+        double time_seconds = ((actual_time) - (it->message.publishTime)) * pow(10.0, -9.0);
+        if (time_seconds > max_timestamp)
+        {
             max_timestamp = time_seconds;
         }
     }
@@ -341,11 +354,11 @@ TEST(McapFileCreationTestWithController, controller_paused_running)
     int n_data_2 = rand() % 10 + 1;
 
     auto recording = record(
-                        file_name,
-                        McapHandlerState::paused,
-                        n_data_1, n_data_2,
-                        McapHandlerState::started,
-                        0);
+        file_name,
+        McapHandlerState::paused,
+        n_data_1, n_data_2,
+        McapHandlerState::started,
+        0);
 
     unsigned int n_received_msgs = std::get<0>(recording);
 
@@ -361,11 +374,11 @@ TEST(McapFileCreationTestWithController, controller_running_paused)
     int n_data_2 = rand() % 10 + 1;
 
     auto recording = record(
-                        file_name,
-                        McapHandlerState::started,
-                        n_data_1, n_data_2,
-                        McapHandlerState::paused,
-                        0);
+        file_name,
+        McapHandlerState::started,
+        n_data_1, n_data_2,
+        McapHandlerState::paused,
+        0);
 
     unsigned int n_received_msgs = std::get<0>(recording);
 
@@ -381,11 +394,11 @@ TEST(McapFileCreationTestWithController, controller_running_stopped)
     int n_data_2 = rand() % 10 + 1;
 
     auto recording = record(
-                        file_name,
-                        McapHandlerState::started,
-                        n_data_1, n_data_2,
-                        McapHandlerState::stopped,
-                        0);
+        file_name,
+        McapHandlerState::started,
+        n_data_1, n_data_2,
+        McapHandlerState::stopped,
+        0);
 
     unsigned int n_received_msgs = std::get<0>(recording);
 
@@ -401,11 +414,11 @@ TEST(McapFileCreationTestWithController, controller_stopped_running)
     int n_data_2 = rand() % 10 + 1;
 
     auto recording = record(
-                        file_name,
-                        McapHandlerState::stopped,
-                        n_data_1, n_data_2,
-                        McapHandlerState::started,
-                        0);
+        file_name,
+        McapHandlerState::stopped,
+        n_data_1, n_data_2,
+        McapHandlerState::started,
+        0);
 
     unsigned int n_received_msgs = std::get<0>(recording);
 
@@ -421,11 +434,11 @@ TEST(McapFileCreationTestWithController, controller_paused_stopped)
     int n_data_2 = rand() % 10 + 1;
 
     auto recording = record(
-                        file_name,
-                        McapHandlerState::paused,
-                        n_data_1, n_data_2,
-                        McapHandlerState::stopped,
-                        0);
+        file_name,
+        McapHandlerState::paused,
+        n_data_1, n_data_2,
+        McapHandlerState::stopped,
+        0);
 
     unsigned int n_received_msgs = std::get<0>(recording);
 
@@ -441,11 +454,11 @@ TEST(McapFileCreationTestWithController, controller_stopped_paused)
     int n_data_2 = rand() % 10 + 1;
 
     auto recording = record(
-                        file_name,
-                        McapHandlerState::stopped,
-                        n_data_1, n_data_2,
-                        McapHandlerState::paused,
-                        0);
+        file_name,
+        McapHandlerState::stopped,
+        n_data_1, n_data_2,
+        McapHandlerState::paused,
+        0);
 
     unsigned int n_received_msgs = std::get<0>(recording);
 
@@ -461,15 +474,15 @@ TEST(McapFileCreationTestWithController, controller_running)
     int n_data_2 = rand() % 10 + 1;
 
     auto recording = record(
-                        file_name,
-                        McapHandlerState::started,
-                        n_data_1, n_data_2,
-                        McapHandlerState::started,
-                        0);
+        file_name,
+        McapHandlerState::started,
+        n_data_1, n_data_2,
+        McapHandlerState::started,
+        0);
 
     unsigned int n_received_msgs = std::get<0>(recording);
 
-    ASSERT_EQ(n_received_msgs, (n_data_1+n_data_2));
+    ASSERT_EQ(n_received_msgs, (n_data_1 + n_data_2));
 
 }
 
@@ -481,11 +494,11 @@ TEST(McapFileCreationTestWithController, controller_paused)
     int n_data_2 = rand() % 10 + 1;
 
     auto recording = record(
-                        file_name,
-                        McapHandlerState::paused,
-                        n_data_1, n_data_2,
-                        McapHandlerState::paused,
-                        0);
+        file_name,
+        McapHandlerState::paused,
+        n_data_1, n_data_2,
+        McapHandlerState::paused,
+        0);
 
     unsigned int n_received_msgs = std::get<0>(recording);
 
@@ -501,11 +514,11 @@ TEST(McapFileCreationTestWithController, controller_stopped)
     int n_data_2 = rand() % 10 + 1;
 
     auto recording = record(
-                        file_name,
-                        McapHandlerState::stopped,
-                        n_data_1, n_data_2,
-                        McapHandlerState::stopped,
-                        0);
+        file_name,
+        McapHandlerState::stopped,
+        n_data_1, n_data_2,
+        McapHandlerState::stopped,
+        0);
 
     unsigned int n_received_msgs = std::get<0>(recording);
 
@@ -521,17 +534,17 @@ TEST(McapFileCreationTestWithController, controller_paused_event_less_window)
     int n_data_2 = rand() % 10 + 1;
 
     auto recording = record(
-                        file_name,
-                        McapHandlerState::paused,
-                        n_data_1, n_data_2,
-                        McapHandlerState::paused,
-                        1);
+        file_name,
+        McapHandlerState::paused,
+        n_data_1, n_data_2,
+        McapHandlerState::paused,
+        1);
 
     unsigned int n_received_msgs = std::get<0>(recording);
     double max_timestamp = std::get<1>(recording);
     unsigned int event_window = test::yml["recorder"]["event-window"].as<uint64_t>();
 
-    ASSERT_EQ(n_received_msgs, (n_data_1+n_data_2));
+    ASSERT_EQ(n_received_msgs, (n_data_1 + n_data_2));
     ASSERT_LE(max_timestamp, event_window);
 
 }
@@ -544,11 +557,11 @@ TEST(McapFileCreationTestWithController, controller_paused_event_max_window)
     int n_data_2 = rand() % 10 + 1;
 
     auto recording = record(
-                        file_name,
-                        McapHandlerState::paused,
-                        n_data_1, n_data_2,
-                        McapHandlerState::paused,
-                        1, 2);
+        file_name,
+        McapHandlerState::paused,
+        n_data_1, n_data_2,
+        McapHandlerState::paused,
+        1, 2);
 
     unsigned int n_received_msgs = std::get<0>(recording);
     double max_timestamp = std::get<1>(recording);

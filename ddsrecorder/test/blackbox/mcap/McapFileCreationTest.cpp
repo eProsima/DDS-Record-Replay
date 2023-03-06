@@ -44,7 +44,7 @@
 #include "types/hello_world/HelloWorldTypeObject.h"
 #include "types/hello_world/HelloWorldPubSubTypes.h"
 
-#include<iostream>
+#include <iostream>
 
 using namespace eprosima::fastdds::dds;
 using namespace eprosima::ddspipe;
@@ -123,14 +123,19 @@ YAML::Node yml;
 
 } // test
 
-std::unique_ptr<core::DdsPipe> create_recorder(std::string file_name, bool downsampling)
+std::unique_ptr<core::DdsPipe> create_recorder(
+        std::string file_name,
+        bool downsampling)
 {
-    if (downsampling) {
+    if (downsampling)
+    {
         for (const char* yml_configuration : test::yml_configurations_downsampling)
         {
             test::yml = YAML::Load(yml_configuration);
         }
-    } else {
+    }
+    else
+    {
         for (const char* yml_configuration : test::yml_configurations)
         {
             test::yml = YAML::Load(yml_configuration);
@@ -145,13 +150,13 @@ std::unique_ptr<core::DdsPipe> create_recorder(std::string file_name, bool downs
         configuration.blocklist);
     // Create Discovery Database
     std::shared_ptr<core::DiscoveryDatabase> discovery_database =
-        std::make_shared<core::DiscoveryDatabase>();
+            std::make_shared<core::DiscoveryDatabase>();
     // Create Payload Pool
     std::shared_ptr<core::PayloadPool> payload_pool =
-        std::make_shared<core::FastPayloadPool>();
+            std::make_shared<core::FastPayloadPool>();
     // Create Thread Pool
     std::shared_ptr<eprosima::utils::SlotThreadPool> thread_pool =
-        std::make_shared<eprosima::utils::SlotThreadPool>(configuration.n_threads);
+            std::make_shared<eprosima::utils::SlotThreadPool>(configuration.n_threads);
 
     // Create MCAP Handler
     eprosima::ddsrecorder::participants::McapHandlerConfiguration handler_config(
@@ -163,7 +168,7 @@ std::unique_ptr<core::DdsPipe> create_recorder(std::string file_name, bool downs
         configuration.cleanup_period);
 
     std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler> mcap_handler =
-    std::make_shared<eprosima::ddsrecorder::participants::McapHandler>(
+            std::make_shared<eprosima::ddsrecorder::participants::McapHandler>(
         handler_config,
         payload_pool,
         McapHandlerState::started);
@@ -184,17 +189,17 @@ std::unique_ptr<core::DdsPipe> create_recorder(std::string file_name, bool downs
 
     // Create and populate Participant Database
     std::shared_ptr<core::ParticipantsDatabase> participant_database =
-        std::make_shared<core::ParticipantsDatabase>();
+            std::make_shared<core::ParticipantsDatabase>();
 
     // Populate Participant Database
     participant_database->add_participant(
         dyn_participant->id(),
         dyn_participant
-    );
+        );
     participant_database->add_participant(
         recorder_participant->id(),
         recorder_participant
-    );
+        );
 
     return std::make_unique<core::DdsPipe>(
         allowed_topics,
@@ -204,7 +209,7 @@ std::unique_ptr<core::DdsPipe> create_recorder(std::string file_name, bool downs
         thread_pool,
         configuration.builtin_topics,
         true
-    );
+        );
 }
 
 void create_publisher(
@@ -218,14 +223,15 @@ void create_publisher(
     pqos.wire_protocol().builtin.typelookup_config.use_server = true;
 
     // Create the Participant
-    eprosima::fastdds::dds::DomainParticipant* participant_ = DomainParticipantFactory::get_instance()->create_participant(domain, pqos);
+    eprosima::fastdds::dds::DomainParticipant* participant_ =
+            DomainParticipantFactory::get_instance()->create_participant(domain, pqos);
 
     // Register the type
     registerHelloWorldTypes();
     test::dynamic_type_ = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->build_dynamic_type(
-            test::data_type_name,
-            GetHelloWorldIdentifier(true),
-            GetHelloWorldObject(true));
+        test::data_type_name,
+        GetHelloWorldIdentifier(true),
+        GetHelloWorldObject(true));
 
     TypeSupport type(new eprosima::fastrtps::types::DynamicPubSubType(test::dynamic_type_));
     // Set type so introspection info is sent
@@ -238,13 +244,16 @@ void create_publisher(
     eprosima::fastdds::dds::Publisher* publisher_ = participant_->create_publisher(PUBLISHER_QOS_DEFAULT, nullptr);
 
     // Create the DDS Topic
-    eprosima::fastdds::dds::Topic* topic_ = participant_->create_topic(topic_name, test::data_type_name, TOPIC_QOS_DEFAULT);
+    eprosima::fastdds::dds::Topic* topic_ = participant_->create_topic(topic_name, test::data_type_name,
+                    TOPIC_QOS_DEFAULT);
 
     // Create the DDS DataWriter
     test::writer_ = publisher_->create_datawriter(topic_, DATAWRITER_QOS_DEFAULT, nullptr);
 }
 
-eprosima::fastrtps::types::DynamicData_ptr send_sample(uint32_t index) {
+eprosima::fastrtps::types::DynamicData_ptr send_sample(
+        uint32_t index)
+{
     // Create and initialize new dynamic data
     eprosima::fastrtps::types::DynamicData_ptr dynamic_data_;
     dynamic_data_ = eprosima::fastrtps::types::DynamicDataFactory::get_instance()->create_data(test::dynamic_type_);
@@ -286,8 +295,8 @@ TEST(McapFileCreationTest, mcap_data_msgs)
     payload.reserve(
         pubsubType.getSerializedSizeProvider(
             sended_data.get()
-        )()
-    );
+            )()
+        );
     pubsubType.serialize(sended_data.get(), &payload);
 
     // Read MCAP file
@@ -297,9 +306,11 @@ TEST(McapFileCreationTest, mcap_data_msgs)
     // Test data
     auto messageView = mcap_reader_.readMessages();
 
-    for (auto it = messageView.begin(); it != messageView.end(); it++) {
+    for (auto it = messageView.begin(); it != messageView.end(); it++)
+    {
         auto received_msg = reinterpret_cast<unsigned char const*>(it->message.data);
-        for (int i = 0; i < payload.length; i++) {
+        for (int i = 0; i < payload.length; i++)
+        {
             ASSERT_EQ(payload.data[i], received_msg[i]) << "wrong data ¡¡";
         }
         ASSERT_EQ(payload.length, it->message.dataSize) << "length fails !!";
@@ -337,7 +348,8 @@ TEST(McapFileCreationTest, mcap_data_topic)
     std::string received_topic;
     std::string received_data_type_name;
 
-    for (auto it = messages.begin(); it != messages.end(); it++) {
+    for (auto it = messages.begin(); it != messages.end(); it++)
+    {
         received_topic = it->channel->topic;
         received_data_type_name = it->schema->name;
     }
@@ -354,7 +366,7 @@ TEST(McapFileCreationTest, mcap_data_num_msgs)
 
     std::string file_name = "output_3_.mcap";
 
-   {
+    {
         // Create Recorder
         auto recorder = create_recorder(file_name, false);
 
@@ -365,10 +377,11 @@ TEST(McapFileCreationTest, mcap_data_num_msgs)
             DataTypeKind::HELLO_WORLD);
 
         // Send data
-        for(int i = 0; i < test::n_msgs; i++) {
+        for (int i = 0; i < test::n_msgs; i++)
+        {
             send_sample(static_cast<uint32_t>(test::index));
         }
-   }
+    }
 
     // Read MCAP file
     mcap::McapReader mcap_reader_;
@@ -377,7 +390,8 @@ TEST(McapFileCreationTest, mcap_data_num_msgs)
     auto messages = mcap_reader_.readMessages();
 
     unsigned int n_received_msgs = 0;
-    for (auto it = messages.begin(); it != messages.end(); it++) {
+    for (auto it = messages.begin(); it != messages.end(); it++)
+    {
         n_received_msgs++;
     }
     mcap_reader_.close();
@@ -392,7 +406,7 @@ TEST(McapFileCreationTest, mcap_data_num_msgs_downsampling)
 
     std::string file_name = "output_4_.mcap";
 
-   {
+    {
         // Create Recorder
         auto recorder = create_recorder(file_name, true);
 
@@ -403,10 +417,11 @@ TEST(McapFileCreationTest, mcap_data_num_msgs_downsampling)
             DataTypeKind::HELLO_WORLD);
 
         // Send data
-        for(int i = 0; i < test::n_msgs; i++) {
+        for (int i = 0; i < test::n_msgs; i++)
+        {
             send_sample(static_cast<uint32_t>(test::index));
         }
-   }
+    }
 
     // Read MCAP file
     mcap::McapReader mcap_reader_;
@@ -415,14 +430,16 @@ TEST(McapFileCreationTest, mcap_data_num_msgs_downsampling)
     auto messages = mcap_reader_.readMessages();
 
     unsigned int n_received_msgs = 0;
-    for (auto it = messages.begin(); it != messages.end(); it++) {
+    for (auto it = messages.begin(); it != messages.end(); it++)
+    {
         n_received_msgs++;
     }
     mcap_reader_.close();
 
     // Test data
     unsigned int expected_msgs = test::n_msgs / test::downsampling;
-    if (test::n_msgs % test::downsampling) {
+    if (test::n_msgs % test::downsampling)
+    {
         expected_msgs++;
     }
     ASSERT_EQ(expected_msgs, n_received_msgs);
