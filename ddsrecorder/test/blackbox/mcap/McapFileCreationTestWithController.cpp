@@ -67,7 +67,7 @@ namespace test {
 
 // Publisher
 
-unsigned int domain = 222;
+unsigned int domain = 223;
 
 std::string topic = "TypeIntrospectionTopic";
 std::string data_type_name = "HelloWorld";
@@ -81,10 +81,10 @@ std::vector<const char*> yml_configurations =
 {
     R"(
     dds:
-        domain: 222
+        domain: 223
     recorder:
-        buffer-size: 5
-        event-window: 1
+        buffer-size: 3
+        event-window: 2
     remote-controller:
         enable: true
         domain: 222
@@ -230,7 +230,7 @@ eprosima::fastrtps::types::DynamicData_ptr send_sample() {
     return dynamic_data_;
 }
 
-unsigned int record(
+std::tuple<unsigned int, double> record(
     std::string file_name,
     McapHandlerState init_state,
     int first_round,
@@ -255,7 +255,15 @@ unsigned int record(
 
         // Create Recorder
         std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler> mcap_handler;
-        auto recorder = create_recorder(configuration, mcap_handler, file_name, init_state);
+
+        std::unique_ptr<core::DdsPipe> recorder;
+        if (init_state == McapHandlerState::stopped) {
+            recorder = create_recorder(configuration, mcap_handler, file_name, McapHandlerState::started);
+            usleep(100000);
+            mcap_handler->stop();
+        } else {
+            recorder = create_recorder(configuration, mcap_handler, file_name, init_state);
+        }
 
         // Send data
         for(int i = 0; i < first_round; i++) {
@@ -310,28 +318,36 @@ unsigned int record(
     auto messages = mcap_reader_.readMessages();
 
     unsigned int n_received_msgs = 0;
+    uint64_t actual_time = std::chrono::duration_cast<std::chrono::nanoseconds>
+              (std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+    double max_timestamp = 0;
     for (auto it = messages.begin(); it != messages.end(); it++) {
         n_received_msgs++;
+        double time_seconds = ((actual_time)-(it->message.publishTime)) * pow(10.0, -9.0);
+        if (time_seconds > max_timestamp) {
+            max_timestamp = time_seconds;
+        }
     }
     mcap_reader_.close();
 
-    return n_received_msgs;
+    return std::tuple<unsigned int, double>{n_received_msgs, max_timestamp};
 }
 
 TEST(McapFileCreationTestWithController, controller_paused_running)
 {
     std::string file_name = "output_5_.mcap";
 
-    int n_data_1 = 10;
-    int n_data_2 = 5;
+    int n_data_1 = rand() % 10 + 1;
+    int n_data_2 = rand() % 10 + 1;
 
-    unsigned int n_received_msgs;
-    n_received_msgs = record(
+    auto recording = record(
                         file_name,
                         McapHandlerState::paused,
                         n_data_1, n_data_2,
                         McapHandlerState::started,
                         0);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
 
     ASSERT_EQ(n_received_msgs, (n_data_2));
 
@@ -341,16 +357,17 @@ TEST(McapFileCreationTestWithController, controller_running_paused)
 {
     std::string file_name = "output_6_.mcap";
 
-    int n_data_1 = 10;
-    int n_data_2 = 5;
+    int n_data_1 = rand() % 10 + 1;
+    int n_data_2 = rand() % 10 + 1;
 
-    unsigned int n_received_msgs;
-    n_received_msgs = record(
+    auto recording = record(
                         file_name,
                         McapHandlerState::started,
                         n_data_1, n_data_2,
                         McapHandlerState::paused,
                         0);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
 
     ASSERT_EQ(n_received_msgs, (n_data_1));
 
@@ -360,16 +377,17 @@ TEST(McapFileCreationTestWithController, controller_running_stopped)
 {
     std::string file_name = "output_7_.mcap";
 
-    int n_data_1 = 10;
-    int n_data_2 = 5;
+    int n_data_1 = rand() % 10 + 1;
+    int n_data_2 = rand() % 10 + 1;
 
-    unsigned int n_received_msgs;
-    n_received_msgs = record(
+    auto recording = record(
                         file_name,
                         McapHandlerState::started,
                         n_data_1, n_data_2,
                         McapHandlerState::stopped,
                         0);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
 
     ASSERT_EQ(n_received_msgs, (n_data_1));
 
@@ -379,16 +397,17 @@ TEST(McapFileCreationTestWithController, controller_stopped_running)
 {
     std::string file_name = "output_8_.mcap";
 
-    int n_data_1 = 10;
-    int n_data_2 = 5;
+    int n_data_1 = rand() % 10 + 1;
+    int n_data_2 = rand() % 10 + 1;
 
-    unsigned int n_received_msgs;
-    n_received_msgs = record(
+    auto recording = record(
                         file_name,
                         McapHandlerState::stopped,
                         n_data_1, n_data_2,
                         McapHandlerState::started,
                         0);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
 
     ASSERT_EQ(n_received_msgs, (n_data_2));
 
@@ -398,16 +417,17 @@ TEST(McapFileCreationTestWithController, controller_paused_stopped)
 {
     std::string file_name = "output_9_.mcap";
 
-    int n_data_1 = 10;
-    int n_data_2 = 5;
+    int n_data_1 = rand() % 10 + 1;
+    int n_data_2 = rand() % 10 + 1;
 
-    unsigned int n_received_msgs;
-    n_received_msgs = record(
+    auto recording = record(
                         file_name,
                         McapHandlerState::paused,
                         n_data_1, n_data_2,
                         McapHandlerState::stopped,
                         0);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
 
     ASSERT_EQ(n_received_msgs, 0);
 
@@ -417,54 +437,37 @@ TEST(McapFileCreationTestWithController, controller_stopped_paused)
 {
     std::string file_name = "output_10_.mcap";
 
-    int n_data_1 = 10;
-    int n_data_2 = 5;
+    int n_data_1 = rand() % 10 + 1;
+    int n_data_2 = rand() % 10 + 1;
 
-    unsigned int n_received_msgs;
-    n_received_msgs = record(
+    auto recording = record(
                         file_name,
                         McapHandlerState::stopped,
                         n_data_1, n_data_2,
                         McapHandlerState::paused,
                         0);
 
+    unsigned int n_received_msgs = std::get<0>(recording);
+
     ASSERT_EQ(n_received_msgs, 0);
 
 }
 
-TEST(McapFileCreationTestWithController, controller_running_max_buf)
-{
-    std::string file_name = "output_11_.mcap";
-
-    int n_data_1 = 6;
-    int n_data_2 = 6;
-
-    unsigned int n_received_msgs;
-    n_received_msgs = record(
-                        file_name,
-                        McapHandlerState::started,
-                        n_data_1, n_data_2,
-                        McapHandlerState::started,
-                        0);
-
-    ASSERT_EQ(n_received_msgs, (n_data_1+n_data_2));
-
-}
-
-TEST(McapFileCreationTestWithController, controller_running_not_max_buf)
+TEST(McapFileCreationTestWithController, controller_running)
 {
     std::string file_name = "output_12_.mcap";
 
-    int n_data_1 = 1;
-    int n_data_2 = 1;
+    int n_data_1 = rand() % 10 + 1;
+    int n_data_2 = rand() % 10 + 1;
 
-    unsigned int n_received_msgs;
-    n_received_msgs = record(
+    auto recording = record(
                         file_name,
                         McapHandlerState::started,
                         n_data_1, n_data_2,
                         McapHandlerState::started,
                         0);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
 
     ASSERT_EQ(n_received_msgs, (n_data_1+n_data_2));
 
@@ -474,16 +477,17 @@ TEST(McapFileCreationTestWithController, controller_paused)
 {
     std::string file_name = "output_13_.mcap";
 
-    int n_data_1 = 1;
-    int n_data_2 = 1;
+    int n_data_1 = rand() % 10 + 1;
+    int n_data_2 = rand() % 10 + 1;
 
-    unsigned int n_received_msgs;
-    n_received_msgs = record(
+    auto recording = record(
                         file_name,
                         McapHandlerState::paused,
                         n_data_1, n_data_2,
                         McapHandlerState::paused,
                         0);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
 
     ASSERT_EQ(n_received_msgs, 0);
 
@@ -493,16 +497,17 @@ TEST(McapFileCreationTestWithController, controller_stopped)
 {
     std::string file_name = "output_14_.mcap";
 
-    int n_data_1 = 1;
-    int n_data_2 = 1;
+    int n_data_1 = rand() % 10 + 1;
+    int n_data_2 = rand() % 10 + 1;
 
-    unsigned int n_received_msgs;
-    n_received_msgs = record(
+    auto recording = record(
                         file_name,
                         McapHandlerState::stopped,
                         n_data_1, n_data_2,
                         McapHandlerState::stopped,
                         0);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
 
     ASSERT_EQ(n_received_msgs, 0);
 
@@ -512,18 +517,22 @@ TEST(McapFileCreationTestWithController, controller_paused_event_less_window)
 {
     std::string file_name = "output_15_.mcap";
 
-    int n_data_1 = 1;
-    int n_data_2 = 1;
+    int n_data_1 = rand() % 10 + 1;
+    int n_data_2 = rand() % 10 + 1;
 
-    unsigned int n_received_msgs;
-    n_received_msgs = record(
+    auto recording = record(
                         file_name,
                         McapHandlerState::paused,
                         n_data_1, n_data_2,
                         McapHandlerState::paused,
                         1);
 
+    unsigned int n_received_msgs = std::get<0>(recording);
+    double max_timestamp = std::get<1>(recording);
+    unsigned int event_window = test::yml["recorder"]["event-window"].as<uint64_t>();
+    std::cout << " data1 " << n_data_1 << " data 2 " << n_data_2 << std::endl;
     ASSERT_EQ(n_received_msgs, (n_data_1+n_data_2));
+    ASSERT_LE(max_timestamp, event_window);
 
 }
 
@@ -531,18 +540,22 @@ TEST(McapFileCreationTestWithController, controller_paused_event_max_window)
 {
     std::string file_name = "output_16_.mcap";
 
-    int n_data_1 = 1;
-    int n_data_2 = 1;
+    int n_data_1 = rand() % 10 + 1;
+    int n_data_2 = rand() % 10 + 1;
 
-    unsigned int n_received_msgs;
-    n_received_msgs = record(
+    auto recording = record(
                         file_name,
                         McapHandlerState::paused,
                         n_data_1, n_data_2,
                         McapHandlerState::paused,
                         1, 2);
 
+    unsigned int n_received_msgs = std::get<0>(recording);
+    double max_timestamp = std::get<1>(recording);
+    unsigned int event_window = test::yml["recorder"]["event-window"].as<uint64_t>();
+
     ASSERT_EQ(n_received_msgs, n_data_2);
+    ASSERT_LE(max_timestamp, event_window);
 
 }
 

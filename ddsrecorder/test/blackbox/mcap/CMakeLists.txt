@@ -63,14 +63,13 @@ set(TEST_SOURCES
 set(TEST_LIST
         controller_paused_running
         controller_running_paused
-        controller_running_stopped
-        controller_stopped_running
         controller_paused_stopped
         controller_stopped_paused
-        controller_close_running_max_buf
-        controller_close_running_not_max_buf
-        controller_close_paused
-        controller_close_stopped
+        controller_running_stopped
+        controller_stopped_running
+        controller_running
+        controller_paused
+        controller_stopped
         controller_paused_event_less_window
         controller_paused_event_max_window
     )
