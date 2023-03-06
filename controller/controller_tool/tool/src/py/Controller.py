@@ -13,6 +13,8 @@
 # limitations under the License.
 """Script implementing a remote controller for the DDS Recorder."""
 
+import json
+
 from enum import Enum
 
 from ControllerCommand import ControllerCommand, ControllerCommandPubSubType
@@ -48,11 +50,11 @@ class DdsRecorderControllerCommand(Enum):
     and value in strings.
     """
 
-    START = 0
-    STOP = 1
-    PAUSE = 2
-    EVENT = 3
-    CLOSE = 4
+    start = 0
+    stop = 1
+    pause = 2
+    event = 3
+    close = 4
 
 
 class CommandWriterListener(fastdds.DataWriterListener):
@@ -217,8 +219,7 @@ class Controller(QObject):
 
     def command_arguments_to_string(args: dict):
         """Serialize json object to string."""
-        # TODO convert to json string
-        return str(args)
+        return json.dumps(args)
 
     def argument_change_state(next_state: DdsRecorderStatus):
         """Set next state EVENT command argument."""

@@ -221,25 +221,25 @@ class ControllerGUI(QMainWindow):
         start_button = QPushButton('Start', self)
         start_button.clicked.connect(
             lambda: self.simple_button_clicked(
-                DdsRecorderControllerCommand.START))
+                DdsRecorderControllerCommand.start))
         buttons_box.addWidget(start_button)
 
         pause_button = QPushButton('Pause', self)
         pause_button.clicked.connect(
             lambda: self.simple_button_clicked(
-                DdsRecorderControllerCommand.PAUSE))
+                DdsRecorderControllerCommand.pause))
         buttons_box.addWidget(pause_button)
 
         stop_button = QPushButton('Stop', self)
         stop_button.clicked.connect(
             lambda: self.simple_button_clicked(
-                DdsRecorderControllerCommand.STOP))
+                DdsRecorderControllerCommand.stop))
         buttons_box.addWidget(stop_button)
 
         event_button = QPushButton('Event', self)
         event_button.clicked.connect(
             lambda: self.simple_button_clicked(
-                DdsRecorderControllerCommand.EVENT))
+                DdsRecorderControllerCommand.event))
         buttons_box.addWidget(event_button)
 
         event_start_button = QPushButton('Event & Start', self)
@@ -255,7 +255,7 @@ class ControllerGUI(QMainWindow):
         close_button = QPushButton('Close', self)
         close_button.clicked.connect(
             lambda: self.simple_button_clicked(
-                DdsRecorderControllerCommand.CLOSE))
+                DdsRecorderControllerCommand.close))
         buttons_box.addWidget(close_button)
         buttons_box.addStretch()
 
@@ -305,14 +305,14 @@ class ControllerGUI(QMainWindow):
 
     def event_start_button_clicked(self):
         """Publish command."""
-        command = DdsRecorderControllerCommand.EVENT
+        command = DdsRecorderControllerCommand.event
         args = Controller.command_arguments_to_string(
             Controller.argument_change_state(DdsRecorderStatus.RUNNING))
         self.send_command(command, args)
 
     def event_stop_button_clicked(self):
         """Publish command."""
-        command = DdsRecorderControllerCommand.EVENT
+        command = DdsRecorderControllerCommand.event
         args = Controller.command_arguments_to_string(
             Controller.argument_change_state(DdsRecorderStatus.STOPPED))
         self.send_command(command, args)

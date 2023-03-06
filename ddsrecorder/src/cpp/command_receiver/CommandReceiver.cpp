@@ -36,8 +36,7 @@ using namespace eprosima::fastdds::rtps;
 CommandReceiver::CommandReceiver(
         uint32_t domain,
         std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler)
-    : command_received_(CommandCode::NONE)
-    , domain_(domain)
+    : domain_(domain)
     , event_handler_(event_handler)
     , participant_(nullptr)
     , command_subscriber_(nullptr)
@@ -178,16 +177,25 @@ CommandReceiver::~CommandReceiver()
     }
 }
 
-void CommandReceiver::wait_for_command()
+ControllerCommand CommandReceiver::wait_for_command()
 {
-    command_received_.store(CommandCode::NONE);
+    ControllerCommand ret;
     event_handler_->wait_for_event();
-    event_handler_->reset_event_count();
-}
 
-CommandCode CommandReceiver::command_received()
-{
-    return command_received_.load();
+    std::lock_guard<std::mutex> lock(mtx_);
+    if (event_handler_->event_count() > commands_received_.size())
+    {
+        // If the events count is greater than the num of commands received, it's because a signal was received -> EXIT
+        ret.command("close");
+    }
+    else  /* = event_count == commands_received_.size */
+    {
+        event_handler_->decrement_event_count();
+        ret = commands_received_.front();
+        commands_received_.pop();
+    }
+
+    return ret;
 }
 
 void CommandReceiver::publish_status(
@@ -241,53 +249,36 @@ void CommandReceiver::on_data_available(
     while ((reader->take_next_sample(&controller_command,
             &info)) == (ReturnCode_t::RETCODE_OK && info.instance_state == ALIVE_INSTANCE_STATE))
     {
-        std::string command = controller_command.command();
-        std::string args = controller_command.args();
         logInfo(
             DDSRECORDER_COMMAND_RECEIVER,
-            "New command received: " << command << " [" << args << "]");
-
-        if (command_received_ == CommandCode::CLOSE)
+            "New command received: " << controller_command.command() << " [" << controller_command.args() << "]");
         {
-            logWarning(
-                DDSRECORDER_COMMAND_RECEIVER,
-                "Receiver disabled, ignoring command...");
-            return;
+            std::lock_guard<std::mutex> lock(mtx_);
+            commands_received_.push(controller_command);
         }
-
-        CommandCode command_code;
-        bool found = CommandCodeBuilder::get_instance()->string_to_enumeration(command, command_code);
-        if (!found)
-        {
-            logWarning(
-                DDSRECORDER_COMMAND_RECEIVER,
-                "Command " << command << " is unrecognized, ignoring...");
-            command_code = CommandCode::UNKNOWN;
-        }
-        command_received_.store(command_code);
         event_handler_->simulate_event_occurred();
     }
 }
 
 std::string CommandReceiver::command_to_status_string_(
-        CommandCode command)
+        const CommandCode& command)
 {
     switch (command)
     {
-        case CommandCode::START:
+        case CommandCode::start:
             return "RUNNING";
 
-        case CommandCode::PAUSE:
+        case CommandCode::pause:
+        case CommandCode::event:
             return "PAUSED";
 
-        case CommandCode::STOP:
+        case CommandCode::stop:
             return "STOPPED";
 
-        case CommandCode::CLOSE:
-        case CommandCode::NONE:
+        case CommandCode::close:
             return "CLOSED";
 
-        case CommandCode::UNKNOWN:
+        case CommandCode::unknown:
         default:
             return "UNKNOWN";
     }

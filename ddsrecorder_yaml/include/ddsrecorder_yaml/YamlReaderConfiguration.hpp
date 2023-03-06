@@ -67,7 +67,7 @@ public:
     // Remote controller configuration
     bool enable_remote_controller = true;
     ddspipe::core::types::DomainId controller_domain;
-    std::string initial_command = "START";
+    std::string initial_state = "RUNNING";
 
     // Specs
     unsigned int n_threads = 12;

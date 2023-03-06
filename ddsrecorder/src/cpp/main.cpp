@@ -17,6 +17,8 @@
  *
  */
 
+#include <nlohmann/json.hpp>
+
 #include <cpp_utils/event/FileWatcherHandler.hpp>
 #include <cpp_utils/event/MultipleEventHandler.hpp>
 #include <cpp_utils/event/PeriodicEventHandler.hpp>
@@ -53,8 +55,12 @@ using namespace eprosima::ddspipe;
 using namespace eprosima::ddsrecorder;
 
 using CommandCode = eprosima::ddsrecorder::receiver::CommandCode;
-using CommandCodeBuilder = eprosima::ddsrecorder::receiver::CommandCodeBuilder;
-using McapHandlerState = eprosima::ddsrecorder::participants::McapHandler::StateCode;
+using json = nlohmann::json;
+using McapHandlerState = eprosima::ddsrecorder::participants::McapHandlerStateCode;
+
+const std::string NEXT_STATE_TAG = "next_state";
+constexpr auto string_to_command = eprosima::ddsrecorder::receiver::string_to_enumeration;
+constexpr auto string_to_state = eprosima::ddsrecorder::participants::string_to_enumeration;
 
 std::unique_ptr<core::DdsPipe> create_recorder(
         const eprosima::ddsrecorder::yaml::Configuration& configuration,
@@ -138,7 +144,7 @@ std::unique_ptr<core::DdsPipe> create_recorder(
         const eprosima::ddsrecorder::yaml::Configuration& configuration)
 {
     std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler> mcap_handler;
-    return create_recorder(configuration, mcap_handler, McapHandlerState::started);
+    return create_recorder(configuration, mcap_handler, McapHandlerState::RUNNING);
 }
 
 std::unique_ptr<eprosima::utils::event::FileWatcherHandler> create_filewatcher(
@@ -209,6 +215,58 @@ std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> create_periodic_ha
 
     // Creating periodic handler
     return std::make_unique<eprosima::utils::event::PeriodicEventHandler>(periodic_callback, reload_time);
+}
+
+void parse_command(const ControllerCommand& command, CommandCode& command_code, json& args)
+{
+    command_code = CommandCode::unknown;
+    args = {};
+
+    std::string command_str = command.command();
+    std::string args_str = command.args();
+
+    bool found = string_to_command(command_str, command_code);
+    if (!found)
+    {
+        logWarning(DDSRECORDER_EXECUTION,
+                "Command " << command_str <<
+                " is not a valid command (only start/pause/stop/close).");
+    }
+
+    if (args_str != "")
+    {
+        try
+        {
+            args = json::parse(args_str);
+        }
+        catch (const std::exception& e)
+        {
+            logWarning(
+                    DDSRECORDER_EXECUTION,
+                    "Received command argument <" << args_str << "> is not a valid json object : <" << e.what() << ">.");
+        }
+    }
+}
+
+CommandCode state_to_command(const McapHandlerState& state)
+{
+    switch (state)
+    {
+        case McapHandlerState::RUNNING:
+            return CommandCode::start;
+
+        case McapHandlerState::PAUSED:
+            return CommandCode::pause;
+
+        case McapHandlerState::STOPPED:
+            return CommandCode::stop;
+
+        default:
+            // Unreachable
+            eprosima::utils::tsnh(
+                eprosima::utils::Formatter() << "Trying to convert to command an invalid state.");
+            return CommandCode::stop;
+    }
 }
 
 int main(
@@ -323,76 +381,76 @@ int main(
             eprosima::ddsrecorder::receiver::CommandReceiver receiver(configuration.controller_domain, close_handler);
             receiver.init();
 
-            // TODO: store CommandCode in YAML configuration, handle invalid option there
-            CommandCode prev = CommandCode::CLOSE;
+            CommandCode prev_command;
             CommandCode command;
-            bool found = CommandCodeBuilder::get_instance()->string_to_enumeration(configuration.initial_command,
-                            command);
-            if (!found ||
-                    (command != CommandCode::START && command != CommandCode::PAUSE && command != CommandCode::STOP))
+            json args;
+
+            // Parse and convert initial state to initial command
+            McapHandlerState initial_state;
+            bool found = string_to_state(configuration.initial_state, initial_state);
+            if (!found)
             {
                 logWarning(DDSRECORDER_EXECUTION,
-                        "Command " << configuration.initial_command <<
-                        " is not a valid initial command (only START/PAUSE/STOP). Using instead default START initial command...");
-                command = CommandCode::START;
+                        "Initial state " << configuration.initial_state <<
+                        " is not a valid one (only RUNNING/PAUSED/STOPPED). Using instead default RUNNING initial state...");
+                initial_state = McapHandlerState::RUNNING;
             }
+            command = state_to_command(initial_state);
 
+            prev_command = CommandCode::close;
             do
             {
-                // Skip waiting for commmand if initial_command is START/PAUSE (only applies to first iteration)
-                if (command == CommandCode::STOP)
+                // Skip waiting for commmand if initial_state is RUNNING/PAUSED (only applies to first iteration)
+                if (command == CommandCode::stop)
                 {
-                    ///////////////////////////
-                    //// STATUS -> STOPPED ////
-                    ///////////////////////////
+                    //////////////////////////
+                    //// STATE -> STOPPED ////
+                    //////////////////////////
 
-                    // Publish state if previous -> CLOSED/STARTED/PAUSED
-                    if (prev != CommandCode::STOP)
+                    // Publish state if previous -> CLOSED/RUNNING/PAUSED
+                    if (prev_command != CommandCode::stop)
                     {
-                        receiver.publish_status(CommandCode::STOP, prev);
+                        receiver.publish_status(CommandCode::stop, prev_command);
                     }
 
-                    prev = CommandCode::STOP;
-                    receiver.wait_for_command();
-                    command = receiver.command_received();
+                    prev_command = CommandCode::stop;
+                    parse_command(receiver.wait_for_command(), command, args);
                     switch (command)
                     {
-                        case CommandCode::START:
-                        case CommandCode::PAUSE:
-                            // Exit STOP status -> proceed
+                        case CommandCode::start:
+                        case CommandCode::pause:
+                            // Exit STOPPED state -> proceed
                             break;
 
-                        case CommandCode::EVENT:
-                        case CommandCode::STOP:
+                        case CommandCode::event:
+                        case CommandCode::stop:
                             logWarning(DDSRECORDER_EXECUTION,
                                     "Ignoring " << command << " command, recorder not active yet.");
-                            command = CommandCode::STOP;  // Stay in STOPPED state
+                            command = CommandCode::stop;  // Stay in STOPPED state
                             continue;
 
-                        case CommandCode::CLOSE:
-                        case CommandCode::NONE:
-                            // CLOSE command or signal received -> exit
+                        case CommandCode::close:
+                            // close command or signal received -> exit
                             continue;
 
                         default:
-                        case CommandCode::UNKNOWN:
-                            command = CommandCode::STOP;  // Stay in STOPPED state
+                        case CommandCode::unknown:
+                            command = CommandCode::stop;  // Stay in STOPPED state
                             continue;
                     }
                 }
 
-                // STOPPED/CLOSED -> STARTED/PAUSED
-                receiver.publish_status(command, prev);
+                // STOPPED/CLOSED -> RUNNING/PAUSED
+                receiver.publish_status(command, prev_command);
 
                 // Set handler state on creation to avoid race condition (reception of data/schema prior to start/pause)
-                McapHandlerState initial_state;
-                if (command == CommandCode::START)
+                if (command == CommandCode::start)
                 {
-                    initial_state = McapHandlerState::started;
+                    initial_state = McapHandlerState::RUNNING;
                 }
-                else if (command == CommandCode::PAUSE)
+                else if (command == CommandCode::pause)
                 {
-                    initial_state = McapHandlerState::paused;
+                    initial_state = McapHandlerState::PAUSED;
                 }
                 else
                 {
@@ -426,63 +484,97 @@ int main(
 
                 // Use flag to avoid ugly warning (start/pause an already started/paused instance)
                 bool first_iter = true;
-                prev = command;
+                prev_command = command;
                 do
                 {
-                    //////////////////////////////////
-                    //// STATUS -> STARTED/PAUSED ////
-                    //////////////////////////////////
+                    /////////////////////////////////
+                    //// STATE -> RUNNING/PAUSED ////
+                    /////////////////////////////////
                     switch (command)
                     {
-                        case CommandCode::START:
+                        case CommandCode::start:
                             if (!first_iter)
                             {
                                 mcap_handler->start();
                             }
-                            if (prev == CommandCode::PAUSE)
+                            if (prev_command == CommandCode::pause)
                             {
-                                receiver.publish_status(CommandCode::START, CommandCode::PAUSE);
+                                receiver.publish_status(CommandCode::start, CommandCode::pause);
                             }
                             break;
 
-                        case CommandCode::PAUSE:
+                        case CommandCode::pause:
                             if (!first_iter)
                             {
                                 mcap_handler->pause();
                             }
-                            if (prev == CommandCode::START)
+                            if (prev_command == CommandCode::start)
                             {
-                                receiver.publish_status(CommandCode::PAUSE, CommandCode::START);
+                                receiver.publish_status(CommandCode::pause, CommandCode::start);
                             }
                             break;
 
-                        case CommandCode::EVENT:
-                            mcap_handler->trigger_event();
-                            // TODO: transition to STOP/START/CLOSE if argument non-empty (command=x + continue)
+                        case CommandCode::event:
+                            if (prev_command != CommandCode::pause)
+                            {
+                                logWarning(DDSRECORDER_EXECUTION,
+                                        "Ignoring event command, instance is not paused.");
+
+                                command = prev_command;  // Back to state before event received
+                            }
+                            else
+                            {
+                                mcap_handler->trigger_event();
+                                {
+                                    // Process next_state argument if provided
+                                    auto it = args.find(NEXT_STATE_TAG);
+                                    if (it != args.end())
+                                    {
+                                        std::string next_state_str = *it;
+                                        McapHandlerState next_state;
+                                        bool found = string_to_state(next_state_str, next_state);
+                                        if (!found || (next_state != McapHandlerState::RUNNING && next_state != McapHandlerState::STOPPED))
+                                        {
+                                            logWarning(DDSRECORDER_EXECUTION, "Value " << next_state_str << " is not a valid event next_state argument (only RUNNING/STOPPED). Ignoring...");
+
+                                            // Stay in current state if provided next_state is not valid
+                                            command = prev_command;
+                                        }
+                                        else
+                                        {
+                                            command = state_to_command(next_state);
+                                            continue;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // Stay in current state if next_state not provided
+                                        command = prev_command;
+                                    }
+                                }
+                            }
                             break;
 
-                        case CommandCode::STOP:
-                        case CommandCode::CLOSE:
-                        case CommandCode::NONE:
+                        case CommandCode::stop:
+                        case CommandCode::close:
                             // Unreachable
                             logError(DDSRECORDER_EXECUTION,
                                     "Reached an unstable execution state: command " << command << " case.");
                             continue;
 
                         default:
-                        case CommandCode::UNKNOWN:
+                        case CommandCode::unknown:
                             break;
                     }
-                    receiver.wait_for_command();
-                    prev = command;
-                    command = receiver.command_received();
+                    prev_command = command;
+                    parse_command(receiver.wait_for_command(), command, args);
                     first_iter = false;
 
-                } while (command != CommandCode::STOP && command != CommandCode::CLOSE && command != CommandCode::NONE);
-            } while (command != CommandCode::CLOSE && command != CommandCode::NONE);
+                } while (command != CommandCode::stop && command != CommandCode::close);
+            } while (command != CommandCode::close);
 
             // Transition to CLOSED state
-            receiver.publish_status(CommandCode::CLOSE, prev);
+            receiver.publish_status(CommandCode::close, prev_command);
         }
         else
         {

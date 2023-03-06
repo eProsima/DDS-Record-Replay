@@ -26,6 +26,7 @@
 
 #include <mcap/writer.hpp>
 
+#include <cpp_utils/macros/custom_enumeration.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 
 #include <fastrtps/types/DynamicTypePtr.h>
@@ -40,6 +41,14 @@
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
+
+//! State of the handler instance
+ENUMERATION_BUILDER(
+    McapHandlerStateCode,
+    STOPPED,                  //! Received messages and schemas are not processed.
+    RUNNING,                  //! Messages are stored in buffer and dumped to disk when full.
+    PAUSED                    //! Messages are stored in buffer and dumped to disk when event triggered.
+    );
 
 /**
  * Structure extending \c mcap::Message with Fast DDS payload and its owner (a \c PayloadPool).
@@ -88,14 +97,6 @@ class McapHandler : public ddspipe::participants::ISchemaHandler
 {
 public:
 
-    //! State of the handler instance
-    enum class StateCode
-    {
-        stopped = 0,          //! Received messages and schemas are not processed.
-        started,              //! Messages are stored in buffer and dumped to disk when full.
-        paused,               //! Messages are stored in buffer and dumped to disk when event triggered.
-    };
-
     /**
      * McapHandler constructor by required values.
      *
@@ -104,12 +105,12 @@ public:
      *
      * @param config:       Structure encapsulating all configuration options.
      * @param payload_pool: Owner of every payload contained in received messages.
-     * @param init_state:   Initial instance state (started/paused/stopped).
+     * @param init_state:   Initial instance state (RUNNING/PAUSED/STOPPED).
      */
     McapHandler(
             const McapHandlerConfiguration& config,
             const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
-            const StateCode& init_state = StateCode::started);
+            const McapHandlerStateCode& init_state = McapHandlerStateCode::RUNNING);
 
     /**
      * @brief Destructor
@@ -123,7 +124,7 @@ public:
      * Any samples following this schema that were received before the schema itself are moved to the memory buffer
      * to be written with the next batch.
      *
-     * If instance is stopped, received schema is not processed.
+     * If instance is STOPPED, received schema is not processed.
      *
      * @param [in] dynamic_type DynamicType containing the type information required to generate the schema.
      */
@@ -137,7 +138,7 @@ public:
      * If channel does not exist, its creation is attempted. If this fails (schema not available yet), the sample is
      * inserted into \c pending_samples_ queue until its schema is received.
      *
-     * If instance is stopped, received data is not processed.
+     * If instance is STOPPED, received data is not processed.
      *
      * @param [in] topic DDS topic associated to this sample.
      * @param [in] data Message to be added.
@@ -149,15 +150,15 @@ public:
     /**
      * @brief Start handler instance
      *
-     * If previous state was paused, the event thread is stopped (and buffer is cleared).
+     * If previous state was PAUSED, the event thread is stopped (and buffer is cleared).
      */
     void start();
 
     /**
      * @brief Stop handler instance
      *
-     * If previous state was started, data stored in buffer is dumped to disk.
-     * If previous state was paused, the event thread is stopped (and buffer is cleared).
+     * If previous state was RUNNING, data stored in buffer is dumped to disk.
+     * If previous state was PAUSED, the event thread is stopped (and buffer is cleared).
      */
     void stop();
 
@@ -166,7 +167,7 @@ public:
      *
      * Creates event thread waiting for an event to dump samples in buffer.
      *
-     * If previous state was started, data stored in buffer is dumped to disk and pending samples cleared.
+     * If previous state was RUNNING, data stored in buffer is dumped to disk and pending samples cleared.
      */
     void pause();
 
@@ -176,7 +177,7 @@ public:
      * When an event is triggered, data stored in buffer (containing samples received during the last event_window
      * seconds) is written to disk.
      *
-     * This method is ineffective if instance state is different than paused.
+     * This method is ineffective if instance state is different than PAUSED.
      */
     void trigger_event();
 
@@ -248,13 +249,13 @@ protected:
     //! Remove samples in buffer older than [now - event_window]
     void remove_outdated_samples_nts_();
 
-    //! Stops event thread, and clears \c samples_buffer_ and \c pending_samples_ structures
+    //! Stop event thread, and clear \c samples_buffer_ and \c pending_samples_ structures
     void stop_event_thread_nts_();
 
-    //! Clears \c samples_buffer_ and \c pending_samples_ structures
+    //! Clear \c samples_buffer_ and \c pending_samples_ structures
     void clear_all_nts_();
 
-    //! Writes in disk samples stored in buffer
+    //! Write in disk samples stored in buffer
     void dump_data_nts_();
 
     /**
@@ -268,7 +269,7 @@ protected:
             const ddspipe::core::types::DdsTopic& topic);
 
     /**
-     * @brief Attempt to get channel associated to given \c topic, and attempts to create one if not found.
+     * @brief Attempt to get channel associated to given \c topic, and attempt to create one if not found.
      *
      * @throw InconsistencyException if not found, and creation fails (schema not found).
      *
@@ -302,10 +303,10 @@ protected:
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;
 
     //! Handler instance state
-    StateCode state_;
+    McapHandlerStateCode state_;
 
-    //! Mutex synchronizing state transitions and access to object's data structures
-    std::mutex mtx_;
+    //! Mutex synchronizing state transitions
+    std::mutex state_mtx_;
 
     //! MCAP writer
     mcap::McapWriter mcap_writer_;
@@ -321,6 +322,9 @@ protected:
 
     //! Pending samples map
     std::map<std::string, std::queue<std::pair<std::string, Message>>> pending_samples_;
+
+    //! Mutex synchronizing access to object's data structures
+    std::mutex mtx_;
 
     //! Event thread
     std::thread event_thread_;

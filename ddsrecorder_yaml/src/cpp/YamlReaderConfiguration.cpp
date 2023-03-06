@@ -198,12 +198,12 @@ void Configuration::load_ddsrecorder_configuration_(
                 controller_domain = simple_configuration->domain;
             }
 
-            // Get optional initial command
-            if (YamlReader::is_tag_present(controller_yml, RECORDER_REMOTE_CONTROLLER_INITIAL_COMMAND_TAG))
+            // Get optional initial state
+            if (YamlReader::is_tag_present(controller_yml, RECORDER_REMOTE_CONTROLLER_INITIAL_STATE_TAG))
             {
-                // Convert to enum value and check valid wherever used to avoid upper dependency
-                initial_command = YamlReader::get<std::string>(controller_yml,
-                                RECORDER_REMOTE_CONTROLLER_INITIAL_COMMAND_TAG, version);
+                // Convert to enum and check valid wherever used to avoid mcap library dependency in YAML module
+                initial_state = YamlReader::get<std::string>(controller_yml,
+                                RECORDER_REMOTE_CONTROLLER_INITIAL_STATE_TAG, version);
             }
         }
 
