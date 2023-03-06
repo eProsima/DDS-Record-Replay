@@ -84,7 +84,7 @@ std::vector<const char*> yml_configurations =
         domain: 222
     recorder:
         buffer-size: 5
-        event-window: 10
+        event-window: 1
     remote-controller:
         enable: true
         domain: 222
@@ -235,7 +235,9 @@ unsigned int record(
     McapHandlerState init_state,
     int first_round,
     int secound_round,
-    McapHandlerState current_state)
+    McapHandlerState current_state,
+    bool event,
+    int time_sleep = 0)
 {
     {
         // Configuration
@@ -277,8 +279,27 @@ unsigned int record(
             }
         }
 
+        sleep(time_sleep);
+
         for(int i = 0; i < secound_round; i++) {
             send_sample();
+        }
+
+        if (event && init_state == McapHandlerState::paused) {
+            if (init_state == current_state){
+                mcap_handler->trigger_event();
+            }
+            // else {
+            //     switch (current_state)
+            //     {
+            //     case McapHandlerState::started:
+            //         mcap_handler->trigger_event("running");
+            //         break;
+            //     case McapHandlerState::stopped:
+            //         mcap_handler->trigger_event("stopped");
+            //         break;
+            //     }
+            // }
         }
     }
 
@@ -309,7 +330,8 @@ TEST(McapFileCreationTestWithController, controller_paused_running)
                         file_name,
                         McapHandlerState::paused,
                         n_data_1, n_data_2,
-                        McapHandlerState::started);
+                        McapHandlerState::started,
+                        0);
 
     ASSERT_EQ(n_received_msgs, (n_data_2));
 
@@ -327,7 +349,8 @@ TEST(McapFileCreationTestWithController, controller_running_paused)
                         file_name,
                         McapHandlerState::started,
                         n_data_1, n_data_2,
-                        McapHandlerState::paused);
+                        McapHandlerState::paused,
+                        0);
 
     ASSERT_EQ(n_received_msgs, (n_data_1));
 
@@ -345,7 +368,8 @@ TEST(McapFileCreationTestWithController, controller_running_stopped)
                         file_name,
                         McapHandlerState::started,
                         n_data_1, n_data_2,
-                        McapHandlerState::stopped);
+                        McapHandlerState::stopped,
+                        0);
 
     ASSERT_EQ(n_received_msgs, (n_data_1));
 
@@ -363,15 +387,54 @@ TEST(McapFileCreationTestWithController, controller_stopped_running)
                         file_name,
                         McapHandlerState::stopped,
                         n_data_1, n_data_2,
-                        McapHandlerState::started);
+                        McapHandlerState::started,
+                        0);
 
     ASSERT_EQ(n_received_msgs, (n_data_2));
 
 }
 
-TEST(McapFileCreationTestWithController, controller_running_max_buf)
+TEST(McapFileCreationTestWithController, controller_paused_stopped)
 {
     std::string file_name = "output_9_.mcap";
+
+    int n_data_1 = 10;
+    int n_data_2 = 5;
+
+    unsigned int n_received_msgs;
+    n_received_msgs = record(
+                        file_name,
+                        McapHandlerState::paused,
+                        n_data_1, n_data_2,
+                        McapHandlerState::stopped,
+                        0);
+
+    ASSERT_EQ(n_received_msgs, 0);
+
+}
+
+TEST(McapFileCreationTestWithController, controller_stopped_paused)
+{
+    std::string file_name = "output_10_.mcap";
+
+    int n_data_1 = 10;
+    int n_data_2 = 5;
+
+    unsigned int n_received_msgs;
+    n_received_msgs = record(
+                        file_name,
+                        McapHandlerState::stopped,
+                        n_data_1, n_data_2,
+                        McapHandlerState::paused,
+                        0);
+
+    ASSERT_EQ(n_received_msgs, 0);
+
+}
+
+TEST(McapFileCreationTestWithController, controller_running_max_buf)
+{
+    std::string file_name = "output_11_.mcap";
 
     int n_data_1 = 6;
     int n_data_2 = 6;
@@ -381,7 +444,8 @@ TEST(McapFileCreationTestWithController, controller_running_max_buf)
                         file_name,
                         McapHandlerState::started,
                         n_data_1, n_data_2,
-                        McapHandlerState::started);
+                        McapHandlerState::started,
+                        0);
 
     ASSERT_EQ(n_received_msgs, (n_data_1+n_data_2));
 
@@ -389,7 +453,7 @@ TEST(McapFileCreationTestWithController, controller_running_max_buf)
 
 TEST(McapFileCreationTestWithController, controller_running_not_max_buf)
 {
-    std::string file_name = "output_10_.mcap";
+    std::string file_name = "output_12_.mcap";
 
     int n_data_1 = 1;
     int n_data_2 = 1;
@@ -399,9 +463,86 @@ TEST(McapFileCreationTestWithController, controller_running_not_max_buf)
                         file_name,
                         McapHandlerState::started,
                         n_data_1, n_data_2,
-                        McapHandlerState::started);
+                        McapHandlerState::started,
+                        0);
 
     ASSERT_EQ(n_received_msgs, (n_data_1+n_data_2));
+
+}
+
+TEST(McapFileCreationTestWithController, controller_paused)
+{
+    std::string file_name = "output_13_.mcap";
+
+    int n_data_1 = 1;
+    int n_data_2 = 1;
+
+    unsigned int n_received_msgs;
+    n_received_msgs = record(
+                        file_name,
+                        McapHandlerState::paused,
+                        n_data_1, n_data_2,
+                        McapHandlerState::paused,
+                        0);
+
+    ASSERT_EQ(n_received_msgs, 0);
+
+}
+
+TEST(McapFileCreationTestWithController, controller_stopped)
+{
+    std::string file_name = "output_14_.mcap";
+
+    int n_data_1 = 1;
+    int n_data_2 = 1;
+
+    unsigned int n_received_msgs;
+    n_received_msgs = record(
+                        file_name,
+                        McapHandlerState::stopped,
+                        n_data_1, n_data_2,
+                        McapHandlerState::stopped,
+                        0);
+
+    ASSERT_EQ(n_received_msgs, 0);
+
+}
+
+TEST(McapFileCreationTestWithController, controller_paused_event_less_window)
+{
+    std::string file_name = "output_15_.mcap";
+
+    int n_data_1 = 1;
+    int n_data_2 = 1;
+
+    unsigned int n_received_msgs;
+    n_received_msgs = record(
+                        file_name,
+                        McapHandlerState::paused,
+                        n_data_1, n_data_2,
+                        McapHandlerState::paused,
+                        1);
+
+    ASSERT_EQ(n_received_msgs, (n_data_1+n_data_2));
+
+}
+
+TEST(McapFileCreationTestWithController, controller_paused_event_max_window)
+{
+    std::string file_name = "output_16_.mcap";
+
+    int n_data_1 = 1;
+    int n_data_2 = 1;
+
+    unsigned int n_received_msgs;
+    n_received_msgs = record(
+                        file_name,
+                        McapHandlerState::paused,
+                        n_data_1, n_data_2,
+                        McapHandlerState::paused,
+                        1, 2);
+
+    ASSERT_EQ(n_received_msgs, n_data_2);
 
 }
 
