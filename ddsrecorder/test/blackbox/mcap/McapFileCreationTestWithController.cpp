@@ -295,7 +295,8 @@ std::tuple<unsigned int, double> record(
             }
         }
 
-        if (!time_sleep) {
+        if (!time_sleep)
+        {
             time_sleep = rand() % 2;
         }
         sleep(time_sleep);
