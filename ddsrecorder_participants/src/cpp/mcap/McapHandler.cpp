@@ -271,7 +271,6 @@ void McapHandler::start()
         if (prev_state == McapHandlerStateCode::PAUSED)
         {
             // Stop event routine (cleans buffer)
-            std::lock_guard<std::mutex> _(mtx_);
             stop_event_thread_nts_();
         }
     }
@@ -285,9 +284,9 @@ void McapHandler::stop()
     McapHandlerStateCode prev_state = state_;
     state_ = McapHandlerStateCode::STOPPED;
 
-    std::lock_guard<std::mutex> _(mtx_);
     if (prev_state == McapHandlerStateCode::RUNNING)
     {
+        std::lock_guard<std::mutex> _(mtx_);
         dump_data_nts_();
     }
     else if (prev_state == McapHandlerStateCode::PAUSED)
@@ -327,6 +326,7 @@ void McapHandler::pause()
         }
 
         // Launch event thread routine
+        event_flag_ = EventCode::untriggered;  // No need to take event mutex (protected by state_mtx_)
         event_thread_ = std::thread(&McapHandler::event_thread_routine_, this);
     }
 }
@@ -432,19 +432,31 @@ void McapHandler::event_thread_routine_()
 
             std::unique_lock<std::mutex> lock(event_cv_mutex_);
 
-            event_flag_ = EventCode::untriggered;
-            timeout = !event_cv_.wait_until(
-                lock,
-                exit_time,
-                [&]
-                {
-                    return event_flag_ != EventCode::untriggered;
-                });
+            if (event_flag_ != EventCode::untriggered)
+            {
+                // Flag set before taking mutex, no need to wait
+                timeout = false;
+            }
+            else
+            {
+                timeout = !event_cv_.wait_until(
+                    lock,
+                    exit_time,
+                    [&]
+                    {
+                        return event_flag_ != EventCode::untriggered;
+                    });
+            }
 
             if (event_flag_ == EventCode::stopped)
             {
                 logInfo(DDSRECORDER_MCAP_HANDLER, "Finishing event thread routine.");
                 return;
+            }
+            else
+            {
+                // Reset and wait for next event
+                event_flag_ = EventCode::untriggered;
             }
         }
 
@@ -491,6 +503,7 @@ void McapHandler::stop_event_thread_nts_()
         event_cv_.notify_one();
         event_thread_.join();
     }
+    std::lock_guard<std::mutex> _(mtx_);
     clear_all_nts_();
 }
 

@@ -99,21 +99,12 @@ class Controller(QObject):
 
     def __init__(
         self,
-        dds_domain=0,
         debug=False
     ):
         """Construct a DDS Controller."""
         super().__init__()
 
         logger.debug('Initializing DDS Recorder controller...')
-
-        # Check DDS Domain
-        if (not self.is_valid_dds_domain(dds_domain)):
-            raise ValueError(
-                f'DDS Domain must be a number '
-                f'between 0 and {MAX_DDS_DOMAIN_ID}.')
-
-        self.init_dds(dds_domain)
 
     def __del__(self):
         """Remove all dds entities in an orderly manner."""
@@ -128,6 +119,12 @@ class Controller(QObject):
         return ((dds_domain >= 0) and (dds_domain <= MAX_DDS_DOMAIN_ID))
 
     def init_dds(self, dds_domain):
+        # Check DDS Domain
+        if (not self.is_valid_dds_domain(dds_domain)):
+            raise ValueError(
+                f'DDS Domain must be a number '
+                f'between 0 and {MAX_DDS_DOMAIN_ID}.')
+
         """Initialize DDS entities."""
         factory = fastdds.DomainParticipantFactory.get_instance()
         participant_qos = fastdds.DomainParticipantQos()

@@ -153,6 +153,10 @@ class ControllerGUI(QMainWindow):
         self.dds_controller.on_ddsrecorder_status.connect(
             self.on_ddsrecorder_status)
 
+        # Create DDS entities at the end to avoid race condition (receive
+        # status before connecting with signal slots)
+        self.dds_controller.init_dds(self.dds_domain)
+
     def on_ddsrecorder_discovered(self, discovered, message):
         """Inform that a new DDS Recorder has been discovered."""
         if not discovered:
