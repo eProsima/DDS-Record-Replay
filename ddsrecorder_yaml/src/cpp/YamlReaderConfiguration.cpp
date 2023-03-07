@@ -173,6 +173,10 @@ void Configuration::load_ddsrecorder_configuration_(
             }
         }
 
+        // Initialize controller domain with the same as the one being recorded
+        // WARNING: dds tag must have been parsed beforehand
+        controller_domain = simple_configuration->domain;
+
         /////
         // Get optional remote controller configuration
         if (YamlReader::is_tag_present(yml, RECORDER_REMOTE_CONTROLLER_TAG))
@@ -191,12 +195,6 @@ void Configuration::load_ddsrecorder_configuration_(
             {
                 controller_domain = YamlReader::get<types::DomainId>(controller_yml, DOMAIN_ID_TAG, version);
             }
-            else
-            {
-                // Use same domain as the one being recorded
-                // WARNING: dds tag must have been parsed beforehand
-                controller_domain = simple_configuration->domain;
-            }
 
             // Get optional initial state
             if (YamlReader::is_tag_present(controller_yml, RECORDER_REMOTE_CONTROLLER_INITIAL_STATE_TAG))
@@ -206,6 +204,10 @@ void Configuration::load_ddsrecorder_configuration_(
                                 RECORDER_REMOTE_CONTROLLER_INITIAL_STATE_TAG, version);
             }
         }
+
+        // Initialize cleanup_period with twice the value of event_window
+        // WARNING: event_window tag (under recorder tag) must have been parsed beforehand
+        cleanup_period = 2 * event_window;
 
         /////
         // Get optional specs configuration
@@ -235,11 +237,6 @@ void Configuration::load_ddsrecorder_configuration_(
             if (YamlReader::is_tag_present(specs_yml, RECORDER_SPECS_CLEANUP_PERIOD_TAG))
             {
                 cleanup_period = YamlReader::get_positive_int(specs_yml, RECORDER_SPECS_CLEANUP_PERIOD_TAG);
-            }
-            else
-            {
-                // WARNING: event_window tag (under recorder tag) must have been parsed beforehand
-                cleanup_period = 2 * event_window;
             }
         }
 
