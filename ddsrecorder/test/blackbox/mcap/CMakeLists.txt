@@ -30,48 +30,17 @@ set(TEST_LIST
         mcap_data_topic
         mcap_data_num_msgs
         mcap_data_num_msgs_downsampling
-    )
-
-set(TEST_NEEDED_SOURCES
-    )
-
-set(TEST_EXTRA_HEADERS
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types)
-
-add_blackbox_executable(
-    "${TEST_NAME}"
-    "${TEST_SOURCES}"
-    "${TEST_LIST}"
-    "${TEST_NEEDED_SOURCES}"
-    "${TEST_EXTRA_HEADERS}"
-)
-
-###########################################
-# McapFileCreationStateTransitionTest.cpp #
-###########################################
-
-set(TEST_NAME McapFileCreationStateTransitionTest)
-
-set(TEST_SOURCES
-        McapFileCreationStateTransitionTest.cpp
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world/HelloWorld.cxx
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world/HelloWorldPubSubTypes.cxx
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world/HelloWorldTypeObject.cxx
-    )
-
-set(TEST_LIST
-        controller_paused_running
-        controller_running_paused
-        controller_paused_stopped
-        controller_stopped_paused
-        controller_running_stopped
-        controller_stopped_running
-        controller_running
-        controller_paused
-        controller_stopped
-        controller_paused_event_less_window
-        controller_paused_event_max_window
+        transition_paused_running
+        transition_running_paused
+        transition_paused_stopped
+        transition_stopped_paused
+        transition_running_stopped
+        transition_stopped_running
+        transition_running
+        transition_paused
+        transition_stopped
+        transition_paused_event_less_window
+        transition_paused_event_max_window
     )
 
 set(TEST_NEEDED_SOURCES
