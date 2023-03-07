@@ -50,7 +50,7 @@ constexpr const char* RECORDER_EVENT_WINDOW_TAG("event-window");
 ////////////////////////////////////
 constexpr const char* RECORDER_REMOTE_CONTROLLER_TAG("remote-controller");
 constexpr const char* RECORDER_REMOTE_CONTROLLER_ENABLE_TAG("enable");
-constexpr const char* RECORDER_REMOTE_CONTROLLER_INITIAL_COMMAND_TAG("initial-command");
+constexpr const char* RECORDER_REMOTE_CONTROLLER_INITIAL_STATE_TAG("initial-state");
 
 ////////////////
 // Specs tags //

@@ -38,8 +38,11 @@ set(MODULE_DEPENDENCIES
     ${MODULE_FIND_PACKAGES})
 
 set(MODULE_THIRDPARTY_HEADERONLY
+    filewatch
+    mcap
+    nlohmann-json
     optionparser
-    mcap)
+    )
 
 set(MODULE_THIRDPARTY_PATH
     "../thirdparty")

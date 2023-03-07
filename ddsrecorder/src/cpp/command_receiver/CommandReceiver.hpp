@@ -19,12 +19,11 @@
 
 #pragma once
 
-#include <atomic>
+#include <mutex>
+#include <queue>
 
-#include <cpp_utils/enum/EnumBuilder.hpp>
 #include <cpp_utils/event/MultipleEventHandler.hpp>
 #include <cpp_utils/macros/custom_enumeration.hpp>
-#include <cpp_utils/macros/macros.hpp>
 
 #include <fastdds/dds/core/status/SubscriptionMatchedStatus.hpp>
 #include <fastdds/dds/domain/DomainParticipant.hpp>
@@ -43,27 +42,12 @@ namespace receiver {
 
 ENUMERATION_BUILDER(
     CommandCode,
-    NONE,
-    START,
-    PAUSE,
-    EVENT,
-    STOP,
-    CLOSE,
-    UNKNOWN
-    );
-
-eProsima_ENUMERATION_BUILDER(
-    CommandCodeBuilder,
-    CommandCode,
-            {
-                { CommandCode::NONE COMMA { "NONE" } } COMMA
-                { CommandCode::START COMMA { "START" } } COMMA
-                { CommandCode::PAUSE COMMA { "PAUSE" } } COMMA
-                { CommandCode::EVENT COMMA { "EVENT" } } COMMA
-                { CommandCode::STOP COMMA { "STOP" } } COMMA
-                { CommandCode::CLOSE COMMA { "CLOSE" } } COMMA
-                { CommandCode::UNKNOWN COMMA { "UNKNOWN" } }
-            }
+    start,
+    pause,
+    event,
+    stop,
+    close,
+    unknown
     );
 
 class CommandReceiver : public eprosima::fastdds::dds::DataReaderListener
@@ -78,9 +62,7 @@ public:
 
     bool init();
 
-    void wait_for_command();
-
-    CommandCode command_received();
+    ControllerCommand wait_for_command();
 
     void publish_status(
             CommandCode current,
@@ -97,9 +79,10 @@ public:
 private:
 
     static std::string command_to_status_string_(
-            CommandCode command);
+            const CommandCode& command);
 
-    std::atomic<CommandCode> command_received_;
+    std::mutex mtx_;
+    std::queue<ControllerCommand> commands_received_;
 
     // DDS related attributes
     uint32_t domain_;

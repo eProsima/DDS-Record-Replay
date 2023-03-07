@@ -62,10 +62,10 @@ Message::~Message()
 McapHandler::McapHandler(
         const McapHandlerConfiguration& config,
         const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
-        const StateCode& init_state /* = StateCode::started */)
+        const McapHandlerStateCode& init_state /* = McapHandlerStateCode::RUNNING */)
     : configuration_(config)
     , payload_pool_(payload_pool)
-    , state_(StateCode::stopped)
+    , state_(McapHandlerStateCode::STOPPED)
 {
     std::string tmp_filename = tmp_filename_(config.file_name);
     auto status = mcap_writer_.open(tmp_filename.c_str(), mcap::McapWriterOptions("ros2"));
@@ -78,11 +78,11 @@ McapHandler::McapHandler(
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "MCAP file <" << config.file_name << "> .");
 
-    if (init_state == StateCode::started)
+    if (init_state == McapHandlerStateCode::RUNNING)
     {
         start();
     }
-    else if (init_state == StateCode::paused)
+    else if (init_state == McapHandlerStateCode::PAUSED)
     {
         pause();
     }
@@ -113,7 +113,7 @@ void McapHandler::add_schema(
 {
     std::lock_guard<std::mutex> lock(mtx_);
 
-    if (state_ == StateCode::stopped)
+    if (state_ == McapHandlerStateCode::STOPPED)
     {
         logWarning(
             DDSRECORDER_MCAP_HANDLER,
@@ -163,7 +163,7 @@ void McapHandler::add_data(
         DDSRECORDER_MCAP_HANDLER,
         "Adding data in topic " << topic);
 
-    if (state_ == StateCode::stopped)
+    if (state_ == McapHandlerStateCode::STOPPED)
     {
         logWarning(
             DDSRECORDER_MCAP_HANDLER,
@@ -250,13 +250,13 @@ void McapHandler::add_data(
 
 void McapHandler::start()
 {
-    std::lock_guard<std::mutex> lock(mtx_);
+    std::lock_guard<std::mutex> lock(state_mtx_);
 
     // Store previous state to act differently depending on its value
-    StateCode prev_state = state_;
-    state_ = StateCode::started;
+    McapHandlerStateCode prev_state = state_;
+    state_ = McapHandlerStateCode::RUNNING;
 
-    if (prev_state == StateCode::started)
+    if (prev_state == McapHandlerStateCode::RUNNING)
     {
         logWarning(
             DDSRECORDER_MCAP_HANDLER,
@@ -268,7 +268,7 @@ void McapHandler::start()
             DDSRECORDER_MCAP_HANDLER,
             "Starting handler.");
 
-        if (prev_state == StateCode::paused)
+        if (prev_state == McapHandlerStateCode::PAUSED)
         {
             // Stop event routine (cleans buffer)
             stop_event_thread_nts_();
@@ -278,17 +278,18 @@ void McapHandler::start()
 
 void McapHandler::stop()
 {
-    std::lock_guard<std::mutex> lock(mtx_);
+    std::lock_guard<std::mutex> lock(state_mtx_);
 
     // Store previous state to act differently depending on its value
-    StateCode prev_state = state_;
-    state_ = StateCode::stopped;
+    McapHandlerStateCode prev_state = state_;
+    state_ = McapHandlerStateCode::STOPPED;
 
-    if (prev_state == StateCode::started)
+    if (prev_state == McapHandlerStateCode::RUNNING)
     {
+        std::lock_guard<std::mutex> _(mtx_);
         dump_data_nts_();
     }
-    else if (prev_state == StateCode::paused)
+    else if (prev_state == McapHandlerStateCode::PAUSED)
     {
         // Stop event routine (cleans buffer)
         stop_event_thread_nts_();
@@ -297,13 +298,13 @@ void McapHandler::stop()
 
 void McapHandler::pause()
 {
-    std::lock_guard<std::mutex> lock(mtx_);
+    std::lock_guard<std::mutex> lock(state_mtx_);
 
     // Store previous state to act differently depending on its value
-    StateCode prev_state = state_;
-    state_ = StateCode::paused;
+    McapHandlerStateCode prev_state = state_;
+    state_ = McapHandlerStateCode::PAUSED;
 
-    if (prev_state == StateCode::paused)
+    if (prev_state == McapHandlerStateCode::PAUSED)
     {
         logWarning(
             DDSRECORDER_MCAP_HANDLER,
@@ -315,8 +316,9 @@ void McapHandler::pause()
             DDSRECORDER_MCAP_HANDLER,
             "Pausing handler.");
 
-        if (prev_state == StateCode::started)
+        if (prev_state == McapHandlerStateCode::RUNNING)
         {
+            std::lock_guard<std::mutex> _(mtx_);
             // Write data stored in buffer
             dump_data_nts_();
             // Remove pending samples
@@ -324,15 +326,16 @@ void McapHandler::pause()
         }
 
         // Launch event thread routine
+        event_flag_ = EventCode::untriggered;  // No need to take event mutex (protected by state_mtx_)
         event_thread_ = std::thread(&McapHandler::event_thread_routine_, this);
     }
 }
 
 void McapHandler::trigger_event()
 {
-    std::lock_guard<std::mutex> lock(mtx_);
+    std::lock_guard<std::mutex> lock(state_mtx_);
 
-    if (state_ != StateCode::paused)
+    if (state_ != McapHandlerStateCode::PAUSED)
     {
         logWarning(
             DDSRECORDER_MCAP_HANDLER,
@@ -374,7 +377,7 @@ void McapHandler::add_data_nts_(
         const Message& msg)
 {
     samples_buffer_.push_back(msg);
-    if (state_ == StateCode::started && samples_buffer_.size() == configuration_.buffer_size)
+    if (state_ == McapHandlerStateCode::RUNNING && samples_buffer_.size() == configuration_.buffer_size)
     {
         logInfo(DDSRECORDER_MCAP_HANDLER, "Full buffer, writting to disk...");
         dump_data_nts_();
@@ -429,19 +432,31 @@ void McapHandler::event_thread_routine_()
 
             std::unique_lock<std::mutex> lock(event_cv_mutex_);
 
-            event_flag_ = EventCode::untriggered;
-            timeout = !event_cv_.wait_until(
-                lock,
-                exit_time,
-                [&]
-                {
-                    return event_flag_ != EventCode::untriggered;
-                });
+            if (event_flag_ != EventCode::untriggered)
+            {
+                // Flag set before taking mutex, no need to wait
+                timeout = false;
+            }
+            else
+            {
+                timeout = !event_cv_.wait_until(
+                    lock,
+                    exit_time,
+                    [&]
+                    {
+                        return event_flag_ != EventCode::untriggered;
+                    });
+            }
 
             if (event_flag_ == EventCode::stopped)
             {
                 logInfo(DDSRECORDER_MCAP_HANDLER, "Finishing event thread routine.");
                 return;
+            }
+            else
+            {
+                // Reset and wait for next event
+                event_flag_ = EventCode::untriggered;
             }
         }
 
@@ -475,8 +490,8 @@ void McapHandler::remove_outdated_samples_nts_()
 
 void McapHandler::stop_event_thread_nts_()
 {
-    // WARNING: state must have been set different to paused before calling this method
-    assert(state_ != StateCode::paused);
+    // WARNING: state must have been set different to PAUSED before calling this method
+    assert(state_ != McapHandlerStateCode::PAUSED);
 
     logInfo(DDSRECORDER_MCAP_HANDLER, "Stopping event thread.");
     if (event_thread_.joinable())
@@ -488,6 +503,7 @@ void McapHandler::stop_event_thread_nts_()
         event_cv_.notify_one();
         event_thread_.join();
     }
+    std::lock_guard<std::mutex> _(mtx_);
     clear_all_nts_();
 }
 
