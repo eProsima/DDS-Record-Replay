@@ -156,8 +156,8 @@ jobs:
         uses: ./DDS-Recorder/.github/actions/install-recorder-subpackage-windows
         with:
           cmake_build_type: ${{ matrix.cmake-config }}
-          subpackage: ddsrecorder
-          subpackage_dir: tools/ddsrecorder
+          subpackage: ddsrecorder_tool
+          subpackage_dir: ddsrecorder
           cmake_prefix_path: 'C:\Program Files\gtest;C:\Program Files\yamlcpp;${{ github.workspace }}\..\fastdds\install;${{ env.vcpkg_install_path }}'
 
 
