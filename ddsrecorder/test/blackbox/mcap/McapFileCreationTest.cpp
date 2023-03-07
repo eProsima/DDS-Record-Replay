@@ -343,17 +343,6 @@ std::tuple<unsigned int, double> record_with_transitions(
             {
                 mcap_handler->trigger_event();
             }
-            // else {
-            //     switch (current_state)
-            //     {
-            //     case McapHandlerState::started:
-            //         mcap_handler->trigger_event("running");
-            //         break;
-            //     case McapHandlerState::stopped:
-            //         mcap_handler->trigger_event("stopped");
-            //         break;
-            //     }
-            // }
         }
     }
 
