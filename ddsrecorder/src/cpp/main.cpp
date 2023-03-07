@@ -217,7 +217,10 @@ std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> create_periodic_ha
     return std::make_unique<eprosima::utils::event::PeriodicEventHandler>(periodic_callback, reload_time);
 }
 
-void parse_command(const ControllerCommand& command, CommandCode& command_code, json& args)
+void parse_command(
+        const ControllerCommand& command,
+        CommandCode& command_code,
+        json& args)
 {
     command_code = CommandCode::unknown;
     args = {};
@@ -242,13 +245,14 @@ void parse_command(const ControllerCommand& command, CommandCode& command_code, 
         catch (const std::exception& e)
         {
             logWarning(
-                    DDSRECORDER_EXECUTION,
-                    "Received command argument <" << args_str << "> is not a valid json object : <" << e.what() << ">.");
+                DDSRECORDER_EXECUTION,
+                "Received command argument <" << args_str << "> is not a valid json object : <" << e.what() << ">.");
         }
     }
 }
 
-CommandCode state_to_command(const McapHandlerState& state)
+CommandCode state_to_command(
+        const McapHandlerState& state)
 {
     switch (state)
     {
@@ -533,9 +537,13 @@ int main(
                                         std::string next_state_str = *it;
                                         McapHandlerState next_state;
                                         bool found = string_to_state(next_state_str, next_state);
-                                        if (!found || (next_state != McapHandlerState::RUNNING && next_state != McapHandlerState::STOPPED))
+                                        if (!found ||
+                                                (next_state != McapHandlerState::RUNNING &&
+                                                next_state != McapHandlerState::STOPPED))
                                         {
-                                            logWarning(DDSRECORDER_EXECUTION, "Value " << next_state_str << " is not a valid event next_state argument (only RUNNING/STOPPED). Ignoring...");
+                                            logWarning(DDSRECORDER_EXECUTION,
+                                                    "Value " << next_state_str <<
+                                                    " is not a valid event next_state argument (only RUNNING/STOPPED). Ignoring...");
 
                                             // Stay in current state if provided next_state is not valid
                                             command = prev_command;
