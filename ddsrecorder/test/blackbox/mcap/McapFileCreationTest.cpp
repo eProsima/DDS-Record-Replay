@@ -52,7 +52,7 @@ using namespace eprosima::fastdds::dds;
 using namespace eprosima::ddspipe;
 using namespace eprosima::ddsrecorder;
 
-using McapHandlerState = eprosima::ddsrecorder::participants::McapHandler::StateCode;
+using McapHandlerState = eprosima::ddsrecorder::participants::McapHandlerStateCode;
 
 enum class DataTypeKind
 {
@@ -96,7 +96,7 @@ std::unique_ptr<core::DdsPipe> create_recorder(
         std::string file_name,
         std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler>& mcap_handler,
         int downsampling,
-        McapHandlerState mcap_handler_state = McapHandlerState::started)
+        McapHandlerState mcap_handler_state = McapHandlerState::RUNNING)
 {
     for (const char* yml_configuration : test::yml_configurations)
     {
@@ -291,9 +291,9 @@ std::tuple<unsigned int, double> record_with_transitions(
         std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler> mcap_handler;
 
         std::unique_ptr<core::DdsPipe> recorder;
-        if (init_state == McapHandlerState::stopped)
+        if (init_state == McapHandlerState::STOPPED)
         {
-            recorder = create_recorder(file_name, mcap_handler, downsampling, McapHandlerState::started);
+            recorder = create_recorder(file_name, mcap_handler, downsampling, McapHandlerState::RUNNING);
             usleep(100000);
             mcap_handler->stop();
         }
@@ -312,13 +312,13 @@ std::tuple<unsigned int, double> record_with_transitions(
         {
             switch (current_state)
             {
-                case McapHandlerState::started:
+                case McapHandlerState::RUNNING:
                     mcap_handler->start();
                     break;
-                case McapHandlerState::stopped:
+                case McapHandlerState::STOPPED:
                     mcap_handler->stop();
                     break;
-                case McapHandlerState::paused:
+                case McapHandlerState::PAUSED:
                     mcap_handler->pause();
                     break;
                 default:
@@ -337,7 +337,7 @@ std::tuple<unsigned int, double> record_with_transitions(
             send_sample();
         }
 
-        if (event && init_state == McapHandlerState::paused)
+        if (event && init_state == McapHandlerState::PAUSED)
         {
             if (init_state == current_state)
             {
@@ -487,9 +487,9 @@ TEST(McapFileCreationTest, transition_paused_running)
 
     auto recording = record_with_transitions(
         file_name,
-        McapHandlerState::paused,
+        McapHandlerState::PAUSED,
         n_data_1, n_data_2,
-        McapHandlerState::started,
+        McapHandlerState::RUNNING,
         0);
 
     unsigned int n_received_msgs = std::get<0>(recording);
@@ -507,9 +507,9 @@ TEST(McapFileCreationTest, transition_running_paused)
 
     auto recording = record_with_transitions(
         file_name,
-        McapHandlerState::started,
+        McapHandlerState::RUNNING,
         n_data_1, n_data_2,
-        McapHandlerState::paused,
+        McapHandlerState::PAUSED,
         0);
 
     unsigned int n_received_msgs = std::get<0>(recording);
@@ -527,9 +527,9 @@ TEST(McapFileCreationTest, transition_running_stopped)
 
     auto recording = record_with_transitions(
         file_name,
-        McapHandlerState::started,
+        McapHandlerState::RUNNING,
         n_data_1, n_data_2,
-        McapHandlerState::stopped,
+        McapHandlerState::STOPPED,
         0);
 
     unsigned int n_received_msgs = std::get<0>(recording);
@@ -547,9 +547,9 @@ TEST(McapFileCreationTest, transition_stopped_running)
 
     auto recording = record_with_transitions(
         file_name,
-        McapHandlerState::stopped,
+        McapHandlerState::STOPPED,
         n_data_1, n_data_2,
-        McapHandlerState::started,
+        McapHandlerState::RUNNING,
         0);
 
     unsigned int n_received_msgs = std::get<0>(recording);
@@ -567,9 +567,9 @@ TEST(McapFileCreationTest, transition_paused_stopped)
 
     auto recording = record_with_transitions(
         file_name,
-        McapHandlerState::paused,
+        McapHandlerState::PAUSED,
         n_data_1, n_data_2,
-        McapHandlerState::stopped,
+        McapHandlerState::STOPPED,
         0);
 
     unsigned int n_received_msgs = std::get<0>(recording);
@@ -587,9 +587,9 @@ TEST(McapFileCreationTest, transition_stopped_paused)
 
     auto recording = record_with_transitions(
         file_name,
-        McapHandlerState::stopped,
+        McapHandlerState::STOPPED,
         n_data_1, n_data_2,
-        McapHandlerState::paused,
+        McapHandlerState::PAUSED,
         0);
 
     unsigned int n_received_msgs = std::get<0>(recording);
@@ -607,9 +607,9 @@ TEST(McapFileCreationTest, transition_running)
 
     auto recording = record_with_transitions(
         file_name,
-        McapHandlerState::started,
+        McapHandlerState::RUNNING,
         n_data_1, n_data_2,
-        McapHandlerState::started,
+        McapHandlerState::RUNNING,
         0);
 
     unsigned int n_received_msgs = std::get<0>(recording);
@@ -627,9 +627,9 @@ TEST(McapFileCreationTest, transition_paused)
 
     auto recording = record_with_transitions(
         file_name,
-        McapHandlerState::paused,
+        McapHandlerState::PAUSED,
         n_data_1, n_data_2,
-        McapHandlerState::paused,
+        McapHandlerState::PAUSED,
         0);
 
     unsigned int n_received_msgs = std::get<0>(recording);
@@ -647,9 +647,9 @@ TEST(McapFileCreationTest, transition_stopped)
 
     auto recording = record_with_transitions(
         file_name,
-        McapHandlerState::stopped,
+        McapHandlerState::STOPPED,
         n_data_1, n_data_2,
-        McapHandlerState::stopped,
+        McapHandlerState::STOPPED,
         0);
 
     unsigned int n_received_msgs = std::get<0>(recording);
@@ -667,9 +667,9 @@ TEST(McapFileCreationTest, transition_paused_event_less_window)
 
     auto recording = record_with_transitions(
         file_name,
-        McapHandlerState::paused,
+        McapHandlerState::PAUSED,
         n_data_1, n_data_2,
-        McapHandlerState::paused,
+        McapHandlerState::PAUSED,
         1, 1);
 
     unsigned int n_received_msgs = std::get<0>(recording);
@@ -690,9 +690,9 @@ TEST(McapFileCreationTest, transition_paused_event_max_window)
 
     auto recording = record_with_transitions(
         file_name,
-        McapHandlerState::paused,
+        McapHandlerState::PAUSED,
         n_data_1, n_data_2,
-        McapHandlerState::paused,
+        McapHandlerState::PAUSED,
         1, 3);
 
     unsigned int n_received_msgs = std::get<0>(recording);
