@@ -234,9 +234,9 @@ eprosima::fastrtps::types::DynamicData_ptr send_sample(
 }
 
 eprosima::fastrtps::types::DynamicData_ptr record(
-    std::string file_name,
-    unsigned int num_msgs = 1,
-    unsigned int downsampling = 1)
+        std::string file_name,
+        unsigned int num_msgs = 1,
+        unsigned int downsampling = 1)
 {
     eprosima::fastrtps::types::DynamicData_ptr send_data;
 
@@ -260,8 +260,8 @@ eprosima::fastrtps::types::DynamicData_ptr record(
 }
 
 mcap::LinearMessageView get_msgs_mcap(
-    std::string file_name,
-    mcap::McapReader& mcap_reader_)
+        std::string file_name,
+        mcap::McapReader& mcap_reader_)
 {
     auto status = mcap_reader_.open(file_name);
 
