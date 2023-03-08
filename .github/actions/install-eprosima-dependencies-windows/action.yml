@@ -14,9 +14,9 @@ inputs:
     required: true
     default: 'main'
   ddspipe_branch:
-        description: 'Branch or tag of DDS Pipe repository (https://github.com/eProsima/DDS-Pipe)'
-        required: true
-        default: 'main'
+    description: 'Branch or tag of DDS Pipe repository (https://github.com/eProsima/DDS-Pipe)'
+    required: true
+    default: 'main'
 runs:
   using: composite
   steps:
