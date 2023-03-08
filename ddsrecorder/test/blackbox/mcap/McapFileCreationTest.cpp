@@ -293,8 +293,9 @@ std::tuple<unsigned int, double> record_with_transitions(
         std::unique_ptr<core::DdsPipe> recorder;
         if (init_state == McapHandlerState::STOPPED)
         {
+            // avoid race condition on TypeObject reception
             recorder = create_recorder(file_name, mcap_handler, downsampling, McapHandlerState::RUNNING);
-            usleep(100000);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             mcap_handler->stop();
         }
         else
@@ -330,33 +331,31 @@ std::tuple<unsigned int, double> record_with_transitions(
         {
             time_sleep = rand() % 2;
         }
-        sleep(time_sleep);
+        std::this_thread::sleep_for(std::chrono::seconds(time_sleep));
 
         for (unsigned int i = 0; i < secound_round; i++)
         {
             send_sample();
         }
 
-        if (event && init_state == McapHandlerState::PAUSED)
+        if (event && current_state == McapHandlerState::PAUSED)
         {
-            if (init_state == current_state)
-            {
-                mcap_handler->trigger_event();
-            }
+            mcap_handler->trigger_event();
         }
     }
+
+    uint64_t current_time = std::chrono::duration_cast<std::chrono::nanoseconds>
+                (std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
     mcap::McapReader mcap_reader;
     auto messages = get_msgs_mcap(file_name, mcap_reader);
 
     unsigned int n_received_msgs = 0;
-    uint64_t actual_time = std::chrono::duration_cast<std::chrono::nanoseconds>
-                (std::chrono::high_resolution_clock::now().time_since_epoch()).count();
     double max_timestamp = 0;
     for (auto it = messages.begin(); it != messages.end(); it++)
     {
         n_received_msgs++;
-        double time_seconds = ((actual_time) - (it->message.publishTime)) * pow(10.0, -9.0);
+        double time_seconds = ((current_time) - (it->message.logTime)) * pow(10.0, -9.0);
         if (time_seconds > max_timestamp)
         {
             max_timestamp = time_seconds;
