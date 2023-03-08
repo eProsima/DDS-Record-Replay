@@ -221,7 +221,7 @@ void McapHandler::add_data(
         auto channel_id = get_channel_id_nts_(topic);
         msg.channelId = channel_id;
     }
-    catch (const utils::Exception& e)
+    catch (const utils::Exception&)
     {
         logWarning(
             DDSRECORDER_MCAP_HANDLER,
@@ -240,7 +240,7 @@ void McapHandler::add_data(
     {
         add_data_nts_(msg);
     }
-    catch (const utils::Exception& e)
+    catch (const utils::Exception&)
     {
         throw utils::InconsistencyException(
                   STR_ENTRY << "Error writting in MCAP a message in topic " << topic.m_topic_name
@@ -406,7 +406,7 @@ void McapHandler::add_pending_samples_nts_(
         {
             add_data_nts_(msg);
         }
-        catch (const utils::Exception& e)
+        catch (const utils::Exception&)
         {
             throw utils::InconsistencyException(
                       STR_ENTRY << "Error writting in MCAP a message in topic " << sample.first
