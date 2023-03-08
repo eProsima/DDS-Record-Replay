@@ -58,7 +58,7 @@ To define these data filtering rules based on the Topics to which they belong, t
 
 These lists of topics stated above are defined by a tag in the *YAML* configuration file, which defines a *YAML* vector (``[]``).
 This vector contains the list of topics for each filtering rule.
-Each Topic is determined by its entries ``name``, ``type`` and ``keyed``, with only the first one being mandatory.
+Each Topic is determined by its entries ``name`` and ``type``, with only the first one being mandatory.
 
 .. list-table::
     :header-rows: 1
@@ -75,11 +75,6 @@ Each Topic is determined by its entries ``name``, ``type`` and ``keyed``, with o
         - ``string``
         - ``"*"``
 
-    *   - ``keyed``
-        - ``bool``
-        - ``false``
-
-The entry ``keyed`` determines whether the corresponding topic is `keyed <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dds_layer/topic/typeSupport/typeSupport.html#data-types-with-a-key>`_ or not.
 See :term:`Topic` section for further information about the topic.
 
 .. note::
@@ -182,6 +177,12 @@ Apart from these values, the tag ``qos`` under each topic allows to configure th
         - ``false``
         - ``EXCLUSIVE_OWNERSHIP_QOS`` / ``SHARED_OWNERSHIP_QOS``
 
+    *   - Key
+        - ``keyed``
+        - *bool*
+        - ``false``
+        - Topic with / without key
+
 **Example of usage:**
 
     .. code-block:: yaml
@@ -195,6 +196,7 @@ Apart from these values, the tag ``qos`` under each topic allows to configure th
               depth: 100         # Use History Depth 100
               partitions: true   # Topic with partitions
               ownership: false   # Use QoS SHARED_OWNERSHIP_QOS
+              keyed: true        # Topic with key
 
 
 .. _usage_configuration_domain_id:
@@ -229,12 +231,6 @@ The recorder output file does support the following configurations:
         - Data type
         - Default value
 
-    *   - File extension
-        - ``extension``
-        - Configure the file extension for the output file.
-        - ``string``
-        - ``.mcap``
-
     *   - File path
         - ``path``
         - Configure the path to save the output file.
@@ -247,28 +243,33 @@ The recorder output file does support the following configurations:
         - ``string``
         -
 
+When DDS Recorder application is launched (or when remotely controlled, every time a ``start`` command is received), a temporary file with ``filename`` name and ``.mcap.tmp~`` extension is created in ``path``.
+This file is not readable until the application is terminated (or a ``stop`` / ``close`` command is received).
+On such event, the temporal file is renamed to ``filename`` with ``.mcap`` extension in the same location, and is then ready to be processed.
+
 Downsampling
 ^^^^^^^^^^^^
 
 Reduces the sampling rate of the received data by keeping the first sample and then all *n-th* samples after the first sample, where *n* is the value specified in ``downsampling``.
-This parameter only accepts integer values.
+This parameter only accepts integer values, and its default value is ``1`` (no downsampling).
 
 Buffer size
 ^^^^^^^^^^^
 
 ``buffer-size`` indicates the number of samples to be stored in the process memory before the dump to disk.
 This avoids disk access each time a sample is received.
-This parameter applies to each topic independently, that is, ``buffer-size`` samples of each topic will be buffered before writing them to the database.
+By default, its value is set to ``100``.
 
-Event Duration
-^^^^^^^^^^^^^^
+.. _usage_configuration_event_window:
 
-The |ddsrecorder| can be configured to continue saving data when it is in pause mode.
-Thus, when the |ddsrecorder| receives the event from the remote controller, it will save the samples received in the time period configured in ``event-duration`` in the database and restart the timer.
+Event Window
+^^^^^^^^^^^^
 
-In other words, the ``event-duration`` acts as a sliding time window that allows to save the collected samples in this time window only when the remote controller event is received.
-This way, a |ddsrecorder| is working in pause mode, recording samples in the database only when the event from the remote controller occurs.
+|ddsrecorder| can be configured to continue saving data when it is in paused mode.
+Thus, when an event is triggered from the remote controller, samples received in the last ``event-window`` seconds are stored in the database.
 
+In other words, the ``event-window`` acts as a sliding time window that allows to save the collected samples in this time window only when the remote controller event is received.
+By default, its value is set to ``20`` seconds.
 
 .. _usage_configuration_remote_controller:
 
@@ -276,7 +277,7 @@ Remote Controller
 -----------------
 
 Configuration of the DDS remote control system.
-Please refer to `remote_control` for further information on how to use the |ddsrecorder| remotely.
+Please refer to :ref:`Remote Control <remote_control>` for further information on how to use |ddsrecorder| remotely.
 The supported configurations are:
 
 .. list-table::
@@ -294,7 +295,7 @@ The supported configurations are:
         - Enable DDS remote |br|
           control system topics.
         - ``boolean``
-        - ``false``
+        - ``true``
         - ``true`` |br|
           ``false``
 
@@ -302,23 +303,23 @@ The supported configurations are:
         - ``domain``
         - DDS Domain of the DDS |br|
           remote control system.
-        - ``string``
-        - ``0``
+        - ``integer``
+        - DDS domain being recorded
         - From ``0`` to ``255``
 
     *   - Initial state
         - ``initial-state``
         - Initial state of |ddsrecorder|.
         - ``string``
-        - ``Running``
-        - ``Running`` |br|
-          ``Paused`` |br|
-          ``Stopped``
+        - ``RUNNING``
+        - ``RUNNING`` |br|
+          ``PAUSED`` |br|
+          ``STOPPED``
 
 Specs Configuration
 -------------------
 
-The internals of the |ddsrecorder| can be configured using the ``specs`` optional tag that contains certain options related with the overall configuration of the |ddsrecorder| instance to run.
+The internals of a |ddsrecorder| can be configured using the ``specs`` optional tag that contains certain options related with the overall configuration of the |ddsrecorder| instance to run.
 The values available to configure are:
 
 Number of Threads
@@ -334,21 +335,17 @@ In case this value is not set, the default number of threads used is :code:`12`.
 Maximum Number of Pending Samples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-It is possible that the |ddsrecorder| starts receiving data from a topic that it has not yet registered, i.e. a topic for which it does not know the data type.
+It is possible that a |ddsrecorder| starts receiving data from a topic that it has not yet registered, i.e. a topic for which it does not know the data type.
 In order not to discard the samples received from this topic, it is possible to keep a limited number of samples in an internal circular buffer that stores those samples that do not yet have a known data type.
-The ``max-pending-samples`` parameter allows to configure the size of this circular buffer for each topic that is discovered.
-The default value is equal to ``10`` samples.
+The ``max-pending-samples`` parameter allows to configure the size of this circular buffer **for each topic** that is discovered.
+The default value is equal to ``5000`` samples.
 
-.. _history_depth_configuration:
+Cleanup Period
+^^^^^^^^^^^^^^
 
-Maximum History Depth
-^^^^^^^^^^^^^^^^^^^^^
-
-``specs`` supports a ``max-depth`` optional value that configures the history size of the *Fast DDS* internal entities.
-By default, the depth of every RTPS History instance is :code:`5000`, which sets a constraint on the maximum number of samples a |ddsrecorder| instance can deliver to late joiner Readers configured with ``TRANSIENT_LOCAL`` `DurabilityQosPolicyKind <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dds_layer/core/policy/standardQosPolicies.html#durabilityqospolicykind>`_.
-Its value should be decreased when the sample size and/or number of created endpoints (increasing with the number of topics and |ddsrecorder| participants) are as big as to cause memory exhaustion issues.
-Likewise, one may choose to increase this value if wishing to deliver a greater number of samples to late joiners and enough memory is available.
-
+As explained in :ref:`Event Window <usage_configuration_event_window>`, a |ddsrecorder| in paused mode awaits for an event command to write in disk all samples received in the last ``event-window`` seconds.
+To accomplish this, received samples are stored in memory until the aforementioned event is triggered and, in order to limit memory consumption, outdated (received more than ``event-window`` seconds ago) samples are removed from this buffer every ``cleanup-period`` seconds.
+By default, its value is equal to twice the ``event-window``.
 
 .. _usage_configuration_general_example:
 
@@ -376,13 +373,12 @@ A complete example of all the configurations described on this page can be found
           qos:
             reliability: true
             durability: true
-            depth: 100
+            keyed: false
             partitions: true
             ownership: false
 
     recorder:
       output:
-        extension: ".mcap"
         filename: "output"
         path: "."
 
@@ -393,12 +389,12 @@ A complete example of all the configurations described on this page can be found
     remote-controller:
       enable: true
       domain: 10
-      init-state: "paused"
+      init-state: "PAUSED"
 
     specs:
       threads: 8
-      max-depth: 100
       max-pending-samples: 10
+      cleanup-period: 90
 
 
 .. _usage_fastdds_configuration:

@@ -43,6 +43,7 @@ The installation of |eddsrecord| in a Linux environment from sources requires th
 
 * :ref:`cmake_gcc_pip_wget_git_sl`
 * :ref:`colcon_install` [optional]
+* :ref:`fastdds_python` [for remote controller only]
 * :ref:`gtest_sl` [for test only]
 
 
@@ -77,6 +78,22 @@ Install the ROS 2 development tools (colcon_ and vcstool_) by executing the foll
     If this fails due to an Environment Error, add the :code:`--user` flag to the :code:`pip3` installation command.
 
 
+.. _fastdds_python:
+
+Fast DDS Python
+^^^^^^^^^^^^^^^
+
+`eProsima Fast DDS Python <https://github.com/eProsima/Fast-DDS-python/>`_ is a Python binding for the eProsima Fast DDS C++ library.
+It is only required for the :ref:`remote controller application <remote_controller>`.
+
+Clone the Github repository into the |eddsrecord| workspace and compile it with colcon_ as a dependency package.
+Use the following command to download the code:
+
+.. code-block:: bash
+
+    git clone https://github.com/eProsima/Fast-DDS-python.git src/Fast-DDS-python
+
+
 .. _gtest_sl:
 
 Gtest
@@ -106,6 +123,8 @@ Dependencies
 * :ref:`asiotinyxml2_sl`
 * :ref:`openssl_sl`
 * :ref:`yaml_cpp`
+* :ref:`swig_sl` [for remote controller only]
+* :ref:`mcap_dependencies`
 * :ref:`eprosima_dependencies`
 
 .. _asiotinyxml2_sl:
@@ -148,6 +167,35 @@ For example, on Ubuntu use the command:
 
    sudo apt install libyaml-cpp-dev
 
+.. _swig_sl:
+
+SWIG
+^^^^
+
+`SWIG <https://www.swig.org>`_ is a software development tool that connects programs written in C and C++ with a variety of high-level programming languages.
+It is leveraged by :ref:`Fast DDS Python <fastdds_python>` to generate a Python wrapper over Fast DDS library.
+SWIG is only a requirement for the :ref:`remote controller application <remote_controller>`.
+It can be installed using the package manager of the appropriate Linux distribution.
+For example, on Ubuntu use the command:
+
+.. code-block:: bash
+
+   sudo apt install swig libpython3-dev
+
+.. _mcap_dependencies:
+
+MCAP dependencies
+^^^^^^^^^^^^^^^^^
+
+`MCAP <https://github.com/foxglove/mcap>`_ is a modular container format and logging library for pub/sub messages with arbitrary message serialization.
+It is primarily intended for use in robotics applications, and works well under various workloads, resource constraints, and durability requirements.
+MCAP C++ library is packed within |ddsrecorder| as a header-only, but its dependencies need to be installed using the package manager of the appropriate Linux distribution.
+For example, on Ubuntu use the command:
+
+.. code-block:: bash
+
+   sudo apt install liblz4-dev libzstd-dev
+
 .. _eprosima_dependencies:
 
 eProsima dependencies
@@ -188,6 +236,10 @@ Colcon installation (recommended)
     .. code-block:: bash
 
         colcon build
+
+.. note::
+
+    To install both |ddsrecorder| and its :ref:`remote controller application <remote_controller>`, compilation flag ``-DBUILD_DDSRECORDER_CONTROLLER=ON`` is required.
 
 .. note::
 
@@ -275,21 +327,21 @@ Local installation
             cd ~/DDS-Record
             mkdir build/ddspipe_core
             cd build/ddspipe_core
-            cmake ~/DDS-Record/ddspipe_core -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
-            cmake --build . --target install
-
-            # ddspipe_yaml
-            cd ~/DDS-Record
-            mkdir build/ddspipe_yaml
-            cd build/ddspipe_yaml
-            cmake ~/DDS-Record/ddspipe_yaml -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
+            cmake ~/DDS-Record/src/ddspipe/ddspipe_core -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
             cmake --build . --target install
 
             # ddspipe_participants
             cd ~/DDS-Record
             mkdir build/ddspipe_participants
             cd build/ddspipe_participants
-            cmake ~/DDS-Record/ddspipe_participants -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
+            cmake ~/DDS-Record/src/ddspipe/ddspipe_participants -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
+            cmake --build . --target install
+
+            # ddspipe_yaml
+            cd ~/DDS-Record
+            mkdir build/ddspipe_yaml
+            cd build/ddspipe_yaml
+            cmake ~/DDS-Record/src/ddspipe/ddspipe_yaml -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
             cmake --build . --target install
 
 #.  Once all dependencies are installed, install |eddsrecord|:
@@ -300,20 +352,20 @@ Local installation
         cd ~/DDS-Record
         mkdir build/ddsrecorder_participants
         cd build/ddsrecorder_participants
-        cmake ~/DDS-Record/src/ddsrecorder_participants -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
+        cmake ~/DDS-Record/src/ddsrecorder/ddsrecorder_participants -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
         cmake --build . --target install
 
         # ddsrecorder_yaml
         cd ~/DDS-Record
         mkdir build/ddsrecorder_yaml
         cd build/ddsrecorder_yaml
-        cmake ~/DDS-Record/src/ddsrecorder_yaml -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
+        cmake ~/DDS-Record/src/ddsrecorder/ddsrecorder_yaml -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
         cmake --build . --target install
 
         # ddsrecorder
         cd ~/DDS-Record
-        mkdir build/ddsrecorder
-        cd build/ddsrecorder
+        mkdir build/ddsrecorder_tool
+        cd build/ddsrecorder_tool
         cmake ~/DDS-Record/src/ddsrecorder/ddsrecorder -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
         cmake --build . --target install
 
@@ -322,6 +374,25 @@ Local installation
     By default, |eddsrecord| does not compile tests.
     However, they can be activated by downloading and installing `Gtest <https://github.com/google/googletest>`_
     and building with CMake option ``-DBUILD_TESTS=ON``.
+
+
+#.  Optionally, install the :ref:`remote controller application <remote_controller>` along with its dependency :ref:`Fast DDS Python <fastdds_python>`:
+
+    .. code-block:: bash
+
+        # Fast DDS Python
+        cd ~/DDS-Record
+        mkdir build/fastdds_python
+        cd build/fastdds_python
+        cmake ~/DDS-Record/src/Fast-DDS-python/fastdds_python -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
+        cmake --build . --target install
+
+        # Remote Controller Application
+        cd ~/DDS-Record
+        mkdir build/controller_tool
+        cd build/controller_tool
+        cmake ~/DDS-Record/src/ddsrecorder/controller/controller_tool -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
+        cmake --build . --target install
 
 
 .. _global_installation_sl:

@@ -77,7 +77,7 @@ Once you have all the desired data, close the |ddsrecorder| application with ``C
 
 .. important::
 
-    Please remember to close the |ddsrecorder| before accessing the output file as the *.mcap* file needs to be properly closed.
+    Please remember to close the |ddsrecorder| application before accessing the output file as the *.mcap* file needs to be properly closed.
 
 Visualize data with Foxglove Studio
 ===================================

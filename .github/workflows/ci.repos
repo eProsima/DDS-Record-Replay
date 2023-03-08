@@ -10,7 +10,7 @@ repositories:
     fastdds:
         type: git
         url: https://github.com/eProsima/Fast-DDS.git
-        version: master
+        version: bugfix/complex-dynamic-types
     fastdds_python:
         type: git
         url: https://github.com/eProsima/Fast-DDS-python.git

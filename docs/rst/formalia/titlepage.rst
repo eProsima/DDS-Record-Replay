@@ -11,7 +11,7 @@
   :alt: eProsima
   :target: http://www.eprosima.com/
 
-*eProsima DDS Record* is an end-user software application that efficiently saves DDS data published in a DDS environment in a MCAP format database.
+*eProsima DDS Record* is an end-user software application that efficiently saves DDS data published into a DDS environment in a MCAP format database.
 Thus, the exact playback of the recorded network events is possible as the data is linked to the timestamp at which the original data was published.
 At the moment, it is only possible to replay the data using external tools capable of interpreting the MCAP format, as the *eProsima DDS Record* does not provide a replay tool.
 

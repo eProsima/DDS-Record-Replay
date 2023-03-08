@@ -25,14 +25,18 @@ These options allow the developer to enable/disable certain |eddsrecord| setting
         - ``Release`` |br|
           ``Debug``
         - ``Release``
+    *   - :class:`BUILD_DDSRECORDER_CONTROLLER`
+        - Build the |eddsrecord| remote |br| controller application. |br|
+        - ``OFF`` |br|
+          ``ON``
+        - ``OFF``
     *   - :class:`BUILD_DOCS`
         - Build the |eddsrecord| documentation. |br|
         - ``OFF`` |br|
           ``ON``
         - ``OFF``
     *   - :class:`BUILD_TESTS`
-        - Build the |eddsrecord| tools and documentation |br|
-          tests.
+        - Build the |eddsrecord| tools and |br| documentation tests.
         - ``OFF`` |br|
           ``ON``
         - ``OFF``
