@@ -17,6 +17,8 @@
  *
  */
 
+#include <cpp_utils/utils.hpp>
+
 #include <ddspipe_core/types/dynamic_types/types.hpp>
 #include <ddspipe_core/types/topic/filter/WildcardDdsFilterTopic.hpp>
 
@@ -202,6 +204,8 @@ void Configuration::load_ddsrecorder_configuration_(
                 // Convert to enum and check valid wherever used to avoid mcap library dependency in YAML module
                 initial_state = YamlReader::get<std::string>(controller_yml,
                                 RECORDER_REMOTE_CONTROLLER_INITIAL_STATE_TAG, version);
+                // Case insensitive
+                eprosima::utils::to_uppercase(initial_state);
             }
         }
 
