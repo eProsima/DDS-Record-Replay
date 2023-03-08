@@ -57,15 +57,15 @@ To start |eddsrecord| with a default configuration, enter:
     ddsrecorder
 
 
-.. _usage_stop_recording:
+.. _usage_close_recorder:
 
-Stopping Recording Application
+Closing Recording Application
 ------------------------------
 
 SIGINT
 ^^^^^^
 
-To stop |eddsrecord|, press ``Ctrl+C``. |eddsrecord| will perform a clean shutdown.
+To close |eddsrecord|, press ``Ctrl+C``. |eddsrecord| will perform a clean shutdown.
 
 SIGTERM
 ^^^^^^^
