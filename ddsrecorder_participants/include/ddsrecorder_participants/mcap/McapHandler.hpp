@@ -36,6 +36,8 @@
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
 #include <ddspipe_participants/participant/dynamic_types/ISchemaHandler.hpp>
+
+#include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/mcap/McapHandlerConfiguration.hpp>
 
 namespace eprosima {
@@ -107,6 +109,7 @@ public:
      * @param payload_pool: Owner of every payload contained in received messages.
      * @param init_state:   Initial instance state (RUNNING/PAUSED/STOPPED).
      */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     McapHandler(
             const McapHandlerConfiguration& config,
             const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
@@ -117,6 +120,7 @@ public:
      *
      * Closes temporal MCAP file, and renames it with filename given in configuration.
      */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     ~McapHandler();
 
     /**
@@ -128,6 +132,7 @@ public:
      *
      * @param [in] dynamic_type DynamicType containing the type information required to generate the schema.
      */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     void add_schema(
             const fastrtps::types::DynamicType_ptr& dynamic_type) override;
 
@@ -143,6 +148,7 @@ public:
      * @param [in] topic DDS topic associated to this sample.
      * @param [in] data Message to be added.
      */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     void add_data(
             const ddspipe::core::types::DdsTopic& topic,
             ddspipe::core::types::RtpsPayloadData& data) override;
@@ -152,6 +158,7 @@ public:
      *
      * If previous state was PAUSED, the event thread is stopped (and buffer is cleared).
      */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     void start();
 
     /**
@@ -160,6 +167,7 @@ public:
      * If previous state was RUNNING, data stored in buffer is dumped to disk.
      * If previous state was PAUSED, the event thread is stopped (and buffer is cleared).
      */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     void stop();
 
     /**
@@ -169,6 +177,7 @@ public:
      *
      * If previous state was RUNNING, data stored in buffer is dumped to disk and pending samples cleared.
      */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     void pause();
 
     /**
@@ -179,6 +188,7 @@ public:
      *
      * This method is ineffective if instance state is different than PAUSED.
      */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     void trigger_event();
 
     /**
@@ -187,6 +197,7 @@ public:
      * @param [in] time Timestamp to be converted
      * @return Timestamp in mcap format
      */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     static mcap::Timestamp fastdds_timestamp_to_mcap_timestamp(
             const ddspipe::core::types::DataTime& time);
 
@@ -196,6 +207,7 @@ public:
      * @param [in] time Timestamp to be converted
      * @return Timestamp in mcap format
      */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     static mcap::Timestamp std_timepoint_to_mcap_timestamp(
             const utils::Timestamp& time);
 
@@ -204,6 +216,7 @@ public:
      *
      * @return Current time in mcap format
      */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     static mcap::Timestamp now();
 
 protected:

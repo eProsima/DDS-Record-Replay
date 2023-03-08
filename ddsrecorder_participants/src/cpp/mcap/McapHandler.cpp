@@ -223,6 +223,7 @@ void McapHandler::add_data(
     }
     catch (const utils::Exception& e)
     {
+        static_cast<void>(e);
         logWarning(
             DDSRECORDER_MCAP_HANDLER,
             "Schema for topic " << topic << " not yet available, inserting to pending samples queue.");
@@ -242,6 +243,7 @@ void McapHandler::add_data(
     }
     catch (const utils::Exception& e)
     {
+        static_cast<void>(e);
         throw utils::InconsistencyException(
                   STR_ENTRY << "Error writting in MCAP a message in topic " << topic.m_topic_name
                   );
@@ -408,6 +410,7 @@ void McapHandler::add_pending_samples_nts_(
         }
         catch (const utils::Exception& e)
         {
+            static_cast<void>(e);
             throw utils::InconsistencyException(
                       STR_ENTRY << "Error writting in MCAP a message in topic " << sample.first
                       );
