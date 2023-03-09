@@ -60,20 +60,20 @@ The following is a description of the aforementioned control topics.
 * Command topic:
 
   * Topic name: ``/ddsrecorder/command``
-  * Topic type name: ``ControllerCommand``
+  * Topic type name: ``DdsRecorderCommand``
   * Type description:
 
     * IDL definition
 
     .. code::
 
-        struct ControllerCommand
+        struct DdsRecorderCommand
         {
             string command;
             string args;
         };
 
-    * ControllerCommand type description:
+    * DdsRecorderCommand type description:
 
       .. list-table::
             :header-rows: 1
@@ -101,21 +101,21 @@ The following is a description of the aforementioned control topics.
 * Status topic:
 
   * Topic name: ``/ddsrecorder/status``
-  * Topic type name: ``Status``
+  * Topic type name: ``DdsRecorderStatus``
   * Type description:
 
     * IDL definition
 
     .. code::
 
-        struct Status
+        struct DdsRecorderStatus
         {
             string previous;
             string current;
             string info;
         };
 
-    * Status type description:
+    * DdsRecorderStatus type description:
 
       .. list-table::
             :header-rows: 1

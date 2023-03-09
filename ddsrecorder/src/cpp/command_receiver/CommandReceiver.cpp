@@ -41,11 +41,11 @@ CommandReceiver::CommandReceiver(
     , command_subscriber_(nullptr)
     , command_topic_(nullptr)
     , command_reader_(nullptr)
-    , command_type_(new ControllerCommandPubSubType())
+    , command_type_(new DdsRecorderCommandPubSubType())
     , status_publisher_(nullptr)
     , status_topic_(nullptr)
     , status_writer_(nullptr)
-    , status_type_(new StatusPubSubType())
+    , status_type_(new DdsRecorderStatusPubSubType())
     , event_handler_(event_handler)
 {
 }
@@ -80,7 +80,7 @@ bool CommandReceiver::init()
     // CREATE THE TOPIC
     command_topic_ = participant_->create_topic(
         "/ddsrecorder/command",
-        "ControllerCommand",
+        command_type_->getName(),
         TOPIC_QOS_DEFAULT);
 
     if (command_topic_ == nullptr)
@@ -120,7 +120,7 @@ bool CommandReceiver::init()
     // CREATE THE TOPIC
     status_topic_ = participant_->create_topic(
         "/ddsrecorder/status",
-        "Status",
+        status_type_->getName(),
         TOPIC_QOS_DEFAULT);
 
     if (status_topic_ == nullptr)
@@ -177,9 +177,9 @@ CommandReceiver::~CommandReceiver()
     }
 }
 
-ControllerCommand CommandReceiver::wait_for_command()
+DdsRecorderCommand CommandReceiver::wait_for_command()
 {
-    ControllerCommand ret;
+    DdsRecorderCommand ret;
     event_handler_->wait_for_event();
 
     std::lock_guard<std::mutex> lock(mtx_);
@@ -203,7 +203,7 @@ void CommandReceiver::publish_status(
         CommandCode previous,
         std::string info)
 {
-    Status status;
+    DdsRecorderStatus status;
     status.current(command_to_status_string_(current));
     status.previous(command_to_status_string_(previous));
     if (!info.empty())
@@ -245,7 +245,7 @@ void CommandReceiver::on_data_available(
         DataReader* reader)
 {
     SampleInfo info;
-    ControllerCommand controller_command;
+    DdsRecorderCommand controller_command;
     while ((reader->take_next_sample(&controller_command,
             &info)) == (ReturnCode_t::RETCODE_OK && info.instance_state == ALIVE_INSTANCE_STATE))
     {

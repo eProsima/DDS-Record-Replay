@@ -3,7 +3,7 @@
 # sender.send("start")
 
 import fastdds
-import ControllerCommand
+import DdsRecorderCommand
 
 class WriterListener (fastdds.DataWriterListener):
     def __init__(self, writer):
@@ -23,8 +23,8 @@ class CommandSender:
         factory.get_default_participant_qos(self.participant_qos)
         self.participant = factory.create_participant(domain, self.participant_qos)
 
-        self.topic_data_type = ControllerCommand.ControllerCommandPubSubType()
-        self.topic_data_type.setName("ControllerCommand")
+        self.topic_data_type = DdsRecorderCommand.DdsRecorderCommandPubSubType()
+        self.topic_data_type.setName("DdsRecorderCommand")
         self.type_support = fastdds.TypeSupport(self.topic_data_type)
         self.participant.register_type(self.type_support)
 
@@ -42,7 +42,7 @@ class CommandSender:
         self.writer = self.publisher.create_datawriter(self.topic, self.writer_qos, self.listener)
 
     def send(self, command):
-        data = ControllerCommand.ControllerCommand()
+        data = DdsRecorderCommand.DdsRecorderCommand()
         data.command(command)
         self.writer.write(data)
         print("Sending command {}".format(command))

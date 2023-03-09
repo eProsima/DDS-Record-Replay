@@ -17,13 +17,13 @@ import json
 
 from enum import Enum
 
-from ControllerCommand import ControllerCommand, ControllerCommandPubSubType
+from DdsRecorderCommand import DdsRecorderCommand, DdsRecorderCommandPubSubType
 
 from Logger import logger
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
-from Status import Status, StatusPubSubType
+from DdsRecorderStatus import DdsRecorderStatus, DdsRecorderStatusPubSubType
 
 import fastdds
 
@@ -31,7 +31,7 @@ import fastdds
 MAX_DDS_DOMAIN_ID = 232
 
 
-class DdsRecorderStatus(Enum):
+class RecorderStatus(Enum):
     """Possible Status values from a DDS Recorder."""
 
     CLOSED = 0
@@ -41,7 +41,7 @@ class DdsRecorderStatus(Enum):
     UNKNOWN = 4
 
 
-class DdsRecorderControllerCommand(Enum):
+class ControllerCommand(Enum):
     """
     Possible commands from a Controller to a DDS Recorder.
 
@@ -58,7 +58,7 @@ class DdsRecorderControllerCommand(Enum):
 
 
 class CommandWriterListener(fastdds.DataWriterListener):
-    """Fast DDS DataWriter listener class for ControllerCommand DataWriter."""
+    """Fast DDS DataWriter listener class for DdsRecorderCommand DataWriter."""
 
     def __init__(self, controller):
         """Construct a WriterListener object."""
@@ -88,7 +88,7 @@ class StatusReaderListener(fastdds.DataReaderListener):
     def on_data_available(self, reader):
         """Raise when there is new Status data available."""
         info = fastdds.SampleInfo()
-        data = Status()
+        data = DdsRecorderStatus()
         reader.take_next_sample(data, info)
         self._controller.on_ddsrecorder_status.emit(
             data.previous(), data.current(), data.info())
@@ -134,8 +134,8 @@ class Controller(QObject):
             dds_domain, participant_qos)
 
         # Initialize command topic
-        self.command_topic_data_type = ControllerCommandPubSubType()
-        self.command_topic_data_type.setName('ControllerCommand')
+        self.command_topic_data_type = DdsRecorderCommandPubSubType()
+        self.command_topic_data_type.setName('DdsRecorderCommand')
         self.command_type_support = fastdds.TypeSupport(self.command_topic_data_type)
         self.participant.register_type(self.command_type_support)
 
@@ -147,8 +147,8 @@ class Controller(QObject):
             command_topic_qos)
 
         # Initialize status topic
-        self.status_topic_data_type = StatusPubSubType()
-        self.status_topic_data_type.setName('Status')
+        self.status_topic_data_type = DdsRecorderStatusPubSubType()
+        self.status_topic_data_type.setName('DdsRecorderStatus')
         self.status_type_support = fastdds.TypeSupport(self.status_topic_data_type)
         self.participant.register_type(self.status_type_support)
 
@@ -191,7 +191,7 @@ class Controller(QObject):
 
     def publish_command(
             self,
-            command: DdsRecorderControllerCommand,
+            command: ControllerCommand,
             args: str = ''):
         """
         Publish a command.
@@ -199,7 +199,7 @@ class Controller(QObject):
         :param command: The command to be published.
         :param debug: The arguments of the command to be published.
         """
-        data = ControllerCommand()
+        data = DdsRecorderCommand()
         data.command(command.name)
         data.args(args)
         if (not self.command_writer.write(data)):

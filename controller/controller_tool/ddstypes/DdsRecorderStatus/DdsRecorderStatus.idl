@@ -1,0 +1,6 @@
+struct DdsRecorderStatus
+{
+    string previous;
+    string current;
+    string info;
+};
