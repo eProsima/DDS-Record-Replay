@@ -94,15 +94,15 @@ std::unique_ptr<core::DdsPipe> create_recorder(
         unsigned int event_window = 20)
 {
     YAML::Node yml;
-    // for (const char* yml_configuration : test::yml_configurations)
-    // {
-    //     yml = YAML::Load(yml_configuration);
-    // }
+    for (const char* yml_configuration : test::yml_configurations)
+    {
+        yml = YAML::Load(yml_configuration);
+    }
 
     eprosima::ddsrecorder::yaml::Configuration configuration(yml);
     configuration.downsampling = downsampling;
     configuration.event_window = event_window;
-    configuration.simple_configuration->domain = test::DOMAIN;
+    // configuration.simple_configuration->domain = test::DOMAIN;
 
     // Create allowed topics list
     auto allowed_topics = std::make_shared<core::AllowedTopicList>(
@@ -300,7 +300,7 @@ std::tuple<unsigned int, double> record_with_transitions(
         }
         else
         {
-            recorder = create_recorder(file_name, mcap_handler, downsampling, init_state);
+            recorder = create_recorder(file_name, mcap_handler, downsampling, init_state, event_window);
         }
 
         // Send data
@@ -684,7 +684,7 @@ TEST(McapFileCreationTest, transition_paused_event_max_window)
         McapHandlerState::PAUSED,
         n_data_1, n_data_2,
         McapHandlerState::PAUSED,
-        true, event_window, 4);
+        true, event_window, 3);
 
     unsigned int n_received_msgs = std::get<0>(recording);
     double max_timestamp = std::get<1>(recording);
