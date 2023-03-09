@@ -63,7 +63,7 @@ namespace test {
 
 // Publisher
 
-unsigned int domain = 222;
+const unsigned int DOMAIN = 222;
 
 std::string topic = "TypeIntrospectionTopic";
 std::string data_type_name = "HelloWorld";
@@ -76,19 +76,13 @@ unsigned int downsampling = 3;
 eprosima::fastdds::dds::DataWriter* writer_;
 eprosima::fastrtps::types::DynamicType_ptr dynamic_type_;
 
-// Configuration
-
 std::vector<const char*> yml_configurations =
 {
     R"(
     dds:
         domain: 222
-    recorder:
-        event-window: 3
     )",
 };
-
-YAML::Node yml;
 
 } // test
 
@@ -96,15 +90,19 @@ std::unique_ptr<core::DdsPipe> create_recorder(
         std::string file_name,
         std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler>& mcap_handler,
         int downsampling,
-        McapHandlerState mcap_handler_state = McapHandlerState::RUNNING)
+        McapHandlerState mcap_handler_state = McapHandlerState::RUNNING,
+        unsigned int event_window = 20)
 {
-    for (const char* yml_configuration : test::yml_configurations)
-    {
-        test::yml = YAML::Load(yml_configuration);
-    }
+    YAML::Node yml;
+    // for (const char* yml_configuration : test::yml_configurations)
+    // {
+    //     yml = YAML::Load(yml_configuration);
+    // }
 
-    eprosima::ddsrecorder::yaml::Configuration configuration(test::yml);
+    eprosima::ddsrecorder::yaml::Configuration configuration(yml);
     configuration.downsampling = downsampling;
+    configuration.event_window = event_window;
+    configuration.simple_configuration->domain = test::DOMAIN;
 
     // Create allowed topics list
     auto allowed_topics = std::make_shared<core::AllowedTopicList>(
@@ -247,7 +245,7 @@ eprosima::fastrtps::types::DynamicData_ptr record(
     // Create Publisher
     create_publisher(
         test::topic,
-        test::domain,
+        test::DOMAIN,
         DataTypeKind::HELLO_WORLD);
 
     // Send data
@@ -276,15 +274,17 @@ std::tuple<unsigned int, double> record_with_transitions(
         unsigned int first_round,
         unsigned int secound_round,
         McapHandlerState current_state,
-        bool event,
+        bool event = false,
+        unsigned int event_window = 20,
         unsigned int time_sleep = 0,
         unsigned int downsampling = 1)
 {
+    uint64_t current_time;
     {
         // Create Publisher
         create_publisher(
             test::topic,
-            test::domain,
+            test::DOMAIN,
             DataTypeKind::HELLO_WORLD);
 
         // Create Recorder
@@ -294,7 +294,7 @@ std::tuple<unsigned int, double> record_with_transitions(
         if (init_state == McapHandlerState::STOPPED)
         {
             // avoid race condition on TypeObject reception
-            recorder = create_recorder(file_name, mcap_handler, downsampling, McapHandlerState::RUNNING);
+            recorder = create_recorder(file_name, mcap_handler, downsampling, McapHandlerState::RUNNING, event_window);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             mcap_handler->stop();
         }
@@ -338,14 +338,14 @@ std::tuple<unsigned int, double> record_with_transitions(
             send_sample();
         }
 
+        current_time = std::chrono::duration_cast<std::chrono::nanoseconds>
+                (std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+
         if (event && current_state == McapHandlerState::PAUSED)
         {
             mcap_handler->trigger_event();
         }
     }
-
-    uint64_t current_time = std::chrono::duration_cast<std::chrono::nanoseconds>
-                (std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
     mcap::McapReader mcap_reader;
     auto messages = get_msgs_mcap(file_name, mcap_reader);
@@ -488,8 +488,7 @@ TEST(McapFileCreationTest, transition_paused_running)
         file_name,
         McapHandlerState::PAUSED,
         n_data_1, n_data_2,
-        McapHandlerState::RUNNING,
-        0);
+        McapHandlerState::RUNNING);
 
     unsigned int n_received_msgs = std::get<0>(recording);
 
@@ -508,8 +507,7 @@ TEST(McapFileCreationTest, transition_running_paused)
         file_name,
         McapHandlerState::RUNNING,
         n_data_1, n_data_2,
-        McapHandlerState::PAUSED,
-        0);
+        McapHandlerState::PAUSED);
 
     unsigned int n_received_msgs = std::get<0>(recording);
 
@@ -528,8 +526,7 @@ TEST(McapFileCreationTest, transition_running_stopped)
         file_name,
         McapHandlerState::RUNNING,
         n_data_1, n_data_2,
-        McapHandlerState::STOPPED,
-        0);
+        McapHandlerState::STOPPED);
 
     unsigned int n_received_msgs = std::get<0>(recording);
 
@@ -548,8 +545,7 @@ TEST(McapFileCreationTest, transition_stopped_running)
         file_name,
         McapHandlerState::STOPPED,
         n_data_1, n_data_2,
-        McapHandlerState::RUNNING,
-        0);
+        McapHandlerState::RUNNING);
 
     unsigned int n_received_msgs = std::get<0>(recording);
 
@@ -568,8 +564,7 @@ TEST(McapFileCreationTest, transition_paused_stopped)
         file_name,
         McapHandlerState::PAUSED,
         n_data_1, n_data_2,
-        McapHandlerState::STOPPED,
-        0);
+        McapHandlerState::STOPPED);
 
     unsigned int n_received_msgs = std::get<0>(recording);
 
@@ -588,8 +583,7 @@ TEST(McapFileCreationTest, transition_stopped_paused)
         file_name,
         McapHandlerState::STOPPED,
         n_data_1, n_data_2,
-        McapHandlerState::PAUSED,
-        0);
+        McapHandlerState::PAUSED);
 
     unsigned int n_received_msgs = std::get<0>(recording);
 
@@ -608,8 +602,7 @@ TEST(McapFileCreationTest, transition_running)
         file_name,
         McapHandlerState::RUNNING,
         n_data_1, n_data_2,
-        McapHandlerState::RUNNING,
-        0);
+        McapHandlerState::RUNNING);
 
     unsigned int n_received_msgs = std::get<0>(recording);
 
@@ -628,8 +621,7 @@ TEST(McapFileCreationTest, transition_paused)
         file_name,
         McapHandlerState::PAUSED,
         n_data_1, n_data_2,
-        McapHandlerState::PAUSED,
-        0);
+        McapHandlerState::PAUSED);
 
     unsigned int n_received_msgs = std::get<0>(recording);
 
@@ -648,8 +640,7 @@ TEST(McapFileCreationTest, transition_stopped)
         file_name,
         McapHandlerState::STOPPED,
         n_data_1, n_data_2,
-        McapHandlerState::STOPPED,
-        0);
+        McapHandlerState::STOPPED);
 
     unsigned int n_received_msgs = std::get<0>(recording);
 
@@ -663,17 +654,17 @@ TEST(McapFileCreationTest, transition_paused_event_less_window)
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
+    unsigned int event_window = 3;
 
     auto recording = record_with_transitions(
         file_name,
         McapHandlerState::PAUSED,
         n_data_1, n_data_2,
         McapHandlerState::PAUSED,
-        1, 1);
+        true, event_window, 1);
 
     unsigned int n_received_msgs = std::get<0>(recording);
     double max_timestamp = std::get<1>(recording);
-    unsigned int event_window = test::yml["recorder"]["event-window"].as<unsigned int>();
 
     ASSERT_EQ(n_received_msgs, (n_data_1 + n_data_2));
     ASSERT_LE(max_timestamp, event_window);
@@ -686,17 +677,17 @@ TEST(McapFileCreationTest, transition_paused_event_max_window)
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
+    unsigned int event_window = 3;
 
     auto recording = record_with_transitions(
         file_name,
         McapHandlerState::PAUSED,
         n_data_1, n_data_2,
         McapHandlerState::PAUSED,
-        1, 3);
+        true, event_window, 4);
 
     unsigned int n_received_msgs = std::get<0>(recording);
     double max_timestamp = std::get<1>(recording);
-    unsigned int event_window = test::yml["recorder"]["event-window"].as<unsigned int>();
 
     ASSERT_EQ(n_received_msgs, n_data_2);
     ASSERT_LE(max_timestamp, event_window);
