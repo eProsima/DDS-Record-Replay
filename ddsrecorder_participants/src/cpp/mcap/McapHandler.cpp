@@ -182,8 +182,15 @@ void McapHandler::add_data(
     // Add data to channel
     Message msg;
     msg.sequence = unique_sequence_number_++;
-    msg.logTime = now();
     msg.publishTime = fastdds_timestamp_to_mcap_timestamp(data.source_timestamp);
+    if (configuration_.log_publishTime)
+    {
+        msg.logTime = msg.publishTime;
+    }
+    else
+    {
+        msg.logTime = now();
+    }
     msg.dataSize = data.payload.length;
 
     if (data.payload.length > 0)

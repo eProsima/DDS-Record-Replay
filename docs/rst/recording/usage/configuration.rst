@@ -271,6 +271,13 @@ Thus, when an event is triggered from the remote controller, samples received in
 In other words, the ``event-window`` acts as a sliding time window that allows to save the collected samples in this time window only when the remote controller event is received.
 By default, its value is set to ``20`` seconds.
 
+Log Publish Time
+^^^^^^^^^^^^^^^^
+
+By default (``log-publish-time: false``) received messages are stored in the MCAP file with ``logTime`` value equals to the reception timestamp.
+Additionally, the timestamp corresponding to when messages were initially published (``publishTime``) is also included in the information dumped to MCAP files.
+In some applications, it may be required to use the ``publishTime`` as ``logTime``, which can be achieved by providing the ``log-publish-time: true`` configuration option.
+
 .. _usage_configuration_remote_controller:
 
 Remote Controller
@@ -384,7 +391,8 @@ A complete example of all the configurations described on this page can be found
 
       downsampling: 3
       buffer-size: 50
-      event-duration: 60
+      event-window: 60
+      log-publish-time: false
 
     remote-controller:
       enable: true

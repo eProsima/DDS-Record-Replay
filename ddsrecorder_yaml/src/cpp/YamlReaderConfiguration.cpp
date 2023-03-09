@@ -173,6 +173,13 @@ void Configuration::load_ddsrecorder_configuration_(
             {
                 event_window = YamlReader::get_positive_int(recorder_yml, RECORDER_EVENT_WINDOW_TAG);
             }
+
+            /////
+            // Get optional log publishTime
+            if (YamlReader::is_tag_present(recorder_yml, RECORDER_LOG_PUBLISH_TIME_TAG))
+            {
+                log_publish_time = YamlReader::get<bool>(recorder_yml, RECORDER_LOG_PUBLISH_TIME_TAG, version);
+            }
         }
 
         // Initialize controller domain with the same as the one being recorded
