@@ -389,7 +389,7 @@ A complete example of all the configurations described on this page can be found
     remote-controller:
       enable: true
       domain: 10
-      init-state: "PAUSED"
+      initial-state: "PAUSED"
 
     specs:
       threads: 8
