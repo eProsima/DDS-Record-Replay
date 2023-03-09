@@ -33,13 +33,15 @@ struct McapHandlerConfiguration
             const unsigned int& buffer_size,
             const unsigned int& downsampling,
             const unsigned int& event_window,
-            const unsigned int& cleanup_period)
+            const unsigned int& cleanup_period,
+            const bool& log_publishTime)
         : file_name(file_name)
         , max_pending_samples(max_pending_samples)
         , buffer_size(buffer_size)
         , downsampling(downsampling)
         , event_window(event_window)
         , cleanup_period(cleanup_period)
+        , log_publishTime(log_publishTime)
     {
     }
 
@@ -60,6 +62,9 @@ struct McapHandlerConfiguration
 
     //! Remove from buffer samples older than *now - event_window* with this period [s] (applies to paused state)
     unsigned int cleanup_period;
+
+    //! Store messages with logTime set to sample publication timestamp
+    bool log_publishTime;
 };
 
 } /* namespace participants */
