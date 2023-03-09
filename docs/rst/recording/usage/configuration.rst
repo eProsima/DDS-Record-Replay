@@ -323,6 +323,22 @@ The supported configurations are:
           ``PAUSED`` |br|
           ``STOPPED``
 
+    *   - Command Topic Name
+        - ``command-topic-name``
+        - Name of Controller |br|
+          Command DDS Topic.
+        - ``string``
+        - ``/ddsrecorder/command``
+        -
+
+    *   - Status Topic Name
+        - ``status-topic-name``
+        - Name of Controller |br|
+          Status DDS Topic.
+        - ``string``
+        - ``/ddsrecorder/status``
+        -
+
 Specs Configuration
 -------------------
 
@@ -398,6 +414,8 @@ A complete example of all the configurations described on this page can be found
       enable: true
       domain: 10
       initial-state: "PAUSED"
+      command-topic-name: "/ddsrecorder/command"
+      status-topic-name: "/ddsrecorder/status"
 
     specs:
       threads: 8

@@ -35,13 +35,17 @@ using namespace eprosima::fastdds::rtps;
 
 CommandReceiver::CommandReceiver(
         uint32_t domain,
+        const std::string& command_topic_name,
+        const std::string& status_topic_name,
         std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler)
     : domain_(domain)
     , participant_(nullptr)
+    , command_topic_name_(command_topic_name)
     , command_subscriber_(nullptr)
     , command_topic_(nullptr)
     , command_reader_(nullptr)
     , command_type_(new DdsRecorderCommandPubSubType())
+    , status_topic_name_(status_topic_name)
     , status_publisher_(nullptr)
     , status_topic_(nullptr)
     , status_writer_(nullptr)
@@ -79,7 +83,7 @@ bool CommandReceiver::init()
 
     // CREATE THE TOPIC
     command_topic_ = participant_->create_topic(
-        "/ddsrecorder/command",
+        command_topic_name_,
         command_type_->getName(),
         TOPIC_QOS_DEFAULT);
 
@@ -119,7 +123,7 @@ bool CommandReceiver::init()
 
     // CREATE THE TOPIC
     status_topic_ = participant_->create_topic(
-        "/ddsrecorder/status",
+        status_topic_name_,
         status_type_->getName(),
         TOPIC_QOS_DEFAULT);
 

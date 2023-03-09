@@ -52,6 +52,8 @@ constexpr const char* RECORDER_LOG_PUBLISH_TIME_TAG("log-publish-time");
 constexpr const char* RECORDER_REMOTE_CONTROLLER_TAG("remote-controller");
 constexpr const char* RECORDER_REMOTE_CONTROLLER_ENABLE_TAG("enable");
 constexpr const char* RECORDER_REMOTE_CONTROLLER_INITIAL_STATE_TAG("initial-state");
+constexpr const char* RECORDER_REMOTE_CONTROLLER_COMMAND_TOPIC_NAME_TAG("command-topic-name");
+constexpr const char* RECORDER_REMOTE_CONTROLLER_STATUS_TOPIC_NAME_TAG("status-topic-name");
 
 ////////////////
 // Specs tags //

@@ -214,6 +214,20 @@ void Configuration::load_ddsrecorder_configuration_(
                 // Case insensitive
                 eprosima::utils::to_uppercase(initial_state);
             }
+
+            // Get optional command topic name
+            if (YamlReader::is_tag_present(controller_yml, RECORDER_REMOTE_CONTROLLER_COMMAND_TOPIC_NAME_TAG))
+            {
+                command_topic_name = YamlReader::get<std::string>(controller_yml,
+                                RECORDER_REMOTE_CONTROLLER_COMMAND_TOPIC_NAME_TAG, version);
+            }
+
+            // Get optional status topic name
+            if (YamlReader::is_tag_present(controller_yml, RECORDER_REMOTE_CONTROLLER_STATUS_TOPIC_NAME_TAG))
+            {
+                status_topic_name = YamlReader::get<std::string>(controller_yml,
+                                RECORDER_REMOTE_CONTROLLER_STATUS_TOPIC_NAME_TAG, version);
+            }
         }
 
         // Initialize cleanup_period with twice the value of event_window
