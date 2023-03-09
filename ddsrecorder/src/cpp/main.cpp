@@ -94,7 +94,7 @@ std::unique_ptr<core::DdsPipe> create_recorder(
         configuration.downsampling,
         configuration.event_window,
         configuration.cleanup_period,
-        configuration.log_publishTime);
+        configuration.log_publish_time);
 
     // Create MCAP Handler
     mcap_handler = std::make_shared<eprosima::ddsrecorder::participants::McapHandler>(

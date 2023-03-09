@@ -176,9 +176,9 @@ void Configuration::load_ddsrecorder_configuration_(
 
             /////
             // Get optional log publishTime
-            if (YamlReader::is_tag_present(recorder_yml, RECORDER_LOG_PUBLISHTIME_TAG))
+            if (YamlReader::is_tag_present(recorder_yml, RECORDER_LOG_PUBLISH_TIME_TAG))
             {
-                log_publishTime = YamlReader::get<bool>(recorder_yml, RECORDER_LOG_PUBLISHTIME_TAG, version);
+                log_publish_time = YamlReader::get<bool>(recorder_yml, RECORDER_LOG_PUBLISH_TIME_TAG, version);
             }
         }
 

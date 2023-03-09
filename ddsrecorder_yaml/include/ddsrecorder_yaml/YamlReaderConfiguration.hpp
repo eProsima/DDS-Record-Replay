@@ -68,7 +68,7 @@ public:
     bool enable_remote_controller = true;
     ddspipe::core::types::DomainId controller_domain;
     std::string initial_state = "RUNNING";
-    bool log_publishTime = false;
+    bool log_publish_time = false;
 
     // Specs
     unsigned int n_threads = 12;
