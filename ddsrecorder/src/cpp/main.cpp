@@ -226,6 +226,8 @@ void parse_command(
     args = {};
 
     std::string command_str = command.command();
+    // Case insensitive
+    eprosima::utils::to_lowercase(command_str);
     std::string args_str = command.args();
 
     bool found = string_to_command(command_str, command_code);
@@ -535,6 +537,8 @@ int main(
                                     if (it != args.end())
                                     {
                                         std::string next_state_str = *it;
+                                        // Case insensitive
+                                        eprosima::utils::to_uppercase(next_state_str);
                                         McapHandlerState next_state;
                                         bool found = string_to_state(next_state_str, next_state);
                                         if (!found ||
