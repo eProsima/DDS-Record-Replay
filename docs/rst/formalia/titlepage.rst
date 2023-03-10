@@ -36,6 +36,9 @@ Overview
   This application allows remote control of the recording tool.
   Thus, a user can have the recording tool on a device and from another device send commands to start, stop or pause data recording.
 
+  .. figure:: /rst/figures/controller_interact.png
+    :align: center
+
 ###############################
 Contacts and Commercial support
 ###############################
