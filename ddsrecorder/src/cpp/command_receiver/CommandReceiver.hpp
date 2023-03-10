@@ -33,8 +33,8 @@
 #include <fastdds/dds/subscriber/DataReaderListener.hpp>
 #include <fastdds/dds/subscriber/Subscriber.hpp>
 
-#include "types/controller_command/ControllerCommandPubSubTypes.h"
-#include "types/status/StatusPubSubTypes.h"
+#include "types/DdsRecorderCommand/DdsRecorderCommandPubSubTypes.h"
+#include "types/DdsRecorderStatus/DdsRecorderStatusPubSubTypes.h"
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -62,7 +62,7 @@ public:
 
     bool init();
 
-    ControllerCommand wait_for_command();
+    DdsRecorderCommand wait_for_command();
 
     void publish_status(
             CommandCode current,
@@ -82,7 +82,7 @@ private:
             const CommandCode& command);
 
     std::mutex mtx_;
-    std::queue<ControllerCommand> commands_received_;
+    std::queue<DdsRecorderCommand> commands_received_;
 
     // DDS related attributes
     uint32_t domain_;

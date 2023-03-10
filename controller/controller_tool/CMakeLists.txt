@@ -49,8 +49,8 @@ if (BUILD_DDSRECORDER_CONTROLLER)
     ###############################################################################
     # Build and install types
     ###############################################################################
-    add_subdirectory(ddstypes/ControllerCommand)
-    add_subdirectory(ddstypes/Status)
+    add_subdirectory(ddstypes/DdsRecorderCommand)
+    add_subdirectory(ddstypes/DdsRecorderStatus)
 
     ###############################################################################
     # Install Tool

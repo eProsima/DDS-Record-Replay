@@ -14,7 +14,7 @@
 """GUI for the DDS Recorder remote controller."""
 
 from Controller import (
-    Controller, DdsRecorderControllerCommand, DdsRecorderStatus,
+    Controller, ControllerCommand, RecorderStatus,
     MAX_DDS_DOMAIN_ID)
 
 from Logger import logger
@@ -30,24 +30,24 @@ DDS_RECORDER = 'DDS Recorder'
 CONTROLLER = 'Controller'
 
 status_to_color_values__ = {
-    DdsRecorderStatus.CLOSED: 'gray',
-    DdsRecorderStatus.RUNNING: 'green',
-    DdsRecorderStatus.PAUSED: 'yellow',
-    DdsRecorderStatus.STOPPED: 'red',
-    DdsRecorderStatus.UNKNOWN: 'gray'
+    RecorderStatus.CLOSED: 'gray',
+    RecorderStatus.RUNNING: 'green',
+    RecorderStatus.PAUSED: 'yellow',
+    RecorderStatus.STOPPED: 'red',
+    RecorderStatus.UNKNOWN: 'gray'
 }
 
 
-def status_to_color(status: DdsRecorderStatus):
-    """Get the color associated with each DDSRecorderStatus."""
+def status_to_color(status: RecorderStatus):
+    """Get the color associated with each RecorderStatus."""
     if status in status_to_color_values__:
         return status_to_color_values__[status]
     else:
-        return status_to_color_values__[DdsRecorderStatus.UNKNOWN]
+        return status_to_color_values__[RecorderStatus.UNKNOWN]
 
 
-def status_to_text(status: DdsRecorderStatus):
-    """Convert DDSRecorderStatus enum value to string."""
+def status_to_text(status: RecorderStatus):
+    """Convert RecorderStatus enum value to string."""
     return status.name
 
 
@@ -160,7 +160,7 @@ class ControllerGUI(QMainWindow):
     def on_ddsrecorder_discovered(self, discovered, message):
         """Inform that a new DDS Recorder has been discovered."""
         if not discovered:
-            self.update_status(DdsRecorderStatus.CLOSED)
+            self.update_status(RecorderStatus.CLOSED)
         self.add_log_entry(CONTROLLER, message)
 
     def on_ddsrecorder_status(self, previous_status, current_status, info):
@@ -175,7 +175,7 @@ class ControllerGUI(QMainWindow):
             self.add_log_entry(DDS_RECORDER, f'Status information: {info}')
 
         # Change status bar
-        self.update_status(DdsRecorderStatus[current_status.upper()])
+        self.update_status(RecorderStatus[current_status.upper()])
 
     def restart_controller(self, dds_domain=0):
         """Restart the DDS Controller if the DDS Domain changes."""
@@ -184,7 +184,7 @@ class ControllerGUI(QMainWindow):
                 # Delete DDS entities in previous domain
                 self.dds_controller.delete_dds()
                 # Reset status
-                self.update_status(DdsRecorderStatus.CLOSED)
+                self.update_status(RecorderStatus.CLOSED)
                 # Create DDS entities in new domain
                 self.dds_controller.init_dds(dds_domain)
                 self.dds_domain = dds_domain
@@ -209,7 +209,7 @@ class ControllerGUI(QMainWindow):
         # Status label box
         self.status_box = QLabel(self)
         self.status_box.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.update_status(DdsRecorderStatus.CLOSED)
+        self.update_status(RecorderStatus.CLOSED)
 
         status_box.addWidget(self.status_box, 1)
 
@@ -225,25 +225,25 @@ class ControllerGUI(QMainWindow):
         start_button = QPushButton('Start', self)
         start_button.clicked.connect(
             lambda: self.simple_button_clicked(
-                DdsRecorderControllerCommand.start))
+                ControllerCommand.start))
         buttons_box.addWidget(start_button)
 
         pause_button = QPushButton('Pause', self)
         pause_button.clicked.connect(
             lambda: self.simple_button_clicked(
-                DdsRecorderControllerCommand.pause))
+                ControllerCommand.pause))
         buttons_box.addWidget(pause_button)
 
         stop_button = QPushButton('Stop', self)
         stop_button.clicked.connect(
             lambda: self.simple_button_clicked(
-                DdsRecorderControllerCommand.stop))
+                ControllerCommand.stop))
         buttons_box.addWidget(stop_button)
 
         event_button = QPushButton('Event', self)
         event_button.clicked.connect(
             lambda: self.simple_button_clicked(
-                DdsRecorderControllerCommand.event))
+                ControllerCommand.event))
         buttons_box.addWidget(event_button)
 
         event_start_button = QPushButton('Event & Start', self)
@@ -259,7 +259,7 @@ class ControllerGUI(QMainWindow):
         close_button = QPushButton('Close', self)
         close_button.clicked.connect(
             lambda: self.simple_button_clicked(
-                DdsRecorderControllerCommand.close))
+                ControllerCommand.close))
         buttons_box.addWidget(close_button)
         buttons_box.addStretch()
 
@@ -290,7 +290,7 @@ class ControllerGUI(QMainWindow):
         self.resize(700, 400)
         self.show()
 
-    def update_status(self, status: DdsRecorderStatus):
+    def update_status(self, status: RecorderStatus):
         """Update status box."""
         self.status_box.setText(status_to_text(status))
         self.status_box.setStyleSheet(
@@ -309,16 +309,16 @@ class ControllerGUI(QMainWindow):
 
     def event_start_button_clicked(self):
         """Publish command."""
-        command = DdsRecorderControllerCommand.event
+        command = ControllerCommand.event
         args = Controller.command_arguments_to_string(
-            Controller.argument_change_state(DdsRecorderStatus.RUNNING))
+            Controller.argument_change_state(RecorderStatus.RUNNING))
         self.send_command(command, args)
 
     def event_stop_button_clicked(self):
         """Publish command."""
-        command = DdsRecorderControllerCommand.event
+        command = ControllerCommand.event
         args = Controller.command_arguments_to_string(
-            Controller.argument_change_state(DdsRecorderStatus.STOPPED))
+            Controller.argument_change_state(RecorderStatus.STOPPED))
         self.send_command(command, args)
 
     def simple_button_clicked(self, command):

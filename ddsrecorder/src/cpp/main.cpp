@@ -219,7 +219,7 @@ std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> create_periodic_ha
 }
 
 void parse_command(
-        const ControllerCommand& command,
+        const DdsRecorderCommand& command,
         CommandCode& command_code,
         json& args)
 {

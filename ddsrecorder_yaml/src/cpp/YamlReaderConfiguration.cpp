@@ -121,8 +121,8 @@ void Configuration::load_ddsrecorder_configuration_(
 
         // Block controller's status and command topics
         types::WildcardDdsFilterTopic status_topic, command_topic;
-        status_topic.type_name.set_value("Status");
-        command_topic.type_name.set_value("ControllerCommand");
+        status_topic.type_name.set_value("DdsRecorderStatus");
+        command_topic.type_name.set_value("DdsRecorderCommand");
         blocklist.insert(
             utils::Heritable<types::WildcardDdsFilterTopic>::make_heritable(status_topic));
         blocklist.insert(
