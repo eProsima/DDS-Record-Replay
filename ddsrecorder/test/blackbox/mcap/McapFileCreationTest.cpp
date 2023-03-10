@@ -286,7 +286,7 @@ std::tuple<unsigned int, double> record_with_transitions(
         {
             // avoid race condition on TypeObject reception
             recorder = create_recorder(file_name, mcap_handler, downsampling, McapHandlerState::RUNNING, event_window);
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
             mcap_handler->stop();
         }
         else
