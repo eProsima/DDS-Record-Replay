@@ -385,7 +385,9 @@ int main(
         if (configuration.enable_remote_controller)
         {
             logUser(DDSRECORDER_EXECUTION, "Waiting for instructions...");
-            eprosima::ddsrecorder::receiver::CommandReceiver receiver(configuration.controller_domain, configuration.command_topic_name, configuration.status_topic_name, close_handler);
+            eprosima::ddsrecorder::receiver::CommandReceiver receiver(configuration.controller_domain,
+                    configuration.command_topic_name,
+                    configuration.status_topic_name, close_handler);
             receiver.init();
 
             CommandCode prev_command;
