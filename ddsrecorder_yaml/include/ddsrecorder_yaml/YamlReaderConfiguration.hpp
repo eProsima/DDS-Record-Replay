@@ -63,12 +63,14 @@ public:
     unsigned int buffer_size = 100;
     unsigned int downsampling = 1;
     unsigned int event_window = 20;
+    bool log_publish_time = false;
 
     // Remote controller configuration
     bool enable_remote_controller = true;
     ddspipe::core::types::DomainId controller_domain;
     std::string initial_state = "RUNNING";
-    bool log_publish_time = false;
+    std::string command_topic_name = "/ddsrecorder/command";
+    std::string status_topic_name = "/ddsrecorder/status";
 
     // Specs
     unsigned int n_threads = 12;

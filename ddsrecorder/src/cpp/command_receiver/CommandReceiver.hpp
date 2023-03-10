@@ -56,6 +56,8 @@ public:
 
     CommandReceiver(
             uint32_t domain,
+            const std::string& command_topic_name,
+            const std::string& status_topic_name,
             std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler);
 
     virtual ~CommandReceiver();
@@ -89,12 +91,14 @@ private:
     eprosima::fastdds::dds::DomainParticipant* participant_;
 
     // Command attributes
+    std::string command_topic_name_;
     eprosima::fastdds::dds::Subscriber* command_subscriber_;
     eprosima::fastdds::dds::Topic* command_topic_;
     eprosima::fastdds::dds::DataReader* command_reader_;
     eprosima::fastdds::dds::TypeSupport command_type_;
 
     // Status attributes
+    std::string status_topic_name_;
     eprosima::fastdds::dds::Publisher* status_publisher_;
     eprosima::fastdds::dds::Topic* status_topic_;
     eprosima::fastdds::dds::DataWriter* status_writer_;

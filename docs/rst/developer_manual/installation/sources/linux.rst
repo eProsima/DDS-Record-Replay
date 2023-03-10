@@ -369,11 +369,11 @@ Local installation
         cmake ~/DDS-Record/src/ddsrecorder/ddsrecorder -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
         cmake --build . --target install
 
-.. note::
+    .. note::
 
-    By default, |eddsrecord| does not compile tests.
-    However, they can be activated by downloading and installing `Gtest <https://github.com/google/googletest>`_
-    and building with CMake option ``-DBUILD_TESTS=ON``.
+        By default, |eddsrecord| does not compile tests.
+        However, they can be activated by downloading and installing `Gtest <https://github.com/google/googletest>`_
+        and building with CMake option ``-DBUILD_TESTS=ON``.
 
 
 #.  Optionally, install the :ref:`remote controller application <remote_controller>` along with its dependency :ref:`Fast DDS Python <fastdds_python>`:

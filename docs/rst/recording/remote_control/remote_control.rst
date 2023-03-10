@@ -30,7 +30,7 @@ The |ddsrecorder| application may have the following states:
   The data will not be saved to the database until an event arrives from the remote controller.
 * **STOPPED**: The application is running but not receiving data.
 
-To change from one state to another, commands can be sent to the application through the DDS ``/ddsrecorder/command`` topic to be defined later.
+To change from one state to another, commands can be sent to the application through the `Controller Command` DDS topic to be defined later.
 The commands that the application accepts are as follows:
 
 * **start**: Changes to ``RUNNING`` state if it was not in it.
@@ -52,14 +52,15 @@ The following is the state diagram of the |ddsrecorder| application with all the
 DDS Controller Data Types
 =========================
 
-The |ddsrecorder| contains a DDS subscriber in the ``/ddsrecorder/command`` topic and a DDS publisher in the ``/ddsrecorder/status`` topic.
-Therefore, any user can create his own application to control the |ddsrecorder| remotely by creating a publisher in the ``/ddsrecorder/command`` topic, which sends commands to the recorder, and a subscriber in the ``/ddsrecorder/status`` topic to monitor its status.
+The |ddsrecorder| contains a DDS subscriber in the `Controller Command` topic and a DDS publisher in the `Controller Status` topic.
+These topics' names are by default ``/ddsrecorder/command`` and ``/ddsrecorder/status``, respectively, but can also be specified by users via the ``command-topic-name`` and ``status-topic-name`` configuration tags.
+Therefore, any user can create his own application to control the |ddsrecorder| remotely by creating a publisher in the `Controller Command` topic, which sends commands to the recorder, and a subscriber in the `Controller Status` topic to monitor its status.
 
 The following is a description of the aforementioned control topics.
 
 * Command topic:
 
-  * Topic name: ``/ddsrecorder/command``
+  * Topic name: Specified in ``command-topic-name`` configuration parameter (Default: ``/ddsrecorder/command``)
   * Topic type name: ``DdsRecorderCommand``
   * Type description:
 
@@ -100,7 +101,7 @@ The following is a description of the aforementioned control topics.
 
 * Status topic:
 
-  * Topic name: ``/ddsrecorder/status``
+  * Topic name: Specified in ``status-topic-name`` configuration parameter (Default: ``/ddsrecorder/status``)
   * Topic type name: ``DdsRecorderStatus``
   * Type description:
 
