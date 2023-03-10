@@ -37,7 +37,6 @@ CommandReceiver::CommandReceiver(
         uint32_t domain,
         std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler)
     : domain_(domain)
-    , event_handler_(event_handler)
     , participant_(nullptr)
     , command_subscriber_(nullptr)
     , command_topic_(nullptr)
@@ -47,6 +46,7 @@ CommandReceiver::CommandReceiver(
     , status_topic_(nullptr)
     , status_writer_(nullptr)
     , status_type_(new StatusPubSubType())
+    , event_handler_(event_handler)
 {
 }
 
