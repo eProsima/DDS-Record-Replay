@@ -76,14 +76,6 @@ unsigned int downsampling = 3;
 eprosima::fastdds::dds::DataWriter* writer_;
 eprosima::fastrtps::types::DynamicType_ptr dynamic_type_;
 
-std::vector<const char*> yml_configurations =
-{
-    R"(
-    dds:
-        domain: 222
-    )",
-};
-
 } // test
 
 std::unique_ptr<core::DdsPipe> create_recorder(
@@ -94,15 +86,13 @@ std::unique_ptr<core::DdsPipe> create_recorder(
         unsigned int event_window = 20)
 {
     YAML::Node yml;
-    for (const char* yml_configuration : test::yml_configurations)
-    {
-        yml = YAML::Load(yml_configuration);
-    }
 
     eprosima::ddsrecorder::yaml::Configuration configuration(yml);
     configuration.downsampling = downsampling;
     configuration.event_window = event_window;
-    // configuration.simple_configuration->domain = test::DOMAIN;
+    eprosima::ddspipe::core::types::DomainId domainId;
+    domainId.domain_id = test::DOMAIN;
+    configuration.simple_configuration->domain = domainId;
 
     // Create allowed topics list
     auto allowed_topics = std::make_shared<core::AllowedTopicList>(
@@ -339,7 +329,7 @@ std::tuple<unsigned int, double> record_with_transitions(
         }
 
         current_time = std::chrono::duration_cast<std::chrono::nanoseconds>
-                (std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+                    (std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
         if (event && current_state == McapHandlerState::PAUSED)
         {
@@ -648,6 +638,7 @@ TEST(McapFileCreationTest, transition_stopped)
 
 }
 
+// can fail due to two race conditions but is very unlikely
 TEST(McapFileCreationTest, transition_paused_event_less_window)
 {
     std::string file_name = "output_transition_paused_event_less_window_.mcap";
