@@ -41,7 +41,6 @@ constexpr const char* RECORDER_PATH_FILE_TAG("path");
 constexpr const char* RECORDER_FILE_NAME_TAG("filename");
 
 // Advanced recorder configuration options
-constexpr const char* RECORDER_DOWNSAMPLING_TAG("downsampling");
 constexpr const char* RECORDER_BUFFER_SIZE_TAG("buffer-size");
 constexpr const char* RECORDER_EVENT_WINDOW_TAG("event-window");
 constexpr const char* RECORDER_LOG_PUBLISH_TIME_TAG("log-publish-time");

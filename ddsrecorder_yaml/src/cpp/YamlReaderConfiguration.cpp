@@ -79,56 +79,6 @@ void Configuration::load_ddsrecorder_configuration_(
         recorder_configuration->is_repeater = false;
 
         /////
-        // Get optional DDS configuration options
-        if (YamlReader::is_tag_present(yml, RECORDER_DDS_TAG))
-        {
-            auto dds_yml = YamlReader::get_value_in_tag(yml, RECORDER_DDS_TAG);
-
-            // Get optional DDS domain
-            if (YamlReader::is_tag_present(dds_yml, DOMAIN_ID_TAG))
-            {
-                simple_configuration->domain = YamlReader::get<types::DomainId>(dds_yml, DOMAIN_ID_TAG, version);
-            }
-
-            /////
-            // Get optional allowlist
-            if (YamlReader::is_tag_present(dds_yml, ALLOWLIST_TAG))
-            {
-                allowlist = YamlReader::get_set<utils::Heritable<types::IFilterTopic>>(dds_yml, ALLOWLIST_TAG, version);
-
-                // Add to allowlist always the type object topic
-                types::WildcardDdsFilterTopic internal_topic;
-                internal_topic.topic_name.set_value(types::TYPE_OBJECT_TOPIC_NAME);
-                allowlist.insert(
-                    utils::Heritable<types::WildcardDdsFilterTopic>::make_heritable(internal_topic));
-            }
-
-            /////
-            // Get optional blocklist
-            if (YamlReader::is_tag_present(dds_yml, BLOCKLIST_TAG))
-            {
-                blocklist = YamlReader::get_set<utils::Heritable<types::IFilterTopic>>(dds_yml, BLOCKLIST_TAG, version);
-            }
-
-            /////
-            // Get optional builtin topics
-            if (YamlReader::is_tag_present(dds_yml, BUILTIN_TAG))
-            {
-                builtin_topics = YamlReader::get_set<utils::Heritable<types::DistributedTopic>>(dds_yml, BUILTIN_TAG,
-                                version);
-            }
-        }
-
-        // Block controller's status and command topics
-        types::WildcardDdsFilterTopic status_topic, command_topic;
-        status_topic.type_name.set_value("DdsRecorderStatus");
-        command_topic.type_name.set_value("DdsRecorderCommand");
-        blocklist.insert(
-            utils::Heritable<types::WildcardDdsFilterTopic>::make_heritable(status_topic));
-        blocklist.insert(
-            utils::Heritable<types::WildcardDdsFilterTopic>::make_heritable(command_topic));
-
-        /////
         // Get optional Recorder configuration options
         if (YamlReader::is_tag_present(yml, RECORDER_RECORDER_TAG))
         {
@@ -158,13 +108,6 @@ void Configuration::load_ddsrecorder_configuration_(
             if (YamlReader::is_tag_present(recorder_yml, RECORDER_BUFFER_SIZE_TAG))
             {
                 buffer_size = YamlReader::get_positive_int(recorder_yml, RECORDER_BUFFER_SIZE_TAG);
-            }
-
-            /////
-            // Get optional downsampling factor
-            if (YamlReader::is_tag_present(recorder_yml, RECORDER_DOWNSAMPLING_TAG))
-            {
-                downsampling = YamlReader::get_positive_int(recorder_yml, RECORDER_DOWNSAMPLING_TAG);
             }
 
             /////
@@ -236,6 +179,7 @@ void Configuration::load_ddsrecorder_configuration_(
 
         /////
         // Get optional specs configuration
+        // WARNING: Parse builtin topics AFTER specs, as some topic-specific default values are set there
         if (YamlReader::is_tag_present(yml, SPECS_TAG))
         {
             auto specs_yml = YamlReader::get_value_in_tag(yml, SPECS_TAG);
@@ -250,6 +194,24 @@ void Configuration::load_ddsrecorder_configuration_(
             if (YamlReader::is_tag_present(specs_yml, MAX_HISTORY_DEPTH_TAG))
             {
                 max_history_depth = YamlReader::get_positive_int(specs_yml, MAX_HISTORY_DEPTH_TAG);
+                // Set default value for history
+                types::TopicQoS::default_history_depth.store(max_history_depth);
+            }
+
+            // Get downsampling
+            if (YamlReader::is_tag_present(specs_yml, DOWNSAMPLING_TAG))
+            {
+                downsampling = YamlReader::get_positive_int(specs_yml, DOWNSAMPLING_TAG);
+                // Set default value for downsampling
+                types::TopicQoS::default_downsampling.store(downsampling);
+            }
+
+            // Get max reception rate
+            if (YamlReader::is_tag_present(specs_yml, MAX_RECEPTION_RATE_TAG))
+            {
+                max_reception_rate = YamlReader::get<unsigned int>(specs_yml, MAX_RECEPTION_RATE_TAG, version);
+                // Set default value for max reception rate
+                types::TopicQoS::default_max_reception_rate.store(max_reception_rate);
             }
 
             // Get max pending samples
@@ -264,6 +226,57 @@ void Configuration::load_ddsrecorder_configuration_(
                 cleanup_period = YamlReader::get_positive_int(specs_yml, RECORDER_SPECS_CLEANUP_PERIOD_TAG);
             }
         }
+
+        /////
+        // Get optional DDS configuration options
+        if (YamlReader::is_tag_present(yml, RECORDER_DDS_TAG))
+        {
+            auto dds_yml = YamlReader::get_value_in_tag(yml, RECORDER_DDS_TAG);
+
+            // Get optional DDS domain
+            if (YamlReader::is_tag_present(dds_yml, DOMAIN_ID_TAG))
+            {
+                simple_configuration->domain = YamlReader::get<types::DomainId>(dds_yml, DOMAIN_ID_TAG, version);
+            }
+
+            /////
+            // Get optional allowlist
+            if (YamlReader::is_tag_present(dds_yml, ALLOWLIST_TAG))
+            {
+                allowlist = YamlReader::get_set<utils::Heritable<types::IFilterTopic>>(dds_yml, ALLOWLIST_TAG, version);
+
+                // Add to allowlist always the type object topic
+                types::WildcardDdsFilterTopic internal_topic;
+                internal_topic.topic_name.set_value(types::TYPE_OBJECT_TOPIC_NAME);
+                allowlist.insert(
+                    utils::Heritable<types::WildcardDdsFilterTopic>::make_heritable(internal_topic));
+            }
+
+            /////
+            // Get optional blocklist
+            if (YamlReader::is_tag_present(dds_yml, BLOCKLIST_TAG))
+            {
+                blocklist = YamlReader::get_set<utils::Heritable<types::IFilterTopic>>(dds_yml, BLOCKLIST_TAG, version);
+            }
+
+            /////
+            // Get optional builtin topics
+            if (YamlReader::is_tag_present(dds_yml, BUILTIN_TAG))
+            {
+                // WARNING: Parse builtin topics AFTER specs, as some topic-specific default values are set there
+                builtin_topics = YamlReader::get_set<utils::Heritable<types::DistributedTopic>>(dds_yml, BUILTIN_TAG,
+                                version);
+            }
+        }
+
+        // Block controller's status and command topics
+        types::WildcardDdsFilterTopic status_topic, command_topic;
+        status_topic.type_name.set_value("DdsRecorderStatus");
+        command_topic.type_name.set_value("DdsRecorderCommand");
+        blocklist.insert(
+            utils::Heritable<types::WildcardDdsFilterTopic>::make_heritable(status_topic));
+        blocklist.insert(
+            utils::Heritable<types::WildcardDdsFilterTopic>::make_heritable(command_topic));
 
         // Generate complete output file name
         recorder_output_file = path + "/" + filename;

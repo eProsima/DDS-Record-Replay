@@ -61,7 +61,6 @@ public:
     // Recording params
     std::string recorder_output_file;
     unsigned int buffer_size = 100;
-    unsigned int downsampling = 1;
     unsigned int event_window = 20;
     bool log_publish_time = false;
 
@@ -75,6 +74,8 @@ public:
     // Specs
     unsigned int n_threads = 12;
     unsigned int max_history_depth = 5000;
+    unsigned int downsampling = 1;
+    unsigned int max_reception_rate = 0;
     unsigned int max_pending_samples = 5000;
     unsigned int cleanup_period;
 

@@ -353,9 +353,6 @@ protected:
 
     //! Unique sequence number assigned to received messages. It is incremented with every sample added.
     unsigned int unique_sequence_number_{0};
-
-    //! Counter used to keep only 1 sample of every \c downsampling received.
-    unsigned int downsampling_idx_{0};
 };
 
 } /* namespace participants */
