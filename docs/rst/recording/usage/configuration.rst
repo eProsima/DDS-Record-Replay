@@ -135,7 +135,6 @@ Topic Quality of Service
 """"""""""""""""""""""""
 
 For every topic contained in this list, both ``name`` and ``type`` must be specified and contain no wildcard characters.
-The entry ``keyed`` is optional, and defaults to ``false``.
 Apart from these values, the tag ``qos`` under each topic allows to configure the following values:
 
 .. list-table::
@@ -183,6 +182,18 @@ Apart from these values, the tag ``qos`` under each topic allows to configure th
         - ``false``
         - Topic with / without key
 
+    *   - Downsampling
+        - ``downsampling``
+        - *integer*
+        - *default value*
+        - Downsampling factor
+
+    *   - Max Reception Rate
+        - ``max-reception-rate``
+        - *integer*
+        - *default value*
+        - Maximum sample reception rate [samples/s]
+
 **Example of usage:**
 
     .. code-block:: yaml
@@ -191,12 +202,14 @@ Apart from these values, the tag ``qos`` under each topic allows to configure th
           - name: HelloWorldTopic
             type: HelloWorld
             qos:
-              reliability: true  # Use QoS RELIABLE
-              durability: true   # Use QoS TRANSIENT_LOCAL
-              depth: 100         # Use History Depth 100
-              partitions: true   # Topic with partitions
-              ownership: false   # Use QoS SHARED_OWNERSHIP_QOS
-              keyed: true        # Topic with key
+              reliability: true       # Use QoS RELIABLE
+              durability: true        # Use QoS TRANSIENT_LOCAL
+              depth: 100              # Use History Depth 100
+              partitions: true        # Topic with partitions
+              ownership: false        # Use QoS SHARED_OWNERSHIP_QOS
+              keyed: true             # Topic with key
+              downsampling: 4         # Keep 1 of every 4 samples
+              max-reception-rate: 10  # Receive up to 10 samples in every 1 second bin
 
 
 .. _usage_configuration_domain_id:
@@ -246,12 +259,6 @@ The recorder output file does support the following configurations:
 When DDS Recorder application is launched (or when remotely controlled, every time a ``start`` command is received), a temporary file with ``filename`` name and ``.mcap.tmp~`` extension is created in ``path``.
 This file is not readable until the application is terminated (or a ``stop`` / ``close`` command is received).
 On such event, the temporal file is renamed to ``filename`` with ``.mcap`` extension in the same location, and is then ready to be processed.
-
-Downsampling
-^^^^^^^^^^^^
-
-Reduces the sampling rate of the received data by keeping the first sample and then all *n-th* samples after the first sample, where *n* is the value specified in ``downsampling``.
-This parameter only accepts integer values, and its default value is ``1`` (no downsampling).
 
 Buffer size
 ^^^^^^^^^^^
@@ -370,6 +377,20 @@ As explained in :ref:`Event Window <usage_configuration_event_window>`, a |ddsre
 To accomplish this, received samples are stored in memory until the aforementioned event is triggered and, in order to limit memory consumption, outdated (received more than ``event-window`` seconds ago) samples are removed from this buffer every ``cleanup-period`` seconds.
 By default, its value is equal to twice the ``event-window``.
 
+Downsampling
+^^^^^^^^^^^^
+
+Reduces the sampling rate of the received data by keeping *1* out every *n* samples received (per topic), where *n* is the value specified in ``downsampling``.
+When specified, this downsampling factor is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
+This parameter only accepts positive integer values, and its default value is ``1`` (no downsampling).
+
+Max Reception Rate
+^^^^^^^^^^^^^^^^^^
+
+Limits the number of samples to be processed, by discarding messages received after ``max-reception-rate`` samples have been processed in 1 second bins.
+When specified, ``max-reception-rate`` is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
+This parameter only accepts integer values, and its default value is ``0`` (no limit).
+
 .. _usage_configuration_general_example:
 
 General Example
@@ -399,13 +420,14 @@ A complete example of all the configurations described on this page can be found
             keyed: false
             partitions: true
             ownership: false
+            downsampling: 4
+            max-reception-rate: 10
 
     recorder:
       output:
         filename: "output"
         path: "."
 
-      downsampling: 3
       buffer-size: 50
       event-window: 60
       log-publish-time: false
@@ -421,6 +443,8 @@ A complete example of all the configurations described on this page can be found
       threads: 8
       max-pending-samples: 10
       cleanup-period: 90
+      downsampling: 3
+      max-reception-rate: 20
 
 
 .. _usage_fastdds_configuration:
