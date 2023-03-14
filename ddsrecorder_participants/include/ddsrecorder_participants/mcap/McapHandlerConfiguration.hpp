@@ -31,14 +31,12 @@ struct McapHandlerConfiguration
             const std::string& file_name,
             const unsigned int& max_pending_samples,
             const unsigned int& buffer_size,
-            const unsigned int& downsampling,
             const unsigned int& event_window,
             const unsigned int& cleanup_period,
             const bool& log_publishTime)
         : file_name(file_name)
         , max_pending_samples(max_pending_samples)
         , buffer_size(buffer_size)
-        , downsampling(downsampling)
         , event_window(event_window)
         , cleanup_period(cleanup_period)
         , log_publishTime(log_publishTime)
@@ -53,9 +51,6 @@ struct McapHandlerConfiguration
 
     //! Max number of elements to keep in memory prior to writting in disk (applies to started state)
     unsigned int buffer_size;
-
-    //! Downsampling rate: keep 1 out of every *downsampling* samples received (downsampling=1 <=> no downsampling)
-    unsigned int downsampling;
 
     //! Keep in memory samples received in time frame [s], to be stored when event triggered (applies to paused state)
     unsigned int event_window;

@@ -89,6 +89,9 @@ std::unique_ptr<core::DdsPipe> create_recorder(
 
     eprosima::ddsrecorder::yaml::Configuration configuration(yml);
     configuration.downsampling = downsampling;
+    // Set default value for downsampling
+    // TODO: Change mechanism setting topic qos' default values from specs
+    eprosima::ddspipe::core::types::TopicQoS::default_downsampling.store(downsampling);
     configuration.event_window = event_window;
     eprosima::ddspipe::core::types::DomainId domainId;
     domainId.domain_id = test::DOMAIN;
@@ -113,7 +116,6 @@ std::unique_ptr<core::DdsPipe> create_recorder(
         file_name,
         configuration.max_pending_samples,
         configuration.buffer_size,
-        configuration.downsampling,
         configuration.event_window,
         configuration.cleanup_period,
         configuration.log_publish_time);

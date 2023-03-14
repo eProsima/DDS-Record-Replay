@@ -91,7 +91,6 @@ std::unique_ptr<core::DdsPipe> create_recorder(
         file_name,
         configuration.max_pending_samples,
         configuration.buffer_size,
-        configuration.downsampling,
         configuration.event_window,
         configuration.cleanup_period,
         configuration.log_publish_time);

@@ -27,6 +27,7 @@
 #include <ddspipe_participants/configuration/SimpleParticipantConfiguration.hpp>
 
 #include <ddspipe_yaml/Yaml.hpp>
+#include <ddspipe_yaml/YamlReader.hpp>
 
 #include <ddsrecorder_yaml/library/library_dll.h>
 
@@ -59,11 +60,12 @@ public:
     std::set<utils::Heritable<ddspipe::core::types::DistributedTopic>> builtin_topics {};
 
     // Recording params
-    std::string recorder_output_file;
+    std::string recorder_output_file = "./output";
     unsigned int buffer_size = 100;
-    unsigned int downsampling = 1;
     unsigned int event_window = 20;
     bool log_publish_time = false;
+    unsigned int downsampling = 1;
+    unsigned int max_reception_rate = 0;
 
     // Remote controller configuration
     bool enable_remote_controller = true;
@@ -82,6 +84,22 @@ protected:
 
     void load_ddsrecorder_configuration_(
             const Yaml& yml);
+
+    void load_recorder_configuration_(
+            const Yaml& yml,
+            const ddspipe::yaml::YamlReaderVersion& version);
+
+    void load_controller_configuration_(
+            const Yaml& yml,
+            const ddspipe::yaml::YamlReaderVersion& version);
+
+    void load_specs_configuration_(
+            const Yaml& yml,
+            const ddspipe::yaml::YamlReaderVersion& version);
+
+    void load_dds_configuration_(
+            const Yaml& yml,
+            const ddspipe::yaml::YamlReaderVersion& version);
 
     void load_ddsrecorder_configuration_from_file_(
             const std::string& file_path);
