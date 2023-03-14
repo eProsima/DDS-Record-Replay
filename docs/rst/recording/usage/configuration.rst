@@ -285,6 +285,20 @@ By default (``log-publish-time: false``) received messages are stored in the MCA
 Additionally, the timestamp corresponding to when messages were initially published (``publishTime``) is also included in the information dumped to MCAP files.
 In some applications, it may be required to use the ``publishTime`` as ``logTime``, which can be achieved by providing the ``log-publish-time: true`` configuration option.
 
+Downsampling
+^^^^^^^^^^^^
+
+Reduces the sampling rate of the received data by keeping *1* out of every *n* samples received (per topic), where *n* is the value specified in ``downsampling``.
+When specified, this downsampling factor is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
+This parameter only accepts positive integer values, and its default value is ``1`` (no downsampling).
+
+Max Reception Rate
+^^^^^^^^^^^^^^^^^^
+
+Limits the number of samples to be processed, by discarding messages received after ``max-reception-rate`` samples have been processed in 1 second bins.
+When specified, ``max-reception-rate`` is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
+This parameter only accepts integer values, and its default value is ``0`` (no limit).
+
 .. _usage_configuration_remote_controller:
 
 Remote Controller
@@ -377,20 +391,6 @@ As explained in :ref:`Event Window <usage_configuration_event_window>`, a |ddsre
 To accomplish this, received samples are stored in memory until the aforementioned event is triggered and, in order to limit memory consumption, outdated (received more than ``event-window`` seconds ago) samples are removed from this buffer every ``cleanup-period`` seconds.
 By default, its value is equal to twice the ``event-window``.
 
-Downsampling
-^^^^^^^^^^^^
-
-Reduces the sampling rate of the received data by keeping *1* out every *n* samples received (per topic), where *n* is the value specified in ``downsampling``.
-When specified, this downsampling factor is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
-This parameter only accepts positive integer values, and its default value is ``1`` (no downsampling).
-
-Max Reception Rate
-^^^^^^^^^^^^^^^^^^
-
-Limits the number of samples to be processed, by discarding messages received after ``max-reception-rate`` samples have been processed in 1 second bins.
-When specified, ``max-reception-rate`` is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
-This parameter only accepts integer values, and its default value is ``0`` (no limit).
-
 .. _usage_configuration_general_example:
 
 General Example
@@ -431,6 +431,8 @@ A complete example of all the configurations described on this page can be found
       buffer-size: 50
       event-window: 60
       log-publish-time: false
+      downsampling: 3
+      max-reception-rate: 20
 
     remote-controller:
       enable: true
@@ -443,8 +445,6 @@ A complete example of all the configurations described on this page can be found
       threads: 8
       max-pending-samples: 10
       cleanup-period: 90
-      downsampling: 3
-      max-reception-rate: 20
 
 
 .. _usage_fastdds_configuration:
