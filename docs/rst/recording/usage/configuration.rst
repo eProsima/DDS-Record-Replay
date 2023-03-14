@@ -254,7 +254,7 @@ The recorder output file does support the following configurations:
         - ``filename``
         - Configure the name of the output file.
         - ``string``
-        -
+        - ``output``
 
 When DDS Recorder application is launched (or when remotely controlled, every time a ``start`` command is received), a temporary file with ``filename`` name and ``.mcap.tmp~`` extension is created in ``path``.
 This file is not readable until the application is terminated (or a ``stop`` / ``close`` command is received).
