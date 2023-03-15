@@ -19,7 +19,6 @@
 #define MCAP_IMPLEMENTATION  // Define this in exactly one .cpp file
 
 #include <cstdio>
-#include <regex>
 
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/exception/InconsistencyException.hpp>
@@ -133,15 +132,10 @@ void McapHandler::add_schema(
         // Schema not found, generate from dynamic type and store
         std::string schema_text = generate_ros2_schema(dynamic_type);
 
-        // Convert to ROS 2 compatible schema name (add namespace prefix and remove non-alphanumerical characters)
-        // NOTE: Not all ROS 2 format rules are automatically fulfilled via this transformation. For example, this
-        // transform does not enforce the first character to be an uppercase letter
-        std::string schema_name = "fastdds/" + std::regex_replace(type_name, std::regex("([^A-Za-z0-9])"), "");
-
-        logInfo(DDSRECORDER_MCAP_HANDLER, "\nAdding schema with name " << schema_name << " :\n" << schema_text << "\n");
+        logInfo(DDSRECORDER_MCAP_HANDLER, "\nAdding schema with name " << type_name << " :\n" << schema_text << "\n");
 
         // Create schema and add it to writer and to schemas map
-        mcap::Schema new_schema(schema_name, "ros2msg", schema_text);
+        mcap::Schema new_schema("fastdds/" + type_name, "ros2msg", schema_text);
         // WARNING: passing as non-const to MCAP library
         mcap_writer_.addSchema(new_schema);
         schemas_.insert({type_name, std::move(new_schema)});
