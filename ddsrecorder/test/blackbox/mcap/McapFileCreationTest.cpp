@@ -402,18 +402,18 @@ TEST(McapFileCreationTest, mcap_data_topic)
     auto messages = get_msgs_mcap(file_name, mcap_reader);
 
     std::string received_topic;
-    std::string received_data_type_name;
+    std::string received_data_schema_name;
 
     for (auto it = messages.begin(); it != messages.end(); it++)
     {
         received_topic = it->channel->topic;
-        received_data_type_name = it->schema->name;
+        received_data_schema_name = it->schema->name;
     }
     mcap_reader.close();
 
     // Test data
     ASSERT_EQ(received_topic, test::topic);
-    ASSERT_EQ(received_data_type_name, test::data_type_name);
+    ASSERT_EQ(received_data_schema_name, "fastdds/" + test::data_type_name);
 
 }
 
