@@ -200,8 +200,8 @@ void Configuration::load_recorder_configuration_(
         if (max_reception_rate_entry < 0)
         {
             throw eprosima::utils::ConfigurationException(
-                    utils::Formatter() << "Error reading <" << MAX_RECEPTION_RATE_TAG <<
-                        "> : value cannot be negative.");
+                      utils::Formatter() << "Error reading <" << MAX_RECEPTION_RATE_TAG <<
+                          "> : value cannot be negative.");
         }
         else
         {
