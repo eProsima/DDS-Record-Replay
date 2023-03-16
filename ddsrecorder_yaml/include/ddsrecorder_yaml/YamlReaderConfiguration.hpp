@@ -65,7 +65,7 @@ public:
     unsigned int event_window = 20;
     bool log_publish_time = false;
     unsigned int downsampling = 1;
-    unsigned int max_reception_rate = 0;
+    float max_reception_rate = 0;
 
     // Remote controller configuration
     bool enable_remote_controller = true;
