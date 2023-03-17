@@ -194,9 +194,21 @@ void Configuration::load_recorder_configuration_(
     // Get optional max reception rate
     if (YamlReader::is_tag_present(yml, MAX_RECEPTION_RATE_TAG))
     {
-        max_reception_rate = YamlReader::get<unsigned int>(yml, MAX_RECEPTION_RATE_TAG, version);
-        // Set default value for max reception rate
-        types::TopicQoS::default_max_reception_rate.store(max_reception_rate);
+        auto max_reception_rate_entry = YamlReader::get<float>(yml, MAX_RECEPTION_RATE_TAG, version);
+
+        // Only accept non-negative values
+        if (max_reception_rate_entry < 0)
+        {
+            throw eprosima::utils::ConfigurationException(
+                      utils::Formatter() << "Error reading <" << MAX_RECEPTION_RATE_TAG <<
+                          "> : value cannot be negative.");
+        }
+        else
+        {
+            max_reception_rate = max_reception_rate_entry;
+            // Set default value for max reception rate
+            types::TopicQoS::default_max_reception_rate.store(max_reception_rate);
+        }
     }
 }
 

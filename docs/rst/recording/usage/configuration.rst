@@ -190,9 +190,9 @@ Apart from these values, the tag ``qos`` under each topic allows to configure th
 
     *   - Max Reception Rate
         - ``max-reception-rate``
-        - *integer*
+        - *float*
         - *default value*
-        - Maximum sample reception rate [samples/s]
+        - Maximum sample reception rate [Hz]
 
 **Example of usage:**
 
@@ -209,7 +209,7 @@ Apart from these values, the tag ``qos`` under each topic allows to configure th
               ownership: false        # Use QoS SHARED_OWNERSHIP_QOS
               keyed: true             # Topic with key
               downsampling: 4         # Keep 1 of every 4 samples
-              max-reception-rate: 10  # Receive up to 10 samples in every 1 second bin
+              max-reception-rate: 10  # Discard messages if less than 100ms elapsed since the last sample was processed
 
 
 .. _usage_configuration_domain_id:
@@ -285,19 +285,20 @@ By default (``log-publish-time: false``) received messages are stored in the MCA
 Additionally, the timestamp corresponding to when messages were initially published (``publishTime``) is also included in the information dumped to MCAP files.
 In some applications, it may be required to use the ``publishTime`` as ``logTime``, which can be achieved by providing the ``log-publish-time: true`` configuration option.
 
+Max Reception Rate
+^^^^^^^^^^^^^^^^^^
+
+Limits the frequency [Hz] at which samples are processed, by discarding messages received before :code:`1/max-reception-rate` seconds have elapsed since the last processed message was received.
+When specified, ``max-reception-rate`` is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
+This parameter only accepts integer values, and its default value is ``0`` (no limit).
+
 Downsampling
 ^^^^^^^^^^^^
 
 Reduces the sampling rate of the received data by keeping *1* out of every *n* samples received (per topic), where *n* is the value specified in ``downsampling``.
+If ``max-reception-rate`` is also set, downsampling applies to messages that already managed to pass this filter.
 When specified, this downsampling factor is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
 This parameter only accepts positive integer values, and its default value is ``1`` (no downsampling).
-
-Max Reception Rate
-^^^^^^^^^^^^^^^^^^
-
-Limits the number of samples to be processed, by discarding messages received after ``max-reception-rate`` samples have been processed in 1 second bins.
-When specified, ``max-reception-rate`` is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
-This parameter only accepts integer values, and its default value is ``0`` (no limit).
 
 .. _usage_configuration_remote_controller:
 
