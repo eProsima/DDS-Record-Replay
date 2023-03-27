@@ -27,6 +27,7 @@ char dummy;
 #endif  // _WIN32
 
 #include "DdsRecorderStatus.h"
+#include "DdsRecorderStatusTypeObject.h"
 #include <fastcdr/Cdr.h>
 
 #include <fastcdr/exceptions/BadParamException.h>
@@ -46,6 +47,8 @@ DdsRecorderStatus::DdsRecorderStatus()
     // string m_info
     m_info ="";
 
+    // Just to register all known types
+    registerDdsRecorderStatusTypes();
 }
 
 DdsRecorderStatus::~DdsRecorderStatus()
