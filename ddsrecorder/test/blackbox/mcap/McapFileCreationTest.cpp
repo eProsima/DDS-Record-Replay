@@ -332,7 +332,7 @@ std::tuple<unsigned int, double> record_with_transitions(
         }
 
         current_time = std::chrono::duration_cast<std::chrono::nanoseconds>
-                    (std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+                    (std::chrono::system_clock::now().time_since_epoch()).count();
 
         if (event && current_state == McapHandlerState::PAUSED)
         {
