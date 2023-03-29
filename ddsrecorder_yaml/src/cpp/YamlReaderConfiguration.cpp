@@ -102,15 +102,6 @@ void Configuration::load_ddsrecorder_configuration_(
             load_dds_configuration_(dds_yml, version);
         }
 
-        // Block controller's status and command topics
-        types::WildcardDdsFilterTopic status_topic, command_topic;
-        status_topic.type_name.set_value("DdsRecorderStatus");
-        command_topic.type_name.set_value("DdsRecorderCommand");
-        blocklist.insert(
-            utils::Heritable<types::WildcardDdsFilterTopic>::make_heritable(status_topic));
-        blocklist.insert(
-            utils::Heritable<types::WildcardDdsFilterTopic>::make_heritable(command_topic));
-
         // Initialize controller domain with the same as the one being recorded
         // WARNING: dds tag must have been parsed beforehand
         controller_domain = simple_configuration->domain;

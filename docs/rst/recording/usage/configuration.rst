@@ -90,6 +90,7 @@ This is the list of topics that |ddsrecorder| will record, i.e. the data publish
 
     If no ``allowlist`` is provided, data will be recorded for all topics (unless filtered out in ``blocklist``).
 
+.. _topic_filtering_blocklist:
 
 Block topic list
 """"""""""""""""
@@ -110,15 +111,15 @@ If a topic matches an expression both in the ``allowlist`` and in the ``blocklis
     .. code-block:: yaml
 
         allowlist:
-        - name: AllowedTopic1
+          - name: AllowedTopic1
             type: Allowed
-        - name: AllowedTopic2
+          - name: AllowedTopic2
             type: "*"
-        - name: HelloWorldTopic
+          - name: HelloWorldTopic
             type: HelloWorld
 
         blocklist:
-        - name: "*"
+          - name: "*"
             type: HelloWorld
 
 Built-in Topics
