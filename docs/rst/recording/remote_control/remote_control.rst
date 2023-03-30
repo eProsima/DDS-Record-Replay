@@ -14,7 +14,6 @@ Moreover, eProsima provides a remote controlling tool that allows to visualize t
 
 This section explains the different execution states of a |ddsrecorder|, how to create your own tool using the DDS topics that the application defines to control its behavior, and the presentation of the eProsima user application for the remote control of the |ddsrecorder|.
 
-
 DDS Recorder Statuses
 =====================
 
@@ -55,6 +54,18 @@ DDS Controller Data Types
 The |ddsrecorder| contains a DDS subscriber in the `Controller Command` topic and a DDS publisher in the `Controller Status` topic.
 These topics' names are by default ``/ddsrecorder/command`` and ``/ddsrecorder/status``, respectively, but can also be specified by users via the ``command-topic-name`` and ``status-topic-name`` configuration tags.
 Therefore, any user can create his own application to control the |ddsrecorder| remotely by creating a publisher in the `Controller Command` topic, which sends commands to the recorder, and a subscriber in the `Controller Status` topic to monitor its status.
+
+.. note::
+
+    Status and command topics are not blocked by default, i.e. messages on this topics will be recorded if listening on the same domain the controller is launched.
+    If willing to avoid this, include these topics in the :ref:`blocklist <topic_filtering_blocklist>`:
+
+    .. code-block:: yaml
+
+      dds:
+        blocklist:
+          - type: DdsRecorderStatus
+          - type: DdsRecorderCommand
 
 The following is a description of the aforementioned control topics.
 

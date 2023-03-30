@@ -52,6 +52,7 @@ CommandReceiver::CommandReceiver(
     , status_type_(new DdsRecorderStatusPubSubType())
     , event_handler_(event_handler)
 {
+    registerDdsRecorderStatusTypes();
 }
 
 bool CommandReceiver::init()

@@ -35,6 +35,7 @@
 
 #include "types/DdsRecorderCommand/DdsRecorderCommandPubSubTypes.h"
 #include "types/DdsRecorderStatus/DdsRecorderStatusPubSubTypes.h"
+#include "types/DdsRecorderStatus/DdsRecorderStatusTypeObject.h"
 
 namespace eprosima {
 namespace ddsrecorder {
