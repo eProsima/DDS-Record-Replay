@@ -26,8 +26,10 @@ This release includes the following **Configuration features**:
 
 * Support YAML :ref:`configuration file <usage_configuration>`.
 * Support for allow and block topic filters at execution time and in run-time.
-* Support :ref:`DDS Recorder configurations <dds_recorder_configuration_dds_configuration>`.
-* Support :ref:`Fast DDS configurations <usage_fastdds_configuration>`.
+* Support configuration related to DDS communication.
+* Support configuration of data writing in the database.
+* Support configuration of the remote controller of the DDS Recorder.
+* Support configuration of the internal operation of the DDS Recorder.
 
 This release includes the following **Tutorials**:
 
