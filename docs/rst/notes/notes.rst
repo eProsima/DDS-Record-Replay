@@ -29,6 +29,11 @@ This release includes the following **Configuration features**:
 * Support :ref:`DDS Recorder configurations <dds_recorder_configuration_dds_configuration>`.
 * Support :ref:`Fast DDS configurations <usage_fastdds_configuration>`.
 
+This release includes the following **Tutorials**:
+
+* :ref:`Configuring Fast DDS DynamicTypes for data recording <tutorials_basic_example>`.
+* :ref:`Visualize recorded data with Foxglove <tutorials_foxglove>`.
+
 This release includes the following **Documentation features**:
 
 * This same documentation.
