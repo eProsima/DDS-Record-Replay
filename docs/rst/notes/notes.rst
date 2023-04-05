@@ -15,7 +15,14 @@ Version v0.1.0
 
 This is the first release of |eddsrecord|.
 
-This release includes several **features** regarding the introspection of DDS data, configuration and user interaction.
+This release includes several **features** regarding the recording of DDS data, configuration and user interaction.
+
+This release includes the following **Recording features**:
+
+* Supports DynamicTypes.
+* Supports saves the data in a MCAP database.
+* Supports for ``downsampling`` that reduces the sampling rate of the received data.
+* Supports for ``buffer-size`` that indicates the number of samples to be stored in the process memory before the dump to disk.
 
 This release includes the following **User Interface features**:
 
@@ -39,7 +46,3 @@ This release includes the following **Tutorials**:
 This release includes the following **Documentation features**:
 
 * This same documentation.
-
-This release includes the following **Installation features**:
-
-* Image of the application ``ubuntu-ddsrecorder:<version>``.
