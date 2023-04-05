@@ -224,12 +224,12 @@ For example, on Ubuntu use the command:
 PyQt6
 ^^^^^
 
-The |eddsrecord| remote controller is a graphical user interface application implemented in Python using `PyQt6 <https://pypi.org/project/PyQt6/>__`. 
+The |eddsrecord| remote controller is a graphical user interface application implemented in Python using `PyQt6 <https://pypi.org/project/PyQt6/>`__. 
 To install PyQt6 simply run:
 
 .. code-block:: bash
 
-    pip3 install pyqt6
+    pip3 install PyQt6
 
 .. _windows_sources_eprosima_dependencies:
 
