@@ -45,6 +45,7 @@ The installation of *eProsima Fast DDS* in a Windows environment from sources re
 * :ref:`windows_sources_chocolatey`
 * :ref:`windows_sources_cmake_pip3_wget_git`
 * :ref:`windows_sources_colcon_install` [optional]
+* :ref:`windows_sources_fastddspython` [for remote controller only]
 * :ref:`windows_sources_gtest` [for test only]
 
 .. _windows_sources_visual_studio:
@@ -90,6 +91,20 @@ Install the ROS 2 development tools (colcon_ and vcstool_) by executing the foll
 
     If this fails due to an Environment Error, add the :code:`--user` flag to the :code:`pip3` installation command.
 
+.. _windows_sources_fastddspython:
+
+Fast DDS Python
+^^^^^^^^^^^^^^^
+
+`eProsima Fast DDS Python <https://github.com/eProsima/Fast-DDS-python/>`_ is a Python binding for the eProsima Fast DDS C++ library.
+It is only required for the :ref:`remote controller application <remote_controller>`.
+
+Clone the Github repository into the |eddsrecord| workspace and compile it with colcon_ as a dependency package.
+Use the following command to download the code:
+
+.. code-block:: bash
+
+    git clone https://github.com/eProsima/Fast-DDS-python.git src/Fast-DDS-python
 
 .. _windows_sources_gtest:
 
@@ -123,6 +138,9 @@ Dependencies
 * :ref:`windows_sources_asiotinyxml2`
 * :ref:`windows_sources_openssl`
 * :ref:`windows_sources_yamlcpp`
+* :ref:`windows_sources_swig` [for remote controller only]
+* :ref:`windows_sources_PyQt6` [for remote controller only]
+* :ref:`windows_sources_mcap`
 * :ref:`windows_sources_eprosima_dependencies`
 
 .. _windows_sources_asiotinyxml2:
@@ -174,6 +192,45 @@ From an administrative shell with *PowerShell*, execute the following commands i
    cmake -DCMAKE_INSTALL_PREFIX='C:\Program Files\yamlcpp' -B build\yamlcpp yaml-cpp
    cmake --build build\yamlcpp --target install    # If building in Debug mode, add --config Debug
 
+.. _windows_sources_mcap:
+
+MCAP dependencies
+^^^^^^^^^^^^^^^^^
+
+`MCAP <https://github.com/foxglove/mcap>`_ is a modular container format and logging library for pub/sub messages with arbitrary message serialization.
+It is primarily intended for use in robotics applications, and works well under various workloads, resource constraints, and durability requirements.
+MCAP C++ library is packed within |ddsrecorder| as a header-only, but its dependencies need to be installed using the appropiate Windoes package manager.
+
+It is recommended to use `vcpkg <https://vcpkg.io/en/>`__ dependency manager to install `LZ4 <https://github.com/lz4/lz4>`__ and `zstd <https://github.com/facebook/zstd>`__ dependencies. 
+Once both dependencies are installed, add the directory where the binaries are located to the ``PATH``. The installed binaries are usually located under ``<path\to\vcpkg>/\installed\x64-windows\bin`` directory.
+
+.. _windows_sources_swig:
+
+SWIG
+^^^^
+
+`SWIG <https://www.swig.org>`_ is a software development tool that connects programs written in C and C++ with a variety of high-level programming languages.
+It is leveraged by :ref:`Fast DDS Python <fastdds_python>` to generate a Python wrapper over Fast DDS library.
+SWIG is only a requirement for the :ref:`remote controller application <remote_controller>`.
+It can be installed using the package manager of the appropriate Linux distribution.
+For example, on Ubuntu use the command:
+
+.. code-block:: bash
+
+   sudo apt install swig libpython3-dev
+
+.. _windows_sources_PyQt6:
+
+PyQt6
+^^^^^
+
+The |eddsrecord| remote controller is a graphical user interface application implemented in Python using `PyQt6 <https://pypi.org/project/PyQt6/>__`. 
+To install PyQt6 simply run:
+
+.. code-block:: bash
+
+    pip3 install pyqt6
+
 .. _windows_sources_eprosima_dependencies:
 
 eProsima dependencies
@@ -222,6 +279,10 @@ Colcon installation (recommended)
     .. code-block:: bash
 
         colcon build
+
+.. note::
+
+    To install both |ddsrecorder| and its :ref:`remote controller application <remote_controller>`, compilation flag ``-DBUILD_DDSRECORDER_CONTROLLER=ON`` is required.
 
 .. note::
 
@@ -365,6 +426,27 @@ Local installation
     By default, |eddsrecord| does not compile tests.
     However, they can be activated by downloading and installing `Gtest <https://github.com/google/googletest>`_
     and building with CMake option ``-DBUILD_TESTS=ON``.
+
+
+#.  Optionally, install the :ref:`remote controller application <remote_controller>` along with its dependency :ref:`Fast DDS Python <fastdds_python>`:
+
+    .. code-block:: bash
+
+        # Fast DDS Python
+        cd <path\to\user\workspace>\DDS-Record
+        mkdir build\fastdds_python
+        cd build\fastdds_python
+        cmake <path\to\user\workspace>\DDS-Record\src\Fast-DDS-python\fastdds_python -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
+            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
+        cmake --build . --config Release --target install
+
+        # Remote Controller Application
+        cd <path\to\user\workspace>\DDS-Record
+        mkdir build\controller_tool
+        cd build\controller_tool
+        cmake <path\to\user\workspace>\DDS-Record\src\controller\controller_tool -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
+            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
+        cmake --build . --config Release --target install
 
 
 .. _windows_sources_global_installation:
