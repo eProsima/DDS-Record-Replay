@@ -199,9 +199,9 @@ MCAP dependencies
 
 `MCAP <https://github.com/foxglove/mcap>`_ is a modular container format and logging library for pub/sub messages with arbitrary message serialization.
 It is primarily intended for use in robotics applications, and works well under various workloads, resource constraints, and durability requirements.
-MCAP C++ library is packed within |ddsrecorder| as a header-only, but its dependencies need to be installed using the appropiate Windoes package manager.
+MCAP C++ library is packed within |ddsrecorder| as a header-only, but its dependencies need to be installed using the appropriate Windows package manager.
 
-It is recommended to use `vcpkg <https://vcpkg.io/en/>`__ dependency manager to install `LZ4 <https://github.com/lz4/lz4>`__ and `zstd <https://github.com/facebook/zstd>`__ dependencies. 
+It is recommended to use `vcpkg <https://vcpkg.io/en/>`__ dependency manager to install `LZ4 <https://github.com/lz4/lz4>`__ and `zstd <https://github.com/facebook/zstd>`__ dependencies.
 Once both dependencies are installed, add the directory where the binaries are located to the ``PATH``. The installed binaries are usually located under ``<path\to\vcpkg>/\installed\x64-windows\bin`` directory.
 
 .. _windows_sources_swig:
@@ -224,7 +224,7 @@ For example, on Ubuntu use the command:
 PyQt6
 ^^^^^
 
-The |eddsrecord| remote controller is a graphical user interface application implemented in Python using `PyQt6 <https://pypi.org/project/PyQt6/>`__. 
+The |eddsrecord| remote controller is a graphical user interface application implemented in Python using `PyQt6 <https://pypi.org/project/PyQt6/>`__.
 To install PyQt6 simply run:
 
 .. code-block:: bash

@@ -124,7 +124,7 @@ Dependencies
 * :ref:`openssl_sl`
 * :ref:`yaml_cpp`
 * :ref:`swig_sl` [for remote controller only]
-* :ref:`PyQt6` [for remote controller only]
+* :ref:`pyqt6_linux_dependencies` [for remote controller only]
 * :ref:`mcap_dependencies`
 * :ref:`eprosima_dependencies`
 
@@ -188,14 +188,14 @@ For example, on Ubuntu use the command:
 PyQt6
 ^^^^^
 
-The |eddsrecord| remote controller is a graphical user interface application implemented in Python using `PyQt6 <https://pypi.org/project/PyQt6/>`__. 
+The |eddsrecord| remote controller is a graphical user interface application implemented in Python using `PyQt6 <https://pypi.org/project/PyQt6/>`__.
 To install PyQt6 simply run:
 
 .. code-block:: bash
 
     pip3 install PyQt6
 
-.. note:: 
+.. note::
 
     To install PyQt6 on Ubuntu 20.04, update ``pip`` and ``setuptools`` packages first.
 
