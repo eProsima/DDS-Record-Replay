@@ -25,6 +25,10 @@ This tutorial focuses on how to send the data type information using Fast DDS Dy
 More specifically, this tutorial implements a DDS Publisher configured to send its data type, a DDS Subscriber that collects the data type and is able to read the incoming data, and a DDS Recorder is launched to save all the data published on the network.
 For more information about how to create the workspace with a basic DDS Publisher and a basic DDS Subscriber, please refer to `Writing a simple C++ publisher and subscriber application <https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html>`_ .
 
+.. warning::
+
+    This tutorial works with `this <https://github.com/eProsima/Fast-DDS/tree/bugfix/complex-dynamic-types>`_ branch of Fast DDS.
+
 *************
 Prerequisites
 *************

@@ -24,6 +24,8 @@
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/utils.hpp>
 
+#include <ddsrecorder_participants/library/config.h>
+
 #include "arguments_configuration.hpp"
 
 namespace eprosima {
@@ -163,7 +165,12 @@ const option::Descriptor usage[] = {
 
 void print_version()
 {
-    std::cout << "DDSRecorder prototype" << std::endl;
+    std::cout
+        << "DDS Recorder "
+        << DDSRECORDER_PARTICIPANTS_VERSION_STRING
+        << "\ncommit hash: "
+        << DDSRECORDER_PARTICIPANTS_COMMIT_HASH
+        << std::endl;
 }
 
 ProcessReturnCode parse_arguments(

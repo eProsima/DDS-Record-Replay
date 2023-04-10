@@ -264,8 +264,8 @@ Colcon installation (recommended)
         mkdir <path\to\user\workspace>\DDS-Recorder
         cd <path\to\user\workspace>\DDS-Recorder
         mkdir src
-        wget https://raw.githubusercontent.com/eProsima/DDS-Recorder/main/ddsrecorder.repos
-        vcs import src < ddsrecorder.repos
+        wget https://raw.githubusercontent.com/eProsima/DDS-Recorder/main/ddsrecorder.repos --output-file ddsrecorder.repos
+        vcs import src --input ddsrecorder.repos
 
     .. note::
 
@@ -310,8 +310,8 @@ Local installation
         mkdir <path\to\user\workspace>\DDS-Record\src
         mkdir <path\to\user\workspace>\DDS-Record\build
         cd <path\to\user\workspace>\DDS-Record
-        wget https://raw.githubusercontent.com/eProsima/DDS-Recorder/main/ddsrecorder.repos
-        vcs import src < ddsrecorder.repos
+        wget https://raw.githubusercontent.com/eProsima/DDS-Recorder/main/ddsrecorder.repos --output-file ddsrecorder.repos
+        vcs import src --input ddsrecorder.repos
 
 #.  Compile all dependencies using CMake_.
 
@@ -445,7 +445,7 @@ Local installation
         mkdir build\controller_tool
         cd build\controller_tool
         cmake <path\to\user\workspace>\DDS-Record\src\controller\controller_tool -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
-            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
+            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install -DBUILD_DDSRECORDER_CONTROLLER=ON
         cmake --build . --config Release --target install
 
 
