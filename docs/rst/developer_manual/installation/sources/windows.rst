@@ -445,7 +445,7 @@ Local installation
         mkdir build\controller_tool
         cd build\controller_tool
         cmake <path\to\user\workspace>\DDS-Record\src\controller\controller_tool -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
-            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
+            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install -DBUILD_DDSRECORDER_CONTROLLER=ON
         cmake --build . --config Release --target install
 
 
