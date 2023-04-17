@@ -21,6 +21,7 @@
 
 #include <ddspipe_core/types/dynamic_types/types.hpp>
 #include <ddspipe_core/types/topic/filter/WildcardDdsFilterTopic.hpp>
+#include <ddspipe_participants/types/address/Address.hpp>
 
 #include <ddspipe_yaml/yaml_configuration_tags.hpp>
 #include <ddspipe_yaml/Yaml.hpp>
@@ -178,7 +179,7 @@ void Configuration::load_recorder_configuration_(
     {
         downsampling = YamlReader::get_positive_int(yml, DOWNSAMPLING_TAG);
         // Set default value for downsampling
-        types::TopicQoS::default_downsampling.store(downsampling);
+        ddspipe::core::types::TopicQoS::default_downsampling.store(downsampling);
     }
 
     /////
@@ -198,7 +199,7 @@ void Configuration::load_recorder_configuration_(
         {
             max_reception_rate = max_reception_rate_entry;
             // Set default value for max reception rate
-            types::TopicQoS::default_max_reception_rate.store(max_reception_rate);
+            ddspipe::core::types::TopicQoS::default_max_reception_rate.store(max_reception_rate);
         }
     }
 }
@@ -217,7 +218,7 @@ void Configuration::load_controller_configuration_(
     // Get optional DDS domain
     if (YamlReader::is_tag_present(yml, DOMAIN_ID_TAG))
     {
-        controller_domain = YamlReader::get<types::DomainId>(yml, DOMAIN_ID_TAG, version);
+        controller_domain = YamlReader::get<ddspipe::core::types::DomainId>(yml, DOMAIN_ID_TAG, version);
     }
 
     // Get optional initial state
@@ -260,7 +261,7 @@ void Configuration::load_specs_configuration_(
     {
         max_history_depth = YamlReader::get_positive_int(yml, MAX_HISTORY_DEPTH_TAG);
         // Set default value for history
-        types::TopicQoS::default_history_depth.store(max_history_depth);
+        ddspipe::core::types::TopicQoS::default_history_depth.store(max_history_depth);
     }
 
     // Get max pending samples
@@ -283,27 +284,35 @@ void Configuration::load_dds_configuration_(
     // Get optional DDS domain
     if (YamlReader::is_tag_present(yml, DOMAIN_ID_TAG))
     {
-        simple_configuration->domain = YamlReader::get<types::DomainId>(yml, DOMAIN_ID_TAG, version);
+        simple_configuration->domain = YamlReader::get<ddspipe::core::types::DomainId>(yml, DOMAIN_ID_TAG, version);
+    }
+
+    /////
+    // Get optional whitelist interfaces
+    if (YamlReader::is_tag_present(yml, WHITELIST_INTERFACES_TAG))
+    {
+        simple_configuration->whitelist = YamlReader::get_set<ddspipe::participants::types::IpType>(yml, WHITELIST_INTERFACES_TAG,
+                        version);
     }
 
     /////
     // Get optional allowlist
     if (YamlReader::is_tag_present(yml, ALLOWLIST_TAG))
     {
-        allowlist = YamlReader::get_set<utils::Heritable<types::IFilterTopic>>(yml, ALLOWLIST_TAG, version);
+        allowlist = YamlReader::get_set<utils::Heritable<ddspipe::core::types::IFilterTopic>>(yml, ALLOWLIST_TAG, version);
 
         // Add to allowlist always the type object topic
-        types::WildcardDdsFilterTopic internal_topic;
-        internal_topic.topic_name.set_value(types::TYPE_OBJECT_TOPIC_NAME);
+        ddspipe::core::types::WildcardDdsFilterTopic internal_topic;
+        internal_topic.topic_name.set_value(ddspipe::core::types::TYPE_OBJECT_TOPIC_NAME);
         allowlist.insert(
-            utils::Heritable<types::WildcardDdsFilterTopic>::make_heritable(internal_topic));
+            utils::Heritable<ddspipe::core::types::WildcardDdsFilterTopic>::make_heritable(internal_topic));
     }
 
     /////
     // Get optional blocklist
     if (YamlReader::is_tag_present(yml, BLOCKLIST_TAG))
     {
-        blocklist = YamlReader::get_set<utils::Heritable<types::IFilterTopic>>(yml, BLOCKLIST_TAG, version);
+        blocklist = YamlReader::get_set<utils::Heritable<ddspipe::core::types::IFilterTopic>>(yml, BLOCKLIST_TAG, version);
     }
 
     /////
@@ -311,7 +320,7 @@ void Configuration::load_dds_configuration_(
     if (YamlReader::is_tag_present(yml, BUILTIN_TAG))
     {
         // WARNING: Parse builtin topics AFTER specs and recorder, as some topic-specific default values are set there
-        builtin_topics = YamlReader::get_set<utils::Heritable<types::DistributedTopic>>(yml, BUILTIN_TAG,
+        builtin_topics = YamlReader::get_set<utils::Heritable<ddspipe::core::types::DistributedTopic>>(yml, BUILTIN_TAG,
                         version);
     }
 }
