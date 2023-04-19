@@ -60,7 +60,7 @@ bool CommandReceiver::init()
 {
     // CREATE THE PARTICIPANT
     DomainParticipantQos pqos;
-    pqos.name("CommandReceiver");
+    pqos.name("DdsRecorderCommandReceiver");
     participant_ = DomainParticipantFactory::get_instance()->create_participant(domain_, pqos);
 
     if (participant_ == nullptr)
