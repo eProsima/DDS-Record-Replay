@@ -289,7 +289,7 @@ int main(
             logUser(DDSRECORDER_EXECUTION, "Waiting for instructions...");
             eprosima::ddsrecorder::recorder::receiver::CommandReceiver receiver(configuration.controller_domain,
                     configuration.command_topic_name,
-                    configuration.status_topic_name, close_handler);
+                    configuration.status_topic_name, close_handler, configuration.simple_configuration);
             receiver.init();
 
             CommandCode prev_command;
