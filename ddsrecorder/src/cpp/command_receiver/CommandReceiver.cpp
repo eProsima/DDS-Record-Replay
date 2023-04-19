@@ -23,6 +23,8 @@
 #include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
 #include <fastdds/dds/subscriber/qos/DataReaderQos.hpp>
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
+#include <fastdds/rtps/transport/UDPv4TransportDescriptor.h>
+#include <fastdds/rtps/transport/shared_mem/SharedMemTransportDescriptor.h>
 
 #include "CommandReceiver.hpp"
 
@@ -38,7 +40,8 @@ CommandReceiver::CommandReceiver(
         uint32_t domain,
         const std::string& command_topic_name,
         const std::string& status_topic_name,
-        std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler)
+        std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler,
+        std::shared_ptr<eprosima::ddspipe::participants::SimpleParticipantConfiguration> participant_configuration)
     : domain_(domain)
     , participant_(nullptr)
     , command_topic_name_(command_topic_name)
@@ -52,14 +55,118 @@ CommandReceiver::CommandReceiver(
     , status_writer_(nullptr)
     , status_type_(new DdsRecorderStatusPubSubType())
     , event_handler_(event_handler)
+    , participant_configuration_(participant_configuration)
 {
     registerDdsRecorderStatusTypes();
 }
 
 bool CommandReceiver::init()
 {
-    // CREATE THE PARTICIPANT
+    // CONFIGURE TRANSPORT
     DomainParticipantQos pqos;
+    if (participant_configuration_->transport == ddspipe::participants::types::TransportProtocol::builtin)
+    {
+        if (!participant_configuration_->whitelist.empty())
+        {
+            // Disable builtin
+            pqos.transport().use_builtin_transports = false;
+
+            // Add Shared Memory Transport
+            std::shared_ptr<eprosima::fastdds::rtps::SharedMemTransportDescriptor> shm_transport =
+                    std::make_shared<eprosima::fastdds::rtps::SharedMemTransportDescriptor>();
+            pqos.transport().user_transports.push_back(shm_transport);
+
+            // Add UDP Transport
+            std::shared_ptr<eprosima::fastdds::rtps::UDPv4TransportDescriptor> udp_transport =
+                    std::make_shared<eprosima::fastdds::rtps::UDPv4TransportDescriptor>();
+
+            // Whitelisting
+            for (const ddspipe::participants::types::IpType& ip : participant_configuration_->whitelist)
+            {
+                if (ddspipe::participants::types::Address::is_ipv4_correct(ip))
+                {
+                    udp_transport->interfaceWhiteList.emplace_back(ip);
+                    logInfo(DDSRECORDER_COMMAND_RECEIVER,
+                            "Adding " << ip << " to whitelist interfaces.");
+                }
+                else
+                {
+                    // Invalid address, continue with next one
+                    logWarning(DDSRECORDER_COMMAND_RECEIVER,
+                            "Not valid IPv4. Discarding whitelist interface " << ip << ".");
+                }
+            }
+            pqos.transport().user_transports.push_back(udp_transport);
+        }
+    }
+    else if (participant_configuration_->transport == ddspipe::participants::types::TransportProtocol::shm)
+    {
+        // Disable builtin
+        pqos.transport().use_builtin_transports = false;
+
+        // Add Shared Memory Transport
+        std::shared_ptr<eprosima::fastdds::rtps::SharedMemTransportDescriptor> shm_transport =
+                std::make_shared<eprosima::fastdds::rtps::SharedMemTransportDescriptor>();
+        pqos.transport().user_transports.push_back(shm_transport);
+    }
+    else if (participant_configuration_->transport == ddspipe::participants::types::TransportProtocol::udp)
+    {
+        // Disable builtin
+        pqos.transport().use_builtin_transports = false;
+
+        // Add UDP Transport
+        std::shared_ptr<eprosima::fastdds::rtps::UDPv4TransportDescriptor> udp_transport =
+                std::make_shared<eprosima::fastdds::rtps::UDPv4TransportDescriptor>();
+
+        // Whitelisting
+        for (const ddspipe::participants::types::IpType& ip : participant_configuration_->whitelist)
+        {
+            if (ddspipe::participants::types::Address::is_ipv4_correct(ip))
+            {
+                udp_transport->interfaceWhiteList.emplace_back(ip);
+                logInfo(DDSRECORDER_COMMAND_RECEIVER,
+                        "Adding " << ip << " to whitelist interfaces.");
+            }
+            else
+            {
+                // Invalid address, continue with next one
+                logWarning(DDSRECORDER_COMMAND_RECEIVER,
+                        "Not valid IPv4. Discarding whitelist interface " << ip << ".");
+            }
+        }
+        pqos.transport().user_transports.push_back(udp_transport);
+    }
+
+    // Participant discovery filter configuration
+    switch (participant_configuration_->ignore_participant_flags)
+    {
+        case ddspipe::core::types::IgnoreParticipantFlags::no_filter:
+            pqos.wire_protocol().builtin.discovery_config.ignoreParticipantFlags =
+                    eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::NO_FILTER;
+            break;
+        case ddspipe::core::types::IgnoreParticipantFlags::filter_different_host:
+            pqos.wire_protocol().builtin.discovery_config.ignoreParticipantFlags =
+                    eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::FILTER_DIFFERENT_HOST;
+            break;
+        case ddspipe::core::types::IgnoreParticipantFlags::filter_different_process:
+            pqos.wire_protocol().builtin.discovery_config.ignoreParticipantFlags =
+                    eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::FILTER_DIFFERENT_PROCESS;
+            break;
+        case ddspipe::core::types::IgnoreParticipantFlags::filter_same_process:
+            pqos.wire_protocol().builtin.discovery_config.ignoreParticipantFlags =
+                    eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::FILTER_SAME_PROCESS;
+            break;
+        case ddspipe::core::types::IgnoreParticipantFlags::filter_different_and_same_process:
+            pqos.wire_protocol().builtin.discovery_config.ignoreParticipantFlags =
+                    static_cast<eprosima::fastrtps::rtps::ParticipantFilteringFlags_t>(
+                eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::FILTER_DIFFERENT_PROCESS |
+                eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::FILTER_SAME_PROCESS);
+            break;
+        default:
+            break;
+    }
+
+    // CREATE THE PARTICIPANT
     pqos.name("DdsRecorderCommandReceiver");
     participant_ = DomainParticipantFactory::get_instance()->create_participant(domain_, pqos);
 
