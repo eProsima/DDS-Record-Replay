@@ -102,6 +102,21 @@ void Configuration::load_ddsrecorder_configuration_(
             load_dds_configuration_(dds_yml, version);
         }
 
+        // Block ROS 2 services (RPC) topics
+        // RATIONALE:
+        // At the time of this writting, services in ROS 2 behave in the following manner: a ROS 2 service
+        // client awaits to discover a server, and it is then when a request is sent to this (and only this) server,
+        // from which a response is expected.
+        // Hence, if these topics are not blocked, the client would wrongly believe DDS-Recorder is a server, thus
+        // sending a request for which a response will not be received.
+        types::WildcardDdsFilterTopic rpc_request_topic, rpc_response_topic;
+        rpc_request_topic.type_name.set_value("rq/*");
+        rpc_response_topic.type_name.set_value("rr/*");
+        blocklist.insert(
+            utils::Heritable<types::WildcardDdsFilterTopic>::make_heritable(rpc_request_topic));
+        blocklist.insert(
+            utils::Heritable<types::WildcardDdsFilterTopic>::make_heritable(rpc_response_topic));
+
         // Initialize controller domain with the same as the one being recorded
         // WARNING: dds tag must have been parsed beforehand
         controller_domain = simple_configuration->domain;
