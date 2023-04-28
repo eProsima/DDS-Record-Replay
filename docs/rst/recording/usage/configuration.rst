@@ -291,7 +291,7 @@ Max Reception Rate
 
 Limits the frequency [Hz] at which samples are processed, by discarding messages received before :code:`1/max-reception-rate` seconds have elapsed since the last processed message was received.
 When specified, ``max-reception-rate`` is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
-This parameter only accepts integer values, and its default value is ``0`` (no limit).
+This parameter only accepts non-negative values, and its default value is ``0`` (no limit).
 
 Downsampling
 ^^^^^^^^^^^^
