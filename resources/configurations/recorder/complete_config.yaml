@@ -1,0 +1,46 @@
+dds:
+  domain: 0
+
+  allowlist:
+    - name: "topic_name"
+    - name: "HelloWorldTopic"
+      type: "HelloWorld"
+
+  blocklist:
+    - name: "topic_to_block"
+      type: "type_to_block"
+
+  builtin-topics:
+    - name: "HelloWorldTopic"
+      type: "HelloWorld"
+      qos:
+        reliability: true
+        durability: true
+        keyed: false
+        partitions: true
+        ownership: false
+        downsampling: 4
+        max-reception-rate: 10
+
+recorder:
+  output:
+    filename: "output"
+    path: "."
+
+  buffer-size: 50
+  event-window: 60
+  log-publish-time: false
+  downsampling: 3
+  max-reception-rate: 20
+
+remote-controller:
+  enable: true
+  domain: 10
+  initial-state: "PAUSED"
+  command-topic-name: "/ddsrecorder/command"
+  status-topic-name: "/ddsrecorder/status"
+
+specs:
+  threads: 8
+  max-pending-samples: 10
+  cleanup-period: 90
