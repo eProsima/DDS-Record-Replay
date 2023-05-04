@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#define MCAP_IMPLEMENTATION  // Define this in exactly one .cpp file
+
 #include <mcap/reader.hpp>
 
 #include <cpp_utils/exception/InitializationException.hpp>
@@ -19,7 +21,8 @@
 #include "DdsReplayer.hpp"
 
 namespace eprosima {
-namespace ddsreplayer {
+namespace ddsrecorder {
+namespace replayer {
 
 using namespace eprosima::ddspipe::core;
 using namespace eprosima::ddspipe::core::types;
@@ -28,7 +31,7 @@ using namespace eprosima::ddspipe::participants::rtps;
 using namespace eprosima::utils;
 
 DdsReplayer::DdsReplayer(
-        const yaml::Configuration& configuration,
+        const yaml::ReplayerConfiguration& configuration,
         std::string& input_file)
 {
     // Create allowed topics list
@@ -113,7 +116,7 @@ void DdsReplayer::stop()
 }
 
 std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topics_(
-        const yaml::Configuration& configuration,
+        const yaml::ReplayerConfiguration& configuration,
         std::string& input_file)
 {
     std::set<utils::Heritable<DistributedTopic>> builtin_topics = configuration.builtin_topics;
@@ -139,7 +142,7 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
     // Scan and parse channels and schemas
     const auto onProblem = [](const mcap::Status& status)
             {
-                logWarning(DDSRECORDER_MCAP_READER_PARTICIPANT,
+                logWarning(DDSREPLAYER_MCAP_READER_PARTICIPANT,
                         "An error occurred while reading summary: " << status.message << ".");
             };
     status = mcap_reader.readSummary(mcap::ReadSummaryMethod::NoFallbackScan, onProblem);
@@ -176,5 +179,6 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
     return builtin_topics;
 }
 
-} /* namespace ddsreplayer */
+} /* namespace replayer */
+} /* namespace ddsrecorder */
 } /* namespace eprosima */

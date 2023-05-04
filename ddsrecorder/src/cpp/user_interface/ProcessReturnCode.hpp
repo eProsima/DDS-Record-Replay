@@ -21,7 +21,7 @@
 
 namespace eprosima {
 namespace ddsrecorder {
-namespace ui {
+namespace recorder {
 
 enum class ProcessReturnCode : int
 {
@@ -33,6 +33,6 @@ enum class ProcessReturnCode : int
     execution_failed = 20,
 };
 
-} /* namespace ui */
+} /* namespace recorder */
 } /* namespace ddsrecorder */
 } /* namespace eprosima */

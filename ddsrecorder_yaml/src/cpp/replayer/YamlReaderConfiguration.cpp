@@ -28,33 +28,33 @@
 #include <ddspipe_yaml/Yaml.hpp>
 #include <ddspipe_yaml/YamlManager.hpp>
 
-#include <ddsreplayer_yaml/yaml_configuration_tags.hpp>
+#include <ddsrecorder_yaml/replayer/yaml_configuration_tags.hpp>
 
-#include <ddsreplayer_yaml/YamlReaderConfiguration.hpp>
+#include <ddsrecorder_yaml/replayer/YamlReaderConfiguration.hpp>
 
 namespace eprosima {
-namespace ddsreplayer {
+namespace ddsrecorder {
 namespace yaml {
 
 using namespace eprosima::ddspipe::core;
 using namespace eprosima::ddspipe::participants;
 using namespace eprosima::ddspipe::participants::rtps;
 using namespace eprosima::ddspipe::yaml;
-using namespace eprosima::ddsreplayer::participants;
+using namespace eprosima::ddsrecorder::participants;
 
-Configuration::Configuration(
+ReplayerConfiguration::ReplayerConfiguration(
         const Yaml& yml)
 {
     load_ddsreplayer_configuration_(yml);
 }
 
-Configuration::Configuration(
+ReplayerConfiguration::ReplayerConfiguration(
         const std::string& file_path)
 {
     load_ddsreplayer_configuration_from_file_(file_path);
 }
 
-void Configuration::load_ddsreplayer_configuration_(
+void ReplayerConfiguration::load_ddsreplayer_configuration_(
         const Yaml& yml)
 {
     try
@@ -115,7 +115,7 @@ void Configuration::load_ddsreplayer_configuration_(
     }
 }
 
-void Configuration::load_replay_configuration_(
+void ReplayerConfiguration::load_replay_configuration_(
         const Yaml& yml,
         const YamlReaderVersion& version)
 {
@@ -158,7 +158,7 @@ void Configuration::load_replay_configuration_(
     }
 }
 
-void Configuration::load_specs_configuration_(
+void ReplayerConfiguration::load_specs_configuration_(
         const Yaml& yml,
         const YamlReaderVersion& version)
 {
@@ -184,7 +184,7 @@ void Configuration::load_specs_configuration_(
     }
 }
 
-void Configuration::load_dds_configuration_(
+void ReplayerConfiguration::load_dds_configuration_(
         const Yaml& yml,
         const YamlReaderVersion& version)
 {
@@ -224,7 +224,7 @@ void Configuration::load_dds_configuration_(
     }
 }
 
-void Configuration::load_ddsreplayer_configuration_from_file_(
+void ReplayerConfiguration::load_ddsreplayer_configuration_from_file_(
         const std::string& file_path)
 {
     Yaml yml;
@@ -244,9 +244,9 @@ void Configuration::load_ddsreplayer_configuration_from_file_(
                       "> :\n " << e.what());
     }
 
-    Configuration::load_ddsreplayer_configuration_(yml);
+    ReplayerConfiguration::load_ddsreplayer_configuration_(yml);
 }
 
 } /* namespace yaml */
-} /* namespace ddsreplayer */
+} /* namespace ddsrecorder */
 } /* namespace eprosima */

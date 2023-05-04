@@ -19,16 +19,18 @@
 #pragma once
 
 #include <cpp_utils/memory/Heritable.hpp>
+#include <cpp_utils/time/time_utils.hpp>
+#include <cpp_utils/types/Fuzzy.hpp>
 
 #include <ddspipe_core/types/topic/dds/DistributedTopic.hpp>
 #include <ddspipe_core/types/topic/filter/IFilterTopic.hpp>
 
-#include <ddspipe_participants/configuration/ParticipantConfiguration.hpp>
 #include <ddspipe_participants/configuration/SimpleParticipantConfiguration.hpp>
 
 #include <ddspipe_yaml/Yaml.hpp>
 #include <ddspipe_yaml/YamlReader.hpp>
 
+#include <ddsrecorder_participants/replayer/McapReaderParticipantConfiguration.hpp>
 #include <ddsrecorder_yaml/library/library_dll.h>
 
 namespace eprosima {
@@ -36,60 +38,46 @@ namespace ddsrecorder {
 namespace yaml {
 
 /**
- * @brief Class that encapsulates specific methods to get a full DDS Recorder Configuration from a yaml node.
+ * @brief Class that encapsulates specific methods to get a full DDS Replayer Configuration from a yaml node.
  *
  * TODO: Add version configuration so it could load different versions
  */
-class DDSRECORDER_YAML_DllAPI Configuration
+class DDSRECORDER_YAML_DllAPI ReplayerConfiguration
 {
 public:
 
-    Configuration(
+    ReplayerConfiguration(
             const Yaml& yml);
 
-    Configuration(
+    ReplayerConfiguration(
             const std::string& file_path);
 
     // Participants configurations
-    std::shared_ptr<ddspipe::participants::SimpleParticipantConfiguration> simple_configuration;
-    std::shared_ptr<ddspipe::participants::ParticipantConfiguration> recorder_configuration;
+    std::shared_ptr<ddsrecorder::participants::McapReaderParticipantConfiguration> mcap_reader_configuration;
+    std::shared_ptr<ddspipe::participants::SimpleParticipantConfiguration> replayer_configuration;
 
     // Topic filtering
     std::set<utils::Heritable<ddspipe::core::types::IFilterTopic>> allowlist{};
     std::set<utils::Heritable<ddspipe::core::types::IFilterTopic>> blocklist{};
     std::set<utils::Heritable<ddspipe::core::types::DistributedTopic>> builtin_topics{};
 
-    // Recording params
-    std::string recorder_output_file = "./output";
-    unsigned int buffer_size = 100;
-    unsigned int event_window = 20;
-    bool log_publish_time = false;
-    unsigned int downsampling = 1;
-    float max_reception_rate = 0;
-
-    // Remote controller configuration
-    bool enable_remote_controller = true;
-    ddspipe::core::types::DomainId controller_domain;
-    std::string initial_state = "RUNNING";
-    std::string command_topic_name = "/ddsrecorder/command";
-    std::string status_topic_name = "/ddsrecorder/status";
+    // Replaying params
+    std::string input_file;
+    utils::Fuzzy<utils::Timestamp> begin_time{};
+    utils::Fuzzy<utils::Timestamp> end_time{};
+    float rate{1};
+    utils::Fuzzy<utils::Timestamp> start_replay_time{};
 
     // Specs
     unsigned int n_threads = 12;
     unsigned int max_history_depth = 5000;
-    unsigned int max_pending_samples = 5000;
-    unsigned int cleanup_period;
 
 protected:
 
-    void load_ddsrecorder_configuration_(
+    void load_ddsreplayer_configuration_(
             const Yaml& yml);
 
-    void load_recorder_configuration_(
-            const Yaml& yml,
-            const ddspipe::yaml::YamlReaderVersion& version);
-
-    void load_controller_configuration_(
+    void load_replay_configuration_(
             const Yaml& yml,
             const ddspipe::yaml::YamlReaderVersion& version);
 
@@ -101,7 +89,7 @@ protected:
             const Yaml& yml,
             const ddspipe::yaml::YamlReaderVersion& version);
 
-    void load_ddsrecorder_configuration_from_file_(
+    void load_ddsreplayer_configuration_from_file_(
             const std::string& file_path);
 };
 

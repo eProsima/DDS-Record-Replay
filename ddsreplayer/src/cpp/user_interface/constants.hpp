@@ -21,12 +21,12 @@
 #pragma once
 
 namespace eprosima {
-namespace ddsreplayer {
-namespace ui {
+namespace ddsrecorder {
+namespace replayer {
 
 //! Default DDSReplayer configuration file
 constexpr const char* DEFAULT_CONFIGURATION_FILE_NAME("DDS_REPLAYER_CONFIGURATION.yaml");
 
-} /* namespace ui */
-} /* namespace ddsreplayer */
+} /* namespace replayer */
+} /* namespace ddsrecorder */
 } /* namespace eprosima */

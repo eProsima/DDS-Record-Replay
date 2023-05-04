@@ -16,7 +16,7 @@
  * @file McapReaderParticipant.cpp
  */
 
-#define MCAP_IMPLEMENTATION
+#include <mcap/reader.hpp>
 
 #include <cpp_utils/exception/InconsistencyException.hpp>
 #include <cpp_utils/Log.hpp>
@@ -30,10 +30,10 @@
 #include <ddspipe_participants/reader/auxiliar/BlankReader.hpp>
 #include <ddspipe_participants/writer/auxiliar/BlankWriter.hpp>
 
-#include <ddsreplayer_participants/McapReaderParticipant.hpp>
+#include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
 
 namespace eprosima {
-namespace ddsreplayer {
+namespace ddsrecorder {
 namespace participants {
 
 using namespace eprosima::ddspipe::core;
@@ -79,7 +79,7 @@ std::shared_ptr<IReader> McapReaderParticipant::create_reader(
 {
     if (!utils::can_cast<DdsTopic>(topic))
     {
-        logWarning(DDSRECORDER_MCAP_READER_PARTICIPANT, "Not creating Writer for topic " << topic.topic_name());
+        logWarning(DDSREPLAYER_MCAP_READER_PARTICIPANT, "Not creating Writer for topic " << topic.topic_name());
         return std::make_shared<BlankReader>();
     }
 
@@ -124,7 +124,7 @@ void McapReaderParticipant::process_mcap()
     // Read messages
     const auto onProblem = [](const mcap::Status& status)
             {
-                logWarning(DDSRECORDER_MCAP_READER_PARTICIPANT,
+                logWarning(DDSREPLAYER_MCAP_READER_PARTICIPANT,
                         "An error occurred while reading messages: " << status.message << ".");
             };
     auto messages = mcap_reader.readMessages(onProblem, read_options);
@@ -139,7 +139,7 @@ void McapReaderParticipant::process_mcap()
     }
     else
     {
-        logWarning(DDSRECORDER_MCAP_READER_PARTICIPANT, "Provided input file contains no messages in the given range.");
+        logWarning(DDSREPLAYER_MCAP_READER_PARTICIPANT, "Provided input file contains no messages in the given range.");
         return;
     }
 
@@ -152,7 +152,7 @@ void McapReaderParticipant::process_mcap()
 
         if (initial_ts < now)
         {
-            logWarning(DDSRECORDER_MCAP_READER_PARTICIPANT,
+            logWarning(DDSREPLAYER_MCAP_READER_PARTICIPANT,
                     "Provided start-replay-time already expired, starting immediately...");
             initial_ts = now;
         }
@@ -258,5 +258,5 @@ mcap::Timestamp McapReaderParticipant::std_timepoint_to_mcap_timestamp(
 }
 
 } /* namespace participants */
-} /* namespace ddsreplayer */
+} /* namespace ddsrecorder */
 } /* namespace eprosima */

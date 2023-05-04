@@ -39,6 +39,7 @@
 
 namespace eprosima {
 namespace ddsrecorder {
+namespace recorder {
 namespace receiver {
 
 ENUMERATION_BUILDER(
@@ -109,5 +110,6 @@ private:
 };
 
 } /* namespace receiver */
+} /* namespace recorder */
 } /* namespace ddsrecorder */
 } /* namespace eprosima */

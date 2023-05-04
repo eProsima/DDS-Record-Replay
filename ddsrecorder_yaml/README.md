@@ -1,6 +1,6 @@
-# eProsima DDS Recorder Yaml Module
+# eProsima DDS Record & Replay Yaml Module
 
-This library implements the required functions to translate a DDS Recorder configuration written in *yaml*
+This library implements the required functions to translate a DDS Recorder/Replayer configuration written in *yaml*
 format into C++ source code.
 It is powered by `yaml-cpp` library.
 
@@ -16,7 +16,10 @@ It provides methods:
 
 ```cpp
 // LOAD DDS RECORDER CONFIGURATION FROM FILE
-eprosima::ddsrecorder::yaml::Configuration configuration("configuration.yaml");
+eprosima::ddsrecorder::yaml::RecorderConfiguration configuration("configuration.yaml");
+
+// LOAD DDS REPLAYER CONFIGURATION FROM FILE
+eprosima::ddsrecorder::yaml::ReplayerConfiguration configuration("configuration.yaml");
 ```
 
 ---

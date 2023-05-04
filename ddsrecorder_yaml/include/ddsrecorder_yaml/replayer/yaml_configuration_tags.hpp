@@ -22,7 +22,7 @@
 #include <string>
 
 namespace eprosima {
-namespace ddsreplayer {
+namespace ddsrecorder {
 namespace yaml {
 
 //////////////////////
@@ -41,5 +41,5 @@ constexpr const char* REPLAYER_REPLAY_RATE_TAG("rate");
 constexpr const char* REPLAYER_REPLAY_START_TIME_TAG("start-replay-time");
 
 } /* namespace yaml */
-} /* namespace ddsreplayer */
+} /* namespace ddsrecorder */
 } /* namespace eprosima */

@@ -27,8 +27,8 @@
 #include "arguments_configuration.hpp"
 
 namespace eprosima {
-namespace ddsreplayer {
-namespace ui {
+namespace ddsrecorder {
+namespace replayer {
 
 const option::Descriptor usage[] = {
     {
@@ -440,6 +440,6 @@ std::ostream& operator <<(
     return output;
 }
 
-} /* namespace ui */
-} /* namespace ddsreplayer */
+} /* namespace replayer */
+} /* namespace ddsrecorder */
 } /* namespace eprosima */

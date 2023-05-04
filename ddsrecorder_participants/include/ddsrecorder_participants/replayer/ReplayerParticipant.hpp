@@ -17,10 +17,10 @@
 #include <ddspipe_participants/configuration/SimpleParticipantConfiguration.hpp>
 #include <ddspipe_participants/participant/rtps/SimpleParticipant.hpp>
 
-#include <ddsreplayer_participants/library/library_dll.h>
+#include <ddsrecorder_participants/library/library_dll.h>
 
 namespace eprosima {
-namespace ddsreplayer {
+namespace ddsrecorder {
 namespace participants {
 
 /**
@@ -33,17 +33,17 @@ public:
     /**
      * TODO
      */
-    DDSREPLAYER_PARTICIPANTS_DllAPI
+    DDSRECORDER_PARTICIPANTS_DllAPI
     ReplayerParticipant(
             const std::shared_ptr<ddspipe::participants::SimpleParticipantConfiguration>& participant_configuration,
             const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
             const std::shared_ptr<ddspipe::core::DiscoveryDatabase>& discovery_database);
 
-    DDSREPLAYER_PARTICIPANTS_DllAPI
+    DDSRECORDER_PARTICIPANTS_DllAPI
     std::shared_ptr<ddspipe::core::IReader> create_reader(
             const ddspipe::core::ITopic& topic) override;
 };
 
 } /* namespace participants */
-} /* namespace ddsreplayer */
+} /* namespace ddsrecorder */
 } /* namespace eprosima */

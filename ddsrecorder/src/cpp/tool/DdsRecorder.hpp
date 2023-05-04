@@ -27,35 +27,39 @@
 #include <ddspipe_core/efficiency/payload/FastPayloadPool.hpp>
 #include <ddspipe_core/types/topic/dds/DistributedTopic.hpp>
 
-#include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
-#include <ddsrecorder_participants/replayer/ReplayerParticipant.hpp>
+#include <ddspipe_participants/participant/dynamic_types/DynTypesParticipant.hpp>
+#include <ddspipe_participants/participant/dynamic_types/SchemaParticipant.hpp>
 
-#include <ddsrecorder_yaml/replayer/YamlReaderConfiguration.hpp>
+#include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
+#include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
+
+#include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
-namespace replayer {
+namespace recorder {
 
-class DdsReplayer
+class DdsRecorder
 {
 public:
 
-    DdsReplayer(
-            const yaml::ReplayerConfiguration& configuration,
-            std::string& input_file);
+    DdsRecorder(
+            const yaml::RecorderConfiguration& configuration,
+            const participants::McapHandlerStateCode& init_state,
+            const std::string& file_name = "");
 
     utils::ReturnCode reload_allowed_topics(
             const std::shared_ptr<ddspipe::core::AllowedTopicList>& allowed_topics);
 
-    void process_mcap();
+    void start();
+
+    void pause();
 
     void stop();
 
-protected:
+    void trigger_event();
 
-    std::set<utils::Heritable<ddspipe::core::types::DistributedTopic>> generate_builtin_topics_(
-            const yaml::ReplayerConfiguration& configuration,
-            std::string& input_file);
+protected:
 
     //! Payload Pool
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;
@@ -69,16 +73,19 @@ protected:
     //! Participants Database
     std::shared_ptr<ddspipe::core::ParticipantsDatabase> participants_database_;
 
-    //! Replayer Participant
-    std::shared_ptr<participants::ReplayerParticipant> replayer_participant_;
+    //! MCAP Handler
+    std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler> mcap_handler_;
 
-    //! MCAP Reader Participant
-    std::shared_ptr<participants::McapReaderParticipant> mcap_reader_participant_;
+    //! Dynamic Types Participant
+    std::shared_ptr<eprosima::ddspipe::participants::DynTypesParticipant> dyn_participant_;
+
+    //! Schema Participant
+    std::shared_ptr<eprosima::ddspipe::participants::SchemaParticipant> recorder_participant_;
 
     //! DDS Pipe
     std::unique_ptr<ddspipe::core::DdsPipe> pipe_;
 };
 
-} /* namespace replayer */
+} /* namespace recorder */
 } /* namespace ddsrecorder */
 } /* namespace eprosima */

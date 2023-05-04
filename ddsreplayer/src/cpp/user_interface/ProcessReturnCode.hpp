@@ -20,8 +20,8 @@
 #pragma once
 
 namespace eprosima {
-namespace ddsreplayer {
-namespace ui {
+namespace ddsrecorder {
+namespace replayer {
 
 enum class ProcessReturnCode : int
 {
@@ -33,6 +33,6 @@ enum class ProcessReturnCode : int
     execution_failed = 20,
 };
 
-} /* namespace ui */
-} /* namespace ddsreplayer */
+} /* namespace replayer */
+} /* namespace ddsrecorder */
 } /* namespace eprosima */

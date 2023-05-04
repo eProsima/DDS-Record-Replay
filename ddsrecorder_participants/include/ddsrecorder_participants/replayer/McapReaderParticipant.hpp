@@ -16,7 +16,7 @@
 
 #include <map>
 
-#include <mcap/reader.hpp>
+#include <mcap/mcap.hpp>
 
 #include <cpp_utils/time/time_utils.hpp>
 
@@ -26,11 +26,11 @@
 
 #include <ddspipe_participants/reader/auxiliar/InternalReader.hpp>
 
-#include <ddsreplayer_participants/library/library_dll.h>
-#include <ddsreplayer_participants/McapReaderParticipantConfiguration.hpp>
+#include <ddsrecorder_participants/library/library_dll.h>
+#include <ddsrecorder_participants/replayer/McapReaderParticipantConfiguration.hpp>
 
 namespace eprosima {
-namespace ddsreplayer {
+namespace ddsrecorder {
 namespace participants {
 
 /**
@@ -41,45 +41,45 @@ class McapReaderParticipant : public ddspipe::core::IParticipant
 public:
 
     // TODO
-    DDSREPLAYER_PARTICIPANTS_DllAPI
+    DDSRECORDER_PARTICIPANTS_DllAPI
     McapReaderParticipant(
             std::shared_ptr<McapReaderParticipantConfiguration> configuration,
             std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
             std::string& file_path);
 
     //! Override id() IParticipant method
-    DDSREPLAYER_PARTICIPANTS_DllAPI
+    DDSRECORDER_PARTICIPANTS_DllAPI
     ddspipe::core::types::ParticipantId id() const noexcept override;
 
     //! Override is_repeater() IParticipant method
-    DDSREPLAYER_PARTICIPANTS_DllAPI
+    DDSRECORDER_PARTICIPANTS_DllAPI
     bool is_repeater() const noexcept override;
 
     //! Override is_rtps_kind() IParticipant method
-    DDSREPLAYER_PARTICIPANTS_DllAPI
+    DDSRECORDER_PARTICIPANTS_DllAPI
     bool is_rtps_kind() const noexcept override;
 
     //! Override create_writer_() IParticipant method
-    DDSREPLAYER_PARTICIPANTS_DllAPI
+    DDSRECORDER_PARTICIPANTS_DllAPI
     std::shared_ptr<ddspipe::core::IWriter> create_writer(
             const ddspipe::core::ITopic& topic) override;
 
     //! Override create_reader_() IParticipant method
-    DDSREPLAYER_PARTICIPANTS_DllAPI
+    DDSRECORDER_PARTICIPANTS_DllAPI
     std::shared_ptr<ddspipe::core::IReader> create_reader(
             const ddspipe::core::ITopic& topic) override;
 
-    DDSREPLAYER_PARTICIPANTS_DllAPI
+    DDSRECORDER_PARTICIPANTS_DllAPI
     void process_mcap();
 
-    DDSREPLAYER_PARTICIPANTS_DllAPI
+    DDSRECORDER_PARTICIPANTS_DllAPI
     void stop() noexcept;
 
-    DDSREPLAYER_PARTICIPANTS_DllAPI
+    DDSRECORDER_PARTICIPANTS_DllAPI
     static utils::Timestamp mcap_timestamp_to_std_timepoint(
             const mcap::Timestamp& time);
 
-    DDSREPLAYER_PARTICIPANTS_DllAPI
+    DDSRECORDER_PARTICIPANTS_DllAPI
     static mcap::Timestamp std_timepoint_to_mcap_timestamp(
             const utils::Timestamp& time);
 
@@ -101,5 +101,5 @@ protected:
 };
 
 } /* namespace participants */
-} /* namespace ddsreplayer */
+} /* namespace ddsrecorder */
 } /* namespace eprosima */

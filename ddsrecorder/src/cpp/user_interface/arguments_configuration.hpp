@@ -30,7 +30,7 @@
 
 namespace eprosima {
 namespace ddsrecorder {
-namespace ui {
+namespace recorder {
 
 /*
  * Struct to parse the executable arguments
@@ -150,6 +150,6 @@ ENUMERATION_BUILDER(
     info
     );
 
-} /* namespace ui */
+} /* namespace recorder */
 } /* namespace ddsrecorder */
 } /* namespace eprosima */

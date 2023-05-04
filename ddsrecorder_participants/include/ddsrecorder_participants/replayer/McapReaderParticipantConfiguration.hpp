@@ -21,7 +21,7 @@
 #include <ddspipe_participants/configuration/ParticipantConfiguration.hpp>
 
 namespace eprosima {
-namespace ddsreplayer {
+namespace ddsrecorder {
 namespace participants {
 
 /**
@@ -36,5 +36,5 @@ struct McapReaderParticipantConfiguration : ddspipe::participants::ParticipantCo
 };
 
 } /* namespace participants */
-} /* namespace ddsreplayer */
+} /* namespace ddsrecorder */
 } /* namespace eprosima */

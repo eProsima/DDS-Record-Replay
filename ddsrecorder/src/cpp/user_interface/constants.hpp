@@ -22,11 +22,11 @@
 
 namespace eprosima {
 namespace ddsrecorder {
-namespace ui {
+namespace recorder {
 
 //! Default DDSRecorder configuration file
 constexpr const char* DEFAULT_CONFIGURATION_FILE_NAME("DDS_RECORDER_CONFIGURATION.yaml");
 
-} /* namespace ui */
+} /* namespace recorder */
 } /* namespace ddsrecorder */
 } /* namespace eprosima */

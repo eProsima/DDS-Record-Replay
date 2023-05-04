@@ -16,8 +16,6 @@
  * @file McapHandler.cpp
  */
 
-#define MCAP_IMPLEMENTATION  // Define this in exactly one .cpp file
-
 #include <cstdio>
 
 #include <cpp_utils/exception/InitializationException.hpp>
@@ -27,7 +25,7 @@
 
 #include <ddspipe_core/types/dynamic_types/schema.hpp>
 
-#include <ddsrecorder_participants/mcap/McapHandler.hpp>
+#include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {

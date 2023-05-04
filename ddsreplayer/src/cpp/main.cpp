@@ -30,7 +30,7 @@
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/utils.hpp>
 
-#include <ddsreplayer_yaml/YamlReaderConfiguration.hpp>
+#include <ddsrecorder_yaml/replayer/YamlReaderConfiguration.hpp>
 
 #include "user_interface/arguments_configuration.hpp"
 #include "user_interface/constants.hpp"
@@ -39,7 +39,7 @@
 #include "tool/DdsReplayer.hpp"
 
 using namespace eprosima::ddspipe;
-using namespace eprosima::ddsreplayer;
+using namespace eprosima::ddsrecorder::replayer;
 
 std::unique_ptr<eprosima::utils::event::FileWatcherHandler> create_filewatcher(
         const std::unique_ptr<DdsReplayer>& replayer,
@@ -57,7 +57,7 @@ std::unique_ptr<eprosima::utils::event::FileWatcherHandler> create_filewatcher(
 
                 try
                 {
-                    eprosima::ddsreplayer::yaml::Configuration new_configuration(file_path);
+                    eprosima::ddsrecorder::yaml::ReplayerConfiguration new_configuration(file_path);
                     // Create new allowed topics list
                     auto new_allowed_topics = std::make_shared<core::AllowedTopicList>(
                         new_configuration.allowlist,
@@ -92,7 +92,7 @@ std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> create_periodic_ha
 
                 try
                 {
-                    eprosima::ddsreplayer::yaml::Configuration new_configuration(file_path);
+                    eprosima::ddsrecorder::yaml::ReplayerConfiguration new_configuration(file_path);
                     // Create new allowed topics list
                     auto new_allowed_topics = std::make_shared<core::AllowedTopicList>(
                         new_configuration.allowlist,
@@ -129,18 +129,18 @@ int main(
     eprosima::fastdds::dds::Log::Kind log_verbosity = eprosima::fastdds::dds::Log::Kind::Warning;
 
     // Parse arguments
-    ui::ProcessReturnCode arg_parse_result =
-            ui::parse_arguments(argc, argv, input_file, file_path, reload_time, log_filter, log_verbosity);
+    ProcessReturnCode arg_parse_result =
+            parse_arguments(argc, argv, input_file, file_path, reload_time, log_filter, log_verbosity);
 
-    if (arg_parse_result == ui::ProcessReturnCode::help_argument)
+    if (arg_parse_result == ProcessReturnCode::help_argument)
     {
-        return static_cast<int>(ui::ProcessReturnCode::success);
+        return static_cast<int>(ProcessReturnCode::success);
     }
-    else if (arg_parse_result == ui::ProcessReturnCode::version_argument)
+    else if (arg_parse_result == ProcessReturnCode::version_argument)
     {
-        return static_cast<int>(ui::ProcessReturnCode::success);
+        return static_cast<int>(ProcessReturnCode::success);
     }
-    else if (arg_parse_result != ui::ProcessReturnCode::success)
+    else if (arg_parse_result != ProcessReturnCode::success)
     {
         return static_cast<int>(arg_parse_result);
     }
@@ -148,9 +148,9 @@ int main(
     // Check file is in args, else get the default file
     if (file_path == "")
     {
-        if (is_file_accessible(ui::DEFAULT_CONFIGURATION_FILE_NAME, eprosima::utils::FileAccessMode::read))
+        if (is_file_accessible(DEFAULT_CONFIGURATION_FILE_NAME, eprosima::utils::FileAccessMode::read))
         {
-            file_path = ui::DEFAULT_CONFIGURATION_FILE_NAME;
+            file_path = DEFAULT_CONFIGURATION_FILE_NAME;
 
             logUser(
                 DDSREPLAYER_EXECUTION,
@@ -166,7 +166,7 @@ int main(
             logError(
                 DDSREPLAYER_ARGS,
                 "File '" << file_path << "' does not exist or it is not accessible.");
-            return static_cast<int>(ui::ProcessReturnCode::required_argument_failed);
+            return static_cast<int>(ProcessReturnCode::required_argument_failed);
         }
     }
 
@@ -202,7 +202,7 @@ int main(
         // DDS Replayer Initialization
 
         // Load configuration from YAML
-        eprosima::ddsreplayer::yaml::Configuration configuration(file_path);
+        eprosima::ddsrecorder::yaml::ReplayerConfiguration configuration(file_path);
 
         // Use MCAP input from YAML configuration file if not provided via executable arg
         if (input_file == "")
@@ -216,7 +216,7 @@ int main(
                     logError(
                         DDSREPLAYER_ARGS,
                         "File '" << input_file << "' does not exist or it is not accessible.");
-                    return static_cast<int>(ui::ProcessReturnCode::required_argument_failed);
+                    return static_cast<int>(ProcessReturnCode::required_argument_failed);
                 }
             }
             else
@@ -225,7 +225,7 @@ int main(
                     DDSREPLAYER_ARGS,
                     "An input MCAP file must be provided through argument '-i' / '--input-file' " <<
                     "or under 'input-file' YAML tag.");
-                return static_cast<int>(ui::ProcessReturnCode::required_argument_failed);
+                return static_cast<int>(ProcessReturnCode::required_argument_failed);
             }
         }
         else
@@ -282,7 +282,7 @@ int main(
         if (!read_success)
         {
             // An exception was captured in the MCAP reading thread
-            return static_cast<int>(ui::ProcessReturnCode::execution_failed);
+            return static_cast<int>(ProcessReturnCode::execution_failed);
         }
 
         logUser(DDSREPLAYER_EXECUTION, "Stopping DDS Replayer.");
@@ -295,14 +295,14 @@ int main(
                 "Error Loading DDS Replayer Configuration from file " << file_path <<
                 ". Error message:\n " <<
                 e.what());
-        return static_cast<int>(ui::ProcessReturnCode::execution_failed);
+        return static_cast<int>(ProcessReturnCode::execution_failed);
     }
     catch (const eprosima::utils::InitializationException& e)
     {
         logError(DDSREPLAYER_ERROR,
                 "Error Initializing DDS Replayer. Error message:\n " <<
                 e.what());
-        return static_cast<int>(ui::ProcessReturnCode::execution_failed);
+        return static_cast<int>(ProcessReturnCode::execution_failed);
     }
 
     logUser(DDSREPLAYER_EXECUTION, "Finishing DDS Replayer execution correctly.");
@@ -310,5 +310,5 @@ int main(
     // Force print every log before closing
     eprosima::utils::Log::Flush();
 
-    return static_cast<int>(ui::ProcessReturnCode::success);
+    return static_cast<int>(ProcessReturnCode::success);
 }

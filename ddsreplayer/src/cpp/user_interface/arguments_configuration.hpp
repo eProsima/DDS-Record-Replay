@@ -29,8 +29,8 @@
 #include "ProcessReturnCode.hpp"
 
 namespace eprosima {
-namespace ddsreplayer {
-namespace ui {
+namespace ddsrecorder {
+namespace replayer {
 
 /*
  * Struct to parse the executable arguments
@@ -149,6 +149,6 @@ ENUMERATION_BUILDER(
     info
     );
 
-} /* namespace ui */
-} /* namespace ddsreplayer */
+} /* namespace replayer */
+} /* namespace ddsrecorder */
 } /* namespace eprosima */

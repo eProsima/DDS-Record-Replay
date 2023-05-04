@@ -14,10 +14,10 @@
 
 #include <ddspipe_participants/reader/auxiliar/BlankReader.hpp>
 
-#include <ddsreplayer_participants/ReplayerParticipant.hpp>
+#include <ddsrecorder_participants/replayer/ReplayerParticipant.hpp>
 
 namespace eprosima {
-namespace ddsreplayer {
+namespace ddsrecorder {
 namespace participants {
 
 using namespace eprosima::ddspipe::core;
@@ -46,5 +46,5 @@ std::shared_ptr<IReader> ReplayerParticipant::create_reader(
 }
 
 } /* namespace participants */
-} /* namespace ddsreplayer */
+} /* namespace ddsrecorder */
 } /* namespace eprosima */

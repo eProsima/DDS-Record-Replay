@@ -30,7 +30,7 @@
 
 namespace eprosima {
 namespace ddsrecorder {
-namespace ui {
+namespace recorder {
 
 const option::Descriptor usage[] = {
     {
@@ -442,6 +442,6 @@ std::ostream& operator <<(
     return output;
 }
 
-} /* namespace ui */
+} /* namespace recorder */
 } /* namespace ddsrecorder */
 } /* namespace eprosima */

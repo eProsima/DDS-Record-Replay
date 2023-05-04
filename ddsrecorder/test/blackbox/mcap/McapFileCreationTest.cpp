@@ -12,24 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#define MCAP_IMPLEMENTATION
-
 #include <cpp_utils/testing/gtest_aux.hpp>
 #include <gtest/gtest.h>
 
 #include <cpp_utils/logging/CustomStdLogConsumer.hpp>
 
-#include <ddspipe_core/core/DdsPipe.hpp>
-#include <ddspipe_core/efficiency/payload/FastPayloadPool.hpp>
+#include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
+#include <ddsrecorder_yaml/recorder/yaml_configuration_tags.hpp>
 
-#include <ddspipe_participants/participant/dynamic_types/DynTypesParticipant.hpp>
-#include <ddspipe_participants/participant/dynamic_types/SchemaParticipant.hpp>
-
-#include <ddsrecorder_participants/mcap/McapHandler.hpp>
-#include <ddsrecorder_participants/mcap/McapHandlerConfiguration.hpp>
-
-#include <ddsrecorder_yaml/YamlReaderConfiguration.hpp>
-#include <ddsrecorder_yaml/yaml_configuration_tags.hpp>
+#include <tool/DdsRecorder.hpp>
 
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/publisher/DataWriter.hpp>
@@ -48,9 +39,10 @@
 #include <thread>
 #include <chrono>
 
-using namespace eprosima::fastdds::dds;
 using namespace eprosima::ddspipe;
 using namespace eprosima::ddsrecorder;
+using namespace eprosima::ddsrecorder::recorder;
+using namespace eprosima::fastdds::dds;
 
 using McapHandlerState = eprosima::ddsrecorder::participants::McapHandlerStateCode;
 
@@ -78,16 +70,15 @@ eprosima::fastrtps::types::DynamicType_ptr dynamic_type_;
 
 } // test
 
-std::unique_ptr<core::DdsPipe> create_recorder(
+std::unique_ptr<DdsRecorder> create_recorder(
         std::string file_name,
-        std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler>& mcap_handler,
         int downsampling,
         McapHandlerState mcap_handler_state = McapHandlerState::RUNNING,
         unsigned int event_window = 20)
 {
     YAML::Node yml;
 
-    eprosima::ddsrecorder::yaml::Configuration configuration(yml);
+    eprosima::ddsrecorder::yaml::RecorderConfiguration configuration(yml);
     configuration.downsampling = downsampling;
     // Set default value for downsampling
     // TODO: Change mechanism setting topic qos' default values from specs
@@ -97,70 +88,12 @@ std::unique_ptr<core::DdsPipe> create_recorder(
     domainId.domain_id = test::DOMAIN;
     configuration.simple_configuration->domain = domainId;
 
-    // Create allowed topics list
-    auto allowed_topics = std::make_shared<core::AllowedTopicList>(
-        configuration.allowlist,
-        configuration.blocklist);
-    // Create Discovery Database
-    std::shared_ptr<core::DiscoveryDatabase> discovery_database =
-            std::make_shared<core::DiscoveryDatabase>();
-    // Create Payload Pool
-    std::shared_ptr<core::PayloadPool> payload_pool =
-            std::make_shared<core::FastPayloadPool>();
-    // Create Thread Pool
-    std::shared_ptr<eprosima::utils::SlotThreadPool> thread_pool =
-            std::make_shared<eprosima::utils::SlotThreadPool>(configuration.n_threads);
+    auto recorder_prueba = std::make_unique<DdsRecorder>(configuration, mcap_handler_state);
 
-    // Create MCAP Handler
-    eprosima::ddsrecorder::participants::McapHandlerConfiguration handler_config(
-        file_name,
-        configuration.max_pending_samples,
-        configuration.buffer_size,
-        configuration.event_window,
-        configuration.cleanup_period,
-        configuration.log_publish_time);
-
-    mcap_handler = std::make_shared<eprosima::ddsrecorder::participants::McapHandler>(
-        handler_config,
-        payload_pool,
-        mcap_handler_state);
-
-    // Create DynTypes Participant
-    auto dyn_participant = std::make_shared<eprosima::ddspipe::participants::DynTypesParticipant>(
-        configuration.simple_configuration,
-        payload_pool,
-        discovery_database);
-    dyn_participant->init();
-
-    // Create Recorder Participant
-    auto recorder_participant = std::make_shared<eprosima::ddspipe::participants::SchemaParticipant>(
-        configuration.recorder_configuration,
-        payload_pool,
-        discovery_database,
-        mcap_handler);
-
-    // Create and populate Participant Database
-    std::shared_ptr<core::ParticipantsDatabase> participant_database =
-            std::make_shared<core::ParticipantsDatabase>();
-
-    // Populate Participant Database
-    participant_database->add_participant(
-        dyn_participant->id(),
-        dyn_participant
-        );
-    participant_database->add_participant(
-        recorder_participant->id(),
-        recorder_participant
-        );
-
-    return std::make_unique<core::DdsPipe>(
-        allowed_topics,
-        discovery_database,
-        payload_pool,
-        participant_database,
-        thread_pool,
-        configuration.builtin_topics,
-        true
+    return std::make_unique<DdsRecorder>(
+        configuration,
+        mcap_handler_state,
+        file_name
         );
 }
 
@@ -232,8 +165,7 @@ eprosima::fastrtps::types::DynamicData_ptr record(
     eprosima::fastrtps::types::DynamicData_ptr send_data;
 
     // Create Recorder
-    std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler> mcap_handler;
-    auto recorder = create_recorder(file_name, mcap_handler, downsampling);
+    auto recorder = create_recorder(file_name, downsampling);
 
     // Create Publisher
     create_publisher(
@@ -281,19 +213,17 @@ std::tuple<unsigned int, double> record_with_transitions(
             DataTypeKind::HELLO_WORLD);
 
         // Create Recorder
-        std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler> mcap_handler;
-
-        std::unique_ptr<core::DdsPipe> recorder;
+        std::unique_ptr<DdsRecorder> recorder;
         if (init_state == McapHandlerState::STOPPED)
         {
             // avoid race condition on TypeObject reception
-            recorder = create_recorder(file_name, mcap_handler, downsampling, McapHandlerState::RUNNING, event_window);
+            recorder = create_recorder(file_name, downsampling, McapHandlerState::RUNNING, event_window);
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
-            mcap_handler->stop();
+            recorder->stop();
         }
         else
         {
-            recorder = create_recorder(file_name, mcap_handler, downsampling, init_state, event_window);
+            recorder = create_recorder(file_name, downsampling, init_state, event_window);
         }
 
         // Send data
@@ -307,13 +237,13 @@ std::tuple<unsigned int, double> record_with_transitions(
             switch (current_state)
             {
                 case McapHandlerState::RUNNING:
-                    mcap_handler->start();
+                    recorder->start();
                     break;
                 case McapHandlerState::STOPPED:
-                    mcap_handler->stop();
+                    recorder->stop();
                     break;
                 case McapHandlerState::PAUSED:
-                    mcap_handler->pause();
+                    recorder->pause();
                     break;
                 default:
                     break;
@@ -336,7 +266,7 @@ std::tuple<unsigned int, double> record_with_transitions(
 
         if (event && current_state == McapHandlerState::PAUSED)
         {
-            mcap_handler->trigger_event();
+            recorder->trigger_event();
         }
     }
 

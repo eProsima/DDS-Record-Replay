@@ -28,6 +28,7 @@
 
 namespace eprosima {
 namespace ddsrecorder {
+namespace recorder {
 namespace receiver {
 
 using namespace eprosima::fastdds::dds;
@@ -290,5 +291,6 @@ std::string CommandReceiver::command_to_status_string_(
 }
 
 } /* namespace receiver */
+} /* namespace recorder */
 } /* namespace ddsrecorder */
 } /* namespace eprosima */
