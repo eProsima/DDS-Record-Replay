@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <condition_variable>
 #include <map>
 
 #include <mcap/mcap.hpp>
