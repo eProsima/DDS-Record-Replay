@@ -309,6 +309,9 @@ protected:
     static std::string tmp_filename_(
             const std::string& filename);
 
+    static std::string serialize_qos_(
+            const ddspipe::core::types::TopicQoS& qos);
+
     //! Handler configuration
     McapHandlerConfiguration configuration_;
 

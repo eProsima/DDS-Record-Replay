@@ -18,6 +18,8 @@
 
 #include <cstdio>
 
+#include <yaml-cpp/yaml.h>
+
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/exception/InconsistencyException.hpp>
 
@@ -539,7 +541,9 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     auto schema_id = get_schema_id_nts_(topic.type_name);
 
     // Create new channel
-    mcap::Channel new_channel(topic.m_topic_name, "cdr", schema_id);
+    mcap::KeyValueMap metadata = {};
+    metadata["qos"] = serialize_qos_(topic.topic_qos);
+    mcap::Channel new_channel(topic.m_topic_name, "cdr", schema_id, metadata);
     mcap_writer_.addChannel(new_channel);
     auto channel_id = new_channel.id;
     channels_.insert({topic.m_topic_name, std::move(new_channel)});
@@ -581,6 +585,49 @@ std::string McapHandler::tmp_filename_(
 {
     static const std::string TMP_SUFFIX = ".tmp~";
     return filename + TMP_SUFFIX;
+}
+
+std::string McapHandler::serialize_qos_(
+        const TopicQoS& qos)
+{
+    // TODO: Reuse code from ddspipe_yaml
+
+    YAML::Node qos_yaml;
+
+    // Reliability tag
+    YAML::Node reliability_tag = qos_yaml["reliability"];
+    if (qos.is_reliable())
+    {
+        reliability_tag = true;
+    }
+    else
+    {
+        reliability_tag = false;
+    }
+
+    // Durability tag
+    YAML::Node durability_tag = qos_yaml["durability"];
+    if (qos.is_transient_local())
+    {
+        durability_tag = true;
+    }
+    else
+    {
+        durability_tag = false;
+    }
+
+    // Ownership tag
+    YAML::Node ownership_tag = qos_yaml["ownership"];
+    if (qos.has_ownership())
+    {
+        ownership_tag = true;
+    }
+    else
+    {
+        ownership_tag = false;
+    }
+
+    return YAML::Dump(qos_yaml);
 }
 
 } /* namespace participants */

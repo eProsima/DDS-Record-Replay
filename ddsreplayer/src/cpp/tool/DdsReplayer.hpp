@@ -25,6 +25,7 @@
 #include <ddspipe_core/dynamic/DiscoveryDatabase.hpp>
 #include <ddspipe_core/dynamic/ParticipantsDatabase.hpp>
 #include <ddspipe_core/efficiency/payload/FastPayloadPool.hpp>
+#include <ddspipe_core/types/dds/TopicQoS.hpp>
 #include <ddspipe_core/types/topic/dds/DistributedTopic.hpp>
 
 #include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
@@ -56,6 +57,9 @@ protected:
     std::set<utils::Heritable<ddspipe::core::types::DistributedTopic>> generate_builtin_topics_(
             const yaml::ReplayerConfiguration& configuration,
             std::string& input_file);
+
+    ddspipe::core::types::TopicQoS deserialize_qos_(
+            const std::string& qos_str);
 
     //! Payload Pool
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;

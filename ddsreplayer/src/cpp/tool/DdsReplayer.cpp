@@ -15,6 +15,7 @@
 #define MCAP_IMPLEMENTATION  // Define this in exactly one .cpp file
 
 #include <mcap/reader.hpp>
+#include <yaml-cpp/yaml.h>
 
 #include <cpp_utils/exception/InitializationException.hpp>
 
@@ -170,13 +171,58 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
             continue;
         }
 
-        // TODO: Use qos stored in MCAP file (discovered when recording, or given to recorder's builtin topics list)
-        // channel_topic->topic_qos = ;
+        // Use QoS stored in MCAP file (discovered when recording, or given to recorder's builtin topics list)
+        channel_topic->topic_qos = deserialize_qos_(it->second->metadata["qos"]);
 
         builtin_topics.insert(channel_topic);
     }
 
     return builtin_topics;
+}
+
+TopicQoS DdsReplayer::deserialize_qos_(
+        const std::string& qos_str)
+{
+    // TODO: Reuse code from ddspipe_yaml
+
+    TopicQoS qos{};
+
+    YAML::Node qos_yaml = YAML::Load(qos_str);
+    bool reliable = qos_yaml["reliability"].as<bool>();
+    bool transient_local = qos_yaml["durability"].as<bool>();
+    bool exclusive_ownership = qos_yaml["ownership"].as<bool>();
+
+    // Parse reliability
+    if (reliable)
+    {
+        qos.reliability_qos = eprosima::ddspipe::core::types::ReliabilityKind::RELIABLE;
+    }
+    else
+    {
+        qos.reliability_qos = eprosima::ddspipe::core::types::ReliabilityKind::BEST_EFFORT;
+    }
+
+    // Parse durability
+    if (transient_local)
+    {
+        qos.durability_qos = eprosima::ddspipe::core::types::DurabilityKind::TRANSIENT_LOCAL;
+    }
+    else
+    {
+        qos.durability_qos = eprosima::ddspipe::core::types::DurabilityKind::VOLATILE;
+    }
+
+    // Parse ownership
+    if (exclusive_ownership)
+    {
+        qos.ownership_qos = eprosima::ddspipe::core::types::OwnershipQosPolicyKind::EXCLUSIVE_OWNERSHIP_QOS;
+    }
+    else
+    {
+        qos.ownership_qos = eprosima::ddspipe::core::types::OwnershipQosPolicyKind::SHARED_OWNERSHIP_QOS;
+    }
+
+    return qos;
 }
 
 } /* namespace replayer */
