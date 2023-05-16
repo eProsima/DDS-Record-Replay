@@ -1,6 +1,6 @@
 .. include:: ../../exports/alias.include
 
-.. _tutorials_basic_example:
+.. _recorder_tutorials_basic_example:
 
 ####################################################
 Configuring Fast DDS DynamicTypes for data recording

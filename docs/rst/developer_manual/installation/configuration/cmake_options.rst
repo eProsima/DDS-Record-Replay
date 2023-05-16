@@ -26,7 +26,7 @@ These options allow the developer to enable/disable certain |eddsrecord| setting
           ``Debug``
         - ``Release``
     *   - :class:`BUILD_DDSRECORDER_CONTROLLER`
-        - Build the |eddsrecord| remote |br| controller application. |br|
+        - Build the |ddsrecorder| remote |br| controller application. |br|
         - ``OFF`` |br|
           ``ON``
         - ``OFF``

@@ -3,10 +3,16 @@
 
 .. |ddsrouter| replace:: *DDS Router*
 .. |fastdds| replace:: *Fast DDS*
+
+.. |ddsrecord| replace:: *DDS Record & Replay*
 .. |ddsrecorder| replace:: *DDS Recorder*
+.. |ddsreplayer| replace:: *DDS Replayer*
+.. |ddsreplay| replace:: *DDS Replay tool*
 
 .. |eddsrouter| replace:: *eProsima DDS Router*
 .. |efastdds| replace:: *eProsima Fast DDS*
-.. |eddsrecord| replace:: *eProsima DDS Record*
+.. |eddsrecord| replace:: *eProsima DDS Record & Replay*
+.. |eddsrecorder| replace:: *eProsima DDS Recorder*
+.. |eddsreplayer| replace:: *eProsima DDS Replayer*
 
 .. |k8s| replace:: *K8s*

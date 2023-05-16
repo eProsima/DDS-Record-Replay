@@ -1,6 +1,6 @@
 .. include:: ../../exports/alias.include
 
-.. _tutorials_foxglove:
+.. _recorder_tutorials_foxglove:
 
 #####################################
 Visualize recorded data with Foxglove
@@ -93,4 +93,4 @@ Finally, we will show how to load the generated MCAP file into Foxglove Studio i
 .. figure:: /rst/figures/foxglove_studio_shapesdemo.png
     :align: center
 
-Feel free to further explore the number of possibilities that |eddsrecord| and *Foxglove Studio* together have to offer.
+Feel free to further explore the number of possibilities that |eddsrecorder| and *Foxglove Studio* together have to offer.

@@ -1,44 +1,44 @@
 .. include:: ../../exports/alias.include
 .. include:: ../../exports/roles.include
 
-.. _recorder_usage_usage:
+.. _replayer_usage_usage:
 
 #####
 Usage
 #####
 
-|eddsrecorder| is a user application executed from command line.
+|eddsreplayer| is a user application executed from command line.
 
 .. contents::
     :local:
     :backlinks: none
     :depth: 1
 
-Starting Recording Application
-------------------------------
+Starting Replay Application
+---------------------------
 
 Docker Image
 ^^^^^^^^^^^^
 
-The recommended method to run the |ddsrecorder| is to instantiate a Docker container of the |ddsrecord| image.
+The recommended method to run the |ddsreplayer| is to instantiate a Docker container of the |ddsrecord| image.
 :ref:`Here <docker>` are the instructions to download the compressed |ddsrecord| Docker image and load it locally.
 
-To run the |ddsrecorder| from a Docker container execute the following command:
+To run the |ddsreplayer| from a Docker container execute the following command:
 
 .. code-block:: bash
 
     docker run -it \
         --net=host \
         --ipc=host \
-        -v /<dds_recorder_ws>/DDS_RECORDER_CONFIGURATION.yaml:/root/DDS_RECORDER_CONFIGURATION.yaml \
-        ubuntu-ddsrecorder:v<X.X.X> ddsrecorder
+        -v /<dds_replayer_ws>/DDS_REPLAYER_CONFIGURATION.yaml:/root/DDS_REPLAYER_CONFIGURATION.yaml \
+        ubuntu-ddsrecorder:v<X.X.X> ddsreplayer
 
 
 Installation from sources
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 |eddsrecord| depends on ``fastrtps``, ``fastcdr`` and ``ddspipe`` libraries.
-In order to correctly execute the recorder, make sure that ``fastrtps``, ``fastcdr`` and ``ddspipe`` are properly sourced.
+In order to correctly execute the replayer, make sure that ``fastrtps``, ``fastcdr`` and ``ddspipe`` are properly sourced.
 
 .. code-block:: bash
 
@@ -50,27 +50,27 @@ In order to correctly execute the recorder, make sure that ``fastrtps``, ``fastc
 
     If Fast DDS, DDS Pipe and DDS Recorder have been installed in the system, these libraries would be sourced by default.
 
-To start |eddsrecorder| with a default configuration, enter:
+To start |eddsreplayer| with a default configuration, enter:
 
 .. code-block:: bash
 
-    ddsrecorder
+    ddsreplayer
 
 
-.. _recorder_usage_close_recorder:
+.. _replayer_usage_close_replayer:
 
-Closing Recording Application
-------------------------------
+Closing Replay Application
+--------------------------
 
 SIGINT
 ^^^^^^
 
-To close |eddsrecorder|, press ``Ctrl+C``. |ddsrecorder| will perform a clean shutdown.
+To close |eddsreplayer|, press ``Ctrl+C``. |ddsreplayer| will perform a clean shutdown.
 
 SIGTERM
 ^^^^^^^
 
-Write command ``kill <pid>`` in a different terminal, where ``<pid>`` is the id of the process running the |ddsrecorder|.
+Write command ``kill <pid>`` in a different terminal, where ``<pid>`` is the id of the process running the |ddsreplayer|.
 Use ``ps`` or ``top`` programs to check the process ids.
 
 TIMEOUT
@@ -78,12 +78,12 @@ TIMEOUT
 
 Setting a maximum amount of seconds that the application will work using argument ``--timeout`` will close the application once the time has expired.
 
-.. _recorder_usage_usage_application_arguments:
+.. _replayer_usage_usage_application_arguments:
 
-Recording Service Command-Line Parameters
------------------------------------------
+Replay Service Command-Line Parameters
+--------------------------------------
 
-The |ddsrecorder| application supports several input arguments:
+The |ddsreplayer| application supports several input arguments:
 
 .. list-table::
     :header-rows: 1
@@ -104,7 +104,7 @@ The |ddsrecorder| application supports several input arguments:
 
     *   - Version
         - It shows the current version |br|
-          of the |ddsrecorder| and the |br|
+          of the |ddsreplayer| and the |br|
           hash of the last commit of |br|
           the compiled code.
         - ``-v`` |br|
@@ -112,13 +112,19 @@ The |ddsrecorder| application supports several input arguments:
         -
         -
 
+    *   - Input File
+        - Input MCAP file path.
+        - ``-i`` |br|
+          ``--input-file``
+        -
+        -
 
     *   - Configuration File
         - Configuration file path.
         - ``-c`` |br|
           ``--config-path``
         -
-        - ``./DDS_RECORDER_CONFIGURATION.yaml``
+        - ``./DDS_REPLAYER_CONFIGURATION.yaml``
 
     *   - Reload Timer
         - The configuration file will be |br|
@@ -142,14 +148,14 @@ The |ddsrecorder| application supports several input arguments:
         - ``0``
 
     *   - Debug
-        - Enables the |ddsrecorder| |br|
+        - Enables the |ddsreplayer| |br|
           logs so the execution can be |br|
           followed by internal |br|
           debugging information. |br|
           Sets ``Log Verbosity`` |br|
           to ``info`` and |br|
           ``Log Filter`` |br|
-          to ``DDSRECORDER``.
+          to ``DDSREPLAYER``.
         - ``-d`` |br|
           ``--debug``
         -
@@ -170,4 +176,4 @@ The |ddsrecorder| application supports several input arguments:
         - Set a regex string as filter.
         - ``--log-filter``
         - String
-        - ``"DDSRECORDER"``
+        - ``"DDSREPLAYER"``

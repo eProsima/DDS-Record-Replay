@@ -125,7 +125,7 @@ int main(
     eprosima::utils::Duration_ms reload_time = 0;
 
     // Debug options
-    std::string log_filter = "(DDSPIPE|DDSREPLAYER)";
+    std::string log_filter = "DDSREPLAYER";
     eprosima::fastdds::dds::Log::Kind log_verbosity = eprosima::fastdds::dds::Log::Kind::Warning;
 
     // Parse arguments

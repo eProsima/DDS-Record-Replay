@@ -24,6 +24,8 @@
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/utils.hpp>
 
+#include <ddsrecorder_participants/library/config.h>
+
 #include "arguments_configuration.hpp"
 
 namespace eprosima {
@@ -136,7 +138,7 @@ const option::Descriptor usage[] = {
         Arg::String,
         "  \t--log-filter\t  \t" \
         "Set a Regex Filter to filter by category the info and warning log entries. " \
-        "[Default = \"(DDSPIPE|DDSREPLAYER)\"]. "
+        "[Default = \"DDSREPLAYER\"]. "
     },
 
     {
@@ -161,7 +163,12 @@ const option::Descriptor usage[] = {
 
 void print_version()
 {
-    std::cout << "DDSReplayer prototype" << std::endl;
+    std::cout
+        << "DDS Record & Replay "
+        << DDSRECORDER_PARTICIPANTS_VERSION_STRING
+        << "\ncommit hash: "
+        << DDSRECORDER_PARTICIPANTS_COMMIT_HASH
+        << std::endl;
 }
 
 ProcessReturnCode parse_arguments(

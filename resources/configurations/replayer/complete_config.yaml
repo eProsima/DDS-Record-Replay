@@ -25,6 +25,7 @@ replayer:
 
   begin-time:
     local: true
+    format: "%Y-%m-%d_%H-%M-%S"
     datetime: 2023-04-10_10-37-50
     milliseconds: 100
 

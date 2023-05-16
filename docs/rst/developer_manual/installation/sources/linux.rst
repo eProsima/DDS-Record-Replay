@@ -19,8 +19,8 @@ It is organized as follows:
 Dependencies installation
 =========================
 
-|ddsrecorder| depends on *eProsima Fast DDS* library and certain Debian packages.
-This section describes the instructions for installing |ddsrecorder| dependencies and requirements in a Linux environment from sources.
+|ddsrecord| depends on *eProsima Fast DDS* library and certain Debian packages.
+This section describes the instructions for installing |ddsrecord| dependencies and requirements in a Linux environment from sources.
 The following packages will be installed:
 
 - ``foonathan_memory_vendor``, an STL compatible C++ memory allocation library.
@@ -84,7 +84,7 @@ Fast DDS Python
 ^^^^^^^^^^^^^^^
 
 `eProsima Fast DDS Python <https://github.com/eProsima/Fast-DDS-python/>`_ is a Python binding for the eProsima Fast DDS C++ library.
-It is only required for the :ref:`remote controller application <remote_controller>`.
+It is only required for the :ref:`remote controller application <recorder_remote_controller>`.
 
 Clone the Github repository into the |eddsrecord| workspace and compile it with colcon_ as a dependency package.
 Use the following command to download the code:
@@ -160,7 +160,7 @@ For example, on Ubuntu use the command:
 yaml-cpp
 ^^^^^^^^
 
-yaml-cpp is a YAML parser and emitter in C++ matching the YAML 1.2 spec, and is used by *DDS Recorder* application to parse the provided configuration files.
+yaml-cpp is a YAML parser and emitter in C++ matching the YAML 1.2 spec, and is used by |ddsrecord| application to parse the provided configuration files.
 Install yaml-cpp using the package manager of the appropriate Linux distribution.
 For example, on Ubuntu use the command:
 
@@ -175,7 +175,7 @@ SWIG
 
 `SWIG <https://www.swig.org>`_ is a software development tool that connects programs written in C and C++ with a variety of high-level programming languages.
 It is leveraged by :ref:`Fast DDS Python <fastdds_python>` to generate a Python wrapper over Fast DDS library.
-SWIG is only a requirement for the :ref:`remote controller application <remote_controller>`.
+SWIG is only a requirement for the :ref:`remote controller application <recorder_remote_controller>`.
 It can be installed using the package manager of the appropriate Linux distribution.
 For example, on Ubuntu use the command:
 
@@ -210,7 +210,7 @@ MCAP dependencies
 
 `MCAP <https://github.com/foxglove/mcap>`_ is a modular container format and logging library for pub/sub messages with arbitrary message serialization.
 It is primarily intended for use in robotics applications, and works well under various workloads, resource constraints, and durability requirements.
-MCAP C++ library is packed within |ddsrecorder| as a header-only, but its dependencies need to be installed using the package manager of the appropriate Linux distribution.
+MCAP C++ library is packed within |ddsrecord| as a header-only, but its dependencies need to be installed using the package manager of the appropriate Linux distribution.
 For example, on Ubuntu use the command:
 
 .. code-block:: bash
@@ -260,7 +260,7 @@ Colcon installation (recommended)
 
 .. note::
 
-    To install both |ddsrecorder| and its :ref:`remote controller application <remote_controller>`, compilation flag ``-DBUILD_DDSRECORDER_CONTROLLER=ON`` is required.
+    To install |ddsrecorder| :ref:`remote controller application <recorder_remote_controller>`, compilation flag ``-DBUILD_DDSRECORDER_CONTROLLER=ON`` is required.
 
 .. note::
 
@@ -280,7 +280,7 @@ This section explains how to compile |eddsrecord| with CMake_, either :ref:`loca
 Local installation
 ------------------
 
-#.  Create a :code:`DDS-Recorder` directory where to download and build |ddsrecorder| and its dependencies:
+#.  Create a :code:`DDS-Recorder` directory where to download and build |ddsrecord| and its dependencies:
 
     .. code-block:: bash
 
@@ -390,6 +390,13 @@ Local installation
         cmake ~/DDS-Record/src/ddsrecorder/ddsrecorder -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
         cmake --build . --target install
 
+        # ddsreplayer
+        cd ~/DDS-Record
+        mkdir build/ddsreplayer_tool
+        cd build/ddsreplayer_tool
+        cmake ~/DDS-Record/src/ddsrecorder/ddsreplayer -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
+        cmake --build . --target install
+
     .. note::
 
         By default, |eddsrecord| does not compile tests.
@@ -397,7 +404,7 @@ Local installation
         and building with CMake option ``-DBUILD_TESTS=ON``.
 
 
-#.  Optionally, install the :ref:`remote controller application <remote_controller>` along with its dependency :ref:`Fast DDS Python <fastdds_python>`:
+#.  Optionally, install the :ref:`remote controller application <recorder_remote_controller>` along with its dependency :ref:`Fast DDS Python <fastdds_python>`:
 
     .. code-block:: bash
 
@@ -440,7 +447,15 @@ To run the |ddsrecorder| tool, source the installation path and execute the exec
     source install/setup.bash
     ./<install-path>/ddsrecorder_tool/bin/ddsrecorder
 
-Be sure that this executable has execution permissions.
+Likewise, to run the |ddsreplay|, source the installation path and execute the executable file that has been installed in :code:`<install-path>/ddsreplayer_tool/bin/ddsreplayer`:
+
+.. code-block:: bash
+
+    # If built has been done using colcon, all projects could be sourced as follows
+    source install/setup.bash
+    ./<install-path>/ddsreplayer_tool/bin/ddsreplayer
+
+Be sure that these executables have execution permissions.
 
 .. External links
 

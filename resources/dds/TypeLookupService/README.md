@@ -16,7 +16,7 @@ This example covers the following points:
 
 ## Building the example
 
-To build the example, install Fast DDS following one of the [installation methods](https://fast-dds.docs.eprosima.com/en/latest/installation/binaries/binaries_linux.html) described in its documentation, or by [installing DDS Recorder](https://dds-recorder.readthedocs.io/en/latest/rst/installation/windows.html) together with eProsima dependencies, i.e. Fast DDS, Fast CDR and DDS Router.
+To build the example, install Fast DDS following one of the [installation methods](https://fast-dds.docs.eprosima.com/en/latest/installation/binaries/binaries_linux.html) described in its documentation, or by [installing DDS Recorder](https://dds-recorder.readthedocs.io/en/latest/rst/installation/windows.html) together with eProsima dependencies, i.e. Fast DDS, Fast CDR and DDS Pipe.
 
 Once Fast DDS is installed, source Fast DDS or make the libraries accessible to be used by CMake.
 

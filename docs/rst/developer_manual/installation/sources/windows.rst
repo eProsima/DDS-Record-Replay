@@ -97,7 +97,7 @@ Fast DDS Python
 ^^^^^^^^^^^^^^^
 
 `eProsima Fast DDS Python <https://github.com/eProsima/Fast-DDS-python/>`_ is a Python binding for the eProsima Fast DDS C++ library.
-It is only required for the :ref:`remote controller application <remote_controller>`.
+It is only required for the :ref:`remote controller application <recorder_remote_controller>`.
 
 Clone the Github repository into the |eddsrecord| workspace and compile it with colcon_ as a dependency package.
 Use the following command to download the code:
@@ -183,7 +183,7 @@ For example:
 yaml-cpp
 ^^^^^^^^
 
-``yaml-cpp`` is a YAML parser and emitter in C++ matching the YAML 1.2 spec, and is used by *DDS Recorder* application to parse the provided configuration files.
+``yaml-cpp`` is a YAML parser and emitter in C++ matching the YAML 1.2 spec, and is used by |ddsrecord| application to parse the provided configuration files.
 From an administrative shell with *PowerShell*, execute the following commands in order to download and install ``yaml-cpp`` for Windows:
 
 .. code-block:: bash
@@ -199,7 +199,7 @@ MCAP dependencies
 
 `MCAP <https://github.com/foxglove/mcap>`_ is a modular container format and logging library for pub/sub messages with arbitrary message serialization.
 It is primarily intended for use in robotics applications, and works well under various workloads, resource constraints, and durability requirements.
-MCAP C++ library is packed within |ddsrecorder| as a header-only, but its dependencies need to be installed using the appropriate Windows package manager.
+MCAP C++ library is packed within |ddsrecord| as a header-only, but its dependencies need to be installed using the appropriate Windows package manager.
 
 It is recommended to use `vcpkg <https://vcpkg.io/en/>`__ dependency manager to install `LZ4 <https://github.com/lz4/lz4>`__ and `zstd <https://github.com/facebook/zstd>`__ dependencies.
 Once both dependencies are installed, add the directory where the binaries are located to the ``PATH``. The installed binaries are usually located under ``<path\to\vcpkg>/\installed\x64-windows\bin`` directory.
@@ -211,7 +211,7 @@ SWIG
 
 `SWIG <https://www.swig.org>`_ is a software development tool that connects programs written in C and C++ with a variety of high-level programming languages.
 It is leveraged by :ref:`Fast DDS Python <fastdds_python>` to generate a Python wrapper over Fast DDS library.
-SWIG is only a requirement for the :ref:`remote controller application <remote_controller>`.
+SWIG is only a requirement for the :ref:`remote controller application <recorder_remote_controller>`.
 It can be installed using the package manager of the appropriate Linux distribution.
 For example, on Ubuntu use the command:
 
@@ -282,7 +282,7 @@ Colcon installation (recommended)
 
 .. note::
 
-    To install both |ddsrecorder| and its :ref:`remote controller application <remote_controller>`, compilation flag ``-DBUILD_DDSRECORDER_CONTROLLER=ON`` is required.
+    To install |ddsrecorder| :ref:`remote controller application <recorder_remote_controller>`, compilation flag ``-DBUILD_DDSRECORDER_CONTROLLER=ON`` is required.
 
 .. note::
 
@@ -414,21 +414,28 @@ Local installation
 
         # ddsrecorder
         cd <path\to\user\workspace>\DDS-Record
-        mkdir build\ddsrecorder
-        cd build\ddsrecorder
+        mkdir build\ddsrecorder_tool
+        cd build\ddsrecorder_tool
         cmake <path\to\user\workspace>\DDS-Record\src\ddsrecorder\ddsrecorder -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
             -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
         cmake --build . --config Release --target install
 
+        # ddsreplayer
+        cd <path\to\user\workspace>\DDS-Record
+        mkdir build\ddsreplayer_tool
+        cd build\ddsreplayer_tool
+        cmake <path\to\user\workspace>\DDS-Record\src\ddsrecorder\ddsreplayer -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
+            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
+        cmake --build . --config Release --target install
 
-.. note::
+    .. note::
 
-    By default, |eddsrecord| does not compile tests.
-    However, they can be activated by downloading and installing `Gtest <https://github.com/google/googletest>`_
-    and building with CMake option ``-DBUILD_TESTS=ON``.
+        By default, |eddsrecord| does not compile tests.
+        However, they can be activated by downloading and installing `Gtest <https://github.com/google/googletest>`_
+        and building with CMake option ``-DBUILD_TESTS=ON``.
 
 
-#.  Optionally, install the :ref:`remote controller application <remote_controller>` along with its dependency :ref:`Fast DDS Python <fastdds_python>`:
+#.  Optionally, install the :ref:`remote controller application <recorder_remote_controller>` along with its dependency :ref:`Fast DDS Python <fastdds_python>`:
 
     .. code-block:: bash
 
@@ -460,7 +467,7 @@ To install |eddsrecord| system-wide instead of locally, remove all the flags tha
 Run an application
 ==================
 
-If the |eddsrecord| was compiled using colcon, when running an instance of a |ddsrecorder|, the colcon overlay built in the dedicated :code:`DDS-Record` directory must be sourced.
+If |eddsrecord| was compiled using colcon, when running an instance of |ddsrecorder| or |ddsreplayer|, the colcon overlay built in the dedicated :code:`DDS-Record` directory must be sourced.
 There are two possibilities:
 
 * Every time a new shell is opened, prepare the environment locally by typing the command:
@@ -471,13 +478,8 @@ There are two possibilities:
 
 * Add the sourcing of the colcon overlay permanently, by opening the *Edit the system environment variables* control panel, and adding the installation path to the :code:`PATH`.
 
-However, when running an instance of a |ddsrecorder| compiled using CMake, it must be linked with its dependencies where the packages have been installed.
-This can be done by opening the *Edit system environment variables* control panel and adding to the ``PATH`` the |eddsrecord|, *Fast DDS*, *Fast CDR*, *DDS Pipe* installation directories:
-
-*   *Fast DDS*: ``C:\\Program Files\\fastrtps``
-*   *Fast CDR*: ``C:\\Program Files\\fastcdr``
-*   *DDS Pipe*: ``C:\\Program Files\\ddspipe``
-*   |eddsrecord|: ``C:\\Program Files\\ddsrecord``
+However, when running a |ddsrecorder| or |ddsreplayer| compiled using CMake, it must be linked with its dependencies where the packages have been installed.
+This can be done by opening the *Edit system environment variables* control panel and adding to the ``PATH`` |eddsrecord| installation directory: ``<path\to\user\workspace>\DDS-Record\install``.
 
 
 .. External links

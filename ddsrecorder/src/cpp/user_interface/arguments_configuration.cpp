@@ -140,7 +140,7 @@ const option::Descriptor usage[] = {
         Arg::String,
         "  \t--log-filter\t  \t" \
         "Set a Regex Filter to filter by category the info and warning log entries. " \
-        "[Default = \"(DDSPIPE|DDSRECORDER)\"]. "
+        "[Default = \"DDSRECORDER\"]. "
     },
 
     {
@@ -166,7 +166,7 @@ const option::Descriptor usage[] = {
 void print_version()
 {
     std::cout
-        << "DDS Recorder "
+        << "DDS Record & Replay "
         << DDSRECORDER_PARTICIPANTS_VERSION_STRING
         << "\ncommit hash: "
         << DDSRECORDER_PARTICIPANTS_COMMIT_HASH
