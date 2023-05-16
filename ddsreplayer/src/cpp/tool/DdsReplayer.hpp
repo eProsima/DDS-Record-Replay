@@ -37,27 +37,63 @@ namespace eprosima {
 namespace ddsrecorder {
 namespace replayer {
 
+/**
+ * Wrapper class that encapsulates all dependencies required to launch a DDS Replayer application.
+ */
 class DdsReplayer
 {
 public:
 
+    /**
+     * DdsRecorder constructor by required values.
+     *
+     * Creates DdsRecorder instance with given configuration, initial state and mcap file name.
+     *
+     * @param configuration: Structure encapsulating all replayer configuration options.
+     * @param input_file:    MCAP file containing the messages to be played back.
+     */
     DdsReplayer(
             const yaml::ReplayerConfiguration& configuration,
             std::string& input_file);
 
+    /**
+     * Reload allowed topics list.
+     *
+     * @param allowed_topics: Allowed topics list to be loaded.
+     *
+     * @return \c RETCODE_OK if allowed topics list has been updated correctly
+     * @return \c RETCODE_NO_DATA if new allowed topics list is the same as the previous one
+     */
     utils::ReturnCode reload_allowed_topics(
             const std::shared_ptr<ddspipe::core::AllowedTopicList>& allowed_topics);
 
+    //! Process input MCAP file
     void process_mcap();
 
+    //! Stop replayer instance
     void stop();
 
 protected:
 
+    /**
+     * @brief Generate a builtin-topics list by combining the channels information within the MCAP file and the
+     * optional builtin-topics list provided via YAML configuration file.
+     *
+     * @param configuration: replayer config containing, among other specs, the YAML-provided builtin-topics list.
+     * @param input_file: path to the input MCAP file.
+     *
+     * @return generated builtin-topics list (set).
+     */
     std::set<utils::Heritable<ddspipe::core::types::DistributedTopic>> generate_builtin_topics_(
             const yaml::ReplayerConfiguration& configuration,
             std::string& input_file);
 
+    /**
+     * @brief Deserialize a serialized \c TopicQoS string.
+     *
+     * @param [in] qos_str Serialized \c TopicQoS string
+     * @return Deserialized TopicQoS
+     */
     ddspipe::core::types::TopicQoS deserialize_qos_(
             const std::string& qos_str);
 

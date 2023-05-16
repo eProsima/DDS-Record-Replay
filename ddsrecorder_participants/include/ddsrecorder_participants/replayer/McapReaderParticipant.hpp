@@ -35,13 +35,23 @@ namespace ddsrecorder {
 namespace participants {
 
 /**
- * TODO
+ * Participant that reads MCAP files and passes its messages to other DDS Pipe participants.
+ *
+ * @implements IParticipant
  */
 class McapReaderParticipant : public ddspipe::core::IParticipant
 {
 public:
 
-    // TODO
+    /**
+     * McapReaderParticipant constructor by required values.
+     *
+     * Creates McapReaderParticipant instance with given configuration, payload pool and input file path.
+     *
+     * @param config:       Structure encapsulating all configuration options.
+     * @param payload_pool: Owner of every payload contained in sent messages.
+     * @param file_path:    Path to the MCAP file with the messages to be read and sent.
+     */
     DDSRECORDER_PARTICIPANTS_DllAPI
     McapReaderParticipant(
             std::shared_ptr<McapReaderParticipantConfiguration> configuration,
@@ -70,16 +80,34 @@ public:
     std::shared_ptr<ddspipe::core::IReader> create_reader(
             const ddspipe::core::ITopic& topic) override;
 
+    /**
+     * @brief Read and send messages sequentially (according to timestamp).
+     *
+     * @throw utils::InconsistencyException if failed to read mcap file.
+     */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void process_mcap();
 
+    //! Stop participant (abort processing mcap)
     DDSRECORDER_PARTICIPANTS_DllAPI
     void stop() noexcept;
 
+    /**
+     * @brief This method converts a mcap timestamp to standard format.
+     *
+     * @param [in] time Timestamp to be converted
+     * @return Timestamp in standard format
+     */
     DDSRECORDER_PARTICIPANTS_DllAPI
     static utils::Timestamp mcap_timestamp_to_std_timepoint(
             const mcap::Timestamp& time);
 
+    /**
+     * @brief This method converts a timestamp in standard format to its mcap equivalent.
+     *
+     * @param [in] time Timestamp to be converted
+     * @return Timestamp in mcap format
+     */
     DDSRECORDER_PARTICIPANTS_DllAPI
     static mcap::Timestamp std_timepoint_to_mcap_timestamp(
             const utils::Timestamp& time);
@@ -92,12 +120,19 @@ protected:
     //! DDS Pipe shared Payload Pool
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;
 
+    //! Input file path
     std::string file_path_;
 
+    //! Internal readers map
     std::map<ddspipe::core::types::DdsTopic, std::shared_ptr<ddspipe::participants::InternalReader>> readers_;
 
+    //! Stop flag
     bool stop_;
+
+    //! Scheduling condition variable
     std::condition_variable scheduling_cv_;
+
+    //! Scheduling condition variable mutex
     std::mutex scheduling_cv_mtx_;
 };
 

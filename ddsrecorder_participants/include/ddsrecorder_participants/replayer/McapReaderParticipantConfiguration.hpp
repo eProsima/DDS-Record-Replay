@@ -25,7 +25,7 @@ namespace ddsrecorder {
 namespace participants {
 
 /**
- * TODO comment
+ * Class that encapsulates all configuration parameters of a \c McapReaderParticipant .
  */
 struct McapReaderParticipantConfiguration : ddspipe::participants::ParticipantConfiguration
 {

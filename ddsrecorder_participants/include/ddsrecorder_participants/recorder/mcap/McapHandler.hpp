@@ -309,6 +309,12 @@ protected:
     static std::string tmp_filename_(
             const std::string& filename);
 
+    /**
+     * @brief Serialize a \c TopicQoS struct into a string.
+     *
+     * @param [in] qos TopicQoS to be serialized
+     * @return Serialized TopicQoS string
+     */
     static std::string serialize_qos_(
             const ddspipe::core::types::TopicQoS& qos);
 

@@ -61,7 +61,7 @@ public:
     std::set<utils::Heritable<ddspipe::core::types::IFilterTopic>> blocklist{};
     std::set<utils::Heritable<ddspipe::core::types::DistributedTopic>> builtin_topics{};
 
-    // Replaying params
+    // Replay params
     std::string input_file;
     utils::Fuzzy<utils::Timestamp> begin_time{};
     utils::Fuzzy<utils::Timestamp> end_time{};

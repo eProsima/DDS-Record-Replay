@@ -1,4 +1,3 @@
-<!-- TODO: update -->
 # eProsima DDS Replayer Tool Module
 This module create an executable that runs a DDS Replayer configured via *yaml* configuration file.
 
@@ -28,7 +27,7 @@ ddsrecorder --help
 # Debug parameters
 #   -d --debug          Set log verbosity to Info
 #                                              (Using this option with --log-filter and/or --log-verbosity will head to undefined behaviour).
-#      --log-filter     Set a Regex Filter to filter by category the info and warning log entries. [Default = "(DDSPIPE|DDSREPLAYER)"].
+#      --log-filter     Set a Regex Filter to filter by category the info and warning log entries. [Default = "DDSREPLAYER"].
 #      --log-verbosity  Set a Log Verbosity Level higher or equal the one given. (Values accepted: "info","warning","error" no Case Sensitive) [Default = "warning"].
 ```
 

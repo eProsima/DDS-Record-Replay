@@ -39,24 +39,48 @@ namespace eprosima {
 namespace ddsrecorder {
 namespace recorder {
 
+/**
+ * Wrapper class that encapsulates all dependencies required to launch a DDS Recorder application.
+ */
 class DdsRecorder
 {
 public:
 
+    /**
+     * DdsRecorder constructor by required values.
+     *
+     * Creates DdsRecorder instance with given configuration, initial state and mcap file name.
+     *
+     * @param configuration: Structure encapsulating all recorder configuration options.
+     * @param init_state:    Initial instance state (RUNNING/PAUSED/STOPPED).
+     * @param file_name:     Name of the mcap file where data is recorded. If not provided, the one from configuration is used instead.
+     */
     DdsRecorder(
             const yaml::RecorderConfiguration& configuration,
             const participants::McapHandlerStateCode& init_state,
             const std::string& file_name = "");
 
+    /**
+     * Reload allowed topics list.
+     *
+     * @param allowed_topics: Allowed topics list to be loaded.
+     *
+     * @return \c RETCODE_OK if allowed topics list has been updated correctly
+     * @return \c RETCODE_NO_DATA if new allowed topics list is the same as the previous one
+     */
     utils::ReturnCode reload_allowed_topics(
             const std::shared_ptr<ddspipe::core::AllowedTopicList>& allowed_topics);
 
+    //! Start recorder (\c mcap_handler_)
     void start();
 
+    //! Pause recorder (\c mcap_handler_)
     void pause();
 
+    //! Stop recorder (\c mcap_handler_)
     void stop();
 
+    //! Trigger event (in \c mcap_handler_)
     void trigger_event();
 
 protected:

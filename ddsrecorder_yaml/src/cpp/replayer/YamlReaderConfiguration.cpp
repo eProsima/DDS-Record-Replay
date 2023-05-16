@@ -233,7 +233,7 @@ void ReplayerConfiguration::load_dds_configuration_(
     // Get optional builtin topics
     if (YamlReader::is_tag_present(yml, BUILTIN_TAG))
     {
-        // WARNING: Parse builtin topics AFTER specs and recorder, as some topic-specific default values are set there
+        // WARNING: Parse builtin topics AFTER specs, as some topic-specific default values are set there
         builtin_topics = YamlReader::get_set<utils::Heritable<types::DistributedTopic>>(yml, BUILTIN_TAG,
                         version);
     }

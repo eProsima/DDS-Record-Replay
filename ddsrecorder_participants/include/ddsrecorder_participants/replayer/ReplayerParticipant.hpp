@@ -24,14 +24,21 @@ namespace ddsrecorder {
 namespace participants {
 
 /**
- * TODO
+ * Participant kind in charge of replaying messages read by a \c McapReaderParticipant.
+ * It is mostly equivalent to a \c rtps::SimpleParticipant without reader, only writer.
  */
 class ReplayerParticipant : public ddspipe::participants::rtps::SimpleParticipant
 {
 public:
 
     /**
-     * TODO
+     * ReplayerParticipant constructor by required values.
+     *
+     * Creates ReplayerParticipant instance with given configuration, payload pool and discovery database.
+     *
+     * @param participant_configuration:  Structure encapsulating all configuration options.
+     * @param payload_pool:               Owner of every payload contained in messages to be sent.
+     * @param discovery_database:         Reference to a \c DiscoveryDatabase instance.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     ReplayerParticipant(
@@ -39,6 +46,7 @@ public:
             const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
             const std::shared_ptr<ddspipe::core::DiscoveryDatabase>& discovery_database);
 
+    //! Override create_reader_() IParticipant method
     DDSRECORDER_PARTICIPANTS_DllAPI
     std::shared_ptr<ddspipe::core::IReader> create_reader(
             const ddspipe::core::ITopic& topic) override;
