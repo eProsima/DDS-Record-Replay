@@ -143,7 +143,7 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
     // Scan and parse channels and schemas
     const auto onProblem = [](const mcap::Status& status)
             {
-                logWarning(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                logWarning(DDSREPLAYER_REPLAYER,
                         "An error occurred while reading summary: " << status.message << ".");
             };
     status = mcap_reader.readSummary(mcap::ReadSummaryMethod::NoFallbackScan, onProblem);
@@ -191,6 +191,7 @@ TopicQoS DdsReplayer::deserialize_qos_(
     bool reliable = qos_yaml["reliability"].as<bool>();
     bool transient_local = qos_yaml["durability"].as<bool>();
     bool exclusive_ownership = qos_yaml["ownership"].as<bool>();
+    bool keyed = qos_yaml["keyed"].as<bool>();
 
     // Parse reliability
     if (reliable)
@@ -221,6 +222,9 @@ TopicQoS DdsReplayer::deserialize_qos_(
     {
         qos.ownership_qos = eprosima::ddspipe::core::types::OwnershipQosPolicyKind::SHARED_OWNERSHIP_QOS;
     }
+
+    // Parse keyed
+    qos.keyed = keyed;
 
     return qos;
 }

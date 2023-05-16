@@ -627,6 +627,17 @@ std::string McapHandler::serialize_qos_(
         ownership_tag = false;
     }
 
+    // Keyed tag
+    YAML::Node keyed_tag = qos_yaml["keyed"];
+    if (qos.keyed)
+    {
+        keyed_tag = true;
+    }
+    else
+    {
+        keyed_tag = false;
+    }
+
     return YAML::Dump(qos_yaml);
 }
 
