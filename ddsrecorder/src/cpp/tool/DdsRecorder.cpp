@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#define MCAP_IMPLEMENTATION  // Define this in exactly one .cpp file
-
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/utils.hpp>

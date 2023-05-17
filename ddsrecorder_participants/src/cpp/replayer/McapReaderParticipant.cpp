@@ -183,8 +183,8 @@ void McapReaderParticipant::process_mcap()
 
         // Set publication delay from original log time and configured playback rate
         auto delay = mcap_timestamp_to_std_timepoint(it->message.logTime) - initial_ts_origin;
-        scheduled_write_ts = initial_ts + std::chrono::duration_cast<std::chrono::nanoseconds>(
-            delay / configuration_->rate);
+        scheduled_write_ts = std::chrono::time_point_cast<utils::Timestamp::duration>(initial_ts + std::chrono::duration_cast<std::chrono::nanoseconds>(
+                            delay / configuration_->rate));
 
         // Set source timestamp
         // NOTE: this is important for QoS such as LifespanQosPolicy
@@ -248,7 +248,8 @@ void McapReaderParticipant::stop() noexcept
 utils::Timestamp McapReaderParticipant::mcap_timestamp_to_std_timepoint(
         const mcap::Timestamp& time)
 {
-    return utils::Timestamp(std::chrono::nanoseconds(time));
+    return std::chrono::time_point_cast<utils::Timestamp::duration>(utils::Timestamp() +
+                   std::chrono::nanoseconds(time));
 }
 
 mcap::Timestamp McapReaderParticipant::std_timepoint_to_mcap_timestamp(

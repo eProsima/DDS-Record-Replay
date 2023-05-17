@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#define MCAP_IMPLEMENTATION  // Define this in exactly one .cpp file
-
 #include <mcap/reader.hpp>
 #include <yaml-cpp/yaml.h>
 
