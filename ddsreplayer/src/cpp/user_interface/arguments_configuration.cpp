@@ -238,13 +238,6 @@ ProcessReturnCode parse_arguments(
             return ProcessReturnCode::version_argument;
         }
 
-        // if (options[optionIndex::INPUT_FILE].count() == 0)
-        // {
-        //     logError(DDSREPLAYER_ARGS, "ERROR: Input file argument (-i | --input-file) is required." );
-        //     option::printUsage(fwrite, stdout, usage, columns);
-        //     return ProcessReturnCode::incorrect_argument;
-        // }
-
         for (int i = 0; i < parse.optionsCount(); ++i)
         {
             option::Option& opt = buffer[i];

@@ -41,7 +41,7 @@ If |eddsrecord| was installed using the `recommended installation <https://dds-r
 
     source <path-to-fastdds-installation>/install/setup.bash
     source <path-to-ddspipe-installation>/install/setup.bash
-    source <path-to-ddsrecorder-installation>/install/setup.bash
+    source <path-to-ddsrecordreplay-installation>/install/setup.bash
 
 *********************
 Generating data types
@@ -216,7 +216,7 @@ Open two terminals:
     .. code-block:: bash
 
         source install/setup.bash
-        cd DDS-Recorder/build/TypeLookupService
+        cd DDS-Record-Replayer/build/TypeLookupService
         ./TypeLookupService
 
 * In the second terminal, run the ddsrecorder:
@@ -238,7 +238,7 @@ Open two terminals:
     .. code-block:: bash
 
         source install/setup.bash
-        cd DDS-Recorder/build/TypeLookupService
+        cd DDS-Record-Replayer/build/TypeLookupService
         ./TypeLookupService --entity publisher
 
 * In the second terminal, run the DDS Subscriber:
@@ -246,7 +246,7 @@ Open two terminals:
 .. code-block:: bash
 
         source install/setup.bash
-        cd DDS-Recorder/build/TypeLookupService
+        cd DDS-Record-Replayer/build/TypeLookupService
         ./TypeLookupService --entity subscriber
 
 At this point, we observe that the data published reach the subscriber and it can access to the content of the sample received.

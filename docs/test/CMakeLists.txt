@@ -16,7 +16,7 @@
 # Add tests
 ####################################################################################################
 
-message(STATUS "Building the eProsima DDS Recorder documentation tests.")
+message(STATUS "Building the eProsima DDS Record & Replay documentation tests.")
 
 find_package(Python COMPONENTS Interpreter Development)
 if(NOT(${Python_FOUND} AND (${Python_VERSION} VERSION_GREATER "3.6")))

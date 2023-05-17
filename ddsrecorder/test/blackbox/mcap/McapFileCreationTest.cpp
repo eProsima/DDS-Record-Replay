@@ -88,8 +88,6 @@ std::unique_ptr<DdsRecorder> create_recorder(
     domainId.domain_id = test::DOMAIN;
     configuration.simple_configuration->domain = domainId;
 
-    auto recorder_prueba = std::make_unique<DdsRecorder>(configuration, mcap_handler_state);
-
     return std::make_unique<DdsRecorder>(
         configuration,
         mcap_handler_state,

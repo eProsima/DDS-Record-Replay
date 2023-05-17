@@ -44,11 +44,11 @@ In order to correctly execute the replayer, make sure that ``fastrtps``, ``fastc
 
     source <path-to-fastdds-installation>/install/setup.bash
     source <path-to-ddspipe-installation>/install/setup.bash
-    source <path-to-ddsrecorder-installation>/install/setup.bash
+    source <path-to-ddsrecordreplay-installation>/install/setup.bash
 
 .. note::
 
-    If Fast DDS, DDS Pipe and DDS Recorder have been installed in the system, these libraries would be sourced by default.
+    If Fast DDS, DDS Pipe and DDS Record & Replay have been installed in the system, these libraries would be sourced by default.
 
 To start |eddsreplayer| with a default configuration, enter:
 

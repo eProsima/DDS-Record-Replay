@@ -256,13 +256,13 @@ Colcon installation (recommended)
     Run colcon within a Visual Studio prompt.
     To do so, launch a *Developer Command Prompt* from the search engine.
 
-#.  Create a :code:`DDS-Recorder` directory and download the :code:`.repos` file that will be used to install
+#.  Create a :code:`DDS-Record-Replayer` directory and download the :code:`.repos` file that will be used to install
     |eddsrecord| and its dependencies:
 
     .. code-block:: bash
 
-        mkdir <path\to\user\workspace>\DDS-Recorder
-        cd <path\to\user\workspace>\DDS-Recorder
+        mkdir <path\to\user\workspace>\DDS-Record-Replayer
+        cd <path\to\user\workspace>\DDS-Record-Replayer
         mkdir src
         wget https://raw.githubusercontent.com/eProsima/DDS-Recorder/main/ddsrecorder.repos --output-file ddsrecorder.repos
         vcs import src --input ddsrecorder.repos
@@ -302,14 +302,14 @@ This section explains how to compile |eddsrecord| with CMake_, either :ref:`loca
 Local installation
 ------------------
 
-#.  Open a command prompt, and create a :code:`DDS-Record` directory where to download and build |eddsrecord| and its dependencies:
+#.  Open a command prompt, and create a :code:`DDS-Record-Replay` directory where to download and build |eddsrecord| and its dependencies:
 
     .. code-block:: bash
 
-        mkdir <path\to\user\workspace>\DDS-Record
-        mkdir <path\to\user\workspace>\DDS-Record\src
-        mkdir <path\to\user\workspace>\DDS-Record\build
-        cd <path\to\user\workspace>\DDS-Record
+        mkdir <path\to\user\workspace>\DDS-Record-Replay
+        mkdir <path\to\user\workspace>\DDS-Record-Replay\src
+        mkdir <path\to\user\workspace>\DDS-Record-Replay\build
+        cd <path\to\user\workspace>\DDS-Record-Replay
         wget https://raw.githubusercontent.com/eProsima/DDS-Recorder/main/ddsrecorder.repos --output-file ddsrecorder.repos
         vcs import src --input ddsrecorder.repos
 
@@ -319,10 +319,10 @@ Local installation
 
         .. code-block:: bash
 
-            cd <path\to\user\workspace>\DDS-Record
+            cd <path\to\user\workspace>\DDS-Record-Replay
             mkdir build\foonathan_memory_vendor
             cd build\foonathan_memory_vendor
-            cmake <path\to\user\workspace>\DDS-Record\src\foonathan_memory_vendor -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
+            cmake <path\to\user\workspace>\DDS-Record-Replay\src\foonathan_memory_vendor -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record-Replay\install ^
                 -DBUILD_SHARED_LIBS=ON
             cmake --build . --config Release --target install
 
@@ -330,21 +330,21 @@ Local installation
 
         .. code-block:: bash
 
-            cd <path\to\user\workspace>\DDS-Record
+            cd <path\to\user\workspace>\DDS-Record-Replay
             mkdir build\fastcdr
             cd build\fastcdr
-            cmake <path\to\user\workspace>\DDS-Record\src\fastcdr -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install
+            cmake <path\to\user\workspace>\DDS-Record-Replay\src\fastcdr -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record-Replay\install
             cmake --build . --config Release --target install
 
     *  `Fast DDS <https://github.com/eProsima/Fast-DDS>`_
 
         .. code-block:: bash
 
-            cd <path\to\user\workspace>\DDS-Record
+            cd <path\to\user\workspace>\DDS-Record-Replay
             mkdir build\fastdds
             cd build\fastdds
-            cmake <path\to\user\workspace>\DDS-Record\src\fastdds -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
-                -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
+            cmake <path\to\user\workspace>\DDS-Record-Replay\src\fastdds -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record-Replay\install ^
+                -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record-Replay\install
             cmake --build . --config Release --target install
 
     * `Dev Utils <https://github.com/eProsima/dev-utils>`_
@@ -352,19 +352,19 @@ Local installation
         .. code-block:: bash
 
             # CMake Utils
-            cd <path\to\user\workspace>\DDS-Record
+            cd <path\to\user\workspace>\DDS-Record-Replay
             mkdir build\cmake_utils
             cd build\cmake_utils
-            cmake <path\to\user\workspace>\DDS-Record\src\dev-utils\cmake_utils -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
-                -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
+            cmake <path\to\user\workspace>\DDS-Record-Replay\src\dev-utils\cmake_utils -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record-Replay\install ^
+                -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record-Replay\install
             cmake --build . --config Release --target install
 
             # C++ Utils
-            cd <path\to\user\workspace>\DDS-Record
+            cd <path\to\user\workspace>\DDS-Record-Replay
             mkdir build\cpp_utils
             cd build\cpp_utils
-            cmake <path\to\user\workspace>\DDS-Record\src\dev-utils\cpp_utils -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
-                -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
+            cmake <path\to\user\workspace>\DDS-Record-Replay\src\dev-utils\cpp_utils -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record-Replay\install ^
+                -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record-Replay\install
             cmake --build . --config Release --target install
 
     * `DDS Pipe <https://github.com/eProsima/DDS-Pipe>`_
@@ -372,24 +372,24 @@ Local installation
         .. code-block:: bash
 
             # ddspipe_core
-            cd <path\to\user\workspace>\DDS-Record
+            cd <path\to\user\workspace>\DDS-Record-Replay
             mkdir build\ddspipe_core
             cd build\ddspipe_core
-            cmake cd <path\to\user\workspace>\DDS-Record\src\ddspipe\ddspipe_core -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
+            cmake cd <path\to\user\workspace>\DDS-Record-Replay\src\ddspipe\ddspipe_core -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record-Replay\install -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record-Replay\install
             cmake --build . --target install
 
             # ddspipe_yaml
-            cd <path\to\user\workspace>\DDS-Record
+            cd <path\to\user\workspace>\DDS-Record-Replay
             mkdir build\ddspipe_yaml
             cd build\ddspipe_yaml
-            cmake <path\to\user\workspace>\DDS-Record\src\ddspipe\ddspipe_yaml -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
+            cmake <path\to\user\workspace>\DDS-Record-Replay\src\ddspipe\ddspipe_yaml -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record-Replay\install -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record-Replay\install
             cmake --build . --target install
 
             # ddspipe_participants
-            cd <path\to\user\workspace>\DDS-Record
+            cd <path\to\user\workspace>\DDS-Record-Replay
             mkdir build\ddspipe_participants
             cd build\ddspipe_participants
-            cmake <path\to\user\workspace>\DDS-Record\src\ddspipe\ddspipe_participants -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
+            cmake <path\to\user\workspace>\DDS-Record-Replay\src\ddspipe\ddspipe_participants -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record-Replay\install -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record-Replay\install
             cmake --build . --target install
 
 #.  Once all dependencies are installed, install |eddsrecord|:
@@ -397,35 +397,35 @@ Local installation
     .. code-block:: bash
 
         # ddsrecorder_participants
-        cd <path\to\user\workspace>\DDS-Record
+        cd <path\to\user\workspace>\DDS-Record-Replay
         mkdir build\ddsrecorder_participants
         cd build\ddsrecorder_participants
-        cmake <path\to\user\workspace>\DDS-Record\src\ddsrecorder\ddsrecorder_participants ^
-            -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
+        cmake <path\to\user\workspace>\DDS-Record-Replay\src\ddsrecorder\ddsrecorder_participants ^
+            -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record-Replay\install -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record-Replay\install
         cmake --build . --config Release --target install
 
         # ddsrecorder_yaml
-        cd <path\to\user\workspace>\DDS-Record
+        cd <path\to\user\workspace>\DDS-Record-Replay
         mkdir build\ddsrecorder_yaml
         cd build\ddsrecorder_yaml
-        cmake <path\to\user\workspace>\DDS-Record\src\ddsrecorder\ddsrecorder_yaml -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
-            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
+        cmake <path\to\user\workspace>\DDS-Record-Replay\src\ddsrecorder\ddsrecorder_yaml -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record-Replay\install ^
+            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record-Replay\install
         cmake --build . --config Release --target install
 
         # ddsrecorder
-        cd <path\to\user\workspace>\DDS-Record
+        cd <path\to\user\workspace>\DDS-Record-Replay
         mkdir build\ddsrecorder_tool
         cd build\ddsrecorder_tool
-        cmake <path\to\user\workspace>\DDS-Record\src\ddsrecorder\ddsrecorder -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
-            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
+        cmake <path\to\user\workspace>\DDS-Record-Replay\src\ddsrecorder\ddsrecorder -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record-Replay\install ^
+            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record-Replay\install
         cmake --build . --config Release --target install
 
         # ddsreplayer
-        cd <path\to\user\workspace>\DDS-Record
+        cd <path\to\user\workspace>\DDS-Record-Replay
         mkdir build\ddsreplayer_tool
         cd build\ddsreplayer_tool
-        cmake <path\to\user\workspace>\DDS-Record\src\ddsrecorder\ddsreplayer -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
-            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
+        cmake <path\to\user\workspace>\DDS-Record-Replay\src\ddsrecorder\ddsreplayer -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record-Replay\install ^
+            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record-Replay\install
         cmake --build . --config Release --target install
 
     .. note::
@@ -440,19 +440,19 @@ Local installation
     .. code-block:: bash
 
         # Fast DDS Python
-        cd <path\to\user\workspace>\DDS-Record
+        cd <path\to\user\workspace>\DDS-Record-Replay
         mkdir build\fastdds_python
         cd build\fastdds_python
-        cmake <path\to\user\workspace>\DDS-Record\src\Fast-DDS-python\fastdds_python -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
-            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install
+        cmake <path\to\user\workspace>\DDS-Record-Replay\src\Fast-DDS-python\fastdds_python -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record-Replay\install ^
+            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record-Replay\install
         cmake --build . --config Release --target install
 
         # Remote Controller Application
-        cd <path\to\user\workspace>\DDS-Record
+        cd <path\to\user\workspace>\DDS-Record-Replay
         mkdir build\controller_tool
         cd build\controller_tool
-        cmake <path\to\user\workspace>\DDS-Record\src\controller\controller_tool -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record\install ^
-            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record\install -DBUILD_DDSRECORDER_CONTROLLER=ON
+        cmake <path\to\user\workspace>\DDS-Record-Replay\src\controller\controller_tool -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record-Replay\install ^
+            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record-Replay\install -DBUILD_DDSRECORDER_CONTROLLER=ON
         cmake --build . --config Release --target install
 
 
@@ -461,13 +461,13 @@ Local installation
 Global installation
 -------------------
 
-To install |eddsrecord| system-wide instead of locally, remove all the flags that appear in the configuration steps of :code:`Fast-CDR`, :code:`Fast-DDS`, :code:`Dev-Utils`, :code:`DDS-Pipe`, and :code:`DDS-Record`
+To install |eddsrecord| system-wide instead of locally, remove all the flags that appear in the configuration steps of :code:`Fast-CDR`, :code:`Fast-DDS`, :code:`Dev-Utils`, :code:`DDS-Pipe`, and :code:`DDS-Record-Replay`
 
 
 Run an application
 ==================
 
-If |eddsrecord| was compiled using colcon, when running an instance of |ddsrecorder| or |ddsreplayer|, the colcon overlay built in the dedicated :code:`DDS-Record` directory must be sourced.
+If |eddsrecord| was compiled using colcon, when running an instance of |ddsrecorder| or |ddsreplayer|, the colcon overlay built in the dedicated :code:`DDS-Record-Replay` directory must be sourced.
 There are two possibilities:
 
 * Every time a new shell is opened, prepare the environment locally by typing the command:
@@ -479,7 +479,7 @@ There are two possibilities:
 * Add the sourcing of the colcon overlay permanently, by opening the *Edit the system environment variables* control panel, and adding the installation path to the :code:`PATH`.
 
 However, when running a |ddsrecorder| or |ddsreplayer| compiled using CMake, it must be linked with its dependencies where the packages have been installed.
-This can be done by opening the *Edit system environment variables* control panel and adding to the ``PATH`` |eddsrecord| installation directory: ``<path\to\user\workspace>\DDS-Record\install``.
+This can be done by opening the *Edit system environment variables* control panel and adding to the ``PATH`` |eddsrecord| installation directory: ``<path\to\user\workspace>\DDS-Record-Replay\install``.
 
 
 .. External links

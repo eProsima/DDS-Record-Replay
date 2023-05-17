@@ -8,7 +8,7 @@ This module create an executable that runs a DDS Replayer configured via *yaml* 
 ```sh
 # Source installation first. In colcon workspace: :$ source install/setup.bash
 
-ddsrecorder --help
+ddsreplayer --help
 
 # Usage: DDS Replayer
 # Playback traffic recorded by eProsima DDS Recorder.

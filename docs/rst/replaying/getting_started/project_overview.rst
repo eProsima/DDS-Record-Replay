@@ -10,7 +10,7 @@ Project Overview
 
 A user can configure a |ddsreplayer| instance differently depending on the scenario and purpose, being able to tune parameters concerning the DDS layer as well as playback settings.
 
-Among its many configuration options, the user is able to allow/block a set of topics, and/or define specific QoS (other than the recorded ones) to be applied to certain topics.
+Among its many :ref:`configuration <replayer_usage_configuration>` options, the user is able to allow/block a set of topics, and/or define specific QoS (other than the recorded ones) to be applied to certain topics.
 It is also possible to publish samples at a rate different than the original one, filter messages according to its timestamp, or define a publication begin time, among others.
 
 Usage Description

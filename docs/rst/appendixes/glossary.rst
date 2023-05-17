@@ -31,7 +31,7 @@ DDS nomenclature
         DDS element that subscribes to a specific Topic.
         It belong to one and only one Participant, and it is uniquely identified by a Guid.
 
-        See `Fast DDS documentation <https://fast-dds.docs.eprosima.com/en/v2.4.1/fastdds/dds_layer/subscriber/subscriber.html>`__
+        See `Fast DDS documentation <https://fast-dds.docs.eprosima.com/en/v2.4.1/fastdds/dds_layer/subscriber/dataReader/dataReader.html>`__
         for further information.
 
     DataWriter
