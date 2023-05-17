@@ -19,7 +19,7 @@
 
 #include <cpp_utils/event/MultipleEventHandler.hpp>
 
-#include "dds/TypeIntrospectionSubscriber.h"
+#include "dds/HelloWorldSubscriber.h"
 
 #include "tool/DdsReplayer.hpp"
 
@@ -38,7 +38,7 @@ namespace test {
 
 const unsigned int DOMAIN = 0;
 
-std::string topic_name = "TypeIntrospectionTopic";
+std::string topic_name = "/dds/topic";
 std::string data_type_name = "HelloWorld";
 
 unsigned int n_msgs = 3;
@@ -56,13 +56,11 @@ enum class DataTypeKind
 
 TEST(McapFileReadTest, trivial)
 {
-
-    std::cout << "creating subscriber !!!!" << std::endl;
-
     // Create Subscriber
-    TypeIntrospectionSubscriber subscriber(
+    HelloWorldSubscriber subscriber(
         test::topic_name,
-        static_cast<uint32_t>(test::DOMAIN));
+        static_cast<uint32_t>(test::DOMAIN),
+        11);
 
     std::cout << "subscriber created !!!!" << std::endl;
 
@@ -71,65 +69,59 @@ TEST(McapFileReadTest, trivial)
     auto close_handler_subscriber = std::make_shared<eprosima::utils::event::MultipleEventHandler>();
 
     // Run Participant
-    std::thread run_subscriber([&] {
-        try
-        {
-            subscriber.run(static_cast<uint32_t>(1));
-        }
-        catch (const eprosima::utils::InconsistencyException& e)
-        {
-            logError(DDSREPLAYER_ERROR,
+    std::thread run_subscriber([&]
+            {
+                try
+                {
+                    subscriber.run();
+                }
+                catch (const eprosima::utils::InconsistencyException& e)
+                {
+                    logError(DDSREPLAYER_ERROR,
                     "Error running subscriber. Error message:\n " <<
-                    e.what());
-        }
-        close_handler_subscriber->simulate_event_occurred();
-    });
+                        e.what());
+                }
+                close_handler_subscriber->simulate_event_occurred();
+            });
 
-    std::cout << "subscriber running !!!!" << std::endl;
 
-    std::cout << "creating replayer !!!!" << std::endl;
-
-    // Load configuration from YAML
-    YAML::Node yml;
-    eprosima::ddsrecorder::yaml::ReplayerConfiguration configuration(yml);
-
-    std::string input_file = "resources/input_file.mcap";
+    // Configuration File path
+    std::string file_path = "resources/config_file.yaml";
+    eprosima::ddsrecorder::yaml::ReplayerConfiguration configuration(file_path);
 
     // Create replayer instance
+    std::string input_file = "resources/helloworld_file.mcap";
     auto replayer = std::make_unique<DdsReplayer>(configuration, input_file);
 
     std::cout << "replayer created !!!!" << std::endl;
 
-    std::cout << "start replaying data !!!!" << std::endl;
     // Start replaying data
     bool read_success;
-    std::thread process_mcap_thread([&] {
-        try
-        {
-            replayer->process_mcap();
-            read_success = true;
-        }
-        catch (const eprosima::utils::InconsistencyException& e)
-        {
-            logError(DDSREPLAYER_ERROR,
+    std::thread process_mcap_thread([&]
+            {
+                try
+                {
+                    replayer->process_mcap();
+                    read_success = true;
+                }
+                catch (const eprosima::utils::InconsistencyException& e)
+                {
+                    logError(DDSREPLAYER_ERROR,
                     "Error processing MCAP file. Error message:\n " <<
-                    e.what());
-            read_success = false;
-        }
-        close_handler_replayer->simulate_event_occurred();
-    });
+                        e.what());
+                    read_success = false;
+                }
+                close_handler_replayer->simulate_event_occurred();
+            });
 
     // Wait until signal arrives (or all messages in MCAP file sent)
     close_handler_replayer->wait_for_event();
-    std::cout << "event replayer ocurred" << std::endl;
 
-    // Wait until signal arrives (or all messages in MCAP file sent)
+    // Wait until signal arrives
     close_handler_subscriber->wait_for_event();
-    std::cout << "event subscriber ocurred" << std::endl;
 
     // Disable inner pipe, which would abort replaying messages in case execution stopped by signal
     replayer->stop();
-    std::cout << "replayer stopped!!!!" << std::endl;
 
     run_subscriber.join();
     process_mcap_thread.join();

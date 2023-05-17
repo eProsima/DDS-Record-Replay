@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * @file TypeIntrospectionSubscriber.h
+ * @file HelloWorldSubscriber.h
  *
  */
 
@@ -35,7 +35,7 @@
  * @brief Class used to group into a single working unit a Subscriber with a DataReader and its listener.
  *
  */
-class TypeIntrospectionSubscriber : public eprosima::fastdds::dds::DomainParticipantListener
+class HelloWorldSubscriber : public eprosima::fastdds::dds::DomainParticipantListener
 {
 public:
 
@@ -44,23 +44,27 @@ public:
      *
      * @param topic_name Name of the DDS Topic
      * @param domain DDS Domain of the DomainParticipant
+     * @param max_messages Number of messages to be received before triggering termination of execution
      */
-    TypeIntrospectionSubscriber(
+    HelloWorldSubscriber(
             const std::string& topic_name,
-            uint32_t domain);
+            uint32_t domain,
+            uint32_t max_messages);
 
     /**
      * @brief Destroy the Type Lookup Service Publisher object
      *
      */
-    virtual ~TypeIntrospectionSubscriber();
+    virtual ~HelloWorldSubscriber();
 
     /**
      * @brief Run the subscriber until "number" samples are received
      *
-     * @param number Number of samples to be published
-     */    void run(
-            uint32_t number);
+     */void run();
+
+    //! Set the maximum number of messages to receive before exiting
+    void set_max_messages(
+            uint32_t max_messages);
 
     //! DataReader callback executed when a new sample is received
     void on_data_available(

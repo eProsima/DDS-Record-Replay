@@ -1,0 +1,11 @@
+dds:
+  domain: 0
+
+  # allowlist:
+  #   - name: "topic_name"
+  #   - name: "HelloWorldTopic"
+  #     type: "HelloWorld"
+
+  # blocklist:
+  #   - name: "topic_to_block"
+  #     type: "type_to_block"

@@ -59,7 +59,7 @@ public:
      * @brief Run the subscriber until "number" samples are received
      *
      * @param number Number of samples to be published
-     */    void run(
+     */void run(
             uint32_t number);
 
     //! DataReader callback executed when a new sample is received

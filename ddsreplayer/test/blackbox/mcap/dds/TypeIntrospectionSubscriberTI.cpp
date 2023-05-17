@@ -198,11 +198,11 @@ void TypeIntrospectionSubscriber::on_type_information_received(
 
     // Create the callback to register the remote dynamic type
     std::function<void(const std::string&, const eprosima::fastrtps::types::DynamicType_ptr)> callback(
-            [this]
+        [this]
             (const std::string& name, const eprosima::fastrtps::types::DynamicType_ptr type)
-            {
-                this->register_remote_type_callback_(name, type);
-            });
+        {
+            this->register_remote_type_callback_(name, type);
+        });
 
     // Register the discovered type and create a DataReader on this topic
     participant_->register_remote_type(
@@ -227,7 +227,7 @@ void TypeIntrospectionSubscriber::run(
 
     // Wait for type discovery
     std::cout << "Subscriber waiting to discover type for topic < " << topic_name_
-        << " >. Press CTRL+C to stop the Subscriber..." << std::endl;
+              << " >. Press CTRL+C to stop the Subscriber..." << std::endl;
 
     // Wait until the type is discovered and registered
     {
@@ -287,9 +287,9 @@ void TypeIntrospectionSubscriber::register_remote_type_callback_(
     ///////////////////////
     // Create the DDS Topic
     topic_ = participant_->create_topic(
-            topic_name_,
-            dynamic_type->get_name(),
-            TOPIC_QOS_DEFAULT);
+        topic_name_,
+        dynamic_type->get_name(),
+        TOPIC_QOS_DEFAULT);
 
     if (topic_ == nullptr)
     {
@@ -299,9 +299,9 @@ void TypeIntrospectionSubscriber::register_remote_type_callback_(
     ////////////////////////
     // Create the DataReader
     datareader_ = subscriber_->create_datareader(
-            topic_,
-            DATAREADER_QOS_DEFAULT,
-            this);
+        topic_,
+        DATAREADER_QOS_DEFAULT,
+        this);
 
     std::cout <<
         "Participant < " << participant_->guid() <<

@@ -91,7 +91,7 @@ void get_information()
 
     / Wait for type discovery
     std::cout << "Subscriber waiting to discover type for topic < " << topic_name_
-        << " >. Press CTRL+C to stop the Subscriber..." << std::endl;
+              << " >. Press CTRL+C to stop the Subscriber..." << std::endl;
 
     // Wait until the type is discovered and registered
     {

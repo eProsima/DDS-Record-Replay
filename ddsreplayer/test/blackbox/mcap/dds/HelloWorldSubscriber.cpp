@@ -30,23 +30,28 @@
 #include <fastrtps/attributes/ParticipantAttributes.h>
 #include <fastrtps/attributes/SubscriberAttributes.h>
 
-#include "TypeIntrospectionSubscriber.h"
+#include "HelloWorldSubscriber.h"
 
 using namespace eprosima::fastdds::dds;
 
-std::atomic<bool> TypeIntrospectionSubscriber::stop_(false);
-std::mutex TypeIntrospectionSubscriber::terminate_cv_mtx_;
-std::condition_variable TypeIntrospectionSubscriber::terminate_cv_;
+std::atomic<bool> HelloWorldSubscriber::stop_(false);
+std::mutex HelloWorldSubscriber::terminate_cv_mtx_;
+std::condition_variable HelloWorldSubscriber::terminate_cv_;
 
-TypeIntrospectionSubscriber::TypeIntrospectionSubscriber(
+HelloWorldSubscriber::HelloWorldSubscriber(
         const std::string& topic_name,
-        uint32_t domain)
+        uint32_t domain,
+        uint32_t max_messages)
     : participant_(nullptr)
     , subscriber_(nullptr)
     , topic_(nullptr)
     , datareader_(nullptr)
     , type_(new HelloWorldPubSubType())
 {
+    samples_ = 0;
+
+    set_max_messages(max_messages);
+
     ///////////////////////////////
     // Create the DomainParticipant
     DomainParticipantQos pqos;
@@ -79,7 +84,7 @@ TypeIntrospectionSubscriber::TypeIntrospectionSubscriber(
     // CREATE THE TOPIC
     topic_ = participant_->create_topic(
         topic_name,
-        "HelloWorld",
+        type_.get_type_name(),
         TOPIC_QOS_DEFAULT);
 
     if (topic_ == nullptr)
@@ -101,7 +106,7 @@ TypeIntrospectionSubscriber::TypeIntrospectionSubscriber(
         std::endl;
 }
 
-TypeIntrospectionSubscriber::~TypeIntrospectionSubscriber()
+HelloWorldSubscriber::~HelloWorldSubscriber()
 {
     if (participant_ != nullptr)
     {
@@ -121,19 +126,25 @@ TypeIntrospectionSubscriber::~TypeIntrospectionSubscriber()
     }
 }
 
-bool TypeIntrospectionSubscriber::is_stopped()
+bool HelloWorldSubscriber::is_stopped()
 {
     return stop_;
 }
 
-void TypeIntrospectionSubscriber::stop()
+void HelloWorldSubscriber::stop()
 {
     stop_ = true;
 
     terminate_cv_.notify_all();
 }
 
-void TypeIntrospectionSubscriber::on_subscription_matched(
+void HelloWorldSubscriber::set_max_messages(
+        uint32_t max_messages)
+{
+    max_messages_ = max_messages;
+}
+
+void HelloWorldSubscriber::on_subscription_matched(
         DataReader*,
         const SubscriptionMatchedStatus& info)
 {
@@ -152,12 +163,11 @@ void TypeIntrospectionSubscriber::on_subscription_matched(
     }
 }
 
-void TypeIntrospectionSubscriber::on_data_available(
+void HelloWorldSubscriber::on_data_available(
         DataReader* reader)
 {
     SampleInfo info;
 
-    // Take next sample until we've read all samples or the application stopped
     while ((reader->take_next_sample(&hello_, &info) == ReturnCode_t::RETCODE_OK) && !is_stopped())
     {
         if (info.instance_state == ALIVE_INSTANCE_STATE)
@@ -165,8 +175,7 @@ void TypeIntrospectionSubscriber::on_data_available(
             samples_++;
 
             // Print your structure data here.
-            std::cout << "Message " << hello_.message().data() << " " << hello_.index() << " RECEIVED" << std::endl;
-            std::cout << "Message " << samples_ << " received:\n" << std::endl;
+            std::cout << "Message " << " " << hello_.index() << " RECEIVED" << std::endl;
             std::cout << "-----------------------------------------------------" << std::endl;
 
             // Stop if all expecting messages has been received (max_messages number reached)
@@ -178,23 +187,16 @@ void TypeIntrospectionSubscriber::on_data_available(
     }
 }
 
-void TypeIntrospectionSubscriber::run(
-        uint32_t samples)
+void HelloWorldSubscriber::run()
 {
     stop_ = false;
-    if (samples > 0)
-    {
-        std::cout << "Subscriber running until " << samples <<
-            " samples have been received. Please press CTRL+C to stop the Subscriber at any time." << std::endl;
-    }
-    else
-    {
-        std::cout << "Subscriber running. Please press CTRL+C to stop the Subscriber." << std::endl;
-    }
+
+    std::cout << "Subscriber running. Please press CTRL+C to stop the Subscriber." << std::endl;
+
     signal(SIGINT, [](int signum)
             {
                 std::cout << "SIGINT received, stopping Subscriber execution." << std::endl;
-                static_cast<void>(signum); TypeIntrospectionSubscriber::stop();
+                static_cast<void>(signum); HelloWorldSubscriber::stop();
             });
     std::unique_lock<std::mutex> lck(terminate_cv_mtx_);
     terminate_cv_.wait(lck, []

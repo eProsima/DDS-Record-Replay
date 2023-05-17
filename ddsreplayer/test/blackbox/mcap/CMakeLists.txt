@@ -22,8 +22,7 @@ set(TEST_SOURCES
         McapFileReadTest.cpp
         ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/hello_world/HelloWorld.cxx
         ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/hello_world/HelloWorldPubSubTypes.cxx
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/hello_world/HelloWorldTypeObject.cxx
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/TypeIntrospectionSubscriber.cpp
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/HelloWorldSubscriber.cpp
     )
 
 set(TEST_LIST
@@ -31,14 +30,12 @@ set(TEST_LIST
     )
 
 set(TEST_NEEDED_SOURCES
-    resources/input_file.mcap
+        resources/helloworld_file.mcap
+        resources/config_file.yaml
     )
 
 set(TEST_EXTRA_HEADERS
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/resources
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/hello_world
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types)
+    )
 
 add_blackbox_executable(
     "${TEST_NAME}"
