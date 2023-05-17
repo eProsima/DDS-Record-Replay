@@ -83,6 +83,7 @@ protected:
      * @param input_file: path to the input MCAP file.
      *
      * @return generated builtin-topics list (set).
+     * @throw utils::InitializationException if failed to read mcap file.
      */
     std::set<utils::Heritable<ddspipe::core::types::DistributedTopic>> generate_builtin_topics_(
             const yaml::ReplayerConfiguration& configuration,

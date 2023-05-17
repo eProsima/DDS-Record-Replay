@@ -10,7 +10,7 @@ Project Overview
 Among these tools is a recording application, called |ddsrecorder|, which allows a user to capture data published in a DDS environment for later analysis or playback.
 
 The |ddsrecorder| application automatically discovers all topics in the DDS network and saves the data published in each topic with the publication timestamp of the data.
-Furthermore, by using the `DynamicTypes <recorder_https://fast-dds.docs.eprosima.com/en/latest/fastdds/dynamic_types/dynamic_types.html>`_ feature of *Fast DDS*, it is possible to record the type of the data in the MCAP file.
+Furthermore, by using the `DynamicTypes <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dynamic_types/dynamic_types.html>`_ feature of *Fast DDS*, it is possible to record the type of the data in the MCAP file.
 The benefit of this comes from the fact that the data is saved serialized according to the CDR format.
 The registration of the data type in the file allows the reading of the data (deserialization) when loading the file.
 

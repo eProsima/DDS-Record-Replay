@@ -61,7 +61,7 @@ Support available at:
 Contributing to the documentation
 #################################
 
-*DDS Record & Replay* is an open source project, and as such all contributions, both in the form of
+*DDS Record & Replay Documentation* is an open source project, and as such all contributions, both in the form of
 feedback and content generation, are most welcomed.
 To make such contributions, please refer to the
 `Contribution Guidelines <https://github.com/eProsima/all-docs/blob/master/CONTRIBUTING.md>`_ hosted in our GitHub
