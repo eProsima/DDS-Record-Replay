@@ -115,13 +115,13 @@ void ReplayerConfiguration::load_ddsreplayer_configuration_(
         // from which a response is expected.
         // Hence, if these topics are not blocked, the client would wrongly believe DDS-Replayer is a server, thus
         // sending a request for which a response will not be received.
-        types::WildcardDdsFilterTopic rpc_request_topic, rpc_response_topic;
+        ddspipe::core::types::WildcardDdsFilterTopic rpc_request_topic, rpc_response_topic;
         rpc_request_topic.topic_name.set_value("rq/*");
         rpc_response_topic.topic_name.set_value("rr/*");
         blocklist.insert(
-            utils::Heritable<types::WildcardDdsFilterTopic>::make_heritable(rpc_request_topic));
+            utils::Heritable<ddspipe::core::types::WildcardDdsFilterTopic>::make_heritable(rpc_request_topic));
         blocklist.insert(
-            utils::Heritable<types::WildcardDdsFilterTopic>::make_heritable(rpc_response_topic));
+            utils::Heritable<ddspipe::core::types::WildcardDdsFilterTopic>::make_heritable(rpc_response_topic));
     }
     catch (const std::exception& e)
     {
@@ -188,7 +188,7 @@ void ReplayerConfiguration::load_specs_configuration_(
     {
         max_history_depth = YamlReader::get_positive_int(yml, MAX_HISTORY_DEPTH_TAG);
         // Set default value for history
-        types::TopicQoS::default_history_depth.store(max_history_depth);
+        ddspipe::core::types::TopicQoS::default_history_depth.store(max_history_depth);
     }
 
     // Get wait all acknowledged timeout
@@ -206,27 +206,27 @@ void ReplayerConfiguration::load_dds_configuration_(
     // Get optional DDS domain
     if (YamlReader::is_tag_present(yml, DOMAIN_ID_TAG))
     {
-        replayer_configuration->domain = YamlReader::get<types::DomainId>(yml, DOMAIN_ID_TAG, version);
+        replayer_configuration->domain = YamlReader::get<ddspipe::core::types::DomainId>(yml, DOMAIN_ID_TAG, version);
     }
 
     /////
     // Get optional allowlist
     if (YamlReader::is_tag_present(yml, ALLOWLIST_TAG))
     {
-        allowlist = YamlReader::get_set<utils::Heritable<types::IFilterTopic>>(yml, ALLOWLIST_TAG, version);
+        allowlist = YamlReader::get_set<utils::Heritable<ddspipe::core::types::IFilterTopic>>(yml, ALLOWLIST_TAG, version);
 
         // Add to allowlist always the type object topic
-        types::WildcardDdsFilterTopic internal_topic;
-        internal_topic.topic_name.set_value(types::TYPE_OBJECT_TOPIC_NAME);
+        ddspipe::core::types::WildcardDdsFilterTopic internal_topic;
+        internal_topic.topic_name.set_value(ddspipe::core::types::TYPE_OBJECT_TOPIC_NAME);
         allowlist.insert(
-            utils::Heritable<types::WildcardDdsFilterTopic>::make_heritable(internal_topic));
+            utils::Heritable<ddspipe::core::types::WildcardDdsFilterTopic>::make_heritable(internal_topic));
     }
 
     /////
     // Get optional blocklist
     if (YamlReader::is_tag_present(yml, BLOCKLIST_TAG))
     {
-        blocklist = YamlReader::get_set<utils::Heritable<types::IFilterTopic>>(yml, BLOCKLIST_TAG, version);
+        blocklist = YamlReader::get_set<utils::Heritable<ddspipe::core::types::IFilterTopic>>(yml, BLOCKLIST_TAG, version);
     }
 
     /////
@@ -234,7 +234,7 @@ void ReplayerConfiguration::load_dds_configuration_(
     if (YamlReader::is_tag_present(yml, BUILTIN_TAG))
     {
         // WARNING: Parse builtin topics AFTER specs, as some topic-specific default values are set there
-        builtin_topics = YamlReader::get_set<utils::Heritable<types::DistributedTopic>>(yml, BUILTIN_TAG,
+        builtin_topics = YamlReader::get_set<utils::Heritable<ddspipe::core::types::DistributedTopic>>(yml, BUILTIN_TAG,
                         version);
     }
 }
