@@ -4,7 +4,7 @@
   <name>ddsrecorder_docs</name>
   <version>0.1.0</version>
   <description>
-     *eprosima DDS Record & Replay* Documentation built with sphinx and deployed in ReadTheDocs.
+     *eprosima DDS Record and Replay* Documentation built with sphinx and deployed in ReadTheDocs.
   </description>
   <maintainer email="RaulSanchezMateos@eprosima.com">Raul Sánchez-Mateos</maintainer>
   <maintainer email="javierparis@eprosima.com">Javier París</maintainer>

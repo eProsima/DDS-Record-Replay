@@ -20,7 +20,7 @@ set(MODULE_NAME
     ddsrecorder_docs)
 
 set(MODULE_SUMMARY
-    "Sphinx documentation for DDS Recorder project.")
+    "Sphinx documentation for DDS Record & Replay project.")
 
 set(MODULE_FIND_PACKAGES
     Sphinx

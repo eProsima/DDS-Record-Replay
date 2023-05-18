@@ -25,8 +25,8 @@ import re
 import requests
 
 
-PROJECT_NAME = 'DDS Record'
-COMPRESS_PROJECT_NAME = 'ddsrecord'
+PROJECT_NAME = 'DDS Record & Replay'
+COMPRESS_PROJECT_NAME = 'ddsrecordreplay'
 
 
 def get_version(version_file='VERSION'):
