@@ -19,8 +19,8 @@ It is organized as follows:
 Dependencies installation
 =========================
 
-|ddsrecorder| depends on *eProsima Fast DDS* library and certain Debian packages.
-This section describes the instructions for installing |ddsrecorder| dependencies and requirements in a Linux environment from sources.
+|ddsrecord| depends on *eProsima Fast DDS* library and certain Debian packages.
+This section describes the instructions for installing |ddsrecord| dependencies and requirements in a Linux environment from sources.
 The following packages will be installed:
 
 - ``foonathan_memory_vendor``, an STL compatible C++ memory allocation library.
@@ -84,7 +84,7 @@ Fast DDS Python
 ^^^^^^^^^^^^^^^
 
 `eProsima Fast DDS Python <https://github.com/eProsima/Fast-DDS-python/>`_ is a Python binding for the eProsima Fast DDS C++ library.
-It is only required for the :ref:`remote controller application <remote_controller>`.
+It is only required for the :ref:`remote controller application <recorder_remote_controller>`.
 
 Clone the Github repository into the |eddsrecord| workspace and compile it with colcon_ as a dependency package.
 Use the following command to download the code:
@@ -160,7 +160,7 @@ For example, on Ubuntu use the command:
 yaml-cpp
 ^^^^^^^^
 
-yaml-cpp is a YAML parser and emitter in C++ matching the YAML 1.2 spec, and is used by *DDS Recorder* application to parse the provided configuration files.
+yaml-cpp is a YAML parser and emitter in C++ matching the YAML 1.2 spec, and is used by |ddsrecord| application to parse the provided configuration files.
 Install yaml-cpp using the package manager of the appropriate Linux distribution.
 For example, on Ubuntu use the command:
 
@@ -175,7 +175,7 @@ SWIG
 
 `SWIG <https://www.swig.org>`_ is a software development tool that connects programs written in C and C++ with a variety of high-level programming languages.
 It is leveraged by :ref:`Fast DDS Python <fastdds_python>` to generate a Python wrapper over Fast DDS library.
-SWIG is only a requirement for the :ref:`remote controller application <remote_controller>`.
+SWIG is only a requirement for the :ref:`remote controller application <recorder_remote_controller>`.
 It can be installed using the package manager of the appropriate Linux distribution.
 For example, on Ubuntu use the command:
 
@@ -210,7 +210,7 @@ MCAP dependencies
 
 `MCAP <https://github.com/foxglove/mcap>`_ is a modular container format and logging library for pub/sub messages with arbitrary message serialization.
 It is primarily intended for use in robotics applications, and works well under various workloads, resource constraints, and durability requirements.
-MCAP C++ library is packed within |ddsrecorder| as a header-only, but its dependencies need to be installed using the package manager of the appropriate Linux distribution.
+MCAP C++ library is packed within |ddsrecord| as a header-only, but its dependencies need to be installed using the package manager of the appropriate Linux distribution.
 For example, on Ubuntu use the command:
 
 .. code-block:: bash
@@ -237,14 +237,14 @@ In other case, just skip this step.
 Colcon installation (recommended)
 =================================
 
-#.  Create a :code:`DDS-Record` directory and download the :code:`.repos` file that will be used to install |eddsrecord| and its dependencies:
+#.  Create a :code:`DDS-Record-Replay` directory and download the :code:`.repos` file that will be used to install |eddsrecord| and its dependencies:
 
     .. code-block:: bash
 
-        mkdir -p ~/DDS-Record/src
-        cd ~/DDS-Record
-        wget https://raw.githubusercontent.com/eProsima/DDS-Recorder/main/ddsrecorder.repos
-        vcs import src < ddsrecorder.repos
+        mkdir -p ~/DDS-Record-Replay/src
+        cd ~/DDS-Record-Replay
+        wget https://raw.githubusercontent.com/eProsima/DDS-Record-Replay/main/ddsrecordreplay.repos
+        vcs import src < ddsrecordreplay.repos
 
     .. note::
 
@@ -260,7 +260,7 @@ Colcon installation (recommended)
 
 .. note::
 
-    To install both |ddsrecorder| and its :ref:`remote controller application <remote_controller>`, compilation flag ``-DBUILD_DDSRECORDER_CONTROLLER=ON`` is required.
+    To install |ddsrecorder| :ref:`remote controller application <recorder_remote_controller>`, compilation flag ``-DBUILD_DDSRECORDER_CONTROLLER=ON`` is required.
 
 .. note::
 
@@ -280,15 +280,15 @@ This section explains how to compile |eddsrecord| with CMake_, either :ref:`loca
 Local installation
 ------------------
 
-#.  Create a :code:`DDS-Recorder` directory where to download and build |ddsrecorder| and its dependencies:
+#.  Create a :code:`DDS-Record-Replay` directory where to download and build |ddsrecord| and its dependencies:
 
     .. code-block:: bash
 
-        mkdir -p ~/DDS-Record/src
-        mkdir -p ~/DDS-Record/build
-        cd ~/DDS-Record
-        wget https://raw.githubusercontent.com/eProsima/DDS-Recorder/main/ddsrecorder.repos
-        vcs import src < ddsrecorder.repos
+        mkdir -p ~/DDS-Record-Replay/src
+        mkdir -p ~/DDS-Record-Replay/build
+        cd ~/DDS-Record-Replay
+        wget https://raw.githubusercontent.com/eProsima/DDS-Record-Replay/main/ddsrecordreplay.repos
+        vcs import src < ddsrecordreplay.repos
 
 #.  Compile all dependencies using CMake_.
 
@@ -296,30 +296,30 @@ Local installation
 
         .. code-block:: bash
 
-            cd ~/DDS-Record
+            cd ~/DDS-Record-Replay
             mkdir build/foonathan_memory_vendor
             cd build/foonathan_memory_vendor
-            cmake ~/DDS-Record/src/foonathan_memory_vendor -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DBUILD_SHARED_LIBS=ON
+            cmake ~/DDS-Record-Replay/src/foonathan_memory_vendor -DCMAKE_INSTALL_PREFIX=~/DDS-Record-Replay/install -DBUILD_SHARED_LIBS=ON
             cmake --build . --target install
 
     * `Fast CDR <https://github.com/eProsima/Fast-CDR>`_
 
         .. code-block:: bash
 
-            cd ~/DDS-Record
+            cd ~/DDS-Record-Replay
             mkdir build/fastcdr
             cd build/fastcdr
-            cmake ~/DDS-Record/src/fastcdr -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install
+            cmake ~/DDS-Record-Replay/src/fastcdr -DCMAKE_INSTALL_PREFIX=~/DDS-Record-Replay/install
             cmake --build . --target install
 
     * `Fast DDS <https://github.com/eProsima/Fast-DDS>`_
 
         .. code-block:: bash
 
-            cd ~/DDS-Record
+            cd ~/DDS-Record-Replay
             mkdir build/fastdds
             cd build/fastdds
-            cmake ~/DDS-Record/src/fastdds -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
+            cmake ~/DDS-Record-Replay/src/fastdds -DCMAKE_INSTALL_PREFIX=~/DDS-Record-Replay/install -DCMAKE_PREFIX_PATH=~/DDS-Record-Replay/install
             cmake --build . --target install
 
     * `Dev Utils <https://github.com/eProsima/dev-utils>`_
@@ -327,17 +327,17 @@ Local installation
         .. code-block:: bash
 
             # CMake Utils
-            cd ~/DDS-Record
+            cd ~/DDS-Record-Replay
             mkdir build/cmake_utils
             cd build/cmake_utils
-            cmake ~/DDS-Record/src/dev-utils/cmake_utils -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
+            cmake ~/DDS-Record-Replay/src/dev-utils/cmake_utils -DCMAKE_INSTALL_PREFIX=~/DDS-Record-Replay/install -DCMAKE_PREFIX_PATH=~/DDS-Record-Replay/install
             cmake --build . --target install
 
             # C++ Utils
-            cd ~/DDS-Record
+            cd ~/DDS-Record-Replay
             mkdir build/cpp_utils
             cd build/cpp_utils
-            cmake ~/DDS-Record/src/dev-utils/cpp_utils -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
+            cmake ~/DDS-Record-Replay/src/dev-utils/cpp_utils -DCMAKE_INSTALL_PREFIX=~/DDS-Record-Replay/install -DCMAKE_PREFIX_PATH=~/DDS-Record-Replay/install
             cmake --build . --target install
 
     * `DDS Pipe <https://github.com/eProsima/DDS-Pipe>`_
@@ -345,24 +345,24 @@ Local installation
         .. code-block:: bash
 
             # ddspipe_core
-            cd ~/DDS-Record
+            cd ~/DDS-Record-Replay
             mkdir build/ddspipe_core
             cd build/ddspipe_core
-            cmake ~/DDS-Record/src/ddspipe/ddspipe_core -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
+            cmake ~/DDS-Record-Replay/src/ddspipe/ddspipe_core -DCMAKE_INSTALL_PREFIX=~/DDS-Record-Replay/install -DCMAKE_PREFIX_PATH=~/DDS-Record-Replay/install
             cmake --build . --target install
 
             # ddspipe_participants
-            cd ~/DDS-Record
+            cd ~/DDS-Record-Replay
             mkdir build/ddspipe_participants
             cd build/ddspipe_participants
-            cmake ~/DDS-Record/src/ddspipe/ddspipe_participants -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
+            cmake ~/DDS-Record-Replay/src/ddspipe/ddspipe_participants -DCMAKE_INSTALL_PREFIX=~/DDS-Record-Replay/install -DCMAKE_PREFIX_PATH=~/DDS-Record-Replay/install
             cmake --build . --target install
 
             # ddspipe_yaml
-            cd ~/DDS-Record
+            cd ~/DDS-Record-Replay
             mkdir build/ddspipe_yaml
             cd build/ddspipe_yaml
-            cmake ~/DDS-Record/src/ddspipe/ddspipe_yaml -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
+            cmake ~/DDS-Record-Replay/src/ddspipe/ddspipe_yaml -DCMAKE_INSTALL_PREFIX=~/DDS-Record-Replay/install -DCMAKE_PREFIX_PATH=~/DDS-Record-Replay/install
             cmake --build . --target install
 
 #.  Once all dependencies are installed, install |eddsrecord|:
@@ -370,24 +370,31 @@ Local installation
     .. code-block:: bash
 
         # ddsrecorder_participants
-        cd ~/DDS-Record
+        cd ~/DDS-Record-Replay
         mkdir build/ddsrecorder_participants
         cd build/ddsrecorder_participants
-        cmake ~/DDS-Record/src/ddsrecorder/ddsrecorder_participants -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
+        cmake ~/DDS-Record-Replay/src/ddsrecorder/ddsrecorder_participants -DCMAKE_INSTALL_PREFIX=~/DDS-Record-Replay/install -DCMAKE_PREFIX_PATH=~/DDS-Record-Replay/install
         cmake --build . --target install
 
         # ddsrecorder_yaml
-        cd ~/DDS-Record
+        cd ~/DDS-Record-Replay
         mkdir build/ddsrecorder_yaml
         cd build/ddsrecorder_yaml
-        cmake ~/DDS-Record/src/ddsrecorder/ddsrecorder_yaml -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
+        cmake ~/DDS-Record-Replay/src/ddsrecorder/ddsrecorder_yaml -DCMAKE_INSTALL_PREFIX=~/DDS-Record-Replay/install -DCMAKE_PREFIX_PATH=~/DDS-Record-Replay/install
         cmake --build . --target install
 
         # ddsrecorder
-        cd ~/DDS-Record
+        cd ~/DDS-Record-Replay
         mkdir build/ddsrecorder_tool
         cd build/ddsrecorder_tool
-        cmake ~/DDS-Record/src/ddsrecorder/ddsrecorder -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
+        cmake ~/DDS-Record-Replay/src/ddsrecorder/ddsrecorder -DCMAKE_INSTALL_PREFIX=~/DDS-Record-Replay/install -DCMAKE_PREFIX_PATH=~/DDS-Record-Replay/install
+        cmake --build . --target install
+
+        # ddsreplayer
+        cd ~/DDS-Record-Replay
+        mkdir build/ddsreplayer_tool
+        cd build/ddsreplayer_tool
+        cmake ~/DDS-Record-Replay/src/ddsrecorder/ddsreplayer -DCMAKE_INSTALL_PREFIX=~/DDS-Record-Replay/install -DCMAKE_PREFIX_PATH=~/DDS-Record-Replay/install
         cmake --build . --target install
 
     .. note::
@@ -397,22 +404,22 @@ Local installation
         and building with CMake option ``-DBUILD_TESTS=ON``.
 
 
-#.  Optionally, install the :ref:`remote controller application <remote_controller>` along with its dependency :ref:`Fast DDS Python <fastdds_python>`:
+#.  Optionally, install the :ref:`remote controller application <recorder_remote_controller>` along with its dependency :ref:`Fast DDS Python <fastdds_python>`:
 
     .. code-block:: bash
 
         # Fast DDS Python
-        cd ~/DDS-Record
+        cd ~/DDS-Record-Replay
         mkdir build/fastdds_python
         cd build/fastdds_python
-        cmake ~/DDS-Record/src/Fast-DDS-python/fastdds_python -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install
+        cmake ~/DDS-Record-Replay/src/Fast-DDS-python/fastdds_python -DCMAKE_INSTALL_PREFIX=~/DDS-Record-Replay/install -DCMAKE_PREFIX_PATH=~/DDS-Record-Replay/install
         cmake --build . --target install
 
         # Remote Controller Application
-        cd ~/DDS-Record
+        cd ~/DDS-Record-Replay
         mkdir build/controller_tool
         cd build/controller_tool
-        cmake ~/DDS-Record/src/ddsrecorder/controller/controller_tool -DCMAKE_INSTALL_PREFIX=~/DDS-Record/install -DCMAKE_PREFIX_PATH=~/DDS-Record/install -DBUILD_DDSRECORDER_CONTROLLER=ON
+        cmake ~/DDS-Record-Replay/src/ddsrecorder/controller/controller_tool -DCMAKE_INSTALL_PREFIX=~/DDS-Record-Replay/install -DCMAKE_PREFIX_PATH=~/DDS-Record-Replay/install -DBUILD_DDSRECORDER_CONTROLLER=ON
         cmake --build . --target install
 
 
@@ -421,7 +428,7 @@ Local installation
 Global installation
 -------------------
 
-To install |eddsrecord| system-wide instead of locally, remove all the flags that appear in the configuration steps of :code:`Fast-CDR`, :code:`Fast-DDS`, :code:`Dev-Utils`, :code:`DDS-Pipe`, and :code:`DDS-Record`, and change the first in the configuration step of :code:`foonathan_memory_vendor` to the following:
+To install |eddsrecord| system-wide instead of locally, remove all the flags that appear in the configuration steps of :code:`Fast-CDR`, :code:`Fast-DDS`, :code:`Dev-Utils`, :code:`DDS-Pipe`, and :code:`DDS-Record-Replay`, and change the first in the configuration step of :code:`foonathan_memory_vendor` to the following:
 
 .. code-block:: bash
 
@@ -440,7 +447,15 @@ To run the |ddsrecorder| tool, source the installation path and execute the exec
     source install/setup.bash
     ./<install-path>/ddsrecorder_tool/bin/ddsrecorder
 
-Be sure that this executable has execution permissions.
+Likewise, to run the |ddsreplay|, source the installation path and execute the executable file that has been installed in :code:`<install-path>/ddsreplayer_tool/bin/ddsreplayer`:
+
+.. code-block:: bash
+
+    # If built has been done using colcon, all projects could be sourced as follows
+    source install/setup.bash
+    ./<install-path>/ddsreplayer_tool/bin/ddsreplayer
+
+Be sure that these executables have execution permissions.
 
 .. External links
 

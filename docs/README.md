@@ -1,7 +1,7 @@
-# eProsima DDS Recorder docs
+# eProsima DDS Record & Replay docs
 
-This package generates the DDS Recorder documentation.
-[Here](https://eprosima-dds-recorder.readthedocs.io/en/latest/) it can be seen the online documentation hosted in
+This package generates the DDS Record & Replay documentation.
+[Here](https://dds-recorder.readthedocs.io/en/latest/) it can be seen the online documentation hosted in
 [readthedocs](https://readthedocs.org/).
 This packages is powered by [sphinx](https://www.sphinx-doc.org/en/master/).
 
@@ -29,13 +29,13 @@ pip3 install -U -r src/ddsrecorder/docs/requirements.txt
 
 In order to install this package independently, use the following command:
 ```bash
-colcon build --packages-select ddsrouter_docs
+colcon build --packages-select ddsrecorder_docs
 ```
 In order to compile and execute the package **tests**, a specific CMake option is required: `BUILD_DOCS_TESTS`.
 
 ```bash
-colcon build --packages-select ddsrouter_docs --cmake-args -DBUILD_DOCS_TESTS=ON
-colcon test --packages-select ddsrouter_docs --event-handler console_direct+
+colcon build --packages-select ddsrecorder_docs --cmake-args -DBUILD_DOCS_TESTS=ON
+colcon test --packages-select ddsrecorder_docs --event-handler console_direct+
 ```
 
 ---

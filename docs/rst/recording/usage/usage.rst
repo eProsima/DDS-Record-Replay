@@ -1,13 +1,13 @@
 .. include:: ../../exports/alias.include
 .. include:: ../../exports/roles.include
 
-.. _usage_usage:
+.. _recorder_usage_usage:
 
 #####
 Usage
 #####
 
-|eddsrecord| is a user application executed from command line.
+|eddsrecorder| is a user application executed from command line.
 
 .. contents::
     :local:
@@ -20,8 +20,8 @@ Starting Recording Application
 Docker Image
 ^^^^^^^^^^^^
 
-The recommended method to run the |ddsrecorder| is to instantiate a Docker container of the |ddsrecorder| image.
-:ref:`Here <docker>` are the instructions to download the compressed |ddsrecorder| Docker image and load it locally.
+The recommended method to run the |ddsrecorder| is to instantiate a Docker container of the |ddsrecord| image.
+:ref:`Here <docker>` are the instructions to download the compressed |ddsrecord| Docker image and load it locally.
 
 To run the |ddsrecorder| from a Docker container execute the following command:
 
@@ -44,20 +44,20 @@ In order to correctly execute the recorder, make sure that ``fastrtps``, ``fastc
 
     source <path-to-fastdds-installation>/install/setup.bash
     source <path-to-ddspipe-installation>/install/setup.bash
-    source <path-to-ddsrecorder-installation>/install/setup.bash
+    source <path-to-ddsrecordreplay-installation>/install/setup.bash
 
 .. note::
 
-    If Fast DDS, DDS Router and DDS Recorder have been installed in the system, these libraries would be sourced by default.
+    If Fast DDS, DDS Pipe and DDS Record & Replay have been installed in the system, these libraries would be sourced by default.
 
-To start |eddsrecord| with a default configuration, enter:
+To start |eddsrecorder| with a default configuration, enter:
 
 .. code-block:: bash
 
     ddsrecorder
 
 
-.. _usage_close_recorder:
+.. _recorder_usage_close_recorder:
 
 Closing Recording Application
 ------------------------------
@@ -65,7 +65,7 @@ Closing Recording Application
 SIGINT
 ^^^^^^
 
-To close |eddsrecord|, press ``Ctrl+C``. |eddsrecord| will perform a clean shutdown.
+To close |eddsrecorder|, press ``Ctrl+C``. |ddsrecorder| will perform a clean shutdown.
 
 SIGTERM
 ^^^^^^^
@@ -78,7 +78,7 @@ TIMEOUT
 
 Setting a maximum amount of seconds that the application will work using argument ``--timeout`` will close the application once the time has expired.
 
-.. _usage_usage_application_arguments:
+.. _recorder_usage_usage_application_arguments:
 
 Recording Service Command-Line Parameters
 -----------------------------------------
@@ -104,7 +104,7 @@ The |ddsrecorder| application supports several input arguments:
 
     *   - Version
         - It shows the current version |br|
-          of the DDS Recorder and the |br|
+          of the |ddsrecorder| and the |br|
           hash of the last commit of |br|
           the compiled code.
         - ``-v`` |br|
@@ -133,7 +133,7 @@ The |ddsrecorder| application supports several input arguments:
     *   - Timeout
         - Set a maximum time while the |br|
           application will be running. |br|
-          `0`` means that the application |br|
+          ``0`` means that the application |br|
           will run forever (until kill |br|
           via signal).
         - ``-t`` |br|
@@ -170,4 +170,4 @@ The |ddsrecorder| application supports several input arguments:
         - Set a regex string as filter.
         - ``--log-filter``
         - String
-        - ``"DDSRecorder"``
+        - ``"DDSRECORDER"``

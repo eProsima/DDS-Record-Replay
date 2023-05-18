@@ -1,7 +1,7 @@
 .. include:: ../../exports/alias.include
 .. include:: ../../exports/roles.include
 
-.. _remote_control:
+.. _recorder_remote_control:
 
 ##############
 Remote Control
@@ -22,7 +22,7 @@ The |ddsrecorder| application may have the following states:
 * **CLOSED**: The application is not running.
   To start running the application it is required to launch it from the terminal by executing ``ddsrecorder``.
   Once the ``ddsrecorder`` application is executed, it will automatically go into recording mode (``RUNNING`` state), although this can be modified through the `.yaml` configuration file.
-  Please refer to the |ddsrecorder| :ref:`remote controller configuration section <usage_configuration_remote_controller>` for more options on the initial state of the application.
+  Please refer to the |ddsrecorder| :ref:`remote controller configuration section <recorder_usage_configuration_remote_controller>` for more options on the initial state of the application.
 * **RUNNING**: The application is running and recording data in the database.
 * **PAUSED**: The application is running but not recording data in the database.
   In this state, the application stores the data it has received in a time window prior to the current time.
@@ -58,7 +58,7 @@ Therefore, any user can create his own application to control the |ddsrecorder| 
 .. note::
 
     Status and command topics are not blocked by default, i.e. messages on this topics will be recorded if listening on the same domain the controller is launched.
-    If willing to avoid this, include these topics in the :ref:`blocklist <topic_filtering_blocklist>`:
+    If willing to avoid this, include these topics in the :ref:`blocklist <recorder_topic_filtering_blocklist>`:
 
     .. code-block:: yaml
 
@@ -153,7 +153,7 @@ The following is a description of the aforementioned control topics.
                 - ``string``
                 - \-
 
-.. _remote_controller:
+.. _recorder_remote_controller:
 
 DDS Recorder remote controller application
 ==========================================
@@ -163,7 +163,7 @@ Thus the user can control a |ddsrecorder| instance using this application withou
 
 .. note::
 
-    If installing |ddsrecorder| from sources, compilation flag ``-DBUILD_DDSRECORDER_CONTROLLER=ON`` is required to build this application.
+    If installing |eddsrecord| from sources, compilation flag ``-DBUILD_DDSRECORDER_CONTROLLER=ON`` is required to build this application.
 
 Its interface is quite simple and intuitive.
 Once the application is launched, a layout as the following one should be visible:

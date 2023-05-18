@@ -27,128 +27,31 @@
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/logging/CustomStdLogConsumer.hpp>
 #include <cpp_utils/ReturnCode.hpp>
-#include <cpp_utils/thread_pool/pool/SlotThreadPool.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/utils.hpp>
 
-#include <ddspipe_core/core/DdsPipe.hpp>
-#include <ddspipe_core/dynamic/AllowedTopicList.hpp>
-#include <ddspipe_core/dynamic/DiscoveryDatabase.hpp>
-#include <ddspipe_core/dynamic/ParticipantsDatabase.hpp>
-#include <ddspipe_core/efficiency/payload/FastPayloadPool.hpp>
-
-#include <ddspipe_participants/participant/dynamic_types/DynTypesParticipant.hpp>
-#include <ddspipe_participants/participant/dynamic_types/SchemaParticipant.hpp>
-
-#include <ddsrecorder_participants/mcap/McapHandler.hpp>
-#include <ddsrecorder_participants/mcap/McapHandlerConfiguration.hpp>
-
-#include <ddsrecorder_yaml/YamlReaderConfiguration.hpp>
+#include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
 #include "user_interface/constants.hpp"
 #include "user_interface/arguments_configuration.hpp"
 #include "user_interface/ProcessReturnCode.hpp"
 
 #include "command_receiver/CommandReceiver.hpp"
+#include "tool/DdsRecorder.hpp"
 
 using namespace eprosima::ddspipe;
-using namespace eprosima::ddsrecorder;
+using namespace eprosima::ddsrecorder::recorder;
 
-using CommandCode = eprosima::ddsrecorder::receiver::CommandCode;
+using CommandCode = eprosima::ddsrecorder::recorder::receiver::CommandCode;
 using json = nlohmann::json;
 using McapHandlerState = eprosima::ddsrecorder::participants::McapHandlerStateCode;
 
 const std::string NEXT_STATE_TAG = "next_state";
-constexpr auto string_to_command = eprosima::ddsrecorder::receiver::string_to_enumeration;
+constexpr auto string_to_command = eprosima::ddsrecorder::recorder::receiver::string_to_enumeration;
 constexpr auto string_to_state = eprosima::ddsrecorder::participants::string_to_enumeration;
 
-std::unique_ptr<core::DdsPipe> create_recorder(
-        const eprosima::ddsrecorder::yaml::Configuration& configuration,
-        std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler>& mcap_handler,
-        McapHandlerState init_state)
-{
-    // Create allowed topics list
-    auto allowed_topics = std::make_shared<core::AllowedTopicList>(
-        configuration.allowlist,
-        configuration.blocklist);
-
-    // Create Discovery Database
-    std::shared_ptr<core::DiscoveryDatabase> discovery_database =
-            std::make_shared<core::DiscoveryDatabase>();
-
-    // Create Payload Pool
-    std::shared_ptr<core::PayloadPool> payload_pool =
-            std::make_shared<core::FastPayloadPool>();
-
-    // Create Thread Pool
-    std::shared_ptr<eprosima::utils::SlotThreadPool> thread_pool =
-            std::make_shared<eprosima::utils::SlotThreadPool>(configuration.n_threads);
-
-    // Create MCAP Handler configuration
-    std::string file_name = configuration.recorder_output_file + "_" + eprosima::utils::timestamp_to_string(
-        eprosima::utils::now()) + ".mcap";
-    eprosima::ddsrecorder::participants::McapHandlerConfiguration handler_config(
-        file_name,
-        configuration.max_pending_samples,
-        configuration.buffer_size,
-        configuration.event_window,
-        configuration.cleanup_period,
-        configuration.log_publish_time);
-
-    // Create MCAP Handler
-    mcap_handler = std::make_shared<eprosima::ddsrecorder::participants::McapHandler>(
-        handler_config,
-        payload_pool,
-        init_state);
-
-    // Create DynTypes Participant
-    auto dyn_participant = std::make_shared<eprosima::ddspipe::participants::DynTypesParticipant>(
-        configuration.simple_configuration,
-        payload_pool,
-        discovery_database);
-    dyn_participant->init();
-
-    // Create Recorder Participant
-    auto recorder_participant = std::make_shared<eprosima::ddspipe::participants::SchemaParticipant>(
-        configuration.recorder_configuration,
-        payload_pool,
-        discovery_database,
-        mcap_handler);
-
-    // Create and populate Participant Database
-    std::shared_ptr<core::ParticipantsDatabase> participant_database =
-            std::make_shared<core::ParticipantsDatabase>();
-
-    // Populate Participant Database
-    participant_database->add_participant(
-        dyn_participant->id(),
-        dyn_participant
-        );
-    participant_database->add_participant(
-        recorder_participant->id(),
-        recorder_participant
-        );
-
-    return std::make_unique<core::DdsPipe>(
-        allowed_topics,
-        discovery_database,
-        payload_pool,
-        participant_database,
-        thread_pool,
-        configuration.builtin_topics,
-        true
-        );
-}
-
-std::unique_ptr<core::DdsPipe> create_recorder(
-        const eprosima::ddsrecorder::yaml::Configuration& configuration)
-{
-    std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler> mcap_handler;
-    return create_recorder(configuration, mcap_handler, McapHandlerState::RUNNING);
-}
-
 std::unique_ptr<eprosima::utils::event::FileWatcherHandler> create_filewatcher(
-        const std::unique_ptr<core::DdsPipe>& recorder,
+        const std::unique_ptr<DdsRecorder>& recorder,
         const std::string& file_path)
 {
     // Callback will reload configuration and pass it to DdsPipe
@@ -163,7 +66,7 @@ std::unique_ptr<eprosima::utils::event::FileWatcherHandler> create_filewatcher(
 
                 try
                 {
-                    eprosima::ddsrecorder::yaml::Configuration new_configuration(file_path);
+                    eprosima::ddsrecorder::yaml::RecorderConfiguration new_configuration(file_path);
                     // Create new allowed topics list
                     auto new_allowed_topics = std::make_shared<core::AllowedTopicList>(
                         new_configuration.allowlist,
@@ -183,7 +86,7 @@ std::unique_ptr<eprosima::utils::event::FileWatcherHandler> create_filewatcher(
 }
 
 std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> create_periodic_handler(
-        const std::unique_ptr<core::DdsPipe>& recorder,
+        const std::unique_ptr<DdsRecorder>& recorder,
         const std::string& file_path,
         const eprosima::utils::Duration_ms& reload_time)
 {
@@ -198,7 +101,7 @@ std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> create_periodic_ha
 
                 try
                 {
-                    eprosima::ddsrecorder::yaml::Configuration new_configuration(file_path);
+                    eprosima::ddsrecorder::yaml::RecorderConfiguration new_configuration(file_path);
                     // Create new allowed topics list
                     auto new_allowed_topics = std::make_shared<core::AllowedTopicList>(
                         new_configuration.allowlist,
@@ -289,22 +192,22 @@ int main(
     eprosima::utils::Duration_ms timeout = 0;
 
     // Debug options
-    std::string log_filter = "(DDSPIPE|DDSRECORDER)";
+    std::string log_filter = "DDSRECORDER";
     eprosima::fastdds::dds::Log::Kind log_verbosity = eprosima::fastdds::dds::Log::Kind::Warning;
 
     // Parse arguments
-    ui::ProcessReturnCode arg_parse_result =
-            ui::parse_arguments(argc, argv, file_path, reload_time, timeout, log_filter, log_verbosity);
+    ProcessReturnCode arg_parse_result =
+            parse_arguments(argc, argv, file_path, reload_time, timeout, log_filter, log_verbosity);
 
-    if (arg_parse_result == ui::ProcessReturnCode::help_argument)
+    if (arg_parse_result == ProcessReturnCode::help_argument)
     {
-        return static_cast<int>(ui::ProcessReturnCode::success);
+        return static_cast<int>(ProcessReturnCode::success);
     }
-    else if (arg_parse_result == ui::ProcessReturnCode::version_argument)
+    else if (arg_parse_result == ProcessReturnCode::version_argument)
     {
-        return static_cast<int>(ui::ProcessReturnCode::success);
+        return static_cast<int>(ProcessReturnCode::success);
     }
-    else if (arg_parse_result != ui::ProcessReturnCode::success)
+    else if (arg_parse_result != ProcessReturnCode::success)
     {
         return static_cast<int>(arg_parse_result);
     }
@@ -312,9 +215,9 @@ int main(
     // Check file is in args, else get the default file
     if (file_path == "")
     {
-        if (is_file_accessible(ui::DEFAULT_CONFIGURATION_FILE_NAME, eprosima::utils::FileAccessMode::read))
+        if (is_file_accessible(DEFAULT_CONFIGURATION_FILE_NAME, eprosima::utils::FileAccessMode::read))
         {
-            file_path = ui::DEFAULT_CONFIGURATION_FILE_NAME;
+            file_path = DEFAULT_CONFIGURATION_FILE_NAME;
 
             logUser(
                 DDSRECORDER_EXECUTION,
@@ -330,7 +233,7 @@ int main(
             logError(
                 DDSRECORDER_ARGS,
                 "File '" << file_path << "' does not exist or it is not accessible.");
-            return static_cast<int>(ui::ProcessReturnCode::required_argument_failed);
+            return static_cast<int>(ProcessReturnCode::required_argument_failed);
         }
     }
 
@@ -377,14 +280,14 @@ int main(
         // DDS Recorder Initialization
 
         // Load configuration from YAML
-        eprosima::ddsrecorder::yaml::Configuration configuration(file_path);
+        eprosima::ddsrecorder::yaml::RecorderConfiguration configuration(file_path);
 
         logUser(DDSRECORDER_EXECUTION, "DDS Recorder running.");
 
         if (configuration.enable_remote_controller)
         {
             logUser(DDSRECORDER_EXECUTION, "Waiting for instructions...");
-            eprosima::ddsrecorder::receiver::CommandReceiver receiver(configuration.controller_domain,
+            eprosima::ddsrecorder::recorder::receiver::CommandReceiver receiver(configuration.controller_domain,
                     configuration.command_topic_name,
                     configuration.status_topic_name, close_handler);
             receiver.init();
@@ -470,11 +373,10 @@ int main(
 
                 // Reload YAML configuration file, in case it changed during STOPPED state
                 // NOTE: Changes to all (but controller specific) recorder configuration options are taken into account
-                configuration = eprosima::ddsrecorder::yaml::Configuration(file_path);
+                configuration = eprosima::ddsrecorder::yaml::RecorderConfiguration(file_path);
 
                 // Create DDS Recorder
-                std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler> mcap_handler;
-                auto recorder = create_recorder(configuration, mcap_handler, initial_state);
+                auto recorder = std::make_unique<DdsRecorder>(configuration, initial_state);
 
                 // Create File Watcher Handler
                 std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;
@@ -503,7 +405,7 @@ int main(
                         case CommandCode::start:
                             if (!first_iter)
                             {
-                                mcap_handler->start();
+                                recorder->start();
                             }
                             if (prev_command == CommandCode::pause)
                             {
@@ -514,7 +416,7 @@ int main(
                         case CommandCode::pause:
                             if (!first_iter)
                             {
-                                mcap_handler->pause();
+                                recorder->pause();
                             }
                             if (prev_command == CommandCode::start)
                             {
@@ -532,7 +434,7 @@ int main(
                             }
                             else
                             {
-                                mcap_handler->trigger_event();
+                                recorder->trigger_event();
                                 {
                                     // Process next_state argument if provided
                                     auto it = args.find(NEXT_STATE_TAG);
@@ -593,7 +495,7 @@ int main(
         else
         {
             // Start recording right away
-            auto recorder = create_recorder(configuration);
+            auto recorder = std::make_unique<DdsRecorder>(configuration, McapHandlerState::RUNNING);
 
             // Create File Watcher Handler
             std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;
@@ -623,14 +525,14 @@ int main(
                 "Error Loading DDS Recorder Configuration from file " << file_path <<
                 ". Error message:\n " <<
                 e.what());
-        return static_cast<int>(ui::ProcessReturnCode::execution_failed);
+        return static_cast<int>(ProcessReturnCode::execution_failed);
     }
     catch (const eprosima::utils::InitializationException& e)
     {
         logError(DDSRECORDER_ERROR,
                 "Error Initializing DDS Recorder. Error message:\n " <<
                 e.what());
-        return static_cast<int>(ui::ProcessReturnCode::execution_failed);
+        return static_cast<int>(ProcessReturnCode::execution_failed);
     }
 
     logUser(DDSRECORDER_EXECUTION, "Finishing DDS Recorder execution correctly.");
@@ -638,5 +540,5 @@ int main(
     // Force print every log before closing
     eprosima::utils::Log::Flush();
 
-    return static_cast<int>(ui::ProcessReturnCode::success);
+    return static_cast<int>(ProcessReturnCode::success);
 }

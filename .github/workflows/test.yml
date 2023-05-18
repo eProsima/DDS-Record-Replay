@@ -1,4 +1,4 @@
-# Main CI for DDS Recorder repository
+# Main CI for DDS Record & Replay repository
 # This is executed with every PullRequest (new or update), any merge in main and every night
 #
 # These jobs that require to install fastrtps library uses the artifact generated for the nightly job
@@ -77,21 +77,21 @@ jobs:
       OPENSSL64_ROOT: "C:/Program Files/OpenSSL-Win64"
 
     steps:
-      - name: Sync eProsima/DDS-Recorder repository
+      - name: Sync eProsima/DDS-Record-Replay repository
         uses: actions/checkout@v3
         with:
-          path: DDS-Recorder
+          path: DDS-Record-Replay
 
       - name: Install OpenSSL
-        uses: ./DDS-Recorder/.github/actions/install-openssl-windows
+        uses: ./DDS-Record-Replay/.github/actions/install-openssl-windows
 
       - name: Install GTest
-        uses: ./DDS-Recorder/.github/actions/install-gtest-windows
+        uses: ./DDS-Record-Replay/.github/actions/install-gtest-windows
         with:
           cmake_build_type: ${{ matrix.cmake-config }}
 
       - name: Install yaml-cpp
-        uses: ./DDS-Recorder/.github/actions/install-yamlcpp-windows
+        uses: ./DDS-Record-Replay/.github/actions/install-yamlcpp-windows
         with:
           cmake_build_type: ${{ matrix.cmake-config }}
 
@@ -142,7 +142,7 @@ jobs:
           run_id: ${{ env.fastdds_job_id }}
 
       - name: Install ddsrecorder_participants
-        uses: ./DDS-Recorder/.github/actions/install-recorder-subpackage-windows
+        uses: ./DDS-Record-Replay/.github/actions/install-recorder-subpackage-windows
         with:
           cmake_build_type: ${{ matrix.cmake-config }}
           subpackage: ddsrecorder_participants
@@ -150,7 +150,7 @@ jobs:
           cmake_prefix_path: 'C:\Program Files\gtest;C:\Program Files\yamlcpp;${{ github.workspace }}\..\fastdds\install;${{ env.vcpkg_install_path }}'
 
       - name: Install ddsrecorder_yaml
-        uses: ./DDS-Recorder/.github/actions/install-recorder-subpackage-windows
+        uses: ./DDS-Record-Replay/.github/actions/install-recorder-subpackage-windows
         with:
           cmake_build_type: ${{ matrix.cmake-config }}
           subpackage: ddsrecorder_yaml
@@ -158,18 +158,32 @@ jobs:
           cmake_prefix_path: 'C:\Program Files\gtest;C:\Program Files\yamlcpp;${{ github.workspace }}\..\fastdds\install;${{ env.vcpkg_install_path }}'
 
       - name: Install ddsrecorder
-        uses: ./DDS-Recorder/.github/actions/install-recorder-subpackage-windows
+        uses: ./DDS-Record-Replay/.github/actions/install-recorder-subpackage-windows
         with:
           cmake_build_type: ${{ matrix.cmake-config }}
           subpackage: ddsrecorder_tool
           subpackage_dir: ddsrecorder
           cmake_prefix_path: 'C:\Program Files\gtest;C:\Program Files\yamlcpp;${{ github.workspace }}\..\fastdds\install;${{ env.vcpkg_install_path }}'
 
+      - name: Install ddsreplayer
+        uses: ./DDS-Record-Replay/.github/actions/install-recorder-subpackage-windows
+        with:
+          cmake_build_type: ${{ matrix.cmake-config }}
+          subpackage: ddsreplayer_tool
+          subpackage_dir: ddsrecorder
+          cmake_prefix_path: 'C:\Program Files\gtest;C:\Program Files\yamlcpp;${{ github.workspace }}\..\fastdds\install;${{ env.vcpkg_install_path }}'
+
       - name: Run tests ddsrecorder_tool
-        uses: ./DDS-Recorder/.github/actions/run-test-windows
+        uses: ./DDS-Record-Replay/.github/actions/run-test-windows
         with:
           package_name: ddsrecorder_tool
           cmake_build_type: ${{ matrix.cmake-config }}
+
+      # - name: Run tests ddsreplayer_tool
+      #   uses: ./DDS-Record-Replay/.github/actions/run-test-windows
+      #   with:
+      #     package_name: ddsreplayer_tool
+      #     cmake_build_type: ${{ matrix.cmake-config }}
 
   ubuntu-main-test:
     runs-on: ubuntu-20.04
@@ -177,19 +191,19 @@ jobs:
       name: codecov
 
     steps:
-      - name: Sync eProsima/DDS-Recorder repository
+      - name: Sync eProsima/DDS-Record-Replay repository
         uses: actions/checkout@v3
         with:
-          path: src/DDS-Recorder
+          path: src/DDS-Record-Replay
 
       - name: Install apt packages
-        uses: ./src/DDS-Recorder/.github/actions/install-apt-packages
+        uses: ./src/DDS-Record-Replay/.github/actions/install-apt-packages
 
       - name: Install GTest
-        uses: ./src/DDS-Recorder/.github/actions/install-gtest-linux
+        uses: ./src/DDS-Record-Replay/.github/actions/install-gtest-linux
 
       - name: Install Python packages
-        uses: ./src/DDS-Recorder/.github/actions/install-python-packages
+        uses: ./src/DDS-Record-Replay/.github/actions/install-python-packages
 
       - name: Get build eProsima dependencies Job Id
         run: |
@@ -215,15 +229,15 @@ jobs:
 
       - name: Build workspace
         run: |
-          cat src/DDS-Recorder/.github/workflows/test_colcon.meta
+          cat src/DDS-Record-Replay/.github/workflows/test_colcon.meta
           source /home/runner/work/fastdds/install/setup.bash
           colcon build \
             --event-handlers=console_direct+ \
-            --metas src/DDS-Recorder/.github/workflows/test_colcon.meta \
+            --metas src/DDS-Record-Replay/.github/workflows/test_colcon.meta \
             --mixin coverage-gcc asan-gcc
 
       - name: Run tests ddsrecorder_docs
-        uses: ./src/DDS-Recorder/.github/actions/run-test-ubuntu
+        uses: ./src/DDS-Record-Replay/.github/actions/run-test-ubuntu
         with:
           package_name: ddsrecorder_docs
         if: always()
@@ -242,10 +256,16 @@ jobs:
         continue-on-error: true
 
       - name: Run tests ddsrecorder_tool
-        uses: ./src/DDS-Recorder/.github/actions/run-test-ubuntu
+        uses: ./src/DDS-Record-Replay/.github/actions/run-test-ubuntu
         with:
           package_name: ddsrecorder_tool
         if: always()
+
+      # - name: Run tests ddsreplayer_tool
+      #   uses: ./src/DDS-Record-Replay/.github/actions/run-test-ubuntu
+      #   with:
+      #     package_name: ddsreplayer_tool
+      #   if: always()
 
       - name: Upload Logs
         uses: actions/upload-artifact@v1
@@ -265,19 +285,19 @@ jobs:
           - 'ubuntu-22.04'
 
     steps:
-      - name: Sync eProsima/DDS-Recorder repository
+      - name: Sync eProsima/DDS-Record-Replay repository
         uses: actions/checkout@v3
         with:
-          path: src/DDS-Recorder
+          path: src/DDS-Record-Replay
 
       - name: Install apt packages
-        uses: ./src/DDS-Recorder/.github/actions/install-apt-packages
+        uses: ./src/DDS-Record-Replay/.github/actions/install-apt-packages
 
       - name: Install GTest
-        uses: ./src/DDS-Recorder/.github/actions/install-gtest-linux
+        uses: ./src/DDS-Record-Replay/.github/actions/install-gtest-linux
 
       - name: Install Python packages
-        uses: ./src/DDS-Recorder/.github/actions/install-python-packages
+        uses: ./src/DDS-Record-Replay/.github/actions/install-python-packages
 
       - name: Get build eProsima dependencies Job Id
         run: |
@@ -333,6 +353,18 @@ jobs:
               --timeout 60
         if: always()
 
+      # - name: Run tests ddsreplayer_tool
+      #   run: |
+      #     source install/setup.bash && \
+      #     colcon test \
+      #       --packages-select-regex ddsreplayer_tool \
+      #       --event-handlers=console_direct+ \
+      #       --return-code-on-test-failure \
+      #       --ctest-args \
+      #         --label-exclude xfail \
+      #         --timeout 60
+      #   if: always()
+
       - name: Upload Logs
         uses: actions/upload-artifact@v1
         with:
@@ -343,19 +375,19 @@ jobs:
   clang-tidy:
     runs-on: ubuntu-20.04
     steps:
-      - name: Sync eProsima/DDS-Recorder repository
+      - name: Sync eProsima/DDS-Record-Replay repository
         uses: actions/checkout@v3
         with:
-          path: src/DDS-Recorder
+          path: src/DDS-Record-Replay
 
       - name: Install apt packages
-        uses: ./src/DDS-Recorder/.github/actions/install-apt-packages
+        uses: ./src/DDS-Record-Replay/.github/actions/install-apt-packages
 
       - name: Install GTest
-        uses: ./src/DDS-Recorder/.github/actions/install-gtest-linux
+        uses: ./src/DDS-Record-Replay/.github/actions/install-gtest-linux
 
       - name: Install Python packages
-        uses: ./src/DDS-Recorder/.github/actions/install-python-packages
+        uses: ./src/DDS-Record-Replay/.github/actions/install-python-packages
 
       - name: Get build eProsima dependencies Job Id
         run: |
@@ -374,11 +406,11 @@ jobs:
 
       - name: Build workspace
         run: |
-          cat src/DDS-Recorder/.github/workflows/clang_colcon.meta
+          cat src/DDS-Record-Replay/.github/workflows/clang_colcon.meta
           source /home/runner/work/fastdds/install/setup.bash
           colcon build \
             --event-handlers=console_direct+ \
-            --metas src/DDS-Recorder/.github/workflows/clang_colcon.meta
+            --metas src/DDS-Record-Replay/.github/workflows/clang_colcon.meta
 
       - name: Run clang-tidy
         run: |
@@ -396,21 +428,21 @@ jobs:
   uncrustify:
     runs-on: ubuntu-20.04
     steps:
-      - name: Sync eProsima/DDS-Recorder repository
+      - name: Sync eProsima/DDS-Record-Replay repository
         uses: actions/checkout@v3
         with:
-          path: src/DDS-Recorder
+          path: src/DDS-Record-Replay
 
       - name: Fetch all branches and tags
         run: |
-          cd src/DDS-Recorder
+          cd src/DDS-Record-Replay
           git fetch --prune --unshallow
 
       - name: Install apt packages
-        uses: ./src/DDS-Recorder/.github/actions/install-apt-packages
+        uses: ./src/DDS-Record-Replay/.github/actions/install-apt-packages
 
       - name: Install Python packages
-        uses: ./src/DDS-Recorder/.github/actions/install-python-packages
+        uses: ./src/DDS-Record-Replay/.github/actions/install-python-packages
 
       - name: Install uncrustify
         run: |
@@ -440,12 +472,12 @@ jobs:
 
       - name: Get difference
         run: |
-          cd src/DDS-Recorder
+          cd src/DDS-Record-Replay
           echo "MODIFIED_FILES=$(git diff --name-only origin/${GITHUB_BASE_REF} origin/${GITHUB_HEAD_REF} | grep -e '\.h' -e '\.hpp' -e '\.cpp' -e '\.ipp' | tr '\n' ' ')" >> $GITHUB_ENV
 
       - name: Check difference
         run: |
-          cd src/DDS-Recorder
+          cd src/DDS-Record-Replay
           if [[ -z "${MODIFIED_FILES}" ]]
           then
             touch empty.hpp
@@ -455,7 +487,7 @@ jobs:
       - name: Check style
         run: |
           source install/local_setup.bash
-          cd src/DDS-Recorder
+          cd src/DDS-Record-Replay
           ament_uncrustify \
             -c ../../uncrustify.cfg \
             --language CPP \

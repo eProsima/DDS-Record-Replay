@@ -26,9 +26,9 @@
 #include <ddspipe_yaml/Yaml.hpp>
 #include <ddspipe_yaml/YamlManager.hpp>
 
-#include <ddsrecorder_yaml/yaml_configuration_tags.hpp>
+#include <ddsrecorder_yaml/recorder/yaml_configuration_tags.hpp>
 
-#include <ddsrecorder_yaml/YamlReaderConfiguration.hpp>
+#include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -38,19 +38,19 @@ using namespace eprosima::ddspipe::core;
 using namespace eprosima::ddspipe::participants;
 using namespace eprosima::ddspipe::yaml;
 
-Configuration::Configuration(
+RecorderConfiguration::RecorderConfiguration(
         const Yaml& yml)
 {
     load_ddsrecorder_configuration_(yml);
 }
 
-Configuration::Configuration(
+RecorderConfiguration::RecorderConfiguration(
         const std::string& file_path)
 {
     load_ddsrecorder_configuration_from_file_(file_path);
 }
 
-void Configuration::load_ddsrecorder_configuration_(
+void RecorderConfiguration::load_ddsrecorder_configuration_(
         const Yaml& yml)
 {
     try
@@ -136,7 +136,7 @@ void Configuration::load_ddsrecorder_configuration_(
     }
 }
 
-void Configuration::load_recorder_configuration_(
+void RecorderConfiguration::load_recorder_configuration_(
         const Yaml& yml,
         const YamlReaderVersion& version)
 {
@@ -218,7 +218,7 @@ void Configuration::load_recorder_configuration_(
     }
 }
 
-void Configuration::load_controller_configuration_(
+void RecorderConfiguration::load_controller_configuration_(
         const Yaml& yml,
         const YamlReaderVersion& version)
 {
@@ -260,7 +260,7 @@ void Configuration::load_controller_configuration_(
     }
 }
 
-void Configuration::load_specs_configuration_(
+void RecorderConfiguration::load_specs_configuration_(
         const Yaml& yml,
         const YamlReaderVersion& version)
 {
@@ -291,7 +291,7 @@ void Configuration::load_specs_configuration_(
     }
 }
 
-void Configuration::load_dds_configuration_(
+void RecorderConfiguration::load_dds_configuration_(
         const Yaml& yml,
         const YamlReaderVersion& version)
 {
@@ -331,7 +331,7 @@ void Configuration::load_dds_configuration_(
     }
 }
 
-void Configuration::load_ddsrecorder_configuration_from_file_(
+void RecorderConfiguration::load_ddsrecorder_configuration_from_file_(
         const std::string& file_path)
 {
     Yaml yml;
@@ -351,7 +351,7 @@ void Configuration::load_ddsrecorder_configuration_from_file_(
                       "> :\n " << e.what());
     }
 
-    Configuration::load_ddsrecorder_configuration_(yml);
+    RecorderConfiguration::load_ddsrecorder_configuration_(yml);
 }
 
 } /* namespace yaml */

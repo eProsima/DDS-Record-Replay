@@ -6,9 +6,8 @@
 Notes
 #####
 
-..
-    TODO uncomment when there are forthcoming notes
-    .. include:: forthcoming_version.rst
+.. TODO uncomment when there are forthcoming notes
+.. include:: forthcoming_version.rst
 
 Version v0.1.0
 ==============
@@ -26,12 +25,12 @@ This release includes the following **Recording features**:
 
 This release includes the following **User Interface features**:
 
-* :ref:`Recording Service Command-Line Parameters <usage_usage_application_arguments>`.
-* :ref:`Remote Control <remote_control>`.
+* :ref:`Recording Service Command-Line Parameters <recorder_usage_usage_application_arguments>`.
+* :ref:`Remote Control <recorder_remote_control>`.
 
 This release includes the following **Configuration features**:
 
-* Support YAML :ref:`configuration file <usage_configuration>`.
+* Support YAML :ref:`configuration file <recorder_usage_configuration>`.
 * Support for allow and block topic filters at execution time and in run-time.
 * Support configuration related to DDS communication.
 * Support configuration of data writing in the database.
@@ -40,8 +39,8 @@ This release includes the following **Configuration features**:
 
 This release includes the following **Tutorials**:
 
-* :ref:`Configuring Fast DDS DynamicTypes for data recording <tutorials_basic_example>`.
-* :ref:`Visualize recorded data with Foxglove <tutorials_foxglove>`.
+* :ref:`Configuring Fast DDS DynamicTypes for data recording <recorder_tutorials_basic_example>`.
+* :ref:`Visualize recorded data with Foxglove <recorder_tutorials_foxglove>`.
 
 This release includes the following **Documentation features**:
 

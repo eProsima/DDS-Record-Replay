@@ -107,7 +107,7 @@ class MenuWidget(QMenuBar):
         release_notes_action = QAction('Release Notes', self)
         release_notes_action.triggered.connect(
             lambda: QDesktopServices.openUrl(
-                QUrl('https://github.com/eProsima/DDS-Recorder/releases')))
+                QUrl('https://github.com/eProsima/DDS-Record-Replay/releases')))
         help_menu.addAction(release_notes_action)
 
         twitter_action = QAction('Join Us on Twitter', self)
@@ -119,13 +119,13 @@ class MenuWidget(QMenuBar):
         feature_request_action = QAction('Search Feature Requests', self)
         feature_request_action.triggered.connect(
             lambda: QDesktopServices.openUrl(
-                QUrl('https://github.com/eProsima/DDS-Recorder/releases')))
+                QUrl('https://github.com/eProsima/DDS-Record-Replay/releases')))
         help_menu.addAction(feature_request_action)
 
         issue_action = QAction('Report Issue', self)
         issue_action.triggered.connect(
             lambda: QDesktopServices.openUrl(
-                QUrl('https://github.com/eProsima/DDS-Recorder/releases/new')))
+                QUrl('https://github.com/eProsima/DDS-Record-Replay/releases/new')))
         help_menu.addAction(issue_action)
 
         # TODO add something in about

@@ -1,6 +1,6 @@
 .. include:: ../../exports/alias.include
 
-.. _tutorials_tutorials:
+.. _recorder_tutorials_tutorials:
 
 #########
 Tutorials

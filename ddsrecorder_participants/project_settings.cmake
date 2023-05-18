@@ -23,6 +23,7 @@ set(MODULE_SUMMARY
     "DDS Recorder Participants implementation.")
 
 set(MODULE_FIND_PACKAGES
+    yaml-cpp
     fastcdr
     fastrtps
     cpp_utils
@@ -42,6 +43,7 @@ set(MODULE_THIRDPARTY_HEADERONLY
 set(fastrtps_MINIMUM_VERSION "2.8")
 
 set(MODULE_DEPENDENCIES
+    yaml-cpp
     $<$<BOOL:${WIN32}>:iphlpapi$<SEMICOLON>Shlwapi>
     fastcdr
     fastrtps

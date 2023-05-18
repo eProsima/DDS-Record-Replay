@@ -20,7 +20,7 @@ set(MODULE_NAME
     ddsrecorder_yaml)
 
 set(MODULE_SUMMARY
-    "C++ library to create a DDS Recorder configuration from a YAML.")
+    "C++ library to create a DDS Recorder/Replayer configuration from a YAML.")
 
 set(MODULE_FIND_PACKAGES
     yaml-cpp

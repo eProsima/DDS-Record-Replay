@@ -24,7 +24,7 @@
 #include <queue>
 #include <thread>
 
-#include <mcap/writer.hpp>
+#include <mcap/mcap.hpp>
 
 #include <cpp_utils/macros/custom_enumeration.hpp>
 #include <cpp_utils/time/time_utils.hpp>
@@ -38,7 +38,7 @@
 #include <ddspipe_participants/participant/dynamic_types/ISchemaHandler.hpp>
 
 #include <ddsrecorder_participants/library/library_dll.h>
-#include <ddsrecorder_participants/mcap/McapHandlerConfiguration.hpp>
+#include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -308,6 +308,15 @@ protected:
      */
     static std::string tmp_filename_(
             const std::string& filename);
+
+    /**
+     * @brief Serialize a \c TopicQoS struct into a string.
+     *
+     * @param [in] qos TopicQoS to be serialized
+     * @return Serialized TopicQoS string
+     */
+    static std::string serialize_qos_(
+            const ddspipe::core::types::TopicQoS& qos);
 
     //! Handler configuration
     McapHandlerConfiguration configuration_;

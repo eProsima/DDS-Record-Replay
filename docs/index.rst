@@ -1,4 +1,4 @@
-.. eProsima DDS Recorder documentation master file.
+.. eProsima DDS Record & Replay documentation master file.
 
 .. include:: rst/formalia/titlepage.rst
 
@@ -38,8 +38,20 @@
    /rst/recording/usage/usage
    /rst/recording/usage/configuration
    /rst/recording/remote_control/remote_control
-   /rst/recording/usage/user_manual_glossary
    /rst/recording/tutorials/tutorials
+
+
+.. _index_replay_application:
+
+.. toctree::
+   :caption: Replay application
+   :maxdepth: 2
+   :numbered: 5
+   :hidden:
+
+   /rst/replaying/getting_started/getting_started
+   /rst/replaying/usage/usage
+   /rst/replaying/usage/configuration
 
 
 .. _index_developer_manual:

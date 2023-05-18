@@ -1,12 +1,18 @@
-.. |FastDDSDocs| replace:: `Fast DDS Documentation <https://fast-dds.docs.eprosima.com/en/v2.3.0/>`__
+.. |FastDDSDocs| replace:: `Fast DDS Documentation <https://fast-dds.docs.eprosima.com/en/v2.10.1/>`__
 .. |DDSSpecification| replace:: `DDS specification <https://www.omg.org/spec/DDS/1.4/About-DDS/>`__
 
 .. |ddsrouter| replace:: *DDS Router*
 .. |fastdds| replace:: *Fast DDS*
+
+.. |ddsrecord| replace:: *DDS Record & Replay*
 .. |ddsrecorder| replace:: *DDS Recorder*
+.. |ddsreplayer| replace:: *DDS Replayer*
+.. |ddsreplay| replace:: *DDS Replay tool*
 
 .. |eddsrouter| replace:: *eProsima DDS Router*
 .. |efastdds| replace:: *eProsima Fast DDS*
-.. |eddsrecord| replace:: *eProsima DDS Record*
+.. |eddsrecord| replace:: *eProsima DDS Record & Replay*
+.. |eddsrecorder| replace:: *eProsima DDS Recorder*
+.. |eddsreplayer| replace:: *eProsima DDS Replayer*
 
 .. |k8s| replace:: *K8s*

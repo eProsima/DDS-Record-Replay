@@ -1,5 +1,5 @@
-name: Install DDS Recorder subpackages
-description: Install and setup DDS Recorder subpackages for linking and building application in Windows
+name: Install DDS Record & Replay subpackages
+description: Install and setup DDS Record & Replay subpackages for linking and building application in Windows
 inputs:
   cmake_extra_args:
     description: 'Specifies cmake arguments different from default'
@@ -26,7 +26,7 @@ runs:
       cmake -DCMAKE_PREFIX_PATH="${{ inputs.cmake_prefix_path }}" `
         -DCMAKE_CXX_FLAGS="/WX /EHsc" -DBUILD_TOOL_TESTS=ON -DBUILD_LIBRARY_TESTS=ON `
         ${{ inputs.cmake_extra_args }} `
-        -B build\${{ inputs.subpackage }} -A x64 -T host=x64 DDS-Recorder/${{ inputs.subpackage_dir }};
+        -B build\${{ inputs.subpackage }} -A x64 -T host=x64 DDS-Record-Replay/${{ inputs.subpackage_dir }};
       cmake --build build\${{ inputs.subpackage }} --config ${{ inputs.cmake_build_type }} --target install;
 
     shell: pwsh

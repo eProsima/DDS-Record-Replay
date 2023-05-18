@@ -2,12 +2,12 @@
 
 .. _installation_manual_linux:
 
-#####################
-DDS Recorder on Linux
-#####################
+############################
+DDS Record & Replay on Linux
+############################
 
 .. warning::
 
-    The current version of |ddsrecorder| does not have installers for Linux platforms.
-    Please refer to the :ref:`developer_manual_installation_sources_linux` section to learn how to build |ddsrecorder|
+    The current version of |ddsrecord| does not have installers for Linux platforms.
+    Please refer to the :ref:`developer_manual_installation_sources_linux` section to learn how to build |ddsrecord|
     on Linux from sources.

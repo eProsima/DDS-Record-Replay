@@ -1,6 +1,6 @@
 .. include:: ../../exports/alias.include
 
-.. _getting_started_getting_started:
+.. _recorder_getting_started_getting_started:
 
 ###############
 Getting Started

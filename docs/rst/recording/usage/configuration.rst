@@ -1,7 +1,7 @@
 .. include:: ../../exports/alias.include
 .. include:: ../../exports/roles.include
 
-.. _usage_configuration:
+.. _recorder_usage_configuration:
 
 #############
 Configuration
@@ -26,14 +26,14 @@ Thus, this file has four major configuration groups:
 * ``specs``: configuration of the internal operation of the |ddsrecorder|.
 
 
-.. _dds_recorder_configuration_dds_configuration:
+.. _recorder_dds_recorder_configuration_dds_configuration:
 
 DDS Configuration
 -----------------
 
 Configuration related to DDS communication.
 
-.. _topic_filtering:
+.. _recorder_topic_filtering:
 
 Topic Filtering
 ^^^^^^^^^^^^^^^
@@ -43,9 +43,9 @@ By automatically detecting these topics, a |ddsrecorder| creates internal DDS :t
 
 .. note::
 
-    |ddsrecorder| entities are created with the QoS of the first Subscriber found in this Topic.
+    |ddsrecorder| entities are created with the QoS of the first Publisher/Subscriber found in this Topic, unless manually set in the :ref:`built-in topics <recorder_builtin_topics>` list.
 
-|ddsrecorder| allows filtering of DDS :term:`Topics<Topic>`, that is, it allows to define the DDS Topics' data that is going to be recorder by the application.
+|ddsrecorder| allows filtering of DDS :term:`Topics<Topic>`, that is, it allows to define the DDS Topics' data that is going to be recorded by the application.
 This way, it is possible to define a set of rules in |ddsrecorder| to filter those data samples the user does not wish to save.
 
 It is not mandatory to define such set of rules in the configuration file.
@@ -90,7 +90,7 @@ This is the list of topics that |ddsrecorder| will record, i.e. the data publish
 
     If no ``allowlist`` is provided, data will be recorded for all topics (unless filtered out in ``blocklist``).
 
-.. _topic_filtering_blocklist:
+.. _recorder_topic_filtering_blocklist:
 
 Block topic list
 """"""""""""""""
@@ -121,6 +121,8 @@ If a topic matches an expression both in the ``allowlist`` and in the ``blocklis
         blocklist:
           - name: "*"
             type: HelloWorld
+
+.. _recorder_builtin_topics:
 
 Built-in Topics
 ^^^^^^^^^^^^^^^
@@ -213,7 +215,7 @@ Apart from these values, the tag ``qos`` under each topic allows to configure th
               max-reception-rate: 10  # Discard messages if less than 100ms elapsed since the last sample was processed
 
 
-.. _usage_configuration_domain_id:
+.. _recorder_usage_configuration_domain_id:
 
 DDS Domain
 ^^^^^^^^^^
@@ -268,7 +270,7 @@ Buffer size
 This avoids disk access each time a sample is received.
 By default, its value is set to ``100``.
 
-.. _usage_configuration_event_window:
+.. _recorder_usage_configuration_event_window:
 
 Event Window
 ^^^^^^^^^^^^
@@ -278,6 +280,8 @@ Thus, when an event is triggered from the remote controller, samples received in
 
 In other words, the ``event-window`` acts as a sliding time window that allows to save the collected samples in this time window only when the remote controller event is received.
 By default, its value is set to ``20`` seconds.
+
+.. _recorder_usage_configuration_logpublishtime:
 
 Log Publish Time
 ^^^^^^^^^^^^^^^^
@@ -291,7 +295,7 @@ Max Reception Rate
 
 Limits the frequency [Hz] at which samples are processed, by discarding messages received before :code:`1/max-reception-rate` seconds have elapsed since the last processed message was received.
 When specified, ``max-reception-rate`` is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
-This parameter only accepts integer values, and its default value is ``0`` (no limit).
+This parameter only accepts non-negative values, and its default value is ``0`` (no limit).
 
 Downsampling
 ^^^^^^^^^^^^
@@ -301,13 +305,13 @@ If ``max-reception-rate`` is also set, downsampling applies to messages that alr
 When specified, this downsampling factor is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
 This parameter only accepts positive integer values, and its default value is ``1`` (no downsampling).
 
-.. _usage_configuration_remote_controller:
+.. _recorder_usage_configuration_remote_controller:
 
 Remote Controller
 -----------------
 
 Configuration of the DDS remote control system.
-Please refer to :ref:`Remote Control <remote_control>` for further information on how to use |ddsrecorder| remotely.
+Please refer to :ref:`Remote Control <recorder_remote_control>` for further information on how to use |ddsrecorder| remotely.
 The supported configurations are:
 
 .. list-table::
@@ -331,15 +335,18 @@ The supported configurations are:
 
     *   - DDS Domain
         - ``domain``
-        - DDS Domain of the DDS |br|
-          remote control system.
+        - DDS Domain of the |br|
+          DDS remote control |br|
+          system.
         - ``integer``
-        - DDS domain being recorded
+        - DDS domain being |br|
+          recorded
         - From ``0`` to ``255``
 
     *   - Initial state
         - ``initial-state``
-        - Initial state of |ddsrecorder|.
+        - Initial state of |br|
+          |ddsrecorder|.
         - ``string``
         - ``RUNNING``
         - ``RUNNING`` |br|
@@ -389,11 +396,11 @@ The default value is equal to ``5000`` samples.
 Cleanup Period
 ^^^^^^^^^^^^^^
 
-As explained in :ref:`Event Window <usage_configuration_event_window>`, a |ddsrecorder| in paused mode awaits for an event command to write in disk all samples received in the last ``event-window`` seconds.
+As explained in :ref:`Event Window <recorder_usage_configuration_event_window>`, a |ddsrecorder| in paused mode awaits for an event command to write in disk all samples received in the last ``event-window`` seconds.
 To accomplish this, received samples are stored in memory until the aforementioned event is triggered and, in order to limit memory consumption, outdated (received more than ``event-window`` seconds ago) samples are removed from this buffer every ``cleanup-period`` seconds.
 By default, its value is equal to twice the ``event-window``.
 
-.. _usage_configuration_general_example:
+.. _recorder_usage_configuration_general_example:
 
 General Example
 ---------------
@@ -449,7 +456,7 @@ A complete example of all the configurations described on this page can be found
       cleanup-period: 90
 
 
-.. _usage_fastdds_configuration:
+.. _recorder_usage_fastdds_configuration:
 
 Fast DDS Configuration
 ======================
@@ -468,4 +475,4 @@ In the *Fast DDS* ``DomainParticipant`` set the following QoS in order to send t
     DomainParticipantQos pqos;
     pqos.wire_protocol().builtin.typelookup_config.use_server = true;
 
-.. TODO: add a reference to dynamic types tutorial
+Feel free to review :ref:`this <recorder_tutorials_basic_example>` section, where it is explained in detail how to configure a Fast DDS Publisher/Subscriber leveraging :term:`Dynamic Types<DynamicTypes>`.

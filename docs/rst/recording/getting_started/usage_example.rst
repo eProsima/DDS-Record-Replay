@@ -1,6 +1,6 @@
 .. include:: ../../exports/alias.include
 
-.. _getting_started_usage_example:
+.. _recorder_getting_started_usage_example:
 
 ################
 Example of usage
@@ -31,7 +31,7 @@ Start ShapesDemo
 
 Let us launch a ShapesDemo instance and start publishing in topics ``Square`` with default settings.
 
-.. figure:: /rst/figures/shapesdemo_publisher.png
+.. figure:: /rst/figures/recorder_shapesdemo_publisher.png
     :align: center
     :scale: 75 %
 
@@ -44,7 +44,7 @@ This default configuration records all messages of all DDS Topics found in DDS D
 Additionally, it is possible to change the default configuration parameters by means of a YAML configuration file.
 
 .. note::
-    Please refer to :ref:`Configuration <usage_configuration>` for more information on how to configure a |ddsrecorder|.
+    Please refer to :ref:`Configuration <recorder_usage_configuration>` for more information on how to configure a |ddsrecorder|.
 
 Recorder execution
 ==================
@@ -61,11 +61,13 @@ In order to know all the possible arguments supported by this tool, use the comm
 
     ddsrecorder --help
 
-.. figure:: /rst/figures/shapesdemo_exec.png
+.. figure:: /rst/figures/recorder_shapesdemo_exec.png
 
 Stop the recorder with ``Ctrl+C`` and check that the MCAP file exists.
 
 Next Steps
 ==========
 
-Explore section :ref:`Tutorials <tutorials_basic_example>` for more information on how to configure and set up a recorder, as well as to discover multiple scenarios where |ddsrecorder| may serve as a useful tool.
+Explore section :ref:`Tutorials <recorder_tutorials_basic_example>` for more information on how to configure and set up a recorder, as well as to discover multiple scenarios where |ddsrecorder| may serve as a useful tool.
+Also, feel free to check out :ref:`this <replayer_getting_started_usage_example>` example, where a |ddsreplayer| is used to reproduce the traffic recorded following the steps in this tutorial.
+

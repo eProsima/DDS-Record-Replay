@@ -1,0 +1,47 @@
+dds:
+  domain: 0
+
+  allowlist:
+    - name: "topic_name"
+    - name: "HelloWorldTopic"
+      type: "HelloWorld"
+
+  blocklist:
+    - name: "topic_to_block"
+      type: "type_to_block"
+
+  builtin-topics:
+    - name: "HelloWorldTopic"
+      type: "HelloWorld"
+      qos:
+        reliability: true
+        durability: true
+        keyed: false
+        partitions: true
+        ownership: false
+
+replayer:
+  input-file: my_output_2023-04-10_10-37-50.mcap
+
+  begin-time:
+    local: true
+    format: "%Y-%m-%d_%H-%M-%S"
+    datetime: 2023-04-10_10-37-50
+    milliseconds: 100
+
+  end-time:
+    local: true
+    datetime: 2023-04-10_10-39-11
+    milliseconds: 200
+    nanoseconds: 50
+
+  start-replay-time:
+    local: true
+    datetime: 2023-04-12_12-00-00
+    milliseconds: 500
+
+  rate: 1.4
+
+specs:
+  threads: 12
+  wait-all-acked-timeout: 10
