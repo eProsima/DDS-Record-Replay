@@ -156,8 +156,8 @@ void ReplayerConfiguration::load_replay_configuration_(
     if ((begin_time.is_set() && end_time.is_set()) && begin_time.get_reference() >= end_time.get_reference())
     {
         throw eprosima::utils::ConfigurationException(
-                utils::Formatter() << "Error loading DDS Replayer configuration from yaml:\n "
-                << "begin_time must be earlier than end_time");
+                  utils::Formatter() << "Error loading DDS Replayer configuration from yaml:\n "
+                                     << "begin_time must be earlier than end_time");
     }
 
     // Get optional rate

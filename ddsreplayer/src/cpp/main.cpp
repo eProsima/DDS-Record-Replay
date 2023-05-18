@@ -224,7 +224,7 @@ int main(
                 logError(
                     DDSREPLAYER_ARGS,
                     "An input MCAP file must be provided through argument '-i' / '--input-file' " <<
-                    "or under 'input-file' YAML tag.");
+                        "or under 'input-file' YAML tag.");
                 return static_cast<int>(ProcessReturnCode::required_argument_failed);
             }
         }
@@ -255,21 +255,22 @@ int main(
 
         // Start replaying data
         bool read_success;
-        std::thread process_mcap_thread([&] {
-            try
-            {
-                replayer->process_mcap();
-                read_success = true;
-            }
-            catch (const eprosima::utils::InconsistencyException& e)
-            {
-                logError(DDSREPLAYER_ERROR,
+        std::thread process_mcap_thread([&]
+                {
+                    try
+                    {
+                        replayer->process_mcap();
+                        read_success = true;
+                    }
+                    catch (const eprosima::utils::InconsistencyException& e)
+                    {
+                        logError(DDSREPLAYER_ERROR,
                         "Error processing MCAP file. Error message:\n " <<
-                        e.what());
-                read_success = false;
-            }
-            close_handler->simulate_event_occurred();
-        });
+                            e.what());
+                        read_success = false;
+                    }
+                    close_handler->simulate_event_occurred();
+                });
 
         // Wait until signal arrives (or all messages in MCAP file sent)
         close_handler->wait_for_event();
