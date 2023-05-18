@@ -216,7 +216,7 @@ Open two terminals:
     .. code-block:: bash
 
         source install/setup.bash
-        cd DDS-Record-Replayer/build/TypeLookupService
+        cd DDS-Record-Replay/build/TypeLookupService
         ./TypeLookupService
 
 * In the second terminal, run the ddsrecorder:
@@ -238,7 +238,7 @@ Open two terminals:
     .. code-block:: bash
 
         source install/setup.bash
-        cd DDS-Record-Replayer/build/TypeLookupService
+        cd DDS-Record-Replay/build/TypeLookupService
         ./TypeLookupService --entity publisher
 
 * In the second terminal, run the DDS Subscriber:
@@ -246,7 +246,7 @@ Open two terminals:
 .. code-block:: bash
 
         source install/setup.bash
-        cd DDS-Record-Replayer/build/TypeLookupService
+        cd DDS-Record-Replay/build/TypeLookupService
         ./TypeLookupService --entity subscriber
 
 At this point, we observe that the data published reach the subscriber and it can access to the content of the sample received.

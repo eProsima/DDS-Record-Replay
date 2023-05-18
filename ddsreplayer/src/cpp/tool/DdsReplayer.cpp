@@ -174,6 +174,7 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
 
         builtin_topics.insert(channel_topic);
     }
+    mcap_reader.close();
 
     return builtin_topics;
 }

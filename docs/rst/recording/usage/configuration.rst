@@ -335,15 +335,18 @@ The supported configurations are:
 
     *   - DDS Domain
         - ``domain``
-        - DDS Domain of the DDS |br|
-          remote control system.
+        - DDS Domain of the |br|
+          DDS remote control |br|
+          system.
         - ``integer``
-        - DDS domain being recorded
+        - DDS domain being |br|
+          recorded
         - From ``0`` to ``255``
 
     *   - Initial state
         - ``initial-state``
-        - Initial state of |ddsrecorder|.
+        - Initial state of |br|
+          |ddsrecorder|.
         - ``string``
         - ``RUNNING``
         - ``RUNNING`` |br|

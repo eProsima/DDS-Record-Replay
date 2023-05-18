@@ -233,9 +233,9 @@ However, a user might be interested in only replaying data relative to a specifi
     *   - Use local time zone
         - ``local``
 
-        - Whether to intrepet the provided datetime as local (``true``) |br|
-          or as a Greenwich Mean Time (GMT/UTC +0) |br|
-          without Daylight Saving Time (DST) considerations (``false``).
+        - Whether to intrepet the provided datetime |br| as local (``true``)
+          or as a Greenwich Mean Time |br| (GMT/UTC +0)
+          without Daylight Saving Time |br| (DST) considerations (``false``).
         - ``bool``
         - ``true``
 

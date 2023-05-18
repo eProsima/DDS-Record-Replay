@@ -256,13 +256,13 @@ Colcon installation (recommended)
     Run colcon within a Visual Studio prompt.
     To do so, launch a *Developer Command Prompt* from the search engine.
 
-#.  Create a :code:`DDS-Record-Replayer` directory and download the :code:`.repos` file that will be used to install
+#.  Create a :code:`DDS-Record-Replay` directory and download the :code:`.repos` file that will be used to install
     |eddsrecord| and its dependencies:
 
     .. code-block:: bash
 
-        mkdir <path\to\user\workspace>\DDS-Record-Replayer
-        cd <path\to\user\workspace>\DDS-Record-Replayer
+        mkdir <path\to\user\workspace>\DDS-Record-Replay
+        cd <path\to\user\workspace>\DDS-Record-Replay
         mkdir src
         wget https://raw.githubusercontent.com/eProsima/DDS-Recorder/main/ddsrecorder.repos --output-file ddsrecorder.repos
         vcs import src --input ddsrecorder.repos

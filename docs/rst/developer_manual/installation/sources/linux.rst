@@ -280,7 +280,7 @@ This section explains how to compile |eddsrecord| with CMake_, either :ref:`loca
 Local installation
 ------------------
 
-#.  Create a :code:`DDS-Record-Replayer` directory where to download and build |ddsrecord| and its dependencies:
+#.  Create a :code:`DDS-Record-Replay` directory where to download and build |ddsrecord| and its dependencies:
 
     .. code-block:: bash
 

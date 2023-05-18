@@ -31,7 +31,7 @@ These options allow the developer to enable/disable certain |eddsrecord| setting
           ``ON``
         - ``OFF``
     *   - :class:`BUILD_DOCS`
-        - Build the |eddsrecord| documentation. |br|
+        - Build the |eddsrecord| |br| documentation. |br|
         - ``OFF`` |br|
           ``ON``
         - ``OFF``
