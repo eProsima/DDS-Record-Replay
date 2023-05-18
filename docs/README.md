@@ -1,7 +1,7 @@
-# eProsima DDS Recorder docs
+# eProsima DDS Record & Replay docs
 
-This package generates the DDS Recorder documentation.
-[Here](https://eprosima-dds-recorder.readthedocs.io/en/latest/) it can be seen the online documentation hosted in
+This package generates the DDS Record & Replay documentation.
+[Here](https://dds-recorder.readthedocs.io/en/latest/) it can be seen the online documentation hosted in
 [readthedocs](https://readthedocs.org/).
 This packages is powered by [sphinx](https://www.sphinx-doc.org/en/master/).
 

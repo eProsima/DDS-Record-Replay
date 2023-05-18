@@ -1,5 +1,5 @@
-name: Run DDS Recorder subpackage tests in windows
-description: Run DDS Recorder tests in windows for a specific package
+name: Run DDS Record & Replay subpackage tests in windows
+description: Run DDS Record & Replay tests in windows for a specific package
 inputs:
   package_name:
     description: 'Specifies the package build name to run the tests'

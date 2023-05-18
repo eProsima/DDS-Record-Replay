@@ -36,21 +36,21 @@ jobs:
       OPENSSL64_ROOT: "C:/Program Files/OpenSSL-Win64"
 
     steps:
-      - name: Sync eProsima/DDS-Recorder repository
+      - name: Sync eProsima/DDS-Record-Replay repository
         uses: actions/checkout@v3
         with:
-          path: DDS-Recorder
+          path: DDS-Record-Replay
 
       - name: Install OpenSSL
-        uses: ./DDS-Recorder/.github/actions/install-openssl-windows
+        uses: ./DDS-Record-Replay/.github/actions/install-openssl-windows
 
       - name: Install yaml-cpp
-        uses: ./DDS-Recorder/.github/actions/install-yamlcpp-windows
+        uses: ./DDS-Record-Replay/.github/actions/install-yamlcpp-windows
         with:
           cmake_build_type: ${{ matrix.cmake-config }}
 
       - name: Install eProsima dependencies
-        uses: ./DDS-Recorder/.github/actions/install-eprosima-dependencies-windows
+        uses: ./DDS-Record-Replay/.github/actions/install-eprosima-dependencies-windows
         env:
           DEFAULT_FASTDDS_BRANCH: 'master'
           DEFAULT_UTILS_BRANCH: 'main'
@@ -77,24 +77,24 @@ jobs:
           - 'ubuntu-22.04'
 
     steps:
-      - name: Sync eProsima/DDS-Recorder repository
+      - name: Sync eProsima/DDS-Record-Replay repository
         uses: actions/checkout@v3
         with:
-          path: src/DDS-Recorder
+          path: src/DDS-Record-Replay
 
-      - name: Avoid DDS Recorder build
+      - name: Avoid DDS Record & Replay build
         run: |
-          touch ./src/DDS-Recorder/COLCON_IGNORE
+          touch ./src/DDS-Record-Replay/COLCON_IGNORE
 
       - name: Install apt packages
-        uses: ./src/DDS-Recorder/.github/actions/install-apt-packages
+        uses: ./src/DDS-Record-Replay/.github/actions/install-apt-packages
 
       - name: Install Python packages
-        uses: ./src/DDS-Recorder/.github/actions/install-python-packages
+        uses: ./src/DDS-Record-Replay/.github/actions/install-python-packages
 
       - name: Fetch repositories
         run: |
-          vcs import src <  src/DDS-Recorder/.github/workflows/ci.repos
+          vcs import src <  src/DDS-Record-Replay/.github/workflows/ci.repos
           cd src/fastrtps && git checkout ${{ inputs.fastdds_branch }} && cd ../..
           cd src/dev-utils && git checkout ${{ inputs.utils_branch }} && cd ../..
           cd src/ddspipe && git checkout ${{ inputs.ddspipe_branch }} && cd ../..

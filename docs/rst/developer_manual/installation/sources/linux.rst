@@ -243,8 +243,8 @@ Colcon installation (recommended)
 
         mkdir -p ~/DDS-Record-Replay/src
         cd ~/DDS-Record-Replay
-        wget https://raw.githubusercontent.com/eProsima/DDS-Recorder/main/ddsrecorder.repos
-        vcs import src < ddsrecorder.repos
+        wget https://raw.githubusercontent.com/eProsima/DDS-Record-Replay/main/ddsrecordreplay.repos
+        vcs import src < ddsrecordreplay.repos
 
     .. note::
 
@@ -287,8 +287,8 @@ Local installation
         mkdir -p ~/DDS-Record-Replay/src
         mkdir -p ~/DDS-Record-Replay/build
         cd ~/DDS-Record-Replay
-        wget https://raw.githubusercontent.com/eProsima/DDS-Recorder/main/ddsrecorder.repos
-        vcs import src < ddsrecorder.repos
+        wget https://raw.githubusercontent.com/eProsima/DDS-Record-Replay/main/ddsrecordreplay.repos
+        vcs import src < ddsrecordreplay.repos
 
 #.  Compile all dependencies using CMake_.
 

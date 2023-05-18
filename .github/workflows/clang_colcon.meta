@@ -1,6 +1,15 @@
 {
     "names":
     {
+        "ddsreplayer_tool":
+        {
+            "cmake-args":
+            [
+                "-DCMAKE_BUILD_TYPE=Release",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+                "-DCMAKE_CXX_FLAGS='-Werror -Wall'",
+            ]
+        },
         "ddsrecorder_tool":
         {
             "cmake-args":
