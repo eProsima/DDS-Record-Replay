@@ -343,7 +343,7 @@ protected:
     std::list<Message> samples_buffer_;
 
     //! Pending samples map
-    std::map<std::string, std::queue<std::pair<std::string, Message>>> pending_samples_;
+    std::map<std::string, std::queue<std::pair<ddspipe::core::types::DdsTopic, Message>>> pending_samples_;
 
     //! Mutex synchronizing access to object's data structures
     std::mutex mtx_;

@@ -231,7 +231,7 @@ void McapHandler::add_data(
         {
             pending_samples_[topic.type_name].pop();
         }
-        pending_samples_[topic.type_name].push({topic.m_topic_name, msg});
+        pending_samples_[topic.type_name].push({topic, msg});
 
         throw;
     }
@@ -243,7 +243,7 @@ void McapHandler::add_data(
     catch (const utils::Exception&)
     {
         throw utils::InconsistencyException(
-                  STR_ENTRY << "Error writting in MCAP a message in topic " << topic.m_topic_name
+                  STR_ENTRY << "Error writting in MCAP a message in topic " << topic
                   );
     }
 }
@@ -392,14 +392,11 @@ void McapHandler::add_pending_samples_nts_(
 
     logInfo(DDSRECORDER_MCAP_HANDLER, "Sending pending samples of type: " << schema_name << ".");
 
-    DdsTopic sample_topic;
     mcap::ChannelId channel_id;
     while (!pending_queue.empty())
     {
         auto& sample = pending_queue.front();
-        sample_topic.m_topic_name = sample.first;
-        sample_topic.type_name = schema_name;
-        channel_id = get_channel_id_nts_(sample_topic);
+        channel_id = get_channel_id_nts_(sample.first);
         auto& msg = sample.second;
         msg.channelId = channel_id;
         try
