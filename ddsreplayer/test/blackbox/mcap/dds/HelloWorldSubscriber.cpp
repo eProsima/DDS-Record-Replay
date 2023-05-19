@@ -35,8 +35,13 @@
 
 using namespace eprosima::fastdds::dds;
 
-void init_info(DataToCheck* data, const std::string& type_name);
-void fill_info(DataToCheck* data, HelloWorld hello_, uint64_t time_arrive_msg);
+void init_info(
+        DataToCheck* data,
+        const std::string& type_name);
+void fill_info(
+        DataToCheck* data,
+        HelloWorld hello_,
+        uint64_t time_arrive_msg);
 
 std::atomic<bool> HelloWorldSubscriber::stop_(false);
 std::mutex HelloWorldSubscriber::terminate_cv_mtx_;
@@ -184,7 +189,7 @@ void HelloWorldSubscriber::on_data_available(
         if (info.instance_state == ALIVE_INSTANCE_STATE)
         {
             uint64_t current_time = std::chrono::duration_cast<std::chrono::milliseconds>
-                    (std::chrono::system_clock::now().time_since_epoch()).count();
+                        (std::chrono::system_clock::now().time_since_epoch()).count();
 
             samples_++;
 
@@ -222,8 +227,8 @@ void HelloWorldSubscriber::run()
 }
 
 void init_info(
-    DataToCheck* data,
-    const std::string& type_name)
+        DataToCheck* data,
+        const std::string& type_name)
 {
     data->n_received_msgs = 0;
     data->type_msg = type_name;
@@ -235,27 +240,34 @@ void init_info(
 
 uint64_t prev_time = 0;
 void fill_info(
-    DataToCheck* data,
-    HelloWorld hello_,
-    uint64_t time_arrive_msg)
+        DataToCheck* data,
+        HelloWorld hello_,
+        uint64_t time_arrive_msg)
 {
     data->n_received_msgs++;
     data->message_msg = hello_.message();
-    if (data->min_index_msg == -1 || data->min_index_msg > hello_.index()) {
+    if (data->min_index_msg == -1 || data->min_index_msg > hello_.index())
+    {
         data->min_index_msg = hello_.index();
     }
-    if (data->max_index_msg == -1 || data->max_index_msg < hello_.index()) {
+    if (data->max_index_msg == -1 || data->max_index_msg < hello_.index())
+    {
         data->max_index_msg = hello_.index();
     }
 
-    if (prev_time == 0) {
+    if (prev_time == 0)
+    {
         prev_time = time_arrive_msg;
     }
-    else {
+    else
+    {
         uint64_t time_between_msgs = time_arrive_msg - prev_time;
-        if (data->hz_msgs == -1) {
+        if (data->hz_msgs == -1)
+        {
             data->hz_msgs = time_between_msgs;
-        } else {
+        }
+        else
+        {
             data->max_index_msg == (data->max_index_msg + time_between_msgs) / 2.0;
         }
     }

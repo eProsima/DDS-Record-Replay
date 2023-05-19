@@ -52,7 +52,8 @@ enum class DataTypeKind
     HELLO_WORLD,
 };
 
-void create_subscriber_replayer(DataToCheck& data)
+void create_subscriber_replayer(
+        DataToCheck& data)
 {
     // Create Subscriber
     HelloWorldSubscriber subscriber(
@@ -129,7 +130,6 @@ void create_subscriber_replayer(DataToCheck& data)
 
     std::cout << "process info..." << std::endl;
 }
-
 
 TEST(McapFileReadTest, trivial)
 {
