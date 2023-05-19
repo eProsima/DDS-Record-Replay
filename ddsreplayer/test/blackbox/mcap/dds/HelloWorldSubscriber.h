@@ -30,6 +30,7 @@
 #include <fastdds/dds/subscriber/DataReaderListener.hpp>
 
 #include "types/hello_world/HelloWorldPubSubTypes.h"
+#include "data_to_check.idl"
 
 /**
  * @brief Class used to group into a single working unit a Subscriber with a DataReader and its listener.
@@ -49,7 +50,8 @@ public:
     HelloWorldSubscriber(
             const std::string& topic_name,
             uint32_t domain,
-            uint32_t max_messages);
+            uint32_t max_messages,
+            DataToCheck& data);
 
     /**
      * @brief Destroy the Type Lookup Service Publisher object
@@ -89,6 +91,8 @@ protected:
     eprosima::fastdds::dds::Topic* topic_;
     eprosima::fastdds::dds::DataReader* datareader_;
     eprosima::fastdds::dds::TypeSupport type_;
+
+    DataToCheck* data_;
 
     HelloWorld hello_;
 

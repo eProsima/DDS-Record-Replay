@@ -18,6 +18,7 @@
  */
 
 #include <csignal>
+#include <chrono>
 
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/subscriber/DataReader.hpp>
@@ -34,6 +35,9 @@
 
 using namespace eprosima::fastdds::dds;
 
+void init_info(DataToCheck* data, const std::string& type_name);
+void fill_info(DataToCheck* data, HelloWorld hello_, uint64_t time_arrive_msg);
+
 std::atomic<bool> HelloWorldSubscriber::stop_(false);
 std::mutex HelloWorldSubscriber::terminate_cv_mtx_;
 std::condition_variable HelloWorldSubscriber::terminate_cv_;
@@ -41,7 +45,8 @@ std::condition_variable HelloWorldSubscriber::terminate_cv_;
 HelloWorldSubscriber::HelloWorldSubscriber(
         const std::string& topic_name,
         uint32_t domain,
-        uint32_t max_messages)
+        uint32_t max_messages,
+        DataToCheck& data)
     : participant_(nullptr)
     , subscriber_(nullptr)
     , topic_(nullptr)
@@ -51,6 +56,8 @@ HelloWorldSubscriber::HelloWorldSubscriber(
     samples_ = 0;
 
     set_max_messages(max_messages);
+
+    data_ = &data;
 
     ///////////////////////////////
     // Create the DomainParticipant
@@ -70,6 +77,10 @@ HelloWorldSubscriber::HelloWorldSubscriber(
     ////////////////////////
     // REGISTER THE TYPE
     type_.register_type(participant_);
+
+    //////////////////////////////
+    // INIT DATA TO CHECK STRUCT
+    init_info(data_, type_.get_type_name());
 
     ////////////////////////
     // Create the Subscriber
@@ -172,7 +183,12 @@ void HelloWorldSubscriber::on_data_available(
     {
         if (info.instance_state == ALIVE_INSTANCE_STATE)
         {
+            uint64_t current_time = std::chrono::duration_cast<std::chrono::milliseconds>
+                    (std::chrono::system_clock::now().time_since_epoch()).count();
+
             samples_++;
+
+            fill_info(data_, hello_, current_time);
 
             // Print your structure data here.
             std::cout << "Message " << " " << hello_.index() << " RECEIVED" << std::endl;
@@ -203,4 +219,45 @@ void HelloWorldSubscriber::run()
             {
                 return is_stopped();
             });
+}
+
+void init_info(
+    DataToCheck* data,
+    const std::string& type_name)
+{
+    data->n_received_msgs = 0;
+    data->type_msg = type_name;
+    data->message_msg = "";
+    data->min_index_msg = -1;
+    data->max_index_msg = -1;
+    data->hz_msgs = -1;
+}
+
+uint64_t prev_time = 0;
+void fill_info(
+    DataToCheck* data,
+    HelloWorld hello_,
+    uint64_t time_arrive_msg)
+{
+    data->n_received_msgs++;
+    data->message_msg = hello_.message();
+    if (data->min_index_msg == -1 || data->min_index_msg > hello_.index()) {
+        data->min_index_msg = hello_.index();
+    }
+    if (data->max_index_msg == -1 || data->max_index_msg < hello_.index()) {
+        data->max_index_msg = hello_.index();
+    }
+
+    if (prev_time == 0) {
+        prev_time = time_arrive_msg;
+    }
+    else {
+        uint64_t time_between_msgs = time_arrive_msg - prev_time;
+        if (data->hz_msgs == -1) {
+            data->hz_msgs = time_between_msgs;
+        } else {
+            data->max_index_msg == (data->max_index_msg + time_between_msgs) / 2.0;
+        }
+    }
+
 }

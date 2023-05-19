@@ -41,7 +41,6 @@ const unsigned int DOMAIN = 0;
 std::string topic_name = "/dds/topic";
 std::string data_type_name = "HelloWorld";
 
-unsigned int n_msgs = 3;
 std::string send_message = "Hello World";
 unsigned int index = 6;
 unsigned int downsampling = 3;
@@ -53,14 +52,14 @@ enum class DataTypeKind
     HELLO_WORLD,
 };
 
-
-TEST(McapFileReadTest, trivial)
+void create_subscriber_replayer(DataToCheck& data)
 {
     // Create Subscriber
     HelloWorldSubscriber subscriber(
         test::topic_name,
         static_cast<uint32_t>(test::DOMAIN),
-        11);
+        11,
+        data);
 
     std::cout << "subscriber created !!!!" << std::endl;
 
@@ -129,9 +128,65 @@ TEST(McapFileReadTest, trivial)
     std::cout << "threads joined!!!!" << std::endl;
 
     std::cout << "process info..." << std::endl;
+}
 
-    // get_information();
-    // eprosima::utils::sleep_for(5000);
+
+TEST(McapFileReadTest, trivial)
+{
+    // info to check
+    DataToCheck data;
+    create_subscriber_replayer(data);
+    ASSERT_TRUE(true);
+}
+
+TEST(McapFileReadTest, n_msgs)
+{
+    // info to check
+    DataToCheck data;
+    create_subscriber_replayer(data);
+    ASSERT_EQ(data.n_received_msgs, 11);
+}
+
+TEST(McapFileReadTest, msg_type)
+{
+    // info to check
+    DataToCheck data;
+    create_subscriber_replayer(data);
+    ASSERT_EQ(data.type_msg, "HelloWorld");
+}
+
+TEST(McapFileReadTest, msg_message)
+{
+    // info to check
+    DataToCheck data;
+    create_subscriber_replayer(data);
+    ASSERT_EQ(data.message_msg, "Hello World");
+}
+
+TEST(McapFileReadTest, msg_min_index)
+{
+    // info to check
+    DataToCheck data;
+    create_subscriber_replayer(data);
+    ASSERT_EQ(data.min_index_msg, 0);
+}
+
+TEST(McapFileReadTest, msg_max_index)
+{
+    // info to check
+    DataToCheck data;
+    create_subscriber_replayer(data);
+    ASSERT_EQ(data.max_index_msg, 10);
+}
+
+TEST(McapFileReadTest, msg_hz)
+{
+    // info to check
+    DataToCheck data;
+    create_subscriber_replayer(data);
+    // hz ~ 200
+    ASSERT_GT(data.hz_msgs, 180);
+    ASSERT_LT(data.hz_msgs, 220);
 }
 
 int main(
@@ -139,5 +194,6 @@ int main(
         char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
+    // create_subscriber_replayer(data);
     return RUN_ALL_TESTS();
 }

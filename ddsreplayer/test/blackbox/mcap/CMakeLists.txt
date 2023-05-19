@@ -27,6 +27,12 @@ set(TEST_SOURCES
 
 set(TEST_LIST
         trivial
+        n_msgs
+        msg_type
+        msg_message
+        msg_min_index
+        msg_max_index
+        msg_hz
     )
 
 set(TEST_NEEDED_SOURCES
