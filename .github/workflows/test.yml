@@ -170,7 +170,7 @@ jobs:
         with:
           cmake_build_type: ${{ matrix.cmake-config }}
           subpackage: ddsreplayer_tool
-          subpackage_dir: ddsrecorder
+          subpackage_dir: ddsreplayer
           cmake_prefix_path: 'C:\Program Files\gtest;C:\Program Files\yamlcpp;${{ github.workspace }}\..\fastdds\install;${{ env.vcpkg_install_path }}'
 
       - name: Run tests ddsrecorder_tool
