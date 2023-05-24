@@ -69,7 +69,8 @@ DdsRecorder::DdsRecorder(
         configuration.buffer_size,
         configuration.event_window,
         configuration.cleanup_period,
-        configuration.log_publish_time);
+        configuration.log_publish_time,
+        configuration.only_with_type);
 
     // Create MCAP Handler
     mcap_handler_ = std::make_shared<participants::McapHandler>(

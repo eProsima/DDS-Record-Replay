@@ -13,34 +13,28 @@
 // limitations under the License.
 
 /**
- * @file yaml_configuration_tags.hpp
+ * @file constants.hpp
  */
 
 #pragma once
 
-#include <set>
-#include <string>
-
 namespace eprosima {
 namespace ddsrecorder {
-namespace yaml {
+namespace participants {
 
-//////////////////////
-// DDS related tags //
-//////////////////////
-constexpr const char* REPLAYER_DDS_TAG("dds");
+// QoS serialization
+constexpr const char* QOS_SERIALIZATION_QOS("qos");
+constexpr const char* QOS_SERIALIZATION_RELIABILITY("reliability");
+constexpr const char* QOS_SERIALIZATION_DURABILITY("durability");
+constexpr const char* QOS_SERIALIZATION_OWNERSHIP("ownership");
+constexpr const char* QOS_SERIALIZATION_KEYED("keyed");
 
-/////////////////////////
-// Replay related tags //
-/////////////////////////
-constexpr const char* REPLAYER_REPLAY_TAG("replayer");
-constexpr const char* REPLAYER_REPLAY_INPUT_TAG("input-file");
-constexpr const char* REPLAYER_REPLAY_BEGIN_TAG("begin-time");
-constexpr const char* REPLAYER_REPLAY_END_TAG("end-time");
-constexpr const char* REPLAYER_REPLAY_RATE_TAG("rate");
-constexpr const char* REPLAYER_REPLAY_START_TIME_TAG("start-replay-time");
-constexpr const char* REPLAYER_REPLAY_TYPES_TAG("replay-types");
+// MCAP metadata
+constexpr const char* METADATA_DYNAMIC_TYPES("dynamic_types");
 
-} /* namespace yaml */
+// Dynamic types serialization
+constexpr const char* TYPES_SERIALIZATION_DELIMITER("//-//-//-//");
+
+} /* namespace participants */
 } /* namespace ddsrecorder */
 } /* namespace eprosima */

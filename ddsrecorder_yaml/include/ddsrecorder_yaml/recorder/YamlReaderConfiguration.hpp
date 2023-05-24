@@ -66,6 +66,7 @@ public:
     bool log_publish_time = false;
     unsigned int downsampling = 1;
     float max_reception_rate = 0;
+    bool only_with_type = false;
 
     // Remote controller configuration
     bool enable_remote_controller = true;
@@ -77,7 +78,7 @@ public:
     // Specs
     unsigned int n_threads = 12;
     unsigned int max_history_depth = 5000;
-    unsigned int max_pending_samples = 5000;
+    unsigned int max_pending_samples = 0;  // 0 <-> no limit
     unsigned int cleanup_period;
 
 protected:

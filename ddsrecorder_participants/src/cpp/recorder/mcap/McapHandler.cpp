@@ -19,15 +19,25 @@
 #define MCAP_IMPLEMENTATION  // Define this in exactly one .cpp file
 
 #include <cstdio>
+#include <mcap/reader.hpp>
 
 #include <yaml-cpp/yaml.h>
 
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/exception/InconsistencyException.hpp>
+#include <cpp_utils/utils.hpp>
 
+#include <fastcdr/Cdr.h>
+#include <fastcdr/FastBuffer.h>
+#include <fastcdr/FastCdr.h>
+#include <fastdds/rtps/common/CDRMessage_t.h>
+#include <fastdds/rtps/common/SerializedPayload.h>
 #include <fastrtps/types/DynamicType.h>
+#include <fastrtps/types/TypeObjectFactory.h>
 
 #include <ddspipe_core/types/dynamic_types/schema.hpp>
+
+#include <ddsrecorder_participants/constants.hpp>
 
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
 
@@ -95,6 +105,9 @@ McapHandler::~McapHandler()
 
     // Stop handler prior to destruction
     stop();
+
+    // Serialize and store dynamic types associated to all added schemas
+    store_dynamic_types_();
 
     // Close writer and output file
     mcap_writer_.close();
@@ -223,11 +236,12 @@ void McapHandler::add_data(
     }
     catch (const utils::Exception&)
     {
-        logWarning(
+        logInfo(
             DDSRECORDER_MCAP_HANDLER,
             "Schema for topic " << topic << " not yet available, inserting to pending samples queue.");
 
-        if (pending_samples_[topic.type_name].size() == configuration_.max_pending_samples)
+        if (configuration_.max_pending_samples > 0 &&
+                pending_samples_[topic.type_name].size() == configuration_.max_pending_samples)
         {
             pending_samples_[topic.type_name].pop();
         }
@@ -287,6 +301,11 @@ void McapHandler::stop()
     if (prev_state == McapHandlerStateCode::RUNNING)
     {
         std::lock_guard<std::mutex> _(mtx_);
+        if (!configuration_.only_with_schema)
+        {
+            // Write samples whose schema was not received while RUNNNING
+            add_pending_samples_nts_();
+        }
         dump_data_nts_();
     }
     else if (prev_state == McapHandlerStateCode::PAUSED)
@@ -319,9 +338,14 @@ void McapHandler::pause()
         if (prev_state == McapHandlerStateCode::RUNNING)
         {
             std::lock_guard<std::mutex> _(mtx_);
+            if (!configuration_.only_with_schema)
+            {
+                // Write samples whose schema was not received while RUNNNING
+                add_pending_samples_nts_();
+            }
             // Write data stored in buffer
             dump_data_nts_();
-            // Remove pending samples
+            // Remove pending samples (if not written)
             clear_all_nts_();
         }
 
@@ -410,6 +434,22 @@ void McapHandler::add_pending_samples_nts_(
                       );
         }
         pending_queue.pop();
+    }
+}
+
+void McapHandler::add_pending_samples_nts_()
+{
+    logInfo(DDSRECORDER_MCAP_HANDLER, "Adding pending samples for all types.");
+
+    for (auto& pending_type: pending_samples_)
+    {
+        logInfo(DDSRECORDER_MCAP_HANDLER, "Blank schema created for type: " << pending_type.first << ".");
+
+        mcap::Schema blank_schema(pending_type.first, "ros2msg", "");
+        mcap_writer_.addSchema(blank_schema);
+        schemas_.insert({pending_type.first, std::move(blank_schema)});
+
+        add_pending_samples_nts_(pending_type.first);
     }
 }
 
@@ -541,7 +581,7 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
 
     // Create new channel
     mcap::KeyValueMap metadata = {};
-    metadata["qos"] = serialize_qos_(topic.topic_qos);
+    metadata[QOS_SERIALIZATION_QOS] = serialize_qos_(topic.topic_qos);
     mcap::Channel new_channel(topic.m_topic_name, "cdr", schema_id, metadata);
     mcap_writer_.addChannel(new_channel);
     auto channel_id = new_channel.id;
@@ -579,6 +619,89 @@ mcap::SchemaId McapHandler::get_schema_id_nts_(
     }
 }
 
+void McapHandler::store_dynamic_types_()
+{
+    auto type_names = utils::get_keys(schemas_);
+    mcap::KeyValueMap dynamic_types{};
+
+    for (auto& type_name: type_names)
+    {
+        const eprosima::fastrtps::types::TypeIdentifier* type_identifier = nullptr;
+        const eprosima::fastrtps::types::TypeObject* type_object = nullptr;
+        const eprosima::fastrtps::types::TypeInformation* type_information = nullptr;
+
+        type_information =
+                eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_information(type_name);
+        if (type_information != nullptr)
+        {
+            auto dependencies = type_information->complete().dependent_typeids();
+            std::string dependency_name;
+            unsigned int dependency_index = 0;
+            for (auto dependency: dependencies)
+            {
+                type_identifier = &dependency.type_id();
+                type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(
+                    type_identifier);
+                dependency_name = type_name + "_" + std::to_string(dependency_index);
+
+                // Serialize dynamic type in a string and store in map
+                store_dynamic_type_(type_identifier, type_object, dependency_name, dynamic_types);
+
+                // Increment suffix counter
+                dependency_index++;
+            }
+        }
+        type_identifier = nullptr;
+        type_object = nullptr;
+
+        type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(type_name,
+                        true);
+        if (type_identifier)
+        {
+            type_object =
+                    eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name, true);
+        }
+
+        // If complete not found, try with minimal
+        if (!type_object)
+        {
+            type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(
+                type_name, false);
+            if (type_identifier)
+            {
+                type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name,
+                                false);
+            }
+        }
+
+        // Serialize dynamic type in a string and store in map
+        store_dynamic_type_(type_identifier, type_object, type_name, dynamic_types);
+    }
+
+    // Store dynamic types as metadata in MCAP file
+    mcap::Metadata dynamic_metadata;
+    dynamic_metadata.name = METADATA_DYNAMIC_TYPES;
+    dynamic_metadata.metadata = dynamic_types;
+    auto status = mcap_writer_.write(dynamic_metadata);
+
+    return;
+}
+
+void McapHandler::store_dynamic_type_(
+        const eprosima::fastrtps::types::TypeIdentifier* type_identifier,
+        const eprosima::fastrtps::types::TypeObject* type_object,
+        const std::string& type_name,
+        mcap::KeyValueMap& dynamic_types)
+{
+    if (type_identifier != nullptr && type_object != nullptr)
+    {
+        auto typeid_str = serialize_type_identifier_(type_identifier);
+        auto typeobj_str = serialize_type_object_(type_object);
+
+        dynamic_types[type_name] = typeid_str + TYPES_SERIALIZATION_DELIMITER + typeobj_str;
+    }
+}
+
 std::string McapHandler::tmp_filename_(
         const std::string& filename)
 {
@@ -594,7 +717,7 @@ std::string McapHandler::serialize_qos_(
     YAML::Node qos_yaml;
 
     // Reliability tag
-    YAML::Node reliability_tag = qos_yaml["reliability"];
+    YAML::Node reliability_tag = qos_yaml[QOS_SERIALIZATION_RELIABILITY];
     if (qos.is_reliable())
     {
         reliability_tag = true;
@@ -605,7 +728,7 @@ std::string McapHandler::serialize_qos_(
     }
 
     // Durability tag
-    YAML::Node durability_tag = qos_yaml["durability"];
+    YAML::Node durability_tag = qos_yaml[QOS_SERIALIZATION_DURABILITY];
     if (qos.is_transient_local())
     {
         durability_tag = true;
@@ -616,7 +739,7 @@ std::string McapHandler::serialize_qos_(
     }
 
     // Ownership tag
-    YAML::Node ownership_tag = qos_yaml["ownership"];
+    YAML::Node ownership_tag = qos_yaml[QOS_SERIALIZATION_OWNERSHIP];
     if (qos.has_ownership())
     {
         ownership_tag = true;
@@ -627,7 +750,7 @@ std::string McapHandler::serialize_qos_(
     }
 
     // Keyed tag
-    YAML::Node keyed_tag = qos_yaml["keyed"];
+    YAML::Node keyed_tag = qos_yaml[QOS_SERIALIZATION_KEYED];
     if (qos.keyed)
     {
         keyed_tag = true;
@@ -638,6 +761,100 @@ std::string McapHandler::serialize_qos_(
     }
 
     return YAML::Dump(qos_yaml);
+}
+
+std::string McapHandler::serialize_type_identifier_(
+        const eprosima::fastrtps::types::TypeIdentifier* type_identifier)
+{
+    // Reserve payload and create buffer
+    size_t size = fastrtps::types::TypeIdentifier::getCdrSerializedSize(*type_identifier) +
+            eprosima::fastrtps::rtps::SerializedPayload_t::representation_header_size;
+    fastrtps::rtps::SerializedPayload_t payload(static_cast<uint32_t>(size));
+    eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
+
+    // Create CDR serializer
+    eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN, eprosima::fastcdr::Cdr::DDS_CDR);
+    payload.encapsulation = ser.endianness() == eprosima::fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
+
+    // Serialize
+    type_identifier->serialize(ser);
+    payload.length = (uint32_t)ser.getSerializedDataLength();
+    size = (ser.getSerializedDataLength() + 3) & ~3;
+
+    // Create CDR message
+    // NOTE: Use 0 length to avoid allocation (memory already reserved in payload creation)
+    eprosima::fastrtps::rtps::CDRMessage_t* cdr_message = new eprosima::fastrtps::rtps::CDRMessage_t(0);
+    cdr_message->buffer = payload.data;
+    cdr_message->max_size = payload.max_size;
+    cdr_message->length = payload.length;
+#if __BIG_ENDIAN__
+    cdr_message->msg_endian = eprosima::fastrtps::rtps::BIGEND;
+#else
+    cdr_message->msg_endian = eprosima::fastrtps::rtps::LITTLEEND;
+#endif // if __BIG_ENDIAN__
+
+    // Add data
+    bool valid = fastrtps::rtps::CDRMessage::addData(cdr_message, payload.data, payload.length);
+    for (uint32_t count = payload.length; count < size; ++count)
+    {
+        valid &= fastrtps::rtps::CDRMessage::addOctet(cdr_message, 0);
+    }
+    // Copy buffer to string
+    std::string typeid_str(reinterpret_cast<char const*>(cdr_message->buffer), size);
+
+    // Delete CDR message
+    // NOTE: set wraps attribute to avoid double free (buffer released by payload on destruction)
+    cdr_message->wraps = true;
+    delete cdr_message;
+
+    return typeid_str;
+}
+
+std::string McapHandler::serialize_type_object_(
+        const eprosima::fastrtps::types::TypeObject* type_object)
+{
+    // Reserve payload and create buffer
+    size_t size = fastrtps::types::TypeObject::getCdrSerializedSize(*type_object) +
+            eprosima::fastrtps::rtps::SerializedPayload_t::representation_header_size;
+    fastrtps::rtps::SerializedPayload_t payload(static_cast<uint32_t>(size));
+    eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
+
+    // Create CDR serializer
+    eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN, eprosima::fastcdr::Cdr::DDS_CDR);
+    payload.encapsulation = ser.endianness() == eprosima::fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
+
+    // Serialize
+    type_object->serialize(ser);
+    payload.length = (uint32_t)ser.getSerializedDataLength();
+    size = (ser.getSerializedDataLength() + 3) & ~3;
+
+    // Create CDR message
+    // NOTE: Use 0 length to avoid allocation (memory already reserved in payload creation)
+    eprosima::fastrtps::rtps::CDRMessage_t* cdr_message = new eprosima::fastrtps::rtps::CDRMessage_t(0);
+    cdr_message->buffer = payload.data;
+    cdr_message->max_size = payload.max_size;
+    cdr_message->length = payload.length;
+#if __BIG_ENDIAN__
+    cdr_message->msg_endian = eprosima::fastrtps::rtps::BIGEND;
+#else
+    cdr_message->msg_endian = eprosima::fastrtps::rtps::LITTLEEND;
+#endif // if __BIG_ENDIAN__
+
+    // Add data
+    bool valid = fastrtps::rtps::CDRMessage::addData(cdr_message, payload.data, payload.length);
+    for (uint32_t count = payload.length; count < size; ++count)
+    {
+        valid &= fastrtps::rtps::CDRMessage::addOctet(cdr_message, 0);
+    }
+    // Copy buffer to string
+    std::string typeobj_str(reinterpret_cast<char const*>(cdr_message->buffer), size);
+
+    // Delete CDR message
+    // NOTE: set wraps attribute to avoid double free (buffer released by payload on destruction)
+    cdr_message->wraps = true;
+    delete cdr_message;
+
+    return typeobj_str;
 }
 
 } /* namespace participants */
