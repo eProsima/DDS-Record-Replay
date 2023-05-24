@@ -262,14 +262,19 @@ void fill_info(
     else
     {
         uint64_t time_between_msgs = time_arrive_msg - prev_time;
+        prev_time = time_arrive_msg;
         if (data->hz_msgs == -1)
         {
             data->hz_msgs = time_between_msgs;
         }
         else
         {
-            data->max_index_msg == (data->max_index_msg + time_between_msgs) / 2.0;
+            std::cout << "else: " << (data->hz_msgs + time_between_msgs) / 2.0 << std::endl;
+            std::cout << "data->hz_msgs: " << data->hz_msgs << std::endl;
+            std::cout << "time_between_msgs: " << time_between_msgs << std::endl;
+
+            data->hz_msgs = (data->hz_msgs + time_between_msgs) / 2.0;
         }
     }
-
+    std::cout << "hz: " << data->hz_msgs << std::endl;
 }
