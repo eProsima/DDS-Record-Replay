@@ -222,7 +222,7 @@ void McapReaderParticipant::process_mcap()
             {
                 logInfo(DDSREPLAYER_MCAP_READER_PARTICIPANT,
                         "Participant stopped while processing MCAP file.");
-                return;
+                break;
             }
         }
 
