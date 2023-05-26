@@ -289,6 +289,12 @@ By default, data is replayed at the same rate it was published/received.
 However, a user might be interested in playing messages back at a rate different than the original one.
 This can be accomplished through the playback ``rate`` tag, which accepts positive float values (e.g. 0.5 <--> half speed || 2 <--> double speed).
 
+Replay Types
+^^^^^^^^^^^^
+
+By default, a |ddsreplayer| instance automatically sends all type information found in the provided MCAP file, which might be required for applications relying on :term:`Dynamic Types<DynamicTypes>`.
+Nonetheless, a user can choose to avoid this by setting ``replay-types: false``, so only data samples are sent while their associated type information is disregarded.
+
 Specs Configuration
 -------------------
 
@@ -364,6 +370,7 @@ A complete example of all the configurations described on this page can be found
         milliseconds: 500
 
       rate: 1.4
+      replay-types: true
 
     specs:
       threads: 8

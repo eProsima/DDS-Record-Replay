@@ -305,6 +305,14 @@ If ``max-reception-rate`` is also set, downsampling applies to messages that alr
 When specified, this downsampling factor is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
 This parameter only accepts positive integer values, and its default value is ``1`` (no downsampling).
 
+.. _recorder_usage_configuration_onlywithtype:
+
+Only With Type
+^^^^^^^^^^^^^^
+
+By default, all (allowed) received messages are recorded regardless of whether their associated type information has been received.
+However, a user can enforce that **only** samples whose type is received are recorded by setting ``only-with-type: true``.
+
 .. _recorder_usage_configuration_remote_controller:
 
 Remote Controller
@@ -389,9 +397,15 @@ Maximum Number of Pending Samples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It is possible that a |ddsrecorder| starts receiving data from a topic that it has not yet registered, i.e. a topic for which it does not know the data type.
-In order not to discard the samples received from this topic, it is possible to keep a limited number of samples in an internal circular buffer that stores those samples that do not yet have a known data type.
-The ``max-pending-samples`` parameter allows to configure the size of this circular buffer **for each topic** that is discovered.
-The default value is equal to ``5000`` samples.
+In this case, messages are kept in an internal circular buffer until their associated type information is received, event on which they are written to disk.
+
+However, the recorder execution might end before this event ever occurs.
+Depending on configuration (see :ref:`recorder_usage_configuration_onlywithtype`), messages kept in the pending samples buffer will be stored or not on closure.
+Hence, note that memory consumption would continuously grow whenever a sample with unknown type information is received.
+
+To avoid the exhaustion of memory resources in such scenarios, a configuration option is provided which lets the user set a limit on memory usage.
+The ``max-pending-samples`` parameter allows to configure the size of the aforementioned circular buffers **for each topic** that is discovered.
+The default value is equal to ``0`` samples (**no limit**).
 
 Cleanup Period
 ^^^^^^^^^^^^^^
@@ -442,6 +456,7 @@ A complete example of all the configurations described on this page can be found
       log-publish-time: false
       downsampling: 3
       max-reception-rate: 20
+      only-with-type: false
 
     remote-controller:
       enable: true
@@ -461,9 +476,10 @@ A complete example of all the configurations described on this page can be found
 Fast DDS Configuration
 ======================
 
-As mentioned before, the |ddsrecorder| requires the topic types in order to be able to record the data of such topics.
-This requires that the user application needs to be configured to send the required type information.
+As explained in :ref:`this section <recorder_getting_started_project_overview>`, a |ddsrecorder| instance stores (by default) all data regardless of whether their associated data type is received or not.
+Some applications rely on this information being recorded and written in the resulting MCAP file, which requires that the user application is configured to send the necessary type information.
 However, *Fast DDS* does not send the data type information by default, it must be configured to do so.
+
 First of all, when generating the topic types using *eProsima Fast DDS Gen*, the option ``-typeobject`` must be added in order to generate the needed code to fill the ``TypeObject`` data.
 
 For native types (data types that does not rely in other data types) this is enough, as *Fast DDS* will send the ``TypeObject`` by default.
@@ -475,4 +491,4 @@ In the *Fast DDS* ``DomainParticipant`` set the following QoS in order to send t
     DomainParticipantQos pqos;
     pqos.wire_protocol().builtin.typelookup_config.use_server = true;
 
-Feel free to review :ref:`this <recorder_tutorials_basic_example>` section, where it is explained in detail how to configure a Fast DDS Publisher/Subscriber leveraging :term:`Dynamic Types<DynamicTypes>`.
+Feel free to review :ref:`this <tutorials_dynamic_types>` section, where it is explained in detail how to configure a Fast DDS Publisher/Subscriber leveraging :term:`Dynamic Types<DynamicTypes>`.

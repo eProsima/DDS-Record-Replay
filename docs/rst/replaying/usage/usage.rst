@@ -20,6 +20,9 @@ Starting Replay Application
 Docker Image
 ^^^^^^^^^^^^
 
+.. warning::
+    Currently, |ddsrecord| Docker image only contains |ddsrecorder| tool, |ddsreplay| application will be added soon.
+
 The recommended method to run the |ddsreplayer| is to instantiate a Docker container of the |ddsrecord| image.
 :ref:`Here <docker>` are the instructions to download the compressed |ddsrecord| Docker image and load it locally.
 
@@ -54,7 +57,7 @@ To start |eddsreplayer| with a default configuration, enter:
 
 .. code-block:: bash
 
-    ddsreplayer
+    ddsreplayer -i input_file.mcap
 
 
 .. _replayer_usage_close_replayer:

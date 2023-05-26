@@ -41,6 +41,7 @@ replayer:
     milliseconds: 500
 
   rate: 1.4
+  replay-types: true
 
 specs:
   threads: 12

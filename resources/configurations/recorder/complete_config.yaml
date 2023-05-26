@@ -32,6 +32,7 @@ recorder:
   log-publish-time: false
   downsampling: 3
   max-reception-rate: 20
+  only-with-type: false
 
 remote-controller:
   enable: true
