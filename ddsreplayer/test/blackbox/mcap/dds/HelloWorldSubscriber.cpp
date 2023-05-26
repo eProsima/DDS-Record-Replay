@@ -44,8 +44,6 @@ void fill_info(
         uint64_t time_arrive_msg);
 
 std::atomic<bool> HelloWorldSubscriber::stop_(false);
-std::mutex HelloWorldSubscriber::terminate_cv_mtx_;
-std::condition_variable HelloWorldSubscriber::terminate_cv_;
 
 HelloWorldSubscriber::HelloWorldSubscriber(
         const std::string& topic_name,
@@ -59,9 +57,7 @@ HelloWorldSubscriber::HelloWorldSubscriber(
     , type_(new HelloWorldPubSubType())
 {
     samples_ = 0;
-
-    set_max_messages(max_messages);
-
+    max_messages_ = max_messages;
     data_ = &data;
 
     ///////////////////////////////
@@ -150,14 +146,6 @@ bool HelloWorldSubscriber::is_stopped()
 void HelloWorldSubscriber::stop()
 {
     stop_ = true;
-
-    terminate_cv_.notify_all();
-}
-
-void HelloWorldSubscriber::set_max_messages(
-        uint32_t max_messages)
-{
-    max_messages_ = max_messages;
 }
 
 void HelloWorldSubscriber::on_subscription_matched(
@@ -184,7 +172,8 @@ void HelloWorldSubscriber::on_data_available(
 {
     SampleInfo info;
 
-    while ((reader->take_next_sample(&hello_, &info) == ReturnCode_t::RETCODE_OK) && !is_stopped())
+    while ((reader->take_next_sample(&hello_,
+            &info) == ReturnCode_t::RETCODE_OK) && !is_stopped() && (samples_ < max_messages_))
     {
         if (info.instance_state == ALIVE_INSTANCE_STATE)
         {
@@ -198,32 +187,21 @@ void HelloWorldSubscriber::on_data_available(
             // Print your structure data here.
             std::cout << "Message " << " " << hello_.index() << " RECEIVED" << std::endl;
             std::cout << "-----------------------------------------------------" << std::endl;
-
-            // Stop if all expecting messages has been received (max_messages number reached)
-            if (max_messages_ > 0 && (samples_ >= max_messages_))
-            {
-                stop();
-            }
         }
+    }
+
+    // Stop if all expecting messages has been received (max_messages number reached)
+    if (samples_ >= max_messages_)
+    {
+        stop();
     }
 }
 
 void HelloWorldSubscriber::run()
 {
-    stop_ = false;
-
-    std::cout << "Subscriber running. Please press CTRL+C to stop the Subscriber." << std::endl;
-
-    signal(SIGINT, [](int signum)
-            {
-                std::cout << "SIGINT received, stopping Subscriber execution." << std::endl;
-                static_cast<void>(signum); HelloWorldSubscriber::stop();
-            });
-    std::unique_lock<std::mutex> lck(terminate_cv_mtx_);
-    terminate_cv_.wait(lck, []
-            {
-                return is_stopped();
-            });
+    while (!is_stopped())
+    {
+    }
 }
 
 void init_info(
@@ -269,12 +247,8 @@ void fill_info(
         }
         else
         {
-            std::cout << "else: " << (data->hz_msgs + time_between_msgs) / 2.0 << std::endl;
-            std::cout << "data->hz_msgs: " << data->hz_msgs << std::endl;
-            std::cout << "time_between_msgs: " << time_between_msgs << std::endl;
 
             data->hz_msgs = (data->hz_msgs + time_between_msgs) / 2.0;
         }
     }
-    std::cout << "hz: " << data->hz_msgs << std::endl;
 }

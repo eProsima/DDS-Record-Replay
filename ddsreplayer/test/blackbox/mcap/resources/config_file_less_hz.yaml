@@ -7,5 +7,8 @@ builtin-topics:
     qos:
       reliability: true       # Use QoS RELIABLE
 
+replayer:
+  rate: 2.0
+
 specs:
   wait-all-acked-timeout: 1000

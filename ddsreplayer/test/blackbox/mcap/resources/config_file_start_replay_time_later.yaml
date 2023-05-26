@@ -7,5 +7,14 @@ builtin-topics:
     qos:
       reliability: true       # Use QoS RELIABLE
 
+replayer:
+  start-replay-time:
+    local: true
+    format: "%H-%M-%S_%Y-%m-%d"
+    datetime: 04-06-30_2023-05-17
+    milliseconds: 0
+    microseconds: 0
+    nanoseconds: 0
+
 specs:
   wait-all-acked-timeout: 1000

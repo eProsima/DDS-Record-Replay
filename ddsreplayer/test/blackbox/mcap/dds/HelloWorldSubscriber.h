@@ -17,8 +17,7 @@
  *
  */
 
-#ifndef _EPROSIMA_DDSRECORDER_RESOURCES_DDS_TYPEINTROSPECTION_TYPEINTROSPECTIONSUBSCRIBER_H_
-#define _EPROSIMA_DDSRECORDER_RESOURCES_DDS_TYPEINTROSPECTION_TYPEINTROSPECTIONSUBSCRIBER_H_
+#pragma once
 
 #include <atomic>
 #include <condition_variable>
@@ -30,7 +29,16 @@
 #include <fastdds/dds/subscriber/DataReaderListener.hpp>
 
 #include "types/hello_world/HelloWorldPubSubTypes.h"
-#include "data_to_check.idl"
+
+struct DataToCheck
+{
+    unsigned int n_received_msgs;
+    std::string type_msg;
+    std::string message_msg;
+    unsigned int min_index_msg;
+    unsigned int max_index_msg;
+    unsigned int hz_msgs;
+};
 
 /**
  * @brief Class used to group into a single working unit a Subscriber with a DataReader and its listener.
@@ -63,10 +71,6 @@ public:
      * @brief Run the subscriber until "number" samples are received
      *
      */void run();
-
-    //! Set the maximum number of messages to receive before exiting
-    void set_max_messages(
-            uint32_t max_messages);
 
     //! DataReader callback executed when a new sample is received
     void on_data_available(
@@ -105,12 +109,4 @@ protected:
 
     //! Member used for control flow purposes
     static std::atomic<bool> stop_;
-
-    //! Protects terminate condition variable
-    static std::mutex terminate_cv_mtx_;
-
-    //! Waits during execution until SIGINT or max_messages_ samples are received
-    static std::condition_variable terminate_cv_;
 };
-
-#endif /* _EPROSIMA_DDSRECORDER_RESOURCES_DDS_TYPEINTROSPECTION_TYPEINTROSPECTIONSUBSCRIBER_H_ */
