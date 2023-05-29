@@ -47,7 +47,18 @@ void create_subscriber_replayer(
         std::string configuration_path = "resources/config_file.yaml",
         uint32_t expected_msgs = 11)
 {
-    // // Create Subscriber
+    // Configuration
+    eprosima::ddsrecorder::yaml::ReplayerConfiguration configuration(configuration_path);
+
+    // Create replayer instance
+    std::string input_file = "resources/helloworld_withtype_file.mcap";
+
+    auto replayer = std::make_unique<DdsReplayer>(configuration, input_file);
+
+    // Create a multiple event handler that handles all events that make subscriber and replayer stop
+    auto close_handler_subscriber = std::make_shared<eprosima::utils::event::MultipleEventHandler>();
+
+    // Create Subscriber
     HelloWorldDynTypesSubscriber subscriber(
         test::topic_name,
         static_cast<uint32_t>(test::DOMAIN),
@@ -55,13 +66,6 @@ void create_subscriber_replayer(
         data);
 
     std::cout << "subscriber created !!!!" << std::endl;
-
-    // Configuration
-    eprosima::ddsrecorder::yaml::ReplayerConfiguration configuration(configuration_path);
-
-    // Create a multiple event handler that handles all events that make subscriber and replayer stop
-    auto close_handler_subscriber = std::make_shared<eprosima::utils::event::MultipleEventHandler>();
-
 
     // Run Participant
     std::thread run_subscriber([&]
@@ -78,18 +82,6 @@ void create_subscriber_replayer(
             }
             close_handler_subscriber->simulate_event_occurred();
         });
-
-    // Create replayer instance
-    std::string input_file = "resources/helloworld_withtype_file.mcap";
-    // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-    auto replayer = std::make_unique<DdsReplayer>(configuration, input_file);
-
-    std::cout << "replayer created !!!!" << std::endl;
-
-
-    // std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-    std::cout << "process mcap !!!!" << std::endl;
 
     // Start replaying data
     replayer->process_mcap();

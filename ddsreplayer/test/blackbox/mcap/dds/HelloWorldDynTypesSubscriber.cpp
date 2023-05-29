@@ -173,54 +173,12 @@ void HelloWorldDynTypesSubscriber::on_data_available(
     }
 }
 
-void HelloWorldDynTypesSubscriber::on_type_discovery(
-        eprosima::fastdds::dds::DomainParticipant* ,
-        const eprosima::fastrtps::rtps::SampleIdentity& ,
-        const eprosima::fastrtps::string_255& topic,
-        const eprosima::fastrtps::types::TypeIdentifier* ,
-        const eprosima::fastrtps::types::TypeObject* ,
-        eprosima::fastrtps::types::DynamicType_ptr dyn_type)
-{
-    // if (use_type_object_)
-    // {
-    //     if (!dyn_type)
-    //     {
-    //         // This is a Fast bug... ups
-    //         std::cout << "on_type_discovery return a nullptr type" << std::endl;
-    //         return;
-    //     }
-
-    //     if (topic.to_string() != topic_name_)
-    //     {
-    //         std::cout << "Discovered Topic " << topic.to_string() << " . Not the one expecting, Skipping." << std::endl;
-    //         return;
-    //     }
-
-    //     bool already_discovered = type_discovered_.exchange(true);
-    //     if (already_discovered)
-    //     {
-    //         return;
-    //     }
-
-    //     std::cout <<
-    //         "Discovered type from topic < " << topic.to_string() <<
-    //         " > with name < " << dyn_type->get_name() <<
-    //         " > by Topic discovery. Registering." << std::endl;
-
-    //     // Registering type and creating reader
-    //     on_type_discovered_and_registered_(dyn_type);
-    // }
-    std::cout << "!!!!!!!!! on_type_discovery"  << std::endl;
-
-}
-
 void HelloWorldDynTypesSubscriber::on_type_information_received(
         eprosima::fastdds::dds::DomainParticipant*,
         const eprosima::fastrtps::string_255 topic_name,
         const eprosima::fastrtps::string_255 type_name,
         const eprosima::fastrtps::types::TypeInformation& type_information)
 {
-    std::cout << "!!!!!!!!! on_type_information_received"  << std::endl;
     // First check if the topic received is the one we are expecting
     if (topic_name.to_string() != topic_name_)
     {
@@ -229,27 +187,61 @@ void HelloWorldDynTypesSubscriber::on_type_information_received(
             " > while expecting < " << topic_name_ << " >. Skipping..." << std::endl;
         return;
     }
-    else
+
+    bool already_discovered = type_discovered_.exchange(true);
+    if (already_discovered)
     {
-        std::cout <<
-            "Discovered type information from topic < " << topic_name.to_string() <<
-            " > while expecting < " << topic_name_ << std::endl;
+        return;
     }
 
-    // Create the callback to register the remote dynamic type
-    std::function<void(const std::string&, const eprosima::fastrtps::types::DynamicType_ptr)> callback(
-        [this]
-            (const std::string& name, const eprosima::fastrtps::types::DynamicType_ptr type)
-        {
-            this->register_remote_type_callback_(name, type);
-        });
-    std::cout << "!!!!!!!!! register_remote_callback:"  << std::endl;
+    std::string type_name_ = type_name.to_string();
+    const eprosima::fastrtps::types::TypeIdentifier* type_identifier = nullptr;
+    const eprosima::fastrtps::types::TypeObject* type_object = nullptr;
+    eprosima::fastrtps::types::DynamicType_ptr dynamic_type(nullptr);
 
-    // Register the discovered type and create a DataReader on this topic
-    participant_->register_remote_type(
-        type_information,
-        type_name.to_string(),
-        callback);
+    // Check if complete identifier already present in factory
+    type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(type_name_, true);
+    if (type_identifier)
+    {
+        type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name_, true);
+    }
+
+    // If complete not found, try with minimal
+    if (!type_object)
+    {
+        type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(type_name_, false);
+        if (type_identifier)
+        {
+            type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name_, false);
+        }
+    }
+
+    // Build dynamic type if type identifier and object found in factory
+    if (type_identifier && type_object)
+    {
+        dynamic_type = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->build_dynamic_type(type_name_, type_identifier, type_object);
+    }
+
+    if (!dynamic_type)
+    {
+        // Create the callback to register the remote dynamic type
+        std::function<void(const std::string&, const eprosima::fastrtps::types::DynamicType_ptr)> callback(
+            [this]
+                (const std::string& name, const eprosima::fastrtps::types::DynamicType_ptr type)
+            {
+                this->register_remote_type_callback_(name, type);
+            });
+
+        // Register the discovered type and create a DataReader on this topic
+        participant_->register_remote_type(
+            type_information,
+            type_name.to_string(),
+            callback);
+    }
+    else
+    {
+        register_remote_type_callback_(type_name_, dynamic_type);
+    }
 }
 
 void HelloWorldDynTypesSubscriber::run()
@@ -289,7 +281,6 @@ void HelloWorldDynTypesSubscriber::register_remote_type_callback_(
         const std::string&,
         const eprosima::fastrtps::types::DynamicType_ptr dynamic_type)
 {
-    std::cout << "!!!!!!!! register_remote_type_callback_" << std::endl;
     ////////////////////
     // Register the type
     TypeSupport type(new eprosima::fastrtps::types::DynamicPubSubType(dynamic_type));
