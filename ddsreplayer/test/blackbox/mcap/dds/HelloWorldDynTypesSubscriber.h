@@ -13,12 +13,11 @@
 // limitations under the License.
 
 /**
- * @file TypeIntrospectionSubscriber.h
+ * @file HelloWorldDynTypesSubscriber.h
  *
  */
 
-#ifndef _EPROSIMA_DDSRECORDER_RESOURCES_DDS_TYPEINTROSPECTION_TYPEINTROSPECTIONSUBSCRIBER_H_
-#define _EPROSIMA_DDSRECORDER_RESOURCES_DDS_TYPEINTROSPECTION_TYPEINTROSPECTIONSUBSCRIBER_H_
+#pragma once
 
 #include <atomic>
 #include <condition_variable>
@@ -31,11 +30,21 @@
 #include <fastdds/dds/subscriber/DataReaderListener.hpp>
 #include <fastdds/dds/subscriber/DataReader.hpp>
 
+struct DataToCheck
+{
+    unsigned int n_received_msgs;
+    std::string type_msg;
+    std::string message_msg;
+    unsigned int min_index_msg;
+    unsigned int max_index_msg;
+    unsigned int hz_msgs;
+};
+
 /**
  * @brief Class used to group into a single working unit a Subscriber with a DataReader and its listener.
  *
  */
-class TypeIntrospectionSubscriber : public eprosima::fastdds::dds::DomainParticipantListener
+class HelloWorldDynTypesSubscriber : public eprosima::fastdds::dds::DomainParticipantListener
 {
 public:
 
@@ -45,22 +54,22 @@ public:
      * @param topic_name Name of the DDS Topic
      * @param domain DDS Domain of the DomainParticipant
      */
-    TypeIntrospectionSubscriber(
+    HelloWorldDynTypesSubscriber(
             const std::string& topic_name,
-            uint32_t domain);
+            uint32_t domain,
+            uint32_t max_messages,
+            DataToCheck& data);
 
     /**
      * @brief Destroy the Type Lookup Service Publisher object
      *
      */
-    virtual ~TypeIntrospectionSubscriber();
+    virtual ~HelloWorldDynTypesSubscriber();
 
     /**
-     * @brief Run the subscriber until "number" samples are received
+     * @brief Run the subscriber until stops
      *
-     * @param number Number of samples to be published
-     */void run(
-            uint32_t number);
+     */void run();
 
     //! DataReader callback executed when a new sample is received
     void on_data_available(
@@ -70,6 +79,14 @@ public:
     void on_subscription_matched(
             eprosima::fastdds::dds::DataReader* reader,
             const eprosima::fastdds::dds::SubscriptionMatchedStatus& info) override;
+
+    void on_type_discovery(
+            eprosima::fastdds::dds::DomainParticipant* participant,
+            const eprosima::fastrtps::rtps::SampleIdentity& request_sample_id,
+            const eprosima::fastrtps::string_255& topic,
+            const eprosima::fastrtps::types::TypeIdentifier* identifier,
+            const eprosima::fastrtps::types::TypeObject* object,
+            eprosima::fastrtps::types::DynamicType_ptr dyn_type) override;
 
     //! Callback to receive the remote data type information
     virtual void on_type_information_received(
@@ -102,6 +119,8 @@ protected:
     eprosima::fastdds::dds::DataReader* datareader_;
     eprosima::fastdds::dds::TypeSupport type_;
 
+    DataToCheck* data_;
+
     //! Name of the DDS Topic
     std::string topic_name_;
     //! Name of the received DDS Topic type
@@ -127,10 +146,4 @@ protected:
 
     //! Indicates if the application is still running
     static std::atomic<bool> stop_;
-    //! Protects terminate condition variable
-    static std::mutex terminate_cv_mtx_;
-    //! Waits during execution until SIGINT or max_messages_ samples are received
-    static std::condition_variable terminate_cv_;
 };
-
-#endif /* _EPROSIMA_DDSRECORDER_RESOURCES_DDS_TYPEINTROSPECTION_TYPEINTROSPECTIONSUBSCRIBER_H_ */

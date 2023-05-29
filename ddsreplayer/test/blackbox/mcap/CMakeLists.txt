@@ -57,3 +57,47 @@ add_blackbox_executable(
     "${TEST_NEEDED_SOURCES}"
     "${TEST_EXTRA_HEADERS}"
 )
+
+############################
+# McapFileReadWithTypeTest #
+############################
+
+set(TEST_NAME McapFileReadWithTypeTest)
+
+set(TEST_SOURCES
+        McapFileReadWithTypeTest.cpp
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/HelloWorldDynTypesSubscriber.cpp
+    )
+
+set(TEST_LIST
+        trivial
+        # data_to_check
+        # less_playback_rate
+        # more_playback_rate
+        # begin_time
+        # end_time
+        # start_replay_time_earlier
+        # start_replay_time_later
+    )
+
+set(TEST_NEEDED_SOURCES
+        resources/helloworld_withtype_file.mcap
+        resources/config_file.yaml
+        resources/config_file_less_hz.yaml
+        resources/config_file_more_hz.yaml
+        resources/config_file_begin_time.yaml
+        resources/config_file_end_time.yaml
+        resources/config_file_start_replay_time_earlier.yaml
+        resources/config_file_start_replay_time_later.yaml
+    )
+
+set(TEST_EXTRA_HEADERS
+    )
+
+add_blackbox_executable(
+    "${TEST_NAME}"
+    "${TEST_SOURCES}"
+    "${TEST_LIST}"
+    "${TEST_NEEDED_SOURCES}"
+    "${TEST_EXTRA_HEADERS}"
+)

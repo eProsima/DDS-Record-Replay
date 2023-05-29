@@ -55,18 +55,14 @@ HelloWorldSubscriber::HelloWorldSubscriber(
     , topic_(nullptr)
     , datareader_(nullptr)
     , type_(new HelloWorldPubSubType())
+    , samples_(0)
+    , max_messages_(max_messages)
+    , data_(&data)
 {
-    samples_ = 0;
-    max_messages_ = max_messages;
-    data_ = &data;
-
     ///////////////////////////////
     // Create the DomainParticipant
     DomainParticipantQos pqos;
-    pqos.name("TypeIntrospection_Subscriber");
-
-    pqos.wire_protocol().builtin.typelookup_config.use_client = true;
-    pqos.wire_protocol().builtin.typelookup_config.use_server = false;
+    pqos.name("HelloWorld_Subscriber");
 
     participant_ = DomainParticipantFactory::get_instance()->create_participant(domain, pqos);
 

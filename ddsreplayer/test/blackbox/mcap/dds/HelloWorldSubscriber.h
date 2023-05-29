@@ -68,7 +68,7 @@ public:
     virtual ~HelloWorldSubscriber();
 
     /**
-     * @brief Run the subscriber until "number" samples are received
+     * @brief Run the subscriber until stops
      *
      */void run();
 

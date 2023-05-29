@@ -1,11 +1,14 @@
 dds:
   domain: 0
 
-builtin-topics:
-  - name: /dds/topic
-    type: HelloWorld
-    qos:
-      reliability: true       # Use QoS RELIABLE
+  builtin-topics:
+    - name: "/dds/topic"
+      type: "HelloWorld"
+      qos:
+        reliability: true       # Use QoS RELIABLE
+
+replayer:
+  replay-types: true
 
 specs:
   wait-all-acked-timeout: 1000
