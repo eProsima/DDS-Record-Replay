@@ -6,15 +6,16 @@ builtin-topics:
     type: HelloWorld
     qos:
       reliability: true       # Use QoS RELIABLE
+      durability: true        # Use QoS TRANSIENT_LOCAL
 
 replayer:
   begin-time:
-    local: true
+    # local: true
+    # format: "%H-%M-%S_%Y-%m-%d"
+    # datetime: 16-06-18_2023-05-17
+    local: false
     format: "%H-%M-%S_%Y-%m-%d"
-    datetime: 16-06-18_2023-05-17
-    milliseconds: 10
-    microseconds: 10
-    nanoseconds: 10
+    datetime: 14-06-18_2023-05-17
 
 specs:
-  wait-all-acked-timeout: 1000
+  wait-all-acked-timeout: 2000

@@ -6,9 +6,10 @@ builtin-topics:
     type: HelloWorld
     qos:
       reliability: true       # Use QoS RELIABLE
+      durability: true        # Use QoS TRANSIENT_LOCAL
 
 replayer:
   rate: 2.0
 
 specs:
-  wait-all-acked-timeout: 1000
+  wait-all-acked-timeout: 2000

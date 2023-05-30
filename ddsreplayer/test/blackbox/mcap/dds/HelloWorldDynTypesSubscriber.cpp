@@ -96,6 +96,7 @@ HelloWorldDynTypesSubscriber::HelloWorldDynTypesSubscriber(
 
 HelloWorldDynTypesSubscriber::~HelloWorldDynTypesSubscriber()
 {
+    std::unique_lock<std::mutex> lck(type_discovered_cv_mtx_);
     if (participant_ != nullptr)
     {
         if (topic_ != nullptr)
@@ -158,7 +159,15 @@ void HelloWorldDynTypesSubscriber::on_data_available(
     {
         if (info.instance_state == ALIVE_INSTANCE_STATE)
         {
+            uint64_t current_time = std::chrono::duration_cast<std::chrono::milliseconds>
+                        (std::chrono::system_clock::now().time_since_epoch()).count();
+
             samples_++;
+
+            int32_t index = new_dynamic_data->get_uint32_value(0);
+            std::string message = new_dynamic_data->get_string_value(1);
+
+            fill_info(data_, index, message, current_time);
 
             std::cout << "Message " << samples_ << " received:\n" << std::endl;
             eprosima::fastrtps::types::DynamicDataHelper::print(new_dynamic_data);
@@ -200,7 +209,8 @@ void HelloWorldDynTypesSubscriber::on_type_information_received(
     eprosima::fastrtps::types::DynamicType_ptr dynamic_type(nullptr);
 
     // Check if complete identifier already present in factory
-    type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(type_name_, true);
+    type_identifier =
+            eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(type_name_, true);
     if (type_identifier)
     {
         type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name_, true);
@@ -209,17 +219,21 @@ void HelloWorldDynTypesSubscriber::on_type_information_received(
     // If complete not found, try with minimal
     if (!type_object)
     {
-        type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(type_name_, false);
+        type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(type_name_,
+                        false);
         if (type_identifier)
         {
-            type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name_, false);
+            type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name_,
+                            false);
         }
     }
 
     // Build dynamic type if type identifier and object found in factory
     if (type_identifier && type_object)
     {
-        dynamic_type = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->build_dynamic_type(type_name_, type_identifier, type_object);
+        dynamic_type = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->build_dynamic_type(type_name_,
+                        type_identifier,
+                        type_object);
     }
 
     if (!dynamic_type)
@@ -246,11 +260,9 @@ void HelloWorldDynTypesSubscriber::on_type_information_received(
 
 void HelloWorldDynTypesSubscriber::run()
 {
-    stop_ = false;
-
     // Wait for type discovery
     std::cout << "Subscriber waiting to discover type for topic < " << topic_name_
-        << " >. Press CTRL+C to stop the Subscriber..." << std::endl;
+              << " >. Press CTRL+C to stop the Subscriber..." << std::endl;
 
     // Wait until the type is discovered and registered
     {
@@ -286,8 +298,6 @@ void HelloWorldDynTypesSubscriber::register_remote_type_callback_(
     TypeSupport type(new eprosima::fastrtps::types::DynamicPubSubType(dynamic_type));
     type.register_type(participant_);
 
-    // init_info(data_, dynamic_type.get_name()); !!!!
-
     ///////////////////////
     // Create the DDS Topic
     topic_ = participant_->create_topic(
@@ -300,11 +310,17 @@ void HelloWorldDynTypesSubscriber::register_remote_type_callback_(
         return;
     }
 
+    init_info(data_, dynamic_type->get_name());
+
     ////////////////////////
     // Create the DataReader
+    DataReaderQos rqos = DATAREADER_QOS_DEFAULT;
+    rqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
+    rqos.durability().kind = TRANSIENT_LOCAL_DURABILITY_QOS;
+
     datareader_ = subscriber_->create_datareader(
         topic_,
-        DATAREADER_QOS_DEFAULT,
+        rqos,
         this);
 
     std::cout <<
@@ -327,6 +343,7 @@ void init_info(
         DataToCheck* data,
         const std::string& type_name)
 {
+
     data->n_received_msgs = 0;
     data->type_msg = type_name;
     data->message_msg = "";
@@ -367,7 +384,6 @@ void fill_info(
         }
         else
         {
-
             data->hz_msgs = (data->hz_msgs + time_between_msgs) / 2.0;
         }
     }

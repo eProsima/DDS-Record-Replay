@@ -102,7 +102,11 @@ HelloWorldSubscriber::HelloWorldSubscriber(
 
     ////////////////////////
     // CREATE THE READER
-    datareader_ = subscriber_->create_datareader(topic_, DATAREADER_QOS_DEFAULT, this);
+    DataReaderQos rqos = DATAREADER_QOS_DEFAULT;
+    rqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
+    rqos.durability().kind = TRANSIENT_LOCAL_DURABILITY_QOS;
+
+    datareader_ = subscriber_->create_datareader(topic_, rqos, this);
     if (datareader_ == nullptr)
     {
         throw std::runtime_error("Error creating reader");

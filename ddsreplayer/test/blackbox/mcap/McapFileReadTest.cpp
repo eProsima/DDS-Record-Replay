@@ -129,9 +129,9 @@ TEST(McapFileReadTest, begin_time)
     // info to check
     DataToCheck data;
     std::string configuration = "resources/config_file_begin_time.yaml";
-    create_subscriber_replayer(data, configuration, 2);
-    ASSERT_EQ(data.n_received_msgs, 2);
-    ASSERT_EQ(data.min_index_msg, 9);       // should be 8 !!?
+    create_subscriber_replayer(data, configuration, 3);
+    ASSERT_EQ(data.n_received_msgs, 3);
+    ASSERT_EQ(data.min_index_msg, 8);
     ASSERT_EQ(data.max_index_msg, 10);
 }
 

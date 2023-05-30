@@ -71,13 +71,13 @@ set(TEST_SOURCES
 
 set(TEST_LIST
         trivial
-        # data_to_check
-        # less_playback_rate
-        # more_playback_rate
-        # begin_time
-        # end_time
-        # start_replay_time_earlier
-        # start_replay_time_later
+        data_to_check
+        less_playback_rate
+        more_playback_rate
+        begin_time
+        end_time
+        start_replay_time_earlier
+        start_replay_time_later
     )
 
 set(TEST_NEEDED_SOURCES
@@ -85,10 +85,10 @@ set(TEST_NEEDED_SOURCES
         resources/config_file.yaml
         resources/config_file_less_hz.yaml
         resources/config_file_more_hz.yaml
-        resources/config_file_begin_time.yaml
-        resources/config_file_end_time.yaml
-        resources/config_file_start_replay_time_earlier.yaml
-        resources/config_file_start_replay_time_later.yaml
+        resources/config_file_begin_time_with_types.yaml
+        resources/config_file_end_time_with_types.yaml
+        resources/config_file_start_replay_time_earlier_with_types.yaml
+        resources/config_file_start_replay_time_later_with_types.yaml
     )
 
 set(TEST_EXTRA_HEADERS
