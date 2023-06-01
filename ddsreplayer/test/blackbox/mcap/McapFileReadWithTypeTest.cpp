@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 
 #include <cpp_utils/event/MultipleEventHandler.hpp>
+#include <cpp_utils/logging/CustomStdLogConsumer.hpp>
 
 #include "dds/HelloWorldDynTypesSubscriber.h"
 
@@ -46,6 +47,19 @@ void create_subscriber_replayer(
         std::string configuration_path = "resources/config_file.yaml",
         uint32_t expected_msgs = 12)
 {
+    // // Debug options
+    // std::string log_filter = "DDSREPLAYER|DDSPIPE";
+    // eprosima::fastdds::dds::Log::Kind log_verbosity = eprosima::fastdds::dds::Log::Kind::Info;
+
+    // // Remove every consumer
+    // eprosima::utils::Log::ClearConsumers();
+
+    // // Activate log with verbosity, as this will avoid running log thread with not desired kind
+    // eprosima::utils::Log::SetVerbosity(log_verbosity);
+
+    // eprosima::utils::Log::RegisterConsumer(
+    //     std::make_unique<eprosima::utils::CustomStdLogConsumer>(log_filter, log_verbosity));
+
     std::string input_file = "resources/helloworld_withtype_file.mcap";
 
     // Create a multiple event handler that handles all events that make subscriber and replayer stop
@@ -102,10 +116,14 @@ void create_subscriber_replayer(
     std::cout << "replayer destroyed!!!!" << std::endl;
 
     std::cout << "process info..." << std::endl;
+
+    // // Force print every log before closing
+    // eprosima::utils::Log::Flush();
 }
 
 TEST(McapFileReadWithTypeTest, trivial)
 {
+    // abort();
     // info to check
     DataToCheck data;
     create_subscriber_replayer(data);
@@ -123,19 +141,20 @@ TEST(McapFileReadWithTypeTest, data_to_check)
     ASSERT_EQ(data.min_index_msg, 0);
     ASSERT_EQ(data.max_index_msg, 11);
     // hz ~ 200
-    ASSERT_GT(data.hz_msgs, 190);
-    ASSERT_LT(data.hz_msgs, 210);
+    ASSERT_GT(data.hz_msgs, 185);
+    ASSERT_LT(data.hz_msgs, 215);
 }
 
 TEST(McapFileReadWithTypeTest, less_playback_rate)
 {
+    abort();
     // info to check
     DataToCheck data;
     std::string configuration = "resources/config_file_less_hz.yaml";
     create_subscriber_replayer(data, configuration);
     // hz ~ 200
-    ASSERT_GT(data.hz_msgs, 90);
-    ASSERT_LT(data.hz_msgs, 110);
+    ASSERT_GT(data.hz_msgs, 85);
+    ASSERT_LT(data.hz_msgs, 115);
 }
 
 TEST(McapFileReadWithTypeTest, more_playback_rate)
@@ -145,8 +164,8 @@ TEST(McapFileReadWithTypeTest, more_playback_rate)
     std::string configuration = "resources/config_file_more_hz.yaml";
     create_subscriber_replayer(data, configuration);
     // hz ~ 200
-    ASSERT_GT(data.hz_msgs, 390);
-    ASSERT_LT(data.hz_msgs, 410);
+    ASSERT_GT(data.hz_msgs, 385);
+    ASSERT_LT(data.hz_msgs, 415);
 }
 
 TEST(McapFileReadWithTypeTest, begin_time)

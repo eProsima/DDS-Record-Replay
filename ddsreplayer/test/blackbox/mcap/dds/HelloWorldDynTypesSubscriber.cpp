@@ -316,6 +316,7 @@ void HelloWorldDynTypesSubscriber::register_remote_type_callback_(
     DataReaderQos rqos = DATAREADER_QOS_DEFAULT;
     rqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
     rqos.durability().kind = TRANSIENT_LOCAL_DURABILITY_QOS;
+    rqos.history().kind = KEEP_ALL_HISTORY_QOS;
 
     datareader_ = subscriber_->create_datareader(
         topic_,

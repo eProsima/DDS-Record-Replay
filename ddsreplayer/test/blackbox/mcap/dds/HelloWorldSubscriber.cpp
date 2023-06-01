@@ -105,6 +105,7 @@ HelloWorldSubscriber::HelloWorldSubscriber(
     DataReaderQos rqos = DATAREADER_QOS_DEFAULT;
     rqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
     rqos.durability().kind = TRANSIENT_LOCAL_DURABILITY_QOS;
+    rqos.history().kind = KEEP_ALL_HISTORY_QOS;
 
     datareader_ = subscriber_->create_datareader(topic_, rqos, this);
     if (datareader_ == nullptr)
@@ -171,6 +172,8 @@ void HelloWorldSubscriber::on_data_available(
         DataReader* reader)
 {
     SampleInfo info;
+
+    std::cout << "on data available: " << samples_ << std::endl;
 
     while ((reader->take_next_sample(&hello_,
             &info) == ReturnCode_t::RETCODE_OK) && !is_stopped() && (samples_ < max_messages_))
