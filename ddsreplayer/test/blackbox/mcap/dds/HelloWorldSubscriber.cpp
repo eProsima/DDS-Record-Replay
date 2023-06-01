@@ -122,10 +122,6 @@ HelloWorldSubscriber::~HelloWorldSubscriber()
 {
     if (participant_ != nullptr)
     {
-        if (topic_ != nullptr)
-        {
-            participant_->delete_topic(topic_);
-        }
         if (subscriber_ != nullptr)
         {
             if (datareader_ != nullptr)
@@ -133,6 +129,10 @@ HelloWorldSubscriber::~HelloWorldSubscriber()
                 subscriber_->delete_datareader(datareader_);
             }
             participant_->delete_subscriber(subscriber_);
+        }
+        if (topic_ != nullptr)
+        {
+            participant_->delete_topic(topic_);
         }
         DomainParticipantFactory::get_instance()->delete_participant(participant_);
     }

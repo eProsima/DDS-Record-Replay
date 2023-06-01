@@ -51,22 +51,22 @@ void create_subscriber_replayer(
     // Create a multiple event handler that handles all events that make subscriber and replayer stop
 	auto close_handler_subscriber = std::make_shared<eprosima::utils::event::MultipleEventHandler>();
     {
-        // Create Subscriber
-        HelloWorldDynTypesSubscriber subscriber(
-            test::topic_name,
-            static_cast<uint32_t>(test::DOMAIN),
-            expected_msgs,
-            data);
+        // Configuration
+        eprosima::ddsrecorder::yaml::ReplayerConfiguration configuration(configuration_path);
+        // Create replayer instance
+        auto replayer = std::make_unique<DdsReplayer>(configuration, input_file);
 
-        std::cout << "subscriber created !!!!" << std::endl;
+        std::cout << "replayer created !!!!" << std::endl;
         {
 
-            // Configuration
-            eprosima::ddsrecorder::yaml::ReplayerConfiguration configuration(configuration_path);
-            // Create replayer instance
-            auto replayer = std::make_unique<DdsReplayer>(configuration, input_file);
+            // Create Subscriber
+            HelloWorldDynTypesSubscriber subscriber(
+                test::topic_name,
+                static_cast<uint32_t>(test::DOMAIN),
+                expected_msgs,
+                data);
 
-            std::cout << "replayer created !!!!" << std::endl;
+            std::cout << "subscriber created !!!!" << std::endl;
 
             // Run Participant
             std::thread run_subscriber([&]
@@ -97,9 +97,9 @@ void create_subscriber_replayer(
             std::cout << "thread joined!!!!" << std::endl;
 
         }
-        std::cout << "replayer destroyed!!!!" << std::endl;
+        std::cout << "subscriber destroyed!!!!" << std::endl;
     }
-    std::cout << "subscriber destroyed!!!!" << std::endl;
+    std::cout << "replayer destroyed!!!!" << std::endl;
 
     std::cout << "process info..." << std::endl;
 }
