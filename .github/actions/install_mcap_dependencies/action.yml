@@ -1,5 +1,6 @@
 name: install_mcap_dependencies
 description: Install and setup lz4 and zstd
+# TODO add this to eProsima-CI
 
 inputs:
 

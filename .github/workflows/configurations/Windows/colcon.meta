@@ -6,6 +6,7 @@
             "cmake-args":
             [
                 "-DCMAKE_CXX_FLAGS='/WX /EHsc'",
+                "-DCMAKE_PREFIX_PATH='${CMAKE_PREFIX_PATH};${vcpkg_install_path}'",
                 "-Ax64",
                 "-T host=x64"
             ]
@@ -16,6 +17,7 @@
             "cmake-args":
             [
                 "-DCMAKE_CXX_FLAGS='/WX /EHsc'",
+                "-DCMAKE_PREFIX_PATH='${CMAKE_PREFIX_PATH};${vcpkg_install_path}'",
                 "-Ax64",
                 "-T host=x64"
             ]
@@ -26,6 +28,7 @@
             "cmake-args":
             [
                 "-DCMAKE_CXX_FLAGS='/WX /EHsc'",
+                "-DCMAKE_PREFIX_PATH='${CMAKE_PREFIX_PATH};${vcpkg_install_path}'",
                 "-Ax64",
                 "-T host=x64"
             ]
