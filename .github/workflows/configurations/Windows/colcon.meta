@@ -1,0 +1,34 @@
+{
+    "names":
+    {
+        "fastddsspy_participants":
+        {
+            "cmake-args":
+            [
+                "-DCMAKE_CXX_FLAGS='/WX /EHsc'",
+                "-Ax64",
+                "-T host=x64"
+            ]
+        },
+
+        "fastddsspy_yaml":
+        {
+            "cmake-args":
+            [
+                "-DCMAKE_CXX_FLAGS='/WX /EHsc'",
+                "-Ax64",
+                "-T host=x64"
+            ]
+        },
+
+        "fastddsspy_tool":
+        {
+            "cmake-args":
+            [
+                "-DCMAKE_CXX_FLAGS='/WX /EHsc'",
+                "-Ax64",
+                "-T host=x64"
+            ]
+        },
+    }
+}
