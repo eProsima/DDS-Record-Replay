@@ -134,7 +134,9 @@ public:
      * to be written with the next batch.
      * Previously created channels (for this type) associated with a blank schema are updated to use the new one.
      *
-     * If instance is STOPPED, received schema is not processed.
+     * If instance is STOPPED, received schema is not processed and a exception is thrown.
+     *
+     * @throw InconsistencyException if instance is STOPPED.
      *
      * @param [in] dynamic_type DynamicType containing the type information required to generate the schema.
      */
@@ -152,7 +154,9 @@ public:
      *                 and discarded otherwise.
      *   if PAUSED  -> the sample is inserted into \c pending_samples_paused_ queue.
      *
-     * If instance is STOPPED, received data is not processed.
+     * If instance is STOPPED, received data is not processed and a exception is thrown.
+     *
+     * @throw InconsistencyException if instance is STOPPED or an error occurs.
      *
      * @param [in] topic DDS topic associated to this sample.
      * @param [in] data Message to be added.

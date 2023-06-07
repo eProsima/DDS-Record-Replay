@@ -405,7 +405,13 @@ Hence, note that memory consumption would continuously grow whenever a sample wi
 
 To avoid the exhaustion of memory resources in such scenarios, a configuration option is provided which lets the user set a limit on memory usage.
 The ``max-pending-samples`` parameter allows to configure the size of the aforementioned circular buffers **for each topic** that is discovered.
-The default value is equal to ``0`` samples (**no limit**).
+The default value is equal to ``5000`` samples, with ``-1`` meaning no limit, and ``0`` no pending samples.
+
+Depending on the combination of this configuration option and the value of ``only-with-type``, the following situations may arise when a message with unknown type is received:
+
+* If ``max-pending-samples`` is ``-1``, or if it is greater than ``0`` and the circular buffer is not full, the sample is added to the collection.
+* If ``max-pending-samples`` is greater than ``0`` and the circular buffer reaches its maximum capacity, the oldest sample with same type as the received one is popped, and either written without type (``only-with-type: false``) or discarded (``only-with-type: true``).
+* If ``max-pending-samples`` is ``0``, the message is written without type if ``only-with-type: false``, and discarded otherwise.
 
 Cleanup Period
 ^^^^^^^^^^^^^^

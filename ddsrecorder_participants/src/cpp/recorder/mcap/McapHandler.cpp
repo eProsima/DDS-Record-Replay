@@ -129,10 +129,9 @@ void McapHandler::add_schema(
 
     if (state_ == McapHandlerStateCode::STOPPED)
     {
-        logWarning(
-            DDSRECORDER_MCAP_HANDLER,
-            "Attempting to add schema through a stopped handler, dropping...");
-        return;
+        throw utils::InconsistencyException(
+                    STR_ENTRY << "Attempting to add schema through a stopped handler, dropping..."
+                    );
     }
 
     assert(nullptr != dynamic_type);
@@ -186,10 +185,9 @@ void McapHandler::add_data(
 
     if (state_ == McapHandlerStateCode::STOPPED)
     {
-        logWarning(
-            DDSRECORDER_MCAP_HANDLER,
-            "Attempting to add sample through a stopped handler, dropping...");
-        return;
+        throw utils::InconsistencyException(
+                    STR_ENTRY << "Attempting to add sample through a stopped handler, dropping..."
+                    );
     }
 
     // Add data to channel
