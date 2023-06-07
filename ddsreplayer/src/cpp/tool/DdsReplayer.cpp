@@ -196,14 +196,6 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
 {
     std::set<utils::Heritable<DistributedTopic>> builtin_topics = configuration.builtin_topics;
 
-    // Cast to DdsTopic so both topic and type names are taken into account on lookups
-    std::set<utils::Heritable<DdsTopic>> builtin_topics_dds{};
-    for (auto topic : builtin_topics)
-    {
-        auto dds_topic = utils::Heritable<DdsTopic>(topic);
-        builtin_topics_dds.insert(dds_topic);
-    }
-
     mcap::McapReader mcap_reader;
 
     auto status = mcap_reader.open(input_file);
@@ -253,9 +245,10 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
         channel_topic->m_topic_name = topic_name;
         channel_topic->type_name = type_name;
 
-        if (builtin_topics_dds.count(channel_topic) == 1)
+        if (builtin_topics.count(channel_topic) == 1)
         {
             // Already present in builtin_topics list, using qos provided through configuration
+            // NOTE: also covers situation where there are channels for same topic with and without (blank) schema
             continue;
         }
 

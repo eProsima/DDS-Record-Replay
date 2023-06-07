@@ -21,7 +21,6 @@
 #include <condition_variable>
 #include <list>
 #include <map>
-#include <queue>
 #include <thread>
 
 #include <mcap/mcap.hpp>
@@ -99,11 +98,15 @@ class McapHandler : public ddspipe::participants::ISchemaHandler
 {
 public:
 
+    using pending_list = std::list<std::pair<ddspipe::core::types::DdsTopic, Message>>;
+
     /**
      * McapHandler constructor by required values.
      *
      * Creates McapHandler instance with given configuration, payload pool and initial state.
      * Opens temporal MCAP file where data is to be written.
+     *
+     * @throw InitializationException if creation fails (fail to open MCAP file).
      *
      * @param config:       Structure encapsulating all configuration options.
      * @param payload_pool: Owner of every payload contained in received messages.
@@ -119,6 +122,8 @@ public:
      * @brief Destructor
      *
      * Closes temporal MCAP file, and renames it with filename given in configuration.
+     * Before closing file, received dynamic types are serialized and stored in metadata section.
+     *
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     ~McapHandler();
@@ -127,6 +132,7 @@ public:
      * @brief Create and store in \c schemas_ a ROS 2 schema (.msg format).
      * Any samples following this schema that were received before the schema itself are moved to the memory buffer
      * to be written with the next batch.
+     * Previously created channels (for this type) associated with a blank schema are updated to use the new one.
      *
      * If instance is STOPPED, received schema is not processed.
      *
@@ -137,11 +143,14 @@ public:
             const fastrtps::types::DynamicType_ptr& dynamic_type) override;
 
     /**
-     * @brief Save in memory (\c buffer_) the received sample, to be written through a mcap \c Channel associated to
-     * the given \c topic.
+     * @brief Add a data sample, to be written through a mcap \c Channel associated to the given \c topic.
      *
-     * If channel does not exist, its creation is attempted. If this fails (schema not available yet), the sample is
-     * inserted into \c pending_samples_ queue until its schema is received.
+     * If a channel with (non-blank) schema exists, the sample is saved in memory \c buffer_ .
+     * Otherwise:
+     *   if RUNNING -> the sample is inserted into \c pending_samples_ queue if max pending samples is not 0.
+     *                 If 0, the sample is added to buffer without schema if allowed (only_with_schema not true),
+     *                 and discarded otherwise.
+     *   if PAUSED  -> the sample is inserted into \c pending_samples_paused_ queue.
      *
      * If instance is STOPPED, received data is not processed.
      *
@@ -156,7 +165,7 @@ public:
     /**
      * @brief Start handler instance
      *
-     * If previous state was PAUSED, the event thread is stopped (and buffer is cleared).
+     * If previous state was PAUSED, the event thread is stopped (and buffers are cleared).
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void start();
@@ -165,7 +174,8 @@ public:
      * @brief Stop handler instance
      *
      * If previous state was RUNNING, data stored in buffer is dumped to disk.
-     * If previous state was PAUSED, the event thread is stopped (and buffer is cleared).
+     * If previous state was PAUSED, the event thread is stopped (and buffers are cleared).
+     * In both cases, pending samples are stored without schema if allowed (only_with_schema not true).
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void stop();
@@ -175,7 +185,7 @@ public:
      *
      * Creates event thread waiting for an event to dump samples in buffer.
      *
-     * If previous state was RUNNING, data stored in buffer is dumped to disk and pending samples cleared.
+     * If previous state was RUNNING, data stored in buffer is dumped to disk.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void pause();
@@ -230,22 +240,83 @@ protected:
     };
 
     /**
-     * @brief Add message to \c buffer_ structure.
+     * @brief Add message to \c buffer_ structure, or directly write to MCAP file.
      *
-     * If after adding the new sample the buffer reaches its maximum size, the content is dumped to disk.
+     * If after adding the new sample (when not directly writting to file) the buffer reaches its maximum size, the
+     * content is dumped to disk.
      *
      * @param [in] msg Message to be added
+     * @param [in] direct_write Whether to directly store in MCAP file
      */
     void add_data_nts_(
+            const Message& msg,
+            bool direct_write = false);
+
+    /**
+     * @brief Add message with given topic.
+     *
+     * First, it is attempted to get a channel given \c topic to be associated with the message.
+     * If this fails, the sample is not added.
+     *
+     * @param [in] msg Message to be added
+     * @param [in] topic Topic of message to be added
+     * @param [in] direct_write Whether to directly store in MCAP file
+     */
+    void add_data_nts_(
+            Message& msg,
+            const ddspipe::core::types::DdsTopic& topic,
+            bool direct_write = false);
+
+    /**
+     * @brief Write message to MCAP file.
+     *
+     * @throw InconsistencyException if failing to write message.
+     *
+     * @param [in] msg Message to be written
+     */
+    void write_message_nts_(
             const Message& msg);
 
     /**
-     * @brief Add any samples stored in \c pending_samples_ structure associated to \c schema_name
+     * @brief Add to pending samples collection.
+     *
+     * If pending samples collection is full, the oldest message is popped and written (if only_with_schema not true).
+     *
+     * @param [in] msg Message to be added
+     * @param [in] topic Topic of message to be added
+     */
+    void add_to_pending_nts_(
+            Message& msg,
+            const ddspipe::core::types::DdsTopic& topic);
+
+    /**
+     * @brief Add any pending samples associated to \c schema_name
+     *
+     * If in PAUSED state, samples in \c pending_samples_paused_ structure for this schema are moved to the buffer,
+     * so they will be written to file later on if event triggered.
+     *
+     * Samples in \c pending_samples_ structure for this schema are to be written irrespectively of the current state.
+     * However, in RUNNING/STOPPED states these are moved to buffer (to be written together with the next batch),
+     * while in PAUSED state they are directly written to the file (to avoid being deleted by event thread).
+     * Note that in the last case, pending samples correspond to messages that were previously received in RUNNING
+     * state, and hence should be stored regardless of whether or not an event is triggered.
      *
      * @param [in] schema_name Name of the schema for which pending samples using it are added.
      */
     void add_pending_samples_nts_(
             const std::string& schema_name);
+
+    /**
+     * @brief Add pending samples.
+     *
+     * Add/write and pop all pending samples from the given list.
+     *
+     * @param [in] pending_samples List of pending samples to be added
+     * @param [in] direct_write Whether to directly store in MCAP file
+     */
+    void add_pending_samples_nts_(
+            pending_list& pending_samples,
+            bool direct_write = false);
 
     /**
      * @brief Add all samples stored in \c pending_samples_ structure, associating each of them to a blank schema.
@@ -265,14 +336,11 @@ protected:
      */
     void event_thread_routine_();
 
-    //! Remove samples in buffer older than [now - event_window]
+    //! Remove buffered samples older than [now - event_window]
     void remove_outdated_samples_nts_();
 
-    //! Stop event thread, and clear \c samples_buffer_ and \c pending_samples_ structures
+    //! Stop event thread, and clear \c samples_buffer_ and \c pending_samples_paused_ structures
     void stop_event_thread_nts_();
-
-    //! Clear \c samples_buffer_ and \c pending_samples_ structures
-    void clear_all_nts_();
 
     //! Write in disk samples stored in buffer
     void dump_data_nts_();
@@ -280,7 +348,9 @@ protected:
     /**
      * @brief Create and add to \c mcap_writer_ channel associated to given \c topic
      *
-     * @throw InconsistencyException if creation fails (schema not found).
+     * A channel with blank schema is created when none found, unless only_with_schema true.
+     *
+     * @throw InconsistencyException if creation fails (schema not found and only_with_schema true).
      *
      * @param [in] topic Topic associated to the channel to be created
      */
@@ -290,12 +360,25 @@ protected:
     /**
      * @brief Attempt to get channel associated to given \c topic, and attempt to create one if not found.
      *
-     * @throw InconsistencyException if not found, and creation fails (schema not found).
+     * @throw InconsistencyException if not found, and creation fails (schema not found and only_with_schema true).
      *
      * @param [in] topic Topic associated to the channel to be created
      */
     mcap::ChannelId get_channel_id_nts_(
             const ddspipe::core::types::DdsTopic& topic);
+
+    /**
+     * @brief Update channels with \c old_schema_id to use \c new_schema_id instead.
+     *
+     * Its main purpose is to update channels previously created with blank schema after having received their
+     * corresponding topic type.
+     *
+     * @param [in] old_schema_id Schema id used by the channels to be updated
+     * @param [in] new_schema_id Schema id with which to update channels (using \c old_schema_id)
+     */
+    void update_channels_nts_(
+            const mcap::SchemaId& old_schema_id,
+            const mcap::SchemaId& new_schema_id);
 
     /**
      * @brief Attempt to get schema with name \c schema_name.
@@ -371,25 +454,28 @@ protected:
     //! Handler instance state
     McapHandlerStateCode state_;
 
-    //! Mutex synchronizing state transitions
-    std::mutex state_mtx_;
-
     //! MCAP writer
     mcap::McapWriter mcap_writer_;
 
     //! Schemas map
     std::map<std::string, mcap::Schema> schemas_;
 
+    //! Received types set
+    std::set<std::string> received_types_;
+
     //! Channels map
-    std::map<std::string, mcap::Channel> channels_;
+    std::map<ddspipe::core::types::DdsTopic, mcap::Channel> channels_;
 
     //! Samples buffer
     std::list<Message> samples_buffer_;
 
-    //! Pending samples map
-    std::map<std::string, std::queue<std::pair<ddspipe::core::types::DdsTopic, Message>>> pending_samples_;
+    //! Structure where messages (received in RUNNING state) with unknown type are kept
+    std::map<std::string, pending_list> pending_samples_;
 
-    //! Mutex synchronizing access to object's data structures
+    //! Structure where messages (received in PAUSED state) with unknown type are kept
+    std::map<std::string, pending_list> pending_samples_paused_;
+
+    //! Mutex synchronizing state transitions and access to object's data structures
     std::mutex mtx_;
 
     //! Event thread
