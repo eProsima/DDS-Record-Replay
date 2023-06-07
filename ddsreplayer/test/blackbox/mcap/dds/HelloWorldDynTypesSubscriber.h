@@ -57,7 +57,6 @@ public:
     HelloWorldDynTypesSubscriber(
             const std::string& topic_name,
             uint32_t domain,
-            uint32_t max_messages,
             DataToCheck& data);
 
     /**
@@ -65,11 +64,6 @@ public:
      *
      */
     virtual ~HelloWorldDynTypesSubscriber();
-
-    /**
-     * @brief Run the subscriber until stops
-     *
-     */void run();
 
     //! DataReader callback executed when a new sample is received
     void on_data_available(
@@ -128,8 +122,6 @@ protected:
     int matched_;
     //! Number of samples received
     uint32_t samples_;
-    //! Number of messages to be received before triggering termination of execution
-    uint32_t max_messages_;
 
     //! Protects type_discovered condition variable
     static std::mutex type_discovered_cv_mtx_;

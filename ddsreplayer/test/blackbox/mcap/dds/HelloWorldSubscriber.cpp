@@ -48,7 +48,6 @@ std::atomic<bool> HelloWorldSubscriber::stop_(false);
 HelloWorldSubscriber::HelloWorldSubscriber(
         const std::string& topic_name,
         uint32_t domain,
-        uint32_t max_messages,
         DataToCheck& data)
     : participant_(nullptr)
     , subscriber_(nullptr)
@@ -56,7 +55,6 @@ HelloWorldSubscriber::HelloWorldSubscriber(
     , datareader_(nullptr)
     , type_(new HelloWorldPubSubType())
     , samples_(0)
-    , max_messages_(max_messages)
     , data_(&data)
 {
     ///////////////////////////////
@@ -173,10 +171,8 @@ void HelloWorldSubscriber::on_data_available(
 {
     SampleInfo info;
 
-    std::cout << "on data available: " << samples_ << std::endl;
-
     while ((reader->take_next_sample(&hello_,
-            &info) == ReturnCode_t::RETCODE_OK) && !is_stopped() && (samples_ < max_messages_))
+            &info) == ReturnCode_t::RETCODE_OK) && !is_stopped())
     {
         if (info.instance_state == ALIVE_INSTANCE_STATE)
         {
@@ -193,18 +189,6 @@ void HelloWorldSubscriber::on_data_available(
         }
     }
 
-    // Stop if all expecting messages has been received (max_messages number reached)
-    if (samples_ >= max_messages_)
-    {
-        stop();
-    }
-}
-
-void HelloWorldSubscriber::run()
-{
-    while (!is_stopped())
-    {
-    }
 }
 
 void init_info(

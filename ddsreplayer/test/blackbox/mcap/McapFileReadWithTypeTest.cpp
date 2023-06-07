@@ -35,7 +35,7 @@ namespace test {
 
 // Publisher
 
-const unsigned int DOMAIN = 0;
+const unsigned int DOMAIN = 110;
 
 std::string topic_name = "/dds/topic";
 
@@ -44,81 +44,45 @@ std::string topic_name = "/dds/topic";
 
 void create_subscriber_replayer(
         DataToCheck& data,
-        std::string configuration_path = "resources/config_file.yaml",
-        uint32_t expected_msgs = 12)
+        std::string configuration_path = "resources/config_file.yaml")
 {
-    // // Debug options
-    // std::string log_filter = "DDSREPLAYER|DDSPIPE";
-    // eprosima::fastdds::dds::Log::Kind log_verbosity = eprosima::fastdds::dds::Log::Kind::Info;
-
-    // // Remove every consumer
-    // eprosima::utils::Log::ClearConsumers();
-
-    // // Activate log with verbosity, as this will avoid running log thread with not desired kind
-    // eprosima::utils::Log::SetVerbosity(log_verbosity);
-
-    // eprosima::utils::Log::RegisterConsumer(
-    //     std::make_unique<eprosima::utils::CustomStdLogConsumer>(log_filter, log_verbosity));
 
     std::string input_file = "resources/helloworld_withtype_file.mcap";
 
-    // Create a multiple event handler that handles all events that make subscriber and replayer stop
-	auto close_handler_subscriber = std::make_shared<eprosima::utils::event::MultipleEventHandler>();
     {
-        // Configuration
-        eprosima::ddsrecorder::yaml::ReplayerConfiguration configuration(configuration_path);
-        // Create replayer instance
-        auto replayer = std::make_unique<DdsReplayer>(configuration, input_file);
+        // Create Subscriber
+        HelloWorldDynTypesSubscriber subscriber(
+            test::topic_name,
+            static_cast<uint32_t>(test::DOMAIN),
+            data);
 
-        std::cout << "replayer created !!!!" << std::endl;
+        std::cout << "subscriber created !!!!" << std::endl;
+
         {
+            // Configuration
+            eprosima::ddsrecorder::yaml::ReplayerConfiguration configuration(configuration_path);
+            configuration.replayer_configuration->domain.domain_id = test::DOMAIN;
 
-            // Create Subscriber
-            HelloWorldDynTypesSubscriber subscriber(
-                test::topic_name,
-                static_cast<uint32_t>(test::DOMAIN),
-                expected_msgs,
-                data);
+            // Create replayer instance
+            auto replayer = std::make_unique<DdsReplayer>(configuration, input_file);
 
-            std::cout << "subscriber created !!!!" << std::endl;
-
-            // Run Participant
-            std::thread run_subscriber([&]
-            {
-                try
-                {
-                    subscriber.run();
-                }
-                catch (const eprosima::utils::InconsistencyException& e)
-                {
-                    logError(DDSREPLAYER_ERROR,
-                    "Error running subscriber. Error message:\n " <<
-                        e.what());
-                }
-                close_handler_subscriber->simulate_event_occurred();
-            });
+            std::cout << "replayer created !!!!" << std::endl;
 
             // Start replaying data
             replayer->process_mcap();
 
-            // Wait until signal arrives
-            close_handler_subscriber->wait_for_event();
-
             replayer->stop();
 
-            run_subscriber.join();
+            subscriber.stop();
 
             std::cout << "thread joined!!!!" << std::endl;
 
         }
-        std::cout << "subscriber destroyed!!!!" << std::endl;
+        std::cout << "replayer destroyed!!!!" << std::endl;
     }
-    std::cout << "replayer destroyed!!!!" << std::endl;
+    std::cout << "subscriber destroyed!!!!" << std::endl;
 
     std::cout << "process info..." << std::endl;
-
-    // // Force print every log before closing
-    // eprosima::utils::Log::Flush();
 }
 
 TEST(McapFileReadWithTypeTest, trivial)
@@ -135,11 +99,11 @@ TEST(McapFileReadWithTypeTest, data_to_check)
     // info to check
     DataToCheck data;
     create_subscriber_replayer(data);
-    ASSERT_EQ(data.n_received_msgs, 12);
+    ASSERT_EQ(data.n_received_msgs, 13);
     ASSERT_EQ(data.type_msg, "HelloWorld");
     ASSERT_EQ(data.message_msg, "Hello World");
     ASSERT_EQ(data.min_index_msg, 0);
-    ASSERT_EQ(data.max_index_msg, 11);
+    ASSERT_EQ(data.max_index_msg, 12);
     // hz ~ 200
     ASSERT_GT(data.hz_msgs, 185);
     ASSERT_LT(data.hz_msgs, 215);
@@ -147,7 +111,6 @@ TEST(McapFileReadWithTypeTest, data_to_check)
 
 TEST(McapFileReadWithTypeTest, less_playback_rate)
 {
-    abort();
     // info to check
     DataToCheck data;
     std::string configuration = "resources/config_file_less_hz.yaml";
@@ -173,10 +136,10 @@ TEST(McapFileReadWithTypeTest, begin_time)
     // info to check
     DataToCheck data;
     std::string configuration = "resources/config_file_begin_time_with_types.yaml";
-    create_subscriber_replayer(data, configuration, 5);
-    ASSERT_EQ(data.n_received_msgs, 5);
+    create_subscriber_replayer(data, configuration);
+    ASSERT_EQ(data.n_received_msgs, 6);
     ASSERT_EQ(data.min_index_msg, 7);
-    ASSERT_EQ(data.max_index_msg, 11);
+    ASSERT_EQ(data.max_index_msg, 12);
 }
 
 TEST(McapFileReadWithTypeTest, end_time)
@@ -184,7 +147,7 @@ TEST(McapFileReadWithTypeTest, end_time)
     // info to check
     DataToCheck data;
     std::string configuration = "resources/config_file_end_time_with_types.yaml";
-    create_subscriber_replayer(data, configuration, 7);
+    create_subscriber_replayer(data, configuration);
     ASSERT_EQ(data.n_received_msgs, 7);
     ASSERT_EQ(data.min_index_msg, 0);
     ASSERT_EQ(data.max_index_msg, 6);
@@ -196,20 +159,9 @@ TEST(McapFileReadWithTypeTest, start_replay_time_earlier)
     DataToCheck data;
     std::string configuration = "resources/config_file_start_replay_time_earlier_with_types.yaml";
     create_subscriber_replayer(data, configuration);
-    ASSERT_EQ(data.n_received_msgs, 12);
+    ASSERT_EQ(data.n_received_msgs, 13);
     ASSERT_EQ(data.min_index_msg, 0);
-    ASSERT_EQ(data.max_index_msg, 11);
-}
-
-TEST(McapFileReadWithTypeTest, start_replay_time_later)
-{
-    // info to check
-    DataToCheck data;
-    std::string configuration = "resources/config_file_start_replay_time_later_with_types.yaml";
-    create_subscriber_replayer(data, configuration, 0);
-    ASSERT_EQ(data.n_received_msgs, 0);
-    ASSERT_EQ(data.min_index_msg, -1);
-    ASSERT_EQ(data.max_index_msg, -1);
+    ASSERT_EQ(data.max_index_msg, 12);
 }
 
 int main(

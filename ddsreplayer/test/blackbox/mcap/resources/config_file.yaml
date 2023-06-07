@@ -1,12 +1,9 @@
-dds:
-  domain: 0
-
-  builtin-topics:
-    - name: "/dds/topic"
-      type: "HelloWorld"
-      qos:
-        reliability: true       # Use QoS RELIABLE
-        durability: true        # Use QoS TRANSIENT_LOCAL
+builtin-topics:
+  - name: "/dds/topic"
+    type: "HelloWorld"
+    qos:
+      reliability: true       # Use QoS RELIABLE
+      durability: true        # Use QoS TRANSIENT_LOCAL
 
 replayer:
   replay-types: true

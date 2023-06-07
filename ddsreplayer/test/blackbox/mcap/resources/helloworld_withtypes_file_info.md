@@ -60,6 +60,9 @@ HelloWorld
     index 11
     message "Hello World"
 
+    index 12
+    message "Hello World"
+
 /ddsrecorder/status             1
 
 DdsRecorderStatus

@@ -262,42 +262,9 @@ jobs:
         if: always()
 
       - name: Run tests ddsreplayer_tool
-        run: |
-          source install/setup.bash
-          colcon test \
-            --packages-select ddsreplayer_tool \
-            --event-handlers=console_direct+ \
-            --retest-until-fail 1000 \
-            --return-code-on-test-failure \
-            --ctest-args \
-              -R McapFileReadWithTypeTest.less_playback_rate \
-              --label-exclude xfail \
-              --timeout 60
-
-      - name: Find coredump ubuntu 20
-        run: |
-          coredumpctl info
-          coredump_path=$(coredumpctl info | sed -n '14 p' | awk '{print $2}')
-          echo $coredump_path
-          echo "Results!!"
-          lz4 $coredump_path ${$coredump_path::-4}
-          coredump_uncompressed=${$coredump_path::-4}
-          echo $coredump_uncompressed
-          echo "bt full" | gdb /home/runner/work/DDS-Record-Replay/DDS-Record-Replay/build/ddsreplayer_tool/test/blackbox/mcap/blackbox_McapFileReadWithTypeTest $coredump_uncompressed
-          echo "Finish results!!"
-        if: always()
-
-      - name: Find coredump ubuntu 22
-        run: |
-          coredumpctl info
-          coredump_path=$(coredumpctl info | sed -n '14 p' | awk '{print $2}')
-          echo $coredump_path
-          echo "Results!!"
-          sudo zstd -d $coredump_path
-          coredump_uncompressed=${$coredump_path::-4}
-          echo $coredump_uncompressed
-          echo "bt full" | sudo gdb /home/runner/work/DDS-Record-Replay/DDS-Record-Replay/build/ddsreplayer_tool/test/blackbox/mcap/blackbox_McapFileReadWithTypeTest $coredump_uncompressed
-          echo "Finish results!!"
+        uses: ./src/DDS-Record-Replay/.github/actions/run-test-ubuntu
+        with:
+          package_name: ddsreplayer_tool
         if: always()
 
       - name: Upload Logs
@@ -393,36 +360,9 @@ jobs:
             --packages-select-regex ddsreplayer_tool \
             --event-handlers=console_direct+ \
             --return-code-on-test-failure \
-            --retest-until-fail 1000 \
             --ctest-args \
-              -R McapFileReadWithTypeTest.less_playback_rate \
               --label-exclude xfail \
               --timeout 60
-        if: always()
-
-      - name: Find coredump ubuntu 20
-        run: |
-          coredumpctl info
-          coredump_path=$(coredumpctl info | sed -n '14 p' | awk '{print $2}')
-          echo $coredump_path
-          echo "Results!!"
-          lz4 $coredump_path ${$coredump_path::-4}
-          coredump_uncompressed=${$coredump_path::-4}
-          echo $coredump_uncompressed
-          echo "bt full" | gdb /home/runner/work/DDS-Record-Replay/DDS-Record-Replay/build/ddsreplayer_tool/test/blackbox/mcap/blackbox_McapFileReadWithTypeTest $coredump_uncompressed
-          echo "Finish results!!"
-        if: always()
-
-      - name: Find coredump ubuntu 22
-        run: |
-          coredumpctl info
-          coredump_path=$(coredumpctl info | sed -n '14 p' | awk '{print $2}')
-          echo $coredump_path
-          echo "Results!!"
-          coredump_uncompressed=${$coredump_path::-4}
-          echo $coredump_uncompressed
-          echo "bt full" | sudo gdb /home/runner/work/DDS-Record-Replay/DDS-Record-Replay/build/ddsreplayer_tool/test/blackbox/mcap/blackbox_McapFileReadWithTypeTest $coredump_uncompressed
-          echo "Finish results!!"
         if: always()
 
       - name: Upload Logs

@@ -52,7 +52,6 @@ std::atomic<bool> HelloWorldDynTypesSubscriber::stop_(false);
 HelloWorldDynTypesSubscriber::HelloWorldDynTypesSubscriber(
         const std::string& topic_name,
         uint32_t domain,
-        uint32_t max_messages,
         DataToCheck& data)
     : participant_(nullptr)
     , subscriber_(nullptr)
@@ -60,7 +59,6 @@ HelloWorldDynTypesSubscriber::HelloWorldDynTypesSubscriber(
     , datareader_(nullptr)
     , topic_name_(topic_name)
     , samples_(0)
-    , max_messages_(max_messages)
     , data_(&data)
 {
     ///////////////////////////////
@@ -154,7 +152,7 @@ void HelloWorldDynTypesSubscriber::on_data_available(
 
     // Take next sample until we've read all samples or the application stopped
     while ((reader->take_next_sample(new_dynamic_data.get(),
-            &info) == ReturnCode_t::RETCODE_OK) && !is_stopped() && (samples_ < max_messages_))
+            &info) == ReturnCode_t::RETCODE_OK) && !is_stopped())
     {
         if (info.instance_state == ALIVE_INSTANCE_STATE)
         {
@@ -172,12 +170,6 @@ void HelloWorldDynTypesSubscriber::on_data_available(
             eprosima::fastrtps::types::DynamicDataHelper::print(new_dynamic_data);
             std::cout << "-----------------------------------------------------" << std::endl;
         }
-    }
-
-    // Stop if all expecting messages has been received (max_messages number reached)
-    if (samples_ >= max_messages_)
-    {
-        stop();
     }
 }
 
@@ -255,37 +247,6 @@ void HelloWorldDynTypesSubscriber::on_type_information_received(
     {
         register_remote_type_callback_(type_name_, dynamic_type);
     }
-}
-
-void HelloWorldDynTypesSubscriber::run()
-{
-    // Wait for type discovery
-    std::cout << "Subscriber waiting to discover type for topic < " << topic_name_
-              << " >. Press CTRL+C to stop the Subscriber..." << std::endl;
-
-    // Wait until the type is discovered and registered
-    {
-        std::unique_lock<std::mutex> lck(type_discovered_cv_mtx_);
-        type_discovered_cv_.wait(lck, []
-                {
-                    return (type_discovered_.load() && type_registered_.load());
-                });
-    }
-
-    std::cout <<
-        "Subscriber < " << datareader_->guid() <<
-        " > listening for data in topic < " << topic_name_ <<
-        " > found data type < " << dynamic_type_->get_name() <<
-        " >" << std::endl;
-
-    while (!is_stopped())
-    {
-    }
-
-    // Print number of data received
-    std::cout <<
-        "Subscriber received " << samples_ <<
-        " samples." << std::endl;
 }
 
 void HelloWorldDynTypesSubscriber::register_remote_type_callback_(

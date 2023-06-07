@@ -1,6 +1,3 @@
-dds:
-  domain: 0
-
 builtin-topics:
   - name: /dds/topic
     type: HelloWorld

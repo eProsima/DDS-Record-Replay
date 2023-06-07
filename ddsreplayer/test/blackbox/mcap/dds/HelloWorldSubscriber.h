@@ -53,12 +53,10 @@ public:
      *
      * @param topic_name Name of the DDS Topic
      * @param domain DDS Domain of the DomainParticipant
-     * @param max_messages Number of messages to be received before triggering termination of execution
      */
     HelloWorldSubscriber(
             const std::string& topic_name,
             uint32_t domain,
-            uint32_t max_messages,
             DataToCheck& data);
 
     /**
@@ -66,11 +64,6 @@ public:
      *
      */
     virtual ~HelloWorldSubscriber();
-
-    /**
-     * @brief Run the subscriber until stops
-     *
-     */void run();
 
     //! DataReader callback executed when a new sample is received
     void on_data_available(
@@ -104,8 +97,6 @@ protected:
     int matched_;
     //! Number of samples received
     uint32_t samples_;
-    //! Number of messages to be received before triggering termination of execution
-    uint32_t max_messages_;
 
     //! Member used for control flow purposes
     static std::atomic<bool> stop_;

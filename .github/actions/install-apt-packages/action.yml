@@ -25,8 +25,5 @@ runs:
           swig \
           libpython3-dev \
           liblz4-dev \
-          libzstd-dev \
-          lz4 \
-          systemd-coredump
-        ulimit -c unlimited
+          libzstd-dev
       shell: bash
