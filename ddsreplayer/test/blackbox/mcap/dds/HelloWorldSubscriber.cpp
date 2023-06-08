@@ -43,8 +43,6 @@ void fill_info(
         HelloWorld hello_,
         uint64_t time_arrive_msg);
 
-std::atomic<bool> HelloWorldSubscriber::stop_(false);
-
 HelloWorldSubscriber::HelloWorldSubscriber(
         const std::string& topic_name,
         uint32_t domain,
@@ -137,16 +135,6 @@ HelloWorldSubscriber::~HelloWorldSubscriber()
     }
 }
 
-bool HelloWorldSubscriber::is_stopped()
-{
-    return stop_;
-}
-
-void HelloWorldSubscriber::stop()
-{
-    stop_ = true;
-}
-
 void HelloWorldSubscriber::on_subscription_matched(
         DataReader*,
         const SubscriptionMatchedStatus& info)
@@ -172,7 +160,7 @@ void HelloWorldSubscriber::on_data_available(
     SampleInfo info;
 
     while ((reader->take_next_sample(&hello_,
-            &info) == ReturnCode_t::RETCODE_OK) && !is_stopped())
+            &info) == ReturnCode_t::RETCODE_OK))
     {
         if (info.instance_state == ALIVE_INSTANCE_STATE)
         {

@@ -47,7 +47,6 @@ std::atomic<bool> HelloWorldDynTypesSubscriber::type_discovered_(false);
 std::atomic<bool> HelloWorldDynTypesSubscriber::type_registered_(false);
 std::mutex HelloWorldDynTypesSubscriber::type_discovered_cv_mtx_;
 std::condition_variable HelloWorldDynTypesSubscriber::type_discovered_cv_;
-std::atomic<bool> HelloWorldDynTypesSubscriber::stop_(false);
 
 HelloWorldDynTypesSubscriber::HelloWorldDynTypesSubscriber(
         const std::string& topic_name,
@@ -112,16 +111,6 @@ HelloWorldDynTypesSubscriber::~HelloWorldDynTypesSubscriber()
     }
 }
 
-bool HelloWorldDynTypesSubscriber::is_stopped()
-{
-    return stop_;
-}
-
-void HelloWorldDynTypesSubscriber::stop()
-{
-    stop_ = true;
-}
-
 void HelloWorldDynTypesSubscriber::on_subscription_matched(
         DataReader*,
         const SubscriptionMatchedStatus& info)
@@ -150,9 +139,9 @@ void HelloWorldDynTypesSubscriber::on_data_available(
 
     SampleInfo info;
 
-    // Take next sample until we've read all samples or the application stopped
+    // Take next sample
     while ((reader->take_next_sample(new_dynamic_data.get(),
-            &info) == ReturnCode_t::RETCODE_OK) && !is_stopped())
+            &info) == ReturnCode_t::RETCODE_OK))
     {
         if (info.instance_state == ALIVE_INSTANCE_STATE)
         {

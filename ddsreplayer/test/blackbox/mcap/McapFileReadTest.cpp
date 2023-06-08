@@ -17,9 +17,6 @@
 #include <cpp_utils/testing/gtest_aux.hpp>
 #include <gtest/gtest.h>
 
-#include <cpp_utils/event/MultipleEventHandler.hpp>
-#include <cpp_utils/logging/CustomStdLogConsumer.hpp>
-
 #include "dds/HelloWorldSubscriber.h"
 
 #include "tool/DdsReplayer.hpp"
@@ -46,11 +43,9 @@ std::string topic_name = "/dds/topic";
 
 void create_subscriber_replayer(
         DataToCheck& data,
-        std::string configuration_path = "resources/config_file.yaml")
+        std::string configuration_path = "resources/config_file.yaml",
+        std::string input_file = "resources/helloworld_file.mcap")
 {
-
-    // Create replayer instance
-    std::string input_file = "resources/helloworld_file.mcap";
     {
         // Create Subscriber
         HelloWorldSubscriber subscriber(
@@ -64,6 +59,7 @@ void create_subscriber_replayer(
             eprosima::ddsrecorder::yaml::ReplayerConfiguration configuration(configuration_path);
             configuration.replayer_configuration->domain.domain_id = test::DOMAIN;
 
+            // Create replayer instance
             auto replayer = std::make_unique<DdsReplayer>(configuration, input_file);
 
             std::cout << "replayer created !!!!" << std::endl;
@@ -73,14 +69,9 @@ void create_subscriber_replayer(
 
             std::cout << "finish process_mcap!!!!" << std::endl;
 
-            // Disable inner pipe, which would abort replaying messages in case execution stopped by signal
             replayer->stop();
 
             std::cout << "replayer stop!!!!" << std::endl;
-
-            subscriber.stop();
-
-            std::cout << "subscriber stop!!!!" << std::endl;
 
         }
         std::cout << "replayer destroyed!!!!" << std::endl;

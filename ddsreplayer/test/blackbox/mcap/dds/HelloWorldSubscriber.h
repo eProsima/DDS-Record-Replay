@@ -19,10 +19,6 @@
 
 #pragma once
 
-#include <atomic>
-#include <condition_variable>
-#include <mutex>
-
 #include <fastdds/dds/core/status/SubscriptionMatchedStatus.hpp>
 #include <fastdds/dds/domain/DomainParticipant.hpp>
 #include <fastdds/dds/domain/DomainParticipantListener.hpp>
@@ -74,12 +70,6 @@ public:
             eprosima::fastdds::dds::DataReader* reader,
             const eprosima::fastdds::dds::SubscriptionMatchedStatus& info) override;
 
-    //! Return the current state of execution
-    static bool is_stopped();
-
-    //! Trigger the end of execution
-    static void stop();
-
 protected:
 
     // Fast DDS entities
@@ -97,7 +87,4 @@ protected:
     int matched_;
     //! Number of samples received
     uint32_t samples_;
-
-    //! Member used for control flow purposes
-    static std::atomic<bool> stop_;
 };

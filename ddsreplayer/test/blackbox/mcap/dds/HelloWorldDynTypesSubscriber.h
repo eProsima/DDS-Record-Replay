@@ -19,11 +19,6 @@
 
 #pragma once
 
-#include <atomic>
-#include <condition_variable>
-#include <mutex>
-#include <functional>
-
 #include <fastdds/dds/core/status/SubscriptionMatchedStatus.hpp>
 #include <fastdds/dds/domain/DomainParticipant.hpp>
 #include <fastdds/dds/domain/DomainParticipantListener.hpp>
@@ -81,12 +76,6 @@ public:
             const eprosima::fastrtps::string_255 type_name,
             const eprosima::fastrtps::types::TypeInformation& type_information) override;
 
-    //! Return the current state of execution
-    static bool is_stopped();
-
-    //! Trigger the end of execution
-    static void stop();
-
 protected:
 
     /**
@@ -128,6 +117,4 @@ protected:
     //! Waits until a type has been discovered
     static std::condition_variable type_discovered_cv_;
 
-    //! Indicates if the application is still running
-    static std::atomic<bool> stop_;
 };

@@ -15,9 +15,6 @@
 #include <cpp_utils/testing/gtest_aux.hpp>
 #include <gtest/gtest.h>
 
-#include <cpp_utils/event/MultipleEventHandler.hpp>
-#include <cpp_utils/logging/CustomStdLogConsumer.hpp>
-
 #include "dds/HelloWorldDynTypesSubscriber.h"
 
 #include "tool/DdsReplayer.hpp"
@@ -42,13 +39,18 @@ std::string topic_name = "/dds/topic";
 } // test
 
 
+/**
+ * It is necessary to create the DDS Subscriber before the DDS Recorder
+ * so that it does not cause a segfault that can trigger for an existing
+ * race condition that shows up if the subscriber receives the type when
+ * it is being created and tries to create the data reader before the
+ * subscriber creation is complete.
+ */
 void create_subscriber_replayer(
         DataToCheck& data,
-        std::string configuration_path = "resources/config_file.yaml")
+        std::string configuration_path = "resources/config_file.yaml",
+        std::string input_file = "resources/helloworld_withtype_file.mcap")
 {
-
-    std::string input_file = "resources/helloworld_withtype_file.mcap";
-
     {
         // Create Subscriber
         HelloWorldDynTypesSubscriber subscriber(
@@ -73,9 +75,7 @@ void create_subscriber_replayer(
 
             replayer->stop();
 
-            subscriber.stop();
-
-            std::cout << "thread joined!!!!" << std::endl;
+            std::cout << "replayer stop!!!!" << std::endl;
 
         }
         std::cout << "replayer destroyed!!!!" << std::endl;
@@ -87,7 +87,6 @@ void create_subscriber_replayer(
 
 TEST(McapFileReadWithTypeTest, trivial)
 {
-    // abort();
     // info to check
     DataToCheck data;
     create_subscriber_replayer(data);

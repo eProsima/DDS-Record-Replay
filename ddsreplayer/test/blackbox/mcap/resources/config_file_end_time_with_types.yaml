@@ -7,9 +7,6 @@ builtin-topics:
 
 replayer:
   end-time:
-    # local: true
-    # format: "%H-%M-%S_%Y-%m-%d"
-    # datetime: 13-48-47_2023-05-26
     local: false
     format: "%H-%M-%S_%Y-%m-%d"
     datetime: 11-48-47_2023-05-26
