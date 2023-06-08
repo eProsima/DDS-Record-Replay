@@ -1,0 +1,12 @@
+builtin-topics:
+  - name: "/dds/topic"
+    type: "HelloWorld"
+    qos:
+      reliability: true       # Use QoS RELIABLE
+      durability: true        # Use QoS TRANSIENT_LOCAL
+
+replayer:
+  replay-types: true
+
+specs:
+  wait-all-acked-timeout: 2000
