@@ -179,11 +179,11 @@ jobs:
           package_name: ddsrecorder_tool
           cmake_build_type: ${{ matrix.cmake-config }}
 
-      # - name: Run tests ddsreplayer_tool
-      #   uses: ./DDS-Record-Replay/.github/actions/run-test-windows
-      #   with:
-      #     package_name: ddsreplayer_tool
-      #     cmake_build_type: ${{ matrix.cmake-config }}
+      - name: Run tests ddsreplayer_tool
+        uses: ./DDS-Record-Replay/.github/actions/run-test-windows
+        with:
+          package_name: ddsreplayer_tool
+          cmake_build_type: ${{ matrix.cmake-config }}
 
   ubuntu-main-test:
     runs-on: ubuntu-20.04
@@ -261,11 +261,11 @@ jobs:
           package_name: ddsrecorder_tool
         if: always()
 
-      # - name: Run tests ddsreplayer_tool
-      #   uses: ./src/DDS-Record-Replay/.github/actions/run-test-ubuntu
-      #   with:
-      #     package_name: ddsreplayer_tool
-      #   if: always()
+      - name: Run tests ddsreplayer_tool
+        uses: ./src/DDS-Record-Replay/.github/actions/run-test-ubuntu
+        with:
+          package_name: ddsreplayer_tool
+        if: always()
 
       - name: Upload Logs
         uses: actions/upload-artifact@v1
@@ -353,17 +353,17 @@ jobs:
               --timeout 60
         if: always()
 
-      # - name: Run tests ddsreplayer_tool
-      #   run: |
-      #     source install/setup.bash && \
-      #     colcon test \
-      #       --packages-select-regex ddsreplayer_tool \
-      #       --event-handlers=console_direct+ \
-      #       --return-code-on-test-failure \
-      #       --ctest-args \
-      #         --label-exclude xfail \
-      #         --timeout 60
-      #   if: always()
+      - name: Run tests ddsreplayer_tool
+        run: |
+          source install/setup.bash && \
+          colcon test \
+            --packages-select-regex ddsreplayer_tool \
+            --event-handlers=console_direct+ \
+            --return-code-on-test-failure \
+            --ctest-args \
+              --label-exclude xfail \
+              --timeout 60
+        if: always()
 
       - name: Upload Logs
         uses: actions/upload-artifact@v1
