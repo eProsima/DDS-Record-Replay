@@ -26,7 +26,6 @@ You can access the documentation online, which is hosted on [Read the Docs](http
 * [Getting Started](https://dds-recorder.readthedocs.io/en/latest/rst/recording/getting_started/getting_started.html)
 * [Usage](https://dds-recorder.readthedocs.io/en/latest/rst/recording/usage/usage.html)
 * [Configuration](https://dds-recorder.readthedocs.io/en/latest/rst/recording/usage/configuration.html)
-* [Tutorials](https://dds-recorder.readthedocs.io/en/latest/rst/recording/tutorials/tutorials.html)
 
 **Replay application**
 

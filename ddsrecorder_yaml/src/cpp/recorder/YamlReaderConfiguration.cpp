@@ -201,21 +201,16 @@ void RecorderConfiguration::load_recorder_configuration_(
     // Get optional max reception rate
     if (YamlReader::is_tag_present(yml, MAX_RECEPTION_RATE_TAG))
     {
-        auto max_reception_rate_entry = YamlReader::get<float>(yml, MAX_RECEPTION_RATE_TAG, version);
+        // Set default value for max reception rate
+        ddspipe::core::types::TopicQoS::default_max_reception_rate.store(YamlReader::get_nonnegative_float(yml,
+                MAX_RECEPTION_RATE_TAG));
+    }
 
-        // Only accept non-negative values
-        if (max_reception_rate_entry < 0)
-        {
-            throw eprosima::utils::ConfigurationException(
-                      utils::Formatter() << "Error reading <" << MAX_RECEPTION_RATE_TAG <<
-                          "> : value cannot be negative.");
-        }
-        else
-        {
-            max_reception_rate = max_reception_rate_entry;
-            // Set default value for max reception rate
-            ddspipe::core::types::TopicQoS::default_max_reception_rate.store(max_reception_rate);
-        }
+    /////
+    // Get optional only_with_type
+    if (YamlReader::is_tag_present(yml, RECORDER_ONLY_WITH_TYPE_TAG))
+    {
+        only_with_type = YamlReader::get<bool>(yml, RECORDER_ONLY_WITH_TYPE_TAG, version);
     }
 }
 

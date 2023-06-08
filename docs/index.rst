@@ -38,7 +38,6 @@
    /rst/recording/usage/usage
    /rst/recording/usage/configuration
    /rst/recording/remote_control/remote_control
-   /rst/recording/tutorials/tutorials
 
 
 .. _index_replay_application:
@@ -52,6 +51,18 @@
    /rst/replaying/getting_started/getting_started
    /rst/replaying/usage/usage
    /rst/replaying/usage/configuration
+
+
+.. _index_tutorials:
+
+.. toctree::
+   :caption: Tutorials
+   :maxdepth: 2
+   :numbered: 5
+   :hidden:
+
+   /rst/tutorials/dynamic_types
+   /rst/tutorials/foxglove_tutorial
 
 
 .. _index_developer_manual:

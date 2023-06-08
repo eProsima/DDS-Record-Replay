@@ -67,6 +67,7 @@ public:
     utils::Fuzzy<utils::Timestamp> end_time{};
     float rate{1};
     utils::Fuzzy<utils::Timestamp> start_replay_time{};
+    bool replay_types = true;
 
     // Specs
     unsigned int n_threads = 12;

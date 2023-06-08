@@ -405,6 +405,10 @@ public:
    */
   const std::unordered_map<SchemaId, SchemaPtr> schemas() const;
 
+  const std::multimap<std::string, MetadataIndex> metadataIndexes() const;
+
+  const std::map<std::string, Metadata> metadata() const;
+
   /**
    * @brief Look up a Channel record by channel ID. If the Channel has not been
    * encountered yet or does not exist in the file, this will return nullptr.
@@ -471,6 +475,7 @@ private:
   internal::IntervalTree<ByteOffset, ChunkIndex> chunkRanges_;
   std::multimap<std::string, AttachmentIndex> attachmentIndexes_;
   std::multimap<std::string, MetadataIndex> metadataIndexes_;
+  std::map<std::string, Metadata> metadata_;
   std::unordered_map<SchemaId, SchemaPtr> schemas_;
   std::unordered_map<ChannelId, ChannelPtr> channels_;
   ByteOffset dataStart_ = 0;

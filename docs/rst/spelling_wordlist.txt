@@ -14,6 +14,8 @@ ddsrecorder
 ddspipe
 ddsrouter
 deserialization
+deserialize
+deserialized
 Diffie
 Dockerfile
 downsampling

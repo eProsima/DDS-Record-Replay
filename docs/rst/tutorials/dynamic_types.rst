@@ -1,10 +1,10 @@
-.. include:: ../../exports/alias.include
+.. include:: ../exports/alias.include
 
-.. _recorder_tutorials_basic_example:
+.. _tutorials_dynamic_types:
 
-####################################################
-Configuring Fast DDS DynamicTypes for data recording
-####################################################
+#################################
+Configuring Fast DDS DynamicTypes
+#################################
 
 .. contents::
     :local:
@@ -15,15 +15,14 @@ Configuring Fast DDS DynamicTypes for data recording
 Background
 **********
 
-Currently, the DDS Recorder only stores DDS data whose data type is set as a DynamicType.
-The reason for this is that, without the need for the user to set the data type in the DDS Recorder, the DDS Recorder can access it via the type lookup service.
-Thus, the user will be able to record the published data using the |ddsrecorder| tool of the |eddsrecord| software.
-
-The source code of this tutorial can be found in the public |eddsrecord| `GitHub repository <https://github.com/eProsima/DDS-Record-Replay/tree/main/resources/dds/TypeLookupService>`_ with an explanation of how to build and run it.
+As explained in :ref:`this section <recorder_getting_started_project_overview>`, a |ddsrecorder| instance stores (by default) all data regardless of whether their associated data type is received or not.
+However, some applications require this information to be recorded and written in the resulting MCAP file, and for this to occur the publishing applications must send it via :term:`Dynamic Types<DynamicTypes>`.
 
 This tutorial focuses on how to send the data type information using Fast DDS DynamicTypes and other relevant aspects of DynamicTypes.
 More specifically, this tutorial implements a DDS Publisher configured to send its data type, a DDS Subscriber that collects the data type and is able to read the incoming data, and a DDS Recorder is launched to save all the data published on the network.
 For more information about how to create the workspace with a basic DDS Publisher and a basic DDS Subscriber, please refer to `Writing a simple C++ publisher and subscriber application <https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html>`_ .
+
+The source code of this tutorial can be found in the public |eddsrecord| `GitHub repository <https://github.com/eProsima/DDS-Record-Replay/tree/main/resources/dds/TypeLookupService>`_ with an explanation of how to build and run it.
 
 .. warning::
 
@@ -35,7 +34,7 @@ Prerequisites
 
 Ensure that |eddsrecord| is installed together with *eProsima* dependencies, i.e. *Fast DDS*, *Fast CDR* and *DDS Pipe*.
 
-If |eddsrecord| was installed using the `recommended installation <https://dds-recorder.readthedocs.io/en/latest/rst/installation/docker.html>`_ the environment is source by default, otherwise, just remember to source it in every terminal in this tutorial:
+If |eddsrecord| was installed using the `recommended installation <https://dds-recorder.readthedocs.io/en/latest/rst/installation/docker.html>`_ the environment is sourced by default, otherwise, just remember to source it in every terminal in this tutorial:
 
 .. code-block:: bash
 
@@ -71,11 +70,11 @@ At the moment, there are two data types that can be used:
 
 * `HelloWorld.idl <https://github.com/eProsima/DDS-Record-Replay/blob/main/resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl>`_
 
-.. literalinclude:: ../../../../resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl
+.. literalinclude:: ../../../resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl
 
 * `Complete.idl <https://github.com/eProsima/DDS-Record-Replay/blob/main/resources/dds/TypeLookupService/types/complete/Complete.idl>`_
 
-.. literalinclude:: ../../../../resources/dds/TypeLookupService/types/complete/Complete.idl
+.. literalinclude:: ../../../resources/dds/TypeLookupService/types/complete/Complete.idl
 
 Examining the code
 ==================
@@ -86,14 +85,14 @@ The private data members of the class defines the DDS Topic, ``DataTypeKind``, D
 The ``DataTypeKind`` defines the type to be used by the application (``HelloWorld`` or ``Complete``).
 For simplicity, this tutorial only covers the code related to the ``HelloWorld`` type.
 
-.. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.h
+.. literalinclude:: ../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.h
     :language: C++
     :lines: 139-146
 
 The next lines show the constructor of the ``TypeLookupServicePublisher`` class that implements the publisher.
 The publisher is created with the topic and data type to use.
 
-.. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
+.. literalinclude:: ../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
     :language: C++
     :lines: 45-54
 
@@ -101,7 +100,7 @@ Inside the ``TypeLookupServicePublisher`` constructor are defined the DomainPart
 As the publisher act as a server of types, its QoS must be configured to send this information.
 Set ``use_client`` to ``false`` and ``use_server`` to ``true``.
 
-.. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
+.. literalinclude:: ../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
     :language: C++
     :lines: 58-62
 
@@ -112,13 +111,13 @@ Next, we register the type in the participant:
 3. Create the ``TypeSupport`` with the dynamic type previously created.
 4. Configure the ``type`` to fill automatically the ``TypeInformation`` and not ``TypeObject`` to be compliant with `DDS-XTypes 1.2. <https://www.omg.org/spec/DDS-XTypes/1.2>`_ standard.
 
-.. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
+.. literalinclude:: ../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
     :language: C++
     :lines: 73-95
 
 The function ``generate_helloworld_type_()`` returns the dynamic type generated with the ``TypeObject`` and ``TypeIdentifier`` of the type.
 
-.. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
+.. literalinclude:: ../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
     :language: C++
     :lines: 256-271
 
@@ -129,7 +128,7 @@ To make the publication, the public member function ``publish()`` is implemented
 1. It creates the variable that will contain the user data, ``dynamic_data_``.
 2. Fill that variable with the function ``fill_helloworld_data_(msg)``, explained below.
 
-.. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
+.. literalinclude:: ../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
     :language: C++
     :lines: 229-254
 
@@ -139,7 +138,7 @@ First, the ``Dynamic_ptr`` that will be filled in and returned is created.
 Using the ``DynamicDataFactory`` we create the data that corresponds to our data type.
 Finally, data variables are assigned, in this case, ``index`` and ``message``.
 
-.. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
+.. literalinclude:: ../../../resources/dds/TypeLookupService/TypeLookupServicePublisher.cpp
     :language: C++
     :lines: 293-307
 
@@ -156,14 +155,14 @@ This section explains the C++ source code of the DDS Subscriber, which can also 
 
 The private data members of the class defines the DDS Topic, DDS Topic type and DynamicType.
 
-.. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.h
+.. literalinclude:: ../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.h
     :language: C++
     :lines: 105-110
 
 The next lines show the constructor of the ``TypeLookupServiceSubscriber`` class that implements the subscriber setting the topic name as the one configured in the
 publisher side.
 
-.. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
+.. literalinclude:: ../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
     :language: C++
     :lines: 45-53
 
@@ -171,7 +170,7 @@ The ``DomainParticipantQos`` are defined inside the ``TypeLookupServiceSubscribe
 As the subscriber act as a client of types, set the QoS in order to receive this information.
 Set ``use_client`` to ``true`` and ``use_server`` to ``false``.
 
-.. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
+.. literalinclude:: ../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
     :language: C++
     :lines: 57-61
 
@@ -181,7 +180,7 @@ Inside ``on_data_available()`` callback function the ``DynamicData_ptr`` is crea
 
 As in the subscriber, the ``DynamicDataFactory`` is used for the creation of the data that corresponds to our data type.
 
-.. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
+.. literalinclude:: ../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
     :language: C++
     :lines: 143-170
 
@@ -189,7 +188,7 @@ The function ``on_type_information_received()`` detects if new topic information
 To register a remote topic, function ``register_remote_type_callback_()`` is used.
 Once the topic has been discovered and registered, it is created a DataReader on this topic.
 
-.. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
+.. literalinclude:: ../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
     :language: C++
     :lines: 172-212
 
@@ -198,38 +197,13 @@ First, it creates a ``TypeSupport`` with the corresponding type and registers it
 Then, it creates the DDS Topic with the topic name set in the creation of the Subscriber and the topic type previously registered.
 Finally, it creates the DataReader of that topic.
 
-.. literalinclude:: ../../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
+.. literalinclude:: ../../../resources/dds/TypeLookupService/TypeLookupServiceSubscriber.cpp
     :language: C++
     :lines: 278-304
 
 ***********************
 Running the application
 ***********************
-
-Recording samples with DDS Recorder
-===================================
-
-Open two terminals:
-
-* In the first terminal, run an instance of the described publisher:
-
-    .. code-block:: bash
-
-        source install/setup.bash
-        cd DDS-Record-Replay/build/TypeLookupService
-        ./TypeLookupService
-
-* In the second terminal, run the ddsrecorder:
-
-    .. code-block:: bash
-
-        source install/setup.bash
-        ddsrecorder
-
-Stop the |ddsrecorder| at any time to save the output MCAP file containing the recorded data.
-
-Publisher <-> Subscriber
-========================
 
 Open two terminals:
 

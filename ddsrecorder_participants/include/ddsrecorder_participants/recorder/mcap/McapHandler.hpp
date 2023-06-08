@@ -248,6 +248,12 @@ protected:
             const std::string& schema_name);
 
     /**
+     * @brief Add all samples stored in \c pending_samples_ structure, associating each of them to a blank schema.
+     *
+     */
+    void add_pending_samples_nts_();
+
+    /**
      * @brief Wait for an event trigger to write in disk samples from buffer.
      *
      * Every \c cleanup_period seconds, and before dumping data to disk, samples older than [now - event_window] are
@@ -302,6 +308,26 @@ protected:
             const std::string& schema_name);
 
     /**
+     * @brief Store in MCAP metadata the dynamic types associated to all added schemas, and their dependencies.
+     *
+     */
+    void store_dynamic_types_();
+
+    /**
+     * @brief Serialize type identifier and object, and insert the result into \c dynamic_types metadata map.
+     *
+     * @param [in] type_identifier Type identifier to be serialized and stored.
+     * @param [in] type_object Type object to be serialized and stored.
+     * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
+     * @param [in,out] dynamic_types Metadata map where to store serialized dynamic type.
+     */
+    void store_dynamic_type_(
+            const eprosima::fastrtps::types::TypeIdentifier* type_identifier,
+            const eprosima::fastrtps::types::TypeObject* type_object,
+            const std::string& type_name,
+            mcap::KeyValueMap& dynamic_types);
+
+    /**
      * @brief Convert given \c filename to temporal format.
      *
      * @param [in] filename Filename to be converted.
@@ -317,6 +343,24 @@ protected:
      */
     static std::string serialize_qos_(
             const ddspipe::core::types::TopicQoS& qos);
+
+    /**
+     * @brief Serialize a \c TypeIdentifier into a string.
+     *
+     * @param [in] type_identifier TypeIdentifier to be serialized
+     * @return Serialized TypeIdentifier string
+     */
+    static std::string serialize_type_identifier_(
+            const eprosima::fastrtps::types::TypeIdentifier* type_identifier);
+
+    /**
+     * @brief Serialize a \c TypeObject into a string.
+     *
+     * @param [in] type_object TypeObject to be serialized
+     * @return Serialized TypeObject string
+     */
+    static std::string serialize_type_object_(
+            const eprosima::fastrtps::types::TypeObject* type_object);
 
     //! Handler configuration
     McapHandlerConfiguration configuration_;
