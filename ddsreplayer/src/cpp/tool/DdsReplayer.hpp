@@ -17,8 +17,13 @@
 #include <memory>
 #include <set>
 
-#include <cpp_utils/thread_pool/pool/SlotThreadPool.hpp>
+#include <cpp_utils/memory/Heritable.hpp>
 #include <cpp_utils/ReturnCode.hpp>
+#include <cpp_utils/thread_pool/pool/SlotThreadPool.hpp>
+
+#include <fastdds/dds/domain/DomainParticipant.hpp>
+#include <fastdds/dds/publisher/DataWriter.hpp>
+#include <fastdds/dds/publisher/Publisher.hpp>
 
 #include <ddspipe_core/core/DdsPipe.hpp>
 #include <ddspipe_core/dynamic/AllowedTopicList.hpp>
@@ -26,7 +31,7 @@
 #include <ddspipe_core/dynamic/ParticipantsDatabase.hpp>
 #include <ddspipe_core/efficiency/payload/FastPayloadPool.hpp>
 #include <ddspipe_core/types/dds/TopicQoS.hpp>
-#include <ddspipe_core/types/topic/dds/DistributedTopic.hpp>
+#include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
 #include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
 #include <ddsrecorder_participants/replayer/ReplayerParticipant.hpp>
@@ -51,10 +56,19 @@ public:
      *
      * @param configuration: Structure encapsulating all replayer configuration options.
      * @param input_file:    MCAP file containing the messages to be played back.
+     *
+     * @throw utils::InitializationException if failed to create dynamic participant/publisher.
      */
     DdsReplayer(
             const yaml::ReplayerConfiguration& configuration,
             std::string& input_file);
+
+    /**
+     * @brief Destructor
+     *
+     * Removes all DDS resources created via the \c fastdds::DomainParticipantFactory
+     */
+    ~DdsReplayer();
 
     /**
      * Reload allowed topics list.
@@ -90,13 +104,51 @@ protected:
             std::string& input_file);
 
     /**
+     * @brief Deserialize and register \c dynamic_type into \c TypeObjectFactory with \c type_name name.
+     *
+     * @param type_name: name of the type with which the given dynamic type is registered.
+     * @param dynamic_type: serialized dynamic type (concatenation of serialized type id and object) to be registered.
+     */
+    void register_dynamic_type_(
+            const std::string& type_name,
+            const std::string& dynamic_type);
+
+    /**
+     * @brief Create DDS DataWriter in given topic to send associated dynamic type information to applications relying
+     * on dynamic types (e.g. applications which dynamically create DataReaders every time a participant receives a
+     * dynamic type via on_type_discovery/on_type_information_received callbacks).
+     *
+     * @param topic: topic on which DataWriter is created.
+     */
+    void create_dynamic_writer_(
+            utils::Heritable<ddspipe::core::types::DdsTopic> topic);
+
+    /**
      * @brief Deserialize a serialized \c TopicQoS string.
      *
      * @param [in] qos_str Serialized \c TopicQoS string
      * @return Deserialized TopicQoS
      */
-    ddspipe::core::types::TopicQoS deserialize_qos_(
+    static ddspipe::core::types::TopicQoS deserialize_qos_(
             const std::string& qos_str);
+
+    /**
+     * @brief Deserialize a serialized \c TypeIdentifier string.
+     *
+     * @param [in] typeid_str Serialized \c TypeIdentifier string
+     * @return Deserialized TypeIdentifier
+     */
+    static fastrtps::types::TypeIdentifier deserialize_type_identifier_(
+            const std::string& typeid_str);
+
+    /**
+     * @brief Deserialize a serialized \c TypeObject string.
+     *
+     * @param [in] typeobj_str Serialized \c TypeObject string
+     * @return Deserialized TypeObject
+     */
+    static fastrtps::types::TypeObject deserialize_type_object_(
+            const std::string& typeobj_str);
 
     //! Payload Pool
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;
@@ -118,6 +170,18 @@ protected:
 
     //! DDS Pipe
     std::unique_ptr<ddspipe::core::DdsPipe> pipe_;
+
+    //! Dynamic DDS DomainParticipant
+    fastdds::dds::DomainParticipant* dyn_participant_;
+
+    //! Dynamic DDS Publisher
+    fastdds::dds::Publisher* dyn_publisher_;
+
+    //! Dynamic DDS Topics map
+    std::map<utils::Heritable<ddspipe::core::types::DdsTopic>, fastdds::dds::Topic*> dyn_topics_;
+
+    //! Dynamic DDS DataWriters map
+    std::map<utils::Heritable<ddspipe::core::types::DdsTopic>, fastdds::dds::DataWriter*> dyn_writers_;
 };
 
 } /* namespace replayer */

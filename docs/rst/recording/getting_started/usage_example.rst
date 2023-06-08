@@ -68,6 +68,6 @@ Stop the recorder with ``Ctrl+C`` and check that the MCAP file exists.
 Next Steps
 ==========
 
-Explore section :ref:`Tutorials <recorder_tutorials_basic_example>` for more information on how to configure and set up a recorder, as well as to discover multiple scenarios where |ddsrecorder| may serve as a useful tool.
+Explore section :ref:`Tutorials <tutorials_dynamic_types>` for more information on how to configure and set up a recorder, as well as to discover multiple scenarios where |ddsrecorder| may serve as a useful tool.
 Also, feel free to check out :ref:`this <replayer_getting_started_usage_example>` example, where a |ddsreplayer| is used to reproduce the traffic recorded following the steps in this tutorial.
 

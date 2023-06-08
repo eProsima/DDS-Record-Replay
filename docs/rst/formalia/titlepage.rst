@@ -76,5 +76,6 @@ This documentation is organized into the sections below.
 * :ref:`Installation Manual <installation_manual_linux>`
 * :ref:`Recording application <recorder_getting_started_getting_started>`
 * :ref:`Replay application <replayer_getting_started_getting_started>`
+* :ref:`Tutorials <tutorials_dynamic_types>`
 * :ref:`Developer Manual <developer_manual_installation_sources_linux>`
 * :ref:`Release Notes <notes>`

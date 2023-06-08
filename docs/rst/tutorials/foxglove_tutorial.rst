@@ -1,10 +1,10 @@
-.. include:: ../../exports/alias.include
+.. include:: ../exports/alias.include
 
-.. _recorder_tutorials_foxglove:
+.. _tutorials_foxglove:
 
-#####################################
-Visualize recorded data with Foxglove
-#####################################
+############################
+Visualize data with Foxglove
+############################
 
 .. contents::
     :local:
@@ -32,6 +32,8 @@ Download *eProsima Shapes Demo* from `eProsima website <https://www.eprosima.com
 * `Windows installation from binaries <https://eprosima-shapes-demo.readthedocs.io/en/latest/installation/windows_binaries.html>`_
 * `Linux installation from sources <https://eprosima-shapes-demo.readthedocs.io/en/latest/installation/linux_sources.html>`_
 * `Docker Image <https://eprosima-shapes-demo.readthedocs.io/en/latest/installation/docker_image.html>`_
+
+.. _tutorials_foxglove_configuring_recorder:
 
 Configuring DDS Recorder
 ************************

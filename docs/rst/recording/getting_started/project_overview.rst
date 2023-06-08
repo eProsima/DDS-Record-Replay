@@ -12,9 +12,13 @@ Among these tools is a recording application, called |ddsrecorder|, which allows
 The |ddsrecorder| application automatically discovers all topics in the DDS network and saves the data published in each topic with the publication timestamp of the data.
 Furthermore, by using the `DynamicTypes <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dynamic_types/dynamic_types.html>`_ feature of *Fast DDS*, it is possible to record the type of the data in the MCAP file.
 The benefit of this comes from the fact that the data is saved serialized according to the CDR format.
-The registration of the data type in the file allows the reading of the data (deserialization) when loading the file.
 
-Since the |ddsrecorder| needs to record the data types of the data to be saved in the database, the user application must communicate the data types with which it is working by means of the type lookup service.
+By default, |eddsrecorder| saves all DDS traffic encountered in the domain of choice, storing samples in the same form they are received (serialized) without the need to have received the (dynamic) type associated to these samples.
+When recorded samples with no associated type information are played back through a |ddsreplayer|, only DDS applications in possession of this type information will be able to receive and process these messages.
+
+However, some applications might not have this information available out of the box, as it is the case of applications relying on :term:`Dynamic Types<DynamicTypes>`.
+Additionally, tools such as `Foxglove Studio <https://studio.foxglove.dev/>`__ require this information to be stored in the resulting MCAP file so messages can be deserialized for visualization.
+In such scenarios, it is required that type information gets stored along with data samples, which is automatically done by a |ddsrecorder| instance as long as the publisher applications (whose messages are recorded) send this information.
 This can be easily achieved by applying the configuration described in :ref:`this section <recorder_usage_fastdds_configuration>`.
 
 Moreover, |ddsrecorder| is designed to ensure that internal communications are handled efficiently, from the reception of the data to its storage in the output database.

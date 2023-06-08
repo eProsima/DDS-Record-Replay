@@ -171,6 +171,12 @@ void ReplayerConfiguration::load_replay_configuration_(
     {
         start_replay_time = YamlReader::get<utils::Timestamp>(yml, REPLAYER_REPLAY_START_TIME_TAG, version);
     }
+
+    // Get optional replay_types
+    if (YamlReader::is_tag_present(yml, REPLAYER_REPLAY_TYPES_TAG))
+    {
+        replay_types = YamlReader::get<bool>(yml, REPLAYER_REPLAY_TYPES_TAG, version);
+    }
 }
 
 void ReplayerConfiguration::load_specs_configuration_(

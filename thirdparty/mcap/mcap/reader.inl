@@ -428,6 +428,7 @@ Status McapReader::readSummarySection_(IReadable& reader) {
 
   attachmentIndexes_.clear();
   metadataIndexes_.clear();
+  metadata_.clear();
   chunkIndexes_.clear();
 
   // Read the Summary section
@@ -487,6 +488,7 @@ Status McapReader::readSummaryFromScan_(IReadable& reader) {
   channels_.clear();
   attachmentIndexes_.clear();
   metadataIndexes_.clear();
+  metadata_.clear();
   chunkIndexes_.clear();
 
   TypedRecordReader typedReader{reader, dataStart_, dataEnd_};
@@ -503,6 +505,7 @@ Status McapReader::readSummaryFromScan_(IReadable& reader) {
   typedReader.onMetadata = [&](const Metadata& metadata, ByteOffset fileOffset) {
     MetadataIndex metadataIndex{metadata, fileOffset};
     metadataIndexes_.emplace(metadata.name, metadataIndex);
+    metadata_.emplace(metadata.name, metadata);
   };
   typedReader.onChunk = [&](const Chunk& chunk, ByteOffset fileOffset) {
     ChunkIndex chunkIndex{};
@@ -621,6 +624,14 @@ const std::unordered_map<ChannelId, ChannelPtr> McapReader::channels() const {
 
 const std::unordered_map<SchemaId, SchemaPtr> McapReader::schemas() const {
   return schemas_;
+}
+
+const std::multimap<std::string, MetadataIndex> McapReader::metadataIndexes() const {
+  return metadataIndexes_;
+}
+
+const std::map<std::string, Metadata> McapReader::metadata() const {
+  return metadata_;
 }
 
 ChannelPtr McapReader::channel(ChannelId channelId) const {
