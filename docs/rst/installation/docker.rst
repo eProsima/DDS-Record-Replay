@@ -33,8 +33,7 @@ The steps to run |ddsrecord| in a Docker container are explained below.
 
 #.  Build a |ddsrecord| configuration YAML file on the local machine.
     This will be the |ddsrecord| configuration file that runs inside the Docker container.
-    To continue this installation manual, let's use one of the configuration files provided in
-    :ref:`this tutorial <tutorials_foxglove>`.
+    To continue this installation manual, let's use the configuration file provided in :ref:`this tutorial <tutorials_foxglove>`.
     Open your preferred text editor and copy the configuration example from :ref:`here <tutorials_foxglove_configuring_recorder>`
     into the ``/<dds_recorder_ws>/DDS_RECORDER_CONFIGURATION.yaml`` file, where ``dds_recorder_ws`` is the path of the
     configuration file.
