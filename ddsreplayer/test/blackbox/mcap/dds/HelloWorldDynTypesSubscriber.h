@@ -19,6 +19,10 @@
 
 #pragma once
 
+#include <atomic>
+#include <condition_variable>
+#include <mutex>
+
 #include <fastdds/dds/core/status/SubscriptionMatchedStatus.hpp>
 #include <fastdds/dds/domain/DomainParticipant.hpp>
 #include <fastdds/dds/domain/DomainParticipantListener.hpp>

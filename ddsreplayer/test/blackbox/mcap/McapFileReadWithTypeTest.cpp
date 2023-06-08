@@ -40,11 +40,12 @@ std::string topic_name = "/dds/topic";
 
 
 /**
- * It is necessary to create the DDS Subscriber before the DDS Recorder
- * so that it does not cause a segfault that can trigger for an existing
- * race condition that shows up if the subscriber receives the type when
- * it is being created and tries to create the data reader before the
- * subscriber creation is complete.
+ * The order in which objects are created is relevant;
+ * if the replayer was created before the subscriber,
+ * a segmentation fault may occur as the dynamic type
+ * could be received by the subscriber's participant
+ * before the DDS subscriber is created (which is required
+ * for creating a DataReader with the received type).
  */
 void create_subscriber_replayer(
         DataToCheck& data,
@@ -78,6 +79,8 @@ void create_subscriber_replayer(
             std::cout << "replayer stop!!!!" << std::endl;
 
         }
+        // Replayer waits on destruction a maximum of wait-all-acked-timeout
+        // ms until all sent msgs are acknowledged
         std::cout << "replayer destroyed!!!!" << std::endl;
     }
     std::cout << "subscriber destroyed!!!!" << std::endl;

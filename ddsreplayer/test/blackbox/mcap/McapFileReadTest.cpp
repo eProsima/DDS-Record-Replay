@@ -74,6 +74,8 @@ void create_subscriber_replayer(
             std::cout << "replayer stop!!!!" << std::endl;
 
         }
+        // Replayer waits on destruction a maximum of wait-all-acked-timeout
+        // ms until all sent msgs are acknowledged
         std::cout << "replayer destroyed!!!!" << std::endl;
     }
     std::cout << "subscriber destroyed!!!!" << std::endl;

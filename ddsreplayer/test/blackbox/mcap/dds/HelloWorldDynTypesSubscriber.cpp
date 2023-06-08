@@ -268,6 +268,7 @@ void HelloWorldDynTypesSubscriber::register_remote_type_callback_(
     rqos.durability().kind = TRANSIENT_LOCAL_DURABILITY_QOS;
     rqos.history().kind = KEEP_ALL_HISTORY_QOS;
 
+    // WARNING: subscriber should already have been created (in object's constructor)
     datareader_ = subscriber_->create_datareader(
         topic_,
         rqos,
