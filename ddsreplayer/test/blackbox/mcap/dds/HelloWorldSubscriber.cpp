@@ -52,8 +52,9 @@ HelloWorldSubscriber::HelloWorldSubscriber(
     , topic_(nullptr)
     , datareader_(nullptr)
     , type_(new HelloWorldPubSubType())
-    , samples_(0)
     , data_(&data)
+    , matched_(0)
+    , samples_(0)
 {
     ///////////////////////////////
     // Create the DomainParticipant
@@ -199,11 +200,11 @@ void fill_info(
 {
     data->n_received_msgs++;
     data->message_msg = hello_.message();
-    if (data->min_index_msg == -1 || data->min_index_msg > hello_.index())
+    if (data->min_index_msg == -1 || data->min_index_msg > static_cast<int>(hello_.index()))
     {
         data->min_index_msg = hello_.index();
     }
-    if (data->max_index_msg == -1 || data->max_index_msg < hello_.index())
+    if (data->max_index_msg == -1 || data->max_index_msg < static_cast<int>(hello_.index()))
     {
         data->max_index_msg = hello_.index();
     }

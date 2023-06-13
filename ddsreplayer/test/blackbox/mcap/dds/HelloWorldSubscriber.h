@@ -31,9 +31,9 @@ struct DataToCheck
     unsigned int n_received_msgs;
     std::string type_msg;
     std::string message_msg;
-    unsigned int min_index_msg;
-    unsigned int max_index_msg;
-    unsigned int hz_msgs;
+    int min_index_msg;
+    int max_index_msg;
+    int hz_msgs;
 };
 
 /**
