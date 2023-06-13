@@ -1,7 +1,7 @@
 {
     "names":
     {
-        "fastddsspy_participants":
+        "ddsrecorder_participants":
         {
             "cmake-args":
             [
@@ -12,7 +12,7 @@
             ]
         },
 
-        "fastddsspy_yaml":
+        "ddsrecorder_yaml":
         {
             "cmake-args":
             [
@@ -23,7 +23,18 @@
             ]
         },
 
-        "fastddsspy_tool":
+        "ddsrecorder_tool":
+        {
+            "cmake-args":
+            [
+                "-DCMAKE_CXX_FLAGS='/WX /EHsc'",
+                "-DCMAKE_PREFIX_PATH='${CMAKE_PREFIX_PATH};${vcpkg_install_path}'",
+                "-Ax64",
+                "-T host=x64"
+            ]
+        },
+
+        "ddsreplayer_tool":
         {
             "cmake-args":
             [
