@@ -40,6 +40,7 @@ using namespace eprosima::ddspipe::core;
 using namespace eprosima::ddspipe::core::types;
 using namespace eprosima::ddspipe::participants;
 using namespace eprosima::ddspipe::participants::rtps;
+using namespace eprosima::ddspipe::participants::types;
 using namespace eprosima::ddspipe::yaml;
 using namespace eprosima::ddsrecorder::participants;
 
@@ -220,28 +221,28 @@ void ReplayerConfiguration::load_dds_configuration_(
     // Get optional whitelist interfaces
     if (YamlReader::is_tag_present(yml, WHITELIST_INTERFACES_TAG))
     {
-        replayer_configuration->whitelist = YamlReader::get_set<ddspipe::participants::types::IpType>(yml, WHITELIST_INTERFACES_TAG,
+        replayer_configuration->whitelist = YamlReader::get_set<IpType>(yml, WHITELIST_INTERFACES_TAG,
                         version);
     }
 
     // Optional get Transport protocol
-    if (YamlReader::is_tag_present(yml, ADDRESS_TRANSPORT_TAG))
+    if (YamlReader::is_tag_present(yml, TRANSPORT_DESCRIPTORS_TRANSPORT_TAG))
     {
-        replayer_configuration->transport = YamlReader::get<ddspipe::participants::types::TransportProtocol>(yml, ADDRESS_TRANSPORT_TAG, version);
+        replayer_configuration->transport = YamlReader::get<TransportDescriptors>(yml, TRANSPORT_DESCRIPTORS_TRANSPORT_TAG, version);
     }
     else
     {
-        replayer_configuration->transport = ddspipe::participants::types::TransportProtocol::builtin;
+        replayer_configuration->transport = TransportDescriptors::builtin;
     }
 
     // Optional get ignore participant flags
     if (YamlReader::is_tag_present(yml, IGNORE_PARTICIPANT_FLAGS_TAG))
     {
-        replayer_configuration->ignore_participant_flags = YamlReader::get<ddspipe::core::types::IgnoreParticipantFlags>(yml, IGNORE_PARTICIPANT_FLAGS_TAG, version);
+        replayer_configuration->ignore_participant_flags = YamlReader::get<IgnoreParticipantFlags>(yml, IGNORE_PARTICIPANT_FLAGS_TAG, version);
     }
     else
     {
-        replayer_configuration->ignore_participant_flags = ddspipe::core::types::IgnoreParticipantFlags::no_filter;
+        replayer_configuration->ignore_participant_flags = IgnoreParticipantFlags::no_filter;
     }
 
     /////

@@ -61,19 +61,6 @@ TypeLookupServicePublisher::TypeLookupServicePublisher(
     pqos.wire_protocol().builtin.typelookup_config.use_client = false;
     pqos.wire_protocol().builtin.typelookup_config.use_server = true;
 
-    pqos.transport().use_builtin_transports = false;
-
-    std::shared_ptr<eprosima::fastdds::rtps::SharedMemTransportDescriptor> shm_transport =
-                std::make_shared<eprosima::fastdds::rtps::SharedMemTransportDescriptor>();
-
-    std::shared_ptr<eprosima::fastdds::rtps::UDPv4TransportDescriptor> udp_transport =
-                std::make_shared<eprosima::fastdds::rtps::UDPv4TransportDescriptor>();
-
-    udp_transport->interfaceWhiteList.emplace_back("127.0.0.1");
-
-    pqos.transport().user_transports.push_back(shm_transport);
-    pqos.transport().user_transports.push_back(udp_transport);
-
     participant_ = DomainParticipantFactory::get_instance()->create_participant(domain, pqos);
 
     if (participant_ == nullptr)

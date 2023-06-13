@@ -26,6 +26,8 @@
 #include <fastdds/rtps/transport/UDPv4TransportDescriptor.h>
 #include <fastdds/rtps/transport/shared_mem/SharedMemTransportDescriptor.h>
 
+#include <ddspipe_participants/participant/rtps/CommonParticipant.hpp>
+
 #include "CommandReceiver.hpp"
 
 namespace eprosima {
@@ -63,8 +65,10 @@ CommandReceiver::CommandReceiver(
 bool CommandReceiver::init()
 {
     // CONFIGURE TRANSPORT
+    // TODO: Create a utils method that returns a participant QoS object (or DomainParticipant directly) given a configuration structure.
+    // This could be somewhere in dev-utils repo, or be a static method of DDS-Pipe's (RTPS/DDS) CommonParticipant class.
     DomainParticipantQos pqos;
-    if (participant_configuration_->transport == ddspipe::participants::types::TransportProtocol::builtin)
+    if (participant_configuration_->transport == ddspipe::core::types::TransportDescriptors::builtin)
     {
         if (!participant_configuration_->whitelist.empty())
         {
@@ -78,28 +82,11 @@ bool CommandReceiver::init()
 
             // Add UDP Transport
             std::shared_ptr<eprosima::fastdds::rtps::UDPv4TransportDescriptor> udp_transport =
-                    std::make_shared<eprosima::fastdds::rtps::UDPv4TransportDescriptor>();
-
-            // Whitelisting
-            for (const ddspipe::participants::types::IpType& ip : participant_configuration_->whitelist)
-            {
-                if (ddspipe::participants::types::Address::is_ipv4_correct(ip))
-                {
-                    udp_transport->interfaceWhiteList.emplace_back(ip);
-                    logInfo(DDSRECORDER_COMMAND_RECEIVER,
-                            "Adding " << ip << " to whitelist interfaces.");
-                }
-                else
-                {
-                    // Invalid address, continue with next one
-                    logWarning(DDSRECORDER_COMMAND_RECEIVER,
-                            "Not valid IPv4. Discarding whitelist interface " << ip << ".");
-                }
-            }
+                    ddspipe::participants::rtps::CommonParticipant::create_descriptor<eprosima::fastdds::rtps::UDPv4TransportDescriptor>(participant_configuration_->whitelist);
             pqos.transport().user_transports.push_back(udp_transport);
         }
     }
-    else if (participant_configuration_->transport == ddspipe::participants::types::TransportProtocol::shm)
+    else if (participant_configuration_->transport == ddspipe::core::types::TransportDescriptors::shm_only)
     {
         // Disable builtin
         pqos.transport().use_builtin_transports = false;
@@ -109,31 +96,14 @@ bool CommandReceiver::init()
                 std::make_shared<eprosima::fastdds::rtps::SharedMemTransportDescriptor>();
         pqos.transport().user_transports.push_back(shm_transport);
     }
-    else if (participant_configuration_->transport == ddspipe::participants::types::TransportProtocol::udp)
+    else if (participant_configuration_->transport == ddspipe::core::types::TransportDescriptors::udp_only)
     {
         // Disable builtin
         pqos.transport().use_builtin_transports = false;
 
         // Add UDP Transport
         std::shared_ptr<eprosima::fastdds::rtps::UDPv4TransportDescriptor> udp_transport =
-                std::make_shared<eprosima::fastdds::rtps::UDPv4TransportDescriptor>();
-
-        // Whitelisting
-        for (const ddspipe::participants::types::IpType& ip : participant_configuration_->whitelist)
-        {
-            if (ddspipe::participants::types::Address::is_ipv4_correct(ip))
-            {
-                udp_transport->interfaceWhiteList.emplace_back(ip);
-                logInfo(DDSRECORDER_COMMAND_RECEIVER,
-                        "Adding " << ip << " to whitelist interfaces.");
-            }
-            else
-            {
-                // Invalid address, continue with next one
-                logWarning(DDSRECORDER_COMMAND_RECEIVER,
-                        "Not valid IPv4. Discarding whitelist interface " << ip << ".");
-            }
-        }
+                    ddspipe::participants::rtps::CommonParticipant::create_descriptor<eprosima::fastdds::rtps::UDPv4TransportDescriptor>(participant_configuration_->whitelist);
         pqos.transport().user_transports.push_back(udp_transport);
     }
 
