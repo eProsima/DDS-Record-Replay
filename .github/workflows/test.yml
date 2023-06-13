@@ -118,6 +118,7 @@ jobs:
           workspace_dependencies: './install'
           ctest_args: --label-exclude "xfail"
           colcon_meta_file: ./src/.github/workflows/configurations/${{ runner.os }}/colcon.meta
+          colcon_test_args: '--executor=sequential' # TODO remove when available in eProsima-CI
 
 
 #####################################################################
