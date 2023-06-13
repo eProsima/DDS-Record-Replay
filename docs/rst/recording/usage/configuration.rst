@@ -227,6 +227,72 @@ Tag ``domain`` configures the :term:`Domain Id`.
     domain: 101
 
 
+.. _recorder_ignore_participant_flags:
+
+Ignore Participant Flags
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+A set of discovery traffic filters can be defined in order to add an extra level of isolation.
+This configuration option can be set through the ``ignore-participant-flags`` tag:
+
+.. code-block:: yaml
+
+    ignore-participant-flags: no_filter                          # No filter (default)
+    # or
+    ignore-participant-flags: filter_different_host              # Discovery traffic from another host is discarded
+    # or
+    ignore-participant-flags: filter_different_process           # Discovery traffic from another process on same host is discarded
+    # or
+    ignore-participant-flags: filter_same_process                # Discovery traffic from own process is discarded
+    # or
+    ignore-participant-flags: filter_different_and_same_process  # Discovery traffic from own host is discarded
+
+See `Ignore Participant Flags <https://fast-dds.docs.eprosima.com/en/latest/fastdds/discovery/general_disc_settings.html?highlight=ignore%20flags#ignore-participant-flags>`_ for more information.
+
+
+.. _recorder_custom_transport_descriptors:
+
+Custom Transport Descriptors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+By default, |ddsrecorder| internal participants are created with enabled `UDP <https://fast-dds.docs.eprosima.com/en/latest/fastdds/transport/udp/udp.html>`_ and `Shared Memory <https://fast-dds.docs.eprosima.com/en/latest/fastdds/transport/shared_memory/shared_memory.html>`_ transport descriptors.
+The use of one or the other for communication will depend on the specific scenario, and whenever both are viable candidates, the most efficient one (Shared Memory Transport) is automatically selected.
+However, a user may desire to force the use of one of the two, which can be accomplished via the ``transport`` configuration tag.
+
+.. code-block:: yaml
+
+    transport: builtin    # UDP & SHM (default)
+    # or
+    transport: udp        # UDP only
+    # or
+    transport: shm        # SHM only
+
+.. warning::
+
+    When configured with ``transport: shm``, |ddsrecorder| will only communicate with applications using Shared Memory Transport exclusively (with disabled UDP transport).
+
+
+.. _recorder_interface_whitelist:
+
+Interface Whitelist
+^^^^^^^^^^^^^^^^^^^
+
+Optional tag ``whitelist-interfaces`` allows to limit the network interfaces used by UDP and TCP transport.
+This may be useful to only allow communication within the host (note: same can be done with :ref:`recorder_ignore_participant_flags`).
+Example:
+
+.. code-block:: yaml
+
+    whitelist-interfaces:
+      - "127.0.0.1"    # Localhost only
+
+See `Interface Whitelist <https://fast-dds.docs.eprosima.com/en/latest/fastdds/transport/whitelist.html>`_ for more information.
+
+.. warning::
+
+    When providing an interface whitelist, external participants with which communication is desired must also be configured with interface whitelisting.
+
+
 Recorder Configuration
 ----------------------
 

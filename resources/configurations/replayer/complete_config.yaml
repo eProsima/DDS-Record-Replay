@@ -20,6 +20,11 @@ dds:
         partitions: true
         ownership: false
 
+  ignore-participant-flags: filter_same_process
+  transport: shm
+  whitelist-interfaces:
+    - "127.0.0.1"
+
 replayer:
   input-file: my_output_2023-04-10_10-37-50.mcap
 
