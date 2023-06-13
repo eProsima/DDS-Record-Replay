@@ -39,7 +39,7 @@ void init_info(
         const std::string& type_name);
 void fill_info(
         DataToCheck* data,
-        uint64_t index,
+        int index,
         const std::string& message,
         uint64_t time_arrive_msg);
 
@@ -56,9 +56,10 @@ HelloWorldDynTypesSubscriber::HelloWorldDynTypesSubscriber(
     , subscriber_(nullptr)
     , topic_(nullptr)
     , datareader_(nullptr)
-    , topic_name_(topic_name)
-    , samples_(0)
     , data_(&data)
+    , topic_name_(topic_name)
+    , matched_(0)
+    , samples_(0)
 {
     ///////////////////////////////
     // Create the DomainParticipant
@@ -153,7 +154,7 @@ void HelloWorldDynTypesSubscriber::on_data_available(
             int32_t index = new_dynamic_data->get_uint32_value(0);
             std::string message = new_dynamic_data->get_string_value(1);
 
-            fill_info(data_, index, message, current_time);
+            fill_info(data_, static_cast<int>(index), message, current_time);
 
             std::cout << "Message " << samples_ << " received:\n" << std::endl;
             eprosima::fastrtps::types::DynamicDataHelper::print(new_dynamic_data);
@@ -306,7 +307,7 @@ void init_info(
 uint64_t prev_time = 0;
 void fill_info(
         DataToCheck* data,
-        uint64_t index,
+        int index,
         const std::string& message,
         uint64_t time_arrive_msg)
 {
@@ -321,7 +322,7 @@ void fill_info(
         data->max_index_msg = index;
     }
 
-    if (prev_time == 0)
+    if (prev_time == 0u)
     {
         prev_time = time_arrive_msg;
     }
@@ -331,11 +332,11 @@ void fill_info(
         prev_time = time_arrive_msg;
         if (data->hz_msgs == -1)
         {
-            data->hz_msgs = time_between_msgs;
+            data->hz_msgs = static_cast<int>(time_between_msgs);
         }
         else
         {
-            data->hz_msgs = (data->hz_msgs + time_between_msgs) / 2.0;
+            data->hz_msgs = static_cast<int>((data->hz_msgs + time_between_msgs) / 2.0);
         }
     }
 }

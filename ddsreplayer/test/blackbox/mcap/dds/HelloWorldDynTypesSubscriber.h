@@ -34,9 +34,9 @@ struct DataToCheck
     unsigned int n_received_msgs;
     std::string type_msg;
     std::string message_msg;
-    unsigned int min_index_msg;
-    unsigned int max_index_msg;
-    unsigned int hz_msgs;
+    int min_index_msg;
+    int max_index_msg;
+    int hz_msgs;
 };
 
 /**
@@ -96,7 +96,6 @@ protected:
     eprosima::fastdds::dds::Subscriber* subscriber_;
     eprosima::fastdds::dds::Topic* topic_;
     eprosima::fastdds::dds::DataReader* datareader_;
-    eprosima::fastdds::dds::TypeSupport type_;
 
     DataToCheck* data_;
 
@@ -107,14 +106,14 @@ protected:
     //! DynamicType generated with the received type information
     eprosima::fastrtps::types::DynamicType_ptr dynamic_type_;
 
-    //! Atomic variables to check whether the type has been discovered and registered
-    static std::atomic<bool> type_discovered_;
-    static std::atomic<bool> type_registered_;
-
     //! Number of DataWriters matched to the associated DataReader
     int matched_;
     //! Number of samples received
     uint32_t samples_;
+
+    //! Atomic variables to check whether the type has been discovered and registered
+    static std::atomic<bool> type_discovered_;
+    static std::atomic<bool> type_registered_;
 
     //! Protects type_discovered condition variable
     static std::mutex type_discovered_cv_mtx_;
