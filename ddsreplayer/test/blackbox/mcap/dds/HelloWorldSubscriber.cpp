@@ -35,7 +35,6 @@
 
 using namespace eprosima::fastdds::dds;
 
-
 HelloWorldSubscriber::HelloWorldSubscriber(
         const std::string& topic_name,
         uint32_t domain,
@@ -46,7 +45,6 @@ HelloWorldSubscriber::HelloWorldSubscriber(
     , datareader_(nullptr)
     , type_(new HelloWorldPubSubType())
     , data_(&data)
-    , matched_(0)
     , samples_(0)
     , prev_time_(0)
 {
@@ -95,7 +93,6 @@ HelloWorldSubscriber::HelloWorldSubscriber(
     // CREATE THE READER
     DataReaderQos rqos = DATAREADER_QOS_DEFAULT;
     rqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
-    rqos.durability().kind = TRANSIENT_LOCAL_DURABILITY_QOS;
     rqos.history().kind = KEEP_ALL_HISTORY_QOS;
 
     datareader_ = subscriber_->create_datareader(topic_, rqos, this);
@@ -112,7 +109,6 @@ HelloWorldSubscriber::HelloWorldSubscriber(
 
 HelloWorldSubscriber::~HelloWorldSubscriber()
 {
-    data_->hz_msgs = data_->hz_msgs / (data_->n_received_msgs - 1);
     if (participant_ != nullptr)
     {
         if (subscriber_ != nullptr)
@@ -183,7 +179,8 @@ void HelloWorldSubscriber::init_info(
     data_->message_msg = "";
     data_->min_index_msg = -1;
     data_->max_index_msg = -1;
-    data_->hz_msgs = -1;
+    data_->accumulate_ms_msgs = -1;
+    data_->mean_ms_msgs = -1;
 }
 
 void HelloWorldSubscriber::fill_info(
@@ -209,13 +206,15 @@ void HelloWorldSubscriber::fill_info(
     {
         double time_between_msgs = time_arrive_msg - prev_time_;
         prev_time_ = time_arrive_msg;
-        if (data_->hz_msgs == -1)
+        if (data_->accumulate_ms_msgs == -1)
         {
-            data_->hz_msgs = time_between_msgs;
+            data_->accumulate_ms_msgs = time_between_msgs;
+            data_->mean_ms_msgs = time_between_msgs;
         }
         else
         {
-            data_->hz_msgs = data_->hz_msgs + time_between_msgs;
+            data_->accumulate_ms_msgs = data_->accumulate_ms_msgs + time_between_msgs;
+            data_->mean_ms_msgs = data_->accumulate_ms_msgs / (data_->n_received_msgs - 1);
         }
     }
 }

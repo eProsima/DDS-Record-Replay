@@ -33,7 +33,8 @@ struct DataToCheck
     std::string message_msg;
     int min_index_msg;
     int max_index_msg;
-    double hz_msgs;
+    double mean_ms_msgs;
+    double accumulate_ms_msgs;
 };
 
 /**
@@ -90,10 +91,8 @@ protected:
 
     HelloWorld hello_;
 
-    //! Number of DataWriters matched to the associated DataReader
-    int matched_;
     //! Number of samples received
     uint32_t samples_;
-
+    //! The time in miliseconds when the previous message arrived
     double prev_time_;
 };

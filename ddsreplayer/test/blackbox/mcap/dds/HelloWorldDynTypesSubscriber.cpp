@@ -34,7 +34,6 @@
 
 using namespace eprosima::fastdds::dds;
 
-
 std::atomic<bool> HelloWorldDynTypesSubscriber::type_discovered_(false);
 std::atomic<bool> HelloWorldDynTypesSubscriber::type_registered_(false);
 std::mutex HelloWorldDynTypesSubscriber::type_discovered_cv_mtx_;
@@ -50,7 +49,6 @@ HelloWorldDynTypesSubscriber::HelloWorldDynTypesSubscriber(
     , datareader_(nullptr)
     , data_(&data)
     , topic_name_(topic_name)
-    , matched_(0)
     , samples_(0)
     , prev_time_(0)
 {
@@ -87,7 +85,6 @@ HelloWorldDynTypesSubscriber::HelloWorldDynTypesSubscriber(
 
 HelloWorldDynTypesSubscriber::~HelloWorldDynTypesSubscriber()
 {
-    data_->hz_msgs = data_->hz_msgs / (data_->n_received_msgs - 1);
     if (participant_ != nullptr)
     {
         if (subscriber_ != nullptr)
@@ -260,7 +257,6 @@ void HelloWorldDynTypesSubscriber::register_remote_type_callback_(
     // Create the DataReader
     DataReaderQos rqos = DATAREADER_QOS_DEFAULT;
     rqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
-    rqos.durability().kind = TRANSIENT_LOCAL_DURABILITY_QOS;
     rqos.history().kind = KEEP_ALL_HISTORY_QOS;
 
     // WARNING: subscriber should already have been created (in object's constructor)
@@ -294,7 +290,8 @@ void HelloWorldDynTypesSubscriber::init_info(
     data_->message_msg = "";
     data_->min_index_msg = -1;
     data_->max_index_msg = -1;
-    data_->hz_msgs = -1;
+    data_->accumulate_ms_msgs = -1;
+    data_->mean_ms_msgs = -1;
 }
 
 void HelloWorldDynTypesSubscriber::fill_info(
@@ -321,13 +318,15 @@ void HelloWorldDynTypesSubscriber::fill_info(
     {
         double time_between_msgs = time_arrive_msg - prev_time_;
         prev_time_ = time_arrive_msg;
-        if (data_->hz_msgs == -1)
+        if (data_->accumulate_ms_msgs == -1)
         {
-            data_->hz_msgs = time_between_msgs;
+            data_->accumulate_ms_msgs = time_between_msgs;
+            data_->mean_ms_msgs = time_between_msgs;
         }
         else
         {
-            data_->hz_msgs = data_->hz_msgs + time_between_msgs;
+            data_->accumulate_ms_msgs = data_->accumulate_ms_msgs + time_between_msgs;
+            data_->mean_ms_msgs = data_->accumulate_ms_msgs / (data_->n_received_msgs - 1);
         }
     }
 }

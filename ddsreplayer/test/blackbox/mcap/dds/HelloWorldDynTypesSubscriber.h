@@ -36,7 +36,8 @@ struct DataToCheck
     std::string message_msg;
     int min_index_msg;
     int max_index_msg;
-    double hz_msgs;
+    double mean_ms_msgs;
+    double accumulate_ms_msgs;
 };
 
 /**
@@ -114,11 +115,9 @@ protected:
     //! DynamicType generated with the received type information
     eprosima::fastrtps::types::DynamicType_ptr dynamic_type_;
 
-    //! Number of DataWriters matched to the associated DataReader
-    int matched_;
     //! Number of samples received
     uint32_t samples_;
-
+    //! The time in miliseconds when the previous message arrived
     double prev_time_;
 
     //! Atomic variables to check whether the type has been discovered and registered
