@@ -1,0 +1,48 @@
+{
+    "names":
+    {
+        "ddsrecorder_participants":
+        {
+            "cmake-args":
+            [
+                "-DCMAKE_CXX_FLAGS='/WX /EHsc'",
+                "-DCMAKE_PREFIX_PATH='${CMAKE_PREFIX_PATH};${vcpkg_install_path}'",
+                "-Ax64",
+                "-T host=x64"
+            ]
+        },
+
+        "ddsrecorder_yaml":
+        {
+            "cmake-args":
+            [
+                "-DCMAKE_CXX_FLAGS='/WX /EHsc'",
+                "-DCMAKE_PREFIX_PATH='${CMAKE_PREFIX_PATH};${vcpkg_install_path}'",
+                "-Ax64",
+                "-T host=x64"
+            ]
+        },
+
+        "ddsrecorder_tool":
+        {
+            "cmake-args":
+            [
+                "-DCMAKE_CXX_FLAGS='/WX /EHsc'",
+                "-DCMAKE_PREFIX_PATH='${CMAKE_PREFIX_PATH};${vcpkg_install_path}'",
+                "-Ax64",
+                "-T host=x64"
+            ]
+        },
+
+        "ddsreplayer_tool":
+        {
+            "cmake-args":
+            [
+                "-DCMAKE_CXX_FLAGS='/WX /EHsc'",
+                "-DCMAKE_PREFIX_PATH='${CMAKE_PREFIX_PATH};${vcpkg_install_path}'",
+                "-Ax64",
+                "-T host=x64"
+            ]
+        },
+    }
+}
