@@ -488,7 +488,7 @@ void McapHandler::add_to_pending_nts_(
 {
     assert(configuration_.max_pending_samples != 0);
     if (configuration_.max_pending_samples > 0 &&
-            pending_samples_[topic.type_name].size() == configuration_.max_pending_samples)
+            pending_samples_[topic.type_name].size() == static_cast<unsigned int>(configuration_.max_pending_samples))
     {
         if (configuration_.only_with_schema)
         {
