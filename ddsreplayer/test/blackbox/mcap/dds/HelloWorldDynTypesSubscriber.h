@@ -36,7 +36,7 @@ struct DataToCheck
     std::string message_msg;
     int min_index_msg;
     int max_index_msg;
-    int hz_msgs;
+    double hz_msgs;
 };
 
 /**
@@ -80,6 +80,14 @@ public:
             const eprosima::fastrtps::string_255 type_name,
             const eprosima::fastrtps::types::TypeInformation& type_information) override;
 
+    void init_info(
+            const std::string& type_name);
+
+    void fill_info(
+            int index,
+            const std::string& message,
+            uint64_t time_arrive_msg);
+
 protected:
 
     /**
@@ -110,6 +118,8 @@ protected:
     int matched_;
     //! Number of samples received
     uint32_t samples_;
+
+    double prev_time_;
 
     //! Atomic variables to check whether the type has been discovered and registered
     static std::atomic<bool> type_discovered_;

@@ -34,14 +34,6 @@
 
 using namespace eprosima::fastdds::dds;
 
-void init_info(
-        DataToCheck* data,
-        const std::string& type_name);
-void fill_info(
-        DataToCheck* data,
-        int index,
-        const std::string& message,
-        uint64_t time_arrive_msg);
 
 std::atomic<bool> HelloWorldDynTypesSubscriber::type_discovered_(false);
 std::atomic<bool> HelloWorldDynTypesSubscriber::type_registered_(false);
@@ -60,6 +52,7 @@ HelloWorldDynTypesSubscriber::HelloWorldDynTypesSubscriber(
     , topic_name_(topic_name)
     , matched_(0)
     , samples_(0)
+    , prev_time_(0)
 {
     ///////////////////////////////
     // Create the DomainParticipant
@@ -94,6 +87,7 @@ HelloWorldDynTypesSubscriber::HelloWorldDynTypesSubscriber(
 
 HelloWorldDynTypesSubscriber::~HelloWorldDynTypesSubscriber()
 {
+    data_->hz_msgs = data_->hz_msgs / (data_->n_received_msgs - 1);
     if (participant_ != nullptr)
     {
         if (subscriber_ != nullptr)
@@ -154,7 +148,7 @@ void HelloWorldDynTypesSubscriber::on_data_available(
             int32_t index = new_dynamic_data->get_uint32_value(0);
             std::string message = new_dynamic_data->get_string_value(1);
 
-            fill_info(data_, static_cast<int>(index), message, current_time);
+            fill_info(static_cast<int>(index), message, current_time);
 
             std::cout << "Message " << samples_ << " received:\n" << std::endl;
             eprosima::fastrtps::types::DynamicDataHelper::print(new_dynamic_data);
@@ -260,7 +254,7 @@ void HelloWorldDynTypesSubscriber::register_remote_type_callback_(
         return;
     }
 
-    init_info(data_, dynamic_type->get_name());
+    init_info(dynamic_type->get_name());
 
     ////////////////////////
     // Create the DataReader
@@ -291,52 +285,49 @@ void HelloWorldDynTypesSubscriber::register_remote_type_callback_(
     type_discovered_cv_.notify_all();
 }
 
-void init_info(
-        DataToCheck* data,
+void HelloWorldDynTypesSubscriber::init_info(
         const std::string& type_name)
 {
 
-    data->n_received_msgs = 0;
-    data->type_msg = type_name;
-    data->message_msg = "";
-    data->min_index_msg = -1;
-    data->max_index_msg = -1;
-    data->hz_msgs = -1;
+    data_->n_received_msgs = 0;
+    data_->type_msg = type_name;
+    data_->message_msg = "";
+    data_->min_index_msg = -1;
+    data_->max_index_msg = -1;
+    data_->hz_msgs = -1;
 }
 
-uint64_t prev_time = 0;
-void fill_info(
-        DataToCheck* data,
+void HelloWorldDynTypesSubscriber::fill_info(
         int index,
         const std::string& message,
         uint64_t time_arrive_msg)
 {
-    data->n_received_msgs++;
-    data->message_msg = message;
-    if (data->min_index_msg == -1 || data->min_index_msg > index)
+    data_->n_received_msgs++;
+    data_->message_msg = message;
+    if (data_->min_index_msg == -1 || data_->min_index_msg > index)
     {
-        data->min_index_msg = index;
+        data_->min_index_msg = index;
     }
-    if (data->max_index_msg == -1 || data->max_index_msg < index)
+    if (data_->max_index_msg == -1 || data_->max_index_msg < index)
     {
-        data->max_index_msg = index;
+        data_->max_index_msg = index;
     }
 
-    if (prev_time == 0u)
+    if (prev_time_ == 0u)
     {
-        prev_time = time_arrive_msg;
+        prev_time_ = time_arrive_msg;
     }
     else
     {
-        uint64_t time_between_msgs = time_arrive_msg - prev_time;
-        prev_time = time_arrive_msg;
-        if (data->hz_msgs == -1)
+        double time_between_msgs = time_arrive_msg - prev_time_;
+        prev_time_ = time_arrive_msg;
+        if (data_->hz_msgs == -1)
         {
-            data->hz_msgs = static_cast<int>(time_between_msgs);
+            data_->hz_msgs = time_between_msgs;
         }
         else
         {
-            data->hz_msgs = static_cast<int>((data->hz_msgs + time_between_msgs) / 2.0);
+            data_->hz_msgs = data_->hz_msgs + time_between_msgs;
         }
     }
 }

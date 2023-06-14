@@ -106,20 +106,9 @@ TEST(McapFileReadWithTypeTest, data_to_check)
     ASSERT_EQ(data.message_msg, "Hello World");
     ASSERT_EQ(data.min_index_msg, 0);
     ASSERT_EQ(data.max_index_msg, 12);
-    // hz ~ 200
+    // ms ~ 200
     ASSERT_GT(data.hz_msgs, 185);
     ASSERT_LT(data.hz_msgs, 215);
-}
-
-TEST(McapFileReadWithTypeTest, less_playback_rate)
-{
-    // info to check
-    DataToCheck data;
-    std::string configuration = "resources/config_file_less_hz.yaml";
-    create_subscriber_replayer(data, configuration);
-    // hz ~ 200
-    ASSERT_GT(data.hz_msgs, 85);
-    ASSERT_LT(data.hz_msgs, 115);
 }
 
 TEST(McapFileReadWithTypeTest, more_playback_rate)
@@ -128,7 +117,18 @@ TEST(McapFileReadWithTypeTest, more_playback_rate)
     DataToCheck data;
     std::string configuration = "resources/config_file_more_hz.yaml";
     create_subscriber_replayer(data, configuration);
-    // hz ~ 200
+    // ms ~ 100
+    ASSERT_GT(data.hz_msgs, 85);
+    ASSERT_LT(data.hz_msgs, 115);
+}
+
+TEST(McapFileReadWithTypeTest, less_playback_rate)
+{
+    // info to check
+    DataToCheck data;
+    std::string configuration = "resources/config_file_less_hz.yaml";
+    create_subscriber_replayer(data, configuration);
+    // ms ~ 400
     ASSERT_GT(data.hz_msgs, 385);
     ASSERT_LT(data.hz_msgs, 415);
 }

@@ -6,7 +6,7 @@ builtin-topics:
       durability: true        # Use QoS TRANSIENT_LOCAL
 
 replayer:
-  rate: 0.5
+  rate: 2.0
 
 specs:
   wait-all-acked-timeout: 2000
