@@ -36,7 +36,9 @@ namespace ddsrecorder {
 namespace yaml {
 
 using namespace eprosima::ddspipe::core;
+using namespace eprosima::ddspipe::core::types;
 using namespace eprosima::ddspipe::participants;
+using namespace eprosima::ddspipe::participants::types;
 using namespace eprosima::ddspipe::yaml;
 
 RecorderConfiguration::RecorderConfiguration(
@@ -110,13 +112,13 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
         // from which a response is expected.
         // Hence, if these topics are not blocked, the client would wrongly believe DDS-Recorder is a server, thus
         // sending a request for which a response will not be received.
-        ddspipe::core::types::WildcardDdsFilterTopic rpc_request_topic, rpc_response_topic;
+        WildcardDdsFilterTopic rpc_request_topic, rpc_response_topic;
         rpc_request_topic.topic_name.set_value("rq/*");
         rpc_response_topic.topic_name.set_value("rr/*");
         blocklist.insert(
-            utils::Heritable<ddspipe::core::types::WildcardDdsFilterTopic>::make_heritable(rpc_request_topic));
+            utils::Heritable<WildcardDdsFilterTopic>::make_heritable(rpc_request_topic));
         blocklist.insert(
-            utils::Heritable<ddspipe::core::types::WildcardDdsFilterTopic>::make_heritable(rpc_response_topic));
+            utils::Heritable<WildcardDdsFilterTopic>::make_heritable(rpc_response_topic));
 
         // Initialize controller domain with the same as the one being recorded
         // WARNING: dds tag must have been parsed beforehand
@@ -194,7 +196,7 @@ void RecorderConfiguration::load_recorder_configuration_(
     {
         downsampling = YamlReader::get_positive_int(yml, DOWNSAMPLING_TAG);
         // Set default value for downsampling
-        ddspipe::core::types::TopicQoS::default_downsampling.store(downsampling);
+        TopicQoS::default_downsampling.store(downsampling);
     }
 
     /////
@@ -202,7 +204,7 @@ void RecorderConfiguration::load_recorder_configuration_(
     if (YamlReader::is_tag_present(yml, MAX_RECEPTION_RATE_TAG))
     {
         // Set default value for max reception rate
-        ddspipe::core::types::TopicQoS::default_max_reception_rate.store(YamlReader::get_nonnegative_float(yml,
+        TopicQoS::default_max_reception_rate.store(YamlReader::get_nonnegative_float(yml,
                 MAX_RECEPTION_RATE_TAG));
     }
 
@@ -228,7 +230,7 @@ void RecorderConfiguration::load_controller_configuration_(
     // Get optional DDS domain
     if (YamlReader::is_tag_present(yml, DOMAIN_ID_TAG))
     {
-        controller_domain = YamlReader::get<ddspipe::core::types::DomainId>(yml, DOMAIN_ID_TAG, version);
+        controller_domain = YamlReader::get<DomainId>(yml, DOMAIN_ID_TAG, version);
     }
 
     // Get optional initial state
@@ -271,13 +273,19 @@ void RecorderConfiguration::load_specs_configuration_(
     {
         max_history_depth = YamlReader::get_positive_int(yml, MAX_HISTORY_DEPTH_TAG);
         // Set default value for history
-        ddspipe::core::types::TopicQoS::default_history_depth.store(max_history_depth);
+        TopicQoS::default_history_depth.store(max_history_depth);
     }
 
     // Get max pending samples
     if (YamlReader::is_tag_present(yml, RECORDER_SPECS_MAX_PENDING_SAMPLES_TAG))
     {
-        max_pending_samples = YamlReader::get_positive_int(yml, RECORDER_SPECS_MAX_PENDING_SAMPLES_TAG);
+        max_pending_samples = YamlReader::get<int>(yml, RECORDER_SPECS_MAX_PENDING_SAMPLES_TAG, version);
+        if (max_pending_samples < -1)
+        {
+            throw eprosima::utils::ConfigurationException(
+                      utils::Formatter() << "Error reading value under tag <" << RECORDER_SPECS_MAX_PENDING_SAMPLES_TAG <<
+                          "> : value cannot be lower than -1.");
+        }
     }
 
     // Get cleanup period
@@ -294,55 +302,55 @@ void RecorderConfiguration::load_dds_configuration_(
     // Get optional DDS domain
     if (YamlReader::is_tag_present(yml, DOMAIN_ID_TAG))
     {
-        simple_configuration->domain = YamlReader::get<ddspipe::core::types::DomainId>(yml, DOMAIN_ID_TAG, version);
+        simple_configuration->domain = YamlReader::get<DomainId>(yml, DOMAIN_ID_TAG, version);
     }
 
     /////
     // Get optional whitelist interfaces
     if (YamlReader::is_tag_present(yml, WHITELIST_INTERFACES_TAG))
     {
-        simple_configuration->whitelist = YamlReader::get_set<ddspipe::participants::types::IpType>(yml, WHITELIST_INTERFACES_TAG,
+        simple_configuration->whitelist = YamlReader::get_set<IpType>(yml, WHITELIST_INTERFACES_TAG,
                         version);
     }
 
     // Optional get Transport protocol
     if (YamlReader::is_tag_present(yml, ADDRESS_TRANSPORT_TAG))
     {
-        simple_configuration->transport = YamlReader::get<ddspipe::participants::types::TransportProtocol>(yml, ADDRESS_TRANSPORT_TAG, version);
+        simple_configuration->transport = YamlReader::get<TransportProtocol>(yml, ADDRESS_TRANSPORT_TAG, version);
     }
     else
     {
-        simple_configuration->transport = ddspipe::participants::types::TransportProtocol::builtin;
+        simple_configuration->transport = TransportProtocol::builtin;
     }
 
     // Optional get ignore participant flags
     if (YamlReader::is_tag_present(yml, IGNORE_PARTICIPANT_FLAGS_TAG))
     {
-        simple_configuration->ignore_participant_flags = YamlReader::get<ddspipe::core::types::IgnoreParticipantFlags>(yml, IGNORE_PARTICIPANT_FLAGS_TAG, version);
+        simple_configuration->ignore_participant_flags = YamlReader::get<IgnoreParticipantFlags>(yml, IGNORE_PARTICIPANT_FLAGS_TAG, version);
     }
     else
     {
-        simple_configuration->ignore_participant_flags = ddspipe::core::types::IgnoreParticipantFlags::no_filter;
+        simple_configuration->ignore_participant_flags = IgnoreParticipantFlags::no_filter;
     }
 
     /////
     // Get optional allowlist
     if (YamlReader::is_tag_present(yml, ALLOWLIST_TAG))
     {
-        allowlist = YamlReader::get_set<utils::Heritable<ddspipe::core::types::IFilterTopic>>(yml, ALLOWLIST_TAG, version);
+        allowlist = YamlReader::get_set<utils::Heritable<IFilterTopic>>(yml, ALLOWLIST_TAG, version);
 
         // Add to allowlist always the type object topic
-        ddspipe::core::types::WildcardDdsFilterTopic internal_topic;
-        internal_topic.topic_name.set_value(ddspipe::core::types::TYPE_OBJECT_TOPIC_NAME);
+        WildcardDdsFilterTopic internal_topic;
+        internal_topic.topic_name.set_value(TYPE_OBJECT_TOPIC_NAME);
         allowlist.insert(
-            utils::Heritable<ddspipe::core::types::WildcardDdsFilterTopic>::make_heritable(internal_topic));
+            utils::Heritable<WildcardDdsFilterTopic>::make_heritable(internal_topic));
     }
 
     /////
     // Get optional blocklist
     if (YamlReader::is_tag_present(yml, BLOCKLIST_TAG))
     {
-        blocklist = YamlReader::get_set<utils::Heritable<ddspipe::core::types::IFilterTopic>>(yml, BLOCKLIST_TAG, version);
+        blocklist = YamlReader::get_set<utils::Heritable<IFilterTopic>>(yml, BLOCKLIST_TAG, version);
     }
 
     /////
@@ -350,7 +358,7 @@ void RecorderConfiguration::load_dds_configuration_(
     if (YamlReader::is_tag_present(yml, BUILTIN_TAG))
     {
         // WARNING: Parse builtin topics AFTER specs and recorder, as some topic-specific default values are set there
-        builtin_topics = YamlReader::get_set<utils::Heritable<ddspipe::core::types::DistributedTopic>>(yml, BUILTIN_TAG,
+        builtin_topics = YamlReader::get_set<utils::Heritable<DistributedTopic>>(yml, BUILTIN_TAG,
                         version);
     }
 }

@@ -129,41 +129,47 @@ void McapHandler::add_schema(
 
     if (state_ == McapHandlerStateCode::STOPPED)
     {
-        logWarning(
-            DDSRECORDER_MCAP_HANDLER,
-            "Attempting to add schema through a stopped handler, dropping...");
-        return;
+        throw utils::InconsistencyException(
+                  STR_ENTRY << "Attempting to add schema through a stopped handler, dropping..."
+                  );
     }
 
     assert(nullptr != dynamic_type);
     std::string type_name = dynamic_type->get_name();
+
+    // Check if it exists already
+    if (received_types_.find(type_name) != received_types_.end())
     {
-        // Check if it exists already
-        if (schemas_.find(type_name) != schemas_.end())
-        {
-            return;
-        }
-
-        // Schema not found, generate from dynamic type and store
-        std::string schema_text = generate_ros2_schema(dynamic_type);
-
-        logInfo(DDSRECORDER_MCAP_HANDLER, "\nAdding schema with name " << type_name << " :\n" << schema_text << "\n");
-
-        // Create schema and add it to writer and to schemas map
-        mcap::Schema new_schema(type_name, "ros2msg", schema_text);
-        // WARNING: passing as non-const to MCAP library
-        mcap_writer_.addSchema(new_schema);
-        schemas_.insert({type_name, std::move(new_schema)});
+        return;
     }
+
+    // Schema not found, generate from dynamic type and store
+    std::string schema_text = generate_ros2_schema(dynamic_type);
+
+    logInfo(DDSRECORDER_MCAP_HANDLER, "\nAdding schema with name " << type_name << " :\n" << schema_text << "\n");
+
+    // Create schema and add it to writer and to schemas map
+    mcap::Schema new_schema(type_name, "ros2msg", schema_text);
+    // WARNING: passing as non-const to MCAP library
+    mcap_writer_.addSchema(new_schema);
 
     logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << type_name << ".");
 
-    // Check if there are any pending samples for this new schema. If so, add them to buffer.
-    auto it = pending_samples_.find(type_name);
-    if (it != pending_samples_.end())
+    auto it = schemas_.find(type_name);
+    if (it != schemas_.end())
+    {
+        // Update channels previously created with blank schema
+        update_channels_nts_(it->second.id, new_schema.id);
+    }
+    schemas_[type_name] = std::move(new_schema);
+    received_types_.insert(type_name);
+
+    // Check if there are any pending samples for this new schema. If so, add them.
+    if ((pending_samples_.find(type_name) != pending_samples_.end()) ||
+            (state_ == McapHandlerStateCode::PAUSED &&
+            (pending_samples_paused_.find(type_name) != pending_samples_paused_.end())))
     {
         add_pending_samples_nts_(type_name);
-        pending_samples_.erase(it);
     }
 }
 
@@ -179,10 +185,9 @@ void McapHandler::add_data(
 
     if (state_ == McapHandlerStateCode::STOPPED)
     {
-        logWarning(
-            DDSRECORDER_MCAP_HANDLER,
-            "Attempting to add sample through a stopped handler, dropping...");
-        return;
+        throw utils::InconsistencyException(
+                  STR_ENTRY << "Attempting to add sample through a stopped handler, dropping..."
+                  );
     }
 
     // Add data to channel
@@ -229,42 +234,57 @@ void McapHandler::add_data(
                   );
     }
 
-    try
+    if (received_types_.count(topic.type_name) != 0)
     {
-        auto channel_id = get_channel_id_nts_(topic);
-        msg.channelId = channel_id;
+        // Schema available -> add to buffer
+        add_data_nts_(msg, topic);
     }
-    catch (const utils::Exception&)
+    else
     {
-        logInfo(
-            DDSRECORDER_MCAP_HANDLER,
-            "Schema for topic " << topic << " not yet available, inserting to pending samples queue.");
-
-        if (configuration_.max_pending_samples > 0 &&
-                pending_samples_[topic.type_name].size() == configuration_.max_pending_samples)
+        if (state_ == McapHandlerStateCode::RUNNING)
         {
-            pending_samples_[topic.type_name].pop();
+            if (configuration_.max_pending_samples == 0)
+            {
+                if (configuration_.only_with_schema)
+                {
+                    // No schema available + no pending samples + only_with_schema -> Discard message
+                    return;
+                }
+                else
+                {
+                    // No schema available + no pending samples -> Add to buffer with blank schema
+                    add_data_nts_(msg, topic);
+                }
+            }
+            else
+            {
+                logInfo(
+                    DDSRECORDER_MCAP_HANDLER,
+                    "Schema for topic " << topic << " not yet available, inserting to pending samples queue.");
+
+                add_to_pending_nts_(msg, topic);
+            }
         }
-        pending_samples_[topic.type_name].push({topic, msg});
+        else if (state_ == McapHandlerStateCode::PAUSED)
+        {
+            logInfo(
+                DDSRECORDER_MCAP_HANDLER,
+                "Schema for topic " << topic << " not yet available, inserting to (paused) pending samples queue.");
 
-        throw;
-    }
-
-    try
-    {
-        add_data_nts_(msg);
-    }
-    catch (const utils::Exception&)
-    {
-        throw utils::InconsistencyException(
-                  STR_ENTRY << "Error writting in MCAP a message in topic " << topic
-                  );
+            pending_samples_paused_[topic.type_name].push_back({topic, msg});
+        }
+        else
+        {
+            // Should not happen, protected with mutex and state verified at beginning
+            utils::tsnh(
+                utils::Formatter() << "Trying to add sample from a stopped instance.");
+        }
     }
 }
 
 void McapHandler::start()
 {
-    std::lock_guard<std::mutex> lock(state_mtx_);
+    std::lock_guard<std::mutex> lock(mtx_);
 
     // Store previous state to act differently depending on its value
     McapHandlerStateCode prev_state = state_;
@@ -284,7 +304,7 @@ void McapHandler::start()
 
         if (prev_state == McapHandlerStateCode::PAUSED)
         {
-            // Stop event routine (cleans buffer)
+            // Stop event routine (cleans buffers)
             stop_event_thread_nts_();
         }
     }
@@ -292,32 +312,48 @@ void McapHandler::start()
 
 void McapHandler::stop()
 {
-    std::lock_guard<std::mutex> lock(state_mtx_);
+    std::lock_guard<std::mutex> lock(mtx_);
 
     // Store previous state to act differently depending on its value
     McapHandlerStateCode prev_state = state_;
     state_ = McapHandlerStateCode::STOPPED;
 
-    if (prev_state == McapHandlerStateCode::RUNNING)
+    if (prev_state == McapHandlerStateCode::STOPPED)
     {
-        std::lock_guard<std::mutex> _(mtx_);
+        logWarning(
+            DDSRECORDER_MCAP_HANDLER,
+            "Ignoring stop command, instance already stopped.");
+    }
+    else
+    {
+        logInfo(
+            DDSRECORDER_MCAP_HANDLER,
+            "Stopping handler.");
+
+        if (prev_state == McapHandlerStateCode::PAUSED)
+        {
+            // Stop event routine (cleans buffers)
+            stop_event_thread_nts_();
+        }
+
         if (!configuration_.only_with_schema)
         {
-            // Write samples whose schema was not received while RUNNNING
+            // Adds to buffer samples whose schema was not received while running
             add_pending_samples_nts_();
         }
-        dump_data_nts_();
-    }
-    else if (prev_state == McapHandlerStateCode::PAUSED)
-    {
-        // Stop event routine (cleans buffer)
-        stop_event_thread_nts_();
+        else
+        {
+            // Free memory resources
+            pending_samples_.clear();
+        }
+        dump_data_nts_();  // if prev_state == RUNNING -> writes buffer + added pending samples (if !only_with_schema)
+                           // if prev_state == PAUSED  -> writes added pending samples (if !only_with_schema)
     }
 }
 
 void McapHandler::pause()
 {
-    std::lock_guard<std::mutex> lock(state_mtx_);
+    std::lock_guard<std::mutex> lock(mtx_);
 
     // Store previous state to act differently depending on its value
     McapHandlerStateCode prev_state = state_;
@@ -337,27 +373,22 @@ void McapHandler::pause()
 
         if (prev_state == McapHandlerStateCode::RUNNING)
         {
-            std::lock_guard<std::mutex> _(mtx_);
-            if (!configuration_.only_with_schema)
-            {
-                // Write samples whose schema was not received while RUNNNING
-                add_pending_samples_nts_();
-            }
             // Write data stored in buffer
             dump_data_nts_();
-            // Remove pending samples (if not written)
-            clear_all_nts_();
+            // Clear buffer
+            // NOTE: not really needed, dump_data_nts_ already writes and pops all samples
+            samples_buffer_.clear();
         }
 
         // Launch event thread routine
-        event_flag_ = EventCode::untriggered;  // No need to take event mutex (protected by state_mtx_)
+        event_flag_ = EventCode::untriggered;  // No need to take event mutex (protected by mtx_)
         event_thread_ = std::thread(&McapHandler::event_thread_routine_, this);
     }
 }
 
 void McapHandler::trigger_event()
 {
-    std::lock_guard<std::mutex> lock(state_mtx_);
+    std::lock_guard<std::mutex> lock(mtx_);
 
     if (state_ != McapHandlerStateCode::PAUSED)
     {
@@ -398,42 +429,127 @@ mcap::Timestamp McapHandler::now()
 }
 
 void McapHandler::add_data_nts_(
+        const Message& msg,
+        bool direct_write /* false */)
+{
+    if (direct_write)
+    {
+        try
+        {
+            // Write to MCAP file
+            write_message_nts_(msg);
+        }
+        catch (const utils::InconsistencyException& e)
+        {
+            logError(DDSRECORDER_MCAP_HANDLER, "Error writting message in channel " << msg.channelId << ". Error message:\n " <<
+                    e.what());
+        }
+    }
+    else
+    {
+        samples_buffer_.push_back(msg);
+        if (state_ == McapHandlerStateCode::RUNNING && samples_buffer_.size() == configuration_.buffer_size)
+        {
+            logInfo(DDSRECORDER_MCAP_HANDLER, "Full buffer, writting to disk...");
+            dump_data_nts_();
+        }
+    }
+}
+
+void McapHandler::add_data_nts_(
+        Message& msg,
+        const DdsTopic& topic,
+        bool direct_write /* false */)
+{
+    try
+    {
+        auto channel_id = get_channel_id_nts_(topic);
+        msg.channelId = channel_id;
+    }
+    catch (const utils::InconsistencyException& e)
+    {
+        logWarning(DDSRECORDER_MCAP_HANDLER, "Error adding message in topic " << topic << ". Error message:\n " <<
+                e.what());
+        return;
+    }
+    add_data_nts_(msg, direct_write);
+}
+
+void McapHandler::write_message_nts_(
         const Message& msg)
 {
-    samples_buffer_.push_back(msg);
-    if (state_ == McapHandlerStateCode::RUNNING && samples_buffer_.size() == configuration_.buffer_size)
+    auto status = mcap_writer_.write(msg);
+    if (!status.ok())
     {
-        logInfo(DDSRECORDER_MCAP_HANDLER, "Full buffer, writting to disk...");
-        dump_data_nts_();
+        throw utils::InconsistencyException(
+                  STR_ENTRY << "Error writting in MCAP, error message: " << status.message
+                  );
     }
+}
+
+void McapHandler::add_to_pending_nts_(
+        Message& msg,
+        const DdsTopic& topic)
+{
+    assert(configuration_.max_pending_samples != 0);
+    if (configuration_.max_pending_samples > 0 &&
+            pending_samples_[topic.type_name].size() == static_cast<unsigned int>(configuration_.max_pending_samples))
+    {
+        if (configuration_.only_with_schema)
+        {
+            // Discard oldest message in pending samples
+            logWarning(DDSRECORDER_MCAP_HANDLER,
+                    "Dropping pending sample in type " << topic.type_name << ": buffer limit (" << configuration_.max_pending_samples <<
+                    ") reached.");
+        }
+        else
+        {
+            logInfo(DDSRECORDER_MCAP_HANDLER,
+                    "Buffer limit (" << configuration_.max_pending_samples <<  ") reached for type " << topic.type_name <<
+                    ": writing oldest sample without schema.");
+
+            // Write oldest message without schema
+            auto& oldest_sample = pending_samples_[topic.type_name].front();
+            add_data_nts_(oldest_sample.second, oldest_sample.first);
+        }
+        pending_samples_[topic.type_name].pop_front();
+    }
+    pending_samples_[topic.type_name].push_back({topic, msg});
 }
 
 void McapHandler::add_pending_samples_nts_(
         const std::string& schema_name)
 {
-    assert(pending_samples_.find(schema_name) != pending_samples_.end());
-    auto& pending_queue = pending_samples_[schema_name];
+    logInfo(DDSRECORDER_MCAP_HANDLER, "Adding pending samples for type: " << schema_name << ".");
 
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Sending pending samples of type: " << schema_name << ".");
-
-    mcap::ChannelId channel_id;
-    while (!pending_queue.empty())
+    if (pending_samples_.find(schema_name) != pending_samples_.end())
     {
-        auto& sample = pending_queue.front();
-        channel_id = get_channel_id_nts_(sample.first);
-        auto& msg = sample.second;
-        msg.channelId = channel_id;
-        try
-        {
-            add_data_nts_(msg);
-        }
-        catch (const utils::Exception&)
-        {
-            throw utils::InconsistencyException(
-                      STR_ENTRY << "Error writting in MCAP a message in topic " << sample.first
-                      );
-        }
-        pending_queue.pop();
+        // Move samples from pending_samples to buffer
+        // NOTE: directly write to MCAP when PAUSED, as these correspond to samples that were previously received in
+        // RUNNING state (hence to avoid being cleaned by event thread)
+        add_pending_samples_nts_(pending_samples_[schema_name], state_ == McapHandlerStateCode::PAUSED);
+        pending_samples_.erase(schema_name);
+    }
+
+    if (state_ == McapHandlerStateCode::PAUSED &&
+            (pending_samples_paused_.find(schema_name) != pending_samples_paused_.end()))
+    {
+        // Move samples from pending_samples_paused to buffer, from where they will be written if event received
+        add_pending_samples_nts_(pending_samples_paused_[schema_name]);
+        pending_samples_paused_.erase(schema_name);
+    }
+}
+
+void McapHandler::add_pending_samples_nts_(
+        pending_list& pending_samples,
+        bool direct_write /* false */)
+{
+    while (!pending_samples.empty())
+    {
+        // Move samples from pending list to buffer, or write them directly to MCAP file
+        auto& sample = pending_samples.front();
+        add_data_nts_(sample.second, sample.first, direct_write);
+        pending_samples.pop_front();
     }
 }
 
@@ -441,15 +557,10 @@ void McapHandler::add_pending_samples_nts_()
 {
     logInfo(DDSRECORDER_MCAP_HANDLER, "Adding pending samples for all types.");
 
-    for (auto& pending_type: pending_samples_)
+    auto pending_types = utils::get_keys(pending_samples_);
+    for (auto& pending_type: pending_types)
     {
-        logInfo(DDSRECORDER_MCAP_HANDLER, "Blank schema created for type: " << pending_type.first << ".");
-
-        mcap::Schema blank_schema(pending_type.first, "ros2msg", "");
-        mcap_writer_.addSchema(blank_schema);
-        schemas_.insert({pending_type.first, std::move(blank_schema)});
-
-        add_pending_samples_nts_(pending_type.first);
+        add_pending_samples_nts_(pending_type);
     }
 }
 
@@ -509,6 +620,37 @@ void McapHandler::event_thread_routine_()
         else
         {
             logInfo(DDSRECORDER_MCAP_HANDLER, "Event triggered: dumping buffered data.");
+
+            if (!(configuration_.max_pending_samples == 0 && configuration_.only_with_schema))
+            {
+                // Move (paused) pending samples to buffer (or pending samples) prior to dumping
+                for (auto& pending_type : pending_samples_paused_)
+                {
+                    auto type_name = pending_type.first;
+                    auto& pending_list = pending_type.second;
+                    while (!pending_list.empty())
+                    {
+                        auto& sample = pending_list.front();
+                        if (configuration_.max_pending_samples == 0)
+                        {
+                            if (configuration_.only_with_schema)
+                            {
+                                // Cannot happen (outter if)
+                            }
+                            else
+                            {
+                                // Add to buffer with blank schema
+                                add_data_nts_(sample.second, sample.first);
+                            }
+                        }
+                        else
+                        {
+                            add_to_pending_nts_(sample.second, sample.first);
+                        }
+                        pending_list.pop_front();
+                    }
+                }
+            }
             dump_data_nts_();
         }
     }
@@ -523,6 +665,14 @@ void McapHandler::remove_outdated_samples_nts_()
             {
                 return sample.logTime < threshold;
             });
+
+    for (auto& pending_type : pending_samples_paused_)
+    {
+        pending_type.second.remove_if([&](auto& sample)
+                {
+                    return sample.second.logTime < threshold;
+                });
+    }
 }
 
 void McapHandler::stop_event_thread_nts_()
@@ -540,19 +690,8 @@ void McapHandler::stop_event_thread_nts_()
         event_cv_.notify_one();
         event_thread_.join();
     }
-    std::lock_guard<std::mutex> _(mtx_);
-    clear_all_nts_();
-}
-
-void McapHandler::clear_all_nts_()
-{
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Cleaning all buffers.");
-
-    // Clear samples buffer
     samples_buffer_.clear();
-
-    // Clear pending samples
-    pending_samples_.clear();
+    pending_samples_paused_.clear();
 }
 
 void McapHandler::dump_data_nts_()
@@ -562,13 +701,18 @@ void McapHandler::dump_data_nts_()
     while (!samples_buffer_.empty())
     {
         auto& sample = samples_buffer_.front();
-        auto status = mcap_writer_.write(sample);
-        if (!status.ok())
+        try
         {
-            throw utils::InconsistencyException(
-                      STR_ENTRY << "Error writting in MCAP"
-                      );
+            // Write to MCAP file
+            write_message_nts_(sample);
         }
+        catch (const utils::InconsistencyException& e)
+        {
+            logError(DDSRECORDER_MCAP_HANDLER, "Error writting message in channel " << sample.channelId << ". Error message:\n " <<
+                    e.what());
+        }
+
+        // Pop written sample (even if exception thrown)
         samples_buffer_.pop_front();
     }
 }
@@ -577,7 +721,30 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
         const DdsTopic& topic)
 {
     // Find schema
-    auto schema_id = get_schema_id_nts_(topic.type_name);
+    mcap::SchemaId schema_id;
+    try
+    {
+        schema_id = get_schema_id_nts_(topic.type_name);
+    }
+    catch (const utils::InconsistencyException&)
+    {
+        if (!configuration_.only_with_schema)
+        {
+            logInfo(DDSRECORDER_MCAP_HANDLER,
+                    "Schema not found for type: " << topic.type_name << ". Creating blank schema...");
+
+            mcap::Schema blank_schema(topic.type_name, "ros2msg", "");
+            mcap_writer_.addSchema(blank_schema);
+            schemas_.insert({topic.type_name, std::move(blank_schema)});
+
+            schema_id = blank_schema.id;
+        }
+        else
+        {
+            // Propagate exception
+            throw;
+        }
+    }
 
     // Create new channel
     mcap::KeyValueMap metadata = {};
@@ -585,7 +752,7 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     mcap::Channel new_channel(topic.m_topic_name, "cdr", schema_id, metadata);
     mcap_writer_.addChannel(new_channel);
     auto channel_id = new_channel.id;
-    channels_.insert({topic.m_topic_name, std::move(new_channel)});
+    channels_.insert({topic, std::move(new_channel)});
     logInfo(DDSRECORDER_MCAP_HANDLER, "Channel created: " << topic << ".");
 
     return channel_id;
@@ -594,7 +761,7 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
 mcap::ChannelId McapHandler::get_channel_id_nts_(
         const DdsTopic& topic)
 {
-    auto it = channels_.find(topic.m_topic_name);
+    auto it = channels_.find(topic);
     if (it != channels_.end())
     {
         return it->second.id;
@@ -602,6 +769,24 @@ mcap::ChannelId McapHandler::get_channel_id_nts_(
 
     // If it does not exist yet, create it (call it with mutex taken)
     return create_channel_id_nts_(topic);
+}
+
+void McapHandler::update_channels_nts_(
+        const mcap::SchemaId& old_schema_id,
+        const mcap::SchemaId& new_schema_id)
+{
+    for (auto& channel : channels_)
+    {
+        if (channel.second.schemaId == old_schema_id)
+        {
+            logInfo(DDSRECORDER_MCAP_HANDLER, "Updating channel in topic " << channel.first.m_topic_name << ".");
+
+            assert(channel.first.m_topic_name == channel.second.topic);
+            mcap::Channel new_channel(channel.second.topic, "cdr", new_schema_id, channel.second.metadata);
+            mcap_writer_.addChannel(new_channel);
+            channel.second = std::move(new_channel);
+        }
+    }
 }
 
 mcap::SchemaId McapHandler::get_schema_id_nts_(

@@ -78,7 +78,7 @@ public:
     // Specs
     unsigned int n_threads = 12;
     unsigned int max_history_depth = 5000;
-    unsigned int max_pending_samples = 0;  // 0 <-> no limit
+    int max_pending_samples = 5000;  // -1 <-> no limit || 0 <-> no pending samples
     unsigned int cleanup_period;
 
 protected:
