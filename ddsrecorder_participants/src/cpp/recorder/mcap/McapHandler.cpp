@@ -341,7 +341,12 @@ void McapHandler::stop()
             // Adds to buffer samples whose schema was not received while running
             add_pending_samples_nts_();
         }
-        dump_data_nts_();  // if prev_state == RUNNING -> writes buffer + added pending samples
+        else
+        {
+            // Free memory resources
+            pending_samples_.clear();
+        }
+        dump_data_nts_();  // if prev_state == RUNNING -> writes buffer + added pending samples (if !only_with_schema)
                            // if prev_state == PAUSED  -> writes added pending samples (if !only_with_schema)
     }
 }
