@@ -29,7 +29,7 @@ struct McapHandlerConfiguration
 {
     McapHandlerConfiguration(
             const std::string& file_name,
-            const unsigned int& max_pending_samples,
+            const int& max_pending_samples,
             const unsigned int& buffer_size,
             const unsigned int& event_window,
             const unsigned int& cleanup_period,
@@ -49,7 +49,7 @@ struct McapHandlerConfiguration
     std::string file_name;
 
     //! Max number of messages to store in memory when schema not yet available
-    unsigned int max_pending_samples;
+    int max_pending_samples;
 
     //! Max number of elements to keep in memory prior to writting in disk (applies to started state)
     unsigned int buffer_size;

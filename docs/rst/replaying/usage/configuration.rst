@@ -271,10 +271,14 @@ However, a user might be interested in only replaying data relative to a specifi
 
 Messages recorded/sent (see :ref:`Log Publish Time <recorder_usage_configuration_logpublishtime>`) before ``begin-time`` will not be played back by a |ddsreplayer| instance.
 
+.. _replayer_replay_configuration_endtime:
+
 End Time
 ^^^^^^^^
 
 As with ``begin-time``, a user can discard messages recorded/sent after a specific timepoint set through the ``end-time`` tag, which follows the format described in :ref:`Begin Time <replayer_replay_configuration_begintime>`.
+
+.. _replayer_replay_configuration_startreplaytime:
 
 Start Replay Time
 ^^^^^^^^^^^^^^^^^
@@ -282,12 +286,16 @@ Start Replay Time
 This configuration option (``start-replay-time``) allows to start replaying data at a certain timepoint following the format described in :ref:`Begin Time <replayer_replay_configuration_begintime>`.
 If the provided timepoint already expired, the replayer starts publishing messages right away.
 
+.. _replayer_replay_configuration_playbackrate:
+
 Playback Rate
 ^^^^^^^^^^^^^
 
 By default, data is replayed at the same rate it was published/received.
 However, a user might be interested in playing messages back at a rate different than the original one.
 This can be accomplished through the playback ``rate`` tag, which accepts positive float values (e.g. 0.5 <--> half speed || 2 <--> double speed).
+
+.. _replayer_replay_configuration_replaytypes:
 
 Replay Types
 ^^^^^^^^^^^^
