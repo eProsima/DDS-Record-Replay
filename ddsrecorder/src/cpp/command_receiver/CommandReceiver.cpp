@@ -82,7 +82,8 @@ bool CommandReceiver::init()
 
             // Add UDP Transport
             std::shared_ptr<eprosima::fastdds::rtps::UDPv4TransportDescriptor> udp_transport =
-                    ddspipe::participants::rtps::CommonParticipant::create_descriptor<eprosima::fastdds::rtps::UDPv4TransportDescriptor>(participant_configuration_->whitelist);
+                    ddspipe::participants::rtps::CommonParticipant::create_descriptor<eprosima::fastdds::rtps::UDPv4TransportDescriptor>(
+                participant_configuration_->whitelist);
             pqos.transport().user_transports.push_back(udp_transport);
         }
     }
@@ -103,7 +104,8 @@ bool CommandReceiver::init()
 
         // Add UDP Transport
         std::shared_ptr<eprosima::fastdds::rtps::UDPv4TransportDescriptor> udp_transport =
-                    ddspipe::participants::rtps::CommonParticipant::create_descriptor<eprosima::fastdds::rtps::UDPv4TransportDescriptor>(participant_configuration_->whitelist);
+                ddspipe::participants::rtps::CommonParticipant::create_descriptor<eprosima::fastdds::rtps::UDPv4TransportDescriptor>(
+            participant_configuration_->whitelist);
         pqos.transport().user_transports.push_back(udp_transport);
     }
 

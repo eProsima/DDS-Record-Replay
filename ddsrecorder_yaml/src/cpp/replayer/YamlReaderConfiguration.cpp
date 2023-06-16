@@ -228,7 +228,9 @@ void ReplayerConfiguration::load_dds_configuration_(
     // Optional get Transport protocol
     if (YamlReader::is_tag_present(yml, TRANSPORT_DESCRIPTORS_TRANSPORT_TAG))
     {
-        replayer_configuration->transport = YamlReader::get<TransportDescriptors>(yml, TRANSPORT_DESCRIPTORS_TRANSPORT_TAG, version);
+        replayer_configuration->transport = YamlReader::get<TransportDescriptors>(yml,
+                        TRANSPORT_DESCRIPTORS_TRANSPORT_TAG,
+                        version);
     }
     else
     {
@@ -238,7 +240,9 @@ void ReplayerConfiguration::load_dds_configuration_(
     // Optional get ignore participant flags
     if (YamlReader::is_tag_present(yml, IGNORE_PARTICIPANT_FLAGS_TAG))
     {
-        replayer_configuration->ignore_participant_flags = YamlReader::get<IgnoreParticipantFlags>(yml, IGNORE_PARTICIPANT_FLAGS_TAG, version);
+        replayer_configuration->ignore_participant_flags = YamlReader::get<IgnoreParticipantFlags>(yml,
+                        IGNORE_PARTICIPANT_FLAGS_TAG,
+                        version);
     }
     else
     {
