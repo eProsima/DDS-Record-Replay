@@ -36,7 +36,8 @@ struct DataToCheck
     std::string message_msg;
     int min_index_msg;
     int max_index_msg;
-    int hz_msgs;
+    double mean_ms_between_msgs;
+    double cummulated_ms_between_msgs;
 };
 
 /**
@@ -80,6 +81,14 @@ public:
             const eprosima::fastrtps::string_255 type_name,
             const eprosima::fastrtps::types::TypeInformation& type_information) override;
 
+    void init_info(
+            const std::string& type_name);
+
+    void fill_info(
+            int index,
+            const std::string& message,
+            uint64_t time_arrive_msg);
+
 protected:
 
     /**
@@ -106,10 +115,10 @@ protected:
     //! DynamicType generated with the received type information
     eprosima::fastrtps::types::DynamicType_ptr dynamic_type_;
 
-    //! Number of DataWriters matched to the associated DataReader
-    int matched_;
     //! Number of samples received
     uint32_t samples_;
+    //! The time in milliseconds when the previous message arrived
+    double prev_time_;
 
     //! Atomic variables to check whether the type has been discovered and registered
     static std::atomic<bool> type_discovered_;

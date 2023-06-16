@@ -33,7 +33,8 @@ struct DataToCheck
     std::string message_msg;
     int min_index_msg;
     int max_index_msg;
-    int hz_msgs;
+    double mean_ms_between_msgs;
+    double cummulated_ms_between_msgs;
 };
 
 /**
@@ -70,6 +71,13 @@ public:
             eprosima::fastdds::dds::DataReader* reader,
             const eprosima::fastdds::dds::SubscriptionMatchedStatus& info) override;
 
+    void init_info(
+            const std::string& type_name);
+
+    void fill_info(
+            HelloWorld hello_,
+            uint64_t time_arrive_msg);
+
 protected:
 
     // Fast DDS entities
@@ -83,8 +91,8 @@ protected:
 
     HelloWorld hello_;
 
-    //! Number of DataWriters matched to the associated DataReader
-    int matched_;
     //! Number of samples received
     uint32_t samples_;
+    //! The time in milliseconds when the previous message arrived
+    double prev_time_;
 };
