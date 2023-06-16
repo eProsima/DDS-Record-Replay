@@ -64,11 +64,17 @@ void create_subscriber_replayer(
 
             std::cout << "replayer created !!!!" << std::endl;
 
-            // Give time for replayer and subscriber match.
+            // Give time for replayer and subscriber to match.
             // Waiting for the subscriber to match the replayer
-            // does not ensure that the replayer is matched the
-            // subscriber so can start replaying messages that
-            // wont arrive to the subscriber
+            // before starting to replay messages does not ensure
+            // that no samples will be lost (even if using reliable QoS).
+            // This is because endpoint matching does not occur
+            // at the same exact moment in both ends of communication,
+            // so the replayer's writer might have not yet matched the
+            // subscriber even if the latter already has (matched the writer).
+            // Transient local QoS would be a solution for this,
+            // but it is not used as it might pollute frequency arrival
+            // measurements.
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
             // Start replaying data
@@ -110,8 +116,8 @@ TEST(McapFileReadTest, data_to_check)
     ASSERT_EQ(data.min_index_msg, 0);
     ASSERT_EQ(data.max_index_msg, 10);
     // ms ~ 200
-    ASSERT_GT(data.mean_ms_msgs, 197.5);
-    ASSERT_LT(data.mean_ms_msgs, 202.5);
+    ASSERT_GT(data.mean_ms_between_msgs, 197.5);
+    ASSERT_LT(data.mean_ms_between_msgs, 202.5);
 }
 
 TEST(McapFileReadTest, more_playback_rate)
@@ -121,8 +127,8 @@ TEST(McapFileReadTest, more_playback_rate)
     std::string configuration = "resources/config_file_more_hz.yaml";
     create_subscriber_replayer(data, configuration);
     // ms ~ 100
-    ASSERT_GT(data.mean_ms_msgs, 97.5);
-    ASSERT_LT(data.mean_ms_msgs, 102.5);
+    ASSERT_GT(data.mean_ms_between_msgs, 97.5);
+    ASSERT_LT(data.mean_ms_between_msgs, 102.5);
 }
 
 TEST(McapFileReadTest, less_playback_rate)
@@ -132,8 +138,8 @@ TEST(McapFileReadTest, less_playback_rate)
     std::string configuration = "resources/config_file_less_hz.yaml";
     create_subscriber_replayer(data, configuration);
     // ms ~ 400
-    ASSERT_GT(data.mean_ms_msgs, 397.5);
-    ASSERT_LT(data.mean_ms_msgs, 402.5);
+    ASSERT_GT(data.mean_ms_between_msgs, 397.5);
+    ASSERT_LT(data.mean_ms_between_msgs, 402.5);
 }
 
 TEST(McapFileReadTest, begin_time)

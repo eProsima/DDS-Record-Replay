@@ -33,8 +33,8 @@ struct DataToCheck
     std::string message_msg;
     int min_index_msg;
     int max_index_msg;
-    double mean_ms_msgs;
-    double accumulate_ms_msgs;
+    double mean_ms_between_msgs;
+    double cummulated_ms_between_msgs;
 };
 
 /**
@@ -93,6 +93,6 @@ protected:
 
     //! Number of samples received
     uint32_t samples_;
-    //! The time in miliseconds when the previous message arrived
+    //! The time in milliseconds when the previous message arrived
     double prev_time_;
 };
