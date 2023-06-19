@@ -25,6 +25,8 @@
 #include <cpp_utils/event/MultipleEventHandler.hpp>
 #include <cpp_utils/macros/custom_enumeration.hpp>
 
+#include <ddspipe_participants/configuration/SimpleParticipantConfiguration.hpp>
+
 #include <fastdds/dds/core/status/SubscriptionMatchedStatus.hpp>
 #include <fastdds/dds/domain/DomainParticipant.hpp>
 #include <fastdds/dds/publisher/DataWriter.hpp>
@@ -60,7 +62,8 @@ public:
             uint32_t domain,
             const std::string& command_topic_name,
             const std::string& status_topic_name,
-            std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler);
+            std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler,
+            std::shared_ptr<eprosima::ddspipe::participants::SimpleParticipantConfiguration> participant_configuration);
 
     virtual ~CommandReceiver();
 
@@ -107,6 +110,8 @@ private:
     eprosima::fastdds::dds::TypeSupport status_type_;
 
     std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler_;
+
+    std::shared_ptr<eprosima::ddspipe::participants::SimpleParticipantConfiguration> participant_configuration_;
 };
 
 } /* namespace receiver */

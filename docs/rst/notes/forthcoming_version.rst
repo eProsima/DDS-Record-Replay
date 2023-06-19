@@ -24,6 +24,9 @@ Next release will include the following (*DDS Replay tool*) **Configuration feat
 * Support configuration of playback settings.
 * Support configuration of the internal operation of the DDS Replayer.
 * Support enabling/disabling dynamic types dispatch (see :ref:`Only With Type <replayer_replay_configuration_replaytypes>`).
+* Support :ref:`Interface Whitelisting <replayer_interface_whitelist>`.
+* Support :ref:`Custom Transport Descriptors <replayer_custom_transport_descriptors>` (UDP or Shared Memory only).
+* Support :ref:`Ignore Participant Flags <replayer_ignore_participant_flags>`.
 
 Next release will include the following **Recording features**:
 
@@ -32,6 +35,9 @@ Next release will include the following **Recording features**:
 Next release will include the following (*DDS Recorder tool*) **Configuration features**:
 
 * Support record only data whose (dynamic) type is known: ``only-with-type: true`` (see :ref:`Only With Type <recorder_usage_configuration_onlywithtype>`).
+* Support :ref:`Interface Whitelisting <recorder_interface_whitelist>`.
+* Support :ref:`Custom Transport Descriptors <recorder_custom_transport_descriptors>` (UDP or Shared Memory only).
+* Support :ref:`Ignore Participant Flags <recorder_ignore_participant_flags>`.
 
 Next release will include the following **Documentation features**:
 
