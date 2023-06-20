@@ -400,6 +400,10 @@ General Example
 
 A complete example of all the configurations described on this page can be found below.
 
+.. warning::
+
+    This example can be used as a quick reference, but it may not be correct due to incompatibility or exclusive properties. **Do not take it as a working example**.
+
 .. code-block:: yaml
 
     dds:
@@ -422,6 +426,11 @@ A complete example of all the configurations described on this page can be found
             keyed: false
             partitions: true
             ownership: false
+
+      ignore-participant-flags: no_filter
+      transport: builtin
+      whitelist-interfaces:
+        - "127.0.0.1"
 
     replayer:
       input-file: my_input.mcap
