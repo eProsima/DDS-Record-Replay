@@ -75,7 +75,7 @@ void create_subscriber_replayer(
             // Transient local QoS would be a solution for this,
             // but it is not used as it might pollute frequency arrival
             // measurements.
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::seconds(1));
 
             // Start replaying data
             replayer->process_mcap();
