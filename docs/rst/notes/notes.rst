@@ -2,46 +2,53 @@
 
 .. _notes:
 
-#####
-Notes
-#####
-
 .. TODO uncomment when there are forthcoming notes
-.. include:: forthcoming_version.rst
+.. .. include:: forthcoming_version.rst
 
-Version v0.1.0
-==============
+##############
+Version v0.2.0
+##############
 
-This is the first release of |eddsrecord|.
+This release includes *DDS Replay tool*, supporting the following **Replay features**:
 
-This release includes several **features** regarding the recording of DDS data, configuration and user interaction.
-
-This release includes the following **Recording features**:
-
-* Supports DynamicTypes.
-* Supports saves the data in a MCAP database.
-* Supports for ``downsampling`` that reduces the sampling rate of the received data.
-* Supports for ``buffer-size`` that indicates the number of samples to be stored in the process memory before the dump to disk.
+* Supports setting :ref:`begin <replayer_replay_configuration_begintime>` and :ref:`end <replayer_replay_configuration_endtime>` times (``begin-time`` / ``end-time``).
+* Supports setting a replay :ref:`start <replayer_replay_configuration_startreplaytime>` time (``start-replay-time``).
+* Supports playing stored data at a specific playback :ref:`rate <replayer_replay_configuration_playbackrate>` (``rate``).
+* Supports sending dynamic types stored in input MCAP file.
 
 This release includes the following **User Interface features**:
 
-* :ref:`Recording Service Command-Line Parameters <recorder_usage_usage_application_arguments>`.
-* :ref:`Remote Control <recorder_remote_control>`.
+* :ref:`Replay Service Command-Line Parameters <replayer_usage_usage_application_arguments>`.
 
-This release includes the following **Configuration features**:
+This release includes the following (*DDS Replay tool*) **Configuration features**:
 
-* Support YAML :ref:`configuration file <recorder_usage_configuration>`.
+* Support YAML :ref:`configuration file <replayer_usage_configuration>`.
 * Support for allow and block topic filters at execution time and in run-time.
 * Support configuration related to DDS communication.
-* Support configuration of data writing in the database.
-* Support configuration of the remote controller of the DDS Recorder.
-* Support configuration of the internal operation of the DDS Recorder.
+* Support configuration of playback settings.
+* Support configuration of the internal operation of the DDS Replayer.
+* Support enabling/disabling dynamic types dispatch (see :ref:`Only With Type <replayer_replay_configuration_replaytypes>`).
+* Support :ref:`Interface Whitelisting <replayer_interface_whitelist>`.
+* Support :ref:`Custom Transport Descriptors <replayer_custom_transport_descriptors>` (UDP or Shared Memory only).
+* Support :ref:`Ignore Participant Flags <replayer_ignore_participant_flags>`.
 
-This release includes the following **Tutorials**:
+This release includes the following **Recording features**:
 
-* :ref:`Configuring Fast DDS DynamicTypes for data recording <tutorials_dynamic_types>`.
-* :ref:`Visualize recorded data with Foxglove <tutorials_foxglove>`.
+* Supports recording messages with unknown (dynamic) data type, and to only record data whose type is known (see :ref:`Only With Type <recorder_usage_configuration_onlywithtype>`).
+
+This release includes the following (*DDS Recorder tool*) **Configuration features**:
+
+* Support record only data whose (dynamic) type is known: ``only-with-type: true`` (see :ref:`Only With Type <recorder_usage_configuration_onlywithtype>`).
+* Support :ref:`Interface Whitelisting <recorder_interface_whitelist>`.
+* Support :ref:`Custom Transport Descriptors <recorder_custom_transport_descriptors>` (UDP or Shared Memory only).
+* Support :ref:`Ignore Participant Flags <recorder_ignore_participant_flags>`.
 
 This release includes the following **Documentation features**:
 
-* This same documentation.
+* Updated documentation with Replay service configuration and usage instructions.
+
+#################
+Previous Versions
+#################
+
+.. include:: previous_versions/v0.1.0.rst
