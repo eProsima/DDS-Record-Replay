@@ -16,6 +16,7 @@ ddsrouter
 deserialization
 deserialize
 deserialized
+Dev
 Diffie
 Dockerfile
 downsampling
@@ -25,6 +26,7 @@ executables
 fastcdr
 fastdds
 fastrtps
+Foonathan
 Foxglove
 github
 gMock
