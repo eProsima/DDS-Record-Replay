@@ -212,12 +212,7 @@ SWIG
 `SWIG <https://www.swig.org>`_ is a software development tool that connects programs written in C and C++ with a variety of high-level programming languages.
 It is leveraged by :ref:`Fast DDS Python <fastdds_python>` to generate a Python wrapper over Fast DDS library.
 SWIG is only a requirement for the :ref:`remote controller application <recorder_remote_controller>`.
-It can be installed using the package manager of the appropriate Linux distribution.
-For example, on Ubuntu use the command:
-
-.. code-block:: bash
-
-   sudo apt install swig libpython3-dev
+Download and install SWIG for Windows, choosing one of the releases available at their `website <https://www.swig.org/download.html>`__.
 
 .. _windows_sources_PyQt6:
 
@@ -264,8 +259,8 @@ Colcon installation (recommended)
         mkdir <path\to\user\workspace>\DDS-Record-Replay
         cd <path\to\user\workspace>\DDS-Record-Replay
         mkdir src
-        wget https://raw.githubusercontent.com/eProsima/DDS-Record-Replay/main/ddsrecordreplay.repos --output-file ddsrecordreplay.repos
-        vcs import src --input ddsrecordreplay.repos
+        wget https://raw.githubusercontent.com/eProsima/DDS-Record-Replay/main/ddsrecordreplay.repos ddsrecordreplay.repos
+        vcs import src < ddsrecordreplay.repos
 
     .. note::
 
@@ -310,8 +305,8 @@ Local installation
         mkdir <path\to\user\workspace>\DDS-Record-Replay\src
         mkdir <path\to\user\workspace>\DDS-Record-Replay\build
         cd <path\to\user\workspace>\DDS-Record-Replay
-        wget https://raw.githubusercontent.com/eProsima/DDS-Record-Replay/main/ddsrecordreplay.repos --output-file ddsrecordreplay.repos
-        vcs import src --input ddsrecordreplay.repos
+        wget https://raw.githubusercontent.com/eProsima/DDS-Record-Replay/main/ddsrecordreplay.repos ddsrecordreplay.repos
+        vcs import src ddsrecordreplay.repos
 
 #.  Compile all dependencies using CMake_.
 

@@ -14,15 +14,22 @@
 """Script implementing a remote controller for the DDS Recorder."""
 
 import json
+import os
+if os.name == 'nt':
+    import win32api
 
 from enum import Enum
 
+if os.name == 'nt':
+    win32api.LoadLibrary('DdsRecorderCommand')
 from DdsRecorderCommand import DdsRecorderCommand, DdsRecorderCommandPubSubType
 
 from Logger import logger
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
+if os.name == 'nt':
+    win32api.LoadLibrary('DdsRecorderStatus')
 from DdsRecorderStatus import DdsRecorderStatus, DdsRecorderStatusPubSubType
 
 import fastdds
