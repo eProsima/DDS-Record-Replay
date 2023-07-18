@@ -384,7 +384,7 @@ However, a user can enforce that **only** samples whose type is received are rec
 Compression
 ^^^^^^^^^^^
 
-Compression settings for writting to an MCAP file can be specified under the ``compression`` configuration tag.
+Compression settings for writing to an MCAP file can be specified under the ``compression`` configuration tag.
 The supported compression options are:
 
 .. list-table::
