@@ -379,6 +379,57 @@ Only With Type
 By default, all (allowed) received messages are recorded regardless of whether their associated type information has been received.
 However, a user can enforce that **only** samples whose type is received are recorded by setting ``only-with-type: true``.
 
+.. _recorder_usage_configuration_compression:
+
+Compression
+^^^^^^^^^^^
+
+Compression settings for writting to an MCAP file can be specified under the ``compression`` configuration tag.
+The supported compression options are:
+
+.. list-table::
+    :header-rows: 1
+
+    *   - Parameter
+        - Tag
+        - Description
+        - Data type
+        - Default value
+        - Possible values
+
+    *   - Compression Algorithm
+        - ``algorithm``
+        - Compression algorithm to |br|
+          use when writing Chunks.
+        - ``string``
+        - ``zstd``
+        - ``none`` |br|
+          ``lz4`` |br|
+          ``zstd``
+
+    *   - Compression Level
+        - ``level``
+        - Compression level to use |br|
+          when writing Chunks.
+        - ``string``
+        - ``default``
+        - ``fastest`` |br|
+          ``fast`` |br|
+          ``default`` |br|
+          ``slow`` |br|
+          ``slowest``
+
+    *   - Force Compression
+        - ``force``
+        - Force compression on all |br|
+          Chunks (even for those |br|
+          that do not benefit from |br|
+          compression).
+        - ``boolean``
+        - ``false``
+        - ``true`` |br|
+          ``false``
+
 .. _recorder_usage_configuration_remote_controller:
 
 Remote Controller
@@ -401,7 +452,7 @@ The supported configurations are:
     *   - Enable
         - ``enable``
         - Enable DDS remote |br|
-          control system topics.
+          control system.
         - ``boolean``
         - ``true``
         - ``true`` |br|
@@ -538,6 +589,10 @@ A complete example of all the configurations described on this page can be found
       downsampling: 3
       max-reception-rate: 20
       only-with-type: false
+      compression:
+        algorithm: lz4
+        level: slowest
+        force: true
 
     remote-controller:
       enable: true

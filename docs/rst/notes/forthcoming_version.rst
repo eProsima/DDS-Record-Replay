@@ -1,7 +1,11 @@
 .. add orphan tag when new info added to this file
 
-:orphan:
+.. :orphan:
 
 ###################
 Forthcoming Version
 ###################
+
+Next release will include the following (*DDS Recorder tool*) **Configuration features**:
+
+* Support :ref:`Compression Settings <recorder_usage_configuration_compression>`.
