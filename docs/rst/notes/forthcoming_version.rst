@@ -6,6 +6,6 @@
 Forthcoming Version
 ###################
 
-Next release will include the following (*DDS Recorder tool*) **Configuration features**:
+Next release will include the following **DDS Recorder tool configuration features**:
 
 * Support :ref:`Compression Settings <recorder_usage_configuration_compression>`.
