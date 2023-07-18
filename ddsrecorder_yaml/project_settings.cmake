@@ -39,6 +39,9 @@ if(WIN32)
         zstd)
 endif()
 
+set(MODULE_THIRDPARTY_HEADERONLY
+    mcap)
+
 set(MODULE_DEPENDENCIES
     $<$<BOOL:${WIN32}>:iphlpapi$<SEMICOLON>Shlwapi>
     yaml-cpp
@@ -51,3 +54,6 @@ set(MODULE_DEPENDENCIES
     ddsrecorder_participants
     $<IF:$<BOOL:${WIN32}>,lz4::lz4,lz4>
     $<IF:$<BOOL:${WIN32}>,$<IF:$<TARGET_EXISTS:zstd::libzstd_shared>,zstd::libzstd_shared,zstd::libzstd_static>,zstd>)
+
+    set(MODULE_CPP_VERSION
+        C++17)

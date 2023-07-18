@@ -38,6 +38,10 @@ recorder:
   downsampling: 3
   max-reception-rate: 20
   only-with-type: false
+  compression:
+    algorithm: lz4
+    level: slowest
+    force: true
 
 remote-controller:
   enable: true

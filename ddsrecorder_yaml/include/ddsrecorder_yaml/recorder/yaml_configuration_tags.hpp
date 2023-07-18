@@ -46,6 +46,20 @@ constexpr const char* RECORDER_EVENT_WINDOW_TAG("event-window");
 constexpr const char* RECORDER_LOG_PUBLISH_TIME_TAG("log-publish-time");
 constexpr const char* RECORDER_ONLY_WITH_TYPE_TAG("only-with-type");
 
+// Compression settings
+constexpr const char* RECORDER_COMPRESSION_SETTINGS_TAG("compression");
+constexpr const char* RECORDER_COMPRESSION_SETTINGS_ALGORITHM_TAG("algorithm");
+constexpr const char* RECORDER_COMPRESSION_SETTINGS_ALGORITHM_NONE_TAG("none");
+constexpr const char* RECORDER_COMPRESSION_SETTINGS_ALGORITHM_LZ4_TAG("lz4");
+constexpr const char* RECORDER_COMPRESSION_SETTINGS_ALGORITHM_ZSTD_TAG("zstd");
+constexpr const char* RECORDER_COMPRESSION_SETTINGS_LEVEL_TAG("level");
+constexpr const char* RECORDER_COMPRESSION_SETTINGS_LEVEL_FASTEST_TAG("fastest");
+constexpr const char* RECORDER_COMPRESSION_SETTINGS_LEVEL_FAST_TAG("fast");
+constexpr const char* RECORDER_COMPRESSION_SETTINGS_LEVEL_DEFAULT_TAG("default");
+constexpr const char* RECORDER_COMPRESSION_SETTINGS_LEVEL_SLOW_TAG("slow");
+constexpr const char* RECORDER_COMPRESSION_SETTINGS_LEVEL_SLOWEST_TAG("slowest");
+constexpr const char* RECORDER_COMPRESSION_SETTINGS_FORCE_TAG("force");
+
 ////////////////////////////////////
 // Remote controller related tags //
 ////////////////////////////////////
