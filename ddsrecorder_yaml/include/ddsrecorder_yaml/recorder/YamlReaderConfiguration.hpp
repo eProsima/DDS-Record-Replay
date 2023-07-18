@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <mcap/mcap.hpp>
+
 #include <cpp_utils/memory/Heritable.hpp>
 
 #include <ddspipe_core/types/topic/dds/DistributedTopic.hpp>
@@ -67,6 +69,7 @@ public:
     unsigned int downsampling = 1;
     float max_reception_rate = 0;
     bool only_with_type = false;
+    mcap::McapWriterOptions mcap_writer_options{"ros2"};
 
     // Remote controller configuration
     bool enable_remote_controller = true;

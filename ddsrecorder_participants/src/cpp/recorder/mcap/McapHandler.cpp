@@ -79,7 +79,7 @@ McapHandler::McapHandler(
     , state_(McapHandlerStateCode::STOPPED)
 {
     std::string tmp_filename = tmp_filename_(config.file_name);
-    auto status = mcap_writer_.open(tmp_filename.c_str(), mcap::McapWriterOptions("ros2"));
+    auto status = mcap_writer_.open(tmp_filename.c_str(), config.mcap_writer_options);
     if (!status.ok())
     {
         throw utils::InitializationException(
