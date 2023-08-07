@@ -407,9 +407,9 @@ int main(
                             {
                                 recorder->start();
                             }
-                            if (prev_command == CommandCode::pause)
+                            if (prev_command != CommandCode::start)
                             {
-                                receiver.publish_status(CommandCode::start, CommandCode::pause);
+                                receiver.publish_status(CommandCode::start, prev_command);
                             }
                             break;
 
@@ -418,9 +418,9 @@ int main(
                             {
                                 recorder->pause();
                             }
-                            if (prev_command == CommandCode::start)
+                            if (prev_command != CommandCode::pause)
                             {
-                                receiver.publish_status(CommandCode::pause, CommandCode::start);
+                                receiver.publish_status(CommandCode::pause, prev_command);
                             }
                             break;
 
@@ -472,6 +472,13 @@ int main(
                             break;
 
                         case CommandCode::stop:
+                            recorder->stop();
+                            if (prev_command != CommandCode::stop)
+                            {
+                                receiver.publish_status(CommandCode::stop, prev_command);
+                            }
+                            break;
+
                         case CommandCode::close:
                             // Unreachable
                             logError(DDSRECORDER_EXECUTION,
@@ -486,7 +493,7 @@ int main(
                     parse_command(receiver.wait_for_command(), command, args);
                     first_iter = false;
 
-                } while (command != CommandCode::stop && command != CommandCode::close);
+                } while (command != CommandCode::close);
             } while (command != CommandCode::close);
 
             // Transition to CLOSED state

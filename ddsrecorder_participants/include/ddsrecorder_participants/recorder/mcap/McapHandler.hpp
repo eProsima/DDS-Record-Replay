@@ -262,6 +262,10 @@ protected:
         stopped,                //! Signals event thread to exit.
     };
 
+    void open_file_nts_();
+
+    void close_file_nts_();
+
     /**
      * @brief Add message to \c buffer_ structure, or directly write to MCAP file.
      *
@@ -440,6 +444,8 @@ protected:
             const std::string& type_name,
             mcap::KeyValueMap& dynamic_types);
 
+    void rewrite_schemas_nts_();
+
     /**
      * @brief Convert given \c filename to temporal format.
      *
@@ -477,6 +483,8 @@ protected:
 
     //! Handler configuration
     McapHandlerConfiguration configuration_;
+
+    std::string mcap_filename_;
 
     //! Payload pool
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;

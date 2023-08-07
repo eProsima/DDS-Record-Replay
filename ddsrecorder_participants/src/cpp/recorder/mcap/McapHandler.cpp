@@ -75,17 +75,10 @@ McapHandler::McapHandler(
         const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
         const McapHandlerStateCode& init_state /* = McapHandlerStateCode::RUNNING */)
     : configuration_(config)
+    , mcap_filename_(config.file_name)
     , payload_pool_(payload_pool)
     , state_(McapHandlerStateCode::STOPPED)
 {
-    std::string tmp_filename = tmp_filename_(config.file_name);
-    auto status = mcap_writer_.open(tmp_filename.c_str(), config.mcap_writer_options);
-    if (!status.ok())
-    {
-        throw utils::InitializationException(
-                  STR_ENTRY << "Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
-    }
-
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "MCAP file <" << config.file_name << "> .");
 
@@ -105,21 +98,6 @@ McapHandler::~McapHandler()
 
     // Stop handler prior to destruction
     stop();
-
-    // Serialize and store dynamic types associated to all added schemas
-    store_dynamic_types_();
-
-    // Close writer and output file
-    mcap_writer_.close();
-
-    // Rename temp file to configuration file_name
-    std::string tmp_filename = tmp_filename_(configuration_.file_name);
-    if (std::rename(tmp_filename.c_str(), configuration_.file_name.c_str()))
-    {
-        logError(
-            DDSRECORDER_MCAP_HANDLER,
-            "Failed to rename " << tmp_filename << " into " << configuration_.file_name << " on handler destruction.");
-    }
 }
 
 void McapHandler::add_schema(
@@ -132,6 +110,8 @@ void McapHandler::add_schema(
         throw utils::InconsistencyException(
                   STR_ENTRY << "Attempting to add schema through a stopped handler, dropping..."
                   );
+
+        // TODO: Deal with this case for the active stopped state to avoid losing schemas (only sent/received once)
     }
 
     assert(nullptr != dynamic_type);
@@ -179,16 +159,16 @@ void McapHandler::add_data(
 {
     std::lock_guard<std::mutex> lock(mtx_);
 
-    logInfo(
-        DDSRECORDER_MCAP_HANDLER,
-        "Adding data in topic " << topic);
-
     if (state_ == McapHandlerStateCode::STOPPED)
     {
         throw utils::InconsistencyException(
                   STR_ENTRY << "Attempting to add sample through a stopped handler, dropping..."
                   );
     }
+
+    logInfo(
+        DDSRECORDER_MCAP_HANDLER,
+        "Adding data in topic " << topic);
 
     // Add data to channel
     Message msg;
@@ -312,7 +292,11 @@ void McapHandler::start()
             DDSRECORDER_MCAP_HANDLER,
             "Starting handler.");
 
-        if (prev_state == McapHandlerStateCode::PAUSED)
+        if (prev_state == McapHandlerStateCode::STOPPED)
+        {
+            open_file_nts_();
+        }
+        else if (prev_state == McapHandlerStateCode::PAUSED)
         {
             // Stop event routine (cleans buffers)
             stop_event_thread_nts_(event_lock);
@@ -368,6 +352,12 @@ void McapHandler::stop()
         }
         dump_data_nts_();  // if prev_state == RUNNING -> writes buffer + added pending samples (if !only_with_schema)
                            // if prev_state == PAUSED  -> writes added pending samples (if !only_with_schema)
+        close_file_nts_();
+
+        assert(channels_.size() == 0);
+        assert(samples_buffer_.size() == 0);
+        assert(pending_samples_.size() == 0);
+        assert(pending_samples_paused_.size() == 0);
     }
 }
 
@@ -394,7 +384,11 @@ void McapHandler::pause()
             DDSRECORDER_MCAP_HANDLER,
             "Pausing handler.");
 
-        if (prev_state == McapHandlerStateCode::RUNNING)
+        if (prev_state == McapHandlerStateCode::STOPPED)
+        {
+            open_file_nts_();
+        }
+        else if (prev_state == McapHandlerStateCode::RUNNING)
         {
             // Write data stored in buffer
             dump_data_nts_();
@@ -459,6 +453,57 @@ mcap::Timestamp McapHandler::std_timepoint_to_mcap_timestamp(
 mcap::Timestamp McapHandler::now()
 {
     return std_timepoint_to_mcap_timestamp(utils::now());
+}
+
+void McapHandler::open_file_nts_()
+{
+    // Replace datetime with current one
+    auto dt_end = mcap_filename_.find_last_of(".");
+    auto dt_middle = mcap_filename_.find_last_of("_");
+    auto dt_begin = mcap_filename_.find_last_of("_", dt_middle - 1);
+    auto current_ts = utils::timestamp_to_string(utils::now());
+    mcap_filename_.replace(dt_begin + 1, dt_end - dt_begin - 1, current_ts);
+
+    std::string tmp_filename = tmp_filename_(mcap_filename_);
+
+    logInfo(DDSRECORDER_MCAP_HANDLER,
+            "Opening file <" << tmp_filename << "> .");
+
+    auto status = mcap_writer_.open(tmp_filename.c_str(), configuration_.mcap_writer_options);
+    if (!status.ok())
+    {
+        throw utils::InitializationException(
+                  STR_ENTRY << "Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
+    }
+
+    // Write in new file schemas already received before
+    // NOTE: This is necessary since dynamic types are only sent/received once on discovery
+    rewrite_schemas_nts_();
+}
+
+void McapHandler::close_file_nts_()
+{
+    std::string tmp_filename = tmp_filename_(mcap_filename_);
+
+    logInfo(DDSRECORDER_MCAP_HANDLER,
+            "Closing file <" << tmp_filename << "> .");
+
+    // Serialize and store dynamic types associated to all added schemas
+    store_dynamic_types_();
+
+    // Close writer and output file
+    mcap_writer_.close();
+
+    // Rename temp file to configuration file_name
+    if (std::rename(tmp_filename.c_str(), mcap_filename_.c_str()))
+    {
+        logError(
+            DDSRECORDER_MCAP_HANDLER,
+            "Failed to rename " << tmp_filename << " into " << mcap_filename_ << " on handler destruction.");
+    }
+
+    // Reset channels
+    channels_.clear();
 }
 
 void McapHandler::add_data_nts_(
@@ -925,6 +970,27 @@ void McapHandler::store_dynamic_type_(
 
         dynamic_types[type_name] = typeid_str + TYPES_SERIALIZATION_DELIMITER + typeobj_str;
     }
+}
+
+void McapHandler::rewrite_schemas_nts_()
+{
+    logInfo(DDSRECORDER_MCAP_HANDLER, "Rewriting received schemas.");
+
+    std::map<std::string, mcap::Schema> new_schemas;
+    for (const auto& schema : schemas_)
+    {
+        std::string type_name = schema.first;
+        mcap::Schema new_schema = schema.second;
+
+        // WARNING: passing as non-const to MCAP library
+        mcap_writer_.addSchema(new_schema);
+        new_schemas[type_name] = std::move(new_schema);
+
+        logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << type_name << ".");
+    }
+
+    // Overwrite schemas map
+    schemas_ = new_schemas;
 }
 
 std::string McapHandler::tmp_filename_(
