@@ -51,6 +51,14 @@ enum class DataTypeKind
     HELLO_WORLD,
 };
 
+enum class EventKind
+{
+    NO_EVENT,
+    EVENT,
+    EVENT_START,
+    EVENT_STOP,
+};
+
 namespace test {
 
 // Publisher
@@ -197,7 +205,7 @@ std::tuple<unsigned int, double> record_with_transitions(
         unsigned int first_round,
         unsigned int secound_round,
         McapHandlerState current_state,
-        bool event = false,
+        EventKind event = EventKind::NO_EVENT,
         unsigned int event_window = 20,
         unsigned int time_sleep = 0,
         unsigned int downsampling = 1)
@@ -262,9 +270,17 @@ std::tuple<unsigned int, double> record_with_transitions(
         current_time = std::chrono::duration_cast<std::chrono::nanoseconds>
                     (std::chrono::system_clock::now().time_since_epoch()).count();
 
-        if (event && current_state == McapHandlerState::PAUSED)
+        if (event != EventKind::NO_EVENT && current_state == McapHandlerState::PAUSED)
         {
             recorder->trigger_event();
+            if (event == EventKind::EVENT_START)
+            {
+                recorder->start();
+            }
+            else if (event == EventKind::EVENT_STOP)
+            {
+                recorder->stop();
+            }
         }
     }
 
@@ -583,7 +599,7 @@ TEST(McapFileCreationTest, transition_paused_event_less_window)
         McapHandlerState::PAUSED,
         n_data_1, n_data_2,
         McapHandlerState::PAUSED,
-        true, event_window, 1);
+        EventKind::EVENT, event_window, 1);
 
     unsigned int n_received_msgs = std::get<0>(recording);
     double max_timestamp = std::get<1>(recording);
@@ -593,9 +609,9 @@ TEST(McapFileCreationTest, transition_paused_event_less_window)
 
 }
 
-TEST(McapFileCreationTest, transition_paused_event_max_window)
+TEST(McapFileCreationTest, transition_paused_event_start)
 {
-    std::string file_name = "output_transition_paused_event_max_window_.mcap";
+    std::string file_name = "output_transition_paused_event_start_.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -606,7 +622,30 @@ TEST(McapFileCreationTest, transition_paused_event_max_window)
         McapHandlerState::PAUSED,
         n_data_1, n_data_2,
         McapHandlerState::PAUSED,
-        true, event_window, 3);
+        EventKind::EVENT_START, event_window, 3);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
+    double max_timestamp = std::get<1>(recording);
+
+    ASSERT_EQ(n_received_msgs, n_data_2);
+    ASSERT_LE(max_timestamp, event_window);
+
+}
+
+TEST(McapFileCreationTest, transition_paused_event_stop)
+{
+    std::string file_name = "output_transition_paused_event_stop_.mcap";
+
+    unsigned int n_data_1 = rand() % 10 + 1;
+    unsigned int n_data_2 = rand() % 10 + 1;
+    unsigned int event_window = 3;
+
+    auto recording = record_with_transitions(
+        file_name,
+        McapHandlerState::PAUSED,
+        n_data_1, n_data_2,
+        McapHandlerState::PAUSED,
+        EventKind::EVENT_STOP, event_window, 3);
 
     unsigned int n_received_msgs = std::get<0>(recording);
     double max_timestamp = std::get<1>(recording);

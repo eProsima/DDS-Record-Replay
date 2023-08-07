@@ -41,6 +41,8 @@ set(TEST_LIST
         transition_stopped
         transition_paused_event_less_window
         transition_paused_event_max_window
+        transition_paused_event_start
+        transition_paused_event_stop
     )
 
 set(TEST_NEEDED_SOURCES
