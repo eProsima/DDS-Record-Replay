@@ -343,8 +343,15 @@ protected:
     //! Remove buffered samples older than [now - event_window]
     void remove_outdated_samples_nts_();
 
-    //! Stop event thread, and clear \c samples_buffer_ and \c pending_samples_paused_ structures
-    void stop_event_thread_nts_();
+    /**
+     * @brief Stop event thread, and clear \c samples_buffer_ and \c pending_samples_paused_ structures
+     *
+     * A (locked) lock wrapping \c event_cv_mutex_ is passed so it can be released just before joining the thread.
+     *
+     * @param [in] event_lock Lock in locked state wrapping \c event_cv_mutex_
+     */
+    void stop_event_thread_nts_(
+            std::unique_lock<std::mutex>& event_lock);
 
     //! Write in disk samples stored in buffer
     void dump_data_nts_();
