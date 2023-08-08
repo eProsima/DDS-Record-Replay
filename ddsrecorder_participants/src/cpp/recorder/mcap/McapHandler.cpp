@@ -690,7 +690,7 @@ void McapHandler::event_thread_routine_()
         }
 
         // Notify threads waiting for this resource
-        event_cv_mutex_.unlock();
+        event_lock.unlock();
         event_cv_.notify_all();
     }
 }
