@@ -108,6 +108,9 @@ public:
      *
      * @throw InitializationException if creation fails (fail to open MCAP file).
      *
+     * @warning Command methods (\c start , \c pause , \c stop , and \c trigger_event) are not thread safe
+     * among themselves. This is, they are expected to be executed sequentially and all in the same thread.
+     *
      * @param config:       Structure encapsulating all configuration options.
      * @param payload_pool: Owner of every payload contained in received messages.
      * @param init_state:   Initial instance state (RUNNING/PAUSED/STOPPED).
@@ -170,6 +173,10 @@ public:
      * @brief Start handler instance
      *
      * If previous state was PAUSED, the event thread is stopped (and buffers are cleared).
+     *
+     * @warning Not thread safe with respect to other command methods ( \c start , \c pause , \c stop ,
+     * and \c trigger_event). This is, they are expected to be executed sequentially and all in the same thread.
+     *
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void start();
@@ -180,6 +187,10 @@ public:
      * If previous state was RUNNING, data stored in buffer is dumped to disk.
      * If previous state was PAUSED, the event thread is stopped (and buffers are cleared).
      * In both cases, pending samples are stored without schema if allowed (only_with_schema not true).
+     *
+     * @warning Not thread safe with respect to other command methods ( \c start , \c pause , \c stop ,
+     * and \c trigger_event). This is, they are expected to be executed sequentially and all in the same thread.
+     *
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void stop();
@@ -190,6 +201,10 @@ public:
      * Creates event thread waiting for an event to dump samples in buffer.
      *
      * If previous state was RUNNING, data stored in buffer is dumped to disk.
+     *
+     * @warning Not thread safe with respect to other command methods ( \c start , \c pause , \c stop ,
+     * and \c trigger_event). This is, they are expected to be executed sequentially and all in the same thread.
+     *
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void pause();
@@ -201,6 +216,10 @@ public:
      * seconds) is written to disk.
      *
      * This method is ineffective if instance state is different than PAUSED.
+     *
+     * @warning Not thread safe with respect to other command methods ( \c start , \c pause , \c stop ,
+     * and \c trigger_event). This is, they are expected to be executed sequentially and all in the same thread.
+     *
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void trigger_event();
@@ -343,8 +362,15 @@ protected:
     //! Remove buffered samples older than [now - event_window]
     void remove_outdated_samples_nts_();
 
-    //! Stop event thread, and clear \c samples_buffer_ and \c pending_samples_paused_ structures
-    void stop_event_thread_nts_();
+    /**
+     * @brief Stop event thread, and clear \c samples_buffer_ and \c pending_samples_paused_ structures
+     *
+     * A (locked) lock wrapping \c event_cv_mutex_ is passed so it can be released just before joining the thread.
+     *
+     * @param [in] event_lock Lock in locked state wrapping \c event_cv_mutex_
+     */
+    void stop_event_thread_nts_(
+            std::unique_lock<std::mutex>& event_lock);
 
     //! Write in disk samples stored in buffer
     void dump_data_nts_();

@@ -284,6 +284,16 @@ void McapHandler::add_data(
 
 void McapHandler::start()
 {
+    // Wait for completion of event routine in case event was triggered
+    std::unique_lock<std::mutex> event_lock(event_cv_mutex_);
+    event_cv_.wait(
+        event_lock,
+        [&]
+        {
+            return event_flag_ != EventCode::triggered;
+        });
+
+    // Protect access to state and data structures (cleared in stop_event_thread_nts)
     std::lock_guard<std::mutex> lock(mtx_);
 
     // Store previous state to act differently depending on its value
@@ -305,13 +315,23 @@ void McapHandler::start()
         if (prev_state == McapHandlerStateCode::PAUSED)
         {
             // Stop event routine (cleans buffers)
-            stop_event_thread_nts_();
+            stop_event_thread_nts_(event_lock);
         }
     }
 }
 
 void McapHandler::stop()
 {
+    // Wait for completion of event routine in case event was triggered
+    std::unique_lock<std::mutex> event_lock(event_cv_mutex_);
+    event_cv_.wait(
+        event_lock,
+        [&]
+        {
+            return event_flag_ != EventCode::triggered;
+        });
+
+    // Protect access to state and data structures
     std::lock_guard<std::mutex> lock(mtx_);
 
     // Store previous state to act differently depending on its value
@@ -333,7 +353,7 @@ void McapHandler::stop()
         if (prev_state == McapHandlerStateCode::PAUSED)
         {
             // Stop event routine (cleans buffers)
-            stop_event_thread_nts_();
+            stop_event_thread_nts_(event_lock);
         }
 
         if (!configuration_.only_with_schema)
@@ -353,7 +373,10 @@ void McapHandler::stop()
 
 void McapHandler::pause()
 {
+    // Protect access to state and data structures
     std::lock_guard<std::mutex> lock(mtx_);
+
+    // NOTE: no need to take event mutex as event thread does not exist at this point
 
     // Store previous state to act differently depending on its value
     McapHandlerStateCode prev_state = state_;
@@ -388,6 +411,16 @@ void McapHandler::pause()
 
 void McapHandler::trigger_event()
 {
+    // Wait for completion of event routine in case event was triggered
+    std::unique_lock<std::mutex> event_lock(event_cv_mutex_);
+    event_cv_.wait(
+        event_lock,
+        [&]
+        {
+            return event_flag_ != EventCode::triggered;
+        });
+
+    // Protect access to state
     std::lock_guard<std::mutex> lock(mtx_);
 
     if (state_ != McapHandlerStateCode::PAUSED)
@@ -401,11 +434,11 @@ void McapHandler::trigger_event()
         logInfo(
             DDSRECORDER_MCAP_HANDLER,
             "Triggering event.");
-        {
-            std::lock_guard<std::mutex> lock(event_cv_mutex_);
-            event_flag_ = EventCode::triggered;
-        }
-        event_cv_.notify_one();
+
+        // Notify event routine thread an event has been triggered
+        event_flag_ = EventCode::triggered;
+        event_lock.unlock(); // Unlock before notifying for efficiency purposes
+        event_cv_.notify_all(); // Need to notify all as not possible to notify a specific thread
     }
 }
 
@@ -566,93 +599,99 @@ void McapHandler::add_pending_samples_nts_()
 
 void McapHandler::event_thread_routine_()
 {
-    while (true)
+    bool keep_going = true;
+    while (keep_going)
     {
         bool timeout;
+        auto exit_time = std::chrono::time_point<std::chrono::system_clock>::max();
+        auto cleanup_period_ = std::chrono::seconds(configuration_.cleanup_period);
+        if (cleanup_period_ < std::chrono::seconds::max())
         {
-            auto exit_time = std::chrono::time_point<std::chrono::system_clock>::max();
-            auto cleanup_period_ = std::chrono::seconds(configuration_.cleanup_period);
-            if (cleanup_period_ < std::chrono::seconds::max())
-            {
-                auto now = std::chrono::system_clock::now();
-                exit_time = now + cleanup_period_;
-            }
-
-            std::unique_lock<std::mutex> lock(event_cv_mutex_);
-
-            if (event_flag_ != EventCode::untriggered)
-            {
-                // Flag set before taking mutex, no need to wait
-                timeout = false;
-            }
-            else
-            {
-                timeout = !event_cv_.wait_until(
-                    lock,
-                    exit_time,
-                    [&]
-                    {
-                        return event_flag_ != EventCode::untriggered;
-                    });
-            }
-
-            if (event_flag_ == EventCode::stopped)
-            {
-                logInfo(DDSRECORDER_MCAP_HANDLER, "Finishing event thread routine.");
-                return;
-            }
-            else
-            {
-                // Reset and wait for next event
-                event_flag_ = EventCode::untriggered;
-            }
+            auto now = std::chrono::system_clock::now();
+            exit_time = now + cleanup_period_;
         }
 
-        std::lock_guard<std::mutex> lock(mtx_);
+        std::unique_lock<std::mutex> event_lock(event_cv_mutex_);
 
-        // Delete outdated samples if timeout, and also before dumping (event triggered case)
-        remove_outdated_samples_nts_();
-
-        if (timeout)
+        if (event_flag_ != EventCode::untriggered)
         {
-            logInfo(DDSRECORDER_MCAP_HANDLER, "Event thread timeout.");
+            // Flag set before taking mutex, no need to wait
+            timeout = false;
         }
         else
         {
-            logInfo(DDSRECORDER_MCAP_HANDLER, "Event triggered: dumping buffered data.");
-
-            if (!(configuration_.max_pending_samples == 0 && configuration_.only_with_schema))
-            {
-                // Move (paused) pending samples to buffer (or pending samples) prior to dumping
-                for (auto& pending_type : pending_samples_paused_)
+            timeout = !event_cv_.wait_until(
+                event_lock,
+                exit_time,
+                [&]
                 {
-                    auto type_name = pending_type.first;
-                    auto& pending_list = pending_type.second;
-                    while (!pending_list.empty())
+                    return event_flag_ != EventCode::untriggered;
+                });
+        }
+
+        if (event_flag_ == EventCode::stopped)
+        {
+            logInfo(DDSRECORDER_MCAP_HANDLER, "Finishing event thread routine.");
+            keep_going = false;
+        }
+        else
+        {
+            // Protect access to state and data structures
+            std::lock_guard<std::mutex> lock(mtx_);
+
+            // NOTE: event mutex not released until routine completed to avoid other commands (start/stop/trigger) to interfere.
+
+            // Delete outdated samples if timeout, and also before dumping (event triggered case)
+            remove_outdated_samples_nts_();
+
+            if (timeout)
+            {
+                logInfo(DDSRECORDER_MCAP_HANDLER, "Event thread timeout.");
+            }
+            else
+            {
+                logInfo(DDSRECORDER_MCAP_HANDLER, "Event triggered: dumping buffered data.");
+
+                if (!(configuration_.max_pending_samples == 0 && configuration_.only_with_schema))
+                {
+                    // Move (paused) pending samples to buffer (or pending samples) prior to dumping
+                    for (auto& pending_type : pending_samples_paused_)
                     {
-                        auto& sample = pending_list.front();
-                        if (configuration_.max_pending_samples == 0)
+                        auto type_name = pending_type.first;
+                        auto& pending_list = pending_type.second;
+                        while (!pending_list.empty())
                         {
-                            if (configuration_.only_with_schema)
+                            auto& sample = pending_list.front();
+                            if (configuration_.max_pending_samples == 0)
                             {
-                                // Cannot happen (outter if)
+                                if (configuration_.only_with_schema)
+                                {
+                                    // Cannot happen (outter if)
+                                }
+                                else
+                                {
+                                    // Add to buffer with blank schema
+                                    add_data_nts_(sample.second, sample.first);
+                                }
                             }
                             else
                             {
-                                // Add to buffer with blank schema
-                                add_data_nts_(sample.second, sample.first);
+                                add_to_pending_nts_(sample.second, sample.first);
                             }
+                            pending_list.pop_front();
                         }
-                        else
-                        {
-                            add_to_pending_nts_(sample.second, sample.first);
-                        }
-                        pending_list.pop_front();
                     }
                 }
+                dump_data_nts_();
             }
-            dump_data_nts_();
+
+            // Event routine iteration completed: reset and wait for next event
+            event_flag_ = EventCode::untriggered;
         }
+
+        // Notify threads waiting for this resource
+        event_lock.unlock();
+        event_cv_.notify_all();
     }
 }
 
@@ -675,19 +714,20 @@ void McapHandler::remove_outdated_samples_nts_()
     }
 }
 
-void McapHandler::stop_event_thread_nts_()
+void McapHandler::stop_event_thread_nts_(
+        std::unique_lock<std::mutex>& event_lock)
 {
+    // NOTE: this method assumes both mtx_ and event_cv_mutex_ (within event_lock) are locked
+
     // WARNING: state must have been set different to PAUSED before calling this method
     assert(state_ != McapHandlerStateCode::PAUSED);
 
     logInfo(DDSRECORDER_MCAP_HANDLER, "Stopping event thread.");
     if (event_thread_.joinable())
     {
-        {
-            std::lock_guard<std::mutex> lock(event_cv_mutex_);
-            event_flag_ = EventCode::stopped;
-        }
-        event_cv_.notify_one();
+        event_flag_ = EventCode::stopped;
+        event_lock.unlock(); // Unlock prior to notification (for efficiency) and join (to avoid deadlock)
+        event_cv_.notify_all(); // Need to notify all as not possible to notify a specific thread
         event_thread_.join();
     }
     samples_buffer_.clear();
