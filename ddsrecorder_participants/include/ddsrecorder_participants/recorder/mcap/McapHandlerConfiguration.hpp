@@ -35,7 +35,8 @@ struct McapHandlerConfiguration
             const unsigned int& cleanup_period,
             const bool& log_publishTime,
             const bool& only_with_schema,
-            const mcap::McapWriterOptions& mcap_writer_options)
+            const mcap::McapWriterOptions& mcap_writer_options,
+            const bool& record_types)
         : file_name(file_name)
         , max_pending_samples(max_pending_samples)
         , buffer_size(buffer_size)
@@ -44,6 +45,7 @@ struct McapHandlerConfiguration
         , log_publishTime(log_publishTime)
         , only_with_schema(only_with_schema)
         , mcap_writer_options(mcap_writer_options)
+        , record_types(record_types)
     {
     }
 
@@ -70,6 +72,9 @@ struct McapHandlerConfiguration
 
     //! Mcap writer configuration options
     mcap::McapWriterOptions mcap_writer_options;
+
+    //! Whether to store received dynamic types in output MCAP file
+    bool record_types;
 };
 
 } /* namespace participants */

@@ -70,6 +70,7 @@ public:
     float max_reception_rate = 0;
     bool only_with_type = false;
     mcap::McapWriterOptions mcap_writer_options{"ros2"};
+    bool record_types = true;
 
     // Remote controller configuration
     bool enable_remote_controller = true;

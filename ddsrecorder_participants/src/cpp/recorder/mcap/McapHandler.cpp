@@ -107,7 +107,10 @@ McapHandler::~McapHandler()
     stop();
 
     // Serialize and store dynamic types associated to all added schemas
-    store_dynamic_types_();
+    if (configuration_.record_types)
+    {
+        store_dynamic_types_();
+    }
 
     // Close writer and output file
     mcap_writer_.close();
