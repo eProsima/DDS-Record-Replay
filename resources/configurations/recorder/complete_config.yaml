@@ -42,6 +42,7 @@ recorder:
     algorithm: lz4
     level: slowest
     force: true
+  record-types: true
 
 remote-controller:
   enable: true

@@ -430,6 +430,15 @@ The supported compression options are:
         - ``true`` |br|
           ``false``
 
+.. _recorder_usage_configuration_recordtypes:
+
+Record Types
+^^^^^^^^^^^^
+
+By default, all type information received during execution is stored in a dedicated MCAP file section.
+This information is then leveraged by |ddsreplayer| on playback, publishing recorded types in addition to data samples, which may be required for receiver applications relying on :term:`Dynamic Types<DynamicTypes>` (see :ref:`Replay Types <replayer_replay_configuration_replaytypes>`).
+However, a user may choose to disable this feature by setting ``record-types: false``.
+
 .. _recorder_usage_configuration_remote_controller:
 
 Remote Controller
@@ -593,6 +602,7 @@ A complete example of all the configurations described on this page can be found
         algorithm: lz4
         level: slowest
         force: true
+      record-types: true
 
     remote-controller:
       enable: true
