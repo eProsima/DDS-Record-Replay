@@ -45,6 +45,7 @@ constexpr const char* RECORDER_BUFFER_SIZE_TAG("buffer-size");
 constexpr const char* RECORDER_EVENT_WINDOW_TAG("event-window");
 constexpr const char* RECORDER_LOG_PUBLISH_TIME_TAG("log-publish-time");
 constexpr const char* RECORDER_ONLY_WITH_TYPE_TAG("only-with-type");
+constexpr const char* RECORDER_RECORD_TYPES_TAG("record-types");
 
 // Compression settings
 constexpr const char* RECORDER_COMPRESSION_SETTINGS_TAG("compression");

@@ -9,3 +9,4 @@ Forthcoming Version
 Next release will include the following **DDS Recorder tool configuration features**:
 
 * Support :ref:`Compression Settings <recorder_usage_configuration_compression>`.
+* Allow disabling the storage of received types (see :ref:`Record Types <recorder_usage_configuration_recordtypes>`).

@@ -221,6 +221,13 @@ void RecorderConfiguration::load_recorder_configuration_(
     {
         mcap_writer_options = YamlReader::get<mcap::McapWriterOptions>(yml, RECORDER_COMPRESSION_SETTINGS_TAG, version);
     }
+
+    /////
+    // Get optional record_types
+    if (YamlReader::is_tag_present(yml, RECORDER_RECORD_TYPES_TAG))
+    {
+        record_types = YamlReader::get<bool>(yml, RECORDER_RECORD_TYPES_TAG, version);
+    }
 }
 
 void RecorderConfiguration::load_controller_configuration_(
