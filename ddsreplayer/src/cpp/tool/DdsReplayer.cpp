@@ -16,6 +16,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include <cpp_utils/exception/InitializationException.hpp>
+#include <cpp_utils/utils.hpp>
 
 #include <fastcdr/Cdr.h>
 #include <fastcdr/FastBuffer.h>
@@ -229,7 +230,7 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
         // Register in factory dynamic types from metadata
         for (auto& dynamic_type: dynamic_metadata)
         {
-            register_dynamic_type_(dynamic_type.first, dynamic_type.second);
+            register_dynamic_type_(dynamic_type.first, utils::base64_decode(dynamic_type.second));
         }
         registered_types = get_keys(dynamic_metadata);
     }
