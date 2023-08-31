@@ -925,8 +925,9 @@ void McapHandler::store_dynamic_type_(
     {
         auto typeid_str = serialize_type_identifier_(type_identifier);
         auto typeobj_str = serialize_type_object_(type_object);
+        std::string dynamic_type_str = typeid_str + TYPES_SERIALIZATION_DELIMITER + typeobj_str;
 
-        dynamic_types[type_name] = typeid_str + TYPES_SERIALIZATION_DELIMITER + typeobj_str;
+        dynamic_types[type_name] = utils::base64_encode(dynamic_type_str);
     }
 }
 
