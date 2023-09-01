@@ -906,11 +906,48 @@ void McapHandler::store_dynamic_types_()
         store_dynamic_type_(type_identifier, type_object, type_name, dynamic_types);
     }
 
+    // mcap::KeyValueMap redundant_dynamic_types{};
+    // unsigned int redundancy_factor = 100000;
+    // for (auto const& item : dynamic_types)
+    // {
+    //     std::string key = item.first;
+    //     for (unsigned int i = 0 ; i < redundancy_factor ; i++)
+    //     {
+    //         std::string redundant_key = key + "_" + std::to_string(i);
+    //         redundant_dynamic_types[redundant_key] = item.second;
+    //     }
+    // }
+
     // Store dynamic types as metadata in MCAP file
-    mcap::Metadata dynamic_metadata;
-    dynamic_metadata.name = METADATA_DYNAMIC_TYPES;
-    dynamic_metadata.metadata = dynamic_types;
-    auto status = mcap_writer_.write(dynamic_metadata);
+    // mcap::Metadata dynamic_metadata;
+    // dynamic_metadata.name = METADATA_DYNAMIC_TYPES;
+    // dynamic_metadata.metadata = dynamic_types;
+    // // dynamic_metadata.metadata = redundant_dynamic_types;
+    // auto status = mcap_writer_.write(dynamic_metadata);
+
+    // Serialize dynamic types map
+    std::string dynamic_types_str;
+    bool first_iter = true;
+    for (auto const& dynamic_type : dynamic_types)
+    {
+        if (!first_iter)
+        {
+            dynamic_types_str.append(INTERTYPES_SERIALIZATION_DELIMITER);
+        }
+        first_iter = false;
+
+        dynamic_types_str.append(dynamic_type.first);
+        dynamic_types_str.append(TYPE_NAME_VALUE_SERIALIZATION_DELIMITER);
+        dynamic_types_str.append(dynamic_type.second);
+    }
+    dynamic_types_str = utils::base64_encode(dynamic_types_str);
+
+    // Store dynamic types as attachment in MCAP file
+    mcap::Attachment dynamic_attachment;
+    dynamic_attachment.name = DYNAMIC_TYPES_ATTACHMENT_NAME;
+    dynamic_attachment.data = (std::byte*)reinterpret_cast<const unsigned char*>(dynamic_types_str.c_str());
+    dynamic_attachment.dataSize = dynamic_types_str.size();
+    auto status = mcap_writer_.write(dynamic_attachment);
 
     return;
 }
@@ -925,9 +962,9 @@ void McapHandler::store_dynamic_type_(
     {
         auto typeid_str = serialize_type_identifier_(type_identifier);
         auto typeobj_str = serialize_type_object_(type_object);
-        std::string dynamic_type_str = typeid_str + TYPES_SERIALIZATION_DELIMITER + typeobj_str;
+        std::string dynamic_type_str = typeid_str + TYPE_ID_OBJECT_SERIALIZATION_DELIMITER + typeobj_str;
 
-        dynamic_types[type_name] = utils::base64_encode(dynamic_type_str);
+        dynamic_types[type_name] = dynamic_type_str;
     }
 }
 

@@ -213,7 +213,7 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
                 logWarning(DDSREPLAYER_REPLAYER,
                         "An error occurred while reading summary: " << status.message << ".");
             };
-    // Read mcap summary: ForceScan method required for parsing metadata
+    // Read mcap summary: ForceScan method required for parsing metadata and attachments
     status = mcap_reader.readSummary(mcap::ReadSummaryMethod::ForceScan, onProblem);
     if (status.code != mcap::StatusCode::Success)
     {
@@ -222,17 +222,46 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
                   );
     }
 
-    auto metadatas = mcap_reader.metadata();
-    mcap::KeyValueMap dynamic_metadata = metadatas[METADATA_DYNAMIC_TYPES].metadata;
+    // auto metadatas = mcap_reader.metadata();
+    // mcap::KeyValueMap dynamic_metadata = metadatas[METADATA_DYNAMIC_TYPES].metadata;
+
+    // Fetch dynamic types attachment
+    auto attachments = mcap_reader.attachments();
+    mcap::Attachment dynamic_attachment = attachments[DYNAMIC_TYPES_ATTACHMENT_NAME];
+    std::string dynamic_types_str(reinterpret_cast<char const*>(dynamic_attachment.data), dynamic_attachment.dataSize);
+    dynamic_types_str = utils::base64_decode(dynamic_types_str);
+
+    // Deserialize into dynamic types map
+    mcap::KeyValueMap dynamic_types;
+
+    std::string intertypes_delimiter(INTERTYPES_SERIALIZATION_DELIMITER);
+    std::string namevalue_delimiter(TYPE_NAME_VALUE_SERIALIZATION_DELIMITER);
+    size_t intertypes_del_pos = 0;
+    size_t current_pos = 0;
+    while (intertypes_del_pos != std::string::npos)
+    {
+        intertypes_del_pos = dynamic_types_str.find(intertypes_delimiter, current_pos);
+        std::string dynamic_type_str = dynamic_types_str.substr(current_pos, intertypes_del_pos - current_pos);
+
+        auto namevalue_del_pos = dynamic_type_str.find(namevalue_delimiter);
+        std::string dynamic_type_name = dynamic_type_str.substr(0, namevalue_del_pos);
+        std::string dynamic_type_value = dynamic_type_str.substr(namevalue_del_pos + namevalue_delimiter.length(), std::string::npos);
+
+        dynamic_types[dynamic_type_name] = dynamic_type_value;
+
+        current_pos = intertypes_del_pos + intertypes_delimiter.length();
+    }
+
+
     std::set<std::string> registered_types{};
     if (configuration.replay_types)
     {
         // Register in factory dynamic types from metadata
-        for (auto& dynamic_type: dynamic_metadata)
+        for (auto& dynamic_type: dynamic_types)
         {
-            register_dynamic_type_(dynamic_type.first, utils::base64_decode(dynamic_type.second));
+            register_dynamic_type_(dynamic_type.first, dynamic_type.second);
         }
-        registered_types = get_keys(dynamic_metadata);
+        registered_types = get_keys(dynamic_types);
     }
 
     auto channels = mcap_reader.channels();
@@ -274,7 +303,7 @@ void DdsReplayer::register_dynamic_type_(
         const std::string& type_name,
         const std::string& dynamic_type)
 {
-    std::string delimiter(TYPES_SERIALIZATION_DELIMITER);
+    std::string delimiter(TYPE_ID_OBJECT_SERIALIZATION_DELIMITER);
     auto del_pos = dynamic_type.find(delimiter);
 
     // Split string (concatenation of serialized type identifer and object)
