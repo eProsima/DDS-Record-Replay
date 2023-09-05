@@ -133,7 +133,7 @@ public:
     ~McapHandler();
 
     /**
-     * @brief Create and store in \c schemas_ a ROS 2 schema (.msg format).
+     * @brief Create and store in \c schemas_ an OMG IDL schema (.idl format).
      * Any samples following this schema that were received before the schema itself are moved to the memory buffer
      * to be written with the next batch.
      * Previously created channels (for this type) associated with a blank schema are updated to use the new one.
