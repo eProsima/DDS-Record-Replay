@@ -152,7 +152,7 @@ void McapHandler::add_schema(
     logInfo(DDSRECORDER_MCAP_HANDLER, "\nAdding schema with name " << type_name << " :\n" << schema_text << "\n");
 
     // Create schema and add it to writer and to schemas map
-    mcap::Schema new_schema(type_name, "ros2msg", schema_text);
+    mcap::Schema new_schema(type_name, "omgidl", schema_text);
     // WARNING: passing as non-const to MCAP library
     mcap_writer_.addSchema(new_schema);
 
