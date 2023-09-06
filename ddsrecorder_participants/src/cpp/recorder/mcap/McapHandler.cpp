@@ -32,12 +32,15 @@
 #include <fastcdr/FastCdr.h>
 #include <fastdds/rtps/common/CDRMessage_t.h>
 #include <fastdds/rtps/common/SerializedPayload.h>
+#include <fastdds/dds/topic/TypeSupport.hpp>
 #include <fastrtps/types/DynamicType.h>
 #include <fastrtps/types/TypeObjectFactory.h>
 
 #include <ddspipe_core/types/dynamic_types/schema.hpp>
 
 #include <ddsrecorder_participants/constants.hpp>
+#include <ddsrecorder_participants/common/types/DynamicTypesCollection.hpp>
+#include <ddsrecorder_participants/common/types/DynamicTypesCollectionPubSubTypes.hpp>
 
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
 
@@ -850,7 +853,7 @@ mcap::SchemaId McapHandler::get_schema_id_nts_(
 void McapHandler::store_dynamic_types_()
 {
     auto type_names = utils::get_keys(schemas_);
-    mcap::KeyValueMap dynamic_types{};
+    DynamicTypesCollection dynamic_types;
 
     for (auto& type_name: type_names)
     {
@@ -906,47 +909,17 @@ void McapHandler::store_dynamic_types_()
         store_dynamic_type_(type_identifier, type_object, type_name, dynamic_types);
     }
 
-    // mcap::KeyValueMap redundant_dynamic_types{};
-    // unsigned int redundancy_factor = 100000;
-    // for (auto const& item : dynamic_types)
-    // {
-    //     std::string key = item.first;
-    //     for (unsigned int i = 0 ; i < redundancy_factor ; i++)
-    //     {
-    //         std::string redundant_key = key + "_" + std::to_string(i);
-    //         redundant_dynamic_types[redundant_key] = item.second;
-    //     }
-    // }
+    eprosima::fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
 
-    // Store dynamic types as metadata in MCAP file
-    // mcap::Metadata dynamic_metadata;
-    // dynamic_metadata.name = METADATA_DYNAMIC_TYPES;
-    // dynamic_metadata.metadata = dynamic_types;
-    // // dynamic_metadata.metadata = redundant_dynamic_types;
-    // auto status = mcap_writer_.write(dynamic_metadata);
+    eprosima::fastrtps::rtps::SerializedPayload_t* serialized_payload =
+            new eprosima::fastrtps::rtps::SerializedPayload_t(
+        type_support.get_serialized_size_provider(&dynamic_types)());
+    type_support.serialize(&dynamic_types, serialized_payload);
 
-    // Serialize dynamic types map
-    std::string dynamic_types_str;
-    bool first_iter = true;
-    for (auto const& dynamic_type : dynamic_types)
-    {
-        if (!first_iter)
-        {
-            dynamic_types_str.append(INTERTYPES_SERIALIZATION_DELIMITER);
-        }
-        first_iter = false;
-
-        dynamic_types_str.append(dynamic_type.first);
-        dynamic_types_str.append(TYPE_NAME_VALUE_SERIALIZATION_DELIMITER);
-        dynamic_types_str.append(dynamic_type.second);
-    }
-    dynamic_types_str = utils::base64_encode(dynamic_types_str);
-
-    // Store dynamic types as attachment in MCAP file
     mcap::Attachment dynamic_attachment;
     dynamic_attachment.name = DYNAMIC_TYPES_ATTACHMENT_NAME;
-    dynamic_attachment.data = (std::byte*)reinterpret_cast<const unsigned char*>(dynamic_types_str.c_str());
-    dynamic_attachment.dataSize = dynamic_types_str.size();
+    dynamic_attachment.data = reinterpret_cast<std::byte*>(serialized_payload->data);
+    dynamic_attachment.dataSize = serialized_payload->length;
     auto status = mcap_writer_.write(dynamic_attachment);
 
     return;
@@ -956,15 +929,16 @@ void McapHandler::store_dynamic_type_(
         const eprosima::fastrtps::types::TypeIdentifier* type_identifier,
         const eprosima::fastrtps::types::TypeObject* type_object,
         const std::string& type_name,
-        mcap::KeyValueMap& dynamic_types)
+        DynamicTypesCollection& dynamic_types)
 {
     if (type_identifier != nullptr && type_object != nullptr)
     {
-        auto typeid_str = serialize_type_identifier_(type_identifier);
-        auto typeobj_str = serialize_type_object_(type_object);
-        std::string dynamic_type_str = typeid_str + TYPE_ID_OBJECT_SERIALIZATION_DELIMITER + typeobj_str;
+        DynamicType dynamic_type;
+        dynamic_type.type_name(type_name);
+        dynamic_type.type_information(utils::base64_encode(serialize_type_identifier_(type_identifier)));
+        dynamic_type.type_object(utils::base64_encode(serialize_type_object_(type_object)));
 
-        dynamic_types[type_name] = dynamic_type_str;
+        dynamic_types.dynamic_types().push_back(dynamic_type);
     }
 }
 

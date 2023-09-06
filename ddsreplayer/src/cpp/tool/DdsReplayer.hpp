@@ -35,6 +35,7 @@
 
 #include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
 #include <ddsrecorder_participants/replayer/ReplayerParticipant.hpp>
+#include <ddsrecorder_participants/common/types/DynamicTypesCollection.hpp>
 
 #include <ddsrecorder_yaml/replayer/YamlReaderConfiguration.hpp>
 
@@ -110,8 +111,7 @@ protected:
      * @param dynamic_type: serialized dynamic type (concatenation of serialized type id and object) to be registered.
      */
     void register_dynamic_type_(
-            const std::string& type_name,
-            const std::string& dynamic_type);
+            const ddsrecorder::participants::DynamicType& dynamic_type);
 
     /**
      * @brief Create DDS DataWriter in given topic to send associated dynamic type information to applications relying

@@ -38,6 +38,7 @@
 
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
+#include <ddsrecorder_participants/common/types/DynamicTypesCollection.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -438,7 +439,7 @@ protected:
             const eprosima::fastrtps::types::TypeIdentifier* type_identifier,
             const eprosima::fastrtps::types::TypeObject* type_object,
             const std::string& type_name,
-            mcap::KeyValueMap& dynamic_types);
+            DynamicTypesCollection& dynamic_types);
 
     /**
      * @brief Convert given \c filename to temporal format.

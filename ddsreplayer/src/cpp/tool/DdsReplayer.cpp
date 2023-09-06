@@ -30,9 +30,12 @@
 #include <fastdds/dds/publisher/Publisher.hpp>
 #include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
 #include <fastdds/dds/publisher/qos/PublisherQos.hpp>
+#include <fastdds/dds/topic/TypeSupport.hpp>
 #include <fastrtps/attributes/ParticipantAttributes.h>
 
 #include <ddsrecorder_participants/constants.hpp>
+#include <ddsrecorder_participants/common/types/DynamicTypesCollection.hpp>
+#include <ddsrecorder_participants/common/types/DynamicTypesCollectionPubSubTypes.hpp>
 
 #include "DdsReplayer.hpp"
 
@@ -222,46 +225,30 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
                   );
     }
 
-    // auto metadatas = mcap_reader.metadata();
-    // mcap::KeyValueMap dynamic_metadata = metadatas[METADATA_DYNAMIC_TYPES].metadata;
-
     // Fetch dynamic types attachment
     auto attachments = mcap_reader.attachments();
     mcap::Attachment dynamic_attachment = attachments[DYNAMIC_TYPES_ATTACHMENT_NAME];
-    std::string dynamic_types_str(reinterpret_cast<char const*>(dynamic_attachment.data), dynamic_attachment.dataSize);
-    dynamic_types_str = utils::base64_decode(dynamic_types_str);
 
-    // Deserialize into dynamic types map
-    mcap::KeyValueMap dynamic_types;
-
-    std::string intertypes_delimiter(INTERTYPES_SERIALIZATION_DELIMITER);
-    std::string namevalue_delimiter(TYPE_NAME_VALUE_SERIALIZATION_DELIMITER);
-    size_t intertypes_del_pos = 0;
-    size_t current_pos = 0;
-    while (intertypes_del_pos != std::string::npos)
-    {
-        intertypes_del_pos = dynamic_types_str.find(intertypes_delimiter, current_pos);
-        std::string dynamic_type_str = dynamic_types_str.substr(current_pos, intertypes_del_pos - current_pos);
-
-        auto namevalue_del_pos = dynamic_type_str.find(namevalue_delimiter);
-        std::string dynamic_type_name = dynamic_type_str.substr(0, namevalue_del_pos);
-        std::string dynamic_type_value = dynamic_type_str.substr(namevalue_del_pos + namevalue_delimiter.length(), std::string::npos);
-
-        dynamic_types[dynamic_type_name] = dynamic_type_value;
-
-        current_pos = intertypes_del_pos + intertypes_delimiter.length();
-    }
-
+    eprosima::fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
+    eprosima::fastrtps::rtps::SerializedPayload_t* serialized_payload =
+            new eprosima::fastrtps::rtps::SerializedPayload_t(dynamic_attachment.dataSize);
+    serialized_payload->length = dynamic_attachment.dataSize;
+    std::memcpy(
+        serialized_payload->data,
+        reinterpret_cast<const unsigned char*>(dynamic_attachment.data),
+        dynamic_attachment.dataSize);
+    DynamicTypesCollection dynamic_types;
+    type_support.deserialize(serialized_payload, &dynamic_types);
 
     std::set<std::string> registered_types{};
     if (configuration.replay_types)
     {
         // Register in factory dynamic types from metadata
-        for (auto& dynamic_type: dynamic_types)
+        for (auto& dynamic_type: dynamic_types.dynamic_types())
         {
-            register_dynamic_type_(dynamic_type.first, dynamic_type.second);
+            register_dynamic_type_(dynamic_type);
+            registered_types.insert(dynamic_type.type_name());
         }
-        registered_types = get_keys(dynamic_types);
     }
 
     auto channels = mcap_reader.channels();
@@ -300,22 +287,18 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
 }
 
 void DdsReplayer::register_dynamic_type_(
-        const std::string& type_name,
-        const std::string& dynamic_type)
+        const ddsrecorder::participants::DynamicType& dynamic_type)
 {
-    std::string delimiter(TYPE_ID_OBJECT_SERIALIZATION_DELIMITER);
-    auto del_pos = dynamic_type.find(delimiter);
-
-    // Split string (concatenation of serialized type identifer and object)
-    std::string typeid_str = dynamic_type.substr(0, del_pos);
-    std::string typeobj_str = dynamic_type.substr(del_pos + delimiter.length(), std::string::npos);
+    std::string typeid_str = utils::base64_decode(dynamic_type.type_information());
+    std::string typeobj_str = utils::base64_decode(dynamic_type.type_object());
 
     // Deserialize type identifer and object strings
     fastrtps::types::TypeIdentifier type_identifier = deserialize_type_identifier_(typeid_str);
     fastrtps::types::TypeObject type_object = deserialize_type_object_(typeobj_str);
 
     // Register in factory
-    fastrtps::types::TypeObjectFactory::get_instance()->add_type_object(type_name, &type_identifier, &type_object);
+    fastrtps::types::TypeObjectFactory::get_instance()->add_type_object(
+        dynamic_type.type_name(), &type_identifier, &type_object);
 }
 
 void DdsReplayer::create_dynamic_writer_(
