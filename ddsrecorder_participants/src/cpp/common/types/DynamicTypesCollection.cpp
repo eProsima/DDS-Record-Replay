@@ -99,7 +99,8 @@ DynamicType& DynamicType::operator =(
 bool DynamicType::operator ==(
         const DynamicType& x) const
 {
-    return (m_type_name == x.m_type_name && m_type_information == x.m_type_information && m_type_object == x.m_type_object);
+    return (m_type_name == x.m_type_name && m_type_information == x.m_type_information &&
+           m_type_object == x.m_type_object);
 }
 
 bool DynamicType::operator !=(
@@ -123,7 +124,8 @@ size_t DynamicType::getCdrSerializedSize(
     size_t initial_alignment = current_alignment;
 
     current_alignment += 4 + eprosima::fastcdr::Cdr::alignment(current_alignment, 4) + data.type_name().size() + 1;
-    current_alignment += 4 + eprosima::fastcdr::Cdr::alignment(current_alignment, 4) + data.type_information().size() + 1;
+    current_alignment += 4 +
+            eprosima::fastcdr::Cdr::alignment(current_alignment, 4) + data.type_information().size() + 1;
     current_alignment += 4 + eprosima::fastcdr::Cdr::alignment(current_alignment, 4) + data.type_object().size() + 1;
 
     return current_alignment - initial_alignment;
@@ -132,7 +134,7 @@ size_t DynamicType::getCdrSerializedSize(
 void DynamicType::serialize(
         eprosima::fastcdr::Cdr& scdr) const
 {
-    scdr << m_type_name.c_str();scdr << m_type_information.c_str();scdr << m_type_object.c_str();
+    scdr << m_type_name.c_str(); scdr << m_type_information.c_str(); scdr << m_type_object.c_str();
 }
 
 void DynamicType::deserialize(
@@ -180,6 +182,7 @@ std::string& DynamicType::type_name()
 {
     return m_type_name;
 }
+
 /*!
  * @brief This function copies the value in member type_information
  * @param _type_information New value to be copied in member type_information
@@ -217,6 +220,7 @@ std::string& DynamicType::type_information()
 {
     return m_type_information;
 }
+
 /*!
  * @brief This function copies the value in member type_object
  * @param _type_object New value to be copied in member type_object
@@ -255,7 +259,6 @@ std::string& DynamicType::type_object()
     return m_type_object;
 }
 
-
 size_t DynamicType::getKeyMaxCdrSerializedSize(
         size_t current_alignment)
 {
@@ -273,7 +276,6 @@ void DynamicType::serializeKey(
 {
     static_cast<void>(scdr);
 }
-
 
 DynamicTypesCollection::DynamicTypesCollection()
 {
@@ -339,7 +341,7 @@ size_t DynamicTypesCollection::getCdrSerializedSize(
 
     current_alignment += 4 + eprosima::fastcdr::Cdr::alignment(current_alignment, 4);
 
-    for(size_t a = 0; a < data.dynamic_types().size(); ++a)
+    for (size_t a = 0; a < data.dynamic_types().size(); ++a)
     {
         current_alignment += DynamicType::getCdrSerializedSize(data.dynamic_types().at(a), current_alignment);
     }
@@ -396,7 +398,6 @@ std::vector<DynamicType>& DynamicTypesCollection::dynamic_types()
 {
     return m_dynamic_types;
 }
-
 
 size_t DynamicTypesCollection::getKeyMaxCdrSerializedSize(
         size_t current_alignment)
