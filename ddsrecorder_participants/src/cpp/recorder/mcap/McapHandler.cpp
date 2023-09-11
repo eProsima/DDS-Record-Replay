@@ -30,6 +30,7 @@
 #include <fastcdr/Cdr.h>
 #include <fastcdr/FastBuffer.h>
 #include <fastcdr/FastCdr.h>
+#include <fastdds/dds/topic/TypeSupport.hpp>
 #include <fastdds/rtps/common/CDRMessage_t.h>
 #include <fastdds/rtps/common/SerializedPayload.h>
 #include <fastrtps/types/DynamicType.h>
@@ -37,6 +38,8 @@
 
 #include <ddspipe_core/types/dynamic_types/schema.hpp>
 
+#include <ddsrecorder_participants/common/types/DynamicTypesCollection.hpp>
+#include <ddsrecorder_participants/common/types/DynamicTypesCollectionPubSubTypes.hpp>
 #include <ddsrecorder_participants/constants.hpp>
 
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
@@ -850,7 +853,7 @@ mcap::SchemaId McapHandler::get_schema_id_nts_(
 void McapHandler::store_dynamic_types_()
 {
     auto type_names = utils::get_keys(schemas_);
-    mcap::KeyValueMap dynamic_types{};
+    DynamicTypesCollection dynamic_types;
 
     for (auto& type_name: type_names)
     {
@@ -906,11 +909,20 @@ void McapHandler::store_dynamic_types_()
         store_dynamic_type_(type_identifier, type_object, type_name, dynamic_types);
     }
 
-    // Store dynamic types as metadata in MCAP file
-    mcap::Metadata dynamic_metadata;
-    dynamic_metadata.name = METADATA_DYNAMIC_TYPES;
-    dynamic_metadata.metadata = dynamic_types;
-    auto status = mcap_writer_.write(dynamic_metadata);
+    // Serialize dynamic types collection using CDR
+    eprosima::fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
+    eprosima::fastrtps::rtps::SerializedPayload_t serialized_payload =
+            eprosima::fastrtps::rtps::SerializedPayload_t(
+        type_support.get_serialized_size_provider(&dynamic_types)());
+    type_support.serialize(&dynamic_types, &serialized_payload);
+
+    // Write serialized dynamic types into attachments section
+    mcap::Attachment dynamic_attachment;
+    dynamic_attachment.name = DYNAMIC_TYPES_ATTACHMENT_NAME;
+    dynamic_attachment.data = reinterpret_cast<std::byte*>(serialized_payload.data);
+    dynamic_attachment.dataSize = serialized_payload.length;
+    dynamic_attachment.createTime = now();
+    auto status = mcap_writer_.write(dynamic_attachment);
 
     return;
 }
@@ -919,15 +931,16 @@ void McapHandler::store_dynamic_type_(
         const eprosima::fastrtps::types::TypeIdentifier* type_identifier,
         const eprosima::fastrtps::types::TypeObject* type_object,
         const std::string& type_name,
-        mcap::KeyValueMap& dynamic_types)
+        DynamicTypesCollection& dynamic_types)
 {
     if (type_identifier != nullptr && type_object != nullptr)
     {
-        auto typeid_str = serialize_type_identifier_(type_identifier);
-        auto typeobj_str = serialize_type_object_(type_object);
-        std::string dynamic_type_str = typeid_str + TYPES_SERIALIZATION_DELIMITER + typeobj_str;
+        DynamicType dynamic_type;
+        dynamic_type.type_name(type_name);
+        dynamic_type.type_information(utils::base64_encode(serialize_type_identifier_(type_identifier)));
+        dynamic_type.type_object(utils::base64_encode(serialize_type_object_(type_object)));
 
-        dynamic_types[type_name] = utils::base64_encode(dynamic_type_str);
+        dynamic_types.dynamic_types().push_back(dynamic_type);
     }
 }
 

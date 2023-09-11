@@ -29,11 +29,8 @@ constexpr const char* QOS_SERIALIZATION_DURABILITY("durability");
 constexpr const char* QOS_SERIALIZATION_OWNERSHIP("ownership");
 constexpr const char* QOS_SERIALIZATION_KEYED("keyed");
 
-// MCAP metadata
-constexpr const char* METADATA_DYNAMIC_TYPES("dynamic_types");
-
 // Dynamic types serialization
-constexpr const char* TYPES_SERIALIZATION_DELIMITER("//-//-//-//");
+constexpr const char* DYNAMIC_TYPES_ATTACHMENT_NAME("dynamic_types");
 
 } /* namespace participants */
 } /* namespace ddsrecorder */

@@ -427,6 +427,7 @@ Status McapReader::readSummarySection_(IReadable& reader) {
   }
 
   attachmentIndexes_.clear();
+  attachments_.clear();
   metadataIndexes_.clear();
   metadata_.clear();
   chunkIndexes_.clear();
@@ -487,6 +488,7 @@ Status McapReader::readSummaryFromScan_(IReadable& reader) {
   schemas_.clear();
   channels_.clear();
   attachmentIndexes_.clear();
+  attachments_.clear();
   metadataIndexes_.clear();
   metadata_.clear();
   chunkIndexes_.clear();
@@ -501,6 +503,7 @@ Status McapReader::readSummaryFromScan_(IReadable& reader) {
   typedReader.onAttachment = [&](const Attachment& attachment, ByteOffset fileOffset) {
     AttachmentIndex attachmentIndex{attachment, fileOffset};
     attachmentIndexes_.emplace(attachment.name, attachmentIndex);
+    attachments_.emplace(attachment.name, attachment);
   };
   typedReader.onMetadata = [&](const Metadata& metadata, ByteOffset fileOffset) {
     MetadataIndex metadataIndex{metadata, fileOffset};
@@ -632,6 +635,14 @@ const std::multimap<std::string, MetadataIndex> McapReader::metadataIndexes() co
 
 const std::map<std::string, Metadata> McapReader::metadata() const {
   return metadata_;
+}
+
+const std::multimap<std::string, AttachmentIndex> McapReader::attachmentIndexes() const {
+  return attachmentIndexes_;
+}
+
+const std::map<std::string, Attachment> McapReader::attachments() const {
+  return attachments_;
 }
 
 ChannelPtr McapReader::channel(ChannelId channelId) const {

@@ -38,6 +38,7 @@
 
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
+#include <ddsrecorder_participants/common/types/DynamicTypesCollection.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -125,7 +126,7 @@ public:
      * @brief Destructor
      *
      * Closes temporal MCAP file, and renames it with filename given in configuration.
-     * Before closing file, received dynamic types are serialized and stored in metadata section.
+     * Before closing file, received dynamic types are serialized and stored as an attachment.
      *
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
@@ -421,24 +422,24 @@ protected:
             const std::string& schema_name);
 
     /**
-     * @brief Store in MCAP metadata the dynamic types associated to all added schemas, and their dependencies.
+     * @brief Store in MCAP attachments the dynamic types associated to all added schemas, and their dependencies.
      *
      */
     void store_dynamic_types_();
 
     /**
-     * @brief Serialize type identifier and object, and insert the result into \c dynamic_types metadata map.
+     * @brief Serialize type identifier and object, and insert the result into a \c DynamicTypesCollection .
      *
      * @param [in] type_identifier Type identifier to be serialized and stored.
      * @param [in] type_object Type object to be serialized and stored.
      * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
-     * @param [in,out] dynamic_types Metadata map where to store serialized dynamic type.
+     * @param [in,out] dynamic_types Collection where to store serialized dynamic type.
      */
     void store_dynamic_type_(
             const eprosima::fastrtps::types::TypeIdentifier* type_identifier,
             const eprosima::fastrtps::types::TypeObject* type_object,
             const std::string& type_name,
-            mcap::KeyValueMap& dynamic_types);
+            DynamicTypesCollection& dynamic_types);
 
     /**
      * @brief Convert given \c filename to temporal format.
