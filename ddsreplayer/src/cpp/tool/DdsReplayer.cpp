@@ -33,9 +33,9 @@
 #include <fastdds/dds/topic/TypeSupport.hpp>
 #include <fastrtps/attributes/ParticipantAttributes.h>
 
-#include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/common/types/DynamicTypesCollection.hpp>
 #include <ddsrecorder_participants/common/types/DynamicTypesCollectionPubSubTypes.hpp>
+#include <ddsrecorder_participants/constants.hpp>
 
 #include "DdsReplayer.hpp"
 
@@ -229,21 +229,22 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
     auto attachments = mcap_reader.attachments();
     mcap::Attachment dynamic_attachment = attachments[DYNAMIC_TYPES_ATTACHMENT_NAME];
 
+    // Deserialize dynamic types collection using CDR
+    DynamicTypesCollection dynamic_types;
     eprosima::fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
-    eprosima::fastrtps::rtps::SerializedPayload_t* serialized_payload =
-            new eprosima::fastrtps::rtps::SerializedPayload_t(dynamic_attachment.dataSize);
-    serialized_payload->length = dynamic_attachment.dataSize;
+    eprosima::fastrtps::rtps::SerializedPayload_t serialized_payload =
+            eprosima::fastrtps::rtps::SerializedPayload_t(dynamic_attachment.dataSize);
+    serialized_payload.length = dynamic_attachment.dataSize;
     std::memcpy(
-        serialized_payload->data,
+        serialized_payload.data,
         reinterpret_cast<const unsigned char*>(dynamic_attachment.data),
         dynamic_attachment.dataSize);
-    DynamicTypesCollection dynamic_types;
-    type_support.deserialize(serialized_payload, &dynamic_types);
+    type_support.deserialize(&serialized_payload, &dynamic_types);
 
     std::set<std::string> registered_types{};
     if (configuration.replay_types)
     {
-        // Register in factory dynamic types from metadata
+        // Register in factory dynamic types from attachment
         for (auto& dynamic_type: dynamic_types.dynamic_types())
         {
             register_dynamic_type_(dynamic_type);
@@ -289,6 +290,7 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
 void DdsReplayer::register_dynamic_type_(
         const ddsrecorder::participants::DynamicType& dynamic_type)
 {
+    // Decode type identifer and object strings
     std::string typeid_str = utils::base64_decode(dynamic_type.type_information());
     std::string typeobj_str = utils::base64_decode(dynamic_type.type_object());
 

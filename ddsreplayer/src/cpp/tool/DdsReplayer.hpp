@@ -33,9 +33,9 @@
 #include <ddspipe_core/types/dds/TopicQoS.hpp>
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
+#include <ddsrecorder_participants/common/types/DynamicTypesCollection.hpp>
 #include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
 #include <ddsrecorder_participants/replayer/ReplayerParticipant.hpp>
-#include <ddsrecorder_participants/common/types/DynamicTypesCollection.hpp>
 
 #include <ddsrecorder_yaml/replayer/YamlReaderConfiguration.hpp>
 
@@ -105,10 +105,9 @@ protected:
             std::string& input_file);
 
     /**
-     * @brief Deserialize and register \c dynamic_type into \c TypeObjectFactory with \c type_name name.
+     * @brief Deserialize and register \c dynamic_type into \c TypeObjectFactory .
      *
-     * @param type_name: name of the type with which the given dynamic type is registered.
-     * @param dynamic_type: serialized dynamic type (concatenation of serialized type id and object) to be registered.
+     * @param dynamic_type: serialized dynamic type to be registered.
      */
     void register_dynamic_type_(
             const ddsrecorder::participants::DynamicType& dynamic_type);

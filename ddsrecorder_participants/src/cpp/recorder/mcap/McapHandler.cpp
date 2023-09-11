@@ -30,17 +30,17 @@
 #include <fastcdr/Cdr.h>
 #include <fastcdr/FastBuffer.h>
 #include <fastcdr/FastCdr.h>
+#include <fastdds/dds/topic/TypeSupport.hpp>
 #include <fastdds/rtps/common/CDRMessage_t.h>
 #include <fastdds/rtps/common/SerializedPayload.h>
-#include <fastdds/dds/topic/TypeSupport.hpp>
 #include <fastrtps/types/DynamicType.h>
 #include <fastrtps/types/TypeObjectFactory.h>
 
 #include <ddspipe_core/types/dynamic_types/schema.hpp>
 
-#include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/common/types/DynamicTypesCollection.hpp>
 #include <ddsrecorder_participants/common/types/DynamicTypesCollectionPubSubTypes.hpp>
+#include <ddsrecorder_participants/constants.hpp>
 
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
 
@@ -909,17 +909,19 @@ void McapHandler::store_dynamic_types_()
         store_dynamic_type_(type_identifier, type_object, type_name, dynamic_types);
     }
 
+    // Serialize dynamic types collection using CDR
     eprosima::fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
-
-    eprosima::fastrtps::rtps::SerializedPayload_t* serialized_payload =
-            new eprosima::fastrtps::rtps::SerializedPayload_t(
+    eprosima::fastrtps::rtps::SerializedPayload_t serialized_payload =
+            eprosima::fastrtps::rtps::SerializedPayload_t(
         type_support.get_serialized_size_provider(&dynamic_types)());
-    type_support.serialize(&dynamic_types, serialized_payload);
+    type_support.serialize(&dynamic_types, &serialized_payload);
 
+    // Write serialized dynamic types into attachments section
     mcap::Attachment dynamic_attachment;
     dynamic_attachment.name = DYNAMIC_TYPES_ATTACHMENT_NAME;
-    dynamic_attachment.data = reinterpret_cast<std::byte*>(serialized_payload->data);
-    dynamic_attachment.dataSize = serialized_payload->length;
+    dynamic_attachment.data = reinterpret_cast<std::byte*>(serialized_payload.data);
+    dynamic_attachment.dataSize = serialized_payload.length;
+    dynamic_attachment.createTime = now();
     auto status = mcap_writer_.write(dynamic_attachment);
 
     return;
