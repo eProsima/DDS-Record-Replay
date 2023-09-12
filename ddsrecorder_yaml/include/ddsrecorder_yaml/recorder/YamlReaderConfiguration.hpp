@@ -61,8 +61,13 @@ public:
     std::set<utils::Heritable<ddspipe::core::types::IFilterTopic>> blocklist{};
     std::set<utils::Heritable<ddspipe::core::types::DistributedTopic>> builtin_topics{};
 
+    // Output file params
+    std::string output_filepath = ".";
+    std::string output_filename = "output";
+    std::string output_timestamp_format = "%Y-%m-%d_%H-%M-%S_%Z";
+    bool output_local_timestamp = true;
+
     // Recording params
-    std::string recorder_output_file = "./output";
     unsigned int buffer_size = 100;
     unsigned int event_window = 20;
     bool log_publish_time = false;

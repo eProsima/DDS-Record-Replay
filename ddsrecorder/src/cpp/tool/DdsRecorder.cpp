@@ -55,7 +55,9 @@ DdsRecorder::DdsRecorder(
     std::string mcap_filename;
     if (file_name == "")
     {
-        mcap_filename = configuration.recorder_output_file + "_" + timestamp_to_string(now()) + ".mcap";
+        mcap_filename = configuration.output_filepath + "/" + timestamp_to_string(
+            now(), configuration.output_timestamp_format,
+            configuration.output_local_timestamp) + "_" + configuration.output_filename  + ".mcap";
     }
     else
     {
