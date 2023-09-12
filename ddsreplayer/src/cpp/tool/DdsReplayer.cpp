@@ -227,11 +227,22 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
 
     // Fetch version metadata
     auto metadatas = mcap_reader.metadata();
-    mcap::KeyValueMap version_metadata = metadatas[VERSION_METADATA_NAME].metadata;
-    if (version_metadata[VERSION_METADATA_RELEASE] != DDSRECORDER_PARTICIPANTS_VERSION_STRING)
+    std::string recording_version;
+    if (metadatas.count(VERSION_METADATA_NAME) != 0)
+    {
+        mcap::KeyValueMap version_metadata = metadatas[VERSION_METADATA_NAME].metadata;
+        recording_version = version_metadata[VERSION_METADATA_RELEASE];
+    }
+    else
+    {
+        recording_version = "UNKNOWN";
+    }
+
+    if (recording_version != DDSRECORDER_PARTICIPANTS_VERSION_STRING)
     {
         logWarning(DDSREPLAYER_REPLAYER,
-                "MCAP file generated with a different DDS Record & Replay version, incompatibilities might arise...");
+                "MCAP file generated with a different DDS Record & Replay version (" << recording_version << ", current is " << DDSRECORDER_PARTICIPANTS_VERSION_STRING <<
+                "), incompatibilities might arise...");
     }
 
     // Fetch dynamic types attachment
