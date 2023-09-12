@@ -442,6 +442,12 @@ protected:
             DynamicTypesCollection& dynamic_types);
 
     /**
+     * @brief Write version metadata (release and commit hash) in MCAP file.
+     *
+     */
+    void write_version_metadata_();
+
+    /**
      * @brief Convert given \c filename to temporal format.
      *
      * @param [in] filename Filename to be converted.

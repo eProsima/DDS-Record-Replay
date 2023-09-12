@@ -225,6 +225,15 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
                   );
     }
 
+    // Fetch version metadata
+    auto metadatas = mcap_reader.metadata();
+    mcap::KeyValueMap version_metadata = metadatas[VERSION_METADATA_NAME].metadata;
+    if (version_metadata[VERSION_METADATA_RELEASE] != DDSRECORDER_PARTICIPANTS_VERSION_STRING)
+    {
+        logWarning(DDSREPLAYER_REPLAYER,
+                "MCAP file generated with a different DDS Record & Replay version, incompatibilities might arise...");
+    }
+
     // Fetch dynamic types attachment
     auto attachments = mcap_reader.attachments();
     mcap::Attachment dynamic_attachment = attachments[DYNAMIC_TYPES_ATTACHMENT_NAME];
