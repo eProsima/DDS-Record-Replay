@@ -37,8 +37,10 @@ constexpr const char* RECORDER_RECORDER_TAG("recorder");
 
 // Output related tags
 constexpr const char* RECORDER_OUTPUT_TAG("output");
-constexpr const char* RECORDER_PATH_FILE_TAG("path");
-constexpr const char* RECORDER_FILE_NAME_TAG("filename");
+constexpr const char* RECORDER_OUTPUT_PATH_FILE_TAG("path");
+constexpr const char* RECORDER_OUTPUT_FILE_NAME_TAG("filename");
+constexpr const char* RECORDER_OUTPUT_TIMESTAMP_FORMAT_TAG("timestamp-format");
+constexpr const char* RECORDER_OUTPUT_LOCAL_TIMESTAMP_TAG("local-timestamp");
 
 // Advanced recorder configuration options
 constexpr const char* RECORDER_BUFFER_SIZE_TAG("buffer-size");

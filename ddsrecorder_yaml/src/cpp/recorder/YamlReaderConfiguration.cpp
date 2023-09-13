@@ -147,26 +147,34 @@ void RecorderConfiguration::load_recorder_configuration_(
     {
         auto output_yml = YamlReader::get_value_in_tag(yml, RECORDER_OUTPUT_TAG);
 
-        // Default path and output values ("./output")
-        std::string path = ".";
-        std::string filename = "output";
-
         /////
         // Get optional file path
-        if (YamlReader::is_tag_present(output_yml, RECORDER_PATH_FILE_TAG))
+        if (YamlReader::is_tag_present(output_yml, RECORDER_OUTPUT_PATH_FILE_TAG))
         {
-            path = YamlReader::get<std::string>(output_yml, RECORDER_PATH_FILE_TAG, version);
+            output_filepath = YamlReader::get<std::string>(output_yml, RECORDER_OUTPUT_PATH_FILE_TAG, version);
         }
 
         /////
         // Get optional file name
-        if (YamlReader::is_tag_present(output_yml, RECORDER_FILE_NAME_TAG))
+        if (YamlReader::is_tag_present(output_yml, RECORDER_OUTPUT_FILE_NAME_TAG))
         {
-            filename = YamlReader::get<std::string>(output_yml, RECORDER_FILE_NAME_TAG, version);
+            output_filename = YamlReader::get<std::string>(output_yml, RECORDER_OUTPUT_FILE_NAME_TAG, version);
         }
 
-        // Generate complete output file name
-        recorder_output_file = path + "/" + filename;
+        /////
+        // Get optional timestamp format
+        if (YamlReader::is_tag_present(output_yml, RECORDER_OUTPUT_TIMESTAMP_FORMAT_TAG))
+        {
+            output_timestamp_format = YamlReader::get<std::string>(output_yml, RECORDER_OUTPUT_TIMESTAMP_FORMAT_TAG,
+                            version);
+        }
+
+        /////
+        // Get optional timestamp format
+        if (YamlReader::is_tag_present(output_yml, RECORDER_OUTPUT_LOCAL_TIMESTAMP_TAG))
+        {
+            output_local_timestamp = YamlReader::get<bool>(output_yml, RECORDER_OUTPUT_LOCAL_TIMESTAMP_TAG, version);
+        }
     }
 
     /////

@@ -298,11 +298,12 @@ Recorder Configuration
 
 Configuration of data writing in the database.
 
+.. _recorder_usage_configuration_outputfile:
 
 Output File
 ^^^^^^^^^^^
 
-The recorder output file does support the following configurations:
+The recorder output file does support the following configuration settings under the ``output`` tag:
 
 .. list-table::
     :header-rows: 1
@@ -325,9 +326,23 @@ The recorder output file does support the following configurations:
         - ``string``
         - ``output``
 
-When DDS Recorder application is launched (or when remotely controlled, every time a ``start`` command is received), a temporary file with ``filename`` name and ``.mcap.tmp~`` extension is created in ``path``.
+    *   - Timestamp format
+        - ``timestamp-format``
+        - Configure the format of the output file |br|
+          timestamp (as in ``std::put_time``).
+        - ``string``
+        - ``%Y-%m-%d_%H-%M-%S_%Z``
+
+    *   - Local timestamp
+        - ``local-timestamp``
+        - Whether to use a local or global (GMT) |br|
+          timestamp.
+        - ``boolean``
+        - ``true``
+
+When DDS Recorder application is launched (or when remotely controlled, every time a ``start`` command is received), a temporary file with ``filename`` name (+timestamp prefix) and ``.mcap.tmp~`` extension is created in ``path``.
 This file is not readable until the application is terminated (or a ``stop`` / ``close`` command is received).
-On such event, the temporal file is renamed to ``filename`` with ``.mcap`` extension in the same location, and is then ready to be processed.
+On such event, the temporal file is renamed to have ``.mcap`` extension in the same location, and is then ready to be processed.
 
 Buffer size
 ^^^^^^^^^^^
@@ -591,6 +606,8 @@ A complete example of all the configurations described on this page can be found
       output:
         filename: "output"
         path: "."
+        timestamp-format: "%Y-%m-%d_%H-%M-%S_%Z"
+        local-timestamp: false
 
       buffer-size: 50
       event-window: 60
