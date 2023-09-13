@@ -115,6 +115,9 @@ McapHandler::~McapHandler()
         store_dynamic_types_();
     }
 
+    // Write version metadata in MCAP file
+    write_version_metadata_();
+
     // Close writer and output file
     mcap_writer_.close();
 
@@ -942,6 +945,20 @@ void McapHandler::store_dynamic_type_(
 
         dynamic_types.dynamic_types().push_back(dynamic_type);
     }
+}
+
+void McapHandler::write_version_metadata_()
+{
+    // Populate map with release version and commit hash
+    mcap::KeyValueMap version;
+    version[VERSION_METADATA_RELEASE] = DDSRECORDER_PARTICIPANTS_VERSION_STRING;
+    version[VERSION_METADATA_COMMIT] = DDSRECORDER_PARTICIPANTS_COMMIT_HASH;
+
+    // Write to MCAP file
+    mcap::Metadata version_metadata;
+    version_metadata.name = VERSION_METADATA_NAME;
+    version_metadata.metadata = version;
+    auto status = mcap_writer_.write(version_metadata);
 }
 
 std::string McapHandler::tmp_filename_(

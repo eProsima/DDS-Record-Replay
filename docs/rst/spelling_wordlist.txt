@@ -42,6 +42,7 @@ multicast
 mutex
 QoS
 Redistributable
+replayable
 replayer
 Requiredness
 runtime
