@@ -109,14 +109,15 @@ McapHandler::~McapHandler()
     // Stop handler prior to destruction
     stop();
 
+    // Write version metadata in MCAP file
+    // WARNING: write version metadata prior to dynamic types attachment to avoid overlapping issue
+    write_version_metadata_();
+
     // Serialize and store dynamic types associated to all added schemas
     if (configuration_.record_types)
     {
         store_dynamic_types_();
     }
-
-    // Write version metadata in MCAP file
-    write_version_metadata_();
 
     // Close writer and output file
     mcap_writer_.close();
