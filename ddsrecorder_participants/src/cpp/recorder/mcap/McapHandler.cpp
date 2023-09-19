@@ -110,6 +110,7 @@ McapHandler::~McapHandler()
     stop();
 
     // Write version metadata in MCAP file
+    // WARNING: write version metadata prior to dynamic types attachment to avoid overlapping issue
     write_version_metadata_();
 
     // Serialize and store dynamic types associated to all added schemas
