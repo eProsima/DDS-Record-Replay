@@ -30,19 +30,27 @@ set(TEST_LIST
         mcap_data_topic
         mcap_data_num_msgs
         mcap_data_num_msgs_downsampling
-        transition_paused_running
-        transition_running_paused
-        transition_paused_stopped
-        transition_stopped_paused
-        transition_running_stopped
-        transition_stopped_running
         transition_running
         transition_paused
         transition_stopped
+        transition_suspended
+        transition_running_paused
+        transition_running_stopped
+        transition_running_suspended
+        transition_paused_running
+        transition_paused_stopped
+        transition_paused_suspended
+        transition_stopped_running
+        transition_stopped_paused
+        transition_stopped_suspended
+        transition_suspended_running
+        transition_suspended_paused
+        transition_suspended_stopped
         transition_paused_event_less_window
         transition_paused_event_max_window
         transition_paused_event_start
         transition_paused_event_stop
+        transition_paused_event_suspend
     )
 
 set(TEST_NEEDED_SOURCES
