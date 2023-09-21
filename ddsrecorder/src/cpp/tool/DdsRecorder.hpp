@@ -39,6 +39,15 @@ namespace eprosima {
 namespace ddsrecorder {
 namespace recorder {
 
+//! State of the DdsRecorder instance
+ENUMERATION_BUILDER(
+    DdsRecorderStateCode,
+    STOPPED,                  //! Internal entities are not created and thus no messages are received.
+    SUSPENDED,                //! Messages are received (internal entities created) but discarded.
+    RUNNING,                  //! Messages are stored in MCAP file.
+    PAUSED                    //! Messages are stored in buffer and stored in MCAP file if event triggered.
+    );
+
 /**
  * Wrapper class that encapsulates all dependencies required to launch a DDS Recorder application.
  */
@@ -52,12 +61,12 @@ public:
      * Creates DdsRecorder instance with given configuration, initial state and mcap file name.
      *
      * @param configuration: Structure encapsulating all recorder configuration options.
-     * @param init_state:    Initial instance state (RUNNING/PAUSED/STOPPED).
+     * @param init_state:    Initial instance state (RUNNING/PAUSED/SUSPENDED/STOPPED).
      * @param file_name:     Name of the mcap file where data is recorded. If not provided, the one from configuration is used instead.
      */
     DdsRecorder(
             const yaml::RecorderConfiguration& configuration,
-            const participants::McapHandlerStateCode& init_state,
+            const DdsRecorderStateCode& init_state,
             const std::string& file_name = "");
 
     /**
@@ -77,6 +86,9 @@ public:
     //! Pause recorder (\c mcap_handler_)
     void pause();
 
+    //! Suspend recorder (stop \c mcap_handler_)
+    void suspend();
+
     //! Stop recorder (\c mcap_handler_)
     void stop();
 
@@ -84,6 +96,9 @@ public:
     void trigger_event();
 
 protected:
+
+    static participants::McapHandlerStateCode recorder_to_handler_state_(
+            const DdsRecorderStateCode& recorder_state);
 
     //! Payload Pool
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;

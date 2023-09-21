@@ -33,6 +33,7 @@ status_to_color_values__ = {
     RecorderStatus.CLOSED: 'gray',
     RecorderStatus.RUNNING: 'green',
     RecorderStatus.PAUSED: 'yellow',
+    RecorderStatus.SUSPENDED: 'pink',
     RecorderStatus.STOPPED: 'red',
     RecorderStatus.UNKNOWN: 'gray'
 }
@@ -234,6 +235,12 @@ class ControllerGUI(QMainWindow):
                 ControllerCommand.pause))
         buttons_box.addWidget(pause_button)
 
+        suspend_button = QPushButton('Suspend', self)
+        suspend_button.clicked.connect(
+            lambda: self.simple_button_clicked(
+                ControllerCommand.suspend))
+        buttons_box.addWidget(suspend_button)
+
         stop_button = QPushButton('Stop', self)
         stop_button.clicked.connect(
             lambda: self.simple_button_clicked(
@@ -250,6 +257,11 @@ class ControllerGUI(QMainWindow):
         event_start_button.clicked.connect(
             lambda: self.event_start_button_clicked())
         buttons_box.addWidget(event_start_button)
+
+        event_suspend_button = QPushButton('Event & Suspend', self)
+        event_suspend_button.clicked.connect(
+            lambda: self.event_suspend_button_clicked())
+        buttons_box.addWidget(event_suspend_button)
 
         event_stop_button = QPushButton('Event & Stop', self)
         event_stop_button.clicked.connect(
@@ -312,6 +324,13 @@ class ControllerGUI(QMainWindow):
         command = ControllerCommand.event
         args = Controller.command_arguments_to_string(
             Controller.argument_change_state(RecorderStatus.RUNNING))
+        self.send_command(command, args)
+
+    def event_suspend_button_clicked(self):
+        """Publish command."""
+        command = ControllerCommand.event
+        args = Controller.command_arguments_to_string(
+            Controller.argument_change_state(RecorderStatus.SUSPENDED))
         self.send_command(command, args)
 
     def event_stop_button_clicked(self):

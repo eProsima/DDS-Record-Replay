@@ -23,12 +23,33 @@ namespace ddsrecorder {
 namespace participants {
 
 /**
+ * Structure encapsulating all MCAP output configuration options.
+ */
+struct McapOutputSettings
+{
+    //! Path where output file is to be created
+    std::string output_filepath;
+
+    //! Name of the output MCAP file
+    std::string output_filename;
+
+    //! Whether to prepend current timestamp when file is created
+    bool prepend_timestamp;
+
+    //! Format to use in timestamp prefix
+    std::string output_timestamp_format;
+
+    //! Whether to use local or global timestamp
+    bool output_local_timestamp;
+};
+
+/**
  * Structure encapsulating all of \c McapHandler configuration options.
  */
 struct McapHandlerConfiguration
 {
     McapHandlerConfiguration(
-            const std::string& file_name,
+            const McapOutputSettings& mcap_output_settings,
             const int& max_pending_samples,
             const unsigned int& buffer_size,
             const unsigned int& event_window,
@@ -37,7 +58,7 @@ struct McapHandlerConfiguration
             const bool& only_with_schema,
             const mcap::McapWriterOptions& mcap_writer_options,
             const bool& record_types)
-        : file_name(file_name)
+        : mcap_output_settings(mcap_output_settings)
         , max_pending_samples(max_pending_samples)
         , buffer_size(buffer_size)
         , event_window(event_window)
@@ -49,8 +70,8 @@ struct McapHandlerConfiguration
     {
     }
 
-    //! Name of MCAP file where data is to be written
-    std::string file_name;
+    //! Configuration settings for MCAP file where data is to be written
+    McapOutputSettings mcap_output_settings;
 
     //! Max number of messages to store in memory when schema not yet available
     int max_pending_samples;

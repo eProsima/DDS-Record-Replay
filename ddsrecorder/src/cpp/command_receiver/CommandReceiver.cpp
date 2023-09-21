@@ -357,6 +357,9 @@ std::string CommandReceiver::command_to_status_string_(
         case CommandCode::event:
             return "PAUSED";
 
+        case CommandCode::suspend:
+            return "SUSPENDED";
+
         case CommandCode::stop:
             return "STOPPED";
 

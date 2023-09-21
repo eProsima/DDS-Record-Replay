@@ -47,7 +47,7 @@ namespace participants {
 //! State of the handler instance
 ENUMERATION_BUILDER(
     McapHandlerStateCode,
-    STOPPED,                  //! Received messages and schemas are not processed.
+    STOPPED,                  //! Received messages are not processed.
     RUNNING,                  //! Messages are stored in buffer and dumped to disk when full.
     PAUSED                    //! Messages are stored in buffer and dumped to disk when event triggered.
     );
@@ -138,10 +138,6 @@ public:
      * to be written with the next batch.
      * Previously created channels (for this type) associated with a blank schema are updated to use the new one.
      *
-     * If instance is STOPPED, received schema is not processed and a exception is thrown.
-     *
-     * @throw InconsistencyException if instance is STOPPED.
-     *
      * @param [in] dynamic_type DynamicType containing the type information required to generate the schema.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
@@ -158,9 +154,7 @@ public:
      *                 and discarded otherwise.
      *   if PAUSED  -> the sample is inserted into \c pending_samples_paused_ queue.
      *
-     * If instance is STOPPED, received data is not processed and a exception is thrown.
-     *
-     * @throw InconsistencyException if instance is STOPPED or an error occurs.
+     * If instance is STOPPED, received data is not processed.
      *
      * @param [in] topic DDS topic associated to this sample.
      * @param [in] data Message to be added.
@@ -189,12 +183,15 @@ public:
      * If previous state was PAUSED, the event thread is stopped (and buffers are cleared).
      * In both cases, pending samples are stored without schema if allowed (only_with_schema not true).
      *
+     * @param [in] on_destruction Whether this command is executed on object's destruction.
+     *
      * @warning Not thread safe with respect to other command methods ( \c start , \c pause , \c stop ,
      * and \c trigger_event). This is, they are expected to be executed sequentially and all in the same thread.
      *
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    void stop();
+    void stop(
+            bool on_destruction = false);
 
     /**
      * @brief Pause handler instance
@@ -262,6 +259,24 @@ protected:
         triggered,              //! Indicates that an event has been triggered.
         stopped,                //! Signals event thread to exit.
     };
+
+    /**
+     * @brief Open a new MCAP file according to configuration settings.
+     *
+     * A temporal suffix is appended after the '.mcap' extension, and additionally a timestamp prefix if applies.
+     *
+     */
+    void open_file_nts_();
+
+    /**
+     * @brief Close the file previously opened with \c open_file_nts_
+     *
+     * Before closure, the information relative to version and received dynamic types is written to file.
+     *
+     * After closure, the temporal file is renamed so no longer has a temporal suffix.
+     *
+     */
+    void close_file_nts_();
 
     /**
      * @brief Add message to \c buffer_ structure, or directly write to MCAP file.
@@ -422,6 +437,12 @@ protected:
             const std::string& schema_name);
 
     /**
+     * @brief Rewrite all received schemas into currently open MCAP file.
+     *
+     */
+    void rewrite_schemas_nts_();
+
+    /**
      * @brief Store in MCAP attachments the dynamic types associated to all added schemas, and their dependencies.
      *
      */
@@ -484,6 +505,9 @@ protected:
 
     //! Handler configuration
     McapHandlerConfiguration configuration_;
+
+    //! Name of opened MCAP file
+    std::string mcap_filename_;
 
     //! Payload pool
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;
