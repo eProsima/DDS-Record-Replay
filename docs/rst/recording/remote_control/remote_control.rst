@@ -27,19 +27,21 @@ The |ddsrecorder| application may have the following states:
 * **PAUSED**: The application is running but not recording data in the database.
   In this state, the application stores the data it has received in a time window prior to the current time.
   The data will not be saved to the database until an event arrives from the remote controller.
-* **STOPPED**: The application is running but not receiving data.
+* **SUSPENDED**: The application is running but not recording data. Internal entities are created and samples received but discarded (advantage: lower latency in transition to ``RUNNING/PAUSED`` states).
+* **STOPPED**: The application is running but not recording data. Internal entities are not created and thus no samples are received.
 
 To change from one state to another, commands can be sent to the application through the `Controller Command` DDS topic to be defined later.
 The commands that the application accepts are as follows:
 
 * **start**: Changes to ``RUNNING`` state if it was not in it.
 * **pause**: Changes to ``PAUSED`` state if it was not in it.
-* **stop**: Changes to ``STOPPED`` state if it was not in it.
 * **event**: Triggers a recording event to save the data of the time window prior to the event.
   This command can take the next state as an argument, so it is possible to trigger an event and change the state with the same command.
   This is useful when the recorder is in a paused state, the user wants to record all the data collected in the current time window and then immediately switch to ``RUNNING`` state to start recording data.
   It could also be the case that the user wants to capture the event, save the data and then stop the recorder to inspect the output file.
   The arguments are sent as a serialized `json` in string format.
+* **suspend**: Changes to ``SUSPENDED`` state if it was not in it.
+* **stop**: Changes to ``STOPPED`` state if it was not in it.
 * **close**: Closes the |ddsrecorder| application.
 
 The following is the state diagram of the |ddsrecorder| application with all the available commands and the state change effect they cause.
@@ -99,8 +101,9 @@ The following is a description of the aforementioned control topics.
                 - ``string``
                 - ``start`` |br|
                   ``pause`` |br|
-                  ``stop`` |br|
                   ``event`` |br|
+                  ``suspend`` |br|
+                  ``stop`` |br|
                   ``close``
             *   - ``args``
                 - Arguments of the command. This arguments |br|
@@ -108,6 +111,7 @@ The following is a description of the aforementioned control topics.
                 - ``string``
                 - * ``event`` command: |br|
                     ``{"next_state": "RUNNING"}`` |br|
+                    ``{"next_state": "SUSPENDED"}`` |br|
                     ``{"next_state": "STOPPED"}``
 
 * Status topic:
@@ -141,12 +145,14 @@ The following is a description of the aforementioned control topics.
                 - ``string``
                 - ``RUNNING`` |br|
                   ``PAUSED`` |br|
+                  ``SUSPENDED`` |br|
                   ``STOPPED``
             *   - ``current``
                 - Current status of the |ddsrecorder|.
                 - ``string``
                 - ``RUNNING`` |br|
                   ``PAUSED`` |br|
+                  ``SUSPENDED`` |br|
                   ``STOPPED``
             *   - ``info``
                 - Additional information related to the state change. (Unused)
@@ -188,7 +194,7 @@ This can be observed in the `eProsima DDS Recorder status` placeholder, located 
 .. figure:: /rst/figures/controller_interact.png
     :align: center
 
-By clicking on ``Stop`` button, the recorder application ceases recording, but can be commanded to ``Start`` / ``Pause`` whenever wished.
+By clicking on ``Suspend`` / ``Stop`` button, the recorder application ceases recording, but can be commanded to ``Start`` / ``Pause`` whenever wished.
 Once the user has finished all recording activity, it is possible to ``Close`` the recorder and free all resources used by the application:
 
 .. figure:: /rst/figures/controller_close.png
