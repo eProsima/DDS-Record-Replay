@@ -253,17 +253,17 @@ class ControllerGUI(QMainWindow):
                 ControllerCommand.event))
         buttons_box.addWidget(event_button)
 
-        event_start_button = QPushButton('Event & Start', self)
+        event_start_button = QPushButton('Event && Start', self)
         event_start_button.clicked.connect(
             lambda: self.event_start_button_clicked())
         buttons_box.addWidget(event_start_button)
 
-        event_suspend_button = QPushButton('Event & Suspend', self)
+        event_suspend_button = QPushButton('Event && Suspend', self)
         event_suspend_button.clicked.connect(
             lambda: self.event_suspend_button_clicked())
         buttons_box.addWidget(event_suspend_button)
 
-        event_stop_button = QPushButton('Event & Stop', self)
+        event_stop_button = QPushButton('Event && Stop', self)
         event_stop_button.clicked.connect(
             lambda: self.event_stop_button_clicked())
         buttons_box.addWidget(event_stop_button)
