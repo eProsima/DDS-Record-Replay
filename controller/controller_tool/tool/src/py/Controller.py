@@ -44,8 +44,9 @@ class RecorderStatus(Enum):
     CLOSED = 0
     RUNNING = 1
     PAUSED = 2
-    STOPPED = 3
-    UNKNOWN = 4
+    SUSPENDED = 3
+    STOPPED = 4
+    UNKNOWN = 5
 
 
 class ControllerCommand(Enum):
@@ -59,9 +60,10 @@ class ControllerCommand(Enum):
 
     start = 0
     stop = 1
-    pause = 2
-    event = 3
-    close = 4
+    suspend = 2
+    pause = 3
+    event = 4
+    close = 5
 
 
 class CommandWriterListener(fastdds.DataWriterListener):

@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include <cpp_utils/exception/InitializationException.hpp>
-#include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/utils.hpp>
 
 #include "DdsRecorder.hpp"
@@ -31,7 +30,7 @@ using namespace eprosima::utils;
 
 DdsRecorder::DdsRecorder(
         const yaml::RecorderConfiguration& configuration,
-        const participants::McapHandlerStateCode& init_state,
+        const DdsRecorderStateCode& init_state,
         const std::string& file_name)
 {
     // Create allowed topics list
@@ -51,22 +50,26 @@ DdsRecorder::DdsRecorder(
     thread_pool_ =
             std::make_shared<SlotThreadPool>(configuration.n_threads);
 
-    // Append current timestamp to configuration's file_name, if none provided to constructor
-    std::string mcap_filename;
+    // Fill MCAP output file settings
+    participants::McapOutputSettings mcap_output_settings;
     if (file_name == "")
     {
-        mcap_filename = configuration.output_filepath + "/" + timestamp_to_string(
-            now(), configuration.output_timestamp_format,
-            configuration.output_local_timestamp) + "_" + configuration.output_filename  + ".mcap";
+        mcap_output_settings.output_filename = configuration.output_filename;
+        mcap_output_settings.output_filepath = configuration.output_filepath;
+        mcap_output_settings.prepend_timestamp = true;
+        mcap_output_settings.output_timestamp_format = configuration.output_timestamp_format;
+        mcap_output_settings.output_local_timestamp = configuration.output_local_timestamp;
     }
     else
     {
-        mcap_filename = file_name;
+        mcap_output_settings.output_filename = file_name;
+        mcap_output_settings.output_filepath = ".";
+        mcap_output_settings.prepend_timestamp = false;
     }
 
     // Create MCAP Handler configuration
     participants::McapHandlerConfiguration handler_config(
-        mcap_filename,
+        mcap_output_settings,
         configuration.max_pending_samples,
         configuration.buffer_size,
         configuration.event_window,
@@ -80,7 +83,7 @@ DdsRecorder::DdsRecorder(
     mcap_handler_ = std::make_shared<participants::McapHandler>(
         handler_config,
         payload_pool_,
-        init_state);
+        recorder_to_handler_state_(init_state));
 
     // Create DynTypes Participant
     dyn_participant_ = std::make_shared<DynTypesParticipant>(
@@ -137,6 +140,11 @@ void DdsRecorder::pause()
     mcap_handler_->pause();
 }
 
+void DdsRecorder::suspend()
+{
+    mcap_handler_->stop();
+}
+
 void DdsRecorder::stop()
 {
     mcap_handler_->stop();
@@ -145,6 +153,29 @@ void DdsRecorder::stop()
 void DdsRecorder::trigger_event()
 {
     mcap_handler_->trigger_event();
+}
+
+participants::McapHandlerStateCode DdsRecorder::recorder_to_handler_state_(
+        const DdsRecorderStateCode& recorder_state)
+{
+    switch (recorder_state)
+    {
+        case DdsRecorderStateCode::RUNNING:
+            return participants::McapHandlerStateCode::RUNNING;
+
+        case DdsRecorderStateCode::PAUSED:
+            return participants::McapHandlerStateCode::PAUSED;
+
+        case DdsRecorderStateCode::STOPPED:
+        case DdsRecorderStateCode::SUSPENDED:
+            return participants::McapHandlerStateCode::STOPPED;
+
+        default:
+            // Unreachable
+            utils::tsnh(
+                utils::Formatter() << "Trying to convert to McapHandler state an invalid DdsRecorder state.");
+            return participants::McapHandlerStateCode::STOPPED;
+    }
 }
 
 } /* namespace recorder */

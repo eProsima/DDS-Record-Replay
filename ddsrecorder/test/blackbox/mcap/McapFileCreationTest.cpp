@@ -44,7 +44,7 @@ using namespace eprosima::ddsrecorder;
 using namespace eprosima::ddsrecorder::recorder;
 using namespace eprosima::fastdds::dds;
 
-using McapHandlerState = eprosima::ddsrecorder::participants::McapHandlerStateCode;
+using DdsRecorderState = eprosima::ddsrecorder::recorder::DdsRecorderStateCode;
 
 enum class DataTypeKind
 {
@@ -57,6 +57,7 @@ enum class EventKind
     EVENT,
     EVENT_START,
     EVENT_STOP,
+    EVENT_SUSPEND,
 };
 
 namespace test {
@@ -81,7 +82,7 @@ eprosima::fastrtps::types::DynamicType_ptr dynamic_type_;
 std::unique_ptr<DdsRecorder> create_recorder(
         std::string file_name,
         int downsampling,
-        McapHandlerState mcap_handler_state = McapHandlerState::RUNNING,
+        DdsRecorderState recorder_state = DdsRecorderState::RUNNING,
         unsigned int event_window = 20)
 {
     YAML::Node yml;
@@ -98,7 +99,7 @@ std::unique_ptr<DdsRecorder> create_recorder(
 
     return std::make_unique<DdsRecorder>(
         configuration,
-        mcap_handler_state,
+        recorder_state,
         file_name
         );
 }
@@ -201,10 +202,10 @@ mcap::LinearMessageView get_msgs_mcap(
 
 std::tuple<unsigned int, double> record_with_transitions(
         std::string file_name,
-        McapHandlerState init_state,
+        DdsRecorderState init_state,
         unsigned int first_round,
         unsigned int secound_round,
-        McapHandlerState current_state,
+        DdsRecorderState current_state,
         EventKind event = EventKind::NO_EVENT,
         unsigned int event_window = 20,
         unsigned int time_sleep = 0,
@@ -219,18 +220,7 @@ std::tuple<unsigned int, double> record_with_transitions(
             DataTypeKind::HELLO_WORLD);
 
         // Create Recorder
-        std::unique_ptr<DdsRecorder> recorder;
-        if (init_state == McapHandlerState::STOPPED)
-        {
-            // avoid race condition on TypeObject reception
-            recorder = create_recorder(file_name, downsampling, McapHandlerState::RUNNING, event_window);
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-            recorder->stop();
-        }
-        else
-        {
-            recorder = create_recorder(file_name, downsampling, init_state, event_window);
-        }
+        std::unique_ptr<DdsRecorder> recorder = create_recorder(file_name, downsampling, init_state, event_window);
 
         // Send data
         for (unsigned int i = 0; i < first_round; i++)
@@ -242,13 +232,16 @@ std::tuple<unsigned int, double> record_with_transitions(
         {
             switch (current_state)
             {
-                case McapHandlerState::RUNNING:
+                case DdsRecorderState::RUNNING:
                     recorder->start();
                     break;
-                case McapHandlerState::STOPPED:
+                case DdsRecorderState::SUSPENDED:
+                    recorder->suspend();
+                    break;
+                case DdsRecorderState::STOPPED:
                     recorder->stop();
                     break;
-                case McapHandlerState::PAUSED:
+                case DdsRecorderState::PAUSED:
                     recorder->pause();
                     break;
                 default:
@@ -270,7 +263,7 @@ std::tuple<unsigned int, double> record_with_transitions(
         current_time = std::chrono::duration_cast<std::chrono::nanoseconds>
                     (std::chrono::system_clock::now().time_since_epoch()).count();
 
-        if (event != EventKind::NO_EVENT && current_state == McapHandlerState::PAUSED)
+        if (event != EventKind::NO_EVENT && current_state == DdsRecorderState::PAUSED)
         {
             recorder->trigger_event();
             if (event == EventKind::EVENT_START)
@@ -280,6 +273,10 @@ std::tuple<unsigned int, double> record_with_transitions(
             else if (event == EventKind::EVENT_STOP)
             {
                 recorder->stop();
+            }
+            else if (event == EventKind::EVENT_SUSPEND)
+            {
+                recorder->suspend();
             }
         }
     }
@@ -306,7 +303,7 @@ std::tuple<unsigned int, double> record_with_transitions(
 TEST(McapFileCreationTest, mcap_data_msgs)
 {
 
-    std::string file_name = "output_mcap_data_msgs_.mcap";
+    std::string file_name = "output_mcap_data_msgs.mcap";
     eprosima::fastrtps::types::DynamicData_ptr send_data;
     send_data = record(file_name);
 
@@ -338,7 +335,7 @@ TEST(McapFileCreationTest, mcap_data_msgs)
 TEST(McapFileCreationTest, mcap_data_topic)
 {
 
-    std::string file_name = "output_mcap_data_topic_.mcap";
+    std::string file_name = "output_mcap_data_topic.mcap";
 
     record(file_name);
 
@@ -364,7 +361,7 @@ TEST(McapFileCreationTest, mcap_data_topic)
 TEST(McapFileCreationTest, mcap_data_num_msgs)
 {
 
-    std::string file_name = "output_mcap_data_num_msgs_.mcap";
+    std::string file_name = "output_mcap_data_num_msgs.mcap";
 
     record(file_name, test::n_msgs);
 
@@ -386,7 +383,7 @@ TEST(McapFileCreationTest, mcap_data_num_msgs)
 TEST(McapFileCreationTest, mcap_data_num_msgs_downsampling)
 {
 
-    std::string file_name = "output_mcap_data_num_msgs_downsampling_.mcap";
+    std::string file_name = "output_mcap_data_num_msgs_downsampling.mcap";
 
     record(file_name, test::n_msgs, test::downsampling);
 
@@ -414,132 +411,18 @@ TEST(McapFileCreationTest, mcap_data_num_msgs_downsampling)
 // With transitions //
 //////////////////////
 
-TEST(McapFileCreationTest, transition_paused_running)
-{
-    std::string file_name = "output_transition_paused_running_.mcap";
-
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
-
-    auto recording = record_with_transitions(
-        file_name,
-        McapHandlerState::PAUSED,
-        n_data_1, n_data_2,
-        McapHandlerState::RUNNING);
-
-    unsigned int n_received_msgs = std::get<0>(recording);
-
-    ASSERT_EQ(n_received_msgs, (n_data_2));
-
-}
-
-TEST(McapFileCreationTest, transition_running_paused)
-{
-    std::string file_name = "output_transition_running_paused_.mcap";
-
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
-
-    auto recording = record_with_transitions(
-        file_name,
-        McapHandlerState::RUNNING,
-        n_data_1, n_data_2,
-        McapHandlerState::PAUSED);
-
-    unsigned int n_received_msgs = std::get<0>(recording);
-
-    ASSERT_EQ(n_received_msgs, (n_data_1));
-
-}
-
-TEST(McapFileCreationTest, transition_running_stopped)
-{
-    std::string file_name = "output_transition_running_stopped_.mcap";
-
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
-
-    auto recording = record_with_transitions(
-        file_name,
-        McapHandlerState::RUNNING,
-        n_data_1, n_data_2,
-        McapHandlerState::STOPPED);
-
-    unsigned int n_received_msgs = std::get<0>(recording);
-
-    ASSERT_EQ(n_received_msgs, (n_data_1));
-
-}
-
-TEST(McapFileCreationTest, transition_stopped_running)
-{
-    std::string file_name = "output_transition_stopped_running_.mcap";
-
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
-
-    auto recording = record_with_transitions(
-        file_name,
-        McapHandlerState::STOPPED,
-        n_data_1, n_data_2,
-        McapHandlerState::RUNNING);
-
-    unsigned int n_received_msgs = std::get<0>(recording);
-
-    ASSERT_EQ(n_received_msgs, (n_data_2));
-
-}
-
-TEST(McapFileCreationTest, transition_paused_stopped)
-{
-    std::string file_name = "output_transition_paused_stopped_.mcap";
-
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
-
-    auto recording = record_with_transitions(
-        file_name,
-        McapHandlerState::PAUSED,
-        n_data_1, n_data_2,
-        McapHandlerState::STOPPED);
-
-    unsigned int n_received_msgs = std::get<0>(recording);
-
-    ASSERT_EQ(n_received_msgs, 0);
-
-}
-
-TEST(McapFileCreationTest, transition_stopped_paused)
-{
-    std::string file_name = "output_transition_stopped_paused_.mcap";
-
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
-
-    auto recording = record_with_transitions(
-        file_name,
-        McapHandlerState::STOPPED,
-        n_data_1, n_data_2,
-        McapHandlerState::PAUSED);
-
-    unsigned int n_received_msgs = std::get<0>(recording);
-
-    ASSERT_EQ(n_received_msgs, 0);
-
-}
-
 TEST(McapFileCreationTest, transition_running)
 {
-    std::string file_name = "output_transition_running_.mcap";
+    std::string file_name = "output_transition_running.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
 
     auto recording = record_with_transitions(
         file_name,
-        McapHandlerState::RUNNING,
+        DdsRecorderState::RUNNING,
         n_data_1, n_data_2,
-        McapHandlerState::RUNNING);
+        DdsRecorderState::RUNNING);
 
     unsigned int n_received_msgs = std::get<0>(recording);
 
@@ -549,16 +432,16 @@ TEST(McapFileCreationTest, transition_running)
 
 TEST(McapFileCreationTest, transition_paused)
 {
-    std::string file_name = "output_transition_paused_.mcap";
+    std::string file_name = "output_transition_paused.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
 
     auto recording = record_with_transitions(
         file_name,
-        McapHandlerState::PAUSED,
+        DdsRecorderState::PAUSED,
         n_data_1, n_data_2,
-        McapHandlerState::PAUSED);
+        DdsRecorderState::PAUSED);
 
     unsigned int n_received_msgs = std::get<0>(recording);
 
@@ -568,16 +451,263 @@ TEST(McapFileCreationTest, transition_paused)
 
 TEST(McapFileCreationTest, transition_stopped)
 {
-    std::string file_name = "output_transition_stopped_.mcap";
+    std::string file_name = "output_transition_stopped.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
 
     auto recording = record_with_transitions(
         file_name,
-        McapHandlerState::STOPPED,
+        DdsRecorderState::STOPPED,
         n_data_1, n_data_2,
-        McapHandlerState::STOPPED);
+        DdsRecorderState::STOPPED);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
+
+    ASSERT_EQ(n_received_msgs, 0);
+
+}
+
+TEST(McapFileCreationTest, transition_suspended)
+{
+    std::string file_name = "output_transition_suspended.mcap";
+
+    unsigned int n_data_1 = rand() % 10 + 1;
+    unsigned int n_data_2 = rand() % 10 + 1;
+
+    auto recording = record_with_transitions(
+        file_name,
+        DdsRecorderState::SUSPENDED,
+        n_data_1, n_data_2,
+        DdsRecorderState::SUSPENDED);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
+
+    ASSERT_EQ(n_received_msgs, 0);
+
+}
+
+TEST(McapFileCreationTest, transition_running_paused)
+{
+    std::string file_name = "output_transition_running_paused.mcap";
+
+    unsigned int n_data_1 = rand() % 10 + 1;
+    unsigned int n_data_2 = rand() % 10 + 1;
+
+    auto recording = record_with_transitions(
+        file_name,
+        DdsRecorderState::RUNNING,
+        n_data_1, n_data_2,
+        DdsRecorderState::PAUSED);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
+
+    ASSERT_EQ(n_received_msgs, (n_data_1));
+
+}
+
+TEST(McapFileCreationTest, transition_running_stopped)
+{
+    std::string file_name = "output_transition_running_stopped.mcap";
+
+    unsigned int n_data_1 = rand() % 10 + 1;
+    unsigned int n_data_2 = rand() % 10 + 1;
+
+    auto recording = record_with_transitions(
+        file_name,
+        DdsRecorderState::RUNNING,
+        n_data_1, n_data_2,
+        DdsRecorderState::STOPPED);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
+
+    ASSERT_EQ(n_received_msgs, (n_data_1));
+
+}
+
+TEST(McapFileCreationTest, transition_running_suspended)
+{
+    std::string file_name = "output_transition_running_suspended.mcap";
+
+    unsigned int n_data_1 = rand() % 10 + 1;
+    unsigned int n_data_2 = rand() % 10 + 1;
+
+    auto recording = record_with_transitions(
+        file_name,
+        DdsRecorderState::RUNNING,
+        n_data_1, n_data_2,
+        DdsRecorderState::SUSPENDED);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
+
+    ASSERT_EQ(n_received_msgs, (n_data_1));
+
+}
+
+TEST(McapFileCreationTest, transition_paused_running)
+{
+    std::string file_name = "output_transition_paused_running.mcap";
+
+    unsigned int n_data_1 = rand() % 10 + 1;
+    unsigned int n_data_2 = rand() % 10 + 1;
+
+    auto recording = record_with_transitions(
+        file_name,
+        DdsRecorderState::PAUSED,
+        n_data_1, n_data_2,
+        DdsRecorderState::RUNNING);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
+
+    ASSERT_EQ(n_received_msgs, (n_data_2));
+
+}
+
+TEST(McapFileCreationTest, transition_paused_stopped)
+{
+    std::string file_name = "output_transition_paused_stopped.mcap";
+
+    unsigned int n_data_1 = rand() % 10 + 1;
+    unsigned int n_data_2 = rand() % 10 + 1;
+
+    auto recording = record_with_transitions(
+        file_name,
+        DdsRecorderState::PAUSED,
+        n_data_1, n_data_2,
+        DdsRecorderState::STOPPED);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
+
+    ASSERT_EQ(n_received_msgs, 0);
+
+}
+
+TEST(McapFileCreationTest, transition_paused_suspended)
+{
+    std::string file_name = "output_transition_paused_suspended.mcap";
+
+    unsigned int n_data_1 = rand() % 10 + 1;
+    unsigned int n_data_2 = rand() % 10 + 1;
+
+    auto recording = record_with_transitions(
+        file_name,
+        DdsRecorderState::PAUSED,
+        n_data_1, n_data_2,
+        DdsRecorderState::SUSPENDED);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
+
+    ASSERT_EQ(n_received_msgs, 0);
+
+}
+
+TEST(McapFileCreationTest, transition_stopped_running)
+{
+    std::string file_name = "output_transition_stopped_running.mcap";
+
+    unsigned int n_data_1 = rand() % 10 + 1;
+    unsigned int n_data_2 = rand() % 10 + 1;
+
+    auto recording = record_with_transitions(
+        file_name,
+        DdsRecorderState::STOPPED,
+        n_data_1, n_data_2,
+        DdsRecorderState::RUNNING);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
+
+    ASSERT_EQ(n_received_msgs, (n_data_2));
+
+}
+
+TEST(McapFileCreationTest, transition_stopped_paused)
+{
+    std::string file_name = "output_transition_stopped_paused.mcap";
+
+    unsigned int n_data_1 = rand() % 10 + 1;
+    unsigned int n_data_2 = rand() % 10 + 1;
+
+    auto recording = record_with_transitions(
+        file_name,
+        DdsRecorderState::STOPPED,
+        n_data_1, n_data_2,
+        DdsRecorderState::PAUSED);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
+
+    ASSERT_EQ(n_received_msgs, 0);
+
+}
+
+TEST(McapFileCreationTest, transition_stopped_suspended)
+{
+    std::string file_name = "output_transition_stopped_suspended.mcap";
+
+    unsigned int n_data_1 = rand() % 10 + 1;
+    unsigned int n_data_2 = rand() % 10 + 1;
+
+    auto recording = record_with_transitions(
+        file_name,
+        DdsRecorderState::SUSPENDED,
+        n_data_1, n_data_2,
+        DdsRecorderState::SUSPENDED);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
+
+    ASSERT_EQ(n_received_msgs, 0);
+
+}
+
+TEST(McapFileCreationTest, transition_suspended_running)
+{
+    std::string file_name = "output_transition_suspended_running.mcap";
+
+    unsigned int n_data_1 = rand() % 10 + 1;
+    unsigned int n_data_2 = rand() % 10 + 1;
+
+    auto recording = record_with_transitions(
+        file_name,
+        DdsRecorderState::SUSPENDED,
+        n_data_1, n_data_2,
+        DdsRecorderState::RUNNING);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
+
+    ASSERT_EQ(n_received_msgs, (n_data_2));
+
+}
+
+TEST(McapFileCreationTest, transition_suspended_paused)
+{
+    std::string file_name = "output_transition_suspended_paused.mcap";
+
+    unsigned int n_data_1 = rand() % 10 + 1;
+    unsigned int n_data_2 = rand() % 10 + 1;
+
+    auto recording = record_with_transitions(
+        file_name,
+        DdsRecorderState::SUSPENDED,
+        n_data_1, n_data_2,
+        DdsRecorderState::PAUSED);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
+
+    ASSERT_EQ(n_received_msgs, 0);
+
+}
+
+TEST(McapFileCreationTest, transition_suspended_stopped)
+{
+    std::string file_name = "output_transition_suspended_stopped.mcap";
+
+    unsigned int n_data_1 = rand() % 10 + 1;
+    unsigned int n_data_2 = rand() % 10 + 1;
+
+    auto recording = record_with_transitions(
+        file_name,
+        DdsRecorderState::STOPPED,
+        n_data_1, n_data_2,
+        DdsRecorderState::SUSPENDED);
 
     unsigned int n_received_msgs = std::get<0>(recording);
 
@@ -588,7 +718,7 @@ TEST(McapFileCreationTest, transition_stopped)
 // can fail due to two race conditions but is very unlikely
 TEST(McapFileCreationTest, transition_paused_event_less_window)
 {
-    std::string file_name = "output_transition_paused_event_less_window_.mcap";
+    std::string file_name = "output_transition_paused_event_less_window.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -596,9 +726,9 @@ TEST(McapFileCreationTest, transition_paused_event_less_window)
 
     auto recording = record_with_transitions(
         file_name,
-        McapHandlerState::PAUSED,
+        DdsRecorderState::PAUSED,
         n_data_1, n_data_2,
-        McapHandlerState::PAUSED,
+        DdsRecorderState::PAUSED,
         EventKind::EVENT, event_window, 1);
 
     unsigned int n_received_msgs = std::get<0>(recording);
@@ -611,7 +741,7 @@ TEST(McapFileCreationTest, transition_paused_event_less_window)
 
 TEST(McapFileCreationTest, transition_paused_event_max_window)
 {
-    std::string file_name = "output_transition_paused_event_max_window_.mcap";
+    std::string file_name = "output_transition_paused_event_max_window.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -619,9 +749,9 @@ TEST(McapFileCreationTest, transition_paused_event_max_window)
 
     auto recording = record_with_transitions(
         file_name,
-        McapHandlerState::PAUSED,
+        DdsRecorderState::PAUSED,
         n_data_1, n_data_2,
-        McapHandlerState::PAUSED,
+        DdsRecorderState::PAUSED,
         EventKind::EVENT, event_window, 3);
 
     unsigned int n_received_msgs = std::get<0>(recording);
@@ -634,7 +764,7 @@ TEST(McapFileCreationTest, transition_paused_event_max_window)
 
 TEST(McapFileCreationTest, transition_paused_event_start)
 {
-    std::string file_name = "output_transition_paused_event_start_.mcap";
+    std::string file_name = "output_transition_paused_event_start.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -642,9 +772,9 @@ TEST(McapFileCreationTest, transition_paused_event_start)
 
     auto recording = record_with_transitions(
         file_name,
-        McapHandlerState::PAUSED,
+        DdsRecorderState::PAUSED,
         n_data_1, n_data_2,
-        McapHandlerState::PAUSED,
+        DdsRecorderState::PAUSED,
         EventKind::EVENT_START, event_window, 3);
 
     unsigned int n_received_msgs = std::get<0>(recording);
@@ -657,7 +787,7 @@ TEST(McapFileCreationTest, transition_paused_event_start)
 
 TEST(McapFileCreationTest, transition_paused_event_stop)
 {
-    std::string file_name = "output_transition_paused_event_stop_.mcap";
+    std::string file_name = "output_transition_paused_event_stop.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -665,10 +795,33 @@ TEST(McapFileCreationTest, transition_paused_event_stop)
 
     auto recording = record_with_transitions(
         file_name,
-        McapHandlerState::PAUSED,
+        DdsRecorderState::PAUSED,
         n_data_1, n_data_2,
-        McapHandlerState::PAUSED,
+        DdsRecorderState::PAUSED,
         EventKind::EVENT_STOP, event_window, 3);
+
+    unsigned int n_received_msgs = std::get<0>(recording);
+    double max_timestamp = std::get<1>(recording);
+
+    ASSERT_EQ(n_received_msgs, n_data_2);
+    ASSERT_LE(max_timestamp, event_window);
+
+}
+
+TEST(McapFileCreationTest, transition_paused_event_suspend)
+{
+    std::string file_name = "output_transition_paused_event_suspend.mcap";
+
+    unsigned int n_data_1 = rand() % 10 + 1;
+    unsigned int n_data_2 = rand() % 10 + 1;
+    unsigned int event_window = 3;
+
+    auto recording = record_with_transitions(
+        file_name,
+        DdsRecorderState::PAUSED,
+        n_data_1, n_data_2,
+        DdsRecorderState::PAUSED,
+        EventKind::EVENT_SUSPEND, event_window, 3);
 
     unsigned int n_received_msgs = std::get<0>(recording);
     double max_timestamp = std::get<1>(recording);

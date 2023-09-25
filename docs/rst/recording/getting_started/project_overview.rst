@@ -37,7 +37,7 @@ whose format is very intuitive and human-readable.
   Please, read this :ref:`section <recorder_usage_configuration>` to apply a specific configuration, and this :ref:`section <recorder_usage_usage_application_arguments>` to see the supported arguments.
 * **Interact**:
   Once the |ddsrecorder| application is running, the allowlist and blocklist topic lists could be changed in runtime by just changing the YAML configuration file.
-  It is also possible to change the status of the recorder (``RUNNING``, ``PAUSED``, ``STOPPED`` or ``CLOSED``) by remote control of the application.
+  It is also possible to change the status of the recorder (``RUNNING``, ``PAUSED``, ``SUSPENDED``, ``STOPPED`` or ``CLOSED``) by remote control of the application.
   This remote control is done by sending commands via DDS or by using the graphical remote control application provided with the |eddsrecord| software tool (see :ref:`Remote control <recorder_remote_control>`).
 * **Close**:
   To close the |ddsrecorder| application just send a `Ctrl+C` signal to terminate the process gracefully (see :ref:`Closing Recording Application <recorder_usage_close_recorder>`) or close it remotely using the remote control application (see :ref:`Remote control <recorder_remote_control>`).

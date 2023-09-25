@@ -49,6 +49,7 @@ ENUMERATION_BUILDER(
     start,
     pause,
     event,
+    suspend,
     stop,
     close,
     unknown

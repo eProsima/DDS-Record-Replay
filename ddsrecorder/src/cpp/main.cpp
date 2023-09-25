@@ -43,12 +43,12 @@ using namespace eprosima::ddspipe;
 using namespace eprosima::ddsrecorder::recorder;
 
 using CommandCode = eprosima::ddsrecorder::recorder::receiver::CommandCode;
+using DdsRecorderState = eprosima::ddsrecorder::recorder::DdsRecorderStateCode;
 using json = nlohmann::json;
-using McapHandlerState = eprosima::ddsrecorder::participants::McapHandlerStateCode;
 
 const std::string NEXT_STATE_TAG = "next_state";
 constexpr auto string_to_command = eprosima::ddsrecorder::recorder::receiver::string_to_enumeration;
-constexpr auto string_to_state = eprosima::ddsrecorder::participants::string_to_enumeration;
+// constexpr auto string_to_state = eprosima::ddsrecorder::recorder::string_to_enumeration;  // TODO: fix compilation error
 
 std::unique_ptr<eprosima::utils::event::FileWatcherHandler> create_filewatcher(
         const std::unique_ptr<DdsRecorder>& recorder,
@@ -138,7 +138,7 @@ void parse_command(
     {
         logWarning(DDSRECORDER_EXECUTION,
                 "Command " << command_str <<
-                " is not a valid command (only start/pause/stop/close).");
+                " is not a valid command (only start/pause/suspend/stop/close).");
     }
 
     if (args_str != "")
@@ -157,17 +157,20 @@ void parse_command(
 }
 
 CommandCode state_to_command(
-        const McapHandlerState& state)
+        const DdsRecorderState& state)
 {
     switch (state)
     {
-        case McapHandlerState::RUNNING:
+        case DdsRecorderState::RUNNING:
             return CommandCode::start;
 
-        case McapHandlerState::PAUSED:
+        case DdsRecorderState::PAUSED:
             return CommandCode::pause;
 
-        case McapHandlerState::STOPPED:
+        case DdsRecorderState::SUSPENDED:
+            return CommandCode::suspend;
+
+        case DdsRecorderState::STOPPED:
             return CommandCode::stop;
 
         default:
@@ -297,28 +300,29 @@ int main(
             json args;
 
             // Parse and convert initial state to initial command
-            McapHandlerState initial_state;
-            bool found = string_to_state(configuration.initial_state, initial_state);
+            DdsRecorderState initial_state;
+            bool found = eprosima::ddsrecorder::recorder::string_to_enumeration(configuration.initial_state,
+                            initial_state);
             if (!found)
             {
                 logWarning(DDSRECORDER_EXECUTION,
                         "Initial state " << configuration.initial_state <<
-                        " is not a valid one (only RUNNING/PAUSED/STOPPED). Using instead default RUNNING initial state...");
-                initial_state = McapHandlerState::RUNNING;
+                        " is not a valid one (only RUNNING/PAUSED/SUSPENDED/STOPPED). Using instead default RUNNING initial state...");
+                initial_state = DdsRecorderState::RUNNING;
             }
             command = state_to_command(initial_state);
 
             prev_command = CommandCode::close;
             do
             {
-                // Skip waiting for commmand if initial_state is RUNNING/PAUSED (only applies to first iteration)
+                // Skip waiting for commmand if initial_state is RUNNING/PAUSED/SUSPENDED (only applies to first iteration)
                 if (command == CommandCode::stop)
                 {
                     //////////////////////////
                     //// STATE -> STOPPED ////
                     //////////////////////////
 
-                    // Publish state if previous -> CLOSED/RUNNING/PAUSED
+                    // Publish state if previous -> CLOSED/RUNNING/PAUSED/SUSPENDED
                     if (prev_command != CommandCode::stop)
                     {
                         receiver.publish_status(CommandCode::stop, prev_command);
@@ -330,6 +334,7 @@ int main(
                     {
                         case CommandCode::start:
                         case CommandCode::pause:
+                        case CommandCode::suspend:
                             // Exit STOPPED state -> proceed
                             break;
 
@@ -351,23 +356,27 @@ int main(
                     }
                 }
 
-                // STOPPED/CLOSED -> RUNNING/PAUSED
+                // STOPPED/CLOSED -> RUNNING/PAUSED/SUSPENDED
                 receiver.publish_status(command, prev_command);
 
-                // Set handler state on creation to avoid race condition (reception of data/schema prior to start/pause)
+                // Set handler state on creation to avoid race condition (reception of data/schema prior to start/pause/suspend)
                 if (command == CommandCode::start)
                 {
-                    initial_state = McapHandlerState::RUNNING;
+                    initial_state = DdsRecorderState::RUNNING;
                 }
                 else if (command == CommandCode::pause)
                 {
-                    initial_state = McapHandlerState::PAUSED;
+                    initial_state = DdsRecorderState::PAUSED;
+                }
+                else if (command == CommandCode::suspend)
+                {
+                    initial_state = DdsRecorderState::SUSPENDED;
                 }
                 else
                 {
                     // Unreachable
                     eprosima::utils::tsnh(
-                        eprosima::utils::Formatter() << "Trying to initiate McapHandler with invalid " << command <<
+                        eprosima::utils::Formatter() << "Trying to initiate DDS Recorder with invalid " << command <<
                             " command.");
                 }
 
@@ -397,9 +406,9 @@ int main(
                 prev_command = command;
                 do
                 {
-                    /////////////////////////////////
-                    //// STATE -> RUNNING/PAUSED ////
-                    /////////////////////////////////
+                    ///////////////////////////////////////////
+                    //// STATE -> RUNNING/PAUSED/SUSPENDED ////
+                    ///////////////////////////////////////////
                     switch (command)
                     {
                         case CommandCode::start:
@@ -407,9 +416,9 @@ int main(
                             {
                                 recorder->start();
                             }
-                            if (prev_command == CommandCode::pause)
+                            if (prev_command != CommandCode::start)
                             {
-                                receiver.publish_status(CommandCode::start, CommandCode::pause);
+                                receiver.publish_status(CommandCode::start, prev_command);
                             }
                             break;
 
@@ -418,9 +427,20 @@ int main(
                             {
                                 recorder->pause();
                             }
-                            if (prev_command == CommandCode::start)
+                            if (prev_command != CommandCode::pause)
                             {
-                                receiver.publish_status(CommandCode::pause, CommandCode::start);
+                                receiver.publish_status(CommandCode::pause, prev_command);
+                            }
+                            break;
+
+                        case CommandCode::suspend:
+                            if (!first_iter)
+                            {
+                                recorder->suspend();
+                            }
+                            if (prev_command != CommandCode::suspend)
+                            {
+                                receiver.publish_status(CommandCode::suspend, prev_command);
                             }
                             break;
 
@@ -443,15 +463,17 @@ int main(
                                         std::string next_state_str = *it;
                                         // Case insensitive
                                         eprosima::utils::to_uppercase(next_state_str);
-                                        McapHandlerState next_state;
-                                        bool found = string_to_state(next_state_str, next_state);
+                                        DdsRecorderState next_state;
+                                        bool found = eprosima::ddsrecorder::recorder::string_to_enumeration(
+                                            next_state_str, next_state);
                                         if (!found ||
-                                                (next_state != McapHandlerState::RUNNING &&
-                                                next_state != McapHandlerState::STOPPED))
+                                                (next_state != DdsRecorderState::RUNNING &&
+                                                next_state != DdsRecorderState::SUSPENDED &&
+                                                next_state != DdsRecorderState::STOPPED))
                                         {
                                             logWarning(DDSRECORDER_EXECUTION,
                                                     "Value " << next_state_str <<
-                                                    " is not a valid event next_state argument (only RUNNING/STOPPED). Ignoring...");
+                                                    " is not a valid event next_state argument (only RUNNING/SUSPENDED/STOPPED). Ignoring...");
 
                                             // Stay in current state if provided next_state is not valid
                                             command = prev_command;
@@ -495,7 +517,7 @@ int main(
         else
         {
             // Start recording right away
-            auto recorder = std::make_unique<DdsRecorder>(configuration, McapHandlerState::RUNNING);
+            auto recorder = std::make_unique<DdsRecorder>(configuration, DdsRecorderState::RUNNING);
 
             // Create File Watcher Handler
             std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;
