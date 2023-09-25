@@ -168,7 +168,12 @@ participants::McapHandlerStateCode DdsRecorder::recorder_to_handler_state_(
 
         case DdsRecorderStateCode::STOPPED:
         case DdsRecorderStateCode::SUSPENDED:
-        default:  // TODO: maybe better throw exception????????????????????????????
+            return participants::McapHandlerStateCode::STOPPED;
+
+        default:
+            // Unreachable
+            utils::tsnh(
+                utils::Formatter() << "Trying to convert to McapHandler state an invalid DdsRecorder state.");
             return participants::McapHandlerStateCode::STOPPED;
     }
 }

@@ -506,7 +506,7 @@ protected:
     //! Handler configuration
     McapHandlerConfiguration configuration_;
 
-    //! Name of opened MCAP file
+    //! Name of open MCAP file
     std::string mcap_filename_;
 
     //! Payload pool
