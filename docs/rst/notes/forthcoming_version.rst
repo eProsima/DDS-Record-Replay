@@ -6,6 +6,10 @@
 Forthcoming Version
 ###################
 
+This release will include the following **Recording features**:
+
+* New DDS Recorder suspended (active stopped) state (see :ref:`remote controller <recorder_remote_controller>` for more details).
+
 Next release will include the following **DDS Recorder & Replay internal adjustments**:
 
 * Store *DDS Record & Replay* version in metadata record of the generated MCAP files.
