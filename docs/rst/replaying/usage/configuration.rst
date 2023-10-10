@@ -173,6 +173,12 @@ Apart from these values, the tag ``qos`` under each topic allows to configure th
         - ``false``
         - Topic with / without key
 
+    *   - Max Transmission Rate
+        - ``max-tx-rate``
+        - *float*
+        - *default value*
+        - Maximum sample transmission rate [Hz]
+
 **Example of usage:**
 
     .. code-block:: yaml
@@ -186,6 +192,7 @@ Apart from these values, the tag ``qos`` under each topic allows to configure th
               partitions: true        # Topic with partitions
               ownership: false        # Use QoS SHARED_OWNERSHIP_QOS
               keyed: true             # Topic with key
+              max-tx-rate: 25         # Discard messages if less than 100ms elapsed since the last sample was transmitted
 
 
 .. _replayer_usage_configuration_domain_id:
@@ -361,6 +368,20 @@ By default, data is replayed at the same rate it was published/received.
 However, a user might be interested in playing messages back at a rate different than the original one.
 This can be accomplished through the playback ``rate`` tag, which accepts positive float values (e.g. 0.5 <--> half speed || 2 <--> double speed).
 
+.. _replayer_usage_configuration_max_tx_rate:
+
+Max Transmission Rate
+---------------------
+
+The ``max-tx-rate`` tag limits the frequency [Hz] at which samples are sent by discarding messages transmitted before :code:`1/max-tx-rate` seconds have passed since the last sent message.
+It only accepts non-negative numbers.
+By default it is set to ``0``; it sends samples at an unlimited transmission rate.
+
+.. note::
+
+    The ``max-tx-rate`` tag can be set for topics and globally under the ``replayer`` tag.
+    If both are set, the configuration under topics prevails.
+
 .. _replayer_replay_configuration_replaytypes:
 
 Replay Types
@@ -426,6 +447,7 @@ A complete example of all the configurations described on this page can be found
             keyed: false
             partitions: true
             ownership: false
+            max-tx-rate: 25
 
       ignore-participant-flags: no_filter
       transport: builtin
@@ -453,6 +475,7 @@ A complete example of all the configurations described on this page can be found
         milliseconds: 500
 
       rate: 1.4
+      max-tx-rate: 50
       replay-types: true
 
     specs:

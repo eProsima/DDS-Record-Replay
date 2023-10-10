@@ -76,6 +76,7 @@ public:
     // Specs
     unsigned int n_threads = 12;
     unsigned int max_history_depth = 5000;
+    float max_tx_rate = 0;
 
 protected:
 

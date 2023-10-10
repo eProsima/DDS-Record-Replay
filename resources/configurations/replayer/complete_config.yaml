@@ -19,6 +19,7 @@ dds:
         keyed: false
         partitions: true
         ownership: false
+        max-tx-rate: 25
 
   ignore-participant-flags: filter_same_process
   transport: shm
@@ -46,6 +47,7 @@ replayer:
     milliseconds: 500
 
   rate: 1.4
+  max-tx-rate: 50
   replay-types: true
 
 specs:

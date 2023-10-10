@@ -174,6 +174,17 @@ void ReplayerConfiguration::load_replay_configuration_(
         start_replay_time = YamlReader::get<utils::Timestamp>(yml, REPLAYER_REPLAY_START_TIME_TAG, version);
     }
 
+    /////
+    // Get optional max transmission rate
+    if (YamlReader::is_tag_present(yml, MAX_TX_RATE_TAG))
+    {
+        // Save max transmission rate
+        max_tx_rate = YamlReader::get_nonnegative_float(yml, MAX_TX_RATE_TAG);
+
+        // Set default value for max transmission rate
+        TopicQoS::default_max_tx_rate.store(max_tx_rate);
+    }
+
     // Get optional replay_types
     if (YamlReader::is_tag_present(yml, REPLAYER_REPLAY_TYPES_TAG))
     {
