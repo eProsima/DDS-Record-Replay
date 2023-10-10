@@ -134,7 +134,10 @@ DdsReplayer::DdsReplayer(
     auto builtin_topics = generate_builtin_topics_(configuration, input_file);
 
     // Create DDS Pipe
+    DdsPipeConfiguration ddspipe_configuration;
+
     pipe_ = std::make_unique<DdsPipe>(
+        ddspipe_configuration,
         allowed_topics,
         discovery_database_,
         payload_pool_,

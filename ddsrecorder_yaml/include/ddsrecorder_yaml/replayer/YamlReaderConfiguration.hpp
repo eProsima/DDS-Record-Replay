@@ -22,6 +22,7 @@
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/types/Fuzzy.hpp>
 
+#include <ddspipe_core/configuration/DdsPipeConfiguration.hpp>
 #include <ddspipe_core/types/topic/dds/DistributedTopic.hpp>
 #include <ddspipe_core/types/topic/filter/IFilterTopic.hpp>
 
@@ -51,6 +52,9 @@ public:
 
     ReplayerConfiguration(
             const std::string& file_path);
+
+    // DDS Pipe Configuration
+    ddspipe::core::DdsPipeConfiguration ddspipe_configuration;
 
     // Participants configurations
     std::shared_ptr<ddsrecorder::participants::McapReaderParticipantConfiguration> mcap_reader_configuration;

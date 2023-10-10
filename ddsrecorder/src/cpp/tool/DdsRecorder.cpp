@@ -115,6 +115,7 @@ DdsRecorder::DdsRecorder(
 
     // Create DDS Pipe
     pipe_ = std::make_unique<DdsPipe>(
+        configuration.ddspipe_configuration,
         allowed_topics,
         discovery_database_,
         payload_pool_,

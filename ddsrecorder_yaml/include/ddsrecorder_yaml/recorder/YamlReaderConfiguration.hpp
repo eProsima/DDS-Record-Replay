@@ -22,6 +22,7 @@
 
 #include <cpp_utils/memory/Heritable.hpp>
 
+#include <ddspipe_core/configuration/DdsPipeConfiguration.hpp>
 #include <ddspipe_core/types/topic/dds/DistributedTopic.hpp>
 #include <ddspipe_core/types/topic/filter/IFilterTopic.hpp>
 
@@ -51,6 +52,9 @@ public:
 
     RecorderConfiguration(
             const std::string& file_path);
+
+    // DDS Pipe Configuration
+    ddspipe::core::DdsPipeConfiguration ddspipe_configuration;
 
     // Participants configurations
     std::shared_ptr<ddspipe::participants::SimpleParticipantConfiguration> simple_configuration;
