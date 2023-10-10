@@ -199,21 +199,25 @@ void RecorderConfiguration::load_recorder_configuration_(
     }
 
     /////
-    // Get optional downsampling
-    if (YamlReader::is_tag_present(yml, DOWNSAMPLING_TAG))
+    // Get optional max reception rate
+    if (YamlReader::is_tag_present(yml, MAX_RX_RATE_TAG))
     {
-        downsampling = YamlReader::get_positive_int(yml, DOWNSAMPLING_TAG);
-        // Set default value for downsampling
-        TopicQoS::default_downsampling.store(downsampling);
+        // Save max reception rate
+        max_rx_rate = YamlReader::get_nonnegative_float(yml, MAX_RX_RATE_TAG);
+
+        // Set default value for max reception rate
+        TopicQoS::default_max_rx_rate.store(max_rx_rate);
     }
 
     /////
-    // Get optional max reception rate
-    if (YamlReader::is_tag_present(yml, MAX_RECEPTION_RATE_TAG))
+    // Get optional downsampling
+    if (YamlReader::is_tag_present(yml, DOWNSAMPLING_TAG))
     {
-        // Set default value for max reception rate
-        TopicQoS::default_max_reception_rate.store(YamlReader::get_nonnegative_float(yml,
-                MAX_RECEPTION_RATE_TAG));
+        // Save downsampling factor
+        downsampling = YamlReader::get_positive_int(yml, DOWNSAMPLING_TAG);
+
+        // Set default value for downsampling
+        TopicQoS::default_downsampling.store(downsampling);
     }
 
     /////

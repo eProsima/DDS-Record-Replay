@@ -185,17 +185,17 @@ Apart from these values, the tag ``qos`` under each topic allows to configure th
         - ``false``
         - Topic with / without key
 
+    *   - Max Reception Rate
+        - ``max-rx-rate``
+        - *float*
+        - *default value*
+        - Maximum sample reception rate [Hz]
+
     *   - Downsampling
         - ``downsampling``
         - *integer*
         - *default value*
         - Downsampling factor
-
-    *   - Max Reception Rate
-        - ``max-reception-rate``
-        - *float*
-        - *default value*
-        - Maximum sample reception rate [Hz]
 
 **Example of usage:**
 
@@ -211,8 +211,8 @@ Apart from these values, the tag ``qos`` under each topic allows to configure th
               partitions: true        # Topic with partitions
               ownership: false        # Use QoS SHARED_OWNERSHIP_QOS
               keyed: true             # Topic with key
+              max-rx-rate: 10         # Discard messages if less than 100ms elapsed since the last sample was processed
               downsampling: 4         # Keep 1 of every 4 samples
-              max-reception-rate: 10  # Discard messages if less than 100ms elapsed since the last sample was processed
 
 
 .. _recorder_usage_configuration_domain_id:
@@ -374,15 +374,15 @@ In some applications, it may be required to use the ``publishTime`` as ``logTime
 Max Reception Rate
 ^^^^^^^^^^^^^^^^^^
 
-Limits the frequency [Hz] at which samples are processed, by discarding messages received before :code:`1/max-reception-rate` seconds have elapsed since the last processed message was received.
-When specified, ``max-reception-rate`` is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
+Limits the frequency [Hz] at which samples are processed, by discarding messages received before :code:`1/max-rx-rate` seconds have elapsed since the last processed message was received.
+When specified, ``max-rx-rate`` is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
 This parameter only accepts non-negative values, and its default value is ``0`` (no limit).
 
 Downsampling
 ^^^^^^^^^^^^
 
 Reduces the sampling rate of the received data by keeping *1* out of every *n* samples received (per topic), where *n* is the value specified in ``downsampling``.
-If ``max-reception-rate`` is also set, downsampling applies to messages that already managed to pass this filter.
+If ``max-rx-rate`` is also set, downsampling applies to messages that already managed to pass this filter.
 When specified, this downsampling factor is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
 This parameter only accepts positive integer values, and its default value is ``1`` (no downsampling).
 
@@ -595,8 +595,8 @@ A complete example of all the configurations described on this page can be found
             keyed: false
             partitions: true
             ownership: false
+            max-rx-rate: 10
             downsampling: 4
-            max-reception-rate: 10
 
       ignore-participant-flags: no_filter
       transport: builtin
@@ -613,8 +613,8 @@ A complete example of all the configurations described on this page can be found
       buffer-size: 50
       event-window: 60
       log-publish-time: false
+      max-rx-rate: 20
       downsampling: 3
-      max-reception-rate: 20
       only-with-type: false
       compression:
         algorithm: lz4
