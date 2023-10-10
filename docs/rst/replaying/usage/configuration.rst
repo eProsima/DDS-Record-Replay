@@ -117,19 +117,9 @@ If a topic matches an expression both in the ``allowlist`` and in the ``blocklis
           - name: "*"
             type: HelloWorld
 
-Built-in Topics
-^^^^^^^^^^^^^^^
-
-As seen in :ref:`recorder_topic_filtering`, a |ddsrecorder| uses the QoS of the first Publisher/Subscriber found in every recorded topic, unless manually defined in the :ref:`built-in topics <recorder_builtin_topics>` list.
-This QoS information is stored in the MCAP file along with the user data, and thus a |ddsreplayer| instance is able to publish recorded data preserving the original QoS.
-
-However, the user has the option to manually set the QoS of any topic to be played back through the replayer's builtin-topics list.
-The builtin-topics list is defined in the same form as the ``allowlist`` and ``blocklist``.
-
-This feature also allows to manually force the QoS of a specific topic, so the entities created in such topic follows the specified QoS and not the one first discovered.
 
 Topic Quality of Service
-""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 For every topic contained in this list, both ``name`` and ``type`` must be specified and contain no wildcard characters.
 Apart from these values, the tag ``qos`` under each topic allows to configure the following values:
@@ -194,6 +184,36 @@ Apart from these values, the tag ``qos`` under each topic allows to configure th
               keyed: true             # Topic with key
               max-tx-rate: 25         # Discard messages if less than 100ms elapsed since the last sample was transmitted
 
+.. _replayer_manual_topics:
+
+Topics
+^^^^^^
+
+A subset of QoSs can be manually configured for a specific topic under the tag ``topics``.
+The tag ``topics`` has a required ``name`` tag that accepts wildcard characters.
+It also has two optional tags: a ``type`` tag that accepts wildcard characters, and a ``qos`` tag with the QoSs that the user wants to manually configure.
+If a ``qos`` is not manually configured, it will get its value by discovery.
+
+**Example of usage**
+
+.. code-block:: yaml
+
+    topics:
+      - name: temperature/*
+        type: temperature/types/*
+        qos:
+            max-tx-rate: 15
+
+Built-in Topics
+^^^^^^^^^^^^^^^
+
+As seen in :ref:`recorder_topic_filtering`, a |ddsrecorder| uses the QoS of the first Publisher/Subscriber found in every recorded topic, unless manually defined in the :ref:`built-in topics <recorder_builtin_topics>` list.
+This QoS information is stored in the MCAP file along with the user data, and thus a |ddsreplayer| instance is able to publish recorded data preserving the original QoS.
+
+However, the user has the option to manually set the QoS of any topic to be played back through the replayer's builtin-topics list.
+The builtin-topics list is defined in the same form as the ``allowlist`` and ``blocklist``.
+
+This feature also allows to manually force the QoS of a specific topic, so the entities created in such topic follows the specified QoS and not the one first discovered.
 
 .. _replayer_usage_configuration_domain_id:
 
@@ -437,6 +457,12 @@ A complete example of all the configurations described on this page can be found
       blocklist:
         - name: "topic_name"
           type: "topic_type"
+
+      topics:
+        - name: temperature/*
+          type: temperature/types/*
+          qos:
+            max-tx-rate: 15
 
       builtin-topics:
         - name: "HelloWorldTopic"

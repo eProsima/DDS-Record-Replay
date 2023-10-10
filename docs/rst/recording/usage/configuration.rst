@@ -122,20 +122,8 @@ If a topic matches an expression both in the ``allowlist`` and in the ``blocklis
           - name: "*"
             type: HelloWorld
 
-.. _recorder_builtin_topics:
-
-Built-in Topics
-^^^^^^^^^^^^^^^
-
-Apart from the dynamic DDS topics discovered in the network, the discovery phase can be accelerated by using the builtin topic list (``builtin-topics``).
-By defining topics in this list, the |ddsrecorder| will create the DataWriters and DataReaders in recorder initialization.
-
-The builtin-topics list is defined in the same form as the ``allowlist`` and ``blocklist``.
-
-This feature also allows to manually force the QoS of a specific topic, so the entities created in such topic follows the specified QoS and not the one first discovered.
-
 Topic Quality of Service
-""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 For every topic contained in this list, both ``name`` and ``type`` must be specified and contain no wildcard characters.
 Apart from these values, the tag ``qos`` under each topic allows to configure the following values:
@@ -196,6 +184,39 @@ Apart from these values, the tag ``qos`` under each topic allows to configure th
         - *integer*
         - *default value*
         - Downsampling factor
+
+.. _recorder_manual_topics:
+
+Topics
+^^^^^^
+
+A subset of QoSs can be manually configured for a specific topic under the tag ``topics``.
+The tag ``topics`` has a required ``name`` tag that accepts wildcard characters.
+It also has two optional tags: a ``type`` tag that accepts wildcard characters, and a ``qos`` tag with the QoSs that the user wants to manually configure.
+If a ``qos`` is not manually configured, it will get its value by discovery.
+
+**Example of usage**
+
+.. code-block:: yaml
+
+    topics:
+      - name: temperature/*
+        type: temperature/types/*
+        qos:
+            max-rx-rate: 15
+            downsampling: 2
+
+.. _recorder_builtin_topics:
+
+Built-in Topics
+^^^^^^^^^^^^^^^
+
+Apart from the dynamic DDS topics discovered in the network, the discovery phase can be accelerated by using the builtin topic list (``builtin-topics``).
+By defining topics in this list, the |ddsrecorder| will create the DataWriters and DataReaders in recorder initialization.
+
+The builtin-topics list is defined in the same form as the ``allowlist`` and ``blocklist``.
+
+This feature also allows to manually force the QoS of a specific topic, so the entities created in such topic follows the specified QoS and not the one first discovered.
 
 **Example of usage:**
 
@@ -585,6 +606,13 @@ A complete example of all the configurations described on this page can be found
       blocklist:
         - name: "topic_name"
           type: "topic_type"
+
+      topics:
+        - name: temperature/*
+          type: temperature/types/*
+          qos:
+            max-rx-rate: 15
+            downsampling: 2
 
       builtin-topics:
         - name: "HelloWorldTopic"

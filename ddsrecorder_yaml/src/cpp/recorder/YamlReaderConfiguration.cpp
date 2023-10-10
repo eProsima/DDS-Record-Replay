@@ -384,6 +384,19 @@ void RecorderConfiguration::load_dds_configuration_(
     }
 
     /////
+    // Get optional topics
+    if (YamlReader::is_tag_present(yml, TOPICS_TAG))
+    {
+        auto manual_topics = YamlReader::get_list<WildcardDdsFilterTopic>(yml, TOPICS_TAG, version);
+
+        for (auto const& manual_topic : manual_topics)
+        {
+            auto new_topic = utils::Heritable<WildcardDdsFilterTopic>::make_heritable(manual_topic);
+            ddspipe_configuration.manual_topics.push_back(new_topic);
+        }
+    }
+
+    /////
     // Get optional builtin topics
     if (YamlReader::is_tag_present(yml, BUILTIN_TAG))
     {
