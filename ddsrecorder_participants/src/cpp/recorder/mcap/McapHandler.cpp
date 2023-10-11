@@ -120,12 +120,12 @@ void McapHandler::add_schema(
     }
 
     // Schema not found, generate from dynamic type and store
-    std::string schema_text = generate_ros2_schema(dynamic_type);
+    std::string schema_text = generate_idl_schema(dynamic_type);
 
     logInfo(DDSRECORDER_MCAP_HANDLER, "\nAdding schema with name " << type_name << " :\n" << schema_text << "\n");
 
     // Create schema and add it to writer and to schemas map
-    mcap::Schema new_schema(type_name, "ros2msg", schema_text);
+    mcap::Schema new_schema(type_name, "omgidl", schema_text);
     // WARNING: passing as non-const to MCAP library
     mcap_writer_.addSchema(new_schema);
 
@@ -837,7 +837,7 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
             logInfo(DDSRECORDER_MCAP_HANDLER,
                     "Schema not found for type: " << topic.type_name << ". Creating blank schema...");
 
-            mcap::Schema blank_schema(topic.type_name, "ros2msg", "");
+            mcap::Schema blank_schema(topic.type_name, "omgidl", "");
             mcap_writer_.addSchema(blank_schema);
             schemas_.insert({topic.type_name, std::move(blank_schema)});
 

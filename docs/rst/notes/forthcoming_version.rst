@@ -14,6 +14,7 @@ Next release will include the following **DDS Recorder & Replay internal adjustm
 
 * Store *DDS Record & Replay* version in metadata record of the generated MCAP files.
 * Move dynamic types storage from metadata to attachments MCAP section.
+* Store schemas in OMG IDL format (instead of ROS 2 msg).
 
 .. warning::
 
