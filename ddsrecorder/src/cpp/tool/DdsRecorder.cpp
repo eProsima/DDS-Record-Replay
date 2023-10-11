@@ -33,11 +33,6 @@ DdsRecorder::DdsRecorder(
         const DdsRecorderStateCode& init_state,
         const std::string& file_name)
 {
-    // Create allowed topics list
-    auto allowed_topics = std::make_shared<AllowedTopicList>(
-        configuration.allowlist,
-        configuration.blocklist);
-
     // Create Discovery Database
     discovery_database_ =
             std::make_shared<DiscoveryDatabase>();
@@ -116,19 +111,16 @@ DdsRecorder::DdsRecorder(
     // Create DDS Pipe
     pipe_ = std::make_unique<DdsPipe>(
         configuration.ddspipe_configuration,
-        allowed_topics,
         discovery_database_,
         payload_pool_,
         participants_database_,
-        thread_pool_,
-        configuration.builtin_topics,
-        true);
+        thread_pool_);
 }
 
-utils::ReturnCode DdsRecorder::reload_allowed_topics(
-        const std::shared_ptr<AllowedTopicList>& allowed_topics)
+utils::ReturnCode DdsRecorder::reload_configuration(
+        const yaml::RecorderConfiguration& new_configuration)
 {
-    return pipe_->reload_allowed_topics(allowed_topics);
+    return pipe_->reload_configuration(new_configuration.ddspipe_configuration);
 }
 
 void DdsRecorder::start()

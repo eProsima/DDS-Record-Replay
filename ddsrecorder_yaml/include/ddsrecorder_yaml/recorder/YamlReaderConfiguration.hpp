@@ -60,11 +60,6 @@ public:
     std::shared_ptr<ddspipe::participants::SimpleParticipantConfiguration> simple_configuration;
     std::shared_ptr<ddspipe::participants::ParticipantConfiguration> recorder_configuration;
 
-    // Topic filtering
-    std::set<utils::Heritable<ddspipe::core::types::IFilterTopic>> allowlist{};
-    std::set<utils::Heritable<ddspipe::core::types::IFilterTopic>> blocklist{};
-    std::set<utils::Heritable<ddspipe::core::types::DistributedTopic>> builtin_topics{};
-
     // Output file params
     std::string output_filepath = ".";
     std::string output_filename = "output";

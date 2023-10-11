@@ -60,11 +60,6 @@ public:
     std::shared_ptr<ddsrecorder::participants::McapReaderParticipantConfiguration> mcap_reader_configuration;
     std::shared_ptr<ddspipe::participants::SimpleParticipantConfiguration> replayer_configuration;
 
-    // Topic filtering
-    std::set<utils::Heritable<ddspipe::core::types::IFilterTopic>> allowlist{};
-    std::set<utils::Heritable<ddspipe::core::types::IFilterTopic>> blocklist{};
-    std::set<utils::Heritable<ddspipe::core::types::DistributedTopic>> builtin_topics{};
-
     // Replay params
     std::string input_file;
     utils::Fuzzy<utils::Timestamp> begin_time{};

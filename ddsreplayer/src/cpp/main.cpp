@@ -58,11 +58,7 @@ std::unique_ptr<eprosima::utils::event::FileWatcherHandler> create_filewatcher(
                 try
                 {
                     eprosima::ddsrecorder::yaml::ReplayerConfiguration new_configuration(file_path);
-                    // Create new allowed topics list
-                    auto new_allowed_topics = std::make_shared<core::AllowedTopicList>(
-                        new_configuration.allowlist,
-                        new_configuration.blocklist);
-                    replayer->reload_allowed_topics(new_allowed_topics);
+                    replayer->reload_configuration(new_configuration);
                 }
                 catch (const std::exception& e)
                 {
@@ -93,11 +89,7 @@ std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> create_periodic_ha
                 try
                 {
                     eprosima::ddsrecorder::yaml::ReplayerConfiguration new_configuration(file_path);
-                    // Create new allowed topics list
-                    auto new_allowed_topics = std::make_shared<core::AllowedTopicList>(
-                        new_configuration.allowlist,
-                        new_configuration.blocklist);
-                    replayer->reload_allowed_topics(new_allowed_topics);
+                    replayer->reload_configuration(new_configuration);
                 }
                 catch (const std::exception& e)
                 {

@@ -61,7 +61,7 @@ public:
      * @throw utils::InitializationException if failed to create dynamic participant/publisher.
      */
     DdsReplayer(
-            const yaml::ReplayerConfiguration& configuration,
+            yaml::ReplayerConfiguration& configuration,
             std::string& input_file);
 
     /**
@@ -79,8 +79,8 @@ public:
      * @return \c RETCODE_OK if allowed topics list has been updated correctly
      * @return \c RETCODE_NO_DATA if new allowed topics list is the same as the previous one
      */
-    utils::ReturnCode reload_allowed_topics(
-            const std::shared_ptr<ddspipe::core::AllowedTopicList>& allowed_topics);
+    utils::ReturnCode reload_configuration(
+            const yaml::ReplayerConfiguration& new_configuration);
 
     //! Process input MCAP file
     void process_mcap();

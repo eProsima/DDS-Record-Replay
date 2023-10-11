@@ -51,16 +51,11 @@ using namespace eprosima::ddsrecorder::participants;
 using namespace eprosima::utils;
 
 DdsReplayer::DdsReplayer(
-        const yaml::ReplayerConfiguration& configuration,
+        yaml::ReplayerConfiguration& configuration,
         std::string& input_file)
     : dyn_participant_(nullptr)
     , dyn_publisher_(nullptr)
 {
-    // Create allowed topics list
-    auto allowed_topics = std::make_shared<AllowedTopicList>(
-        configuration.allowlist,
-        configuration.blocklist);
-
     // Create Discovery Database
     discovery_database_ =
             std::make_shared<DiscoveryDatabase>();
@@ -131,18 +126,15 @@ DdsReplayer::DdsReplayer(
     }
 
     // Generate builtin-topics list by combining information from YAML and MCAP files
-    auto builtin_topics = generate_builtin_topics_(configuration, input_file);
+    configuration.ddspipe_configuration.builtin_topics = generate_builtin_topics_(configuration, input_file);
 
     // Create DDS Pipe
     pipe_ = std::make_unique<DdsPipe>(
         configuration.ddspipe_configuration,
-        allowed_topics,
         discovery_database_,
         payload_pool_,
         participants_database_,
-        thread_pool_,
-        builtin_topics,
-        true);
+        thread_pool_);
 }
 
 DdsReplayer::~DdsReplayer()
@@ -171,10 +163,10 @@ DdsReplayer::~DdsReplayer()
     }
 }
 
-utils::ReturnCode DdsReplayer::reload_allowed_topics(
-        const std::shared_ptr<AllowedTopicList>& allowed_topics)
+utils::ReturnCode DdsReplayer::reload_configuration(
+        const yaml::ReplayerConfiguration& new_configuration)
 {
-    return pipe_->reload_allowed_topics(allowed_topics);
+    return pipe_->reload_configuration(new_configuration.ddspipe_configuration);
 }
 
 void DdsReplayer::process_mcap()
@@ -199,7 +191,7 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
         const yaml::ReplayerConfiguration& configuration,
         std::string& input_file)
 {
-    std::set<utils::Heritable<DistributedTopic>> builtin_topics = configuration.builtin_topics;
+    std::set<utils::Heritable<DistributedTopic>> builtin_topics = configuration.ddspipe_configuration.builtin_topics;
 
     mcap::McapReader mcap_reader;
 
