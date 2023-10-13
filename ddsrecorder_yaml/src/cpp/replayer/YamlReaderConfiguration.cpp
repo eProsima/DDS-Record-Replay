@@ -134,6 +134,9 @@ void ReplayerConfiguration::load_ddsreplayer_configuration_(
 
         // The DDS Pipe should be enabled on start up.
         ddspipe_configuration.init_enabled = true;
+
+        // The replayer's DdsPipe doesn't get triggered by the discovery of entities
+        ddspipe_configuration.entity_creation_trigger = EntityCreationTrigger::NONE;
     }
     catch (const std::exception& e)
     {
@@ -289,6 +292,12 @@ void ReplayerConfiguration::load_dds_configuration_(
         ddspipe_configuration.manual_topics =
                 std::vector<ManualTopic>(manual_topics.begin(), manual_topics.end());
     }
+
+    // Create the internal communication (built-in) topics
+    const auto& internal_topic = utils::Heritable<DistributedTopic>::make_heritable(
+            ddspipe::core::types::type_object_topic());
+
+    ddspipe_configuration.builtin_topics.insert(internal_topic);
 }
 
 void ReplayerConfiguration::load_ddsreplayer_configuration_from_file_(
