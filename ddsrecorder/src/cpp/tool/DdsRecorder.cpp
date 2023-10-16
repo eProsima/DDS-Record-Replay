@@ -94,8 +94,7 @@ DdsRecorder::DdsRecorder(
         mcap_handler_);
 
     // Create the internal communication (built-in) topics
-    const auto& internal_topic = utils::Heritable<DistributedTopic>::make_heritable(
-            ddspipe::core::types::type_object_topic());
+    const auto& internal_topic = utils::Heritable<DistributedTopic>::make_heritable(type_object_topic());
 
     configuration.ddspipe_configuration.builtin_topics.insert(internal_topic);
 

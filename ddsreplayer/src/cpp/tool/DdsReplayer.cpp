@@ -33,6 +33,8 @@
 #include <fastdds/dds/topic/TypeSupport.hpp>
 #include <fastrtps/attributes/ParticipantAttributes.h>
 
+#include <ddspipe_core/types/dynamic_types/types.hpp>
+
 #include <ddsrecorder_participants/common/types/DynamicTypesCollection.hpp>
 #include <ddsrecorder_participants/common/types/DynamicTypesCollectionPubSubTypes.hpp>
 #include <ddsrecorder_participants/constants.hpp>
@@ -136,9 +138,7 @@ DdsReplayer::DdsReplayer(
     }
 
     // Create the internal communication (built-in) topics
-    const auto& internal_topic = utils::Heritable<DistributedTopic>::make_heritable(
-            ddspipe::core::types::type_object_topic());
-
+    const auto& internal_topic = utils::Heritable<DistributedTopic>::make_heritable(type_object_topic());
     configuration.ddspipe_configuration.builtin_topics.insert(internal_topic);
 
     // Generate builtin-topics list by combining information from YAML and MCAP files
