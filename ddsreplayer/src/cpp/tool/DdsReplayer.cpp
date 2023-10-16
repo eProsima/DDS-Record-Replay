@@ -135,6 +135,12 @@ DdsReplayer::DdsReplayer(
         }
     }
 
+    // Create the internal communication (built-in) topics
+    const auto& internal_topic = utils::Heritable<DistributedTopic>::make_heritable(
+            ddspipe::core::types::type_object_topic());
+
+    configuration.ddspipe_configuration.builtin_topics.insert(internal_topic);
+
     // Generate builtin-topics list by combining information from YAML and MCAP files
     configuration.ddspipe_configuration.builtin_topics = generate_builtin_topics_(configuration, input_file);
 

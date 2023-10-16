@@ -15,6 +15,8 @@
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/utils.hpp>
 
+#include <ddspipe_core/types/dynamic_types/types.hpp>
+
 #include "DdsRecorder.hpp"
 
 namespace eprosima {
@@ -29,21 +31,18 @@ using namespace eprosima::ddsrecorder::participants;
 using namespace eprosima::utils;
 
 DdsRecorder::DdsRecorder(
-        const yaml::RecorderConfiguration& configuration,
+        yaml::RecorderConfiguration& configuration,
         const DdsRecorderStateCode& init_state,
         const std::string& file_name)
 {
     // Create Discovery Database
-    discovery_database_ =
-            std::make_shared<DiscoveryDatabase>();
+    discovery_database_ = std::make_shared<DiscoveryDatabase>();
 
     // Create Payload Pool
-    payload_pool_ =
-            std::make_shared<FastPayloadPool>();
+    payload_pool_ = std::make_shared<FastPayloadPool>();
 
     // Create Thread Pool
-    thread_pool_ =
-            std::make_shared<SlotThreadPool>(configuration.n_threads);
+    thread_pool_ = std::make_shared<SlotThreadPool>(configuration.n_threads);
 
     // Fill MCAP output file settings
     participants::McapOutputSettings mcap_output_settings;
@@ -94,9 +93,14 @@ DdsRecorder::DdsRecorder(
         discovery_database_,
         mcap_handler_);
 
-    // Create and populate Participant Database
-    participants_database_ =
-            std::make_shared<ParticipantsDatabase>();
+    // Create the internal communication (built-in) topics
+    const auto& internal_topic = utils::Heritable<DistributedTopic>::make_heritable(
+            ddspipe::core::types::type_object_topic());
+
+    configuration.ddspipe_configuration.builtin_topics.insert(internal_topic);
+
+    // Create Participant Database
+    participants_database_ = std::make_shared<ParticipantsDatabase>();
 
     // Populate Participant Database
     participants_database_->add_participant(

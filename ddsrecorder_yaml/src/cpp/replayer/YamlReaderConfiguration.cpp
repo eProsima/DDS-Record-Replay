@@ -292,12 +292,6 @@ void ReplayerConfiguration::load_dds_configuration_(
         ddspipe_configuration.manual_topics =
                 std::vector<ManualTopic>(manual_topics.begin(), manual_topics.end());
     }
-
-    // Create the internal communication (built-in) topics
-    const auto& internal_topic = utils::Heritable<DistributedTopic>::make_heritable(
-            ddspipe::core::types::type_object_topic());
-
-    ddspipe_configuration.builtin_topics.insert(internal_topic);
 }
 
 void ReplayerConfiguration::load_ddsreplayer_configuration_from_file_(

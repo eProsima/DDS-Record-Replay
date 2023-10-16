@@ -65,7 +65,7 @@ public:
      * @param file_name:     Name of the mcap file where data is recorded. If not provided, the one from configuration is used instead.
      */
     DdsRecorder(
-            const yaml::RecorderConfiguration& configuration,
+            yaml::RecorderConfiguration& configuration,
             const DdsRecorderStateCode& init_state,
             const std::string& file_name = "");
 
