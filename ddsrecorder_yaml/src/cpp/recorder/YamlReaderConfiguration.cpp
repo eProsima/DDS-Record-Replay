@@ -129,7 +129,7 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
             utils::Heritable<WildcardDdsFilterTopic>::make_heritable(rpc_response_topic));
 
         // The DDS Pipe should be enabled on start up.
-        ddspipe_configuration.init_enabled = false;
+        ddspipe_configuration.init_enabled = true;
 
         // The recorder's DdsPipe trigger is the discovery of a writer
         ddspipe_configuration.entity_creation_trigger = EntityCreationTrigger::WRITER;
@@ -394,12 +394,6 @@ void RecorderConfiguration::load_dds_configuration_(
         ddspipe_configuration.builtin_topics = YamlReader::get_set<utils::Heritable<DistributedTopic>>(yml, BUILTIN_TAG,
                         version);
     }
-
-    // Create the internal communication (built-in) topics
-    const auto& internal_topic = utils::Heritable<DistributedTopic>::make_heritable(
-            ddspipe::core::types::type_object_topic());
-            
-    ddspipe_configuration.builtin_topics.insert(internal_topic);
 }
 
 void RecorderConfiguration::load_ddsrecorder_configuration_from_file_(
