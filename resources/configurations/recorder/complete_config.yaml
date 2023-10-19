@@ -22,6 +22,13 @@ dds:
         max-rx-rate: 10
         downsampling: 4
 
+  topics:
+    - name: temperature/*
+      type: temperature/types/*
+      qos:
+        max-rx-rate: 15
+        downsampling: 2
+
   ignore-participant-flags: filter_same_process
   transport: shm
   whitelist-interfaces:

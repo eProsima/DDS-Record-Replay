@@ -607,13 +607,6 @@ A complete example of all the configurations described on this page can be found
         - name: "topic_name"
           type: "topic_type"
 
-      topics:
-        - name: temperature/*
-          type: temperature/types/*
-          qos:
-            max-rx-rate: 15
-            downsampling: 2
-
       builtin-topics:
         - name: "HelloWorldTopic"
           type: "HelloWorld"
@@ -625,6 +618,13 @@ A complete example of all the configurations described on this page can be found
             ownership: false
             max-rx-rate: 10
             downsampling: 4
+
+      topics:
+        - name: temperature/*
+          type: temperature/types/*
+          qos:
+            max-rx-rate: 15
+            downsampling: 2
 
       ignore-participant-flags: no_filter
       transport: builtin
