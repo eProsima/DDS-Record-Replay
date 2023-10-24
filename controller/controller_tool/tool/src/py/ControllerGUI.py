@@ -23,7 +23,7 @@ from PyQt6.QtCore import QDateTime, QUrl, Qt
 from PyQt6.QtGui import QAction, QDesktopServices
 from PyQt6.QtWidgets import (
     QDialog, QDialogButtonBox, QHBoxLayout, QHeaderView,
-    QLabel, QMainWindow, QMenuBar, QPushButton, QSpinBox, QTableWidget,
+    QLabel, QLineEdit, QMainWindow, QMenuBar, QPushButton, QSpinBox, QTableWidget,
     QTableWidgetItem, QVBoxLayout, QWidget)
 
 DDS_RECORDER = 'DDS Recorder'
@@ -81,6 +81,50 @@ class DdsDomainDialog(QDialog):
     def get_dds_domain(self):
         """Return DDS Domain from spin box as integer value."""
         return int(self.spin_box.value())
+    
+
+class DdsTopicNameDialog(QDialog):
+    """Class that implements the a dialog to set the DDS command and status topic names."""
+
+    def __init__(self, current_command_topic, current_status_topic):
+        """Construct the dialog to set the DDS command and status topic names."""
+        super().__init__()
+
+        self.command_topic_label = QLabel('Enter command topic name:')
+        self.command_text_box = QLineEdit(self)
+        self.command_text_box.setText(current_command_topic)
+
+        self.status_topic_label = QLabel('Enter status topic name:')
+        self.status_text_box = QLineEdit(self)
+        self.status_text_box.setText(current_status_topic)
+
+        self.buttonBox = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Save
+            | QDialogButtonBox.StandardButton.Cancel)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        command_layout = QVBoxLayout()
+        command_layout.addWidget(self.command_topic_label)
+        command_layout.addWidget(self.command_text_box)
+
+        status_layout = QVBoxLayout()
+        status_layout.addWidget(self.status_topic_label)
+        status_layout.addWidget(self.status_text_box)
+
+        horiznontal_layout = QHBoxLayout()
+        horiznontal_layout.addLayout(command_layout)
+        horiznontal_layout.addLayout(status_layout)
+
+        self.setLayout(horiznontal_layout)
+
+    def get_command_topic(self):
+        """Return DDS command topic from the text box."""
+        return self.command_text_box.text()
+
+    def get_status_topic(self):
+        """Return DDS status topic from the text box."""
+        return self.status_text_box.text()
 
 
 class MenuWidget(QMenuBar):
@@ -145,6 +189,8 @@ class ControllerGUI(QMainWindow):
 
         self.dds_controller = Controller()
         self.dds_domain = 0
+        self.command_topic = '/ddsrecorder/command'
+        self.status_topic = '/ddsrecorder/status'
 
         self.init_gui()
 
@@ -156,7 +202,7 @@ class ControllerGUI(QMainWindow):
 
         # Create DDS entities at the end to avoid race condition (receive
         # status before connecting with signal slots)
-        self.dds_controller.init_dds(self.dds_domain)
+        self.dds_controller.init_dds(self.dds_domain, self.command_topic, self.status_topic)
 
     def on_ddsrecorder_discovered(self, discovered, message):
         """Inform that a new DDS Recorder has been discovered."""
@@ -178,9 +224,9 @@ class ControllerGUI(QMainWindow):
         # Change status bar
         self.update_status(RecorderStatus[current_status.upper()])
 
-    def restart_controller(self, dds_domain=0):
-        """Restart the DDS Controller if the DDS Domain changes."""
-        if dds_domain != self.dds_domain:
+    def restart_controller(self, dds_domain=0, command_topic='/ddsrecorder/command', status_topic='/ddsrecorder/status'):
+        """Restart the DDS Controller if the DDS Domain or topic name changes."""
+        if dds_domain != self.dds_domain or command_topic != self.command_topic or status_topic != self.status_topic:
             if self.dds_controller.is_valid_dds_domain(dds_domain):
                 # Delete DDS entities in previous domain
                 self.dds_controller.delete_dds()
@@ -189,6 +235,8 @@ class ControllerGUI(QMainWindow):
                 # Create DDS entities in new domain
                 self.dds_controller.init_dds(dds_domain)
                 self.dds_domain = dds_domain
+                self.command_topic = command_topic
+                self.status_topic = status_topic
 
     def init_gui(self):
         """Initialize the graphical interface and its widgets."""
@@ -317,7 +365,17 @@ class ControllerGUI(QMainWindow):
             # Restart only if it is a different Domain
             if domain != self.dds_domain:
                 if (self.dds_controller.is_valid_dds_domain(domain)):
-                    self.restart_controller(dds_domain=domain)
+                    self.restart_controller(domain, self.command_topic, self.status_topic)
+    
+    def topic_name_dialog(self):
+        """Create a dialog to update the recorder topic names."""
+        dialog = DdsTopicNameDialog(self.command_topic, self.status_topic)
+        if dialog.exec():
+            command_topic = dialog.get_command_topic()
+            status_topic = dialog.get_status_topic()
+            # Restart controller if a topic name has changed
+            if command_topic != self.command_topic or status_topic != self.status_topic:
+                self.restart_controller(self.dds_domain, command_topic, status_topic)
 
     def event_start_button_clicked(self):
         """Publish command."""
