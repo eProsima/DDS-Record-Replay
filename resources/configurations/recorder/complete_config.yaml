@@ -13,14 +13,6 @@ dds:
   builtin-topics:
     - name: "HelloWorldTopic"
       type: "HelloWorld"
-      qos:
-        reliability: true
-        durability: true
-        keyed: false
-        partitions: true
-        ownership: false
-        max-rx-rate: 10
-        downsampling: 4
 
   topics:
     - name: temperature/*
@@ -44,8 +36,6 @@ recorder:
   buffer-size: 50
   event-window: 60
   log-publish-time: false
-  max-rx-rate: 20
-  downsampling: 3
   only-with-type: false
   compression:
     algorithm: lz4
@@ -64,3 +54,7 @@ specs:
   threads: 8
   max-pending-samples: 10
   cleanup-period: 90
+
+  qos:
+    max-rx-rate: 20
+    downsampling: 3

@@ -33,12 +33,31 @@ DDS Configuration
 
 Configuration related to DDS communication.
 
+.. _recorder_builtin_topics:
+
+Built-in Topics
+^^^^^^^^^^^^^^^
+
+The discovery phase can be accelerated by listing topics under the ``builtin-topics`` tag.
+The |ddsrecorder| will create the DataWriters and DataReaders for these topics in the |ddsrecorder| initialization.
+The :ref:`Topic QoS <recorder_topic_qos>` for these topics can be manually configured with a :ref:`Manual Topic <recorder_manual_topics>`; if a :ref:`Topic QoS <recorder_topic_qos>` is not configured, it will take its default value.
+
+The ``builtin-topics`` must specify a ``name`` and ``type`` without wildcard characters.
+
+**Example of usage:**
+
+    .. code-block:: yaml
+
+        builtin-topics:
+          - name: HelloWorldTopic
+            type: HelloWorld
+
 .. _recorder_topic_filtering:
 
 Topic Filtering
 ^^^^^^^^^^^^^^^
 
-|ddsrecorder| includes a mechanism to automatically detect which topics are being used in a DDS network.
+The |ddsrecorder| includes a mechanism to automatically detect which topics are being used in a DDS network.
 By automatically detecting these topics, a |ddsrecorder| creates internal DDS :term:`Readers<DataReader>` for each topic in order to record the data published on each discovered topic.
 
 .. note::
@@ -122,11 +141,13 @@ If a topic matches an expression both in the ``allowlist`` and in the ``blocklis
           - name: "*"
             type: HelloWorld
 
-Topic Quality of Service
-^^^^^^^^^^^^^^^^^^^^^^^^
+.. _recorder_topic_qos:
 
-For every topic contained in this list, both ``name`` and ``type`` must be specified and contain no wildcard characters.
-Apart from these values, the tag ``qos`` under each topic allows to configure the following values:
+Topic QoS
+^^^^^^^^^
+
+The following is the set of QoS that are configurable for a topic.
+For more information on topics, please read the `Fast DDS Topic <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dds_layer/topic/topic.html>`_ section.
 
 .. list-table::
     :header-rows: 1
@@ -149,23 +170,17 @@ Apart from these values, the tag ``qos`` under each topic allows to configure th
         - ``false``
         - ``TRANSIENT_LOCAL`` / ``VOLATILE``
 
-    *   - History Depth
-        - ``depth``
-        - *integer*
-        - *default value*
-        - -
+    *   - Ownership
+        - ``ownership``
+        - *bool*
+        - ``false``
+        - ``EXCLUSIVE_OWNERSHIP_QOS`` / ``SHARED_OWNERSHIP_QOS``
 
     *   - Partitions
         - ``partitions``
         - *bool*
         - ``false``
         - Topic with / without partitions
-
-    *   - Ownership
-        - ``ownership``
-        - *bool*
-        - ``false``
-        - ``EXCLUSIVE_OWNERSHIP_QOS`` / ``SHARED_OWNERSHIP_QOS``
 
     *   - Key
         - ``keyed``
@@ -176,23 +191,42 @@ Apart from these values, the tag ``qos`` under each topic allows to configure th
     *   - Max Reception Rate
         - ``max-rx-rate``
         - *float*
-        - *default value*
-        - Maximum sample reception rate [Hz]
+        - ``0`` (unlimited)
+        - :ref:`recorder_max_rx_rate`
 
     *   - Downsampling
         - ``downsampling``
-        - *integer*
-        - *default value*
-        - Downsampling factor
+        - *unsigned integer*
+        - ``1``
+        - :ref:`recorder_downsampling`
+
+.. _recorder_max_rx_rate:
+
+Max Reception Rate
+""""""""""""""""""
+
+Limits the frequency [Hz] at which samples are processed, by discarding messages received before :code:`1/max-rx-rate` seconds have elapsed since the last processed message was received.
+When specified, ``max-rx-rate`` is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
+This parameter only accepts non-negative values, and its default value is ``0`` (no limit).
+
+.. _recorder_downsampling:
+
+Downsampling
+""""""""""""
+
+Reduces the sampling rate of the received data by keeping *1* out of every *n* samples received (per topic), where *n* is the value specified in ``downsampling``.
+If ``max-rx-rate`` is also set, downsampling applies to messages that already managed to pass this filter.
+When specified, this downsampling factor is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
+This parameter only accepts positive integer values, and its default value is ``1`` (no downsampling).
 
 .. _recorder_manual_topics:
 
-Topics
-^^^^^^
+Manual Topics
+^^^^^^^^^^^^^
 
-A subset of QoSs can be manually configured for a specific topic under the tag ``topics``.
+A subset of :ref:`Topic QoS <recorder_topic_qos>` can be manually configured for a specific topic under the tag ``topics``.
 The tag ``topics`` has a required ``name`` tag that accepts wildcard characters.
-It also has two optional tags: a ``type`` tag that accepts wildcard characters, and a ``qos`` tag with the QoSs that the user wants to manually configure.
+It also has two optional tags: a ``type`` tag that accepts wildcard characters, and a ``qos`` tag with the :ref:`Topic QoS <recorder_topic_qos>` that the user wants to manually configure.
 If a ``qos`` is not manually configured, it will get its value by discovery.
 
 **Example of usage**
@@ -205,36 +239,6 @@ If a ``qos`` is not manually configured, it will get its value by discovery.
         qos:
             max-rx-rate: 15
             downsampling: 2
-
-.. _recorder_builtin_topics:
-
-Built-in Topics
-^^^^^^^^^^^^^^^
-
-Apart from the dynamic DDS topics discovered in the network, the discovery phase can be accelerated by using the builtin topic list (``builtin-topics``).
-By defining topics in this list, the |ddsrecorder| will create the DataWriters and DataReaders in recorder initialization.
-
-The builtin-topics list is defined in the same form as the ``allowlist`` and ``blocklist``.
-
-This feature also allows to manually force the QoS of a specific topic, so the entities created in such topic follows the specified QoS and not the one first discovered.
-
-**Example of usage:**
-
-    .. code-block:: yaml
-
-        builtin-topics:
-          - name: HelloWorldTopic
-            type: HelloWorld
-            qos:
-              reliability: true       # Use QoS RELIABLE
-              durability: true        # Use QoS TRANSIENT_LOCAL
-              depth: 100              # Use History Depth 100
-              partitions: true        # Topic with partitions
-              ownership: false        # Use QoS SHARED_OWNERSHIP_QOS
-              keyed: true             # Topic with key
-              max-rx-rate: 10         # Discard messages if less than 100ms elapsed since the last sample was processed
-              downsampling: 4         # Keep 1 of every 4 samples
-
 
 .. _recorder_usage_configuration_domain_id:
 
@@ -391,21 +395,6 @@ Log Publish Time
 By default (``log-publish-time: false``) received messages are stored in the MCAP file with ``logTime`` value equals to the reception timestamp.
 Additionally, the timestamp corresponding to when messages were initially published (``publishTime``) is also included in the information dumped to MCAP files.
 In some applications, it may be required to use the ``publishTime`` as ``logTime``, which can be achieved by providing the ``log-publish-time: true`` configuration option.
-
-Max Reception Rate
-^^^^^^^^^^^^^^^^^^
-
-Limits the frequency [Hz] at which samples are processed, by discarding messages received before :code:`1/max-rx-rate` seconds have elapsed since the last processed message was received.
-When specified, ``max-rx-rate`` is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
-This parameter only accepts non-negative values, and its default value is ``0`` (no limit).
-
-Downsampling
-^^^^^^^^^^^^
-
-Reduces the sampling rate of the received data by keeping *1* out of every *n* samples received (per topic), where *n* is the value specified in ``downsampling``.
-If ``max-rx-rate`` is also set, downsampling applies to messages that already managed to pass this filter.
-When specified, this downsampling factor is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
-This parameter only accepts positive integer values, and its default value is ``1`` (no downsampling).
 
 .. _recorder_usage_configuration_onlywithtype:
 
@@ -610,14 +599,6 @@ A complete example of all the configurations described on this page can be found
       builtin-topics:
         - name: "HelloWorldTopic"
           type: "HelloWorld"
-          qos:
-            reliability: true
-            durability: true
-            keyed: false
-            partitions: true
-            ownership: false
-            max-rx-rate: 10
-            downsampling: 4
 
       topics:
         - name: temperature/*
@@ -641,8 +622,6 @@ A complete example of all the configurations described on this page can be found
       buffer-size: 50
       event-window: 60
       log-publish-time: false
-      max-rx-rate: 20
-      downsampling: 3
       only-with-type: false
       compression:
         algorithm: lz4
@@ -661,6 +640,10 @@ A complete example of all the configurations described on this page can be found
       threads: 8
       max-pending-samples: 10
       cleanup-period: 90
+
+      qos:
+        max-rx-rate: 20
+        downsampling: 3
 
 
 .. _recorder_usage_fastdds_configuration:

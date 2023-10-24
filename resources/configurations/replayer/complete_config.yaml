@@ -13,13 +13,6 @@ dds:
   builtin-topics:
     - name: "HelloWorldTopic"
       type: "HelloWorld"
-      qos:
-        reliability: true
-        durability: true
-        keyed: false
-        partitions: true
-        ownership: false
-        max-tx-rate: 25
 
   topics:
     - name: temperature/*
@@ -53,9 +46,11 @@ replayer:
     milliseconds: 500
 
   rate: 1.4
-  max-tx-rate: 50
   replay-types: true
 
 specs:
   threads: 12
   wait-all-acked-timeout: 10
+
+  qos:
+    max-tx-rate: 20

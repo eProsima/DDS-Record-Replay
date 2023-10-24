@@ -23,6 +23,7 @@
 #include <cpp_utils/types/Fuzzy.hpp>
 
 #include <ddspipe_core/configuration/DdsPipeConfiguration.hpp>
+#include <ddspipe_core/types/dds/TopicQoS.hpp>
 #include <ddspipe_core/types/topic/dds/DistributedTopic.hpp>
 #include <ddspipe_core/types/topic/filter/IFilterTopic.hpp>
 
@@ -70,8 +71,7 @@ public:
 
     // Specs
     unsigned int n_threads = 12;
-    unsigned int max_history_depth = 5000;
-    float max_tx_rate = 0;
+    ddspipe::core::types::TopicQoS topic_qos{};
 
 protected:
 

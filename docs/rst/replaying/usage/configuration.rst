@@ -32,6 +32,23 @@ DDS Configuration
 
 Configuration related to DDS communication.
 
+.. _replayer_builtin_topics:
+
+Built-in Topics
+^^^^^^^^^^^^^^^
+
+The discovery phase can be accelerated by listing topics under the ``builtin-topics`` tag.
+The |ddsreplayer| will create the DataWriters and DataReaders for these topics in the |ddsreplayer| initialization.
+The :ref:`Topic QoS <replayer_topic_qos>` for these topics can be manually configured with a :ref:`Manual Topic <replayer_manual_topics>`; if a :ref:`Topic QoS <replayer_topic_qos>` is not configured, it will take its default value.
+
+The ``builtin-topics`` must specify a ``name`` and ``type`` without wildcard characters.
+
+.. code-block:: yaml
+
+    builtin-topics:
+      - name: HelloWorldTopic
+        type: HelloWorld
+
 .. _replayer_topic_filtering:
 
 Topic Filtering
@@ -79,7 +96,7 @@ See :term:`Topic` section for further information about the topic.
 
 Allow topic list
 """"""""""""""""
-This is the list of topics that |ddsreplayer| will replay, i.e. only recorded data under the topics matching the expressions in the ``allowlist`` will be published by |ddsreplayer|.
+This is the list of topics that the |ddsreplayer| will replay, i.e. only recorded data under the topics matching the expressions in the ``allowlist`` will be published by |ddsreplayer|.
 
 .. note::
 
@@ -117,12 +134,13 @@ If a topic matches an expression both in the ``allowlist`` and in the ``blocklis
           - name: "*"
             type: HelloWorld
 
+.. _replayer_topic_qos:
 
-Topic Quality of Service
-^^^^^^^^^^^^^^^^^^^^^^^^
+Topic QoS
+^^^^^^^^^
 
-For every topic contained in this list, both ``name`` and ``type`` must be specified and contain no wildcard characters.
-Apart from these values, the tag ``qos`` under each topic allows to configure the following values:
+The following is the set of QoS that are configurable for a topic.
+For more information on topics, please read the `Fast DDS Topic <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dds_layer/topic/topic.html>`_ section.
 
 .. list-table::
     :header-rows: 1
@@ -145,17 +163,17 @@ Apart from these values, the tag ``qos`` under each topic allows to configure th
         - ``false``
         - ``TRANSIENT_LOCAL`` / ``VOLATILE``
 
-    *   - Partitions
-        - ``partitions``
-        - *bool*
-        - ``false``
-        - Topic with / without partitions
-
     *   - Ownership
         - ``ownership``
         - *bool*
         - ``false``
         - ``EXCLUSIVE_OWNERSHIP_QOS`` / ``SHARED_OWNERSHIP_QOS``
+
+    *   - Partitions
+        - ``partitions``
+        - *bool*
+        - ``false``
+        - Topic with / without partitions
 
     *   - Key
         - ``keyed``
@@ -166,28 +184,36 @@ Apart from these values, the tag ``qos`` under each topic allows to configure th
     *   - Max Transmission Rate
         - ``max-tx-rate``
         - *float*
-        - *default value*
-        - Maximum sample transmission rate [Hz]
+        - ``0`` (unlimited)
+        - :ref:`replayer_max_tx_rate`
 
-**Example of usage:**
+.. _replayer_history_depth:
 
-    .. code-block:: yaml
+History Depth
+^^^^^^^^^^^^^
 
-        builtin-topics:
-          - name: HelloWorldTopic
-            type: HelloWorld
-            qos:
-              reliability: true       # Use QoS RELIABLE
-              durability: true        # Use QoS TRANSIENT_LOCAL
-              partitions: true        # Topic with partitions
-              ownership: false        # Use QoS SHARED_OWNERSHIP_QOS
-              keyed: true             # Topic with key
-              max-tx-rate: 25         # Discard messages if less than 100ms elapsed since the last sample was transmitted
+The ``history-depth`` tag configures the history depth of the Fast DDS internal entities.
+By default, the depth of every RTPS History instance is :code:`5000`, which sets a constraint on the maximum number of samples a |ddsreplayer| instance can deliver to late joiner Readers configured with ``TRANSIENT_LOCAL`` `DurabilityQosPolicyKind <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dds_layer/core/policy/standardQosPolicies.html#durabilityqospolicykind>`_.
+Its value should be decreased when the sample size and/or number of created endpoints (increasing with the number of topics and |ddsreplayer| participants) are big enough to cause memory exhaustion issues.
+If enough memory is available, however, the ``history-depth`` could be increased to deliver a greater number of samples to late joiners.
+
+.. _replayer_max_tx_rate:
+
+Max Transmission Rate
+"""""""""""""""""""""
+
+The ``max-tx-rate`` tag limits the frequency [Hz] at which samples are sent by discarding messages transmitted before :code:`1/max-tx-rate` seconds have passed since the last sent message.
+It only accepts non-negative numbers.
+By default it is set to ``0``; it sends samples at an unlimited transmission rate.
+
+.. note::
+
+    The ``max-tx-rate`` tag can be set (in order of precedence) for topics, for participants, and globally in specs.
 
 .. _replayer_manual_topics:
 
-Topics
-^^^^^^
+Manual Topics
+^^^^^^^^^^^^^
 
 A subset of QoSs can be manually configured for a specific topic under the tag ``topics``.
 The tag ``topics`` has a required ``name`` tag that accepts wildcard characters.
@@ -202,18 +228,7 @@ If a ``qos`` is not manually configured, it will get its value by discovery.
       - name: temperature/*
         type: temperature/types/*
         qos:
-            max-tx-rate: 15
-
-Built-in Topics
-^^^^^^^^^^^^^^^
-
-As seen in :ref:`recorder_topic_filtering`, a |ddsrecorder| uses the QoS of the first Publisher/Subscriber found in every recorded topic, unless manually defined in the :ref:`built-in topics <recorder_builtin_topics>` list.
-This QoS information is stored in the MCAP file along with the user data, and thus a |ddsreplayer| instance is able to publish recorded data preserving the original QoS.
-
-However, the user has the option to manually set the QoS of any topic to be played back through the replayer's builtin-topics list.
-The builtin-topics list is defined in the same form as the ``allowlist`` and ``blocklist``.
-
-This feature also allows to manually force the QoS of a specific topic, so the entities created in such topic follows the specified QoS and not the one first discovered.
+          max-tx-rate: 15
 
 .. _replayer_usage_configuration_domain_id:
 
@@ -458,22 +473,15 @@ A complete example of all the configurations described on this page can be found
         - name: "topic_name"
           type: "topic_type"
 
+      builtin-topics:
+        - name: "HelloWorldTopic"
+          type: "HelloWorld"
+
       topics:
         - name: temperature/*
           type: temperature/types/*
           qos:
             max-tx-rate: 15
-
-      builtin-topics:
-        - name: "HelloWorldTopic"
-          type: "HelloWorld"
-          qos:
-            reliability: true
-            durability: true
-            keyed: false
-            partitions: true
-            ownership: false
-            max-tx-rate: 25
 
       ignore-participant-flags: no_filter
       transport: builtin
@@ -501,9 +509,11 @@ A complete example of all the configurations described on this page can be found
         milliseconds: 500
 
       rate: 1.4
-      max-tx-rate: 50
       replay-types: true
 
     specs:
       threads: 8
       wait-all-acked-timeout: 10
+
+      qos:
+        max-tx-rate: 20
