@@ -95,7 +95,6 @@ DdsRecorder::DdsRecorder(
 
     // Create the internal communication (built-in) topics
     const auto& internal_topic = utils::Heritable<DistributedTopic>::make_heritable(type_object_topic());
-
     configuration.ddspipe_configuration.builtin_topics.insert(internal_topic);
 
     // Create Participant Database

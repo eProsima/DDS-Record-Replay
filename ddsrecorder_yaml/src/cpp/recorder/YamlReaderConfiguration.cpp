@@ -132,7 +132,7 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
         ddspipe_configuration.init_enabled = true;
 
         // The recorder's DdsPipe trigger is the discovery of a writer
-        ddspipe_configuration.entity_creation_trigger = EntityCreationTrigger::WRITER;
+        ddspipe_configuration.discovery_trigger = DiscoveryTrigger::WRITER;
 
         // Initialize controller domain with the same as the one being recorded
         // WARNING: dds tag must have been parsed beforehand

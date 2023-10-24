@@ -136,7 +136,7 @@ void ReplayerConfiguration::load_ddsreplayer_configuration_(
         ddspipe_configuration.init_enabled = true;
 
         // The replayer's DdsPipe doesn't get triggered by the discovery of entities
-        ddspipe_configuration.entity_creation_trigger = EntityCreationTrigger::NONE;
+        ddspipe_configuration.discovery_trigger = DiscoveryTrigger::NONE;
     }
     catch (const std::exception& e)
     {
