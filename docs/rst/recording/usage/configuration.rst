@@ -250,11 +250,11 @@ If a ``qos`` is not manually configured, it will get its value by discovery.
 .. code-block:: yaml
 
     topics:
-      - name: temperature/*
-        type: temperature/types/*
+      - name: "temperature/*"
+        type: "temperature/types/*"
         qos:
-            max-rx-rate: 15
-            downsampling: 2
+          max-rx-rate: 15
+          downsampling: 2
 
 .. _recorder_usage_configuration_domain_id:
 
@@ -622,8 +622,8 @@ A complete example of all the configurations described on this page can be found
           type: "HelloWorld"
 
       topics:
-        - name: temperature/*
-          type: temperature/types/*
+        - name: "temperature/*"
+          type: "temperature/types/*"
           qos:
             max-rx-rate: 15
             downsampling: 2

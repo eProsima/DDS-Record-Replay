@@ -231,8 +231,8 @@ If a ``qos`` is not manually configured, it will get its value by discovery.
 .. code-block:: yaml
 
     topics:
-      - name: temperature/*
-        type: temperature/types/*
+      - name: "temperature/*"
+        type: "temperature/types/*"
         qos:
           max-tx-rate: 15
 
@@ -489,8 +489,8 @@ A complete example of all the configurations described on this page can be found
           type: "HelloWorld"
 
       topics:
-        - name: temperature/*
-          type: temperature/types/*
+        - name: "temperature/*"
+          type: "temperature/types/*"
           qos:
             max-tx-rate: 15
 
