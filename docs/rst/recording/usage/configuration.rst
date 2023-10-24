@@ -186,7 +186,13 @@ For more information on topics, please read the `Fast DDS Topic <https://fast-dd
         - ``keyed``
         - *bool*
         - ``false``
-        - Topic with / without key
+        - Topic with / without `key <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dds_layer/topic/typeSupport/typeSupport.html#data-types-with-a-key>`_
+
+    *   - History Depth
+        - ``history-depth``
+        - *integer*
+        - ``5000``
+        - :ref:`recorder_history_depth`
 
     *   - Max Reception Rate
         - ``max-rx-rate``
@@ -200,24 +206,34 @@ For more information on topics, please read the `Fast DDS Topic <https://fast-dd
         - ``1``
         - :ref:`recorder_downsampling`
 
+.. _recorder_history_depth:
+
+History Depth
+"""""""""""""
+
+The ``history-depth`` tag configures the history depth of the Fast DDS internal entities.
+By default, the depth of every RTPS History instance is :code:`5000`, which sets a constraint on the maximum number of samples a |ddsrecorder| instance can deliver to late joiner Readers configured with ``TRANSIENT_LOCAL`` `DurabilityQosPolicyKind <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dds_layer/core/policy/standardQosPolicies.html#durabilityqospolicykind>`_.
+Its value should be decreased when the sample size and/or number of created endpoints (increasing with the number of topics) are big enough to cause memory exhaustion issues.
+If enough memory is available, however, the ``history-depth`` could be increased to deliver a greater number of samples to late joiners.
+
 .. _recorder_max_rx_rate:
 
 Max Reception Rate
 """"""""""""""""""
 
-Limits the frequency [Hz] at which samples are processed, by discarding messages received before :code:`1/max-rx-rate` seconds have elapsed since the last processed message was received.
-When specified, ``max-rx-rate`` is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
-This parameter only accepts non-negative values, and its default value is ``0`` (no limit).
+The ``max-rx-rate`` tag limits the frequency [Hz] at which samples are processed by discarding messages received before :code:`1/max-rx-rate` seconds have passed since the last processed message.
+It only accepts non-negative numbers.
+By default it is set to ``0``; it processes samples at an unlimited reception rate.
 
 .. _recorder_downsampling:
 
 Downsampling
 """"""""""""
 
-Reduces the sampling rate of the received data by keeping *1* out of every *n* samples received (per topic), where *n* is the value specified in ``downsampling``.
-If ``max-rx-rate`` is also set, downsampling applies to messages that already managed to pass this filter.
-When specified, this downsampling factor is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
-This parameter only accepts positive integer values, and its default value is ``1`` (no downsampling).
+The ``downsampling`` tag reduces the sampling rate of the received data by only keeping *1* out of every *n* samples received (per topic), where *n* is the value specified under the ``downsampling`` tag.
+When the ``max-rx-rate`` tag is also set, down-sampling only applies to messages that have passed the ``max-rx-rate`` filter.
+It only accepts positive integers.
+By default it is set to ``1``; it accepts every message.
 
 .. _recorder_manual_topics:
 
@@ -571,6 +587,11 @@ Cleanup Period
 As explained in :ref:`Event Window <recorder_usage_configuration_event_window>`, a |ddsrecorder| in paused mode awaits for an event command to write in disk all samples received in the last ``event-window`` seconds.
 To accomplish this, received samples are stored in memory until the aforementioned event is triggered and, in order to limit memory consumption, outdated (received more than ``event-window`` seconds ago) samples are removed from this buffer every ``cleanup-period`` seconds.
 By default, its value is equal to twice the ``event-window``.
+
+QoS
+^^^
+
+``specs`` supports a ``qos`` **optional** tag to configure the default values of the :ref:`Topic QoS <recorder_topic_qos>`.
 
 .. _recorder_usage_configuration_general_example:
 

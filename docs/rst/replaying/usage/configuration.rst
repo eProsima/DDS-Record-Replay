@@ -179,7 +179,13 @@ For more information on topics, please read the `Fast DDS Topic <https://fast-dd
         - ``keyed``
         - *bool*
         - ``false``
-        - Topic with / without key
+        - Topic with / without `key <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dds_layer/topic/typeSupport/typeSupport.html#data-types-with-a-key>`_
+
+    *   - History Depth
+        - ``history-depth``
+        - *integer*
+        - ``5000``
+        - :ref:`replayer_history_depth`
 
     *   - Max Transmission Rate
         - ``max-tx-rate``
@@ -190,11 +196,11 @@ For more information on topics, please read the `Fast DDS Topic <https://fast-dd
 .. _replayer_history_depth:
 
 History Depth
-^^^^^^^^^^^^^
+"""""""""""""
 
 The ``history-depth`` tag configures the history depth of the Fast DDS internal entities.
 By default, the depth of every RTPS History instance is :code:`5000`, which sets a constraint on the maximum number of samples a |ddsreplayer| instance can deliver to late joiner Readers configured with ``TRANSIENT_LOCAL`` `DurabilityQosPolicyKind <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dds_layer/core/policy/standardQosPolicies.html#durabilityqospolicykind>`_.
-Its value should be decreased when the sample size and/or number of created endpoints (increasing with the number of topics and |ddsreplayer| participants) are big enough to cause memory exhaustion issues.
+Its value should be decreased when the sample size and/or number of created endpoints (increasing with the number of topics) are big enough to cause memory exhaustion issues.
 If enough memory is available, however, the ``history-depth`` could be increased to deliver a greater number of samples to late joiners.
 
 .. _replayer_max_tx_rate:
@@ -448,6 +454,11 @@ The execution of a |ddsreplayer| instance ends when the last message contained i
 Note that this last message might be lost after publication, and if reliable `Reliability QoS <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dds_layer/core/policy/standardQosPolicies.html#reliabilityqospolicy>`__ is being used, a mechanism should be established to avoid this problematic situation.
 For this purpose, the user can specify the maximum amount of milliseconds (``wait-all-acked-timeout``) to wait on closure until published messages are acknowledged by matched readers.
 Its value is set to ``0`` by default (no wait).
+
+QoS
+^^^
+
+``specs`` supports a ``qos`` **optional** tag to configure the default values of the :ref:`Topic QoS <replayer_topic_qos>`.
 
 .. _replayer_usage_configuration_general_example:
 
