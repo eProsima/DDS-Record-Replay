@@ -71,8 +71,6 @@ public:
     unsigned int buffer_size = 100;
     unsigned int event_window = 20;
     bool log_publish_time = false;
-    float max_rx_rate = 0;
-    unsigned int downsampling = 1;
     bool only_with_type = false;
     mcap::McapWriterOptions mcap_writer_options{"ros2"};
     bool record_types = true;

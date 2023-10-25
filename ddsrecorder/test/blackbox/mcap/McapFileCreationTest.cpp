@@ -88,10 +88,10 @@ std::unique_ptr<DdsRecorder> create_recorder(
     YAML::Node yml;
 
     eprosima::ddsrecorder::yaml::RecorderConfiguration configuration(yml);
-    configuration.downsampling = downsampling;
+    configuration.topic_qos.downsampling = downsampling;
     // Set default value for downsampling
     // TODO: Change mechanism setting topic qos' default values from specs
-    eprosima::ddspipe::core::types::TopicQoS::default_topic_qos->downsampling.set_value(downsampling);
+    eprosima::ddspipe::core::types::TopicQoS::default_topic_qos.set_value(configuration.topic_qos);
     configuration.event_window = event_window;
     eprosima::ddspipe::core::types::DomainId domainId;
     domainId.domain_id = test::DOMAIN;
