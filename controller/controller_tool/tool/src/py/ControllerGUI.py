@@ -90,13 +90,17 @@ class DdsTopicNameDialog(QDialog):
         """Construct the dialog to set the DDS command and status topic names."""
         super().__init__()
 
-        self.command_topic_label = QLabel('Enter command topic name:')
+        self.command_topic_label = QLabel('Command topic:')
+        self.command_topic_label.setFixedWidth(120)
         self.command_text_box = QLineEdit(self)
         self.command_text_box.setText(current_command_topic)
+        self.command_text_box.setMinimumWidth(250)
 
-        self.status_topic_label = QLabel('Enter status topic name:')
+        self.status_topic_label = QLabel('Status topic:')
+        self.status_topic_label.setFixedWidth(120)
         self.status_text_box = QLineEdit(self)
         self.status_text_box.setText(current_status_topic)
+        self.status_text_box.setMinimumWidth(250)
 
         self.buttonBox = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save
@@ -104,19 +108,21 @@ class DdsTopicNameDialog(QDialog):
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 
-        command_layout = QVBoxLayout()
-        command_layout.addWidget(self.command_topic_label)
-        command_layout.addWidget(self.command_text_box)
+        self.command_layout = QHBoxLayout()
+        self.command_layout.addWidget(self.command_topic_label)
+        self.command_layout.addWidget(self.command_text_box)
 
-        status_layout = QVBoxLayout()
-        status_layout.addWidget(self.status_topic_label)
-        status_layout.addWidget(self.status_text_box)
+        self.status_layout = QHBoxLayout()
+        self.status_layout.addWidget(self.status_topic_label)
+        self.status_layout.addWidget(self.status_text_box)
 
-        horiznontal_layout = QHBoxLayout()
-        horiznontal_layout.addLayout(command_layout)
-        horiznontal_layout.addLayout(status_layout)
+        layout = QVBoxLayout()
+        layout.addLayout(self.command_layout)
+        layout.addLayout(self.status_layout)
+        layout.addWidget(self.buttonBox)
+        layout.setSizeConstraint(QVBoxLayout.SizeConstraint.SetFixedSize)
 
-        self.setLayout(horiznontal_layout)
+        self.setLayout(layout)
 
     def get_command_topic(self):
         """Return DDS command topic from the text box."""
@@ -142,6 +148,10 @@ class MenuWidget(QMenuBar):
         dds_domain_action = QAction('DDS Domain', self)
         dds_domain_action.triggered.connect(self.main_window.dds_domain_dialog)
         file_menu.addAction(dds_domain_action)
+
+        topic_name_action = QAction('DDS Topics', self)
+        topic_name_action.triggered.connect(self.main_window.topic_name_dialog)
+        file_menu.addAction(topic_name_action)
 
         docs_action = QAction('Documentation', self)
         docs_action.triggered.connect(
@@ -233,7 +243,7 @@ class ControllerGUI(QMainWindow):
                 # Reset status
                 self.update_status(RecorderStatus.CLOSED)
                 # Create DDS entities in new domain
-                self.dds_controller.init_dds(dds_domain)
+                self.dds_controller.init_dds(dds_domain, command_topic, status_topic)
                 self.dds_domain = dds_domain
                 self.command_topic = command_topic
                 self.status_topic = status_topic
