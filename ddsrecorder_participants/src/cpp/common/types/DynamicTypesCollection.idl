@@ -1,0 +1,19 @@
+module eprosima {
+module ddsrecorder {
+module participants {
+
+struct DynamicType
+{
+    string type_name;
+    string type_information;
+    string type_object;
+};
+
+struct DynamicTypesCollection
+{
+    sequence<DynamicType> dynamic_types;
+};
+
+};
+};
+};
