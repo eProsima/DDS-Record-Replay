@@ -15,8 +15,8 @@ dds:
       type: "HelloWorld"
 
   topics:
-    - name: temperature/*
-      type: temperature/types/*
+    - name: "temperature/*"
+      type: "temperature/types/*"
       qos:
         max-tx-rate: 15
 

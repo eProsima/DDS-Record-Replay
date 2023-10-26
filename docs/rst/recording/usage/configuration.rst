@@ -40,7 +40,7 @@ Built-in Topics
 
 The discovery phase can be accelerated by listing topics under the ``builtin-topics`` tag.
 The |ddsrecorder| will create the DataWriters and DataReaders for these topics in the |ddsrecorder| initialization.
-The :ref:`Topic QoS <recorder_topic_qos>` for these topics can be manually configured with a :ref:`Manual Topic <recorder_manual_topics>`; if a :ref:`Topic QoS <recorder_topic_qos>` is not configured, it will take its default value.
+The :ref:`Topic QoS <recorder_topic_qos>` for these topics can be manually configured with the :ref:`Manual Topic <recorder_manual_topics>` and with the :ref:`Specs Topic QoS <recorder_specs_topic_qos>`; if a :ref:`Topic QoS <recorder_topic_qos>` is not configured, it will take its default value.
 
 The ``builtin-topics`` must specify a ``name`` and ``type`` without wildcard characters.
 
@@ -55,91 +55,46 @@ The ``builtin-topics`` must specify a ``name`` and ``type`` without wildcard cha
 .. _recorder_topic_filtering:
 
 Topic Filtering
-^^^^^^^^^^^^^^^
+---------------
 
-The |ddsrecorder| includes a mechanism to automatically detect which topics are being used in a DDS network.
-By automatically detecting these topics, a |ddsrecorder| creates internal DDS :term:`Readers<DataReader>` for each topic in order to record the data published on each discovered topic.
-
-.. note::
-
-    |ddsrecorder| entities are created with the QoS of the first Publisher/Subscriber found in this Topic, unless manually set in the :ref:`built-in topics <recorder_builtin_topics>` list.
-
-|ddsrecorder| allows filtering of DDS :term:`Topics<Topic>`, that is, it allows to define the DDS Topics' data that is going to be recorded by the application.
-This way, it is possible to define a set of rules in |ddsrecorder| to filter those data samples the user does not wish to save.
-
-It is not mandatory to define such set of rules in the configuration file.
-In this case, a |ddsrecorder| will save all the data published under the topics that it automatically discovers within the DDS network to which it connects.
-
-To define these data filtering rules based on the Topics to which they belong, the following lists are available:
-
-* Allowed topics list (``allowlist``)
-* Block topics list (``blocklist``)
-
-These lists of topics stated above are defined by a tag in the *YAML* configuration file, which defines a *YAML* vector (``[]``).
-This vector contains the list of topics for each filtering rule.
-Each Topic is determined by its entries ``name`` and ``type``, with only the first one being mandatory.
-
-.. list-table::
-    :header-rows: 1
-
-    *   - Topic entries
-        - Data type
-        - Default value
-
-    *   - ``name``
-        - ``string``
-        - \-
-
-    *   - ``type``
-        - ``string``
-        - ``"*"``
-
-See :term:`Topic` section for further information about the topic.
+The |ddsrecorder| automatically detects the topics that are being used in a DDS Network.
+The |ddsrecorder| then creates internal DDS :term:`Readers<DataReader>` to record the data published on each topic.
 
 .. note::
 
-    Placing quotation marks around values in a YAML file is generally optional.
-    However, values containing wildcard characters must be enclosed by single or double quotation marks.
+    |ddsrecorder| entities are created with the :ref:`Topic QoS <recorder_topic_qos>` of the first Subscriber found on the Topic.
 
-Allow topic list
-""""""""""""""""
-This is the list of topics that |ddsrecorder| will record, i.e. the data published under the topics matching the expressions in the ``allowlist`` will be saved by |ddsrecorder|.
+The |ddsrouter| allows filtering DDS :term:`Topics<Topic>` to allow users to configure the DDS :term:`Topics<Topic>` that must be recorded.
+These data filtering rules can be configured under the ``allowlist`` and ``blocklist`` tags.
+If the ``allowlist`` and ``blocklist`` are not configured, the |ddsrecorder| will recorded the data published on every topic it discovers.
+If both the ``allowlist`` and ``blocklist`` are configured and a topic appears in both of them, the ``blocklist`` has priority and the topic will be blocked.
+
+Topics are determined by the tags ``name`` (required) and ``type``, both of which accept wildcard characters.
 
 .. note::
 
-    If no ``allowlist`` is provided, data will be recorded for all topics (unless filtered out in ``blocklist``).
+    Placing quotation marks around values in a YAML file is generally optional, but values containing wildcard characters do require single or double quotation marks.
 
-.. _recorder_topic_filtering_blocklist:
+Consider the following example:
 
-Block topic list
-""""""""""""""""
-This is the list of topics that the |ddsrecorder| will block, that is, all data published under the topics matching the filters specified in the ``blocklist`` will be discarded by the |ddsrecorder| and therefore will not be recorded.
+.. code-block:: yaml
 
-This list takes precedence over the ``allowlist``.
-If a topic matches an expression both in the ``allowlist`` and in the ``blocklist``, the ``blocklist`` takes precedence, causing the data under this topic to be discarded.
+    allowlist:
+      - name: AllowedTopic1
+        type: Allowed
 
-**Example of usage - Allowlist and blocklist collision:**
+      - name: AllowedTopic2
+        type: "*"
 
-    In the following example, the ``HelloWorldTopic`` topic is both in the ``allowlist`` and (implicitly) in the
-    ``blocklist``, so according to the ``blocklist`` preference rule this topic is blocked.
-    Moreover, only the topics present in the allowlist are relayed, regardless of whether more topics are dynamically
-    discovered in the DDS network.
-    In this case the forwarded topics are ``AllowedTopic1`` with data type ``Allowed``
-    and ``AllowedTopic2`` regardless of its data type.
+      - name: HelloWorldTopic
+        type: HelloWorld
 
-    .. code-block:: yaml
+    blocklist:
+      - name: "*"
+        type: HelloWorld
 
-        allowlist:
-          - name: AllowedTopic1
-            type: Allowed
-          - name: AllowedTopic2
-            type: "*"
-          - name: HelloWorldTopic
-            type: HelloWorld
-
-        blocklist:
-          - name: "*"
-            type: HelloWorld
+In this example, the data published in the topic ``AllowedTopic1`` with type ``Allowed`` and in the topic ``AllowedTopic2`` with any type will be recorded by the |ddsrecorder|.
+The data published in the topic ``HelloWorldTopic`` with type ``HelloWorld`` will be blocked, since the ``blocklist`` is blocking all topics with any name and with type ``HelloWorld``.
 
 .. _recorder_topic_qos:
 
@@ -190,7 +145,7 @@ For more information on topics, please read the `Fast DDS Topic <https://fast-dd
 
     *   - History Depth
         - ``history-depth``
-        - *integer*
+        - *unsigned integer*
         - ``5000``
         - :ref:`recorder_history_depth`
 
@@ -245,8 +200,6 @@ The tag ``topics`` has a required ``name`` tag that accepts wildcard characters.
 It also has two optional tags: a ``type`` tag that accepts wildcard characters, and a ``qos`` tag with the :ref:`Topic QoS <recorder_topic_qos>` that the user wants to manually configure.
 If a ``qos`` is not manually configured, it will get its value by discovery.
 
-**Example of usage**
-
 .. code-block:: yaml
 
     topics:
@@ -255,6 +208,10 @@ If a ``qos`` is not manually configured, it will get its value by discovery.
         qos:
           max-rx-rate: 15
           downsampling: 2
+
+.. note::
+
+    The :ref:`Topic QoS <recorder_topic_qos>` configured in the Manual Topics take precedence over the :ref:`Specs Topic QoS <recorder_specs_topic_qos>`.
 
 .. _recorder_usage_configuration_domain_id:
 
@@ -588,10 +545,16 @@ As explained in :ref:`Event Window <recorder_usage_configuration_event_window>`,
 To accomplish this, received samples are stored in memory until the aforementioned event is triggered and, in order to limit memory consumption, outdated (received more than ``event-window`` seconds ago) samples are removed from this buffer every ``cleanup-period`` seconds.
 By default, its value is equal to twice the ``event-window``.
 
+.. _recorder_specs_topic_qos:
+
 QoS
 ^^^
 
 ``specs`` supports a ``qos`` **optional** tag to configure the default values of the :ref:`Topic QoS <recorder_topic_qos>`.
+
+.. note::
+
+    The :ref:`Topic QoS <recorder_topic_qos>` configured in ``specs`` can be overwritten by the :ref:`Manual Topics <recorder_manual_topics>`.
 
 .. _recorder_usage_configuration_general_example:
 

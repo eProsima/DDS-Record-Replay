@@ -39,7 +39,7 @@ Built-in Topics
 
 The discovery phase can be accelerated by listing topics under the ``builtin-topics`` tag.
 The |ddsreplayer| will create the DataWriters and DataReaders for these topics in the |ddsreplayer| initialization.
-The :ref:`Topic QoS <replayer_topic_qos>` for these topics can be manually configured with a :ref:`Manual Topic <replayer_manual_topics>`; if a :ref:`Topic QoS <replayer_topic_qos>` is not configured, it will take its default value.
+The :ref:`Topic QoS <replayer_topic_qos>` for these topics can be manually configured with a :ref:`Manual Topic <replayer_manual_topics>` and with the :ref:`Specs Topic QoS <replayer_specs_topic_qos>`; if a :ref:`Topic QoS <replayer_topic_qos>` is not configured, it will take its default value.
 
 The ``builtin-topics`` must specify a ``name`` and ``type`` without wildcard characters.
 
@@ -52,87 +52,42 @@ The ``builtin-topics`` must specify a ``name`` and ``type`` without wildcard cha
 .. _replayer_topic_filtering:
 
 Topic Filtering
-^^^^^^^^^^^^^^^
+---------------
 
-As seen in :ref:`DDS Recorder topic filtering <recorder_topic_filtering>`, a user can define a set of rules to only record DDS :term:`Topics<Topic>` of interest.
+The |ddsreplayer| automatically detects the topics that are being used in a DDS Network.
+The |ddsreplayer| then creates internal DDS :term:`Writers<DataWriter>` to replay the data published on each topic.
 
-In addition to the filters applied to |ddsrecorder| when recording, |ddsreplayer| also allows filtering of DDS :term:`Topics<Topic>`.
-That is, it allows to define the DDS Topics' data that is going to be replayed by the application.
-This way, it is possible to define a set of rules in |ddsreplayer| to filter those data samples the user does not wish to replay.
+The |ddsrouter| allows filtering DDS :term:`Topics<Topic>` to allow users to configure the DDS :term:`Topics<Topic>` that must be replayed.
+These data filtering rules can be configured under the ``allowlist`` and ``blocklist`` tags.
+If the ``allowlist`` and ``blocklist`` are not configured, the |ddsreplayer| will replayed the data published on every topic it discovers.
+If both the ``allowlist`` and ``blocklist`` are configured and a topic appears in both of them, the ``blocklist`` has priority and the topic will be blocked.
 
-It is not mandatory to define such set of rules in the configuration file.
-In this case, a |ddsreplayer| will publish all data stored in the provided input MCAP file.
-
-To define these data filtering rules based on the Topics to which they belong, the following lists are available:
-
-* Allowed topics list (``allowlist``)
-* Block topics list (``blocklist``)
-
-These lists of topics stated above are defined by a tag in the *YAML* configuration file, which defines a *YAML* vector (``[]``).
-This vector contains the list of topics for each filtering rule.
-Each Topic is determined by its entries ``name`` and ``type``, with only the first one being mandatory.
-
-.. list-table::
-    :header-rows: 1
-
-    *   - Topic entries
-        - Data type
-        - Default value
-
-    *   - ``name``
-        - ``string``
-        - \-
-
-    *   - ``type``
-        - ``string``
-        - ``"*"``
-
-See :term:`Topic` section for further information about the topic.
+Topics are determined by the tags ``name`` (required) and ``type``, both of which accept wildcard characters.
 
 .. note::
 
-    Placing quotation marks around values in a YAML file is generally optional.
-    However, values containing wildcard characters must be enclosed by single or double quotation marks.
+    Placing quotation marks around values in a YAML file is generally optional, but values containing wildcard characters do require single or double quotation marks.
 
-Allow topic list
-""""""""""""""""
-This is the list of topics that the |ddsreplayer| will replay, i.e. only recorded data under the topics matching the expressions in the ``allowlist`` will be published by |ddsreplayer|.
+Consider the following example:
 
-.. note::
+.. code-block:: yaml
 
-    If no ``allowlist`` is provided, data will be replayed for all topics (unless filtered out in ``blocklist``).
+    allowlist:
+      - name: AllowedTopic1
+        type: Allowed
 
-.. _replayer_topic_filtering_blocklist:
+      - name: AllowedTopic2
+        type: "*"
 
-Block topic list
-""""""""""""""""
-This is the list of topics that the |ddsreplayer| will block, that is, all input data under the topics matching the filters specified in the ``blocklist`` will be discarded by the |ddsreplayer| and therefore will not be published.
+      - name: HelloWorldTopic
+        type: HelloWorld
 
-This list takes precedence over the ``allowlist``.
-If a topic matches an expression both in the ``allowlist`` and in the ``blocklist``, the ``blocklist`` takes precedence, causing the data under this topic to be discarded.
+    blocklist:
+      - name: "*"
+        type: HelloWorld
 
-**Example of usage - Allowlist and blocklist collision:**
-
-    In the following example, the ``HelloWorldTopic`` topic is both in the ``allowlist`` and (implicitly) in the
-    ``blocklist``, so according to the ``blocklist`` preference rule this topic is blocked.
-    Moreover, only the topics present in the allowlist are relayed, regardless of whether more topics are dynamically
-    discovered in the DDS network.
-    In this case the forwarded topics are ``AllowedTopic1`` with data type ``Allowed``
-    and ``AllowedTopic2`` regardless of its data type.
-
-    .. code-block:: yaml
-
-        allowlist:
-          - name: AllowedTopic1
-            type: Allowed
-          - name: AllowedTopic2
-            type: "*"
-          - name: HelloWorldTopic
-            type: HelloWorld
-
-        blocklist:
-          - name: "*"
-            type: HelloWorld
+In this example, the data published in the topic ``AllowedTopic1`` with type ``Allowed`` and in the topic ``AllowedTopic2`` with any type will be replayed by the |ddsreplayer|.
+The data published in the topic ``HelloWorldTopic`` with type ``HelloWorld`` will be blocked, since the ``blocklist`` is blocking all topics with any name and with type ``HelloWorld``.
 
 .. _replayer_topic_qos:
 
@@ -183,7 +138,7 @@ For more information on topics, please read the `Fast DDS Topic <https://fast-dd
 
     *   - History Depth
         - ``history-depth``
-        - *integer*
+        - *unsigned integer*
         - ``5000``
         - :ref:`replayer_history_depth`
 
@@ -235,6 +190,10 @@ If a ``qos`` is not manually configured, it will get its value by discovery.
         type: "temperature/types/*"
         qos:
           max-tx-rate: 15
+
+.. note::
+
+    The :ref:`Topic QoS <replayer_topic_qos>` configured in the Manual Topics take precedence over the :ref:`Specs Topic QoS <replayer_specs_topic_qos>`.
 
 .. _replayer_usage_configuration_domain_id:
 
@@ -455,10 +414,16 @@ Note that this last message might be lost after publication, and if reliable `Re
 For this purpose, the user can specify the maximum amount of milliseconds (``wait-all-acked-timeout``) to wait on closure until published messages are acknowledged by matched readers.
 Its value is set to ``0`` by default (no wait).
 
+.. _replayer_specs_topic_qos:
+
 QoS
 ^^^
 
 ``specs`` supports a ``qos`` **optional** tag to configure the default values of the :ref:`Topic QoS <replayer_topic_qos>`.
+
+.. note::
+
+    The :ref:`Topic QoS <replayer_topic_qos>` configured in ``specs`` can be overwritten by the :ref:`Manual Topics <replayer_manual_topics>`.
 
 .. _replayer_usage_configuration_general_example:
 
