@@ -27,6 +27,7 @@
 #include <cpp_utils/exception/InconsistencyException.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/utils.hpp>
+#include <cpp_utils/ros2_mangling.hpp>
 
 #include <fastcdr/Cdr.h>
 #include <fastcdr/FastBuffer.h>
@@ -111,7 +112,8 @@ void McapHandler::add_schema(
     // NOTE: Process schemas even if in STOPPED state to avoid losing them (only sent/received once in discovery)
 
     assert(nullptr != dynamic_type);
-    std::string type_name = dynamic_type->get_name();
+
+    std::string type_name = configuration_.ros2_types ? utils::demangle_if_ros_type(dynamic_type->get_name()) : dynamic_type->get_name();
 
     // Check if it exists already
     if (received_types_.find(type_name) != received_types_.end())
@@ -120,12 +122,13 @@ void McapHandler::add_schema(
     }
 
     // Schema not found, generate from dynamic type and store
-    std::string schema_text = idl::generate_idl_schema(dynamic_type);
+    std::string schema_text = configuration_.ros2_types ? msg::generate_ros2_schema(dynamic_type) : idl::generate_idl_schema(dynamic_type);
 
     logInfo(DDSRECORDER_MCAP_HANDLER, "\nAdding schema with name " << type_name << " :\n" << schema_text << "\n");
 
     // Create schema and add it to writer and to schemas map
-    mcap::Schema new_schema(type_name, "omgidl", schema_text);
+    std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
+    mcap::Schema new_schema(type_name, encoding, schema_text);
     // WARNING: passing as non-const to MCAP library
     mcap_writer_.addSchema(new_schema);
 
@@ -155,6 +158,10 @@ void McapHandler::add_data(
 {
     std::lock_guard<std::mutex> lock(mtx_);
 
+    DdsTopic topic_ = topic;
+
+    topic_.type_name = configuration_.ros2_types ? utils::demangle_if_ros_type(topic.type_name) : topic.type_name;
+
     if (state_ == McapHandlerStateCode::STOPPED)
     {
         logInfo(DDSRECORDER_MCAP_HANDLER, "Attempting to add sample through a stopped handler, dropping...");
@@ -163,7 +170,7 @@ void McapHandler::add_data(
 
     logInfo(
         DDSRECORDER_MCAP_HANDLER,
-        "Adding data in topic " << topic);
+        "Adding data in topic " << topic_);
 
     // Add data to channel
     Message msg;
@@ -209,10 +216,10 @@ void McapHandler::add_data(
                   );
     }
 
-    if (received_types_.count(topic.type_name) != 0)
+    if (received_types_.count(topic_.type_name) != 0)
     {
         // Schema available -> add to buffer
-        add_data_nts_(msg, topic);
+        add_data_nts_(msg, topic_);
     }
     else
     {
@@ -228,25 +235,25 @@ void McapHandler::add_data(
                 else
                 {
                     // No schema available + no pending samples -> Add to buffer with blank schema
-                    add_data_nts_(msg, topic);
+                    add_data_nts_(msg, topic_);
                 }
             }
             else
             {
                 logInfo(
                     DDSRECORDER_MCAP_HANDLER,
-                    "Schema for topic " << topic << " not yet available, inserting to pending samples queue.");
+                    "Schema for topic " << topic_ << " not yet available, inserting to pending samples queue.");
 
-                add_to_pending_nts_(msg, topic);
+                add_to_pending_nts_(msg, topic_);
             }
         }
         else if (state_ == McapHandlerStateCode::PAUSED)
         {
             logInfo(
                 DDSRECORDER_MCAP_HANDLER,
-                "Schema for topic " << topic << " not yet available, inserting to (paused) pending samples queue.");
+                "Schema for topic " << topic_ << " not yet available, inserting to (paused) pending samples queue.");
 
-            pending_samples_paused_[topic.type_name].push_back({topic, msg});
+            pending_samples_paused_[topic_.type_name].push_back({topic_, msg});
         }
         else
         {
@@ -837,7 +844,8 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
             logInfo(DDSRECORDER_MCAP_HANDLER,
                     "Schema not found for type: " << topic.type_name << ". Creating blank schema...");
 
-            mcap::Schema blank_schema(topic.type_name, "omgidl", "");
+            std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
+            mcap::Schema blank_schema(topic.type_name, encoding, "");
             mcap_writer_.addSchema(blank_schema);
             schemas_.insert({topic.type_name, std::move(blank_schema)});
 

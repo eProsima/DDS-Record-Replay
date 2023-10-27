@@ -74,6 +74,7 @@ public:
     bool only_with_type = false;
     mcap::McapWriterOptions mcap_writer_options{"ros2"};
     bool record_types = true;
+    bool ros2_types = false;
 
     // Remote controller configuration
     bool enable_remote_controller = true;

@@ -48,6 +48,7 @@ constexpr const char* RECORDER_EVENT_WINDOW_TAG("event-window");
 constexpr const char* RECORDER_LOG_PUBLISH_TIME_TAG("log-publish-time");
 constexpr const char* RECORDER_ONLY_WITH_TYPE_TAG("only-with-type");
 constexpr const char* RECORDER_RECORD_TYPES_TAG("record-types");
+constexpr const char* RECORDER_ROS2_TYPES_TAG("ros2-types");
 
 // Compression settings
 constexpr const char* RECORDER_COMPRESSION_SETTINGS_TAG("compression");

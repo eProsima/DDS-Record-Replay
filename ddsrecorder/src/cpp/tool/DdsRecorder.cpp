@@ -65,14 +65,15 @@ DdsRecorder::DdsRecorder(
     // Create MCAP Handler configuration
     participants::McapHandlerConfiguration handler_config(
         mcap_output_settings,
-        configuration_.max_pending_samples,
-        configuration_.buffer_size,
-        configuration_.event_window,
-        configuration_.cleanup_period,
-        configuration_.log_publish_time,
-        configuration_.only_with_type,
-        configuration_.mcap_writer_options,
-        configuration_.record_types);
+        configuration.max_pending_samples,
+        configuration.buffer_size,
+        configuration.event_window,
+        configuration.cleanup_period,
+        configuration.log_publish_time,
+        configuration.only_with_type,
+        configuration.mcap_writer_options,
+        configuration.record_types,
+        configuration.ros2_types);
 
     // Create MCAP Handler
     mcap_handler_ = std::make_shared<participants::McapHandler>(
