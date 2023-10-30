@@ -176,9 +176,9 @@ By default it is set to ``0``; it sends samples at an unlimited transmission rat
 Manual Topics
 ^^^^^^^^^^^^^
 
-A subset of QoSs can be manually configured for a specific topic under the tag ``topics``.
+A subset of QoS can be manually configured for a specific topic under the tag ``topics``.
 The tag ``topics`` has a required ``name`` tag that accepts wildcard characters.
-It also has two optional tags: a ``type`` tag that accepts wildcard characters, and a ``qos`` tag with the QoSs that the user wants to manually configure.
+It also has two optional tags: a ``type`` tag that accepts wildcard characters, and a ``qos`` tag with the QoS that the user wants to manually configure.
 If a ``qos`` is not manually configured, it will get its value by discovery.
 
 **Example of usage**

@@ -20,6 +20,7 @@
 #include <cpp_utils/utils.hpp>
 
 #include <ddspipe_core/types/dynamic_types/types.hpp>
+#include <ddspipe_core/types/topic/filter/ManualTopic.hpp>
 #include <ddspipe_core/types/topic/filter/WildcardDdsFilterTopic.hpp>
 #include <ddspipe_participants/types/address/Address.hpp>
 
@@ -370,13 +371,9 @@ void RecorderConfiguration::load_dds_configuration_(
     // Get optional topics
     if (YamlReader::is_tag_present(yml, TOPICS_TAG))
     {
-        auto manual_topics = YamlReader::get_list<WildcardDdsFilterTopic>(yml, TOPICS_TAG, version);
-
-        for (auto const& manual_topic : manual_topics)
-        {
-            auto new_topic = utils::Heritable<WildcardDdsFilterTopic>::make_heritable(manual_topic);
-            ddspipe_configuration.manual_topics.push_back(new_topic);
-        }
+        const auto& manual_topics = YamlReader::get_list<ManualTopic>(yml, TOPICS_TAG, version);
+        ddspipe_configuration.manual_topics =
+                std::vector<ManualTopic>(manual_topics.begin(), manual_topics.end());
     }
 
     /////
