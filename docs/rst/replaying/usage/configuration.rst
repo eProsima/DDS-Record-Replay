@@ -57,7 +57,7 @@ Topic Filtering
 The |ddsreplayer| automatically detects the topics that are being used in a DDS Network.
 The |ddsreplayer| then creates internal DDS :term:`Writers<DataWriter>` to replay the data published on each topic.
 
-The |ddsrouter| allows filtering DDS :term:`Topics<Topic>` to allow users to configure the DDS :term:`Topics<Topic>` that must be replayed.
+The |ddsreplayer| allows filtering DDS :term:`Topics<Topic>` to allow users to configure the DDS :term:`Topics<Topic>` that must be replayed.
 These data filtering rules can be configured under the ``allowlist`` and ``blocklist`` tags.
 If the ``allowlist`` and ``blocklist`` are not configured, the |ddsreplayer| will replayed the data published on every topic it discovers.
 If both the ``allowlist`` and ``blocklist`` are configured and a topic appears in both of them, the ``blocklist`` has priority and the topic will be blocked.

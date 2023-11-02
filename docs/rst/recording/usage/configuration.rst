@@ -64,7 +64,7 @@ The |ddsrecorder| then creates internal DDS :term:`Readers<DataReader>` to recor
 
     |ddsrecorder| entities are created with the :ref:`Topic QoS <recorder_topic_qos>` of the first Subscriber found on the Topic.
 
-The |ddsrouter| allows filtering DDS :term:`Topics<Topic>` to allow users to configure the DDS :term:`Topics<Topic>` that must be recorded.
+The |ddsrecorder| allows filtering DDS :term:`Topics<Topic>` to allow users to configure the DDS :term:`Topics<Topic>` that must be recorded.
 These data filtering rules can be configured under the ``allowlist`` and ``blocklist`` tags.
 If the ``allowlist`` and ``blocklist`` are not configured, the |ddsrecorder| will recorded the data published on every topic it discovers.
 If both the ``allowlist`` and ``blocklist`` are configured and a topic appears in both of them, the ``blocklist`` has priority and the topic will be blocked.
@@ -186,7 +186,7 @@ Downsampling
 """"""""""""
 
 The ``downsampling`` tag reduces the sampling rate of the received data by only keeping *1* out of every *n* samples received (per topic), where *n* is the value specified under the ``downsampling`` tag.
-When the ``max-rx-rate`` tag is also set, down-sampling only applies to messages that have passed the ``max-rx-rate`` filter.
+When the ``max-rx-rate`` tag is also set, downsampling only applies to messages that have passed the ``max-rx-rate`` filter.
 It only accepts positive integers.
 By default it is set to ``1``; it accepts every message.
 
