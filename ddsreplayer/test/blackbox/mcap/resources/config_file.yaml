@@ -1,5 +1,6 @@
 topics:
   - name: /dds/topic
+    type: HelloWorld
     qos:
       reliability: true       # Use QoS RELIABLE
 

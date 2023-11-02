@@ -131,6 +131,10 @@ For more information on topics, please read the `Fast DDS Topic <https://fast-dd
         - ``0`` (unlimited)
         - :ref:`replayer_max_tx_rate`
 
+.. warning::
+
+    The ``TRANSIENT_LOCAL`` durability is not compatible with the ``BEST_EFFORT`` reliability.
+
 .. _replayer_history_depth:
 
 History Depth
