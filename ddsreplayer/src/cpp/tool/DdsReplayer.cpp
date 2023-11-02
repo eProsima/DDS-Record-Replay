@@ -191,7 +191,7 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
         const yaml::ReplayerConfiguration& configuration,
         std::string& input_file)
 {
-    std::set<utils::Heritable<DistributedTopic>> builtin_topics = configuration.ddspipe_configuration.builtin_topics;
+    std::set<utils::Heritable<DistributedTopic>> builtin_topics;
 
     mcap::McapReader mcap_reader;
 
@@ -267,6 +267,7 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
 
     auto channels = mcap_reader.channels();
     auto schemas = mcap_reader.schemas();
+
     for (auto it = channels.begin(); it != channels.end(); it++)
     {
         std::string topic_name = it->second->topic;
@@ -276,15 +277,10 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
         channel_topic->m_topic_name = topic_name;
         channel_topic->type_name = type_name;
 
-        if (builtin_topics.count(channel_topic) == 1)
-        {
-            // Already present in builtin_topics list, using qos provided through configuration
-            // NOTE: also covers situation where there are channels for same topic with and without (blank) schema
-            continue;
-        }
-
-        // Use QoS stored in MCAP file (discovered when recording, or given to recorder's builtin topics list)
-        channel_topic->topic_qos = deserialize_qos_(it->second->metadata[QOS_SERIALIZATION_QOS]);
+        // Apply the QoS stored in the MCAP file as if they were the discovered QoS.
+        channel_topic->topic_qos.set_qos(
+                deserialize_qos_(it->second->metadata[QOS_SERIALIZATION_QOS]),
+                utils::FuzzyLevelValues::fuzzy_level_fuzzy);
 
         // Insert channel topic in builtin topics list
         builtin_topics.insert(channel_topic);
@@ -295,6 +291,7 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
             create_dynamic_writer_(channel_topic);
         }
     }
+
     mcap_reader.close();
 
     return builtin_topics;

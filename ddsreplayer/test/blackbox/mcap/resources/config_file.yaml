@@ -1,7 +1,3 @@
-builtin-topics:
-  - name: "/dds/topic"
-    type: "HelloWorld"
-
 topics:
   - name: /dds/topic
     qos:

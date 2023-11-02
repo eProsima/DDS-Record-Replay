@@ -32,23 +32,6 @@ DDS Configuration
 
 Configuration related to DDS communication.
 
-.. _replayer_builtin_topics:
-
-Built-in Topics
-^^^^^^^^^^^^^^^
-
-The discovery phase can be accelerated by listing topics under the ``builtin-topics`` tag.
-The |ddsreplayer| will create the DataWriters and DataReaders for these topics in the |ddsreplayer| initialization.
-The :ref:`Topic QoS <replayer_topic_qos>` for these topics can be manually configured with a :ref:`Manual Topic <replayer_manual_topics>` and with the :ref:`Specs Topic QoS <replayer_specs_topic_qos>`; if a :ref:`Topic QoS <replayer_topic_qos>` is not configured, it will take its default value.
-
-The ``builtin-topics`` must specify a ``name`` and ``type`` without wildcard characters.
-
-.. code-block:: yaml
-
-    builtin-topics:
-      - name: HelloWorldTopic
-        type: HelloWorld
-
 .. _replayer_topic_filtering:
 
 Topic Filtering
@@ -448,10 +431,6 @@ A complete example of all the configurations described on this page can be found
       blocklist:
         - name: "topic_name"
           type: "topic_type"
-
-      builtin-topics:
-        - name: "HelloWorldTopic"
-          type: "HelloWorld"
 
       topics:
         - name: "temperature/*"

@@ -10,10 +10,6 @@ dds:
     - name: "topic_to_block"
       type: "type_to_block"
 
-  builtin-topics:
-    - name: "HelloWorldTopic"
-      type: "HelloWorld"
-
   topics:
     - name: "temperature/*"
       type: "temperature/types/*"
