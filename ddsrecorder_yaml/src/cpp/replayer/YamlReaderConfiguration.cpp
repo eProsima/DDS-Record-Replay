@@ -89,6 +89,8 @@ void ReplayerConfiguration::load_ddsreplayer_configuration_(
         // WARNING: Replayer configuration must have been parsed beforehand
         mcap_reader_configuration = std::make_shared<McapReaderParticipantConfiguration>();
         mcap_reader_configuration->id = "McapReaderParticipant";
+        mcap_reader_configuration->app_id = "DDS REPLAYER";
+        mcap_reader_configuration->app_metadata = "";
         mcap_reader_configuration->is_repeater = false;
         mcap_reader_configuration->begin_time = begin_time;
         mcap_reader_configuration->end_time = end_time;
@@ -99,6 +101,8 @@ void ReplayerConfiguration::load_ddsreplayer_configuration_(
         // Create Replayer Participant Configuration
         replayer_configuration = std::make_shared<SimpleParticipantConfiguration>();
         replayer_configuration->id = "ReplayerParticipant";
+        replayer_configuration->app_id = "DDS REPLAYER";
+        replayer_configuration->app_metadata = "";
         replayer_configuration->is_repeater = false;
 
         /////
