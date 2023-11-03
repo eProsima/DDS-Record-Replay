@@ -287,8 +287,18 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
 
         if (configuration.replay_types && registered_types.count(type_name) != 0)
         {
+            // Make a copy of the Topic to customize it according to the Participant's configured QoS.
+            utils::Heritable<DistributedTopic> topic = channel_topic->copy();
+
+            // Apply the Manual Topics for this participant.
+            for (const auto& manual_topic : configuration.ddspipe_configuration.get_manual_topics(channel_topic))
+            {
+                topic->topic_qos.set_qos(manual_topic.first->topic_qos, utils::FuzzyLevelValues::fuzzy_level_hard);
+            }
+
             // Create Datawriter in this topic so dynamic type can be shared in EDP
-            create_dynamic_writer_(channel_topic);
+            // TODO: Avoid creating the dynamic writer when the topic is not allowed.
+            create_dynamic_writer_(topic);
         }
     }
 
