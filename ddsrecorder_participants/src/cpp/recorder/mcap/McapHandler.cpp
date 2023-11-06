@@ -120,7 +120,7 @@ void McapHandler::add_schema(
     }
 
     // Schema not found, generate from dynamic type and store
-    std::string schema_text = generate_idl_schema(dynamic_type);
+    std::string schema_text = idl::generate_idl_schema(dynamic_type);
 
     logInfo(DDSRECORDER_MCAP_HANDLER, "\nAdding schema with name " << type_name << " :\n" << schema_text << "\n");
 
