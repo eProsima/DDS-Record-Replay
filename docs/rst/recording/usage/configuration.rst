@@ -431,6 +431,15 @@ By default, all type information received during execution is stored in a dedica
 This information is then leveraged by |ddsreplayer| on playback, publishing recorded types in addition to data samples, which may be required for receiver applications relying on :term:`Dynamic Types<DynamicTypes>` (see :ref:`Replay Types <replayer_replay_configuration_replaytypes>`).
 However, a user may choose to disable this feature by setting ``record-types: false``.
 
+.. _recorder_usage_configuration_topictypeformat:
+
+Topic type format
+^^^^^^^^^^^^^^^^^
+
+The optional ``ros2-types`` tag enables specification of the format for storing schemas.
+When set to ``true``, schemas are stored in ROS 2 message format (.msg).
+If set to ``false``, schemas are stored in OMG IDL format (.idl).
+
 .. _recorder_usage_configuration_remote_controller:
 
 Remote Controller
@@ -606,6 +615,7 @@ A complete example of all the configurations described on this page can be found
         level: slowest
         force: true
       record-types: true
+      ros2-types: false
 
     remote-controller:
       enable: true

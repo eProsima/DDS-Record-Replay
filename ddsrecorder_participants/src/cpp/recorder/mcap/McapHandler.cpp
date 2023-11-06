@@ -113,7 +113,9 @@ void McapHandler::add_schema(
 
     assert(nullptr != dynamic_type);
 
-    std::string type_name = configuration_.ros2_types ? utils::demangle_if_ros_type(dynamic_type->get_name()) : dynamic_type->get_name();
+    std::string type_name =
+            configuration_.ros2_types ? utils::demangle_if_ros_type(dynamic_type->get_name()) : dynamic_type
+                    ->get_name();
 
     // Check if it exists already
     if (received_types_.find(type_name) != received_types_.end())
@@ -122,7 +124,9 @@ void McapHandler::add_schema(
     }
 
     // Schema not found, generate from dynamic type and store
-    std::string schema_text = configuration_.ros2_types ? msg::generate_ros2_schema(dynamic_type) : idl::generate_idl_schema(dynamic_type);
+    std::string schema_text =
+            configuration_.ros2_types ? msg::generate_ros2_schema(dynamic_type) : idl::generate_idl_schema(
+        dynamic_type);
 
     logInfo(DDSRECORDER_MCAP_HANDLER, "\nAdding schema with name " << type_name << " :\n" << schema_text << "\n");
 
