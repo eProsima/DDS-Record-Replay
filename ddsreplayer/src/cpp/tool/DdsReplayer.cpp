@@ -291,7 +291,7 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
             utils::Heritable<DistributedTopic> topic = channel_topic->copy();
 
             // Apply the Manual Topics for this participant.
-            for (const auto& manual_topic : configuration.ddspipe_configuration.get_manual_topics(channel_topic))
+            for (const auto& manual_topic : configuration.ddspipe_configuration.get_manual_topics(*channel_topic))
             {
                 topic->topic_qos.set_qos(manual_topic.first->topic_qos, utils::FuzzyLevelValues::fuzzy_level_hard);
             }
