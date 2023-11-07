@@ -71,7 +71,7 @@ public:
     bool is_rtps_kind() const noexcept override;
 
     //! Override topic_qos() IParticipant method
-    DDSPIPE_PARTICIPANTS_DllAPI
+    DDSRECORDER_PARTICIPANTS_DllAPI
     ddspipe::core::types::TopicQoS topic_qos() const noexcept override;
 
     //! Override create_writer_() IParticipant method
