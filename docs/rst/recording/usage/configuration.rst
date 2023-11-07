@@ -59,11 +59,6 @@ Topic Filtering
 
 The |ddsrecorder| automatically detects the topics that are being used in a DDS Network.
 The |ddsrecorder| then creates internal DDS :term:`Readers<DataReader>` to record the data published on each topic.
-
-.. note::
-
-    |ddsrecorder| entities are created with the :ref:`Topic QoS <recorder_topic_qos>` of the first Subscriber found on the Topic.
-
 The |ddsrecorder| allows filtering DDS :term:`Topics<Topic>` to allow users to configure the DDS :term:`Topics<Topic>` that must be recorded.
 These data filtering rules can be configured under the ``allowlist`` and ``blocklist`` tags.
 If the ``allowlist`` and ``blocklist`` are not configured, the |ddsrecorder| will recorded the data published on every topic it discovers.
