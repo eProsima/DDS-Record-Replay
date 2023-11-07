@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 
 #include <cpp_utils/logging/CustomStdLogConsumer.hpp>
+#include <cpp_utils/ros2_mangling.hpp>
 
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 #include <ddsrecorder_yaml/recorder/yaml_configuration_tags.hpp>
@@ -66,8 +67,11 @@ namespace test {
 
 const unsigned int DOMAIN = 222;
 
-std::string topic = "TypeIntrospectionTopic";
-std::string data_type_name = "HelloWorld";
+std::string dds_topic_name = "TypeIntrospectionTopic";
+std::string dds_type_name = "HelloWorld";
+
+std::string ros2_topic_name = "rt/hello";
+std::string ros2_type_name = "std_msgs::msg::dds_::String_";
 
 unsigned int n_msgs = 3;
 std::string send_message = "Hello World";
@@ -83,7 +87,8 @@ std::unique_ptr<DdsRecorder> create_recorder(
         std::string file_name,
         int downsampling,
         DdsRecorderState recorder_state = DdsRecorderState::RUNNING,
-        unsigned int event_window = 20)
+        unsigned int event_window = 20,
+        bool ros2_types = false)
 {
     YAML::Node yml;
 
@@ -96,6 +101,7 @@ std::unique_ptr<DdsRecorder> create_recorder(
     eprosima::ddspipe::core::types::DomainId domainId;
     domainId.domain_id = test::DOMAIN;
     configuration.simple_configuration->domain = domainId;
+    configuration.ros2_types = ros2_types;
 
     return std::make_unique<DdsRecorder>(
         configuration,
@@ -106,8 +112,8 @@ std::unique_ptr<DdsRecorder> create_recorder(
 
 void create_publisher(
         std::string topic_name,
-        unsigned int domain,
-        DataTypeKind data_type_kind)
+        std::string type_name,
+        unsigned int domain)
 {
     eprosima::fastdds::dds::DomainParticipantQos pqos;
     pqos.name("TypeIntrospectionExample_Participant_Publisher");
@@ -121,7 +127,7 @@ void create_publisher(
     // Register the type
     registerHelloWorldTypes();
     test::dynamic_type_ = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->build_dynamic_type(
-        test::data_type_name,
+        type_name,
         GetHelloWorldIdentifier(true),
         GetHelloWorldObject(true));
 
@@ -136,7 +142,7 @@ void create_publisher(
     eprosima::fastdds::dds::Publisher* publisher_ = participant_->create_publisher(PUBLISHER_QOS_DEFAULT, nullptr);
 
     // Create the DDS Topic
-    eprosima::fastdds::dds::Topic* topic_ = participant_->create_topic(topic_name, test::data_type_name,
+    eprosima::fastdds::dds::Topic* topic_ = participant_->create_topic(topic_name, type_name,
                     TOPIC_QOS_DEFAULT);
 
     // Create the DDS DataWriter
@@ -167,18 +173,19 @@ eprosima::fastrtps::types::DynamicData_ptr send_sample(
 eprosima::fastrtps::types::DynamicData_ptr record(
         std::string file_name,
         unsigned int num_msgs = 1,
-        unsigned int downsampling = 1)
+        unsigned int downsampling = 1,
+        bool ros2 = false)
 {
     eprosima::fastrtps::types::DynamicData_ptr send_data;
 
     // Create Recorder
-    auto recorder = create_recorder(file_name, downsampling);
+    auto recorder = create_recorder(file_name, downsampling, DdsRecorderState::RUNNING, 20, ros2);
 
     // Create Publisher
-    create_publisher(
-        test::topic,
-        test::DOMAIN,
-        DataTypeKind::HELLO_WORLD);
+    ros2 ? create_publisher(test::ros2_topic_name, test::ros2_type_name, test::DOMAIN) : create_publisher(
+        test::dds_topic_name, test::dds_type_name, test::DOMAIN);
+
+
 
     // Send data
     for (unsigned int i = 0; i < num_msgs; i++)
@@ -209,18 +216,18 @@ std::tuple<unsigned int, double> record_with_transitions(
         EventKind event = EventKind::NO_EVENT,
         unsigned int event_window = 20,
         unsigned int time_sleep = 0,
-        unsigned int downsampling = 1)
+        unsigned int downsampling = 1,
+        bool ros2 = false)
 {
     uint64_t current_time;
     {
         // Create Publisher
-        create_publisher(
-            test::topic,
-            test::DOMAIN,
-            DataTypeKind::HELLO_WORLD);
+        ros2 ? create_publisher(test::ros2_topic_name, test::ros2_type_name, test::DOMAIN) : create_publisher(
+            test::dds_topic_name, test::dds_type_name, test::DOMAIN);
 
         // Create Recorder
-        std::unique_ptr<DdsRecorder> recorder = create_recorder(file_name, downsampling, init_state, event_window);
+        std::unique_ptr<DdsRecorder> recorder =
+                create_recorder(file_name, downsampling, init_state, event_window, ros2);
 
         // Send data
         for (unsigned int i = 0; i < first_round; i++)
@@ -332,7 +339,7 @@ TEST(McapFileCreationTest, mcap_data_msgs)
 
 }
 
-TEST(McapFileCreationTest, mcap_data_topic)
+TEST(McapFileCreationTest, mcap_dds_topic)
 {
 
     std::string file_name = "output_mcap_data_topic.mcap";
@@ -353,8 +360,34 @@ TEST(McapFileCreationTest, mcap_data_topic)
     mcap_reader.close();
 
     // Test data
-    ASSERT_EQ(received_topic, test::topic);
-    ASSERT_EQ(received_data_type_name, test::data_type_name);
+    ASSERT_EQ(received_topic, test::dds_topic_name);
+    ASSERT_EQ(received_data_type_name, test::dds_type_name);
+
+}
+
+TEST(McapFileCreationTest, mcap_ros2_topic)
+{
+
+    std::string file_name = "output_mcap_data_topic.mcap";
+
+    record(file_name, 1, 1, true);
+
+    mcap::McapReader mcap_reader;
+    auto messages = get_msgs_mcap(file_name, mcap_reader);
+
+    std::string received_topic;
+    std::string received_data_type_name;
+
+    for (auto it = messages.begin(); it != messages.end(); it++)
+    {
+        received_topic = it->channel->topic;
+        received_data_type_name = it->schema->name;
+    }
+    mcap_reader.close();
+
+    // Test data
+    ASSERT_EQ(received_topic, eprosima::utils::demangle_if_ros_topic(test::ros2_topic_name));
+    ASSERT_EQ(received_data_type_name, eprosima::utils::demangle_if_ros_type(test::ros2_type_name));
 
 }
 

@@ -163,7 +163,8 @@ void McapHandler::add_data(
     std::lock_guard<std::mutex> lock(mtx_);
 
     DdsTopic topic_ = topic;
-
+    topic_.m_topic_name =
+            configuration_.ros2_types ? utils::demangle_if_ros_topic(topic.topic_name()) : topic.topic_name();
     topic_.type_name = configuration_.ros2_types ? utils::demangle_if_ros_type(topic.type_name) : topic.type_name;
 
     if (state_ == McapHandlerStateCode::STOPPED)

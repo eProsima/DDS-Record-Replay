@@ -27,7 +27,8 @@ set(TEST_SOURCES
 
 set(TEST_LIST
         mcap_data_msgs
-        mcap_data_topic
+        mcap_dds_topic
+        mcap_ros2_topic
         mcap_data_num_msgs
         mcap_data_num_msgs_downsampling
         transition_running
