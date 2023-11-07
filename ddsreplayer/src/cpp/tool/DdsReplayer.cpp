@@ -279,8 +279,8 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
 
         // Apply the QoS stored in the MCAP file as if they were the discovered QoS.
         channel_topic->topic_qos.set_qos(
-                deserialize_qos_(it->second->metadata[QOS_SERIALIZATION_QOS]),
-                utils::FuzzyLevelValues::fuzzy_level_fuzzy);
+            deserialize_qos_(it->second->metadata[QOS_SERIALIZATION_QOS]),
+            utils::FuzzyLevelValues::fuzzy_level_fuzzy);
 
         // Insert channel topic in builtin topics list
         builtin_topics.insert(channel_topic);
