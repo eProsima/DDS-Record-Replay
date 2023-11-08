@@ -45,9 +45,27 @@
 #include <fastdds/dds/core/LoanableSequence.hpp>
 %}
 
+%include <fastcdr/config.h>
+#if FASTCDR_VERSION_MAJOR > 1
+%import(module="fastdds") "fastcdr/xcdr/optional.hpp"
+#endif
 %import(module="fastdds") "fastdds/dds/core/LoanableCollection.hpp"
 %import(module="fastdds") "fastdds/dds/core/LoanableTypedCollection.hpp"
 %import(module="fastdds") "fastdds/dds/core/LoanableSequence.hpp"
+
+%define %traits_penumn(Type...)
+  %fragment(SWIG_Traits_frag(Type),"header",
+        fragment="StdTraits") {
+namespace swig {
+  template <> struct traits< Type > {
+    typedef value_category category;
+    static const char* type_name() { return  #Type; }
+  };
+}
+}
+%enddef
+
+
 
 ////////////////////////////////////////////////////////
 // Binding for class DdsRecorderCommand
@@ -66,6 +84,7 @@
 // We ignore them to prevent this
 %ignore DdsRecorderCommand::command();
 %rename("%s") DdsRecorderCommand::command() const;
+
 
 
 %ignore DdsRecorderCommand::args(std::string&&);

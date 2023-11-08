@@ -76,6 +76,8 @@ void registerCompleteTypes()
             });
 }
 
+
+
 const TypeIdentifier* GetTimestampIdentifier(bool complete)
 {
     const TypeIdentifier * c_identifier = TypeObjectFactory::get_instance()->get_type_identifier("Timestamp", complete);
@@ -165,7 +167,6 @@ const TypeObject* GetMinimalTimestampObject()
     // TODO Inheritance
     //type_object->minimal().struct_type().header().base_type()._d(EK_MINIMAL);
     //type_object->minimal().struct_type().header().base_type().equivalence_hash()[0..13];
-
     TypeIdentifier identifier;
     identifier._d(EK_MINIMAL);
 
@@ -254,7 +255,6 @@ const TypeObject* GetCompleteTimestampObject()
     // Header
     type_object->complete().struct_type().header().detail().type_name("Timestamp");
     // TODO inheritance
-
     TypeIdentifier identifier;
     identifier._d(EK_COMPLETE);
 
@@ -287,6 +287,8 @@ const TypeObject* GetCompleteTimestampObject()
     delete type_object;
     return TypeObjectFactory::get_instance()->get_type_object("Timestamp", true);
 }
+
+
 
 const TypeIdentifier* GetPointIdentifier(bool complete)
 {
@@ -396,7 +398,6 @@ const TypeObject* GetMinimalPointObject()
     // TODO Inheritance
     //type_object->minimal().struct_type().header().base_type()._d(EK_MINIMAL);
     //type_object->minimal().struct_type().header().base_type().equivalence_hash()[0..13];
-
     TypeIdentifier identifier;
     identifier._d(EK_MINIMAL);
 
@@ -501,7 +502,6 @@ const TypeObject* GetCompletePointObject()
     // Header
     type_object->complete().struct_type().header().detail().type_name("Point");
     // TODO inheritance
-
     TypeIdentifier identifier;
     identifier._d(EK_COMPLETE);
 
@@ -534,6 +534,8 @@ const TypeObject* GetCompletePointObject()
     delete type_object;
     return TypeObjectFactory::get_instance()->get_type_object("Point", true);
 }
+
+
 
 const TypeIdentifier* GetMessageDescriptorIdentifier(bool complete)
 {
@@ -641,7 +643,6 @@ const TypeObject* GetMinimalMessageDescriptorObject()
     // TODO Inheritance
     //type_object->minimal().struct_type().header().base_type()._d(EK_MINIMAL);
     //type_object->minimal().struct_type().header().base_type().equivalence_hash()[0..13];
-
     TypeIdentifier identifier;
     identifier._d(EK_MINIMAL);
 
@@ -744,7 +745,6 @@ const TypeObject* GetCompleteMessageDescriptorObject()
     // Header
     type_object->complete().struct_type().header().detail().type_name("MessageDescriptor");
     // TODO inheritance
-
     TypeIdentifier identifier;
     identifier._d(EK_COMPLETE);
 
@@ -777,6 +777,8 @@ const TypeObject* GetCompleteMessageDescriptorObject()
     delete type_object;
     return TypeObjectFactory::get_instance()->get_type_object("MessageDescriptor", true);
 }
+
+
 
 const TypeIdentifier* GetMessageIdentifier(bool complete)
 {
@@ -865,7 +867,6 @@ const TypeObject* GetMinimalMessageObject()
     // TODO Inheritance
     //type_object->minimal().struct_type().header().base_type()._d(EK_MINIMAL);
     //type_object->minimal().struct_type().header().base_type().equivalence_hash()[0..13];
-
     TypeIdentifier identifier;
     identifier._d(EK_MINIMAL);
 
@@ -952,7 +953,6 @@ const TypeObject* GetCompleteMessageObject()
     // Header
     type_object->complete().struct_type().header().detail().type_name("Message");
     // TODO inheritance
-
     TypeIdentifier identifier;
     identifier._d(EK_COMPLETE);
 
@@ -985,6 +985,8 @@ const TypeObject* GetCompleteMessageObject()
     delete type_object;
     return TypeObjectFactory::get_instance()->get_type_object("Message", true);
 }
+
+
 
 const TypeIdentifier* GetCompleteDataIdentifier(bool complete)
 {
@@ -1110,7 +1112,6 @@ const TypeObject* GetMinimalCompleteDataObject()
     // TODO Inheritance
     //type_object->minimal().struct_type().header().base_type()._d(EK_MINIMAL);
     //type_object->minimal().struct_type().header().base_type().equivalence_hash()[0..13];
-
     TypeIdentifier identifier;
     identifier._d(EK_MINIMAL);
 
@@ -1228,7 +1229,6 @@ const TypeObject* GetCompleteCompleteDataObject()
     // Header
     type_object->complete().struct_type().header().detail().type_name("CompleteData");
     // TODO inheritance
-
     TypeIdentifier identifier;
     identifier._d(EK_COMPLETE);
 

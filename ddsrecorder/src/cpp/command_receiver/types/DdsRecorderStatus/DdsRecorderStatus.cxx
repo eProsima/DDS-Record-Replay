@@ -27,21 +27,24 @@ char dummy;
 #endif  // _WIN32
 
 #include "DdsRecorderStatus.h"
+
+#if FASTCDR_VERSION_MAJOR > 1
+
 #include "DdsRecorderStatusTypeObject.h"
 
-#include <fastdds/rtps/common/CdrSerialization.hpp>
+#include <fastcdr/Cdr.h>
+
+
+#include <fastcdr/exceptions/BadParamException.h>
+using namespace eprosima::fastcdr::exception;
 
 #include <utility>
 
-// Include auxiliary functions like for serializing/deserializing.
-#include "DdsRecorderStatusCdrAux.ipp"
 
-using namespace eprosima::fastcdr::exception;
 
 
 DdsRecorderStatus::DdsRecorderStatus()
 {
-
     // Just to register all known types
     registerDdsRecorderStatusTypes();
 }
@@ -99,19 +102,6 @@ bool DdsRecorderStatus::operator !=(
 {
     return !(*this == x);
 }
-
-void DdsRecorderStatus::serialize(
-        eprosima::fastcdr::Cdr& scdr) const
-{
-    eprosima::fastcdr::serialize(scdr, *this);
-}
-
-void DdsRecorderStatus::deserialize(
-        eprosima::fastcdr::Cdr& dcdr)
-{
-    eprosima::fastcdr::deserialize(dcdr, *this);
-}
-
 
 /*!
  * @brief This function copies the value in member previous
@@ -229,3 +219,8 @@ std::string& DdsRecorderStatus::info()
     return m_info;
 }
 
+
+// Include auxiliary functions like for serializing/deserializing.
+#include "DdsRecorderStatusCdrAux.ipp"
+
+#endif // FASTCDR_VERSION_MAJOR > 1

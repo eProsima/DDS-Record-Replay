@@ -46,21 +46,31 @@ namespace fastcdr {
 class Cdr;
 class CdrSizeCalculator;
 
+
+
 eProsima_user_DllExport void serialize_key(
         eprosima::fastcdr::Cdr& scdr,
         const Timestamp& data);
+
+
 
 eProsima_user_DllExport void serialize_key(
         eprosima::fastcdr::Cdr& scdr,
         const Point& data);
 
+
+
 eProsima_user_DllExport void serialize_key(
         eprosima::fastcdr::Cdr& scdr,
         const MessageDescriptor& data);
 
+
+
 eProsima_user_DllExport void serialize_key(
         eprosima::fastcdr::Cdr& scdr,
         const Message& data);
+
+
 
 eProsima_user_DllExport void serialize_key(
         eprosima::fastcdr::Cdr& scdr,

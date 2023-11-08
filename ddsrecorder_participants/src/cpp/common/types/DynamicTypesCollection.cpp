@@ -27,14 +27,16 @@ char dummy;
 #endif  // _WIN32
 
 #include <ddsrecorder_participants/common/types/DynamicTypesCollection.hpp>
-#include <fastdds/rtps/common/CdrSerialization.hpp>
+
+#if FASTCDR_VERSION_MAJOR > 1
+
+#include <fastcdr/Cdr.h>
+
+
+#include <fastcdr/exceptions/BadParamException.h>
+using namespace eprosima::fastcdr::exception;
 
 #include <utility>
-
-// Include auxiliary functions like for serializing/deserializing.
-#include "DynamicTypesCollectionCdrAux.ipp"
-
-using namespace eprosima::fastcdr::exception;
 
 
 namespace eprosima {
@@ -43,16 +45,17 @@ namespace ddsrecorder {
 
 namespace participants {
 
-eprosima::ddsrecorder::participants::DynamicType::DynamicType()
-{
 
-}
 
-eprosima::ddsrecorder::participants::DynamicType::~DynamicType()
+DynamicType::DynamicType()
 {
 }
 
-eprosima::ddsrecorder::participants::DynamicType::DynamicType(
+DynamicType::~DynamicType()
+{
+}
+
+DynamicType::DynamicType(
         const DynamicType& x)
 {
     m_type_name = x.m_type_name;
@@ -60,7 +63,7 @@ eprosima::ddsrecorder::participants::DynamicType::DynamicType(
     m_type_object = x.m_type_object;
 }
 
-eprosima::ddsrecorder::participants::DynamicType::DynamicType(
+DynamicType::DynamicType(
         DynamicType&& x) noexcept
 {
     m_type_name = std::move(x.m_type_name);
@@ -68,7 +71,7 @@ eprosima::ddsrecorder::participants::DynamicType::DynamicType(
     m_type_object = std::move(x.m_type_object);
 }
 
-eprosima::ddsrecorder::participants::DynamicType& eprosima::ddsrecorder::participants::DynamicType::operator =(
+DynamicType& DynamicType::operator =(
         const DynamicType& x)
 {
 
@@ -78,7 +81,7 @@ eprosima::ddsrecorder::participants::DynamicType& eprosima::ddsrecorder::partici
     return *this;
 }
 
-eprosima::ddsrecorder::participants::DynamicType& eprosima::ddsrecorder::participants::DynamicType::operator =(
+DynamicType& DynamicType::operator =(
         DynamicType&& x) noexcept
 {
 
@@ -88,7 +91,7 @@ eprosima::ddsrecorder::participants::DynamicType& eprosima::ddsrecorder::partici
     return *this;
 }
 
-bool eprosima::ddsrecorder::participants::DynamicType::operator ==(
+bool DynamicType::operator ==(
         const DynamicType& x) const
 {
     return (m_type_name == x.m_type_name &&
@@ -96,29 +99,17 @@ bool eprosima::ddsrecorder::participants::DynamicType::operator ==(
            m_type_object == x.m_type_object);
 }
 
-bool eprosima::ddsrecorder::participants::DynamicType::operator !=(
+bool DynamicType::operator !=(
         const DynamicType& x) const
 {
     return !(*this == x);
-}
-
-void eprosima::ddsrecorder::participants::DynamicType::serialize(
-        eprosima::fastcdr::Cdr& scdr) const
-{
-    eprosima::fastcdr::serialize(scdr, *this);
-}
-
-void eprosima::ddsrecorder::participants::DynamicType::deserialize(
-        eprosima::fastcdr::Cdr& dcdr)
-{
-    eprosima::fastcdr::deserialize(dcdr, *this);
 }
 
 /*!
  * @brief This function copies the value in member type_name
  * @param _type_name New value to be copied in member type_name
  */
-void eprosima::ddsrecorder::participants::DynamicType::type_name(
+void DynamicType::type_name(
         const std::string& _type_name)
 {
     m_type_name = _type_name;
@@ -128,7 +119,7 @@ void eprosima::ddsrecorder::participants::DynamicType::type_name(
  * @brief This function moves the value in member type_name
  * @param _type_name New value to be moved in member type_name
  */
-void eprosima::ddsrecorder::participants::DynamicType::type_name(
+void DynamicType::type_name(
         std::string&& _type_name)
 {
     m_type_name = std::move(_type_name);
@@ -138,7 +129,7 @@ void eprosima::ddsrecorder::participants::DynamicType::type_name(
  * @brief This function returns a constant reference to member type_name
  * @return Constant reference to member type_name
  */
-const std::string& eprosima::ddsrecorder::participants::DynamicType::type_name() const
+const std::string& DynamicType::type_name() const
 {
     return m_type_name;
 }
@@ -147,7 +138,7 @@ const std::string& eprosima::ddsrecorder::participants::DynamicType::type_name()
  * @brief This function returns a reference to member type_name
  * @return Reference to member type_name
  */
-std::string& eprosima::ddsrecorder::participants::DynamicType::type_name()
+std::string& DynamicType::type_name()
 {
     return m_type_name;
 }
@@ -156,7 +147,7 @@ std::string& eprosima::ddsrecorder::participants::DynamicType::type_name()
  * @brief This function copies the value in member type_information
  * @param _type_information New value to be copied in member type_information
  */
-void eprosima::ddsrecorder::participants::DynamicType::type_information(
+void DynamicType::type_information(
         const std::string& _type_information)
 {
     m_type_information = _type_information;
@@ -166,7 +157,7 @@ void eprosima::ddsrecorder::participants::DynamicType::type_information(
  * @brief This function moves the value in member type_information
  * @param _type_information New value to be moved in member type_information
  */
-void eprosima::ddsrecorder::participants::DynamicType::type_information(
+void DynamicType::type_information(
         std::string&& _type_information)
 {
     m_type_information = std::move(_type_information);
@@ -176,7 +167,7 @@ void eprosima::ddsrecorder::participants::DynamicType::type_information(
  * @brief This function returns a constant reference to member type_information
  * @return Constant reference to member type_information
  */
-const std::string& eprosima::ddsrecorder::participants::DynamicType::type_information() const
+const std::string& DynamicType::type_information() const
 {
     return m_type_information;
 }
@@ -185,7 +176,7 @@ const std::string& eprosima::ddsrecorder::participants::DynamicType::type_inform
  * @brief This function returns a reference to member type_information
  * @return Reference to member type_information
  */
-std::string& eprosima::ddsrecorder::participants::DynamicType::type_information()
+std::string& DynamicType::type_information()
 {
     return m_type_information;
 }
@@ -194,7 +185,7 @@ std::string& eprosima::ddsrecorder::participants::DynamicType::type_information(
  * @brief This function copies the value in member type_object
  * @param _type_object New value to be copied in member type_object
  */
-void eprosima::ddsrecorder::participants::DynamicType::type_object(
+void DynamicType::type_object(
         const std::string& _type_object)
 {
     m_type_object = _type_object;
@@ -204,7 +195,7 @@ void eprosima::ddsrecorder::participants::DynamicType::type_object(
  * @brief This function moves the value in member type_object
  * @param _type_object New value to be moved in member type_object
  */
-void eprosima::ddsrecorder::participants::DynamicType::type_object(
+void DynamicType::type_object(
         std::string&& _type_object)
 {
     m_type_object = std::move(_type_object);
@@ -214,7 +205,7 @@ void eprosima::ddsrecorder::participants::DynamicType::type_object(
  * @brief This function returns a constant reference to member type_object
  * @return Constant reference to member type_object
  */
-const std::string& eprosima::ddsrecorder::participants::DynamicType::type_object() const
+const std::string& DynamicType::type_object() const
 {
     return m_type_object;
 }
@@ -223,34 +214,32 @@ const std::string& eprosima::ddsrecorder::participants::DynamicType::type_object
  * @brief This function returns a reference to member type_object
  * @return Reference to member type_object
  */
-std::string& eprosima::ddsrecorder::participants::DynamicType::type_object()
+std::string& DynamicType::type_object()
 {
     return m_type_object;
 }
 
-eprosima::ddsrecorder::participants::DynamicTypesCollection::DynamicTypesCollection()
-{
-
-}
-
-eprosima::ddsrecorder::participants::DynamicTypesCollection::~DynamicTypesCollection()
+DynamicTypesCollection::DynamicTypesCollection()
 {
 }
 
-eprosima::ddsrecorder::participants::DynamicTypesCollection::DynamicTypesCollection(
+DynamicTypesCollection::~DynamicTypesCollection()
+{
+}
+
+DynamicTypesCollection::DynamicTypesCollection(
         const DynamicTypesCollection& x)
 {
     m_dynamic_types = x.m_dynamic_types;
 }
 
-eprosima::ddsrecorder::participants::DynamicTypesCollection::DynamicTypesCollection(
+DynamicTypesCollection::DynamicTypesCollection(
         DynamicTypesCollection&& x) noexcept
 {
     m_dynamic_types = std::move(x.m_dynamic_types);
 }
 
-eprosima::ddsrecorder::participants::DynamicTypesCollection& eprosima::ddsrecorder::participants::DynamicTypesCollection
-        ::operator =(
+DynamicTypesCollection& DynamicTypesCollection::operator =(
         const DynamicTypesCollection& x)
 {
 
@@ -258,8 +247,7 @@ eprosima::ddsrecorder::participants::DynamicTypesCollection& eprosima::ddsrecord
     return *this;
 }
 
-eprosima::ddsrecorder::participants::DynamicTypesCollection& eprosima::ddsrecorder::participants::DynamicTypesCollection
-        ::operator =(
+DynamicTypesCollection& DynamicTypesCollection::operator =(
         DynamicTypesCollection&& x) noexcept
 {
 
@@ -267,35 +255,23 @@ eprosima::ddsrecorder::participants::DynamicTypesCollection& eprosima::ddsrecord
     return *this;
 }
 
-bool eprosima::ddsrecorder::participants::DynamicTypesCollection::operator ==(
+bool DynamicTypesCollection::operator ==(
         const DynamicTypesCollection& x) const
 {
     return (m_dynamic_types == x.m_dynamic_types);
 }
 
-bool eprosima::ddsrecorder::participants::DynamicTypesCollection::operator !=(
+bool DynamicTypesCollection::operator !=(
         const DynamicTypesCollection& x) const
 {
     return !(*this == x);
-}
-
-void eprosima::ddsrecorder::participants::DynamicTypesCollection::serialize(
-        eprosima::fastcdr::Cdr& scdr) const
-{
-    eprosima::fastcdr::serialize(scdr, *this);
-}
-
-void eprosima::ddsrecorder::participants::DynamicTypesCollection::deserialize(
-        eprosima::fastcdr::Cdr& dcdr)
-{
-    eprosima::fastcdr::deserialize(dcdr, *this);
 }
 
 /*!
  * @brief This function copies the value in member dynamic_types
  * @param _dynamic_types New value to be copied in member dynamic_types
  */
-void eprosima::ddsrecorder::participants::DynamicTypesCollection::dynamic_types(
+void DynamicTypesCollection::dynamic_types(
         const std::vector<eprosima::ddsrecorder::participants::DynamicType>& _dynamic_types)
 {
     m_dynamic_types = _dynamic_types;
@@ -305,7 +281,7 @@ void eprosima::ddsrecorder::participants::DynamicTypesCollection::dynamic_types(
  * @brief This function moves the value in member dynamic_types
  * @param _dynamic_types New value to be moved in member dynamic_types
  */
-void eprosima::ddsrecorder::participants::DynamicTypesCollection::dynamic_types(
+void DynamicTypesCollection::dynamic_types(
         std::vector<eprosima::ddsrecorder::participants::DynamicType>&& _dynamic_types)
 {
     m_dynamic_types = std::move(_dynamic_types);
@@ -315,8 +291,7 @@ void eprosima::ddsrecorder::participants::DynamicTypesCollection::dynamic_types(
  * @brief This function returns a constant reference to member dynamic_types
  * @return Constant reference to member dynamic_types
  */
-const std::vector<eprosima::ddsrecorder::participants::DynamicType>& eprosima::ddsrecorder::participants::
-        DynamicTypesCollection::dynamic_types() const
+const std::vector<eprosima::ddsrecorder::participants::DynamicType>& DynamicTypesCollection::dynamic_types() const
 {
     return m_dynamic_types;
 }
@@ -325,8 +300,7 @@ const std::vector<eprosima::ddsrecorder::participants::DynamicType>& eprosima::d
  * @brief This function returns a reference to member dynamic_types
  * @return Reference to member dynamic_types
  */
-std::vector<eprosima::ddsrecorder::participants::DynamicType>& eprosima::ddsrecorder::participants::
-        DynamicTypesCollection::dynamic_types()
+std::vector<eprosima::ddsrecorder::participants::DynamicType>& DynamicTypesCollection::dynamic_types()
 {
     return m_dynamic_types;
 }
@@ -338,3 +312,7 @@ std::vector<eprosima::ddsrecorder::participants::DynamicType>& eprosima::ddsreco
 
 
 } // namespace eprosima
+// Include auxiliary functions like for serializing/deserializing.
+#include "DynamicTypesCollectionCdrAux.ipp"
+
+#endif // FASTCDR_VERSION_MAJOR > 1

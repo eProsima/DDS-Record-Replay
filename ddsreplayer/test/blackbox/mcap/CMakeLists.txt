@@ -21,6 +21,7 @@ set(TEST_NAME McapFileReadTest)
 set(TEST_SOURCES
         McapFileReadTest.cpp
         ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/hello_world/HelloWorld.cxx
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/hello_world/HelloWorldv1.cxx
         ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/hello_world/HelloWorldPubSubTypes.cxx
         ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/HelloWorldSubscriber.cpp
     )

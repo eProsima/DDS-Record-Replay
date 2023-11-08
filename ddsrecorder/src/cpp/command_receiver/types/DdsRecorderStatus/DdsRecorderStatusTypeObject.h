@@ -54,6 +54,8 @@ using namespace eprosima::fastrtps::types;
 
 eProsima_user_DllExport void registerDdsRecorderStatusTypes();
 
+
+
 eProsima_user_DllExport const TypeIdentifier* GetDdsRecorderStatusIdentifier(bool complete = false);
 eProsima_user_DllExport const TypeObject* GetDdsRecorderStatusObject(bool complete = false);
 eProsima_user_DllExport const TypeObject* GetMinimalDdsRecorderStatusObject();

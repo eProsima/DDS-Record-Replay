@@ -38,6 +38,8 @@
 #endif  // GEN_API_VER
 
 
+
+
 /*!
  * @brief This class represents the TopicDataType of the type Timestamp defined by the user in the IDL file.
  * @ingroup Complete
@@ -125,6 +127,8 @@ public:
     unsigned char* m_keyBuffer;
 
 };
+
+
 
 /*!
  * @brief This class represents the TopicDataType of the type Point defined by the user in the IDL file.
@@ -214,6 +218,8 @@ public:
 
 };
 
+
+
 /*!
  * @brief This class represents the TopicDataType of the type MessageDescriptor defined by the user in the IDL file.
  * @ingroup Complete
@@ -302,6 +308,8 @@ public:
 
 };
 
+
+
 /*!
  * @brief This class represents the TopicDataType of the type Message defined by the user in the IDL file.
  * @ingroup Complete
@@ -389,6 +397,8 @@ public:
     unsigned char* m_keyBuffer;
 
 };
+
+
 
 /*!
  * @brief This class represents the TopicDataType of the type CompleteData defined by the user in the IDL file.

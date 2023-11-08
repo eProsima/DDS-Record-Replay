@@ -21,6 +21,7 @@ set(TEST_NAME McapFileCreationTest)
 set(TEST_SOURCES
         McapFileCreationTest.cpp
         ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world/HelloWorld.cxx
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world/HelloWorldv1.cxx
         ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world/HelloWorldPubSubTypes.cxx
         ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world/HelloWorldTypeObject.cxx
     )

@@ -27,21 +27,24 @@ char dummy;
 #endif  // _WIN32
 
 #include "Complete.h"
+
+#if FASTCDR_VERSION_MAJOR > 1
+
 #include "CompleteTypeObject.h"
 
-#include <fastdds/rtps/common/CdrSerialization.hpp>
+#include <fastcdr/Cdr.h>
+
+
+#include <fastcdr/exceptions/BadParamException.h>
+using namespace eprosima::fastcdr::exception;
 
 #include <utility>
 
-// Include auxiliary functions like for serializing/deserializing.
-#include "CompleteCdrAux.ipp"
 
-using namespace eprosima::fastcdr::exception;
 
 
 Timestamp::Timestamp()
 {
-
     // Just to register all known types
     registerCompleteTypes();
 }
@@ -94,19 +97,6 @@ bool Timestamp::operator !=(
 {
     return !(*this == x);
 }
-
-void Timestamp::serialize(
-        eprosima::fastcdr::Cdr& scdr) const
-{
-    eprosima::fastcdr::serialize(scdr, *this);
-}
-
-void Timestamp::deserialize(
-        eprosima::fastcdr::Cdr& dcdr)
-{
-    eprosima::fastcdr::deserialize(dcdr, *this);
-}
-
 
 /*!
  * @brief This function sets a value in member seconds
@@ -166,9 +156,10 @@ int32_t& Timestamp::milliseconds()
 }
 
 
+
+
 Point::Point()
 {
-
     // Just to register all known types
     registerCompleteTypes();
 }
@@ -226,19 +217,6 @@ bool Point::operator !=(
 {
     return !(*this == x);
 }
-
-void Point::serialize(
-        eprosima::fastcdr::Cdr& scdr) const
-{
-    eprosima::fastcdr::serialize(scdr, *this);
-}
-
-void Point::deserialize(
-        eprosima::fastcdr::Cdr& dcdr)
-{
-    eprosima::fastcdr::deserialize(dcdr, *this);
-}
-
 
 /*!
  * @brief This function sets a value in member x
@@ -327,9 +305,10 @@ int32_t& Point::z()
 }
 
 
+
+
 MessageDescriptor::MessageDescriptor()
 {
-
     // Just to register all known types
     registerCompleteTypes();
 }
@@ -387,19 +366,6 @@ bool MessageDescriptor::operator !=(
 {
     return !(*this == x);
 }
-
-void MessageDescriptor::serialize(
-        eprosima::fastcdr::Cdr& scdr) const
-{
-    eprosima::fastcdr::serialize(scdr, *this);
-}
-
-void MessageDescriptor::deserialize(
-        eprosima::fastcdr::Cdr& dcdr)
-{
-    eprosima::fastcdr::deserialize(dcdr, *this);
-}
-
 
 /*!
  * @brief This function sets a value in member id
@@ -508,9 +474,10 @@ Timestamp& MessageDescriptor::time()
 }
 
 
+
+
 Message::Message()
 {
-
     // Just to register all known types
     registerCompleteTypes();
 }
@@ -563,19 +530,6 @@ bool Message::operator !=(
 {
     return !(*this == x);
 }
-
-void Message::serialize(
-        eprosima::fastcdr::Cdr& scdr) const
-{
-    eprosima::fastcdr::serialize(scdr, *this);
-}
-
-void Message::deserialize(
-        eprosima::fastcdr::Cdr& dcdr)
-{
-    eprosima::fastcdr::deserialize(dcdr, *this);
-}
-
 
 /*!
  * @brief This function copies the value in member descriptor
@@ -655,9 +609,10 @@ std::string& Message::message()
 }
 
 
+
+
 CompleteData::CompleteData()
 {
-
     // Just to register all known types
     registerCompleteTypes();
 }
@@ -720,19 +675,6 @@ bool CompleteData::operator !=(
 {
     return !(*this == x);
 }
-
-void CompleteData::serialize(
-        eprosima::fastcdr::Cdr& scdr) const
-{
-    eprosima::fastcdr::serialize(scdr, *this);
-}
-
-void CompleteData::deserialize(
-        eprosima::fastcdr::Cdr& dcdr)
-{
-    eprosima::fastcdr::deserialize(dcdr, *this);
-}
-
 
 /*!
  * @brief This function sets a value in member index
@@ -879,3 +821,8 @@ std::array<Message, 2>& CompleteData::messages()
     return m_messages;
 }
 
+
+// Include auxiliary functions like for serializing/deserializing.
+#include "CompleteCdrAux.ipp"
+
+#endif // FASTCDR_VERSION_MAJOR > 1
