@@ -35,104 +35,49 @@ Configuration related to DDS communication.
 .. _replayer_topic_filtering:
 
 Topic Filtering
-^^^^^^^^^^^^^^^
+---------------
 
-As seen in :ref:`DDS Recorder topic filtering <recorder_topic_filtering>`, a user can define a set of rules to only record DDS :term:`Topics<Topic>` of interest.
+The |ddsreplayer| automatically detects the topics that are being used in a DDS Network.
+The |ddsreplayer| then creates internal DDS :term:`Writers<DataWriter>` to replay the data published on each topic.
+The |ddsreplayer| allows filtering DDS :term:`Topics<Topic>` to allow users to configure the DDS :term:`Topics<Topic>` that must be replayed.
+These data filtering rules can be configured under the ``allowlist`` and ``blocklist`` tags.
+If the ``allowlist`` and ``blocklist`` are not configured, the |ddsreplayer| will replayed the data published on every topic it discovers.
+If both the ``allowlist`` and ``blocklist`` are configured and a topic appears in both of them, the ``blocklist`` has priority and the topic will be blocked.
 
-In addition to the filters applied to |ddsrecorder| when recording, |ddsreplayer| also allows filtering of DDS :term:`Topics<Topic>`.
-That is, it allows to define the DDS Topics' data that is going to be replayed by the application.
-This way, it is possible to define a set of rules in |ddsreplayer| to filter those data samples the user does not wish to replay.
-
-It is not mandatory to define such set of rules in the configuration file.
-In this case, a |ddsreplayer| will publish all data stored in the provided input MCAP file.
-
-To define these data filtering rules based on the Topics to which they belong, the following lists are available:
-
-* Allowed topics list (``allowlist``)
-* Block topics list (``blocklist``)
-
-These lists of topics stated above are defined by a tag in the *YAML* configuration file, which defines a *YAML* vector (``[]``).
-This vector contains the list of topics for each filtering rule.
-Each Topic is determined by its entries ``name`` and ``type``, with only the first one being mandatory.
-
-.. list-table::
-    :header-rows: 1
-
-    *   - Topic entries
-        - Data type
-        - Default value
-
-    *   - ``name``
-        - ``string``
-        - \-
-
-    *   - ``type``
-        - ``string``
-        - ``"*"``
-
-See :term:`Topic` section for further information about the topic.
+Topics are determined by the tags ``name`` (required) and ``type``, both of which accept wildcard characters.
 
 .. note::
 
-    Placing quotation marks around values in a YAML file is generally optional.
-    However, values containing wildcard characters must be enclosed by single or double quotation marks.
+    Placing quotation marks around values in a YAML file is generally optional, but values containing wildcard characters do require single or double quotation marks.
 
-Allow topic list
-""""""""""""""""
-This is the list of topics that |ddsreplayer| will replay, i.e. only recorded data under the topics matching the expressions in the ``allowlist`` will be published by |ddsreplayer|.
+Consider the following example:
 
-.. note::
+.. code-block:: yaml
 
-    If no ``allowlist`` is provided, data will be replayed for all topics (unless filtered out in ``blocklist``).
+    allowlist:
+      - name: AllowedTopic1
+        type: Allowed
 
-.. _replayer_topic_filtering_blocklist:
+      - name: AllowedTopic2
+        type: "*"
 
-Block topic list
-""""""""""""""""
-This is the list of topics that the |ddsreplayer| will block, that is, all input data under the topics matching the filters specified in the ``blocklist`` will be discarded by the |ddsreplayer| and therefore will not be published.
+      - name: HelloWorldTopic
+        type: HelloWorld
 
-This list takes precedence over the ``allowlist``.
-If a topic matches an expression both in the ``allowlist`` and in the ``blocklist``, the ``blocklist`` takes precedence, causing the data under this topic to be discarded.
+    blocklist:
+      - name: "*"
+        type: HelloWorld
 
-**Example of usage - Allowlist and blocklist collision:**
+In this example, the data published in the topic ``AllowedTopic1`` with type ``Allowed`` and in the topic ``AllowedTopic2`` with any type will be replayed by the |ddsreplayer|.
+The data published in the topic ``HelloWorldTopic`` with type ``HelloWorld`` will be blocked, since the ``blocklist`` is blocking all topics with any name and with type ``HelloWorld``.
 
-    In the following example, the ``HelloWorldTopic`` topic is both in the ``allowlist`` and (implicitly) in the
-    ``blocklist``, so according to the ``blocklist`` preference rule this topic is blocked.
-    Moreover, only the topics present in the allowlist are relayed, regardless of whether more topics are dynamically
-    discovered in the DDS network.
-    In this case the forwarded topics are ``AllowedTopic1`` with data type ``Allowed``
-    and ``AllowedTopic2`` regardless of its data type.
+.. _replayer_topic_qos:
 
-    .. code-block:: yaml
+Topic QoS
+^^^^^^^^^
 
-        allowlist:
-          - name: AllowedTopic1
-            type: Allowed
-          - name: AllowedTopic2
-            type: "*"
-          - name: HelloWorldTopic
-            type: HelloWorld
-
-        blocklist:
-          - name: "*"
-            type: HelloWorld
-
-Built-in Topics
-^^^^^^^^^^^^^^^
-
-As seen in :ref:`recorder_topic_filtering`, a |ddsrecorder| uses the QoS of the first Publisher/Subscriber found in every recorded topic, unless manually defined in the :ref:`built-in topics <recorder_builtin_topics>` list.
-This QoS information is stored in the MCAP file along with the user data, and thus a |ddsreplayer| instance is able to publish recorded data preserving the original QoS.
-
-However, the user has the option to manually set the QoS of any topic to be played back through the replayer's builtin-topics list.
-The builtin-topics list is defined in the same form as the ``allowlist`` and ``blocklist``.
-
-This feature also allows to manually force the QoS of a specific topic, so the entities created in such topic follows the specified QoS and not the one first discovered.
-
-Topic Quality of Service
-""""""""""""""""""""""""
-
-For every topic contained in this list, both ``name`` and ``type`` must be specified and contain no wildcard characters.
-Apart from these values, the tag ``qos`` under each topic allows to configure the following values:
+The following is the set of QoS that are configurable for a topic.
+For more information on topics, please read the `Fast DDS Topic <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dds_layer/topic/topic.html>`_ section.
 
 .. list-table::
     :header-rows: 1
@@ -155,38 +100,87 @@ Apart from these values, the tag ``qos`` under each topic allows to configure th
         - ``false``
         - ``TRANSIENT_LOCAL`` / ``VOLATILE``
 
-    *   - Partitions
-        - ``partitions``
-        - *bool*
-        - ``false``
-        - Topic with / without partitions
-
     *   - Ownership
         - ``ownership``
         - *bool*
         - ``false``
         - ``EXCLUSIVE_OWNERSHIP_QOS`` / ``SHARED_OWNERSHIP_QOS``
 
+    *   - Partitions
+        - ``partitions``
+        - *bool*
+        - ``false``
+        - Topic with / without partitions
+
     *   - Key
         - ``keyed``
         - *bool*
         - ``false``
-        - Topic with / without key
+        - Topic with / without `key <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dds_layer/topic/typeSupport/typeSupport.html#data-types-with-a-key>`_
 
-**Example of usage:**
+    *   - History Depth
+        - ``history-depth``
+        - *unsigned integer*
+        - ``5000``
+        - :ref:`replayer_history_depth`
 
-    .. code-block:: yaml
+    *   - Max Transmission Rate
+        - ``max-tx-rate``
+        - *float*
+        - ``0`` (unlimited)
+        - :ref:`replayer_max_tx_rate`
 
-        builtin-topics:
-          - name: HelloWorldTopic
-            type: HelloWorld
-            qos:
-              reliability: true       # Use QoS RELIABLE
-              durability: true        # Use QoS TRANSIENT_LOCAL
-              partitions: true        # Topic with partitions
-              ownership: false        # Use QoS SHARED_OWNERSHIP_QOS
-              keyed: true             # Topic with key
+.. warning::
 
+    Manually configuring ``TRANSIENT_LOCAL`` durability may lead to incompatibility issues when the discovered reliability is ``BEST_EFFORT``.
+    Please ensure to always configure the ``reliability`` when configuring the ``durability`` to avoid the issue.
+
+.. _replayer_history_depth:
+
+History Depth
+"""""""""""""
+
+The ``history-depth`` tag configures the history depth of the Fast DDS internal entities.
+By default, the depth of every RTPS History instance is :code:`5000`, which sets a constraint on the maximum number of samples a |ddsreplayer| instance can deliver to late joiner Readers configured with ``TRANSIENT_LOCAL`` `DurabilityQosPolicyKind <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dds_layer/core/policy/standardQosPolicies.html#durabilityqospolicykind>`_.
+Its value should be decreased when the sample size and/or number of created endpoints (increasing with the number of topics) are big enough to cause memory exhaustion issues.
+If enough memory is available, however, the ``history-depth`` could be increased to deliver a greater number of samples to late joiners.
+
+.. _replayer_max_tx_rate:
+
+Max Transmission Rate
+"""""""""""""""""""""
+
+The ``max-tx-rate`` tag limits the frequency [Hz] at which samples are sent by discarding messages transmitted before :code:`1/max-tx-rate` seconds have passed since the last sent message.
+It only accepts non-negative numbers.
+By default it is set to ``0``; it sends samples at an unlimited transmission rate.
+
+.. note::
+
+    The ``max-tx-rate`` tag can be set (in order of precedence) for topics, for participants, and globally in specs.
+
+.. _replayer_manual_topics:
+
+Manual Topics
+^^^^^^^^^^^^^
+
+A subset of QoS can be manually configured for a specific topic under the tag ``topics``.
+The tag ``topics`` has a required ``name`` tag that accepts wildcard characters.
+It also has two optional tags: a ``type`` tag that accepts wildcard characters, and a ``qos`` tag with the QoS that the user wants to manually configure.
+If a ``qos`` is not manually configured, it will get its value by discovery.
+
+**Example of usage**
+
+.. code-block:: yaml
+
+    topics:
+      - name: "temperature/*"
+        type: "temperature/types/*"
+        qos:
+          max-tx-rate: 15
+
+.. note::
+
+    The :ref:`Topic QoS <replayer_topic_qos>` configured in the Manual Topics take precedence over the :ref:`Specs Topic QoS <replayer_specs_topic_qos>`.
 
 .. _replayer_usage_configuration_domain_id:
 
@@ -361,6 +355,20 @@ By default, data is replayed at the same rate it was published/received.
 However, a user might be interested in playing messages back at a rate different than the original one.
 This can be accomplished through the playback ``rate`` tag, which accepts positive float values (e.g. 0.5 <--> half speed || 2 <--> double speed).
 
+.. _replayer_usage_configuration_max_tx_rate:
+
+Max Transmission Rate
+---------------------
+
+The ``max-tx-rate`` tag limits the frequency [Hz] at which samples are sent by discarding messages transmitted before :code:`1/max-tx-rate` seconds have passed since the last sent message.
+It only accepts non-negative numbers.
+By default it is set to ``0``; it sends samples at an unlimited transmission rate.
+
+.. note::
+
+    The ``max-tx-rate`` tag can be set for topics and globally under the ``replayer`` tag.
+    If both are set, the configuration under topics prevails.
+
 .. _replayer_replay_configuration_replaytypes:
 
 Replay Types
@@ -393,6 +401,17 @@ Note that this last message might be lost after publication, and if reliable `Re
 For this purpose, the user can specify the maximum amount of milliseconds (``wait-all-acked-timeout``) to wait on closure until published messages are acknowledged by matched readers.
 Its value is set to ``0`` by default (no wait).
 
+.. _replayer_specs_topic_qos:
+
+QoS
+^^^
+
+``specs`` supports a ``qos`` **optional** tag to configure the default values of the :ref:`Topic QoS <replayer_topic_qos>`.
+
+.. note::
+
+    The :ref:`Topic QoS <replayer_topic_qos>` configured in ``specs`` can be overwritten by the :ref:`Manual Topics <replayer_manual_topics>`.
+
 .. _replayer_usage_configuration_general_example:
 
 General Example
@@ -417,15 +436,11 @@ A complete example of all the configurations described on this page can be found
         - name: "topic_name"
           type: "topic_type"
 
-      builtin-topics:
-        - name: "HelloWorldTopic"
-          type: "HelloWorld"
+      topics:
+        - name: "temperature/*"
+          type: "temperature/types/*"
           qos:
-            reliability: true
-            durability: true
-            keyed: false
-            partitions: true
-            ownership: false
+            max-tx-rate: 15
 
       ignore-participant-flags: no_filter
       transport: builtin
@@ -458,3 +473,6 @@ A complete example of all the configurations described on this page can be found
     specs:
       threads: 8
       wait-all-acked-timeout: 10
+
+      qos:
+        max-tx-rate: 20

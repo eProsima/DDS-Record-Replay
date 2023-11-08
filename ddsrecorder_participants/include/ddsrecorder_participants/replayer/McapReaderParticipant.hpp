@@ -70,6 +70,10 @@ public:
     DDSRECORDER_PARTICIPANTS_DllAPI
     bool is_rtps_kind() const noexcept override;
 
+    //! Override topic_qos() IParticipant method
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    ddspipe::core::types::TopicQoS topic_qos() const noexcept override;
+
     //! Override create_writer_() IParticipant method
     DDSRECORDER_PARTICIPANTS_DllAPI
     std::shared_ptr<ddspipe::core::IWriter> create_writer(

@@ -68,6 +68,11 @@ bool McapReaderParticipant::is_rtps_kind() const noexcept
     return false;
 }
 
+TopicQoS McapReaderParticipant::topic_qos() const noexcept
+{
+    return configuration_->topic_qos;
+}
+
 std::shared_ptr<IWriter> McapReaderParticipant::create_writer(
         const ITopic& /* topic */)
 {

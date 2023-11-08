@@ -60,7 +60,7 @@ Therefore, any user can create his own application to control the |ddsrecorder| 
 .. note::
 
     Status and command topics are not blocked by default, i.e. messages on this topics will be recorded if listening on the same domain the controller is launched.
-    If willing to avoid this, include these topics in the :ref:`blocklist <recorder_topic_filtering_blocklist>`:
+    If willing to avoid this, include these topics in the :ref:`blocklist <recorder_topic_filtering>`:
 
     .. code-block:: yaml
 

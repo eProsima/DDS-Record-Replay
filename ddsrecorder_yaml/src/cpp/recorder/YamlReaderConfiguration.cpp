@@ -20,6 +20,7 @@
 #include <cpp_utils/utils.hpp>
 
 #include <ddspipe_core/types/dynamic_types/types.hpp>
+#include <ddspipe_core/types/topic/filter/ManualTopic.hpp>
 #include <ddspipe_core/types/topic/filter/WildcardDdsFilterTopic.hpp>
 #include <ddspipe_participants/types/address/Address.hpp>
 
@@ -115,10 +116,15 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
         WildcardDdsFilterTopic rpc_request_topic, rpc_response_topic;
         rpc_request_topic.topic_name.set_value("rq/*");
         rpc_response_topic.topic_name.set_value("rr/*");
-        blocklist.insert(
+
+        ddspipe_configuration.blocklist.insert(
             utils::Heritable<WildcardDdsFilterTopic>::make_heritable(rpc_request_topic));
-        blocklist.insert(
+
+        ddspipe_configuration.blocklist.insert(
             utils::Heritable<WildcardDdsFilterTopic>::make_heritable(rpc_response_topic));
+
+        // The DDS Pipe should be enabled on start up.
+        ddspipe_configuration.init_enabled = true;
 
         // Initialize controller domain with the same as the one being recorded
         // WARNING: dds tag must have been parsed beforehand
@@ -199,24 +205,6 @@ void RecorderConfiguration::load_recorder_configuration_(
     }
 
     /////
-    // Get optional downsampling
-    if (YamlReader::is_tag_present(yml, DOWNSAMPLING_TAG))
-    {
-        downsampling = YamlReader::get_positive_int(yml, DOWNSAMPLING_TAG);
-        // Set default value for downsampling
-        TopicQoS::default_downsampling.store(downsampling);
-    }
-
-    /////
-    // Get optional max reception rate
-    if (YamlReader::is_tag_present(yml, MAX_RECEPTION_RATE_TAG))
-    {
-        // Set default value for max reception rate
-        TopicQoS::default_max_reception_rate.store(YamlReader::get_nonnegative_float(yml,
-                MAX_RECEPTION_RATE_TAG));
-    }
-
-    /////
     // Get optional only_with_type
     if (YamlReader::is_tag_present(yml, RECORDER_ONLY_WITH_TYPE_TAG))
     {
@@ -290,12 +278,12 @@ void RecorderConfiguration::load_specs_configuration_(
         n_threads = YamlReader::get_positive_int(yml, NUMBER_THREADS_TAG);
     }
 
-    // Get maximum history depth
-    if (YamlReader::is_tag_present(yml, MAX_HISTORY_DEPTH_TAG))
+    /////
+    // Get optional Topic QoS
+    if (YamlReader::is_tag_present(yml, SPECS_QOS_TAG))
     {
-        max_history_depth = YamlReader::get_positive_int(yml, MAX_HISTORY_DEPTH_TAG);
-        // Set default value for history
-        TopicQoS::default_history_depth.store(max_history_depth);
+        YamlReader::fill<TopicQoS>(topic_qos, YamlReader::get_value_in_tag(yml, SPECS_QOS_TAG), version);
+        TopicQoS::default_topic_qos.set_value(topic_qos);
     }
 
     // Get max pending samples
@@ -363,12 +351,13 @@ void RecorderConfiguration::load_dds_configuration_(
     // Get optional allowlist
     if (YamlReader::is_tag_present(yml, ALLOWLIST_TAG))
     {
-        allowlist = YamlReader::get_set<utils::Heritable<IFilterTopic>>(yml, ALLOWLIST_TAG, version);
+        ddspipe_configuration.allowlist = YamlReader::get_set<utils::Heritable<IFilterTopic>>(yml, ALLOWLIST_TAG,
+                        version);
 
         // Add to allowlist always the type object topic
         WildcardDdsFilterTopic internal_topic;
         internal_topic.topic_name.set_value(TYPE_OBJECT_TOPIC_NAME);
-        allowlist.insert(
+        ddspipe_configuration.allowlist.insert(
             utils::Heritable<WildcardDdsFilterTopic>::make_heritable(internal_topic));
     }
 
@@ -376,7 +365,17 @@ void RecorderConfiguration::load_dds_configuration_(
     // Get optional blocklist
     if (YamlReader::is_tag_present(yml, BLOCKLIST_TAG))
     {
-        blocklist = YamlReader::get_set<utils::Heritable<IFilterTopic>>(yml, BLOCKLIST_TAG, version);
+        ddspipe_configuration.blocklist = YamlReader::get_set<utils::Heritable<IFilterTopic>>(yml, BLOCKLIST_TAG,
+                        version);
+    }
+
+    /////
+    // Get optional topics
+    if (YamlReader::is_tag_present(yml, TOPICS_TAG))
+    {
+        const auto& manual_topics = YamlReader::get_list<ManualTopic>(yml, TOPICS_TAG, version);
+        ddspipe_configuration.manual_topics =
+                std::vector<ManualTopic>(manual_topics.begin(), manual_topics.end());
     }
 
     /////
@@ -384,7 +383,7 @@ void RecorderConfiguration::load_dds_configuration_(
     if (YamlReader::is_tag_present(yml, BUILTIN_TAG))
     {
         // WARNING: Parse builtin topics AFTER specs and recorder, as some topic-specific default values are set there
-        builtin_topics = YamlReader::get_set<utils::Heritable<DistributedTopic>>(yml, BUILTIN_TAG,
+        ddspipe_configuration.builtin_topics = YamlReader::get_set<utils::Heritable<DistributedTopic>>(yml, BUILTIN_TAG,
                         version);
     }
 }

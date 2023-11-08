@@ -1,6 +1,6 @@
-builtin-topics:
-  - name: "/dds/topic"
-    type: "HelloWorld"
+topics:
+  - name: /dds/topic
+    type: HelloWorld
     qos:
       reliability: true       # Use QoS RELIABLE
 

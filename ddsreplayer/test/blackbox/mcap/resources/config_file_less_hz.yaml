@@ -1,4 +1,4 @@
-builtin-topics:
+topics:
   - name: /dds/topic
     type: HelloWorld
     qos:

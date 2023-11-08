@@ -51,16 +51,11 @@ using namespace eprosima::ddsrecorder::participants;
 using namespace eprosima::utils;
 
 DdsReplayer::DdsReplayer(
-        const yaml::ReplayerConfiguration& configuration,
+        yaml::ReplayerConfiguration& configuration,
         std::string& input_file)
     : dyn_participant_(nullptr)
     , dyn_publisher_(nullptr)
 {
-    // Create allowed topics list
-    auto allowed_topics = std::make_shared<AllowedTopicList>(
-        configuration.allowlist,
-        configuration.blocklist);
-
     // Create Discovery Database
     discovery_database_ =
             std::make_shared<DiscoveryDatabase>();
@@ -131,17 +126,15 @@ DdsReplayer::DdsReplayer(
     }
 
     // Generate builtin-topics list by combining information from YAML and MCAP files
-    auto builtin_topics = generate_builtin_topics_(configuration, input_file);
+    configuration.ddspipe_configuration.builtin_topics = generate_builtin_topics_(configuration, input_file);
 
     // Create DDS Pipe
     pipe_ = std::make_unique<DdsPipe>(
-        allowed_topics,
+        configuration.ddspipe_configuration,
         discovery_database_,
         payload_pool_,
         participants_database_,
-        thread_pool_,
-        builtin_topics,
-        true);
+        thread_pool_);
 }
 
 DdsReplayer::~DdsReplayer()
@@ -170,10 +163,10 @@ DdsReplayer::~DdsReplayer()
     }
 }
 
-utils::ReturnCode DdsReplayer::reload_allowed_topics(
-        const std::shared_ptr<AllowedTopicList>& allowed_topics)
+utils::ReturnCode DdsReplayer::reload_configuration(
+        const yaml::ReplayerConfiguration& new_configuration)
 {
-    return pipe_->reload_allowed_topics(allowed_topics);
+    return pipe_->reload_configuration(new_configuration.ddspipe_configuration);
 }
 
 void DdsReplayer::process_mcap()
@@ -198,7 +191,7 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
         const yaml::ReplayerConfiguration& configuration,
         std::string& input_file)
 {
-    std::set<utils::Heritable<DistributedTopic>> builtin_topics = configuration.builtin_topics;
+    std::set<utils::Heritable<DistributedTopic>> builtin_topics;
 
     mcap::McapReader mcap_reader;
 
@@ -274,6 +267,7 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
 
     auto channels = mcap_reader.channels();
     auto schemas = mcap_reader.schemas();
+
     for (auto it = channels.begin(); it != channels.end(); it++)
     {
         std::string topic_name = it->second->topic;
@@ -283,25 +277,31 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
         channel_topic->m_topic_name = topic_name;
         channel_topic->type_name = type_name;
 
-        if (builtin_topics.count(channel_topic) == 1)
-        {
-            // Already present in builtin_topics list, using qos provided through configuration
-            // NOTE: also covers situation where there are channels for same topic with and without (blank) schema
-            continue;
-        }
-
-        // Use QoS stored in MCAP file (discovered when recording, or given to recorder's builtin topics list)
-        channel_topic->topic_qos = deserialize_qos_(it->second->metadata[QOS_SERIALIZATION_QOS]);
+        // Apply the QoS stored in the MCAP file as if they were the discovered QoS.
+        channel_topic->topic_qos.set_qos(
+            deserialize_qos_(it->second->metadata[QOS_SERIALIZATION_QOS]),
+            utils::FuzzyLevelValues::fuzzy_level_fuzzy);
 
         // Insert channel topic in builtin topics list
         builtin_topics.insert(channel_topic);
 
         if (configuration.replay_types && registered_types.count(type_name) != 0)
         {
+            // Make a copy of the Topic to customize it according to the Participant's configured QoS.
+            utils::Heritable<DistributedTopic> topic = channel_topic->copy();
+
+            // Apply the Manual Topics for this participant.
+            for (const auto& manual_topic : configuration.ddspipe_configuration.get_manual_topics(*channel_topic))
+            {
+                topic->topic_qos.set_qos(manual_topic.first->topic_qos, utils::FuzzyLevelValues::fuzzy_level_hard);
+            }
+
             // Create Datawriter in this topic so dynamic type can be shared in EDP
-            create_dynamic_writer_(channel_topic);
+            // TODO: Avoid creating the dynamic writer when the topic is not allowed.
+            create_dynamic_writer_(topic);
         }
     }
+
     mcap_reader.close();
 
     return builtin_topics;

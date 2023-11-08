@@ -33,112 +33,71 @@ DDS Configuration
 
 Configuration related to DDS communication.
 
-.. _recorder_topic_filtering:
-
-Topic Filtering
-^^^^^^^^^^^^^^^
-
-|ddsrecorder| includes a mechanism to automatically detect which topics are being used in a DDS network.
-By automatically detecting these topics, a |ddsrecorder| creates internal DDS :term:`Readers<DataReader>` for each topic in order to record the data published on each discovered topic.
-
-.. note::
-
-    |ddsrecorder| entities are created with the QoS of the first Publisher/Subscriber found in this Topic, unless manually set in the :ref:`built-in topics <recorder_builtin_topics>` list.
-
-|ddsrecorder| allows filtering of DDS :term:`Topics<Topic>`, that is, it allows to define the DDS Topics' data that is going to be recorded by the application.
-This way, it is possible to define a set of rules in |ddsrecorder| to filter those data samples the user does not wish to save.
-
-It is not mandatory to define such set of rules in the configuration file.
-In this case, a |ddsrecorder| will save all the data published under the topics that it automatically discovers within the DDS network to which it connects.
-
-To define these data filtering rules based on the Topics to which they belong, the following lists are available:
-
-* Allowed topics list (``allowlist``)
-* Block topics list (``blocklist``)
-
-These lists of topics stated above are defined by a tag in the *YAML* configuration file, which defines a *YAML* vector (``[]``).
-This vector contains the list of topics for each filtering rule.
-Each Topic is determined by its entries ``name`` and ``type``, with only the first one being mandatory.
-
-.. list-table::
-    :header-rows: 1
-
-    *   - Topic entries
-        - Data type
-        - Default value
-
-    *   - ``name``
-        - ``string``
-        - \-
-
-    *   - ``type``
-        - ``string``
-        - ``"*"``
-
-See :term:`Topic` section for further information about the topic.
-
-.. note::
-
-    Placing quotation marks around values in a YAML file is generally optional.
-    However, values containing wildcard characters must be enclosed by single or double quotation marks.
-
-Allow topic list
-""""""""""""""""
-This is the list of topics that |ddsrecorder| will record, i.e. the data published under the topics matching the expressions in the ``allowlist`` will be saved by |ddsrecorder|.
-
-.. note::
-
-    If no ``allowlist`` is provided, data will be recorded for all topics (unless filtered out in ``blocklist``).
-
-.. _recorder_topic_filtering_blocklist:
-
-Block topic list
-""""""""""""""""
-This is the list of topics that the |ddsrecorder| will block, that is, all data published under the topics matching the filters specified in the ``blocklist`` will be discarded by the |ddsrecorder| and therefore will not be recorded.
-
-This list takes precedence over the ``allowlist``.
-If a topic matches an expression both in the ``allowlist`` and in the ``blocklist``, the ``blocklist`` takes precedence, causing the data under this topic to be discarded.
-
-**Example of usage - Allowlist and blocklist collision:**
-
-    In the following example, the ``HelloWorldTopic`` topic is both in the ``allowlist`` and (implicitly) in the
-    ``blocklist``, so according to the ``blocklist`` preference rule this topic is blocked.
-    Moreover, only the topics present in the allowlist are relayed, regardless of whether more topics are dynamically
-    discovered in the DDS network.
-    In this case the forwarded topics are ``AllowedTopic1`` with data type ``Allowed``
-    and ``AllowedTopic2`` regardless of its data type.
-
-    .. code-block:: yaml
-
-        allowlist:
-          - name: AllowedTopic1
-            type: Allowed
-          - name: AllowedTopic2
-            type: "*"
-          - name: HelloWorldTopic
-            type: HelloWorld
-
-        blocklist:
-          - name: "*"
-            type: HelloWorld
-
 .. _recorder_builtin_topics:
 
 Built-in Topics
 ^^^^^^^^^^^^^^^
 
-Apart from the dynamic DDS topics discovered in the network, the discovery phase can be accelerated by using the builtin topic list (``builtin-topics``).
-By defining topics in this list, the |ddsrecorder| will create the DataWriters and DataReaders in recorder initialization.
+The discovery phase can be accelerated by listing topics under the ``builtin-topics`` tag.
+The |ddsrecorder| will create the DataWriters and DataReaders for these topics in the |ddsrecorder| initialization.
+The :ref:`Topic QoS <recorder_topic_qos>` for these topics can be manually configured with the :ref:`Manual Topic <recorder_manual_topics>` and with the :ref:`Specs Topic QoS <recorder_specs_topic_qos>`; if a :ref:`Topic QoS <recorder_topic_qos>` is not configured, it will take its default value.
 
-The builtin-topics list is defined in the same form as the ``allowlist`` and ``blocklist``.
+The ``builtin-topics`` must specify a ``name`` and ``type`` without wildcard characters.
 
-This feature also allows to manually force the QoS of a specific topic, so the entities created in such topic follows the specified QoS and not the one first discovered.
+**Example of usage:**
 
-Topic Quality of Service
-""""""""""""""""""""""""
+    .. code-block:: yaml
 
-For every topic contained in this list, both ``name`` and ``type`` must be specified and contain no wildcard characters.
-Apart from these values, the tag ``qos`` under each topic allows to configure the following values:
+        builtin-topics:
+          - name: HelloWorldTopic
+            type: HelloWorld
+
+.. _recorder_topic_filtering:
+
+Topic Filtering
+---------------
+
+The |ddsrecorder| automatically detects the topics that are being used in a DDS Network.
+The |ddsrecorder| then creates internal DDS :term:`Readers<DataReader>` to record the data published on each topic.
+The |ddsrecorder| allows filtering DDS :term:`Topics<Topic>` to allow users to configure the DDS :term:`Topics<Topic>` that must be recorded.
+These data filtering rules can be configured under the ``allowlist`` and ``blocklist`` tags.
+If the ``allowlist`` and ``blocklist`` are not configured, the |ddsrecorder| will recorded the data published on every topic it discovers.
+If both the ``allowlist`` and ``blocklist`` are configured and a topic appears in both of them, the ``blocklist`` has priority and the topic will be blocked.
+
+Topics are determined by the tags ``name`` (required) and ``type``, both of which accept wildcard characters.
+
+.. note::
+
+    Placing quotation marks around values in a YAML file is generally optional, but values containing wildcard characters do require single or double quotation marks.
+
+Consider the following example:
+
+.. code-block:: yaml
+
+    allowlist:
+      - name: AllowedTopic1
+        type: Allowed
+
+      - name: AllowedTopic2
+        type: "*"
+
+      - name: HelloWorldTopic
+        type: HelloWorld
+
+    blocklist:
+      - name: "*"
+        type: HelloWorld
+
+In this example, the data published in the topic ``AllowedTopic1`` with type ``Allowed`` and in the topic ``AllowedTopic2`` with any type will be recorded by the |ddsrecorder|.
+The data published in the topic ``HelloWorldTopic`` with type ``HelloWorld`` will be blocked, since the ``blocklist`` is blocking all topics with any name and with type ``HelloWorld``.
+
+.. _recorder_topic_qos:
+
+Topic QoS
+^^^^^^^^^
+
+The following is the set of QoS that are configurable for a topic.
+For more information on topics, please read the `Fast DDS Topic <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dds_layer/topic/topic.html>`_ section.
 
 .. list-table::
     :header-rows: 1
@@ -161,11 +120,11 @@ Apart from these values, the tag ``qos`` under each topic allows to configure th
         - ``false``
         - ``TRANSIENT_LOCAL`` / ``VOLATILE``
 
-    *   - History Depth
-        - ``depth``
-        - *integer*
-        - *default value*
-        - -
+    *   - Ownership
+        - ``ownership``
+        - *bool*
+        - ``false``
+        - ``EXCLUSIVE_OWNERSHIP_QOS`` / ``SHARED_OWNERSHIP_QOS``
 
     *   - Partitions
         - ``partitions``
@@ -173,47 +132,86 @@ Apart from these values, the tag ``qos`` under each topic allows to configure th
         - ``false``
         - Topic with / without partitions
 
-    *   - Ownership
-        - ``ownership``
-        - *bool*
-        - ``false``
-        - ``EXCLUSIVE_OWNERSHIP_QOS`` / ``SHARED_OWNERSHIP_QOS``
-
     *   - Key
         - ``keyed``
         - *bool*
         - ``false``
-        - Topic with / without key
+        - Topic with / without `key <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dds_layer/topic/typeSupport/typeSupport.html#data-types-with-a-key>`_
+
+    *   - History Depth
+        - ``history-depth``
+        - *unsigned integer*
+        - ``5000``
+        - :ref:`recorder_history_depth`
+
+    *   - Max Reception Rate
+        - ``max-rx-rate``
+        - *float*
+        - ``0`` (unlimited)
+        - :ref:`recorder_max_rx_rate`
 
     *   - Downsampling
         - ``downsampling``
-        - *integer*
-        - *default value*
-        - Downsampling factor
+        - *unsigned integer*
+        - ``1``
+        - :ref:`recorder_downsampling`
 
-    *   - Max Reception Rate
-        - ``max-reception-rate``
-        - *float*
-        - *default value*
-        - Maximum sample reception rate [Hz]
+.. warning::
 
-**Example of usage:**
+    Manually configuring ``TRANSIENT_LOCAL`` durability may lead to incompatibility issues when the discovered reliability is ``BEST_EFFORT``.
+    Please ensure to always configure the ``reliability`` when configuring the ``durability`` to avoid the issue.
 
-    .. code-block:: yaml
+.. _recorder_history_depth:
 
-        builtin-topics:
-          - name: HelloWorldTopic
-            type: HelloWorld
-            qos:
-              reliability: true       # Use QoS RELIABLE
-              durability: true        # Use QoS TRANSIENT_LOCAL
-              depth: 100              # Use History Depth 100
-              partitions: true        # Topic with partitions
-              ownership: false        # Use QoS SHARED_OWNERSHIP_QOS
-              keyed: true             # Topic with key
-              downsampling: 4         # Keep 1 of every 4 samples
-              max-reception-rate: 10  # Discard messages if less than 100ms elapsed since the last sample was processed
+History Depth
+"""""""""""""
 
+The ``history-depth`` tag configures the history depth of the Fast DDS internal entities.
+By default, the depth of every RTPS History instance is :code:`5000`, which sets a constraint on the maximum number of samples a |ddsrecorder| instance can deliver to late joiner Readers configured with ``TRANSIENT_LOCAL`` `DurabilityQosPolicyKind <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dds_layer/core/policy/standardQosPolicies.html#durabilityqospolicykind>`_.
+Its value should be decreased when the sample size and/or number of created endpoints (increasing with the number of topics) are big enough to cause memory exhaustion issues.
+If enough memory is available, however, the ``history-depth`` could be increased to deliver a greater number of samples to late joiners.
+
+.. _recorder_max_rx_rate:
+
+Max Reception Rate
+""""""""""""""""""
+
+The ``max-rx-rate`` tag limits the frequency [Hz] at which samples are processed by discarding messages received before :code:`1/max-rx-rate` seconds have passed since the last processed message.
+It only accepts non-negative numbers.
+By default it is set to ``0``; it processes samples at an unlimited reception rate.
+
+.. _recorder_downsampling:
+
+Downsampling
+""""""""""""
+
+The ``downsampling`` tag reduces the sampling rate of the received data by only keeping *1* out of every *n* samples received (per topic), where *n* is the value specified under the ``downsampling`` tag.
+When the ``max-rx-rate`` tag is also set, downsampling only applies to messages that have passed the ``max-rx-rate`` filter.
+It only accepts positive integers.
+By default it is set to ``1``; it accepts every message.
+
+.. _recorder_manual_topics:
+
+Manual Topics
+^^^^^^^^^^^^^
+
+A subset of :ref:`Topic QoS <recorder_topic_qos>` can be manually configured for a specific topic under the tag ``topics``.
+The tag ``topics`` has a required ``name`` tag that accepts wildcard characters.
+It also has two optional tags: a ``type`` tag that accepts wildcard characters, and a ``qos`` tag with the :ref:`Topic QoS <recorder_topic_qos>` that the user wants to manually configure.
+If a ``qos`` is not manually configured, it will get its value by discovery.
+
+.. code-block:: yaml
+
+    topics:
+      - name: "temperature/*"
+        type: "temperature/types/*"
+        qos:
+          max-rx-rate: 15
+          downsampling: 2
+
+.. note::
+
+    The :ref:`Topic QoS <recorder_topic_qos>` configured in the Manual Topics take precedence over the :ref:`Specs Topic QoS <recorder_specs_topic_qos>`.
 
 .. _recorder_usage_configuration_domain_id:
 
@@ -370,21 +368,6 @@ Log Publish Time
 By default (``log-publish-time: false``) received messages are stored in the MCAP file with ``logTime`` value equals to the reception timestamp.
 Additionally, the timestamp corresponding to when messages were initially published (``publishTime``) is also included in the information dumped to MCAP files.
 In some applications, it may be required to use the ``publishTime`` as ``logTime``, which can be achieved by providing the ``log-publish-time: true`` configuration option.
-
-Max Reception Rate
-^^^^^^^^^^^^^^^^^^
-
-Limits the frequency [Hz] at which samples are processed, by discarding messages received before :code:`1/max-reception-rate` seconds have elapsed since the last processed message was received.
-When specified, ``max-reception-rate`` is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
-This parameter only accepts non-negative values, and its default value is ``0`` (no limit).
-
-Downsampling
-^^^^^^^^^^^^
-
-Reduces the sampling rate of the received data by keeping *1* out of every *n* samples received (per topic), where *n* is the value specified in ``downsampling``.
-If ``max-reception-rate`` is also set, downsampling applies to messages that already managed to pass this filter.
-When specified, this downsampling factor is set for all topics without distinction, but a different value can also set for a particular topic under the ``qos`` configuration tag within the builtin-topics list.
-This parameter only accepts positive integer values, and its default value is ``1`` (no downsampling).
 
 .. _recorder_usage_configuration_onlywithtype:
 
@@ -562,6 +545,17 @@ As explained in :ref:`Event Window <recorder_usage_configuration_event_window>`,
 To accomplish this, received samples are stored in memory until the aforementioned event is triggered and, in order to limit memory consumption, outdated (received more than ``event-window`` seconds ago) samples are removed from this buffer every ``cleanup-period`` seconds.
 By default, its value is equal to twice the ``event-window``.
 
+.. _recorder_specs_topic_qos:
+
+QoS
+^^^
+
+``specs`` supports a ``qos`` **optional** tag to configure the default values of the :ref:`Topic QoS <recorder_topic_qos>`.
+
+.. note::
+
+    The :ref:`Topic QoS <recorder_topic_qos>` configured in ``specs`` can be overwritten by the :ref:`Manual Topics <recorder_manual_topics>`.
+
 .. _recorder_usage_configuration_general_example:
 
 General Example
@@ -589,14 +583,13 @@ A complete example of all the configurations described on this page can be found
       builtin-topics:
         - name: "HelloWorldTopic"
           type: "HelloWorld"
+
+      topics:
+        - name: "temperature/*"
+          type: "temperature/types/*"
           qos:
-            reliability: true
-            durability: true
-            keyed: false
-            partitions: true
-            ownership: false
-            downsampling: 4
-            max-reception-rate: 10
+            max-rx-rate: 15
+            downsampling: 2
 
       ignore-participant-flags: no_filter
       transport: builtin
@@ -613,8 +606,6 @@ A complete example of all the configurations described on this page can be found
       buffer-size: 50
       event-window: 60
       log-publish-time: false
-      downsampling: 3
-      max-reception-rate: 20
       only-with-type: false
       compression:
         algorithm: lz4
@@ -633,6 +624,10 @@ A complete example of all the configurations described on this page can be found
       threads: 8
       max-pending-samples: 10
       cleanup-period: 90
+
+      qos:
+        max-rx-rate: 20
+        downsampling: 3
 
 
 .. _recorder_usage_fastdds_configuration:

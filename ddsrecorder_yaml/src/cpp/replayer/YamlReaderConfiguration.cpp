@@ -20,6 +20,7 @@
 #include <cpp_utils/utils.hpp>
 
 #include <ddspipe_core/types/dynamic_types/types.hpp>
+#include <ddspipe_core/types/topic/filter/ManualTopic.hpp>
 #include <ddspipe_core/types/topic/filter/WildcardDdsFilterTopic.hpp>
 
 #include <ddspipe_participants/writer/rtps/CommonWriter.hpp>
@@ -73,7 +74,6 @@ void ReplayerConfiguration::load_ddsreplayer_configuration_(
 
         /////
         // Get optional specs configuration
-        // WARNING: Parse builtin topics (dds tag) AFTER specs, as some topic-specific default values are set there
         if (YamlReader::is_tag_present(yml, SPECS_TAG))
         {
             auto specs_yml = YamlReader::get_value_in_tag(yml, SPECS_TAG);
@@ -120,10 +120,15 @@ void ReplayerConfiguration::load_ddsreplayer_configuration_(
         WildcardDdsFilterTopic rpc_request_topic, rpc_response_topic;
         rpc_request_topic.topic_name.set_value("rq/*");
         rpc_response_topic.topic_name.set_value("rr/*");
-        blocklist.insert(
+
+        ddspipe_configuration.blocklist.insert(
             utils::Heritable<WildcardDdsFilterTopic>::make_heritable(rpc_request_topic));
-        blocklist.insert(
+
+        ddspipe_configuration.blocklist.insert(
             utils::Heritable<WildcardDdsFilterTopic>::make_heritable(rpc_response_topic));
+
+        // The DDS Pipe should be enabled on start up.
+        ddspipe_configuration.init_enabled = true;
     }
     catch (const std::exception& e)
     {
@@ -191,12 +196,12 @@ void ReplayerConfiguration::load_specs_configuration_(
         n_threads = YamlReader::get_positive_int(yml, NUMBER_THREADS_TAG);
     }
 
-    // Get maximum history depth
-    if (YamlReader::is_tag_present(yml, MAX_HISTORY_DEPTH_TAG))
+    /////
+    // Get optional Topic QoS
+    if (YamlReader::is_tag_present(yml, SPECS_QOS_TAG))
     {
-        max_history_depth = YamlReader::get_positive_int(yml, MAX_HISTORY_DEPTH_TAG);
-        // Set default value for history
-        TopicQoS::default_history_depth.store(max_history_depth);
+        YamlReader::fill<TopicQoS>(topic_qos, YamlReader::get_value_in_tag(yml, SPECS_QOS_TAG), version);
+        TopicQoS::default_topic_qos.set_value(topic_qos);
     }
 
     // Get wait all acknowledged timeout
@@ -253,12 +258,13 @@ void ReplayerConfiguration::load_dds_configuration_(
     // Get optional allowlist
     if (YamlReader::is_tag_present(yml, ALLOWLIST_TAG))
     {
-        allowlist = YamlReader::get_set<utils::Heritable<IFilterTopic>>(yml, ALLOWLIST_TAG, version);
+        ddspipe_configuration.allowlist = YamlReader::get_set<utils::Heritable<IFilterTopic>>(yml, ALLOWLIST_TAG,
+                        version);
 
         // Add to allowlist always the type object topic
         WildcardDdsFilterTopic internal_topic;
         internal_topic.topic_name.set_value(TYPE_OBJECT_TOPIC_NAME);
-        allowlist.insert(
+        ddspipe_configuration.allowlist.insert(
             utils::Heritable<WildcardDdsFilterTopic>::make_heritable(internal_topic));
     }
 
@@ -266,16 +272,17 @@ void ReplayerConfiguration::load_dds_configuration_(
     // Get optional blocklist
     if (YamlReader::is_tag_present(yml, BLOCKLIST_TAG))
     {
-        blocklist = YamlReader::get_set<utils::Heritable<IFilterTopic>>(yml, BLOCKLIST_TAG, version);
+        ddspipe_configuration.blocklist = YamlReader::get_set<utils::Heritable<IFilterTopic>>(yml, BLOCKLIST_TAG,
+                        version);
     }
 
     /////
-    // Get optional builtin topics
-    if (YamlReader::is_tag_present(yml, BUILTIN_TAG))
+    // Get optional topics
+    if (YamlReader::is_tag_present(yml, TOPICS_TAG))
     {
-        // WARNING: Parse builtin topics AFTER specs, as some topic-specific default values are set there
-        builtin_topics = YamlReader::get_set<utils::Heritable<DistributedTopic>>(yml, BUILTIN_TAG,
-                        version);
+        const auto& manual_topics = YamlReader::get_list<ManualTopic>(yml, TOPICS_TAG, version);
+        ddspipe_configuration.manual_topics =
+                std::vector<ManualTopic>(manual_topics.begin(), manual_topics.end());
     }
 }
 

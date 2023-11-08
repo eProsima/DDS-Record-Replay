@@ -22,6 +22,8 @@
 
 #include <cpp_utils/memory/Heritable.hpp>
 
+#include <ddspipe_core/configuration/DdsPipeConfiguration.hpp>
+#include <ddspipe_core/types/dds/TopicQoS.hpp>
 #include <ddspipe_core/types/topic/dds/DistributedTopic.hpp>
 #include <ddspipe_core/types/topic/filter/IFilterTopic.hpp>
 
@@ -52,14 +54,12 @@ public:
     RecorderConfiguration(
             const std::string& file_path);
 
+    // DDS Pipe Configuration
+    ddspipe::core::DdsPipeConfiguration ddspipe_configuration;
+
     // Participants configurations
     std::shared_ptr<ddspipe::participants::SimpleParticipantConfiguration> simple_configuration;
     std::shared_ptr<ddspipe::participants::ParticipantConfiguration> recorder_configuration;
-
-    // Topic filtering
-    std::set<utils::Heritable<ddspipe::core::types::IFilterTopic>> allowlist{};
-    std::set<utils::Heritable<ddspipe::core::types::IFilterTopic>> blocklist{};
-    std::set<utils::Heritable<ddspipe::core::types::DistributedTopic>> builtin_topics{};
 
     // Output file params
     std::string output_filepath = ".";
@@ -71,8 +71,6 @@ public:
     unsigned int buffer_size = 100;
     unsigned int event_window = 20;
     bool log_publish_time = false;
-    unsigned int downsampling = 1;
-    float max_reception_rate = 0;
     bool only_with_type = false;
     mcap::McapWriterOptions mcap_writer_options{"ros2"};
     bool record_types = true;
@@ -86,9 +84,9 @@ public:
 
     // Specs
     unsigned int n_threads = 12;
-    unsigned int max_history_depth = 5000;
     int max_pending_samples = 5000;  // -1 <-> no limit || 0 <-> no pending samples
     unsigned int cleanup_period;
+    ddspipe::core::types::TopicQoS topic_qos{};
 
 protected:
 
