@@ -23,6 +23,7 @@
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/types/cast.hpp>
 #include <cpp_utils/utils.hpp>
+#include <cpp_utils/ros2_mangling.hpp>
 
 #include <ddspipe_core/types/data/RtpsPayloadData.hpp>
 #include <ddspipe_core/types/dds/Payload.hpp>
@@ -91,6 +92,8 @@ std::shared_ptr<IReader> McapReaderParticipant::create_reader(
     auto reader = std::make_shared<InternalReader>(id());
 
     auto dds_topic = dynamic_cast<const DdsTopic&>(topic);
+    dds_topic.m_topic_name = utils::mangle_if_ros_topic(topic.topic_name());
+    dds_topic.type_name = utils::mangle_if_ros_type(dds_topic.type_name);
 
     readers_[dds_topic] = reader;
 
@@ -199,8 +202,8 @@ void McapReaderParticipant::process_mcap()
 
         // Create topic on which this message should be published
         DdsTopic channel_topic;
-        channel_topic.m_topic_name = it->channel->topic;
-        channel_topic.type_name = it->schema->name;
+        channel_topic.m_topic_name = utils::mangle_if_ros_topic(it->channel->topic);
+        channel_topic.type_name = utils::mangle_if_ros_type(it->schema->name);
 
         auto readers_it = readers_.find(channel_topic);
         if (readers_it == readers_.end())
