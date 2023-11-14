@@ -93,9 +93,9 @@ DdsRecorder::DdsRecorder(
         discovery_database_,
         mcap_handler_);
 
-    // Create the internal communication (built-in) topics
-    const auto& internal_topic = utils::Heritable<DistributedTopic>::make_heritable(type_object_topic());
-    configuration.ddspipe_configuration.builtin_topics.insert(internal_topic);
+    // Create an internal topic to transmit the dynamic types
+    configuration.ddspipe_configuration.builtin_topics.insert(
+        utils::Heritable<DistributedTopic>::make_heritable(type_object_topic()));
 
     // Create Participant Database
     participants_database_ = std::make_shared<ParticipantsDatabase>();

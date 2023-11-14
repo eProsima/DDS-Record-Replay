@@ -59,16 +59,13 @@ DdsReplayer::DdsReplayer(
     , dyn_publisher_(nullptr)
 {
     // Create Discovery Database
-    discovery_database_ =
-            std::make_shared<DiscoveryDatabase>();
+    discovery_database_ = std::make_shared<DiscoveryDatabase>();
 
     // Create Payload Pool
-    payload_pool_ =
-            std::make_shared<FastPayloadPool>();
+    payload_pool_ = std::make_shared<FastPayloadPool>();
 
     // Create Thread Pool
-    thread_pool_ =
-            std::make_shared<SlotThreadPool>(configuration.n_threads);
+    thread_pool_ = std::make_shared<SlotThreadPool>(configuration.n_threads);
 
     // Create MCAP Reader Participant
     mcap_reader_participant_ = std::make_shared<McapReaderParticipant>(
@@ -137,12 +134,12 @@ DdsReplayer::DdsReplayer(
         }
     }
 
-    // Create the internal communication (built-in) topics
-    const auto& internal_topic = utils::Heritable<DistributedTopic>::make_heritable(type_object_topic());
-    configuration.ddspipe_configuration.builtin_topics.insert(internal_topic);
-
-    // Generate builtin-topics list by combining information from YAML and MCAP files
+    // Generate builtin-topics from the topics in the MCAP file
     configuration.ddspipe_configuration.builtin_topics = generate_builtin_topics_(configuration, input_file);
+
+    // Create an internal topic to transmit the dynamic types
+    configuration.ddspipe_configuration.builtin_topics.insert(
+        utils::Heritable<DistributedTopic>::make_heritable(type_object_topic()));
 
     // Create DDS Pipe
     pipe_ = std::make_unique<DdsPipe>(
