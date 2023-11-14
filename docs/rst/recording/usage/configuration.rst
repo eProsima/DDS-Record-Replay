@@ -439,6 +439,7 @@ Topic type format
 The optional ``ros2-types`` tag enables specification of the format for storing schemas.
 When set to ``true``, schemas are stored in ROS 2 message format (.msg).
 If set to ``false``, schemas are stored in OMG IDL format (.idl).
+By default it is set to ``false``.
 
 .. _recorder_usage_configuration_remote_controller:
 

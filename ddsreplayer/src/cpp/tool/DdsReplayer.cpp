@@ -280,10 +280,15 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
 
     for (auto it = channels.begin(); it != channels.end(); it++)
     {
-        // Avoid mangle /ddsrecorder/status topic
-        std::string topic_name = it->second->topic != "/ddsrecorder/status" ? utils::mangle_if_ros_topic(
+        // Avoid mangle /ddsrecorder/* topic
+        const std::regex regex_topic("/ddsrecorder/.*");
+        // Avoid mangle DdsRecorder* type
+        const std::regex regex_type("DdsRecorder.*");
+        std::string topic_name = !std::regex_match(it->second->topic, regex_topic) ? utils::mangle_if_ros_topic(
             it->second->topic) : it->second->topic;
-        std::string type_name = schemas[it->second->schemaId]->name != "DdsRecorderStatus" ? utils::mangle_if_ros_type(
+        std::string type_name =
+                !std::regex_match(schemas[it->second->schemaId]->name,
+                        regex_type) ? utils::mangle_if_ros_type(
             schemas[it->second->schemaId]->name) : schemas[it->second->schemaId]->name;                                                                                                             // TODO: assert exists beforehand
 
         auto channel_topic = utils::Heritable<DdsTopic>::make_heritable();

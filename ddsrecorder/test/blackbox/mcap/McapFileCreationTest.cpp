@@ -174,15 +174,15 @@ eprosima::fastrtps::types::DynamicData_ptr record(
         std::string file_name,
         unsigned int num_msgs = 1,
         unsigned int downsampling = 1,
-        bool ros2 = false)
+        bool ros2_types = false)
 {
     eprosima::fastrtps::types::DynamicData_ptr send_data;
 
     // Create Recorder
-    auto recorder = create_recorder(file_name, downsampling, DdsRecorderState::RUNNING, 20, ros2);
+    auto recorder = create_recorder(file_name, downsampling, DdsRecorderState::RUNNING, 20, ros2_types);
 
     // Create Publisher
-    ros2 ? create_publisher(test::ros2_topic_name, test::ros2_type_name, test::DOMAIN) : create_publisher(
+    ros2_types ? create_publisher(test::ros2_topic_name, test::ros2_type_name, test::DOMAIN) : create_publisher(
         test::dds_topic_name, test::dds_type_name, test::DOMAIN);
 
 
@@ -217,17 +217,17 @@ std::tuple<unsigned int, double> record_with_transitions(
         unsigned int event_window = 20,
         unsigned int time_sleep = 0,
         unsigned int downsampling = 1,
-        bool ros2 = false)
+        bool ros2_types = false)
 {
     uint64_t current_time;
     {
         // Create Publisher
-        ros2 ? create_publisher(test::ros2_topic_name, test::ros2_type_name, test::DOMAIN) : create_publisher(
+        ros2_types ? create_publisher(test::ros2_topic_name, test::ros2_type_name, test::DOMAIN) : create_publisher(
             test::dds_topic_name, test::dds_type_name, test::DOMAIN);
 
         // Create Recorder
         std::unique_ptr<DdsRecorder> recorder =
-                create_recorder(file_name, downsampling, init_state, event_window, ros2);
+                create_recorder(file_name, downsampling, init_state, event_window, ros2_types);
 
         // Send data
         for (unsigned int i = 0; i < first_round; i++)
