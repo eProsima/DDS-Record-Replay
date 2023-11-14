@@ -113,9 +113,7 @@ void McapHandler::add_schema(
 
     assert(nullptr != dynamic_type);
 
-    std::string type_name =
-            configuration_.ros2_types ? utils::demangle_if_ros_type(dynamic_type->get_name()) : dynamic_type
-                    ->get_name();
+    std::string type_name = dynamic_type->get_name();
 
     // Check if it exists already
     if (received_types_.find(type_name) != received_types_.end())
@@ -132,7 +130,9 @@ void McapHandler::add_schema(
 
     // Create schema and add it to writer and to schemas map
     std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
-    mcap::Schema new_schema(type_name, encoding, schema_text);
+    mcap::Schema new_schema(configuration_.ros2_types ? utils::demangle_if_ros_type(dynamic_type->get_name()) :
+            dynamic_type
+                    ->get_name(), encoding, schema_text);
     // WARNING: passing as non-const to MCAP library
     mcap_writer_.addSchema(new_schema);
 
@@ -162,11 +162,6 @@ void McapHandler::add_data(
 {
     std::lock_guard<std::mutex> lock(mtx_);
 
-    DdsTopic topic_ = topic;
-    topic_.m_topic_name =
-            configuration_.ros2_types ? utils::demangle_if_ros_topic(topic.topic_name()) : topic.topic_name();
-    topic_.type_name = configuration_.ros2_types ? utils::demangle_if_ros_type(topic.type_name) : topic.type_name;
-
     if (state_ == McapHandlerStateCode::STOPPED)
     {
         logInfo(DDSRECORDER_MCAP_HANDLER, "Attempting to add sample through a stopped handler, dropping...");
@@ -175,7 +170,7 @@ void McapHandler::add_data(
 
     logInfo(
         DDSRECORDER_MCAP_HANDLER,
-        "Adding data in topic " << topic_);
+        "Adding data in topic " << topic);
 
     // Add data to channel
     Message msg;
@@ -221,10 +216,10 @@ void McapHandler::add_data(
                   );
     }
 
-    if (received_types_.count(topic_.type_name) != 0)
+    if (received_types_.count(topic.type_name) != 0)
     {
         // Schema available -> add to buffer
-        add_data_nts_(msg, topic_);
+        add_data_nts_(msg, topic);
     }
     else
     {
@@ -240,25 +235,25 @@ void McapHandler::add_data(
                 else
                 {
                     // No schema available + no pending samples -> Add to buffer with blank schema
-                    add_data_nts_(msg, topic_);
+                    add_data_nts_(msg, topic);
                 }
             }
             else
             {
                 logInfo(
                     DDSRECORDER_MCAP_HANDLER,
-                    "Schema for topic " << topic_ << " not yet available, inserting to pending samples queue.");
+                    "Schema for topic " << topic << " not yet available, inserting to pending samples queue.");
 
-                add_to_pending_nts_(msg, topic_);
+                add_to_pending_nts_(msg, topic);
             }
         }
         else if (state_ == McapHandlerStateCode::PAUSED)
         {
             logInfo(
                 DDSRECORDER_MCAP_HANDLER,
-                "Schema for topic " << topic_ << " not yet available, inserting to (paused) pending samples queue.");
+                "Schema for topic " << topic << " not yet available, inserting to (paused) pending samples queue.");
 
-            pending_samples_paused_[topic_.type_name].push_back({topic_, msg});
+            pending_samples_paused_[topic.type_name].push_back({topic, msg});
         }
         else
         {
@@ -866,7 +861,12 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     // Create new channel
     mcap::KeyValueMap metadata = {};
     metadata[QOS_SERIALIZATION_QOS] = serialize_qos_(topic.topic_qos);
-    mcap::Channel new_channel(topic.m_topic_name, "cdr", schema_id, metadata);
+    metadata[ROS2_TYPES] =
+            configuration_.ros2_types ? topic.m_topic_name.rfind("rt/",
+                    0) == 0 ? "true" : "false" : "false";
+    std::string topic_name =
+            configuration_.ros2_types ? utils::demangle_if_ros_topic(topic.m_topic_name) : topic.m_topic_name;
+    mcap::Channel new_channel(topic_name, "cdr", schema_id, metadata);
     mcap_writer_.addChannel(new_channel);
     auto channel_id = new_channel.id;
     channels_.insert({topic, std::move(new_channel)});
