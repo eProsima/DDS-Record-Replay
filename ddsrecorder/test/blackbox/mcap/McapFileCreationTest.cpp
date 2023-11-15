@@ -67,16 +67,16 @@ namespace test {
 
 const unsigned int DOMAIN = 222;
 
-std::string dds_topic_name = "TypeIntrospectionTopic";
-std::string dds_type_name = "HelloWorld";
+const std::string dds_topic_name = "TypeIntrospectionTopic";
+const std::string dds_type_name = "HelloWorld";
 
-std::string ros2_topic_name = "rt/hello";
-std::string ros2_type_name = "std_msgs::msg::dds_::String_";
+const std::string ros2_topic_name = "rt/hello";
+const std::string ros2_type_name = "std_msgs::msg::dds_::String_";
 
-unsigned int n_msgs = 3;
-std::string send_message = "Hello World";
-unsigned int index = 6;
-unsigned int downsampling = 3;
+const unsigned int n_msgs = 3;
+const std::string send_message = "Hello World";
+const unsigned int index = 6;
+const unsigned int downsampling = 3;
 
 eprosima::fastdds::dds::DataWriter* writer_;
 eprosima::fastrtps::types::DynamicType_ptr dynamic_type_;
@@ -84,11 +84,11 @@ eprosima::fastrtps::types::DynamicType_ptr dynamic_type_;
 } // test
 
 std::unique_ptr<DdsRecorder> create_recorder(
-        std::string file_name,
-        int downsampling,
+        const std::string file_name,
+        const int downsampling,
         DdsRecorderState recorder_state = DdsRecorderState::RUNNING,
-        unsigned int event_window = 20,
-        bool ros2_types = false)
+        const unsigned int event_window = 20,
+        const bool ros2_types = false)
 {
     YAML::Node yml;
 
@@ -111,10 +111,12 @@ std::unique_ptr<DdsRecorder> create_recorder(
 }
 
 void create_publisher(
-        std::string topic_name,
-        std::string type_name,
-        unsigned int domain)
+        const std::string topic_name,
+        const std::string type_name,
+        const unsigned int domain)
 {
+    std::cout << "topic name: " << topic_name << "type_name: " << type_name << "!!!!!!!" << std::endl;
+
     eprosima::fastdds::dds::DomainParticipantQos pqos;
     pqos.name("TypeIntrospectionExample_Participant_Publisher");
     pqos.wire_protocol().builtin.typelookup_config.use_client = false;
@@ -150,8 +152,8 @@ void create_publisher(
 }
 
 eprosima::fastrtps::types::DynamicData_ptr send_sample(
-        unsigned int index = 1,
-        unsigned int time_sleep = 100)
+        const unsigned int index = 1,
+        const unsigned int time_sleep = 100)
 {
     // Create and initialize new dynamic data
     eprosima::fastrtps::types::DynamicData_ptr dynamic_data_;
@@ -171,33 +173,32 @@ eprosima::fastrtps::types::DynamicData_ptr send_sample(
 }
 
 eprosima::fastrtps::types::DynamicData_ptr record(
-        std::string file_name,
-        unsigned int num_msgs = 1,
-        unsigned int downsampling = 1,
-        bool ros2_types = false)
+        const std::string file_name,
+        const unsigned int num_msgs = 1,
+        const unsigned int downsampling = 1,
+        const bool ros2_types = false)
 {
     eprosima::fastrtps::types::DynamicData_ptr send_data;
-
-    // Create Recorder
-    auto recorder = create_recorder(file_name, downsampling, DdsRecorderState::RUNNING, 20, ros2_types);
-
-    // Create Publisher
-    ros2_types ? create_publisher(test::ros2_topic_name, test::ros2_type_name, test::DOMAIN) : create_publisher(
-        test::dds_topic_name, test::dds_type_name, test::DOMAIN);
-
-
-
-    // Send data
-    for (unsigned int i = 0; i < num_msgs; i++)
     {
-        send_data = send_sample(test::index);
+        // Create Recorder
+        auto recorder = create_recorder(file_name, downsampling, DdsRecorderState::RUNNING, 20, ros2_types);
+
+        // Create Publisher
+        ros2_types ? create_publisher(test::ros2_topic_name, test::ros2_type_name, test::DOMAIN) : create_publisher(
+            test::dds_topic_name, test::dds_type_name, test::DOMAIN);
+
+        // Send data
+        for (unsigned int i = 0; i < num_msgs; i++)
+        {
+            send_data = send_sample(test::index);
+        }
     }
 
     return send_data;
 }
 
 mcap::LinearMessageView get_msgs_mcap(
-        std::string file_name,
+        const std::string file_name,
         mcap::McapReader& mcap_reader_)
 {
     auto status = mcap_reader_.open(file_name);
@@ -208,16 +209,16 @@ mcap::LinearMessageView get_msgs_mcap(
 }
 
 std::tuple<unsigned int, double> record_with_transitions(
-        std::string file_name,
+        const std::string file_name,
         DdsRecorderState init_state,
-        unsigned int first_round,
-        unsigned int secound_round,
+        const unsigned int first_round,
+        const unsigned int secound_round,
         DdsRecorderState current_state,
         EventKind event = EventKind::NO_EVENT,
-        unsigned int event_window = 20,
+        const unsigned int event_window = 20,
         unsigned int time_sleep = 0,
-        unsigned int downsampling = 1,
-        bool ros2_types = false)
+        const unsigned int downsampling = 1,
+        const bool ros2_types = false)
 {
     uint64_t current_time;
     {
@@ -310,7 +311,7 @@ std::tuple<unsigned int, double> record_with_transitions(
 TEST(McapFileCreationTest, mcap_data_msgs)
 {
 
-    std::string file_name = "output_mcap_data_msgs.mcap";
+    const std::string file_name = "output_mcap_data_msgs.mcap";
     eprosima::fastrtps::types::DynamicData_ptr send_data;
     send_data = record(file_name);
 
@@ -342,15 +343,15 @@ TEST(McapFileCreationTest, mcap_data_msgs)
 TEST(McapFileCreationTest, mcap_dds_topic)
 {
 
-    std::string file_name = "output_mcap_data_topic.mcap";
+    const std::string file_name = "output_mcap_dds_topic.mcap";
 
     record(file_name);
 
     mcap::McapReader mcap_reader;
     auto messages = get_msgs_mcap(file_name, mcap_reader);
 
-    std::string received_topic;
-    std::string received_data_type_name;
+    std::string received_topic = "";
+    std::string received_data_type_name =  "";
 
     for (auto it = messages.begin(); it != messages.end(); it++)
     {
@@ -368,15 +369,15 @@ TEST(McapFileCreationTest, mcap_dds_topic)
 TEST(McapFileCreationTest, mcap_ros2_topic)
 {
 
-    std::string file_name = "output_mcap_data_topic.mcap";
+    const std::string file_name = "output_mcap_ros2_topic.mcap";
 
     record(file_name, 1, 1, true);
 
     mcap::McapReader mcap_reader;
     auto messages = get_msgs_mcap(file_name, mcap_reader);
 
-    std::string received_topic;
-    std::string received_data_type_name;
+    std::string received_topic = "";
+    std::string received_data_type_name =  "";
 
     for (auto it = messages.begin(); it != messages.end(); it++)
     {
@@ -394,7 +395,7 @@ TEST(McapFileCreationTest, mcap_ros2_topic)
 TEST(McapFileCreationTest, mcap_data_num_msgs)
 {
 
-    std::string file_name = "output_mcap_data_num_msgs.mcap";
+    const std::string file_name = "output_mcap_data_num_msgs.mcap";
 
     record(file_name, test::n_msgs);
 
@@ -416,7 +417,7 @@ TEST(McapFileCreationTest, mcap_data_num_msgs)
 TEST(McapFileCreationTest, mcap_data_num_msgs_downsampling)
 {
 
-    std::string file_name = "output_mcap_data_num_msgs_downsampling.mcap";
+    const std::string file_name = "output_mcap_data_num_msgs_downsampling.mcap";
 
     record(file_name, test::n_msgs, test::downsampling);
 
@@ -446,7 +447,7 @@ TEST(McapFileCreationTest, mcap_data_num_msgs_downsampling)
 
 TEST(McapFileCreationTest, transition_running)
 {
-    std::string file_name = "output_transition_running.mcap";
+    const std::string file_name = "output_transition_running.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -465,7 +466,7 @@ TEST(McapFileCreationTest, transition_running)
 
 TEST(McapFileCreationTest, transition_paused)
 {
-    std::string file_name = "output_transition_paused.mcap";
+    const std::string file_name = "output_transition_paused.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -484,7 +485,7 @@ TEST(McapFileCreationTest, transition_paused)
 
 TEST(McapFileCreationTest, transition_stopped)
 {
-    std::string file_name = "output_transition_stopped.mcap";
+    const std::string file_name = "output_transition_stopped.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -503,7 +504,7 @@ TEST(McapFileCreationTest, transition_stopped)
 
 TEST(McapFileCreationTest, transition_suspended)
 {
-    std::string file_name = "output_transition_suspended.mcap";
+    const std::string file_name = "output_transition_suspended.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -522,7 +523,7 @@ TEST(McapFileCreationTest, transition_suspended)
 
 TEST(McapFileCreationTest, transition_running_paused)
 {
-    std::string file_name = "output_transition_running_paused.mcap";
+    const std::string file_name = "output_transition_running_paused.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -541,7 +542,7 @@ TEST(McapFileCreationTest, transition_running_paused)
 
 TEST(McapFileCreationTest, transition_running_stopped)
 {
-    std::string file_name = "output_transition_running_stopped.mcap";
+    const std::string file_name = "output_transition_running_stopped.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -560,7 +561,7 @@ TEST(McapFileCreationTest, transition_running_stopped)
 
 TEST(McapFileCreationTest, transition_running_suspended)
 {
-    std::string file_name = "output_transition_running_suspended.mcap";
+    const std::string file_name = "output_transition_running_suspended.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -579,7 +580,7 @@ TEST(McapFileCreationTest, transition_running_suspended)
 
 TEST(McapFileCreationTest, transition_paused_running)
 {
-    std::string file_name = "output_transition_paused_running.mcap";
+    const std::string file_name = "output_transition_paused_running.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -598,7 +599,7 @@ TEST(McapFileCreationTest, transition_paused_running)
 
 TEST(McapFileCreationTest, transition_paused_stopped)
 {
-    std::string file_name = "output_transition_paused_stopped.mcap";
+    const std::string file_name = "output_transition_paused_stopped.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -617,7 +618,7 @@ TEST(McapFileCreationTest, transition_paused_stopped)
 
 TEST(McapFileCreationTest, transition_paused_suspended)
 {
-    std::string file_name = "output_transition_paused_suspended.mcap";
+    const std::string file_name = "output_transition_paused_suspended.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -636,7 +637,7 @@ TEST(McapFileCreationTest, transition_paused_suspended)
 
 TEST(McapFileCreationTest, transition_stopped_running)
 {
-    std::string file_name = "output_transition_stopped_running.mcap";
+    const std::string file_name = "output_transition_stopped_running.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -655,7 +656,7 @@ TEST(McapFileCreationTest, transition_stopped_running)
 
 TEST(McapFileCreationTest, transition_stopped_paused)
 {
-    std::string file_name = "output_transition_stopped_paused.mcap";
+    const std::string file_name = "output_transition_stopped_paused.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -674,7 +675,7 @@ TEST(McapFileCreationTest, transition_stopped_paused)
 
 TEST(McapFileCreationTest, transition_stopped_suspended)
 {
-    std::string file_name = "output_transition_stopped_suspended.mcap";
+    const std::string file_name = "output_transition_stopped_suspended.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -693,7 +694,7 @@ TEST(McapFileCreationTest, transition_stopped_suspended)
 
 TEST(McapFileCreationTest, transition_suspended_running)
 {
-    std::string file_name = "output_transition_suspended_running.mcap";
+    const std::string file_name = "output_transition_suspended_running.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -712,7 +713,7 @@ TEST(McapFileCreationTest, transition_suspended_running)
 
 TEST(McapFileCreationTest, transition_suspended_paused)
 {
-    std::string file_name = "output_transition_suspended_paused.mcap";
+    const std::string file_name = "output_transition_suspended_paused.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -731,7 +732,7 @@ TEST(McapFileCreationTest, transition_suspended_paused)
 
 TEST(McapFileCreationTest, transition_suspended_stopped)
 {
-    std::string file_name = "output_transition_suspended_stopped.mcap";
+    const std::string file_name = "output_transition_suspended_stopped.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -751,7 +752,7 @@ TEST(McapFileCreationTest, transition_suspended_stopped)
 // can fail due to two race conditions but is very unlikely
 TEST(McapFileCreationTest, transition_paused_event_less_window)
 {
-    std::string file_name = "output_transition_paused_event_less_window.mcap";
+    const std::string file_name = "output_transition_paused_event_less_window.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -774,7 +775,7 @@ TEST(McapFileCreationTest, transition_paused_event_less_window)
 
 TEST(McapFileCreationTest, transition_paused_event_max_window)
 {
-    std::string file_name = "output_transition_paused_event_max_window.mcap";
+    const std::string file_name = "output_transition_paused_event_max_window.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -797,7 +798,7 @@ TEST(McapFileCreationTest, transition_paused_event_max_window)
 
 TEST(McapFileCreationTest, transition_paused_event_start)
 {
-    std::string file_name = "output_transition_paused_event_start.mcap";
+    const std::string file_name = "output_transition_paused_event_start.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -820,7 +821,7 @@ TEST(McapFileCreationTest, transition_paused_event_start)
 
 TEST(McapFileCreationTest, transition_paused_event_stop)
 {
-    std::string file_name = "output_transition_paused_event_stop.mcap";
+    const std::string file_name = "output_transition_paused_event_stop.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
@@ -843,7 +844,7 @@ TEST(McapFileCreationTest, transition_paused_event_stop)
 
 TEST(McapFileCreationTest, transition_paused_event_suspend)
 {
-    std::string file_name = "output_transition_paused_event_suspend.mcap";
+    const std::string file_name = "output_transition_paused_event_suspend.mcap";
 
     unsigned int n_data_1 = rand() % 10 + 1;
     unsigned int n_data_2 = rand() % 10 + 1;
