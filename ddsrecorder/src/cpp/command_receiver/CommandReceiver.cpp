@@ -140,6 +140,17 @@ bool CommandReceiver::init()
 
     // CREATE THE PARTICIPANT
     pqos.name("DdsRecorderCommandReceiver");
+
+    // Set app properties
+    pqos.properties().properties().emplace_back(
+        "fastdds.application.id",
+        participant_configuration_->app_id,
+        "true");
+    pqos.properties().properties().emplace_back(
+        "fastdds.application.metadata",
+        participant_configuration_->app_metadata,
+        "true");
+
     participant_ = DomainParticipantFactory::get_instance()->create_participant(domain_, pqos);
 
     if (participant_ == nullptr)

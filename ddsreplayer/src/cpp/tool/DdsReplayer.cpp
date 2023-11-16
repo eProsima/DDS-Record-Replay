@@ -101,6 +101,16 @@ DdsReplayer::DdsReplayer(
         fastdds::dds::DomainParticipantQos pqos;
         pqos.name("DdsReplayer_dynTypesPublisher");
 
+        // Set app properties
+        pqos.properties().properties().emplace_back(
+            "fastdds.application.id",
+            configuration.replayer_configuration->app_id,
+            "true");
+        pqos.properties().properties().emplace_back(
+            "fastdds.application.metadata",
+            configuration.replayer_configuration->app_metadata,
+            "true");
+
         // Set as server in TypeLookup service
         pqos.wire_protocol().builtin.typelookup_config.use_client = false;
         pqos.wire_protocol().builtin.typelookup_config.use_server = true;
