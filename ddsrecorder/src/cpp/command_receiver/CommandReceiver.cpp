@@ -140,7 +140,7 @@ bool CommandReceiver::init()
 
     // CREATE THE PARTICIPANT
     pqos.name("DdsRecorderCommandReceiver");
-    
+
     // Set app properties
     pqos.properties().properties().emplace_back(
         "fastdds.application.id",
