@@ -69,7 +69,7 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
         // Create Simple Participant Configuration
         simple_configuration = std::make_shared<SimpleParticipantConfiguration>();
         simple_configuration->id = "SimpleRecorderParticipant";
-        simple_configuration->app_id = "DDS RECORDER";
+        simple_configuration->app_id = "DDS_RECORDER";
         simple_configuration->app_metadata = "";
         simple_configuration->is_repeater = false;
 
@@ -77,7 +77,8 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
         // Create Recorder Participant Configuration
         recorder_configuration = std::make_shared<ParticipantConfiguration>();
         recorder_configuration->id = "RecorderRecorderParticipant";
-        recorder_configuration->app_id = "DDS RECORDER";
+        recorder_configuration->app_id = "DDS_RECORDER";
+        // TODO: fill metadata field once its content has been defined.
         recorder_configuration->app_metadata = "";
         recorder_configuration->is_repeater = false;
 
