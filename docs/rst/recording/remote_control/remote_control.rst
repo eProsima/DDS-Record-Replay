@@ -182,6 +182,8 @@ If the controller should function in a domain different than the default one (``
 .. figure:: /rst/figures/controller_domain.png
     :align: center
 
+It is also possible to use non-default status and command topic names through the ``File->DDS Topics`` dialog.
+
 When a |ddsrecorder| instance is found in the domain, a message is displayed in the logging panel:
 
 .. figure:: /rst/figures/controller_found.png

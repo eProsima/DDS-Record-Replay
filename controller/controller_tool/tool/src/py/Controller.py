@@ -127,7 +127,7 @@ class Controller(QObject):
         """Check if DDS Domain is valid."""
         return ((dds_domain >= 0) and (dds_domain <= MAX_DDS_DOMAIN_ID))
 
-    def init_dds(self, dds_domain):
+    def init_dds(self, dds_domain, command_topic, status_topic):
         # Check DDS Domain
         if (not self.is_valid_dds_domain(dds_domain)):
             raise ValueError(
@@ -151,7 +151,7 @@ class Controller(QObject):
         command_topic_qos = fastdds.TopicQos()
         self.participant.get_default_topic_qos(command_topic_qos)
         self.command_topic = self.participant.create_topic(
-            '/ddsrecorder/command',
+            command_topic,
             self.command_topic_data_type.getName(),
             command_topic_qos)
 
@@ -164,7 +164,7 @@ class Controller(QObject):
         status_topic_qos = fastdds.TopicQos()
         self.participant.get_default_topic_qos(status_topic_qos)
         self.status_topic = self.participant.create_topic(
-            '/ddsrecorder/status',
+            status_topic,
             self.status_topic_data_type.getName(),
             status_topic_qos)
 
