@@ -81,7 +81,7 @@ class DdsDomainDialog(QDialog):
     def get_dds_domain(self):
         """Return DDS Domain from spin box as integer value."""
         return int(self.spin_box.value())
-    
+
 
 class DdsTopicNameDialog(QDialog):
     """Class that implements the a dialog to set the DDS command and status topic names."""
@@ -234,9 +234,15 @@ class ControllerGUI(QMainWindow):
         # Change status bar
         self.update_status(RecorderStatus[current_status.upper()])
 
-    def restart_controller(self, dds_domain=0, command_topic='/ddsrecorder/command', status_topic='/ddsrecorder/status'):
+    def restart_controller(
+            self,
+            dds_domain=0,
+            command_topic='/ddsrecorder/command',
+            status_topic='/ddsrecorder/status'):
         """Restart the DDS Controller if the DDS Domain or topic name changes."""
-        if dds_domain != self.dds_domain or command_topic != self.command_topic or status_topic != self.status_topic:
+        if (dds_domain != self.dds_domain
+                or command_topic != self.command_topic
+                or status_topic != self.status_topic):
             if self.dds_controller.is_valid_dds_domain(dds_domain):
                 # Delete DDS entities in previous domain
                 self.dds_controller.delete_dds()
@@ -376,7 +382,7 @@ class ControllerGUI(QMainWindow):
             if domain != self.dds_domain:
                 if (self.dds_controller.is_valid_dds_domain(domain)):
                     self.restart_controller(domain, self.command_topic, self.status_topic)
-    
+
     def topic_name_dialog(self):
         """Create a dialog to update the recorder topic names."""
         dialog = DdsTopicNameDialog(self.command_topic, self.status_topic)
