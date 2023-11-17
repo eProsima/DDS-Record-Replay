@@ -27,7 +27,7 @@ set(TEST_SOURCES
 
 set(TEST_LIST
         trivial
-        data_to_check
+        dds_data_to_check
         less_playback_rate
         more_playback_rate
         begin_time
@@ -69,9 +69,12 @@ set(TEST_SOURCES
 
 set(TEST_LIST
         trivial
-        data_to_check
-        less_playback_rate
-        more_playback_rate
+        dds_data_to_check
+        ros2_data_to_check
+        dds_less_playback_rate
+        ros2_less_playback_rate
+        dds_more_playback_rate
+        ros2_more_playback_rate
         begin_time
         end_time
         start_replay_time_earlier
@@ -79,6 +82,7 @@ set(TEST_LIST
 
 set(TEST_NEEDED_SOURCES
         resources/helloworld_withtype_file.mcap
+        resources/ros2_file.mcap
         resources/config_file.yaml
         resources/config_file_less_hz.yaml
         resources/config_file_more_hz.yaml

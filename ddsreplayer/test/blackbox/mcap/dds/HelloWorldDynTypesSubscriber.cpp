@@ -142,10 +142,19 @@ void HelloWorldDynTypesSubscriber::on_data_available(
 
             samples_++;
 
-            int32_t index = new_dynamic_data->get_uint32_value(0);
-            std::string message = new_dynamic_data->get_string_value(1);
+            if (new_dynamic_data->get_name() == "std_msgs::msg::dds_::String_")
+            {
+                std::string message = new_dynamic_data->get_string_value(0);
 
-            fill_info(static_cast<int>(index), message, current_time);
+                fill_info(static_cast<int>(0), message, current_time);
+            }
+            else if (new_dynamic_data->get_name() == "HelloWorld")
+            {
+                int32_t index = new_dynamic_data->get_uint32_value(0);
+                std::string message = new_dynamic_data->get_string_value(1);
+
+                fill_info(static_cast<int>(index), message, current_time);
+            }
 
             std::cout << "Message " << samples_ << " received:\n" << std::endl;
             eprosima::fastrtps::types::DynamicDataHelper::print(new_dynamic_data);
