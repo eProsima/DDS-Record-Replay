@@ -115,8 +115,6 @@ void create_publisher(
         const std::string type_name,
         const unsigned int domain)
 {
-    std::cout << "topic name: " << topic_name << "type_name: " << type_name << "!!!!!!!" << std::endl;
-
     eprosima::fastdds::dds::DomainParticipantQos pqos;
     pqos.name("TypeIntrospectionExample_Participant_Publisher");
     pqos.wire_protocol().builtin.typelookup_config.use_client = false;
