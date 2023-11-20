@@ -152,6 +152,9 @@ bool CommandReceiver::init()
         participant_configuration_->app_metadata,
         "true");
 
+    // Enable type information sending
+    pqos.wire_protocol().builtin.typelookup_config.use_server = true;
+
     participant_ = DomainParticipantFactory::get_instance()->create_participant(domain_, pqos);
 
     if (participant_ == nullptr)
