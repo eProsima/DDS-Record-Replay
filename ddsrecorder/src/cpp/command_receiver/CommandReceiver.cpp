@@ -59,6 +59,7 @@ CommandReceiver::CommandReceiver(
     , event_handler_(event_handler)
     , participant_configuration_(participant_configuration)
 {
+    registerDdsRecorderCommandTypes();
     registerDdsRecorderStatusTypes();
 }
 
