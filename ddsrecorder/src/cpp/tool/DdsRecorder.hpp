@@ -65,7 +65,7 @@ public:
      * @param file_name:     Name of the mcap file where data is recorded. If not provided, the one from configuration is used instead.
      */
     DdsRecorder(
-            yaml::RecorderConfiguration& configuration,
+            const yaml::RecorderConfiguration& configuration,
             const DdsRecorderStateCode& init_state,
             const std::string& file_name = "");
 
@@ -99,6 +99,9 @@ protected:
 
     static participants::McapHandlerStateCode recorder_to_handler_state_(
             const DdsRecorderStateCode& recorder_state);
+
+    //! Configuration of the DDS Recorder
+    yaml::RecorderConfiguration configuration_;
 
     //! Payload Pool
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;

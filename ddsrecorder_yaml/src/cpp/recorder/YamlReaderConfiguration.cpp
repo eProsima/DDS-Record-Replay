@@ -361,12 +361,6 @@ void RecorderConfiguration::load_dds_configuration_(
     {
         ddspipe_configuration.allowlist = YamlReader::get_set<utils::Heritable<IFilterTopic>>(yml, ALLOWLIST_TAG,
                         version);
-
-        // Add to allowlist always the type object topic
-        WildcardDdsFilterTopic internal_topic;
-        internal_topic.topic_name.set_value(TYPE_OBJECT_TOPIC_NAME);
-        ddspipe_configuration.allowlist.insert(
-            utils::Heritable<WildcardDdsFilterTopic>::make_heritable(internal_topic));
     }
 
     /////

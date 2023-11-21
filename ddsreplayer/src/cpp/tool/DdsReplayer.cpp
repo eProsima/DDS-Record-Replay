@@ -137,10 +137,6 @@ DdsReplayer::DdsReplayer(
     // Generate builtin-topics from the topics in the MCAP file
     configuration.ddspipe_configuration.builtin_topics = generate_builtin_topics_(configuration, input_file);
 
-    // Create an internal topic to transmit the dynamic types
-    configuration.ddspipe_configuration.builtin_topics.insert(
-        utils::Heritable<DistributedTopic>::make_heritable(type_object_topic()));
-
     // Create DDS Pipe
     pipe_ = std::make_unique<DdsPipe>(
         configuration.ddspipe_configuration,

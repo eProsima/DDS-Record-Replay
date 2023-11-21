@@ -33,6 +33,17 @@ DDS Configuration
 
 Configuration related to DDS communication.
 
+.. _recorder_usage_configuration_domain_id:
+
+DDS Domain
+^^^^^^^^^^
+
+Tag ``domain`` configures the :term:`Domain Id`.
+
+.. code-block:: yaml
+
+    domain: 101
+
 .. _recorder_builtin_topics:
 
 Built-in Topics
@@ -55,7 +66,7 @@ The ``builtin-topics`` must specify a ``name`` and ``type`` without wildcard cha
 .. _recorder_topic_filtering:
 
 Topic Filtering
----------------
+^^^^^^^^^^^^^^^
 
 The |ddsrecorder| automatically detects the topics that are being used in a DDS Network.
 The |ddsrecorder| then creates internal DDS :term:`Readers<DataReader>` to record the data published on each topic.
@@ -212,18 +223,6 @@ If a ``qos`` is not manually configured, it will get its value by discovery.
 .. note::
 
     The :ref:`Topic QoS <recorder_topic_qos>` configured in the Manual Topics take precedence over the :ref:`Specs Topic QoS <recorder_specs_topic_qos>`.
-
-.. _recorder_usage_configuration_domain_id:
-
-DDS Domain
-^^^^^^^^^^
-
-Tag ``domain`` configures the :term:`Domain Id`.
-
-.. code-block:: yaml
-
-    domain: 101
-
 
 .. _recorder_ignore_participant_flags:
 

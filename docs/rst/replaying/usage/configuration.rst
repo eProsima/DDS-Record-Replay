@@ -32,10 +32,21 @@ DDS Configuration
 
 Configuration related to DDS communication.
 
+.. _replayer_usage_configuration_domain_id:
+
+DDS Domain
+^^^^^^^^^^
+
+Tag ``domain`` configures the :term:`Domain Id`.
+
+.. code-block:: yaml
+
+    domain: 101
+
 .. _replayer_topic_filtering:
 
 Topic Filtering
----------------
+^^^^^^^^^^^^^^^
 
 The |ddsreplayer| automatically detects the topics that are being used in a DDS Network.
 The |ddsreplayer| then creates internal DDS :term:`Writers<DataWriter>` to replay the data published on each topic.
@@ -156,7 +167,7 @@ By default it is set to ``0``; it sends samples at an unlimited transmission rat
 
 .. note::
 
-    The ``max-tx-rate`` tag can be set (in order of precedence) for topics, for participants, and globally in specs.
+    The ``max-tx-rate`` tag can be set (in order of precedence) for topics and globally in specs.
 
 .. _replayer_manual_topics:
 
@@ -181,17 +192,6 @@ If a ``qos`` is not manually configured, it will get its value by discovery.
 .. note::
 
     The :ref:`Topic QoS <replayer_topic_qos>` configured in the Manual Topics take precedence over the :ref:`Specs Topic QoS <replayer_specs_topic_qos>`.
-
-.. _replayer_usage_configuration_domain_id:
-
-DDS Domain
-^^^^^^^^^^
-
-Tag ``domain`` configures the :term:`Domain Id`.
-
-.. code-block:: yaml
-
-    domain: 101
 
 
 .. _replayer_ignore_participant_flags:
