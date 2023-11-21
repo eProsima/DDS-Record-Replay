@@ -29,10 +29,10 @@ runs:
 
     - name: Install vcpkg
       if: runner.os == 'Windows'
-      uses: lukka/run-vcpkg@v10
+      uses: lukka/run-vcpkg@v11
       with:
         vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-        vcpkgGitCommitId: '64fabc9401d9296273ed67cd8c39f92c113f9ea5'
+        vcpkgGitCommitId: 'a42af01b72c28a8e1d7b48107b33e4f286a55ef6'
 
     - name: Install lz4 and zstd
       if: runner.os == 'Windows'
