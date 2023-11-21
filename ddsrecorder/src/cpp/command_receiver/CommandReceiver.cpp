@@ -59,6 +59,7 @@ CommandReceiver::CommandReceiver(
     , event_handler_(event_handler)
     , participant_configuration_(participant_configuration)
 {
+    registerDdsRecorderCommandTypes();
     registerDdsRecorderStatusTypes();
 }
 
@@ -150,6 +151,9 @@ bool CommandReceiver::init()
         "fastdds.application.metadata",
         participant_configuration_->app_metadata,
         "true");
+
+    // Enable type information sending
+    pqos.wire_protocol().builtin.typelookup_config.use_server = true;
 
     participant_ = DomainParticipantFactory::get_instance()->create_participant(domain_, pqos);
 

@@ -36,6 +36,7 @@
 #include <fastdds/dds/subscriber/Subscriber.hpp>
 
 #include "types/DdsRecorderCommand/DdsRecorderCommandPubSubTypes.h"
+#include "types/DdsRecorderCommand/DdsRecorderCommandTypeObject.h"
 #include "types/DdsRecorderStatus/DdsRecorderStatusPubSubTypes.h"
 #include "types/DdsRecorderStatus/DdsRecorderStatusTypeObject.h"
 
