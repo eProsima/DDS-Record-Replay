@@ -32,5 +32,5 @@ Next release will include the following **DDS Recorder tool configuration featur
 Next release will include the following **DDS Replayer tool configuration features**:
 
 * New configuration option (``topics``) to configure the :ref:`Manual Topics <replayer_manual_topics>`.
-* New configuration option (``max-tx-rate``) to configure the :ref:`Max transmission rate <replayer_usage_configuration_max_tx_rate>`.
+* New configuration option (``max-tx-rate``) to configure the :ref:`Max transmission rate <replayer_max_tx_rate>`.
 * Remove the support for `Built-in Topics <https://dds-recorder.readthedocs.io/en/v0.2.0/rst/replaying/usage/configuration.html#built-in-topics>`_.

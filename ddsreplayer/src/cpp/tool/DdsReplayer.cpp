@@ -33,6 +33,8 @@
 #include <fastdds/dds/topic/TypeSupport.hpp>
 #include <fastrtps/attributes/ParticipantAttributes.h>
 
+#include <ddspipe_core/types/dynamic_types/types.hpp>
+
 #include <ddsrecorder_participants/common/types/DynamicTypesCollection.hpp>
 #include <ddsrecorder_participants/common/types/DynamicTypesCollectionPubSubTypes.hpp>
 #include <ddsrecorder_participants/constants.hpp>
@@ -57,16 +59,13 @@ DdsReplayer::DdsReplayer(
     , dyn_publisher_(nullptr)
 {
     // Create Discovery Database
-    discovery_database_ =
-            std::make_shared<DiscoveryDatabase>();
+    discovery_database_ = std::make_shared<DiscoveryDatabase>();
 
     // Create Payload Pool
-    payload_pool_ =
-            std::make_shared<FastPayloadPool>();
+    payload_pool_ = std::make_shared<FastPayloadPool>();
 
     // Create Thread Pool
-    thread_pool_ =
-            std::make_shared<SlotThreadPool>(configuration.n_threads);
+    thread_pool_ = std::make_shared<SlotThreadPool>(configuration.n_threads);
 
     // Create MCAP Reader Participant
     mcap_reader_participant_ = std::make_shared<McapReaderParticipant>(
@@ -135,7 +134,7 @@ DdsReplayer::DdsReplayer(
         }
     }
 
-    // Generate builtin-topics list by combining information from YAML and MCAP files
+    // Generate builtin-topics from the topics in the MCAP file
     configuration.ddspipe_configuration.builtin_topics = generate_builtin_topics_(configuration, input_file);
 
     // Create DDS Pipe

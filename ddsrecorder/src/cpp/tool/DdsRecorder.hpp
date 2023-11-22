@@ -100,6 +100,9 @@ protected:
     static participants::McapHandlerStateCode recorder_to_handler_state_(
             const DdsRecorderStateCode& recorder_state);
 
+    //! Configuration of the DDS Recorder
+    yaml::RecorderConfiguration configuration_;
+
     //! Payload Pool
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;
 

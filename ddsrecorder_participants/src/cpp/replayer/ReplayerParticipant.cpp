@@ -33,10 +33,6 @@ ReplayerParticipant::ReplayerParticipant(
         payload_pool,
         discovery_database)
 {
-    // Delete endpoint discovery/removal callbacks inserted in DDS-Pipe core.
-    // This is to avoid the creation of useless bridges and tracks created when discovering endpoints in topics other
-    // than the ones present in MCAP.
-    discovery_database_->clear_all_callbacks();
 }
 
 std::shared_ptr<IReader> ReplayerParticipant::create_reader(

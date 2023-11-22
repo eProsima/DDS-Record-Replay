@@ -15,6 +15,8 @@
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/utils.hpp>
 
+#include <ddspipe_core/types/dynamic_types/types.hpp>
+
 #include "DdsRecorder.hpp"
 
 namespace eprosima {
@@ -32,28 +34,26 @@ DdsRecorder::DdsRecorder(
         const yaml::RecorderConfiguration& configuration,
         const DdsRecorderStateCode& init_state,
         const std::string& file_name)
+    : configuration_(configuration)
 {
     // Create Discovery Database
-    discovery_database_ =
-            std::make_shared<DiscoveryDatabase>();
+    discovery_database_ = std::make_shared<DiscoveryDatabase>();
 
     // Create Payload Pool
-    payload_pool_ =
-            std::make_shared<FastPayloadPool>();
+    payload_pool_ = std::make_shared<FastPayloadPool>();
 
     // Create Thread Pool
-    thread_pool_ =
-            std::make_shared<SlotThreadPool>(configuration.n_threads);
+    thread_pool_ = std::make_shared<SlotThreadPool>(configuration_.n_threads);
 
     // Fill MCAP output file settings
     participants::McapOutputSettings mcap_output_settings;
     if (file_name == "")
     {
-        mcap_output_settings.output_filename = configuration.output_filename;
-        mcap_output_settings.output_filepath = configuration.output_filepath;
+        mcap_output_settings.output_filename = configuration_.output_filename;
+        mcap_output_settings.output_filepath = configuration_.output_filepath;
         mcap_output_settings.prepend_timestamp = true;
-        mcap_output_settings.output_timestamp_format = configuration.output_timestamp_format;
-        mcap_output_settings.output_local_timestamp = configuration.output_local_timestamp;
+        mcap_output_settings.output_timestamp_format = configuration_.output_timestamp_format;
+        mcap_output_settings.output_local_timestamp = configuration_.output_local_timestamp;
     }
     else
     {
@@ -65,14 +65,14 @@ DdsRecorder::DdsRecorder(
     // Create MCAP Handler configuration
     participants::McapHandlerConfiguration handler_config(
         mcap_output_settings,
-        configuration.max_pending_samples,
-        configuration.buffer_size,
-        configuration.event_window,
-        configuration.cleanup_period,
-        configuration.log_publish_time,
-        configuration.only_with_type,
-        configuration.mcap_writer_options,
-        configuration.record_types);
+        configuration_.max_pending_samples,
+        configuration_.buffer_size,
+        configuration_.event_window,
+        configuration_.cleanup_period,
+        configuration_.log_publish_time,
+        configuration_.only_with_type,
+        configuration_.mcap_writer_options,
+        configuration_.record_types);
 
     // Create MCAP Handler
     mcap_handler_ = std::make_shared<participants::McapHandler>(
@@ -82,21 +82,34 @@ DdsRecorder::DdsRecorder(
 
     // Create DynTypes Participant
     dyn_participant_ = std::make_shared<DynTypesParticipant>(
-        configuration.simple_configuration,
+        configuration_.simple_configuration,
         payload_pool_,
         discovery_database_);
     dyn_participant_->init();
 
     // Create Recorder Participant
     recorder_participant_ = std::make_shared<SchemaParticipant>(
-        configuration.recorder_configuration,
+        configuration_.recorder_configuration,
         payload_pool_,
         discovery_database_,
         mcap_handler_);
 
-    // Create and populate Participant Database
-    participants_database_ =
-            std::make_shared<ParticipantsDatabase>();
+    // Create an internal topic to transmit the dynamic types
+    configuration_.ddspipe_configuration.builtin_topics.insert(
+        utils::Heritable<DistributedTopic>::make_heritable(type_object_topic()));
+
+    if (!configuration_.ddspipe_configuration.allowlist.empty())
+    {
+        // The allowlist is not empty. Add the internal topic.
+        WildcardDdsFilterTopic internal_topic;
+        internal_topic.topic_name.set_value(TYPE_OBJECT_TOPIC_NAME);
+
+        configuration_.ddspipe_configuration.allowlist.insert(
+            utils::Heritable<WildcardDdsFilterTopic>::make_heritable(internal_topic));
+    }
+
+    // Create Participant Database
+    participants_database_ = std::make_shared<ParticipantsDatabase>();
 
     // Populate Participant Database
     participants_database_->add_participant(
@@ -110,7 +123,7 @@ DdsRecorder::DdsRecorder(
 
     // Create DDS Pipe
     pipe_ = std::make_unique<DdsPipe>(
-        configuration.ddspipe_configuration,
+        configuration_.ddspipe_configuration,
         discovery_database_,
         payload_pool_,
         participants_database_,

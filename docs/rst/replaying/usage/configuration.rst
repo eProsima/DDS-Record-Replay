@@ -32,10 +32,21 @@ DDS Configuration
 
 Configuration related to DDS communication.
 
+.. _replayer_usage_configuration_domain_id:
+
+DDS Domain
+^^^^^^^^^^
+
+Tag ``domain`` configures the :term:`Domain Id`.
+
+.. code-block:: yaml
+
+    domain: 101
+
 .. _replayer_topic_filtering:
 
 Topic Filtering
----------------
+^^^^^^^^^^^^^^^
 
 The |ddsreplayer| automatically detects the topics that are being used in a DDS Network.
 The |ddsreplayer| then creates internal DDS :term:`Writers<DataWriter>` to replay the data published on each topic.
@@ -154,10 +165,6 @@ The ``max-tx-rate`` tag limits the frequency [Hz] at which samples are sent by d
 It only accepts non-negative numbers.
 By default it is set to ``0``; it sends samples at an unlimited transmission rate.
 
-.. note::
-
-    The ``max-tx-rate`` tag can be set (in order of precedence) for topics, for participants, and globally in specs.
-
 .. _replayer_manual_topics:
 
 Manual Topics
@@ -181,17 +188,6 @@ If a ``qos`` is not manually configured, it will get its value by discovery.
 .. note::
 
     The :ref:`Topic QoS <replayer_topic_qos>` configured in the Manual Topics take precedence over the :ref:`Specs Topic QoS <replayer_specs_topic_qos>`.
-
-.. _replayer_usage_configuration_domain_id:
-
-DDS Domain
-^^^^^^^^^^
-
-Tag ``domain`` configures the :term:`Domain Id`.
-
-.. code-block:: yaml
-
-    domain: 101
 
 
 .. _replayer_ignore_participant_flags:
@@ -254,11 +250,6 @@ Example:
       - "127.0.0.1"    # Localhost only
 
 See `Interface Whitelist <https://fast-dds.docs.eprosima.com/en/latest/fastdds/transport/whitelist.html>`_ for more information.
-
-.. warning::
-
-    When providing an interface whitelist, external participants with which communication is desired must also be configured with interface whitelisting.
-
 
 Replay Configuration
 --------------------
@@ -354,20 +345,6 @@ Playback Rate
 By default, data is replayed at the same rate it was published/received.
 However, a user might be interested in playing messages back at a rate different than the original one.
 This can be accomplished through the playback ``rate`` tag, which accepts positive float values (e.g. 0.5 <--> half speed || 2 <--> double speed).
-
-.. _replayer_usage_configuration_max_tx_rate:
-
-Max Transmission Rate
----------------------
-
-The ``max-tx-rate`` tag limits the frequency [Hz] at which samples are sent by discarding messages transmitted before :code:`1/max-tx-rate` seconds have passed since the last sent message.
-It only accepts non-negative numbers.
-By default it is set to ``0``; it sends samples at an unlimited transmission rate.
-
-.. note::
-
-    The ``max-tx-rate`` tag can be set for topics and globally under the ``replayer`` tag.
-    If both are set, the configuration under topics prevails.
 
 .. _replayer_replay_configuration_replaytypes:
 
