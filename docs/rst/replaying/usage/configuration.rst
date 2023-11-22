@@ -165,11 +165,6 @@ The ``max-tx-rate`` tag limits the frequency [Hz] at which samples are sent by d
 It only accepts non-negative numbers.
 By default it is set to ``0``; it sends samples at an unlimited transmission rate.
 
-.. note::
-
-    The ``max-tx-rate`` tag can be set for topics and globally under the ``replayer`` tag.
-    If both are set, the configuration under topics prevails.
-
 .. _replayer_manual_topics:
 
 Manual Topics
