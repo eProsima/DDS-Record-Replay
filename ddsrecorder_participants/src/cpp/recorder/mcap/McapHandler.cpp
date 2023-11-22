@@ -29,11 +29,9 @@
 #include <cpp_utils/utils.hpp>
 #include <cpp_utils/ros2_mangling.hpp>
 
-#include <fastcdr/Cdr.h>
-#include <fastcdr/FastBuffer.h>
-#include <fastcdr/FastCdr.h>
 #include <fastdds/dds/topic/TypeSupport.hpp>
 #include <fastdds/rtps/common/CDRMessage_t.h>
+#include <fastdds/rtps/common/CdrSerialization.hpp>
 #include <fastdds/rtps/common/SerializedPayload.h>
 #include <fastrtps/types/DynamicType.h>
 #include <fastrtps/types/TypeObjectFactory.h>
@@ -1120,13 +1118,19 @@ std::string McapHandler::serialize_type_identifier_(
     eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
 
     // Create CDR serializer
-    eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN, eprosima::fastcdr::Cdr::DDS_CDR);
+    eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN,
+            eprosima::fastcdr::CdrVersion::XCDRv1);
     payload.encapsulation = ser.endianness() == eprosima::fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
 
     // Serialize
     type_identifier->serialize(ser);
+#if FASTCDR_VERSION_MAJOR == 1
     payload.length = (uint32_t)ser.getSerializedDataLength();
     size = (ser.getSerializedDataLength() + 3) & ~3;
+#else
+    payload.length = (uint32_t)ser.get_serialized_data_length();
+    size = (ser.get_serialized_data_length() + 3) & ~3;
+#endif // if FASTCDR_VERSION_MAJOR == 1
 
     // Create CDR message
     // NOTE: Use 0 length to avoid allocation (memory already reserved in payload creation)
@@ -1167,13 +1171,19 @@ std::string McapHandler::serialize_type_object_(
     eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
 
     // Create CDR serializer
-    eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN, eprosima::fastcdr::Cdr::DDS_CDR);
+    eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN,
+            eprosima::fastcdr::CdrVersion::XCDRv1);
     payload.encapsulation = ser.endianness() == eprosima::fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
 
     // Serialize
     type_object->serialize(ser);
+#if FASTCDR_VERSION_MAJOR == 1
     payload.length = (uint32_t)ser.getSerializedDataLength();
     size = (ser.getSerializedDataLength() + 3) & ~3;
+#else
+    payload.length = (uint32_t)ser.get_serialized_data_length();
+    size = (ser.get_serialized_data_length() + 3) & ~3;
+#endif // if FASTCDR_VERSION_MAJOR == 1
 
     // Create CDR message
     // NOTE: Use 0 length to avoid allocation (memory already reserved in payload creation)

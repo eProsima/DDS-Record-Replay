@@ -30,6 +30,8 @@ char dummy;
 
 #if FASTCDR_VERSION_MAJOR > 1
 
+#include "DdsRecorderCommandTypeObject.h"
+
 #include <fastcdr/Cdr.h>
 
 
@@ -43,6 +45,8 @@ using namespace eprosima::fastcdr::exception;
 
 DdsRecorderCommand::DdsRecorderCommand()
 {
+    // Just to register all known types
+    registerDdsRecorderCommandTypes();
 }
 
 DdsRecorderCommand::~DdsRecorderCommand()

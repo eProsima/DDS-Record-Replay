@@ -30,6 +30,8 @@ char dummy;
 
 #if FASTCDR_VERSION_MAJOR == 1
 
+#include "DdsRecorderCommandTypeObject.h"
+
 #include <fastcdr/Cdr.h>
 
 
@@ -95,6 +97,8 @@ DdsRecorderCommand::DdsRecorderCommand()
     // /type_d() m_args
 
 
+    // Just to register all known types
+    registerDdsRecorderCommandTypes();
 }
 
 DdsRecorderCommand::~DdsRecorderCommand()
