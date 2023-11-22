@@ -34,7 +34,7 @@ DdsRecorder::DdsRecorder(
         const yaml::RecorderConfiguration& configuration,
         const DdsRecorderStateCode& init_state,
         const std::string& file_name)
-        : configuration_(configuration)
+    : configuration_(configuration)
 {
     // Create Discovery Database
     discovery_database_ = std::make_shared<DiscoveryDatabase>();
