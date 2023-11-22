@@ -165,6 +165,11 @@ The ``max-tx-rate`` tag limits the frequency [Hz] at which samples are sent by d
 It only accepts non-negative numbers.
 By default it is set to ``0``; it sends samples at an unlimited transmission rate.
 
+.. note::
+
+    The ``max-tx-rate`` tag can be set for topics and globally under the ``replayer`` tag.
+    If both are set, the configuration under topics prevails.
+
 .. _replayer_manual_topics:
 
 Manual Topics
@@ -345,20 +350,6 @@ Playback Rate
 By default, data is replayed at the same rate it was published/received.
 However, a user might be interested in playing messages back at a rate different than the original one.
 This can be accomplished through the playback ``rate`` tag, which accepts positive float values (e.g. 0.5 <--> half speed || 2 <--> double speed).
-
-.. _replayer_usage_configuration_max_tx_rate:
-
-Max Transmission Rate
----------------------
-
-The ``max-tx-rate`` tag limits the frequency [Hz] at which samples are sent by discarding messages transmitted before :code:`1/max-tx-rate` seconds have passed since the last sent message.
-It only accepts non-negative numbers.
-By default it is set to ``0``; it sends samples at an unlimited transmission rate.
-
-.. note::
-
-    The ``max-tx-rate`` tag can be set for topics and globally under the ``replayer`` tag.
-    If both are set, the configuration under topics prevails.
 
 .. _replayer_replay_configuration_replaytypes:
 
