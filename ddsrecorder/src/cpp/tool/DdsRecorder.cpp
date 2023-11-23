@@ -96,7 +96,7 @@ DdsRecorder::DdsRecorder(
 
     // Create an internal topic to transmit the dynamic types
     configuration_.ddspipe_configuration.builtin_topics.insert(
-        utils::Heritable<DistributedTopic>::make_heritable(type_object_topic()));
+        utils::Heritable<DdsTopic>::make_heritable(type_object_topic()));
 
     if (!configuration_.ddspipe_configuration.allowlist.empty())
     {
