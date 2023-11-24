@@ -861,11 +861,9 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     // Create new channel
     mcap::KeyValueMap metadata = {};
     metadata[QOS_SERIALIZATION_QOS] = serialize_qos_(topic.topic_qos);
-    metadata[ROS2_TYPES] =
-            configuration_.ros2_types ? topic.m_topic_name.rfind("rt/",
-                    0) == 0 ? "true" : "false" : "false";
     std::string topic_name =
             configuration_.ros2_types ? utils::demangle_if_ros_topic(topic.m_topic_name) : topic.m_topic_name;
+    metadata[ROS2_TYPES] = topic_name.compare(topic.m_topic_name) == 0 ? "true" : "false";
     mcap::Channel new_channel(topic_name, "cdr", schema_id, metadata);
     mcap_writer_.addChannel(new_channel);
     auto channel_id = new_channel.id;

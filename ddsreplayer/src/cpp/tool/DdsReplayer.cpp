@@ -352,8 +352,6 @@ void DdsReplayer::create_dynamic_writer_(
                 "Failed to create " << topic->type_name << " DynamicType, aborting dynamic writer creation...");
         return;
     }
-    logWarning(DDSREPLAYER_REPLAYER,
-            "Succesfully create " << topic->type_name << " DynamicType...");
 
     fastdds::dds::TypeSupport type(new fastrtps::types::DynamicPubSubType(dyn_type));
 

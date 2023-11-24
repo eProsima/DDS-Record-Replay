@@ -25,7 +25,6 @@ enable_language(CXX)
 ###############################################################################
 # Package cmake_utils is required to get every cmake macro needed
 find_package(cmake_utils REQUIRED)
-find_package(cpp_utils REQUIRED)
 
 ###############################################################################
 # Project

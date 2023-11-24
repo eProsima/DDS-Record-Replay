@@ -20,10 +20,10 @@
 
 #include <cpp_utils/exception/InconsistencyException.hpp>
 #include <cpp_utils/Log.hpp>
+#include <cpp_utils/ros2_mangling.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/types/cast.hpp>
 #include <cpp_utils/utils.hpp>
-#include <cpp_utils/ros2_mangling.hpp>
 
 #include <ddspipe_core/types/data/RtpsPayloadData.hpp>
 #include <ddspipe_core/types/dds/Payload.hpp>
@@ -31,8 +31,8 @@
 #include <ddspipe_participants/reader/auxiliar/BlankReader.hpp>
 #include <ddspipe_participants/writer/auxiliar/BlankWriter.hpp>
 
-#include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
 #include <ddsrecorder_participants/constants.hpp>
+#include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
