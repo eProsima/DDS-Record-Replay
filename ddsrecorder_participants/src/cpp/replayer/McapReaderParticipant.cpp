@@ -20,6 +20,7 @@
 
 #include <cpp_utils/exception/InconsistencyException.hpp>
 #include <cpp_utils/Log.hpp>
+#include <cpp_utils/ros2_mangling.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/types/cast.hpp>
 #include <cpp_utils/utils.hpp>
@@ -30,6 +31,7 @@
 #include <ddspipe_participants/reader/auxiliar/BlankReader.hpp>
 #include <ddspipe_participants/writer/auxiliar/BlankWriter.hpp>
 
+#include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
 
 namespace eprosima {
@@ -199,8 +201,10 @@ void McapReaderParticipant::process_mcap()
 
         // Create topic on which this message should be published
         DdsTopic channel_topic;
-        channel_topic.m_topic_name = it->channel->topic;
-        channel_topic.type_name = it->schema->name;
+        channel_topic.m_topic_name = it->channel->metadata[ROS2_TYPES] == "true" ? utils::mangle_if_ros_topic(
+            it->channel->topic) : it->channel->topic;
+        channel_topic.type_name = it->channel->metadata[ROS2_TYPES] == "true" ? utils::mangle_if_ros_type(
+            it->schema->name) : it->schema->name;
 
         auto readers_it = readers_.find(channel_topic);
         if (readers_it == readers_.end())

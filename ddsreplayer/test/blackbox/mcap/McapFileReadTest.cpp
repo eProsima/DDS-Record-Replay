@@ -36,14 +36,14 @@ namespace test {
 
 const unsigned int DOMAIN = 110;
 
-std::string topic_name = "/dds/topic";
+const std::string topic_name = "/dds/topic";
 
 } // test
 
 
 void create_subscriber_replayer(
         DataToCheck& data,
-        std::string configuration_path = "resources/config_file.yaml",
+        const std::string& configuration_path = "resources/config_file.yaml",
         std::string input_file = "resources/helloworld_file.mcap")
 {
     {
@@ -105,7 +105,7 @@ TEST(McapFileReadTest, trivial)
     ASSERT_TRUE(true);
 }
 
-TEST(McapFileReadTest, data_to_check)
+TEST(McapFileReadTest, dds_data_to_check)
 {
     // info to check
     DataToCheck data;
@@ -124,7 +124,7 @@ TEST(McapFileReadTest, more_playback_rate)
 {
     // info to check
     DataToCheck data;
-    std::string configuration = "resources/config_file_more_hz.yaml";
+    const std::string configuration = "resources/config_file_more_hz.yaml";
     create_subscriber_replayer(data, configuration);
     // ms ~ 100
     ASSERT_GT(data.mean_ms_between_msgs, 97.5);
@@ -135,7 +135,7 @@ TEST(McapFileReadTest, less_playback_rate)
 {
     // info to check
     DataToCheck data;
-    std::string configuration = "resources/config_file_less_hz.yaml";
+    const std::string configuration = "resources/config_file_less_hz.yaml";
     create_subscriber_replayer(data, configuration);
     // ms ~ 400
     ASSERT_GT(data.mean_ms_between_msgs, 397.5);
@@ -146,7 +146,7 @@ TEST(McapFileReadTest, begin_time)
 {
     // info to check
     DataToCheck data;
-    std::string configuration = "resources/config_file_begin_time.yaml";
+    const std::string configuration = "resources/config_file_begin_time.yaml";
     create_subscriber_replayer(data, configuration);
     ASSERT_EQ(data.n_received_msgs, 3);
     ASSERT_EQ(data.min_index_msg, 8);
@@ -157,7 +157,7 @@ TEST(McapFileReadTest, end_time)
 {
     // info to check
     DataToCheck data;
-    std::string configuration = "resources/config_file_end_time.yaml";
+    const std::string configuration = "resources/config_file_end_time.yaml";
     create_subscriber_replayer(data, configuration);
     ASSERT_EQ(data.n_received_msgs, 8);
     ASSERT_EQ(data.min_index_msg, 0);
@@ -168,7 +168,7 @@ TEST(McapFileReadTest, start_replay_time_earlier)
 {
     // info to check
     DataToCheck data;
-    std::string configuration = "resources/config_file_start_replay_time_earlier.yaml";
+    const std::string configuration = "resources/config_file_start_replay_time_earlier.yaml";
     create_subscriber_replayer(data, configuration);
     ASSERT_EQ(data.n_received_msgs, 11);
     ASSERT_EQ(data.min_index_msg, 0);

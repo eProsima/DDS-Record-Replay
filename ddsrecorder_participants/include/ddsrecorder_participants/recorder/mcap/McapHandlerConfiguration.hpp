@@ -57,7 +57,8 @@ struct McapHandlerConfiguration
             const bool& log_publishTime,
             const bool& only_with_schema,
             const mcap::McapWriterOptions& mcap_writer_options,
-            const bool& record_types)
+            const bool& record_types,
+            const bool& ros2_types)
         : mcap_output_settings(mcap_output_settings)
         , max_pending_samples(max_pending_samples)
         , buffer_size(buffer_size)
@@ -67,6 +68,7 @@ struct McapHandlerConfiguration
         , only_with_schema(only_with_schema)
         , mcap_writer_options(mcap_writer_options)
         , record_types(record_types)
+        , ros2_types(ros2_types)
     {
     }
 
@@ -96,6 +98,9 @@ struct McapHandlerConfiguration
 
     //! Whether to store received dynamic types in output MCAP file
     bool record_types;
+
+    //! Whether to generate schemas as OMG IDL or ROS2 msg
+    bool ros2_types;
 };
 
 } /* namespace participants */

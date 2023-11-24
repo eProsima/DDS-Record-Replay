@@ -17,6 +17,7 @@
 
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/utils.hpp>
+#include <cpp_utils/ros2_mangling.hpp>
 
 #include <fastcdr/Cdr.h>
 #include <fastcdr/FastBuffer.h>
@@ -279,8 +280,10 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
 
     for (auto it = channels.begin(); it != channels.end(); it++)
     {
-        std::string topic_name = it->second->topic;
-        std::string type_name = schemas[it->second->schemaId]->name;  // TODO: assert exists beforehand
+        std::string topic_name = it->second->metadata[ROS2_TYPES] == "true" ? utils::mangle_if_ros_topic(
+            it->second->topic) : it->second->topic;
+        std::string type_name = it->second->metadata[ROS2_TYPES] == "true" ? utils::mangle_if_ros_type(
+            schemas[it->second->schemaId]->name) : schemas[it->second->schemaId]->name;                                                                                                             // TODO: assert exists beforehand
 
         auto channel_topic = utils::Heritable<DdsTopic>::make_heritable();
         channel_topic->m_topic_name = topic_name;

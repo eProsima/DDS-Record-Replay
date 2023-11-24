@@ -27,6 +27,7 @@
 #include <cpp_utils/exception/InconsistencyException.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/utils.hpp>
+#include <cpp_utils/ros2_mangling.hpp>
 
 #include <fastcdr/Cdr.h>
 #include <fastcdr/FastBuffer.h>
@@ -111,6 +112,7 @@ void McapHandler::add_schema(
     // NOTE: Process schemas even if in STOPPED state to avoid losing them (only sent/received once in discovery)
 
     assert(nullptr != dynamic_type);
+
     std::string type_name = dynamic_type->get_name();
 
     // Check if it exists already
@@ -120,12 +122,17 @@ void McapHandler::add_schema(
     }
 
     // Schema not found, generate from dynamic type and store
-    std::string schema_text = idl::generate_idl_schema(dynamic_type);
+    std::string schema_text =
+            configuration_.ros2_types ? msg::generate_ros2_schema(dynamic_type) : idl::generate_idl_schema(
+        dynamic_type);
 
     logInfo(DDSRECORDER_MCAP_HANDLER, "\nAdding schema with name " << type_name << " :\n" << schema_text << "\n");
 
     // Create schema and add it to writer and to schemas map
-    mcap::Schema new_schema(type_name, "omgidl", schema_text);
+    std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
+    mcap::Schema new_schema(configuration_.ros2_types ? utils::demangle_if_ros_type(dynamic_type->get_name()) :
+            dynamic_type
+                    ->get_name(), encoding, schema_text);
     // WARNING: passing as non-const to MCAP library
     mcap_writer_.addSchema(new_schema);
 
@@ -837,7 +844,8 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
             logInfo(DDSRECORDER_MCAP_HANDLER,
                     "Schema not found for type: " << topic.type_name << ". Creating blank schema...");
 
-            mcap::Schema blank_schema(topic.type_name, "omgidl", "");
+            std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
+            mcap::Schema blank_schema(topic.type_name, encoding, "");
             mcap_writer_.addSchema(blank_schema);
             schemas_.insert({topic.type_name, std::move(blank_schema)});
 
@@ -853,7 +861,11 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     // Create new channel
     mcap::KeyValueMap metadata = {};
     metadata[QOS_SERIALIZATION_QOS] = serialize_qos_(topic.topic_qos);
-    mcap::Channel new_channel(topic.m_topic_name, "cdr", schema_id, metadata);
+    std::string topic_name =
+            configuration_.ros2_types ? utils::demangle_if_ros_topic(topic.m_topic_name) : topic.m_topic_name;
+    // Set ROS2_TYPES to "false" if the given topic_name is equal to topic.m_topic_name, otherwise set it to "true".
+    metadata[ROS2_TYPES] = topic_name.compare(topic.m_topic_name) ? "true" : "false";
+    mcap::Channel new_channel(topic_name, "cdr", schema_id, metadata);
     mcap_writer_.addChannel(new_channel);
     auto channel_id = new_channel.id;
     channels_.insert({topic, std::move(new_channel)});

@@ -42,6 +42,7 @@ recorder:
     level: slowest
     force: true
   record-types: true
+  ros2-types: false
 
 remote-controller:
   enable: true

@@ -232,6 +232,13 @@ void RecorderConfiguration::load_recorder_configuration_(
     {
         record_types = YamlReader::get<bool>(yml, RECORDER_RECORD_TYPES_TAG, version);
     }
+
+    /////
+    // Get optional ros2_types
+    if (YamlReader::is_tag_present(yml, RECORDER_ROS2_TYPES_TAG))
+    {
+        ros2_types = YamlReader::get<bool>(yml, RECORDER_ROS2_TYPES_TAG, version);
+    }
 }
 
 void RecorderConfiguration::load_controller_configuration_(
