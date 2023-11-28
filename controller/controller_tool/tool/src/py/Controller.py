@@ -169,7 +169,7 @@ class Controller(QObject):
         writer_qos.reliability().kind = fastdds.RELIABLE_RELIABILITY_QOS
         writer_qos.durability().kind = fastdds.VOLATILE_DURABILITY_QOS
         writer_qos.history().kind = fastdds.KEEP_LAST_HISTORY_QOS
-        writer_qos.history().size = 10
+        writer_qos.history().depth = 10
         self.command_writer = self.publisher.create_datawriter(
             self.command_topic, writer_qos)
 
@@ -184,7 +184,7 @@ class Controller(QObject):
         reader_qos.reliability().kind = fastdds.RELIABLE_RELIABILITY_QOS
         reader_qos.durability().kind = fastdds.TRANSIENT_LOCAL_DURABILITY_QOS
         reader_qos.history().kind = fastdds.KEEP_LAST_HISTORY_QOS
-        reader_qos.history().size = 10
+        reader_qos.history().depth = 10
         self.status_reader = self.subscriber.create_datareader(
             self.status_topic, reader_qos, self.status_reader_listener)
 
