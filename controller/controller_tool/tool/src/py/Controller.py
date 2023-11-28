@@ -66,15 +66,15 @@ class ControllerCommand(Enum):
     close = 5
 
 
-class CommandWriterListener(fastdds.DataWriterListener):
-    """Fast DDS DataWriter listener class for DdsRecorderCommand DataWriter."""
+class StatusReaderListener(fastdds.DataReaderListener):
+    """Fast DDS DataReader listener class for Status DataReader."""
 
     def __init__(self, controller):
-        """Construct a WriterListener object."""
+        """Construct a ReaderListener object."""
         self._controller = controller
         super().__init__()
 
-    def on_publication_matched(self, writer, info):
+    def on_subscription_matched(self, reader, info):
         """Raise when there has been a match/unmatch event."""
         if (0 < info.current_count_change):
             logger.debug('DDS Recorder found!')
@@ -84,15 +84,6 @@ class CommandWriterListener(fastdds.DataWriterListener):
             logger.debug('DDS Recorder lost!')
             self._controller.on_ddsrecorder_discovered.emit(
                 False, 'DDS Recorder lost!')
-
-
-class StatusReaderListener(fastdds.DataReaderListener):
-    """Fast DDS DataReader listener class for Status DataReader."""
-
-    def __init__(self, controller):
-        """Construct a WriterListener object."""
-        self._controller = controller
-        super().__init__()
 
     def on_data_available(self, reader):
         """Raise when there is new Status data available."""
@@ -173,7 +164,6 @@ class Controller(QObject):
         self.participant.get_default_publisher_qos(publisher_qos)
         self.publisher = self.participant.create_publisher(publisher_qos)
 
-        self.command_writer_listener = CommandWriterListener(self)
         writer_qos = fastdds.DataWriterQos()
         self.publisher.get_default_datawriter_qos(writer_qos)
         writer_qos.reliability().kind = fastdds.RELIABLE_RELIABILITY_QOS
@@ -181,7 +171,7 @@ class Controller(QObject):
         writer_qos.history().kind = fastdds.KEEP_LAST_HISTORY_QOS
         writer_qos.history().size = 10
         self.command_writer = self.publisher.create_datawriter(
-            self.command_topic, writer_qos, self.command_writer_listener)
+            self.command_topic, writer_qos)
 
         # Initialize Status reader
         self.subscriber_qos = fastdds.SubscriberQos()
