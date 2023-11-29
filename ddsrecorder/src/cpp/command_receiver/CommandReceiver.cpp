@@ -323,21 +323,21 @@ void CommandReceiver::on_subscription_matched(
 {
     if (info.current_count_change == 1)
     {
-        logInfo(
-            DDSRECORDER_COMMAND_RECEIVER,
-            "Subscriber matched [ " << iHandle2GUID(info.last_publication_handle) << " ].");
+        logError(
+            DEBUG_COMMAND,
+            "Command receiver's reader matched [ " << iHandle2GUID(info.last_publication_handle) << " ].");
     }
     else if (info.current_count_change == -1)
     {
-        logInfo(
-            DDSRECORDER_COMMAND_RECEIVER,
-            "Subscriber unmatched [ " << iHandle2GUID(info.last_publication_handle) << " ].");
+        logError(
+            DEBUG_COMMAND,
+            "Command receiver's reader unmatched [ " << iHandle2GUID(info.last_publication_handle) << " ].");
     }
     else
     {
-        logWarning(
-            DDSRECORDER_COMMAND_RECEIVER,
-            info.current_count_change << " is not a valid value for SubscriptionMatchedStatus current count change");
+        logError(
+            DEBUG_COMMAND,
+            info.current_count_change << " is not a valid value for SubscriptionMatchedStatus current count change (ommand receiver's reader callback)");
     }
 }
 
@@ -349,8 +349,8 @@ void CommandReceiver::on_data_available(
     while ((reader->take_next_sample(&controller_command,
             &info)) == (ReturnCode_t::RETCODE_OK && info.instance_state == ALIVE_INSTANCE_STATE))
     {
-        logInfo(
-            DDSRECORDER_COMMAND_RECEIVER,
+        logError(
+            DEBUG_COMMAND,
             "New command received: " << controller_command.command() << " [" << controller_command.args() << "]");
         {
             std::lock_guard<std::mutex> lock(mtx_);
