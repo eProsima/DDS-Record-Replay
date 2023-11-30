@@ -490,6 +490,7 @@ private:
   bool parsedSummary_ = false;
 
   void reset_();
+  void clear_attachments_();
   Status readSummarySection_(IReadable& reader);
   Status readSummaryFromScan_(IReadable& reader);
 };

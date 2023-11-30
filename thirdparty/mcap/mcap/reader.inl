@@ -351,6 +351,7 @@ void McapReader::reset_() {
   statistics_ = std::nullopt;
   chunkIndexes_.clear();
   attachmentIndexes_.clear();
+  clear_attachments_();
   schemas_.clear();
   channels_.clear();
   dataStart_ = 0;
@@ -358,6 +359,13 @@ void McapReader::reset_() {
   startTime_ = 0;
   endTime_ = 0;
   parsedSummary_ = false;
+}
+
+void McapReader::clear_attachments_() {
+    for (auto& [attachment_name, attachment] : attachments_) {
+        std::free((void*)attachment.data);
+    }
+    attachments_.clear();
 }
 
 Status McapReader::readSummary(ReadSummaryMethod method, const ProblemCallback& onProblem) {
@@ -427,7 +435,7 @@ Status McapReader::readSummarySection_(IReadable& reader) {
   }
 
   attachmentIndexes_.clear();
-  attachments_.clear();
+  clear_attachments_();
   metadataIndexes_.clear();
   metadata_.clear();
   chunkIndexes_.clear();
@@ -488,7 +496,7 @@ Status McapReader::readSummaryFromScan_(IReadable& reader) {
   schemas_.clear();
   channels_.clear();
   attachmentIndexes_.clear();
-  attachments_.clear();
+  clear_attachments_();
   metadataIndexes_.clear();
   metadata_.clear();
   chunkIndexes_.clear();
@@ -503,7 +511,11 @@ Status McapReader::readSummaryFromScan_(IReadable& reader) {
   typedReader.onAttachment = [&](const Attachment& attachment, ByteOffset fileOffset) {
     AttachmentIndex attachmentIndex{attachment, fileOffset};
     attachmentIndexes_.emplace(attachment.name, attachmentIndex);
-    attachments_.emplace(attachment.name, attachment);
+    // Copy buffer for storage as original is freed when leaving scope
+    Attachment attachment_copy = attachment;
+    attachment_copy.data = (std::byte*)std::malloc(attachment.dataSize);
+    std::memcpy((void*)attachment_copy.data, attachment.data, attachment.dataSize);
+    attachments_.emplace(attachment_copy.name, attachment_copy);
   };
   typedReader.onMetadata = [&](const Metadata& metadata, ByteOffset fileOffset) {
     MetadataIndex metadataIndex{metadata, fileOffset};
