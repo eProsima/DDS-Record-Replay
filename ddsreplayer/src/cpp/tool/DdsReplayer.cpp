@@ -482,7 +482,7 @@ fastrtps::types::TypeIdentifier DdsReplayer::deserialize_type_identifier_(
 #endif // if __BIG_ENDIAN__
 
     // Reserve payload and create buffer
-    uint16_t parameter_length = cdr_message->length;
+    const auto parameter_length = cdr_message->length;
     fastrtps::rtps::SerializedPayload_t payload(parameter_length);
     fastcdr::FastBuffer fastbuffer((char*)payload.data, parameter_length);
 
@@ -520,7 +520,7 @@ fastrtps::types::TypeObject DdsReplayer::deserialize_type_object_(
 #endif // if __BIG_ENDIAN__
 
     // Reserve payload and create buffer
-    uint16_t parameter_length = cdr_message->length;
+    const auto parameter_length = cdr_message->length;
     fastrtps::rtps::SerializedPayload_t payload(parameter_length);
     fastcdr::FastBuffer fastbuffer((char*)payload.data, parameter_length);
 
