@@ -515,7 +515,7 @@ Status McapReader::readSummaryFromScan_(IReadable& reader) {
     Attachment attachment_copy = attachment;
     attachment_copy.data = (std::byte*)std::malloc(attachment.dataSize);
     std::memcpy((void*)attachment_copy.data, attachment.data, attachment.dataSize);
-    attachments_.emplace(attachment_copy.name, attachment_copy);
+    attachments_.emplace(attachment_copy.name, std::move(attachment_copy));
   };
   typedReader.onMetadata = [&](const Metadata& metadata, ByteOffset fileOffset) {
     MetadataIndex metadataIndex{metadata, fileOffset};
