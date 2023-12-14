@@ -216,7 +216,7 @@ int main(
 
             logUser(
                 DDSRECORDER_EXECUTION,
-                "Not configuration file given, using default file " << file_path << ".");
+                "No configuration file given, using default file " << file_path << ".");
         }
     }
     else

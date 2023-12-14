@@ -72,9 +72,9 @@ public:
     ~DdsReplayer();
 
     /**
-     * Reload allowed topics list.
+     * Reconfigure the Replayer with the new configuration.
      *
-     * @param allowed_topics: Allowed topics list to be loaded.
+     * @param new_configuration: The configuration to replace the previous configuration with.
      *
      * @return \c RETCODE_OK if allowed topics list has been updated correctly
      * @return \c RETCODE_NO_DATA if new allowed topics list is the same as the previous one
