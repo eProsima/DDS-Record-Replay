@@ -36,6 +36,8 @@ DdsRecorder::DdsRecorder(
         const std::string& file_name)
     : configuration_(configuration)
 {
+    load_internal_topics_(configuration_);
+
     // Create Discovery Database
     discovery_database_ = std::make_shared<DiscoveryDatabase>();
 
@@ -95,20 +97,6 @@ DdsRecorder::DdsRecorder(
         discovery_database_,
         mcap_handler_);
 
-    // Create an internal topic to transmit the dynamic types
-    configuration_.ddspipe_configuration.builtin_topics.insert(
-        utils::Heritable<DdsTopic>::make_heritable(type_object_topic()));
-
-    if (!configuration_.ddspipe_configuration.allowlist.empty())
-    {
-        // The allowlist is not empty. Add the internal topic.
-        WildcardDdsFilterTopic internal_topic;
-        internal_topic.topic_name.set_value(TYPE_OBJECT_TOPIC_NAME);
-
-        configuration_.ddspipe_configuration.allowlist.insert(
-            utils::Heritable<WildcardDdsFilterTopic>::make_heritable(internal_topic));
-    }
-
     // Create Participant Database
     participants_database_ = std::make_shared<ParticipantsDatabase>();
 
@@ -132,8 +120,13 @@ DdsRecorder::DdsRecorder(
 }
 
 utils::ReturnCode DdsRecorder::reload_configuration(
-        const yaml::RecorderConfiguration& new_configuration)
+        yaml::RecorderConfiguration& new_configuration)
 {
+    load_internal_topics_(new_configuration);
+
+    // Update the Recorder's configuration
+    configuration_ = new_configuration;
+
     return pipe_->reload_configuration(new_configuration.ddspipe_configuration);
 }
 
@@ -160,6 +153,24 @@ void DdsRecorder::stop()
 void DdsRecorder::trigger_event()
 {
     mcap_handler_->trigger_event();
+}
+
+void DdsRecorder::load_internal_topics_(
+        yaml::RecorderConfiguration& configuration)
+{
+    // Create an internal topic to transmit the dynamic types
+    configuration.ddspipe_configuration.builtin_topics.insert(
+        utils::Heritable<DdsTopic>::make_heritable(type_object_topic()));
+
+    if (!configuration.ddspipe_configuration.allowlist.empty())
+    {
+        // The allowlist is not empty. Add the internal topic.
+        WildcardDdsFilterTopic internal_topic;
+        internal_topic.topic_name.set_value(TYPE_OBJECT_TOPIC_NAME);
+
+        configuration.ddspipe_configuration.allowlist.insert(
+            utils::Heritable<WildcardDdsFilterTopic>::make_heritable(internal_topic));
+    }
 }
 
 participants::McapHandlerStateCode DdsRecorder::recorder_to_handler_state_(

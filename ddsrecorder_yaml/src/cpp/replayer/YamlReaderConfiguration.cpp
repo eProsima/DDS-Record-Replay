@@ -132,10 +132,9 @@ void ReplayerConfiguration::load_ddsreplayer_configuration_(
         ddspipe_configuration.blocklist.insert(
             utils::Heritable<WildcardDdsFilterTopic>::make_heritable(rpc_response_topic));
 
-        // The DDS Pipe should be enabled on start up.
         ddspipe_configuration.init_enabled = true;
 
-        // The replayer's DdsPipe doesn't get triggered by the discovery of entities
+        // Don't trigger the DdsPipe's callbacks when discovering or removing external entities
         ddspipe_configuration.discovery_trigger = DiscoveryTrigger::NONE;
     }
     catch (const std::exception& e)

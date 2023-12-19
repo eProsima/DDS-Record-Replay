@@ -128,10 +128,9 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
         ddspipe_configuration.blocklist.insert(
             utils::Heritable<WildcardDdsFilterTopic>::make_heritable(rpc_response_topic));
 
-        // The DDS Pipe should be enabled on start up.
         ddspipe_configuration.init_enabled = true;
 
-        // The recorder's DdsPipe trigger is the discovery of a writer
+        // Only trigger the DdsPipe's callbacks when discovering or removing writers
         ddspipe_configuration.discovery_trigger = DiscoveryTrigger::WRITER;
 
         // Initialize controller domain with the same as the one being recorded

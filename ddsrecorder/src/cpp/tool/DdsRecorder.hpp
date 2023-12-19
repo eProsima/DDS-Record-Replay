@@ -70,15 +70,15 @@ public:
             const std::string& file_name = "");
 
     /**
-     * Reload allowed topics list.
+     * Reconfigure the Recorder with the new configuration.
      *
-     * @param allowed_topics: Allowed topics list to be loaded.
+     * @param new_configuration: The configuration to replace the previous configuration with.
      *
      * @return \c RETCODE_OK if allowed topics list has been updated correctly
      * @return \c RETCODE_NO_DATA if new allowed topics list is the same as the previous one
      */
     utils::ReturnCode reload_configuration(
-            const yaml::RecorderConfiguration& new_configuration);
+            yaml::RecorderConfiguration& new_configuration);
 
     //! Start recorder (\c mcap_handler_)
     void start();
@@ -96,6 +96,14 @@ public:
     void trigger_event();
 
 protected:
+
+    /**
+     * Load the Recorder's internal topics into a configuration object.
+     *
+     * @param configuration: The configuration to load the internal topics into.
+     */
+    void load_internal_topics_(
+            yaml::RecorderConfiguration& configuration);
 
     static participants::McapHandlerStateCode recorder_to_handler_state_(
             const DdsRecorderStateCode& recorder_state);
