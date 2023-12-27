@@ -105,7 +105,7 @@ public:
     }
 
     eProsima_user_DllExport inline bool is_plain(
-        eprosima::fastdds::dds::DataRepresentationId_t data_representation) const override
+            eprosima::fastdds::dds::DataRepresentationId_t data_representation) const override
     {
         static_cast<void>(data_representation);
         return false;
@@ -195,7 +195,7 @@ public:
     }
 
     eProsima_user_DllExport inline bool is_plain(
-        eprosima::fastdds::dds::DataRepresentationId_t data_representation) const override
+            eprosima::fastdds::dds::DataRepresentationId_t data_representation) const override
     {
         static_cast<void>(data_representation);
         return false;
@@ -285,7 +285,7 @@ public:
     }
 
     eProsima_user_DllExport inline bool is_plain(
-        eprosima::fastdds::dds::DataRepresentationId_t data_representation) const override
+            eprosima::fastdds::dds::DataRepresentationId_t data_representation) const override
     {
         static_cast<void>(data_representation);
         return false;
@@ -375,7 +375,7 @@ public:
     }
 
     eProsima_user_DllExport inline bool is_plain(
-        eprosima::fastdds::dds::DataRepresentationId_t data_representation) const override
+            eprosima::fastdds::dds::DataRepresentationId_t data_representation) const override
     {
         static_cast<void>(data_representation);
         return false;
@@ -465,7 +465,7 @@ public:
     }
 
     eProsima_user_DllExport inline bool is_plain(
-        eprosima::fastdds::dds::DataRepresentationId_t data_representation) const override
+            eprosima::fastdds::dds::DataRepresentationId_t data_representation) const override
     {
         static_cast<void>(data_representation);
         return false;

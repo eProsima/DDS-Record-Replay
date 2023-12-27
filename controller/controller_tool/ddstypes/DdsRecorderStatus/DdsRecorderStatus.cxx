@@ -137,7 +137,6 @@ std::string& DdsRecorderStatus::previous()
     return m_previous;
 }
 
-
 /*!
  * @brief This function copies the value in member current
  * @param _current New value to be copied in member current
@@ -176,7 +175,6 @@ std::string& DdsRecorderStatus::current()
     return m_current;
 }
 
-
 /*!
  * @brief This function copies the value in member info
  * @param _info New value to be copied in member info
@@ -214,7 +212,6 @@ std::string& DdsRecorderStatus::info()
 {
     return m_info;
 }
-
 
 // Include auxiliary functions like for serializing/deserializing.
 #include "DdsRecorderStatusCdrAux.ipp"

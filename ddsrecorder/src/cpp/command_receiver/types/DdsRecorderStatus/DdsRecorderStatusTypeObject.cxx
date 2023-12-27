@@ -21,8 +21,10 @@
 
 #ifdef _WIN32
 // Remove linker warning LNK4221 on Visual Studio
-namespace { char dummy; }
-#endif
+namespace {
+char dummy;
+} // namespace
+#endif // ifdef _WIN32
 
 #include "DdsRecorderStatus.h"
 #include "DdsRecorderStatusTypeObject.h"
@@ -43,7 +45,7 @@ void registerDdsRecorderStatusTypes()
     static std::once_flag once_flag;
     std::call_once(once_flag, []()
             {
-                TypeObjectFactory *factory = TypeObjectFactory::get_instance();
+                TypeObjectFactory* factory = TypeObjectFactory::get_instance();
                 factory->add_type_object("DdsRecorderStatus", GetDdsRecorderStatusIdentifier(true),
                 GetDdsRecorderStatusObject(true));
                 factory->add_type_object("DdsRecorderStatus", GetDdsRecorderStatusIdentifier(false),
@@ -52,11 +54,11 @@ void registerDdsRecorderStatusTypes()
             });
 }
 
-
-
-const TypeIdentifier* GetDdsRecorderStatusIdentifier(bool complete)
+const TypeIdentifier* GetDdsRecorderStatusIdentifier(
+        bool complete)
 {
-    const TypeIdentifier * c_identifier = TypeObjectFactory::get_instance()->get_type_identifier("DdsRecorderStatus", complete);
+    const TypeIdentifier* c_identifier = TypeObjectFactory::get_instance()->get_type_identifier("DdsRecorderStatus",
+                    complete);
     if (c_identifier != nullptr && (!complete || c_identifier->_d() == EK_COMPLETE))
     {
         return c_identifier;
@@ -66,7 +68,8 @@ const TypeIdentifier* GetDdsRecorderStatusIdentifier(bool complete)
     return TypeObjectFactory::get_instance()->get_type_identifier("DdsRecorderStatus", complete);
 }
 
-const TypeObject* GetDdsRecorderStatusObject(bool complete)
+const TypeObject* GetDdsRecorderStatusObject(
+        bool complete)
 {
     const TypeObject* c_type_object = TypeObjectFactory::get_instance()->get_type_object("DdsRecorderStatus", complete);
     if (c_type_object != nullptr)
@@ -89,7 +92,7 @@ const TypeObject* GetMinimalDdsRecorderStatusObject()
         return c_type_object;
     }
 
-    TypeObject *type_object = new TypeObject();
+    TypeObject* type_object = new TypeObject();
     type_object->_d(EK_MINIMAL);
     type_object->minimal()._d(TK_STRUCTURE);
 
@@ -112,7 +115,7 @@ const TypeObject* GetMinimalDdsRecorderStatusObject()
     mst_previous.common().member_type_id(*TypeObjectFactory::get_instance()->get_string_identifier(255, false));
 
     MD5 previous_hash("previous");
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         mst_previous.detail().name_hash()[i] = previous_hash.digest[i];
     }
@@ -130,7 +133,7 @@ const TypeObject* GetMinimalDdsRecorderStatusObject()
     mst_current.common().member_type_id(*TypeObjectFactory::get_instance()->get_string_identifier(255, false));
 
     MD5 current_hash("current");
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         mst_current.detail().name_hash()[i] = current_hash.digest[i];
     }
@@ -148,7 +151,7 @@ const TypeObject* GetMinimalDdsRecorderStatusObject()
     mst_info.common().member_type_id(*TypeObjectFactory::get_instance()->get_string_identifier(255, false));
 
     MD5 info_hash("info");
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         mst_info.detail().name_hash()[i] = info_hash.digest[i];
     }
@@ -165,7 +168,7 @@ const TypeObject* GetMinimalDdsRecorderStatusObject()
     eprosima::fastcdr::CdrSizeCalculator calculator(eprosima::fastcdr::CdrVersion::XCDRv1);
     size_t current_alignment {0};
     SerializedPayload_t payload(static_cast<uint32_t>(
-        calculator.calculate_serialized_size(type_object->minimal().struct_type(), current_alignment) + 4));
+                calculator.calculate_serialized_size(type_object->minimal().struct_type(), current_alignment) + 4));
     eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
     // Fixed endian (Page 221, EquivalenceHash definition of Extensible and Dynamic Topic Types for DDS document)
     eprosima::fastcdr::Cdr ser(
@@ -182,7 +185,7 @@ const TypeObject* GetMinimalDdsRecorderStatusObject()
     MD5 objectHash;
     objectHash.update((char*)payload.data, payload.length);
     objectHash.finalize();
-    for(int i = 0; i < 14; ++i)
+    for (int i = 0; i < 14; ++i)
     {
         identifier.equivalence_hash()[i] = objectHash.digest[i];
     }
@@ -200,7 +203,7 @@ const TypeObject* GetCompleteDdsRecorderStatusObject()
         return c_type_object;
     }
 
-    TypeObject *type_object = new TypeObject();
+    TypeObject* type_object = new TypeObject();
     type_object->_d(EK_COMPLETE);
     type_object->complete()._d(TK_STRUCTURE);
 
@@ -266,7 +269,7 @@ const TypeObject* GetCompleteDdsRecorderStatusObject()
     eprosima::fastcdr::CdrSizeCalculator calculator(eprosima::fastcdr::CdrVersion::XCDRv1);
     size_t current_alignment {0};
     SerializedPayload_t payload(static_cast<uint32_t>(
-        calculator.calculate_serialized_size(type_object->complete().struct_type(), current_alignment) + 4));
+                calculator.calculate_serialized_size(type_object->complete().struct_type(), current_alignment) + 4));
     eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
     // Fixed endian (Page 221, EquivalenceHash definition of Extensible and Dynamic Topic Types for DDS document)
     eprosima::fastcdr::Cdr ser(
@@ -283,7 +286,7 @@ const TypeObject* GetCompleteDdsRecorderStatusObject()
     MD5 objectHash;
     objectHash.update((char*)payload.data, payload.length);
     objectHash.finalize();
-    for(int i = 0; i < 14; ++i)
+    for (int i = 0; i < 14; ++i)
     {
         identifier.equivalence_hash()[i] = objectHash.digest[i];
     }

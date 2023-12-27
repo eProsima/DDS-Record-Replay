@@ -52,11 +52,11 @@ eProsima_user_DllExport size_t calculate_serialized_size(
                                 current_alignment)};
 
 
-        calculated_size += calculator.calculate_member_serialized_size(eprosima::fastcdr::MemberId(0),
-                data.command(), current_alignment);
+    calculated_size += calculator.calculate_member_serialized_size(eprosima::fastcdr::MemberId(0),
+                    data.command(), current_alignment);
 
-        calculated_size += calculator.calculate_member_serialized_size(eprosima::fastcdr::MemberId(1),
-                data.args(), current_alignment);
+    calculated_size += calculator.calculate_member_serialized_size(eprosima::fastcdr::MemberId(1),
+                    data.args(), current_alignment);
 
 
     calculated_size += calculator.end_calculate_type_serialized_size(previous_encoding, current_alignment);
@@ -78,7 +78,7 @@ eProsima_user_DllExport void serialize(
     scdr
         << eprosima::fastcdr::MemberId(0) << data.command()
         << eprosima::fastcdr::MemberId(1) << data.args()
-;
+    ;
     scdr.end_serialize_type(current_state);
 }
 
@@ -95,13 +95,13 @@ eProsima_user_DllExport void deserialize(
                 bool ret_value = true;
                 switch (mid.id)
                 {
-                                        case 0:
-                                                dcdr >> data.command();
-                                            break;
+                    case 0:
+                        dcdr >> data.command();
+                        break;
 
-                                        case 1:
-                                                dcdr >> data.args();
-                                            break;
+                    case 1:
+                        dcdr >> data.args();
+                        break;
 
                     default:
                         ret_value = false;
@@ -118,8 +118,6 @@ void serialize_key(
     static_cast<void>(scdr);
     static_cast<void>(data);
 }
-
-
 
 } // namespace fastcdr
 } // namespace eprosima

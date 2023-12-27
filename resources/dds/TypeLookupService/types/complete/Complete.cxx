@@ -126,7 +126,6 @@ int32_t& Timestamp::seconds()
     return m_seconds;
 }
 
-
 /*!
  * @brief This function sets a value in member milliseconds
  * @param _milliseconds New value for member milliseconds
@@ -154,9 +153,6 @@ int32_t& Timestamp::milliseconds()
 {
     return m_milliseconds;
 }
-
-
-
 
 Point::Point()
 {
@@ -246,7 +242,6 @@ int32_t& Point::x()
     return m_x;
 }
 
-
 /*!
  * @brief This function sets a value in member y
  * @param _y New value for member y
@@ -275,7 +270,6 @@ int32_t& Point::y()
     return m_y;
 }
 
-
 /*!
  * @brief This function sets a value in member z
  * @param _z New value for member z
@@ -303,9 +297,6 @@ int32_t& Point::z()
 {
     return m_z;
 }
-
-
-
 
 MessageDescriptor::MessageDescriptor()
 {
@@ -395,7 +386,6 @@ uint32_t& MessageDescriptor::id()
     return m_id;
 }
 
-
 /*!
  * @brief This function copies the value in member topic
  * @param _topic New value to be copied in member topic
@@ -434,7 +424,6 @@ std::string& MessageDescriptor::topic()
     return m_topic;
 }
 
-
 /*!
  * @brief This function copies the value in member time
  * @param _time New value to be copied in member time
@@ -472,9 +461,6 @@ Timestamp& MessageDescriptor::time()
 {
     return m_time;
 }
-
-
-
 
 Message::Message()
 {
@@ -569,7 +555,6 @@ MessageDescriptor& Message::descriptor()
     return m_descriptor;
 }
 
-
 /*!
  * @brief This function copies the value in member message
  * @param _message New value to be copied in member message
@@ -607,9 +592,6 @@ std::string& Message::message()
 {
     return m_message;
 }
-
-
-
 
 CompleteData::CompleteData()
 {
@@ -704,7 +686,6 @@ uint32_t& CompleteData::index()
     return m_index;
 }
 
-
 /*!
  * @brief This function copies the value in member main_point
  * @param _main_point New value to be copied in member main_point
@@ -742,7 +723,6 @@ Point& CompleteData::main_point()
 {
     return m_main_point;
 }
-
 
 /*!
  * @brief This function copies the value in member internal_data
@@ -782,7 +762,6 @@ std::vector<Point>& CompleteData::internal_data()
     return m_internal_data;
 }
 
-
 /*!
  * @brief This function copies the value in member messages
  * @param _messages New value to be copied in member messages
@@ -820,7 +799,6 @@ std::array<Message, 2>& CompleteData::messages()
 {
     return m_messages;
 }
-
 
 // Include auxiliary functions like for serializing/deserializing.
 #include "CompleteCdrAux.ipp"

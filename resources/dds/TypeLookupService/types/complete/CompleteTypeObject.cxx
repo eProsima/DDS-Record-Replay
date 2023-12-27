@@ -21,8 +21,10 @@
 
 #ifdef _WIN32
 // Remove linker warning LNK4221 on Visual Studio
-namespace { char dummy; }
-#endif
+namespace {
+char dummy;
+} // namespace
+#endif // ifdef _WIN32
 
 #include "Complete.h"
 #include "CompleteTypeObject.h"
@@ -43,7 +45,7 @@ void registerCompleteTypes()
     static std::once_flag once_flag;
     std::call_once(once_flag, []()
             {
-                TypeObjectFactory *factory = TypeObjectFactory::get_instance();
+                TypeObjectFactory* factory = TypeObjectFactory::get_instance();
                 factory->add_type_object("Timestamp", GetTimestampIdentifier(true),
                 GetTimestampObject(true));
                 factory->add_type_object("Timestamp", GetTimestampIdentifier(false),
@@ -76,11 +78,10 @@ void registerCompleteTypes()
             });
 }
 
-
-
-const TypeIdentifier* GetTimestampIdentifier(bool complete)
+const TypeIdentifier* GetTimestampIdentifier(
+        bool complete)
 {
-    const TypeIdentifier * c_identifier = TypeObjectFactory::get_instance()->get_type_identifier("Timestamp", complete);
+    const TypeIdentifier* c_identifier = TypeObjectFactory::get_instance()->get_type_identifier("Timestamp", complete);
     if (c_identifier != nullptr && (!complete || c_identifier->_d() == EK_COMPLETE))
     {
         return c_identifier;
@@ -90,7 +91,8 @@ const TypeIdentifier* GetTimestampIdentifier(bool complete)
     return TypeObjectFactory::get_instance()->get_type_identifier("Timestamp", complete);
 }
 
-const TypeObject* GetTimestampObject(bool complete)
+const TypeObject* GetTimestampObject(
+        bool complete)
 {
     const TypeObject* c_type_object = TypeObjectFactory::get_instance()->get_type_object("Timestamp", complete);
     if (c_type_object != nullptr)
@@ -113,7 +115,7 @@ const TypeObject* GetMinimalTimestampObject()
         return c_type_object;
     }
 
-    TypeObject *type_object = new TypeObject();
+    TypeObject* type_object = new TypeObject();
     type_object->_d(EK_MINIMAL);
     type_object->minimal()._d(TK_STRUCTURE);
 
@@ -137,7 +139,7 @@ const TypeObject* GetMinimalTimestampObject()
 
 
     MD5 seconds_hash("seconds");
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         mst_seconds.detail().name_hash()[i] = seconds_hash.digest[i];
     }
@@ -156,7 +158,7 @@ const TypeObject* GetMinimalTimestampObject()
 
 
     MD5 milliseconds_hash("milliseconds");
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         mst_milliseconds.detail().name_hash()[i] = milliseconds_hash.digest[i];
     }
@@ -173,7 +175,7 @@ const TypeObject* GetMinimalTimestampObject()
     eprosima::fastcdr::CdrSizeCalculator calculator(eprosima::fastcdr::CdrVersion::XCDRv1);
     size_t current_alignment {0};
     SerializedPayload_t payload(static_cast<uint32_t>(
-        calculator.calculate_serialized_size(type_object->minimal().struct_type(), current_alignment) + 4));
+                calculator.calculate_serialized_size(type_object->minimal().struct_type(), current_alignment) + 4));
     eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
     // Fixed endian (Page 221, EquivalenceHash definition of Extensible and Dynamic Topic Types for DDS document)
     eprosima::fastcdr::Cdr ser(
@@ -190,7 +192,7 @@ const TypeObject* GetMinimalTimestampObject()
     MD5 objectHash;
     objectHash.update((char*)payload.data, payload.length);
     objectHash.finalize();
-    for(int i = 0; i < 14; ++i)
+    for (int i = 0; i < 14; ++i)
     {
         identifier.equivalence_hash()[i] = objectHash.digest[i];
     }
@@ -208,7 +210,7 @@ const TypeObject* GetCompleteTimestampObject()
         return c_type_object;
     }
 
-    TypeObject *type_object = new TypeObject();
+    TypeObject* type_object = new TypeObject();
     type_object->_d(EK_COMPLETE);
     type_object->complete()._d(TK_STRUCTURE);
 
@@ -261,7 +263,7 @@ const TypeObject* GetCompleteTimestampObject()
     eprosima::fastcdr::CdrSizeCalculator calculator(eprosima::fastcdr::CdrVersion::XCDRv1);
     size_t current_alignment {0};
     SerializedPayload_t payload(static_cast<uint32_t>(
-        calculator.calculate_serialized_size(type_object->complete().struct_type(), current_alignment) + 4));
+                calculator.calculate_serialized_size(type_object->complete().struct_type(), current_alignment) + 4));
     eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
     // Fixed endian (Page 221, EquivalenceHash definition of Extensible and Dynamic Topic Types for DDS document)
     eprosima::fastcdr::Cdr ser(
@@ -278,7 +280,7 @@ const TypeObject* GetCompleteTimestampObject()
     MD5 objectHash;
     objectHash.update((char*)payload.data, payload.length);
     objectHash.finalize();
-    for(int i = 0; i < 14; ++i)
+    for (int i = 0; i < 14; ++i)
     {
         identifier.equivalence_hash()[i] = objectHash.digest[i];
     }
@@ -288,11 +290,10 @@ const TypeObject* GetCompleteTimestampObject()
     return TypeObjectFactory::get_instance()->get_type_object("Timestamp", true);
 }
 
-
-
-const TypeIdentifier* GetPointIdentifier(bool complete)
+const TypeIdentifier* GetPointIdentifier(
+        bool complete)
 {
-    const TypeIdentifier * c_identifier = TypeObjectFactory::get_instance()->get_type_identifier("Point", complete);
+    const TypeIdentifier* c_identifier = TypeObjectFactory::get_instance()->get_type_identifier("Point", complete);
     if (c_identifier != nullptr && (!complete || c_identifier->_d() == EK_COMPLETE))
     {
         return c_identifier;
@@ -302,7 +303,8 @@ const TypeIdentifier* GetPointIdentifier(bool complete)
     return TypeObjectFactory::get_instance()->get_type_identifier("Point", complete);
 }
 
-const TypeObject* GetPointObject(bool complete)
+const TypeObject* GetPointObject(
+        bool complete)
 {
     const TypeObject* c_type_object = TypeObjectFactory::get_instance()->get_type_object("Point", complete);
     if (c_type_object != nullptr)
@@ -325,7 +327,7 @@ const TypeObject* GetMinimalPointObject()
         return c_type_object;
     }
 
-    TypeObject *type_object = new TypeObject();
+    TypeObject* type_object = new TypeObject();
     type_object->_d(EK_MINIMAL);
     type_object->minimal()._d(TK_STRUCTURE);
 
@@ -349,7 +351,7 @@ const TypeObject* GetMinimalPointObject()
 
 
     MD5 x_hash("x");
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         mst_x.detail().name_hash()[i] = x_hash.digest[i];
     }
@@ -368,7 +370,7 @@ const TypeObject* GetMinimalPointObject()
 
 
     MD5 y_hash("y");
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         mst_y.detail().name_hash()[i] = y_hash.digest[i];
     }
@@ -387,7 +389,7 @@ const TypeObject* GetMinimalPointObject()
 
 
     MD5 z_hash("z");
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         mst_z.detail().name_hash()[i] = z_hash.digest[i];
     }
@@ -404,7 +406,7 @@ const TypeObject* GetMinimalPointObject()
     eprosima::fastcdr::CdrSizeCalculator calculator(eprosima::fastcdr::CdrVersion::XCDRv1);
     size_t current_alignment {0};
     SerializedPayload_t payload(static_cast<uint32_t>(
-        calculator.calculate_serialized_size(type_object->minimal().struct_type(), current_alignment) + 4));
+                calculator.calculate_serialized_size(type_object->minimal().struct_type(), current_alignment) + 4));
     eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
     // Fixed endian (Page 221, EquivalenceHash definition of Extensible and Dynamic Topic Types for DDS document)
     eprosima::fastcdr::Cdr ser(
@@ -421,7 +423,7 @@ const TypeObject* GetMinimalPointObject()
     MD5 objectHash;
     objectHash.update((char*)payload.data, payload.length);
     objectHash.finalize();
-    for(int i = 0; i < 14; ++i)
+    for (int i = 0; i < 14; ++i)
     {
         identifier.equivalence_hash()[i] = objectHash.digest[i];
     }
@@ -439,7 +441,7 @@ const TypeObject* GetCompletePointObject()
         return c_type_object;
     }
 
-    TypeObject *type_object = new TypeObject();
+    TypeObject* type_object = new TypeObject();
     type_object->_d(EK_COMPLETE);
     type_object->complete()._d(TK_STRUCTURE);
 
@@ -508,7 +510,7 @@ const TypeObject* GetCompletePointObject()
     eprosima::fastcdr::CdrSizeCalculator calculator(eprosima::fastcdr::CdrVersion::XCDRv1);
     size_t current_alignment {0};
     SerializedPayload_t payload(static_cast<uint32_t>(
-        calculator.calculate_serialized_size(type_object->complete().struct_type(), current_alignment) + 4));
+                calculator.calculate_serialized_size(type_object->complete().struct_type(), current_alignment) + 4));
     eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
     // Fixed endian (Page 221, EquivalenceHash definition of Extensible and Dynamic Topic Types for DDS document)
     eprosima::fastcdr::Cdr ser(
@@ -525,7 +527,7 @@ const TypeObject* GetCompletePointObject()
     MD5 objectHash;
     objectHash.update((char*)payload.data, payload.length);
     objectHash.finalize();
-    for(int i = 0; i < 14; ++i)
+    for (int i = 0; i < 14; ++i)
     {
         identifier.equivalence_hash()[i] = objectHash.digest[i];
     }
@@ -535,11 +537,11 @@ const TypeObject* GetCompletePointObject()
     return TypeObjectFactory::get_instance()->get_type_object("Point", true);
 }
 
-
-
-const TypeIdentifier* GetMessageDescriptorIdentifier(bool complete)
+const TypeIdentifier* GetMessageDescriptorIdentifier(
+        bool complete)
 {
-    const TypeIdentifier * c_identifier = TypeObjectFactory::get_instance()->get_type_identifier("MessageDescriptor", complete);
+    const TypeIdentifier* c_identifier = TypeObjectFactory::get_instance()->get_type_identifier("MessageDescriptor",
+                    complete);
     if (c_identifier != nullptr && (!complete || c_identifier->_d() == EK_COMPLETE))
     {
         return c_identifier;
@@ -549,7 +551,8 @@ const TypeIdentifier* GetMessageDescriptorIdentifier(bool complete)
     return TypeObjectFactory::get_instance()->get_type_identifier("MessageDescriptor", complete);
 }
 
-const TypeObject* GetMessageDescriptorObject(bool complete)
+const TypeObject* GetMessageDescriptorObject(
+        bool complete)
 {
     const TypeObject* c_type_object = TypeObjectFactory::get_instance()->get_type_object("MessageDescriptor", complete);
     if (c_type_object != nullptr)
@@ -572,7 +575,7 @@ const TypeObject* GetMinimalMessageDescriptorObject()
         return c_type_object;
     }
 
-    TypeObject *type_object = new TypeObject();
+    TypeObject* type_object = new TypeObject();
     type_object->_d(EK_MINIMAL);
     type_object->minimal()._d(TK_STRUCTURE);
 
@@ -596,7 +599,7 @@ const TypeObject* GetMinimalMessageDescriptorObject()
 
 
     MD5 id_hash("id");
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         mst_id.detail().name_hash()[i] = id_hash.digest[i];
     }
@@ -614,7 +617,7 @@ const TypeObject* GetMinimalMessageDescriptorObject()
     mst_topic.common().member_type_id(*TypeObjectFactory::get_instance()->get_string_identifier(255, false));
 
     MD5 topic_hash("topic");
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         mst_topic.detail().name_hash()[i] = topic_hash.digest[i];
     }
@@ -632,7 +635,7 @@ const TypeObject* GetMinimalMessageDescriptorObject()
     mst_time.common().member_type_id(*GetTimestampIdentifier(false));
 
     MD5 time_hash("time");
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         mst_time.detail().name_hash()[i] = time_hash.digest[i];
     }
@@ -649,7 +652,7 @@ const TypeObject* GetMinimalMessageDescriptorObject()
     eprosima::fastcdr::CdrSizeCalculator calculator(eprosima::fastcdr::CdrVersion::XCDRv1);
     size_t current_alignment {0};
     SerializedPayload_t payload(static_cast<uint32_t>(
-        calculator.calculate_serialized_size(type_object->minimal().struct_type(), current_alignment) + 4));
+                calculator.calculate_serialized_size(type_object->minimal().struct_type(), current_alignment) + 4));
     eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
     // Fixed endian (Page 221, EquivalenceHash definition of Extensible and Dynamic Topic Types for DDS document)
     eprosima::fastcdr::Cdr ser(
@@ -666,7 +669,7 @@ const TypeObject* GetMinimalMessageDescriptorObject()
     MD5 objectHash;
     objectHash.update((char*)payload.data, payload.length);
     objectHash.finalize();
-    for(int i = 0; i < 14; ++i)
+    for (int i = 0; i < 14; ++i)
     {
         identifier.equivalence_hash()[i] = objectHash.digest[i];
     }
@@ -684,7 +687,7 @@ const TypeObject* GetCompleteMessageDescriptorObject()
         return c_type_object;
     }
 
-    TypeObject *type_object = new TypeObject();
+    TypeObject* type_object = new TypeObject();
     type_object->_d(EK_COMPLETE);
     type_object->complete()._d(TK_STRUCTURE);
 
@@ -751,7 +754,7 @@ const TypeObject* GetCompleteMessageDescriptorObject()
     eprosima::fastcdr::CdrSizeCalculator calculator(eprosima::fastcdr::CdrVersion::XCDRv1);
     size_t current_alignment {0};
     SerializedPayload_t payload(static_cast<uint32_t>(
-        calculator.calculate_serialized_size(type_object->complete().struct_type(), current_alignment) + 4));
+                calculator.calculate_serialized_size(type_object->complete().struct_type(), current_alignment) + 4));
     eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
     // Fixed endian (Page 221, EquivalenceHash definition of Extensible and Dynamic Topic Types for DDS document)
     eprosima::fastcdr::Cdr ser(
@@ -768,7 +771,7 @@ const TypeObject* GetCompleteMessageDescriptorObject()
     MD5 objectHash;
     objectHash.update((char*)payload.data, payload.length);
     objectHash.finalize();
-    for(int i = 0; i < 14; ++i)
+    for (int i = 0; i < 14; ++i)
     {
         identifier.equivalence_hash()[i] = objectHash.digest[i];
     }
@@ -778,11 +781,10 @@ const TypeObject* GetCompleteMessageDescriptorObject()
     return TypeObjectFactory::get_instance()->get_type_object("MessageDescriptor", true);
 }
 
-
-
-const TypeIdentifier* GetMessageIdentifier(bool complete)
+const TypeIdentifier* GetMessageIdentifier(
+        bool complete)
 {
-    const TypeIdentifier * c_identifier = TypeObjectFactory::get_instance()->get_type_identifier("Message", complete);
+    const TypeIdentifier* c_identifier = TypeObjectFactory::get_instance()->get_type_identifier("Message", complete);
     if (c_identifier != nullptr && (!complete || c_identifier->_d() == EK_COMPLETE))
     {
         return c_identifier;
@@ -792,7 +794,8 @@ const TypeIdentifier* GetMessageIdentifier(bool complete)
     return TypeObjectFactory::get_instance()->get_type_identifier("Message", complete);
 }
 
-const TypeObject* GetMessageObject(bool complete)
+const TypeObject* GetMessageObject(
+        bool complete)
 {
     const TypeObject* c_type_object = TypeObjectFactory::get_instance()->get_type_object("Message", complete);
     if (c_type_object != nullptr)
@@ -815,7 +818,7 @@ const TypeObject* GetMinimalMessageObject()
         return c_type_object;
     }
 
-    TypeObject *type_object = new TypeObject();
+    TypeObject* type_object = new TypeObject();
     type_object->_d(EK_MINIMAL);
     type_object->minimal()._d(TK_STRUCTURE);
 
@@ -838,7 +841,7 @@ const TypeObject* GetMinimalMessageObject()
     mst_descriptor.common().member_type_id(*GetMessageDescriptorIdentifier(false));
 
     MD5 descriptor_hash("descriptor");
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         mst_descriptor.detail().name_hash()[i] = descriptor_hash.digest[i];
     }
@@ -856,7 +859,7 @@ const TypeObject* GetMinimalMessageObject()
     mst_message.common().member_type_id(*TypeObjectFactory::get_instance()->get_string_identifier(255, false));
 
     MD5 message_hash("message");
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         mst_message.detail().name_hash()[i] = message_hash.digest[i];
     }
@@ -873,7 +876,7 @@ const TypeObject* GetMinimalMessageObject()
     eprosima::fastcdr::CdrSizeCalculator calculator(eprosima::fastcdr::CdrVersion::XCDRv1);
     size_t current_alignment {0};
     SerializedPayload_t payload(static_cast<uint32_t>(
-        calculator.calculate_serialized_size(type_object->minimal().struct_type(), current_alignment) + 4));
+                calculator.calculate_serialized_size(type_object->minimal().struct_type(), current_alignment) + 4));
     eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
     // Fixed endian (Page 221, EquivalenceHash definition of Extensible and Dynamic Topic Types for DDS document)
     eprosima::fastcdr::Cdr ser(
@@ -890,7 +893,7 @@ const TypeObject* GetMinimalMessageObject()
     MD5 objectHash;
     objectHash.update((char*)payload.data, payload.length);
     objectHash.finalize();
-    for(int i = 0; i < 14; ++i)
+    for (int i = 0; i < 14; ++i)
     {
         identifier.equivalence_hash()[i] = objectHash.digest[i];
     }
@@ -908,7 +911,7 @@ const TypeObject* GetCompleteMessageObject()
         return c_type_object;
     }
 
-    TypeObject *type_object = new TypeObject();
+    TypeObject* type_object = new TypeObject();
     type_object->_d(EK_COMPLETE);
     type_object->complete()._d(TK_STRUCTURE);
 
@@ -959,7 +962,7 @@ const TypeObject* GetCompleteMessageObject()
     eprosima::fastcdr::CdrSizeCalculator calculator(eprosima::fastcdr::CdrVersion::XCDRv1);
     size_t current_alignment {0};
     SerializedPayload_t payload(static_cast<uint32_t>(
-        calculator.calculate_serialized_size(type_object->complete().struct_type(), current_alignment) + 4));
+                calculator.calculate_serialized_size(type_object->complete().struct_type(), current_alignment) + 4));
     eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
     // Fixed endian (Page 221, EquivalenceHash definition of Extensible and Dynamic Topic Types for DDS document)
     eprosima::fastcdr::Cdr ser(
@@ -976,7 +979,7 @@ const TypeObject* GetCompleteMessageObject()
     MD5 objectHash;
     objectHash.update((char*)payload.data, payload.length);
     objectHash.finalize();
-    for(int i = 0; i < 14; ++i)
+    for (int i = 0; i < 14; ++i)
     {
         identifier.equivalence_hash()[i] = objectHash.digest[i];
     }
@@ -986,11 +989,11 @@ const TypeObject* GetCompleteMessageObject()
     return TypeObjectFactory::get_instance()->get_type_object("Message", true);
 }
 
-
-
-const TypeIdentifier* GetCompleteDataIdentifier(bool complete)
+const TypeIdentifier* GetCompleteDataIdentifier(
+        bool complete)
 {
-    const TypeIdentifier * c_identifier = TypeObjectFactory::get_instance()->get_type_identifier("CompleteData", complete);
+    const TypeIdentifier* c_identifier =
+            TypeObjectFactory::get_instance()->get_type_identifier("CompleteData", complete);
     if (c_identifier != nullptr && (!complete || c_identifier->_d() == EK_COMPLETE))
     {
         return c_identifier;
@@ -1000,7 +1003,8 @@ const TypeIdentifier* GetCompleteDataIdentifier(bool complete)
     return TypeObjectFactory::get_instance()->get_type_identifier("CompleteData", complete);
 }
 
-const TypeObject* GetCompleteDataObject(bool complete)
+const TypeObject* GetCompleteDataObject(
+        bool complete)
 {
     const TypeObject* c_type_object = TypeObjectFactory::get_instance()->get_type_object("CompleteData", complete);
     if (c_type_object != nullptr)
@@ -1023,7 +1027,7 @@ const TypeObject* GetMinimalCompleteDataObject()
         return c_type_object;
     }
 
-    TypeObject *type_object = new TypeObject();
+    TypeObject* type_object = new TypeObject();
     type_object->_d(EK_MINIMAL);
     type_object->minimal()._d(TK_STRUCTURE);
 
@@ -1047,7 +1051,7 @@ const TypeObject* GetMinimalCompleteDataObject()
 
 
     MD5 index_hash("index");
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         mst_index.detail().name_hash()[i] = index_hash.digest[i];
     }
@@ -1065,7 +1069,7 @@ const TypeObject* GetMinimalCompleteDataObject()
     mst_main_point.common().member_type_id(*GetPointIdentifier(false));
 
     MD5 main_point_hash("main_point");
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         mst_main_point.detail().name_hash()[i] = main_point_hash.digest[i];
     }
@@ -1080,10 +1084,11 @@ const TypeObject* GetMinimalCompleteDataObject()
     mst_internal_data.common().member_flags().IS_MUST_UNDERSTAND(false);
     mst_internal_data.common().member_flags().IS_KEY(false);
     mst_internal_data.common().member_flags().IS_DEFAULT(false); // Doesn't apply
-    mst_internal_data.common().member_type_id(*TypeObjectFactory::get_instance()->get_sequence_identifier("Point", 100, false));
+    mst_internal_data.common().member_type_id(*TypeObjectFactory::get_instance()->get_sequence_identifier("Point", 100,
+            false));
 
     MD5 internal_data_hash("internal_data");
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         mst_internal_data.detail().name_hash()[i] = internal_data_hash.digest[i];
     }
@@ -1098,10 +1103,11 @@ const TypeObject* GetMinimalCompleteDataObject()
     mst_messages.common().member_flags().IS_MUST_UNDERSTAND(false);
     mst_messages.common().member_flags().IS_KEY(false);
     mst_messages.common().member_flags().IS_DEFAULT(false); // Doesn't apply
-    mst_messages.common().member_type_id(*TypeObjectFactory::get_instance()->get_array_identifier("Message", {2}, false));
+    mst_messages.common().member_type_id(*TypeObjectFactory::get_instance()->get_array_identifier("Message", {2},
+            false));
 
     MD5 messages_hash("messages");
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         mst_messages.detail().name_hash()[i] = messages_hash.digest[i];
     }
@@ -1118,7 +1124,7 @@ const TypeObject* GetMinimalCompleteDataObject()
     eprosima::fastcdr::CdrSizeCalculator calculator(eprosima::fastcdr::CdrVersion::XCDRv1);
     size_t current_alignment {0};
     SerializedPayload_t payload(static_cast<uint32_t>(
-        calculator.calculate_serialized_size(type_object->minimal().struct_type(), current_alignment) + 4));
+                calculator.calculate_serialized_size(type_object->minimal().struct_type(), current_alignment) + 4));
     eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
     // Fixed endian (Page 221, EquivalenceHash definition of Extensible and Dynamic Topic Types for DDS document)
     eprosima::fastcdr::Cdr ser(
@@ -1135,7 +1141,7 @@ const TypeObject* GetMinimalCompleteDataObject()
     MD5 objectHash;
     objectHash.update((char*)payload.data, payload.length);
     objectHash.finalize();
-    for(int i = 0; i < 14; ++i)
+    for (int i = 0; i < 14; ++i)
     {
         identifier.equivalence_hash()[i] = objectHash.digest[i];
     }
@@ -1153,7 +1159,7 @@ const TypeObject* GetCompleteCompleteDataObject()
         return c_type_object;
     }
 
-    TypeObject *type_object = new TypeObject();
+    TypeObject* type_object = new TypeObject();
     type_object->_d(EK_COMPLETE);
     type_object->complete()._d(TK_STRUCTURE);
 
@@ -1204,7 +1210,8 @@ const TypeObject* GetCompleteCompleteDataObject()
     cst_internal_data.common().member_flags().IS_MUST_UNDERSTAND(false);
     cst_internal_data.common().member_flags().IS_KEY(false);
     cst_internal_data.common().member_flags().IS_DEFAULT(false); // Doesn't apply
-    cst_internal_data.common().member_type_id(*TypeObjectFactory::get_instance()->get_sequence_identifier("Point", 100, true));
+    cst_internal_data.common().member_type_id(*TypeObjectFactory::get_instance()->get_sequence_identifier("Point", 100,
+            true));
 
     cst_internal_data.detail().name("internal_data");
 
@@ -1219,7 +1226,8 @@ const TypeObject* GetCompleteCompleteDataObject()
     cst_messages.common().member_flags().IS_MUST_UNDERSTAND(false);
     cst_messages.common().member_flags().IS_KEY(false);
     cst_messages.common().member_flags().IS_DEFAULT(false); // Doesn't apply
-    cst_messages.common().member_type_id(*TypeObjectFactory::get_instance()->get_array_identifier("Message", {2}, true));
+    cst_messages.common().member_type_id(*TypeObjectFactory::get_instance()->get_array_identifier("Message", {2},
+            true));
 
     cst_messages.detail().name("messages");
 
@@ -1235,7 +1243,7 @@ const TypeObject* GetCompleteCompleteDataObject()
     eprosima::fastcdr::CdrSizeCalculator calculator(eprosima::fastcdr::CdrVersion::XCDRv1);
     size_t current_alignment {0};
     SerializedPayload_t payload(static_cast<uint32_t>(
-        calculator.calculate_serialized_size(type_object->complete().struct_type(), current_alignment) + 4));
+                calculator.calculate_serialized_size(type_object->complete().struct_type(), current_alignment) + 4));
     eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
     // Fixed endian (Page 221, EquivalenceHash definition of Extensible and Dynamic Topic Types for DDS document)
     eprosima::fastcdr::Cdr ser(
@@ -1252,7 +1260,7 @@ const TypeObject* GetCompleteCompleteDataObject()
     MD5 objectHash;
     objectHash.update((char*)payload.data, payload.length);
     objectHash.finalize();
-    for(int i = 0; i < 14; ++i)
+    for (int i = 0; i < 14; ++i)
     {
         identifier.equivalence_hash()[i] = objectHash.digest[i];
     }

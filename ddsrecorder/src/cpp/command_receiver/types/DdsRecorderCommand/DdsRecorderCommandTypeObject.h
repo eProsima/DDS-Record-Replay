@@ -31,10 +31,10 @@
 #define eProsima_user_DllExport __declspec( dllexport )
 #else
 #define eProsima_user_DllExport
-#endif
+#endif // if defined(EPROSIMA_USER_DLL_EXPORT)
 #else
 #define eProsima_user_DllExport
-#endif
+#endif // if defined(_WIN32)
 
 #if defined(_WIN32)
 #if defined(EPROSIMA_USER_DLL_EXPORT)
@@ -45,7 +45,7 @@
 #endif // DdsRecorderCommand_SOURCE
 #else
 #define DdsRecorderCommand_DllAPI
-#endif
+#endif // if defined(EPROSIMA_USER_DLL_EXPORT)
 #else
 #define DdsRecorderCommand_DllAPI
 #endif // _WIN32
@@ -56,8 +56,10 @@ eProsima_user_DllExport void registerDdsRecorderCommandTypes();
 
 
 
-eProsima_user_DllExport const TypeIdentifier* GetDdsRecorderCommandIdentifier(bool complete = false);
-eProsima_user_DllExport const TypeObject* GetDdsRecorderCommandObject(bool complete = false);
+eProsima_user_DllExport const TypeIdentifier* GetDdsRecorderCommandIdentifier(
+        bool complete = false);
+eProsima_user_DllExport const TypeObject* GetDdsRecorderCommandObject(
+        bool complete = false);
 eProsima_user_DllExport const TypeObject* GetMinimalDdsRecorderCommandObject();
 eProsima_user_DllExport const TypeObject* GetCompleteDdsRecorderCommandObject();
 

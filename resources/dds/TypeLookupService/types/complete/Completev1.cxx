@@ -40,16 +40,20 @@ using namespace eprosima::fastcdr::exception;
 
 #include <utility>
 
-namespace helper { namespace internal {
+namespace helper {
+namespace internal {
 
-enum class Size {
+enum class Size
+{
     UInt8,
     UInt16,
     UInt32,
     UInt64,
 };
 
-constexpr Size get_size(int s) {
+constexpr Size get_size(
+        int s)
+{
     return (s <= 8 ) ? Size::UInt8:
            (s <= 16) ? Size::UInt16:
            (s <= 32) ? Size::UInt32: Size::UInt64;
@@ -59,31 +63,36 @@ template<Size s>
 struct FindTypeH;
 
 template<>
-struct FindTypeH<Size::UInt8> {
+struct FindTypeH<Size::UInt8>
+{
     using type = std::uint8_t;
 };
 
 template<>
-struct FindTypeH<Size::UInt16> {
+struct FindTypeH<Size::UInt16>
+{
     using type = std::uint16_t;
 };
 
 template<>
-struct FindTypeH<Size::UInt32> {
+struct FindTypeH<Size::UInt32>
+{
     using type = std::uint32_t;
 };
 
 template<>
-struct FindTypeH<Size::UInt64> {
+struct FindTypeH<Size::UInt64>
+{
     using type = std::uint64_t;
 };
-}
+} // namespace internal
 
 template<int S>
-struct FindType {
+struct FindType
+{
     using type = typename internal::FindTypeH<internal::get_size(S)>::type;
 };
-}
+} // namespace helper
 
 #define MessageDescriptor_max_cdr_typesize 280ULL;
 #define CompleteData_max_cdr_typesize 2724ULL;
@@ -187,7 +196,6 @@ size_t Timestamp::getCdrSerializedSize(
     return current_alignment - initial_alignment;
 }
 
-
 void Timestamp::serialize(
         eprosima::fastcdr::Cdr& scdr) const
 {
@@ -208,7 +216,6 @@ void Timestamp::deserialize(
 
 
 }
-
 
 bool Timestamp::isKeyDefined()
 {
@@ -249,7 +256,6 @@ int32_t& Timestamp::seconds()
     return m_seconds;
 }
 
-
 /*!
  * @brief This function sets a value in member milliseconds
  * @param _milliseconds New value for member milliseconds
@@ -277,10 +283,6 @@ int32_t& Timestamp::milliseconds()
 {
     return m_milliseconds;
 }
-
-
-
-
 
 Point::Point()
 {
@@ -393,7 +395,6 @@ size_t Point::getCdrSerializedSize(
     return current_alignment - initial_alignment;
 }
 
-
 void Point::serialize(
         eprosima::fastcdr::Cdr& scdr) const
 {
@@ -420,7 +421,6 @@ void Point::deserialize(
 
 
 }
-
 
 bool Point::isKeyDefined()
 {
@@ -461,7 +461,6 @@ int32_t& Point::x()
     return m_x;
 }
 
-
 /*!
  * @brief This function sets a value in member y
  * @param _y New value for member y
@@ -490,7 +489,6 @@ int32_t& Point::y()
     return m_y;
 }
 
-
 /*!
  * @brief This function sets a value in member z
  * @param _z New value for member z
@@ -518,10 +516,6 @@ int32_t& Point::z()
 {
     return m_z;
 }
-
-
-
-
 
 MessageDescriptor::MessageDescriptor()
 {
@@ -634,7 +628,6 @@ size_t MessageDescriptor::getCdrSerializedSize(
     return current_alignment - initial_alignment;
 }
 
-
 void MessageDescriptor::serialize(
         eprosima::fastcdr::Cdr& scdr) const
 {
@@ -661,7 +654,6 @@ void MessageDescriptor::deserialize(
 
 
 }
-
 
 bool MessageDescriptor::isKeyDefined()
 {
@@ -702,7 +694,6 @@ uint32_t& MessageDescriptor::id()
     return m_id;
 }
 
-
 /*!
  * @brief This function copies the value in member topic
  * @param _topic New value to be copied in member topic
@@ -741,7 +732,6 @@ std::string& MessageDescriptor::topic()
     return m_topic;
 }
 
-
 /*!
  * @brief This function copies the value in member time
  * @param _time New value to be copied in member time
@@ -779,10 +769,6 @@ Timestamp& MessageDescriptor::time()
 {
     return m_time;
 }
-
-
-
-
 
 Message::Message()
 {
@@ -877,7 +863,6 @@ size_t Message::getCdrSerializedSize(
     return current_alignment - initial_alignment;
 }
 
-
 void Message::serialize(
         eprosima::fastcdr::Cdr& scdr) const
 {
@@ -898,7 +883,6 @@ void Message::deserialize(
 
 
 }
-
 
 bool Message::isKeyDefined()
 {
@@ -949,7 +933,6 @@ MessageDescriptor& Message::descriptor()
     return m_descriptor;
 }
 
-
 /*!
  * @brief This function copies the value in member message
  * @param _message New value to be copied in member message
@@ -987,10 +970,6 @@ std::string& Message::message()
 {
     return m_message;
 }
-
-
-
-
 
 CompleteData::CompleteData()
 {
@@ -1115,7 +1094,7 @@ size_t CompleteData::getCdrSerializedSize(
     current_alignment += 4 + eprosima::fastcdr::Cdr::alignment(current_alignment, 4);
 
 
-    for(size_t a = 0; a < data.internal_data().size(); ++a)
+    for (size_t a = 0; a < data.internal_data().size(); ++a)
     {
         current_alignment += Point::getCdrSerializedSize(data.internal_data().at(a), current_alignment);
     }
@@ -1123,9 +1102,9 @@ size_t CompleteData::getCdrSerializedSize(
 
 
 
-    for(size_t a = 0; a < data.messages().size(); ++a)
+    for (size_t a = 0; a < data.messages().size(); ++a)
     {
-            current_alignment += Message::getCdrSerializedSize(data.messages().at(a), current_alignment);
+        current_alignment += Message::getCdrSerializedSize(data.messages().at(a), current_alignment);
 
     }
 
@@ -1133,7 +1112,6 @@ size_t CompleteData::getCdrSerializedSize(
 
     return current_alignment - initial_alignment;
 }
-
 
 void CompleteData::serialize(
         eprosima::fastcdr::Cdr& scdr) const
@@ -1169,7 +1147,6 @@ void CompleteData::deserialize(
 
 
 }
-
 
 bool CompleteData::isKeyDefined()
 {
@@ -1210,7 +1187,6 @@ uint32_t& CompleteData::index()
     return m_index;
 }
 
-
 /*!
  * @brief This function copies the value in member main_point
  * @param _main_point New value to be copied in member main_point
@@ -1248,7 +1224,6 @@ Point& CompleteData::main_point()
 {
     return m_main_point;
 }
-
 
 /*!
  * @brief This function copies the value in member internal_data
@@ -1288,7 +1263,6 @@ std::vector<Point>& CompleteData::internal_data()
     return m_internal_data;
 }
 
-
 /*!
  * @brief This function copies the value in member messages
  * @param _messages New value to be copied in member messages
@@ -1326,8 +1300,5 @@ std::array<Message, 2>& CompleteData::messages()
 {
     return m_messages;
 }
-
-
-
 
 #endif // FASTCDR_VERSION_MAJOR == 1

@@ -31,10 +31,10 @@
 #define eProsima_user_DllExport __declspec( dllexport )
 #else
 #define eProsima_user_DllExport
-#endif
+#endif // if defined(EPROSIMA_USER_DLL_EXPORT)
 #else
 #define eProsima_user_DllExport
-#endif
+#endif // if defined(_WIN32)
 
 #if defined(_WIN32)
 #if defined(EPROSIMA_USER_DLL_EXPORT)
@@ -45,7 +45,7 @@
 #endif // Complete_SOURCE
 #else
 #define Complete_DllAPI
-#endif
+#endif // if defined(EPROSIMA_USER_DLL_EXPORT)
 #else
 #define Complete_DllAPI
 #endif // _WIN32
@@ -56,36 +56,46 @@ eProsima_user_DllExport void registerCompleteTypes();
 
 
 
-eProsima_user_DllExport const TypeIdentifier* GetTimestampIdentifier(bool complete = false);
-eProsima_user_DllExport const TypeObject* GetTimestampObject(bool complete = false);
+eProsima_user_DllExport const TypeIdentifier* GetTimestampIdentifier(
+        bool complete = false);
+eProsima_user_DllExport const TypeObject* GetTimestampObject(
+        bool complete = false);
 eProsima_user_DllExport const TypeObject* GetMinimalTimestampObject();
 eProsima_user_DllExport const TypeObject* GetCompleteTimestampObject();
 
 
 
-eProsima_user_DllExport const TypeIdentifier* GetPointIdentifier(bool complete = false);
-eProsima_user_DllExport const TypeObject* GetPointObject(bool complete = false);
+eProsima_user_DllExport const TypeIdentifier* GetPointIdentifier(
+        bool complete = false);
+eProsima_user_DllExport const TypeObject* GetPointObject(
+        bool complete = false);
 eProsima_user_DllExport const TypeObject* GetMinimalPointObject();
 eProsima_user_DllExport const TypeObject* GetCompletePointObject();
 
 
 
-eProsima_user_DllExport const TypeIdentifier* GetMessageDescriptorIdentifier(bool complete = false);
-eProsima_user_DllExport const TypeObject* GetMessageDescriptorObject(bool complete = false);
+eProsima_user_DllExport const TypeIdentifier* GetMessageDescriptorIdentifier(
+        bool complete = false);
+eProsima_user_DllExport const TypeObject* GetMessageDescriptorObject(
+        bool complete = false);
 eProsima_user_DllExport const TypeObject* GetMinimalMessageDescriptorObject();
 eProsima_user_DllExport const TypeObject* GetCompleteMessageDescriptorObject();
 
 
 
-eProsima_user_DllExport const TypeIdentifier* GetMessageIdentifier(bool complete = false);
-eProsima_user_DllExport const TypeObject* GetMessageObject(bool complete = false);
+eProsima_user_DllExport const TypeIdentifier* GetMessageIdentifier(
+        bool complete = false);
+eProsima_user_DllExport const TypeObject* GetMessageObject(
+        bool complete = false);
 eProsima_user_DllExport const TypeObject* GetMinimalMessageObject();
 eProsima_user_DllExport const TypeObject* GetCompleteMessageObject();
 
 
 
-eProsima_user_DllExport const TypeIdentifier* GetCompleteDataIdentifier(bool complete = false);
-eProsima_user_DllExport const TypeObject* GetCompleteDataObject(bool complete = false);
+eProsima_user_DllExport const TypeIdentifier* GetCompleteDataIdentifier(
+        bool complete = false);
+eProsima_user_DllExport const TypeObject* GetCompleteDataObject(
+        bool complete = false);
 eProsima_user_DllExport const TypeObject* GetMinimalCompleteDataObject();
 eProsima_user_DllExport const TypeObject* GetCompleteCompleteDataObject();
 

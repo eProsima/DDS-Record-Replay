@@ -132,7 +132,6 @@ std::string& DdsRecorderCommand::command()
     return m_command;
 }
 
-
 /*!
  * @brief This function copies the value in member args
  * @param _args New value to be copied in member args
@@ -170,7 +169,6 @@ std::string& DdsRecorderCommand::args()
 {
     return m_args;
 }
-
 
 // Include auxiliary functions like for serializing/deserializing.
 #include "DdsRecorderCommandCdrAux.ipp"
