@@ -19,10 +19,8 @@
 #include <cpp_utils/utils.hpp>
 #include <cpp_utils/ros2_mangling.hpp>
 
-#include <fastcdr/Cdr.h>
-#include <fastcdr/FastBuffer.h>
-#include <fastcdr/FastCdr.h>
 #include <fastdds/rtps/common/CDRMessage_t.h>
+#include <fastdds/rtps/common/CdrSerialization.hpp>
 #include <fastdds/rtps/common/SerializedPayload.h>
 #include <fastrtps/types/TypeObjectFactory.h>
 
@@ -490,7 +488,7 @@ fastrtps::types::TypeIdentifier DdsReplayer::deserialize_type_identifier_(
     fastrtps::rtps::CDRMessage::readData(cdr_message, payload.data, parameter_length);
 
     // Create CDR deserializer
-    fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::Cdr::DDS_CDR);
+    fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::CdrVersion::XCDRv1);
     payload.encapsulation = deser.endianness() == fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
 
     // Deserialize
@@ -528,7 +526,7 @@ fastrtps::types::TypeObject DdsReplayer::deserialize_type_object_(
     fastrtps::rtps::CDRMessage::readData(cdr_message, payload.data, parameter_length);
 
     // Create CDR deserializer
-    fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::Cdr::DDS_CDR);
+    fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::CdrVersion::XCDRv1);
     payload.encapsulation = deser.endianness() == fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
 
     // Deserialize
