@@ -60,45 +60,26 @@ project(
 # - Configure log depending on LOG_INFO flag and CMake type
 configure_project_cpp()
 
-# Check FastDDS version
-if(FASTRTPS_VERSION LESS 2.13)
-    message(STATUS "FastDDS version is less than 2.13. Compiling files not containing /v2/ regex.")
-
-    # Add source files excluding those containing /v2/ regex
-    file(GLOB_RECURSE SOURCE_FILES "${PROJECT_SOURCE_DIR}/src/cpp/")
-    foreach(SOURCE_FILE ${SOURCE_FILES})
-        if(NOT SOURCE_FILE MATCHES "/v2/")
-            compile_tool(${SOURCE_FILE})
-        endif()
-    endforeach()
-
-    # Add tests excluding those containing /v2/ regex
-    file(GLOB_RECURSE TEST_FILES "${PROJECT_SOURCE_DIR}/test/")
-    foreach(TEST_FILE ${TEST_FILES})
-        if(NOT TEST_FILE MATCHES "/v2/")
-            compile_test_tool(${TEST_FILE})
-        endif()
-    endforeach()
-
+# Determine Fast DDS version
+if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
+    set(FASTDDS_SUBDIRECTORY "/v2/")
 else()
-    # FastDDS version is 2.13 or greater, compile all source files
-    # Add source files excluding those containing /v1/ regex
-    file(GLOB_RECURSE SOURCE_FILES "${PROJECT_SOURCE_DIR}/src/cpp/")
-    foreach(SOURCE_FILE ${SOURCE_FILES})
-        if(NOT SOURCE_FILE MATCHES "/v1/")
-            compile_tool(${SOURCE_FILE})
-        endif()
-    endforeach()
-
-    # Add tests excluding those containing /v1/ regex
-    file(GLOB_RECURSE TEST_FILES "${PROJECT_SOURCE_DIR}/test/")
-    foreach(TEST_FILE ${TEST_FILES})
-        if(NOT TEST_FILE MATCHES "/v1/")
-            compile_test_tool(${TEST_FILE})
-        endif()
-    endforeach()
-
+    set(FASTDDS_SUBDIRECTORY "/v1/")
 endif()
+
+file(GLOB_RECURSE SOURCES_FILES "${PROJECT_SOURCE_DIR}/src/cpp/")
+foreach(SOURCE_FILE ${SOURCES_FILES})
+    if(NOT SOURCE_FILE MATCHES ${FASTDDS_SUBDIRECTORY})
+        compile_tool(${SOURCE_FILE})
+    endif()
+endforeach()
+
+file(GLOB_RECURSE TEST_FILES "${PROJECT_SOURCE_DIR}/test/")
+foreach(TEST_FILE ${TEST_FILES})
+    if(NOT TEST_FILE MATCHES ${FASTDDS_SUBDIRECTORY})
+        compile_test_tool(${TEST_FILE})
+    endif()
+endforeach()
 
 ###############################################################################
 # Packaging

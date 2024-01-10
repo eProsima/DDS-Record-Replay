@@ -35,7 +35,7 @@
 #include <fastdds/dds/subscriber/DataReaderListener.hpp>
 #include <fastdds/dds/subscriber/Subscriber.hpp>
 
-#if FASTRTPS_VERSION_MINOR <= 12
+#if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
     #include "types/v1/DdsRecorderCommand/DdsRecorderCommandPubSubTypes.h"
     #include "types/v1/DdsRecorderCommand/DdsRecorderCommandTypeObject.h"
     #include "types/v1/DdsRecorderStatus/DdsRecorderStatusPubSubTypes.h"
@@ -45,7 +45,7 @@
     #include "types/v2/DdsRecorderCommand/DdsRecorderCommandTypeObject.h"
     #include "types/v2/DdsRecorderStatus/DdsRecorderStatusPubSubTypes.h"
     #include "types/v2/DdsRecorderStatus/DdsRecorderStatusTypeObject.h"
-#endif // if FASTRTPS_VERSION_MINOR <= 12
+#endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
 
 namespace eprosima {
 namespace ddsrecorder {

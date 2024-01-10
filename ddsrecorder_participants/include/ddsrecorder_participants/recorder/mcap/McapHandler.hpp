@@ -39,11 +39,11 @@
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
 
-#if FASTRTPS_VERSION_MINOR < 13
+#if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
     #include <ddsrecorder_participants/common/types/v1/DynamicTypesCollection.hpp>
 #else
     #include <ddsrecorder_participants/common/types/v2/DynamicTypesCollection.hpp>
-#endif // if FASTRTPS_VERSION_MINOR < 13
+#endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
 
 namespace eprosima {
 namespace ddsrecorder {

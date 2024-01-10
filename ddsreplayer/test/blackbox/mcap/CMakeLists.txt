@@ -19,21 +19,19 @@
 set(TEST_NAME McapFileReadTest)
 
 # Determine Fast DDS version
-if ("${FASTRTPS_VERSION}" LESS 2.13)
+if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
     set(FASTDDS_SUBDIRECTORY "v1")
 else()
     set(FASTDDS_SUBDIRECTORY "v2")
 endif()
 
 set(TEST_SOURCES
-        McapFileReadTest.cpp
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/${FASTDDS_SUBDIRECTORY}/hello_world/HelloWorld.cxx
-        # if ("${FASTRTPS_VERSION}" GREATER_EQUAL 2.13)
-        #     ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/${FASTDDS_SUBDIRECTORY}/hello_world/HelloWorldv1.cxx
-        # endif()
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/${FASTDDS_SUBDIRECTORY}/hello_world/HelloWorldPubSubTypes.cxx
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/HelloWorldSubscriber.cpp
-    )
+    McapFileReadTest.cpp
+    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/${FASTDDS_SUBDIRECTORY}/hello_world/HelloWorld.cxx
+    $<$<STREQUAL:${FASTDDS_SUBDIRECTORY},v2>:${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/v2/hello_world/HelloWorldv1.cxx>
+    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/${FASTDDS_SUBDIRECTORY}/hello_world/HelloWorldPubSubTypes.cxx
+    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/HelloWorldSubscriber.cpp
+)
 
 set(TEST_LIST
         trivial

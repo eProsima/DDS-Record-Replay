@@ -54,7 +54,7 @@ if (BUILD_DDSRECORDER_CONTROLLER)
     ###############################################################################
 
     # Determine Fast DDS version
-    if ("${FASTRTPS_VERSION}" LESS 2.13)
+    if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
         set(FASTDDS_SUBDIRECTORY "v1")
     else()
         set(FASTDDS_SUBDIRECTORY "v2")

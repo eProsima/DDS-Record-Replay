@@ -33,13 +33,13 @@
 
 #include <ddspipe_core/types/dynamic_types/types.hpp>
 
-#if FASTRTPS_VERSION_MINOR < 13
+#if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
     #include <ddsrecorder_participants/common/types/v1/DynamicTypesCollection.hpp>
     #include <ddsrecorder_participants/common/types/v1/DynamicTypesCollectionPubSubTypes.hpp>
 #else
     #include <ddsrecorder_participants/common/types/v2/DynamicTypesCollection.hpp>
     #include <ddsrecorder_participants/common/types/v2/DynamicTypesCollectionPubSubTypes.hpp>
-#endif // if FASTRTPS_VERSION_MINOR < 13
+#endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
 
 #include <ddsrecorder_participants/constants.hpp>
 
@@ -501,7 +501,11 @@ fastrtps::types::TypeIdentifier DdsReplayer::deserialize_type_identifier_(
     fastrtps::rtps::CDRMessage::readData(cdr_message, payload.data, parameter_length);
 
     // Create CDR deserializer
-    fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::CdrVersion::XCDRv1);
+    #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
+        fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::Cdr::DDS_CDR);
+    #else
+        fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::CdrVersion::XCDRv1);
+    #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
     payload.encapsulation = deser.endianness() == fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
 
     // Deserialize
@@ -539,7 +543,11 @@ fastrtps::types::TypeObject DdsReplayer::deserialize_type_object_(
     fastrtps::rtps::CDRMessage::readData(cdr_message, payload.data, parameter_length);
 
     // Create CDR deserializer
-    fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::CdrVersion::XCDRv1);
+    #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
+        fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::Cdr::DDS_CDR);
+    #else
+        fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::CdrVersion::XCDRv1);
+    #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
     payload.encapsulation = deser.endianness() == fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
 
     // Deserialize

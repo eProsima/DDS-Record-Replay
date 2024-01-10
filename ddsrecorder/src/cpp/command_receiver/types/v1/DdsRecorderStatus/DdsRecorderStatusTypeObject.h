@@ -31,10 +31,10 @@
 #define eProsima_user_DllExport __declspec( dllexport )
 #else
 #define eProsima_user_DllExport
-#endif
+#endif // if defined(EPROSIMA_USER_DLL_EXPORT)
 #else
 #define eProsima_user_DllExport
-#endif
+#endif // if defined(_WIN32)
 
 #if defined(_WIN32)
 #if defined(EPROSIMA_USER_DLL_EXPORT)
@@ -45,7 +45,7 @@
 #endif // DdsRecorderStatus_SOURCE
 #else
 #define DdsRecorderStatus_DllAPI
-#endif
+#endif // if defined(EPROSIMA_USER_DLL_EXPORT)
 #else
 #define DdsRecorderStatus_DllAPI
 #endif // _WIN32
@@ -54,8 +54,10 @@ using namespace eprosima::fastrtps::types;
 
 eProsima_user_DllExport void registerDdsRecorderStatusTypes();
 
-eProsima_user_DllExport const TypeIdentifier* GetDdsRecorderStatusIdentifier(bool complete = false);
-eProsima_user_DllExport const TypeObject* GetDdsRecorderStatusObject(bool complete = false);
+eProsima_user_DllExport const TypeIdentifier* GetDdsRecorderStatusIdentifier(
+        bool complete = false);
+eProsima_user_DllExport const TypeObject* GetDdsRecorderStatusObject(
+        bool complete = false);
 eProsima_user_DllExport const TypeObject* GetMinimalDdsRecorderStatusObject();
 eProsima_user_DllExport const TypeObject* GetCompleteDdsRecorderStatusObject();
 

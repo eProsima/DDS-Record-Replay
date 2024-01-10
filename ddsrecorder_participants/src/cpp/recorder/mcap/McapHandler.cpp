@@ -37,7 +37,7 @@
 
 #include <ddspipe_core/types/dynamic_types/schema.hpp>
 
-#if FASTRTPS_VERSION_MINOR < 13
+#if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
     #include <fastcdr/Cdr.h>
     #include <fastcdr/FastBuffer.h>
     #include <fastcdr/FastCdr.h>
@@ -47,7 +47,7 @@
     #include <fastdds/rtps/common/CdrSerialization.hpp>
     #include <ddsrecorder_participants/common/types/v2/DynamicTypesCollection.hpp>
     #include <ddsrecorder_participants/common/types/v2/DynamicTypesCollectionPubSubTypes.hpp>
-#endif // if FASTRTPS_VERSION_MINOR < 13
+#endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
 
 #include <ddsrecorder_participants/constants.hpp>
 
@@ -1127,8 +1127,13 @@ std::string McapHandler::serialize_type_identifier_(
     eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
 
     // Create CDR serializer
-    eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN,
+    #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
+        eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN, eprosima::fastcdr::Cdr::DDS_CDR);
+    #else
+        eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN,
             eprosima::fastcdr::CdrVersion::XCDRv1);
+    #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
+
     payload.encapsulation = ser.endianness() == eprosima::fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
 
     // Serialize
@@ -1180,8 +1185,12 @@ std::string McapHandler::serialize_type_object_(
     eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
 
     // Create CDR serializer
-    eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN,
+    #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
+        eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN, eprosima::fastcdr::Cdr::DDS_CDR);
+    #else
+        eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN,
             eprosima::fastcdr::CdrVersion::XCDRv1);
+    #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
     payload.encapsulation = ser.endianness() == eprosima::fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
 
     // Serialize
