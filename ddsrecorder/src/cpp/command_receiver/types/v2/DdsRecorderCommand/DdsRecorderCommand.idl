@@ -1,0 +1,5 @@
+struct DdsRecorderCommand
+{
+    string command;
+    string args;
+};

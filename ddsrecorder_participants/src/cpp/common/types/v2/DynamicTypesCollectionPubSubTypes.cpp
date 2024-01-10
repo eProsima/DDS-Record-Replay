@@ -22,7 +22,7 @@
 
 #include <fastdds/rtps/common/CdrSerialization.hpp>
 
-#include <ddsrecorder_participants/common/types/DynamicTypesCollectionPubSubTypes.hpp>
+#include <ddsrecorder_participants/common/types/v2/DynamicTypesCollectionPubSubTypes.hpp>
 #include "DynamicTypesCollectionCdrAux.hpp"
 
 using SerializedPayload_t = eprosima::fastrtps::rtps::SerializedPayload_t;
@@ -419,4 +419,3 @@ bool DynamicTypesCollectionPubSubType::getKey(
 
 
 } //End of namespace eprosima
-

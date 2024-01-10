@@ -26,7 +26,7 @@ char dummy;
 }  // namespace
 #endif  // _WIN32
 
-#include <ddsrecorder_participants/common/types/DynamicTypesCollection.hpp>
+#include <ddsrecorder_participants/common/types/v2/DynamicTypesCollection.hpp>
 
 #if FASTCDR_VERSION_MAJOR == 1
 

@@ -52,8 +52,17 @@ if (BUILD_DDSRECORDER_CONTROLLER)
     ###############################################################################
     # Build and install types
     ###############################################################################
-    add_subdirectory(ddstypes/DdsRecorderCommand)
-    add_subdirectory(ddstypes/DdsRecorderStatus)
+
+    # Determine Fast DDS version
+    if ("${FASTRTPS_VERSION}" LESS 2.13)
+        set(FASTDDS_SUBDIRECTORY "v1")
+    else()
+        set(FASTDDS_SUBDIRECTORY "v2")
+    endif()
+
+    # Add subdirectory based on Fast DDS version
+    add_subdirectory(ddstypes/${FASTDDS_SUBDIRECTORY}/DdsRecorderCommand)
+    add_subdirectory(ddstypes/${FASTDDS_SUBDIRECTORY}/DdsRecorderStatus)
 
     ###############################################################################
     # Install Tool

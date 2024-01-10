@@ -31,15 +31,24 @@
 
 #include <fastdds/dds/topic/TypeSupport.hpp>
 #include <fastdds/rtps/common/CDRMessage_t.h>
-#include <fastdds/rtps/common/CdrSerialization.hpp>
 #include <fastdds/rtps/common/SerializedPayload.h>
 #include <fastrtps/types/DynamicType.h>
 #include <fastrtps/types/TypeObjectFactory.h>
 
 #include <ddspipe_core/types/dynamic_types/schema.hpp>
 
-#include <ddsrecorder_participants/common/types/DynamicTypesCollection.hpp>
-#include <ddsrecorder_participants/common/types/DynamicTypesCollectionPubSubTypes.hpp>
+#if FASTRTPS_VERSION_MINOR < 13
+    #include <fastcdr/Cdr.h>
+    #include <fastcdr/FastBuffer.h>
+    #include <fastcdr/FastCdr.h>
+    #include <ddsrecorder_participants/common/types/v1/DynamicTypesCollection.hpp>
+    #include <ddsrecorder_participants/common/types/v1/DynamicTypesCollectionPubSubTypes.hpp>
+#else
+    #include <fastdds/rtps/common/CdrSerialization.hpp>
+    #include <ddsrecorder_participants/common/types/v2/DynamicTypesCollection.hpp>
+    #include <ddsrecorder_participants/common/types/v2/DynamicTypesCollectionPubSubTypes.hpp>
+#endif // if FASTRTPS_VERSION_MINOR < 13
+
 #include <ddsrecorder_participants/constants.hpp>
 
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>

@@ -60,18 +60,45 @@ project(
 # - Configure log depending on LOG_INFO flag and CMake type
 configure_project_cpp()
 
-# Compile C++ library
-compile_tool(
-    "${PROJECT_SOURCE_DIR}/src/cpp" # Source directory
-)
+# Check FastDDS version
+if(FASTRTPS_VERSION LESS 2.13)
+    message(STATUS "FastDDS version is less than 2.13. Compiling files not containing /v2/ regex.")
 
-###############################################################################
-# Test
-###############################################################################
-# Compile tests if CMake options requires it
-compile_test_tool(
-    "${PROJECT_SOURCE_DIR}/test" # Test directory
-)
+    # Add source files excluding those containing /v2/ regex
+    file(GLOB_RECURSE SOURCE_FILES "${PROJECT_SOURCE_DIR}/src/cpp/")
+    foreach(SOURCE_FILE ${SOURCE_FILES})
+        if(NOT SOURCE_FILE MATCHES "/v2/")
+            compile_tool(${SOURCE_FILE})
+        endif()
+    endforeach()
+
+    # Add tests excluding those containing /v2/ regex
+    file(GLOB_RECURSE TEST_FILES "${PROJECT_SOURCE_DIR}/test/")
+    foreach(TEST_FILE ${TEST_FILES})
+        if(NOT TEST_FILE MATCHES "/v2/")
+            compile_test_tool(${TEST_FILE})
+        endif()
+    endforeach()
+
+else()
+    # FastDDS version is 2.13 or greater, compile all source files
+    # Add source files excluding those containing /v1/ regex
+    file(GLOB_RECURSE SOURCE_FILES "${PROJECT_SOURCE_DIR}/src/cpp/")
+    foreach(SOURCE_FILE ${SOURCE_FILES})
+        if(NOT SOURCE_FILE MATCHES "/v1/")
+            compile_tool(${SOURCE_FILE})
+        endif()
+    endforeach()
+
+    # Add tests excluding those containing /v1/ regex
+    file(GLOB_RECURSE TEST_FILES "${PROJECT_SOURCE_DIR}/test/")
+    foreach(TEST_FILE ${TEST_FILES})
+        if(NOT TEST_FILE MATCHES "/v1/")
+            compile_test_tool(${TEST_FILE})
+        endif()
+    endforeach()
+
+endif()
 
 ###############################################################################
 # Packaging

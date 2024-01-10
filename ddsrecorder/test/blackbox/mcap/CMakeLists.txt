@@ -18,13 +18,24 @@
 
 set(TEST_NAME McapFileCreationTest)
 
+# Determine Fast DDS version
+if ("${FASTRTPS_VERSION}" LESS 2.13)
+    set(FASTDDS_SUBDIRECTORY "v1")
+else()
+    set(FASTDDS_SUBDIRECTORY "v2")
+endif()
+
 set(TEST_SOURCES
         McapFileCreationTest.cpp
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world/HelloWorld.cxx
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world/HelloWorldv1.cxx
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world/HelloWorldPubSubTypes.cxx
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world/HelloWorldTypeObject.cxx
-    )
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/${FASTDDS_SUBDIRECTORY}/hello_world/HelloWorld.cxx
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/${FASTDDS_SUBDIRECTORY}/hello_world/HelloWorldv1.cxx
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/${FASTDDS_SUBDIRECTORY}/hello_world/HelloWorldPubSubTypes.cxx
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/${FASTDDS_SUBDIRECTORY}/hello_world/HelloWorldTypeObject.cxx
+
+        if ("${FASTRTPS_VERSION}" GREATER_EQUAL 2.13)
+            ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/${FASTDDS_SUBDIRECTORY}/hello_world/HelloWorldv1.cxx
+        endif()
+)
 
 set(TEST_LIST
         mcap_data_msgs
@@ -59,8 +70,8 @@ set(TEST_NEEDED_SOURCES
     )
 
 set(TEST_EXTRA_HEADERS
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/hello_world
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types)
+    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/${FASTDDS_SUBDIRECTORY}/hello_world
+    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/${FASTDDS_SUBDIRECTORY})
 
 add_blackbox_executable(
     "${TEST_NAME}"

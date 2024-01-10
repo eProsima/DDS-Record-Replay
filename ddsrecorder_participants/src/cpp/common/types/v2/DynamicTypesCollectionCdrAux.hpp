@@ -22,7 +22,7 @@
 #ifndef _FAST_DDS_GENERATED_EPROSIMA_DDSRECORDER_PARTICIPANTS_DYNAMICTYPESCOLLECTIONCDRAUX_HPP_
 #define _FAST_DDS_GENERATED_EPROSIMA_DDSRECORDER_PARTICIPANTS_DYNAMICTYPESCOLLECTIONCDRAUX_HPP_
 
-#include <ddsrecorder_participants/common/types/DynamicTypesCollection.hpp>
+#include <ddsrecorder_participants/common/types/v2/DynamicTypesCollection.hpp>
 
 constexpr uint32_t eprosima_ddsrecorder_participants_DynamicTypesCollection_max_cdr_typesize {78412UL};
 constexpr uint32_t eprosima_ddsrecorder_participants_DynamicTypesCollection_max_key_cdr_typesize {0UL};
@@ -59,4 +59,3 @@ eProsima_user_DllExport void serialize_key(
 } // namespace eprosima
 
 #endif // _FAST_DDS_GENERATED_EPROSIMA_DDSRECORDER_PARTICIPANTS_DYNAMICTYPESCOLLECTIONCDRAUX_HPP_
-

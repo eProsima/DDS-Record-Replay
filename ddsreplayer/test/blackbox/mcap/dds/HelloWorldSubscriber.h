@@ -24,7 +24,11 @@
 #include <fastdds/dds/domain/DomainParticipantListener.hpp>
 #include <fastdds/dds/subscriber/DataReaderListener.hpp>
 
-#include "types/hello_world/HelloWorldPubSubTypes.h"
+#if FASTRTPS_VERSION_MINOR < 13
+    #include "types/v1/hello_world/HelloWorldPubSubTypes.h"
+#else
+    #include "types/v2/hello_world/HelloWorldPubSubTypes.h"
+#endif // if FASTRTPS_VERSION_MINOR < 13
 
 struct DataToCheck
 {

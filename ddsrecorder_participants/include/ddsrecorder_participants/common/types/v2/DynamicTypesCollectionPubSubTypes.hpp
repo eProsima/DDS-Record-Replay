@@ -29,7 +29,7 @@
 #include <fastdds/rtps/common/SerializedPayload.h>
 #include <fastrtps/utils/md5.h>
 
-#include <ddsrecorder_participants/common/types/DynamicTypesCollection.hpp>
+#include <ddsrecorder_participants/common/types/v2/DynamicTypesCollection.hpp>
 
 
 #if !defined(GEN_API_VER) || (GEN_API_VER != 2)
@@ -227,4 +227,3 @@ public:
 } // namespace eprosima
 
 #endif // _FAST_DDS_GENERATED_EPROSIMA_DDSRECORDER_PARTICIPANTS_DYNAMICTYPESCOLLECTION_PUBSUBTYPES_H_
-
