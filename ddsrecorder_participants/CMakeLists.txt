@@ -62,16 +62,16 @@ configure_project_cpp()
 
 # Determine Fast DDS version
 if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
-    set(FASTDDS_SUBDIRECTORY "/v1/")
+    set(DDS_TYPES_VERSION "/v1/")
 else()
-    set(FASTDDS_SUBDIRECTORY "/v2/")
+    set(DDS_TYPES_VERSION "/v2/")
 endif()
 
 file(
     GLOB_RECURSE SOURCES_FILES
         "${PROJECT_SOURCE_DIR}/src/cpp/replayer/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/cpp/recorder/**/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/cpp/**/**${FASTDDS_SUBDIRECTORY}*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/cpp/**/**${DDS_TYPES_VERSION}*.cpp"
     )
 
 file(
@@ -79,7 +79,7 @@ file(
         ${PROJECT_SOURCE_DIR}/include/constants.hpp
         ${PROJECT_SOURCE_DIR}/include/replayer/*.hpp
         ${PROJECT_SOURCE_DIR}/include/recorder/**/*.hpp
-        ${PROJECT_SOURCE_DIR}/include/**/**${FASTDDS_SUBDIRECTORY}*.hpp
+        ${PROJECT_SOURCE_DIR}/include/**/**${DDS_TYPES_VERSION}*.hpp
     )
 
 # Compile C++ library

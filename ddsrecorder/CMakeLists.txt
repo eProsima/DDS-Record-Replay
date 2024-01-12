@@ -62,21 +62,28 @@ configure_project_cpp()
 
 # Determine Fast DDS version
 if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
-    set(FASTDDS_SUBDIRECTORY "/v2/")
+    set(DDS_TYPES_VERSION "/v1/")
 else()
-    set(FASTDDS_SUBDIRECTORY "/v1/")
+    set(DDS_TYPES_VERSION "/v2/")
 endif()
 
-file(GLOB_RECURSE SOURCES_FILES "${PROJECT_SOURCE_DIR}/src/cpp/")
-foreach(SOURCE_FILE ${SOURCES_FILES})
-    if(NOT SOURCE_FILE MATCHES ${FASTDDS_SUBDIRECTORY})
-        compile_tool(${SOURCE_FILE})
-    endif()
-endforeach()
+file(
+    GLOB_RECURSE SOURCES_FILES
+        "${PROJECT_SOURCE_DIR}/src/cpp/tool/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/cpp/user_interface/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/cpp/main.cpp"
+        "${PROJECT_SOURCE_DIR}/src/cpp/command_receiver/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/cpp/**/**${DDS_TYPES_VERSION}**/*.cxx"
+    )
+
+compile_tool(
+    "${PROJECT_SOURCE_DIR}/src/cpp/" # Source directory
+    "${SOURCES_FILES}"
+)
 
 file(GLOB_RECURSE TEST_FILES "${PROJECT_SOURCE_DIR}/test/")
 foreach(TEST_FILE ${TEST_FILES})
-    if(NOT TEST_FILE MATCHES ${FASTDDS_SUBDIRECTORY})
+    if(NOT TEST_FILE MATCHES ${DDS_TYPES_VERSION})
         compile_test_tool(${TEST_FILE})
     endif()
 endforeach()
