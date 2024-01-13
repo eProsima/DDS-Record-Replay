@@ -217,6 +217,10 @@ For example, on Ubuntu use the command:
 
    sudo apt install liblz4-dev libzstd-dev
 
+.. note::
+
+    To work with MCAP files via command line interface, you can use `MCAP CLI <https://mcap.dev/guides/cli>` _ to manage the data in MCAP files.
+
 .. _eprosima_dependencies:
 
 eProsima dependencies
