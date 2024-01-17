@@ -204,6 +204,10 @@ MCAP C++ library is packed within |ddsrecord| as a header-only, but its dependen
 It is recommended to use `vcpkg <https://vcpkg.io/en/>`__ dependency manager to install `LZ4 <https://github.com/lz4/lz4>`__ and `zstd <https://github.com/facebook/zstd>`__ dependencies.
 Once both dependencies are installed, add the directory where the binaries are located to the ``PATH``. The installed binaries are usually located under ``<path\to\vcpkg>/\installed\x64-windows\bin`` directory.
 
+.. note::
+
+    To work with MCAP files via command line interface, you can use `MCAP CLI <https://mcap.dev/guides/cli>` _ to manage the data in MCAP files.
+
 .. _windows_sources_swig:
 
 SWIG
