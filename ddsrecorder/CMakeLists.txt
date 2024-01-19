@@ -62,9 +62,9 @@ configure_project_cpp()
 
 # Determine Fast DDS version
 if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
-    set(DDS_TYPES_VERSION "/v1/")
+    set(DDS_TYPES_VERSION "v1")
 else()
-    set(DDS_TYPES_VERSION "/v2/")
+    set(DDS_TYPES_VERSION "v2")
 endif()
 
 file(
@@ -72,8 +72,8 @@ file(
         "${PROJECT_SOURCE_DIR}/src/cpp/tool/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/cpp/user_interface/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/cpp/main.cpp"
-        "${PROJECT_SOURCE_DIR}/src/cpp/command_receiver/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/cpp/**/**${DDS_TYPES_VERSION}**/*.cxx"
+        "${PROJECT_SOURCE_DIR}/src/cpp/command_receiver/Command*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/cpp/*/*/${DDS_TYPES_VERSION}/*/*.cxx"
     )
 
 compile_tool(
@@ -81,12 +81,7 @@ compile_tool(
     "${SOURCES_FILES}"
 )
 
-file(GLOB_RECURSE TEST_FILES "${PROJECT_SOURCE_DIR}/test/")
-foreach(TEST_FILE ${TEST_FILES})
-    if(NOT TEST_FILE MATCHES ${DDS_TYPES_VERSION})
-        compile_test_tool(${TEST_FILE})
-    endif()
-endforeach()
+compile_test_tool("${PROJECT_SOURCE_DIR}/test/")
 
 ###############################################################################
 # Packaging

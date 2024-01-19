@@ -25,13 +25,21 @@ else()
     set(DDS_TYPES_VERSION "v2")
 endif()
 
+file(
+    GLOB_RECURSE TEST_LIBRARY_SOURCES
+        "${PROJECT_SOURCE_DIR}/src/cpp/tool/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/cpp/user_interface/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/cpp/command_receiver/Command*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/cpp/*/*/${DDS_TYPES_VERSION}/*/*.cxx"
+    )
+
 set(TEST_SOURCES
         McapFileCreationTest.cpp
         ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/${DDS_TYPES_VERSION}/hello_world/HelloWorld.cxx
         ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/${DDS_TYPES_VERSION}/hello_world/HelloWorldPubSubTypes.cxx
         ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/${DDS_TYPES_VERSION}/hello_world/HelloWorldTypeObject.cxx
         $<$<STREQUAL:${DDS_TYPES_VERSION},v2>:${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/v2/hello_world/HelloWorldv1.cxx>
-)
+    )
 
 set(TEST_LIST
         mcap_data_msgs
@@ -75,4 +83,5 @@ add_blackbox_executable(
     "${TEST_LIST}"
     "${TEST_NEEDED_SOURCES}"
     "${TEST_EXTRA_HEADERS}"
+    "${TEST_LIBRARY_SOURCES}"
 )
