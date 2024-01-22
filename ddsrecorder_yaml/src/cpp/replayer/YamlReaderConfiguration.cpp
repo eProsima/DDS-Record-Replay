@@ -28,6 +28,7 @@
 #include <ddspipe_yaml/yaml_configuration_tags.hpp>
 #include <ddspipe_yaml/Yaml.hpp>
 #include <ddspipe_yaml/YamlManager.hpp>
+#include <ddspipe_yaml/YamlValidator.hpp>
 
 #include <ddsrecorder_yaml/replayer/yaml_configuration_tags.hpp>
 
@@ -63,6 +64,13 @@ void ReplayerConfiguration::load_ddsreplayer_configuration_(
     try
     {
         YamlReaderVersion version = LATEST;
+
+        const std::set<TagType> tags{
+            REPLAYER_REPLAY_TAG,
+            SPECS_TAG,
+            REPLAYER_DDS_TAG};
+
+        YamlValidator::validate_tags(yml, tags);
 
         /////
         // Get optional Replayer configuration options
@@ -148,6 +156,16 @@ void ReplayerConfiguration::load_replay_configuration_(
         const Yaml& yml,
         const YamlReaderVersion& version)
 {
+    const std::set<TagType> tags{
+        REPLAYER_REPLAY_INPUT_TAG,
+        REPLAYER_REPLAY_BEGIN_TAG,
+        REPLAYER_REPLAY_END_TAG,
+        REPLAYER_REPLAY_RATE_TAG,
+        REPLAYER_REPLAY_START_TIME_TAG,
+        REPLAYER_REPLAY_TYPES_TAG};
+
+    YamlValidator::validate_tags(yml, tags);
+
     // Get optional input_file
     if (YamlReader::is_tag_present(yml, REPLAYER_REPLAY_INPUT_TAG))
     {
@@ -197,6 +215,13 @@ void ReplayerConfiguration::load_specs_configuration_(
         const Yaml& yml,
         const YamlReaderVersion& version)
 {
+    const std::set<TagType> tags{
+        NUMBER_THREADS_TAG,
+        SPECS_QOS_TAG,
+        WAIT_ALL_ACKED_TIMEOUT_TAG};
+
+    YamlValidator::validate_tags(yml, tags);
+
     // Get number of threads
     if (YamlReader::is_tag_present(yml, NUMBER_THREADS_TAG))
     {
@@ -207,7 +232,7 @@ void ReplayerConfiguration::load_specs_configuration_(
     // Get optional Topic QoS
     if (YamlReader::is_tag_present(yml, SPECS_QOS_TAG))
     {
-        YamlReader::fill<TopicQoS>(topic_qos, YamlReader::get_value_in_tag(yml, SPECS_QOS_TAG), version);
+        topic_qos = YamlReader::get<TopicQoS>(yml, SPECS_QOS_TAG, version);
         TopicQoS::default_topic_qos.set_value(topic_qos);
     }
 
@@ -223,6 +248,17 @@ void ReplayerConfiguration::load_dds_configuration_(
         const Yaml& yml,
         const YamlReaderVersion& version)
 {
+    const std::set<TagType> tags{
+        DOMAIN_ID_TAG,
+        WHITELIST_INTERFACES_TAG,
+        TRANSPORT_DESCRIPTORS_TRANSPORT_TAG,
+        IGNORE_PARTICIPANT_FLAGS_TAG,
+        ALLOWLIST_TAG,
+        BLOCKLIST_TAG,
+        TOPICS_TAG};
+
+    YamlValidator::validate_tags(yml, tags);
+
     // Get optional DDS domain
     if (YamlReader::is_tag_present(yml, DOMAIN_ID_TAG))
     {
