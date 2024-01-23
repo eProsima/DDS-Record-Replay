@@ -501,6 +501,9 @@ void McapHandler::open_file_nts_()
     {
         monitor_error("MCAP_FILE_CREATION_FAILURE");
 
+        logError(
+            DDSRECORDER_MCAP_HANDLER,
+            "Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
         throw utils::InitializationException(
                   STR_ENTRY << "Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
     }

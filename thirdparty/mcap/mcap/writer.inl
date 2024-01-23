@@ -6,6 +6,7 @@
 #include <lz4hc.h>
 #include <zstd.h>
 #include <zstd_errors.h>
+#include <filesystem>
 
 namespace mcap {
 
@@ -53,7 +54,21 @@ void FileWriter::handleWrite(const std::byte* data, uint64_t size) {
   assert(file_);
   const size_t written = std::fwrite(data, 1, size, file_);
   (void)written;
-  assert(written == size);
+  if (written != size)
+  {
+#ifdef _WIN32
+    std::filesystem::space_info space = std::filesystem::space("C:\\");
+#else
+    std::filesystem::space_info space = std::filesystem::space("/");
+#endif
+
+    if (space.available < size)
+    {
+      logError(
+            DDSRECORDER_MCAP_HANDLER,
+            "Not enough space available in disk. Space available: " << space.available);
+    }
+  }
   size_ += size;
 }
 
