@@ -25,6 +25,7 @@
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
 #include <fastdds/rtps/transport/UDPv4TransportDescriptor.h>
 #include <fastdds/rtps/transport/shared_mem/SharedMemTransportDescriptor.h>
+#include <fastrtps/xmlparser/XMLProfileManager.h>
 
 #include <ddspipe_participants/participant/rtps/CommonParticipant.hpp>
 
@@ -154,6 +155,15 @@ bool CommandReceiver::init()
 
     // Enable type information sending
     pqos.wire_protocol().builtin.typelookup_config.use_server = true;
+
+    // Set Intraprocess OFF
+    // WORKAROUND: This is a temporal solution to fix a potential deadlock in the communication
+    // between a recorder and its corresponding command receiver (both being in the same
+    // DDS domain). More precisely, the deadlock affects the current implementation of
+    // TypeLookupService module with intraprocess communication.
+    auto settings = fastrtps::xmlparser::XMLProfileManager::library_settings();
+    settings.intraprocess_delivery = fastrtps::INTRAPROCESS_OFF;
+    fastrtps::xmlparser::XMLProfileManager::library_settings(settings);
 
     participant_ = DomainParticipantFactory::get_instance()->create_participant(domain_, pqos);
 
