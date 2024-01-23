@@ -499,6 +499,9 @@ void McapHandler::open_file_nts_()
     auto status = mcap_writer_.open(tmp_filename.c_str(), configuration_.mcap_writer_options);
     if (!status.ok())
     {
+        logError(
+            DDSRECORDER_MCAP_HANDLER,
+            "Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
         throw utils::InitializationException(
                   STR_ENTRY << "Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
     }
