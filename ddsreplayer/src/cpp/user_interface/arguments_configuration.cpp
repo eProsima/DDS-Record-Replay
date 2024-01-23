@@ -23,6 +23,7 @@
 
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/utils.hpp>
+#include <cpp_utils/types/Fuzzy.hpp>
 
 #include <ddsrecorder_participants/library/config.h>
 
@@ -31,6 +32,8 @@
 namespace eprosima {
 namespace ddsrecorder {
 namespace replayer {
+
+using LogFilter = std::map<eprosima::fastdds::dds::Log::Kind, std::string>;
 
 const option::Descriptor usage[] = {
     {
@@ -177,8 +180,8 @@ ProcessReturnCode parse_arguments(
         std::string& input_file,
         std::string& file_path,
         utils::Duration_ms& reload_time,
-        std::string& log_filter,
-        eprosima::fastdds::dds::Log::Kind& log_verbosity)
+        eprosima::utils::Fuzzy<LogFilter>& log_filter,
+        eprosima::utils::Fuzzy<eprosima::fastdds::dds::Log::Kind>& log_verbosity)
 {
     // Variable to pretty print usage help
     int columns;
@@ -200,6 +203,11 @@ ProcessReturnCode parse_arguments(
 
     // Parse arguments
     // No required arguments
+    bool activateDebug = false;
+    bool hasLogFilter = false;
+    bool hasLogVerbosity = false;
+    std::string log_filter_parse;
+    eprosima::fastdds::dds::Log::Kind log_verbosity_parse;
     if (argc > 0)
     {
         argc -= (argc > 0); // reduce arg count of program name if present
@@ -256,16 +264,19 @@ ProcessReturnCode parse_arguments(
                     break;
 
                 case optionIndex::ACTIVATE_DEBUG:
-                    log_filter = "DDSREPLAYER";
-                    log_verbosity = eprosima::fastdds::dds::Log::Kind::Info;
+                    activateDebug = true;
+                    log_filter_parse = "DDSREPLAYER";
+                    log_verbosity_parse = eprosima::fastdds::dds::Log::Kind::Info;
                     break;
 
                 case optionIndex::LOG_FILTER:
-                    log_filter = opt.arg;
+                    hasLogFilter = true;
+                    log_filter_parse = opt.arg;
                     break;
 
                 case optionIndex::LOG_VERBOSITY:
-                    log_verbosity = eprosima::fastdds::dds::Log::Kind(static_cast<int>(from_string_LogKind(opt.arg)));
+                    hasLogVerbosity = true;
+                    log_verbosity_parse = eprosima::fastdds::dds::Log::Kind(static_cast<int>(from_string_LogKind(opt.arg)));
                     break;
 
                 case optionIndex::UNKNOWN_OPT:
@@ -283,6 +294,27 @@ ProcessReturnCode parse_arguments(
     {
         option::printUsage(fwrite, stdout, usage, columns);
         return ProcessReturnCode::incorrect_argument;
+    }
+
+    // If filter or verbosity defined convert into correct format
+    if (hasLogVerbosity && !hasLogFilter)
+    {
+        log_verbosity.set_value(log_verbosity_parse, eprosima::utils::FuzzyLevelValues::fuzzy_level_fuzzy);
+    }
+
+    else if (!hasLogVerbosity && hasLogFilter)
+    {
+        LogFilter log_filter_parse_map{};
+        log_filter_parse_map[eprosima::fastdds::dds::Log::Kind::Warning] = log_filter_parse;
+        log_filter.set_value(log_filter_parse_map, eprosima::utils::FuzzyLevelValues::fuzzy_level_fuzzy);
+    }
+
+    else if ((hasLogVerbosity && hasLogFilter) || activateDebug)
+    {
+        LogFilter log_filter_parse_map{};
+        log_filter_parse_map[log_verbosity_parse] = log_filter_parse;
+        log_verbosity.set_value(log_verbosity_parse, eprosima::utils::FuzzyLevelValues::fuzzy_level_fuzzy);
+        log_filter.set_value(log_filter_parse_map, eprosima::utils::FuzzyLevelValues::fuzzy_level_fuzzy);
     }
 
     return ProcessReturnCode::success;

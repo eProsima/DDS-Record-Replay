@@ -18,7 +18,9 @@
  */
 
 #include <cpp_utils/utils.hpp>
+#include <cpp_utils/logging/CustomStdLogConsumer.hpp>
 
+#include <ddspipe_core/types/dds/LogConfiguration.hpp>
 #include <ddspipe_core/types/dynamic_types/types.hpp>
 #include <ddspipe_core/types/topic/filter/ManualTopic.hpp>
 #include <ddspipe_core/types/topic/filter/WildcardDdsFilterTopic.hpp>
@@ -216,6 +218,13 @@ void ReplayerConfiguration::load_specs_configuration_(
     {
         // Set value for static attribute
         CommonWriter::wait_all_acked_timeout.store(YamlReader::get_nonnegative_int(yml, WAIT_ALL_ACKED_TIMEOUT_TAG));
+    }
+
+    /////
+    // Get optional Log Configuration
+    if (YamlReader::is_tag_present(yml, LOG_CONFIGURATION_TAG))
+    {
+        YamlReader::fill<LogConfiguration>(log_configuration, YamlReader::get_value_in_tag(yml, LOG_CONFIGURATION_TAG), version);
     }
 }
 

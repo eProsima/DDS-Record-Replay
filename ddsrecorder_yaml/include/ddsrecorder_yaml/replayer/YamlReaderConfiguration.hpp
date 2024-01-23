@@ -24,6 +24,7 @@
 
 #include <ddspipe_core/configuration/DdsPipeConfiguration.hpp>
 #include <ddspipe_core/types/dds/TopicQoS.hpp>
+#include <ddspipe_core/types/dds/LogConfiguration.hpp>
 #include <ddspipe_core/types/topic/dds/DistributedTopic.hpp>
 #include <ddspipe_core/types/topic/filter/IFilterTopic.hpp>
 
@@ -72,6 +73,7 @@ public:
     // Specs
     unsigned int n_threads = 12;
     ddspipe::core::types::TopicQoS topic_qos{};
+    ddspipe::core::types::LogConfiguration log_configuration{};
 
 protected:
 

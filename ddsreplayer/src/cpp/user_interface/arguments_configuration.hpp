@@ -25,6 +25,7 @@
 
 #include <cpp_utils/macros/custom_enumeration.hpp>
 #include <cpp_utils/time/time_utils.hpp>
+#include <cpp_utils/types/Fuzzy.hpp>
 
 #include "ProcessReturnCode.hpp"
 
@@ -123,14 +124,17 @@ extern const option::Descriptor usage[];
  * @return \c HELP_ARGUMENT if arguments help given
  * @return \c REQUIRED_ARGUMENT_FAILED if required arguments not given
  */
+
+using LogFilter = std::map<eprosima::fastdds::dds::Log::Kind, std::string>;
+
 ProcessReturnCode parse_arguments(
         int argc,
         char** argv,
         std::string& input_file,
         std::string& file_path,
         utils::Duration_ms& reload_time,
-        std::string& log_filter,
-        eprosima::fastdds::dds::Log::Kind& log_verbosity);
+        eprosima::utils::Fuzzy<LogFilter>& log_filter,
+        eprosima::utils::Fuzzy<eprosima::fastdds::dds::Log::Kind>& log_verbosity);
 
 //! \c Option to stream serializator
 std::ostream& operator <<(

@@ -18,7 +18,9 @@
  */
 
 #include <cpp_utils/utils.hpp>
+#include <cpp_utils/logging/CustomStdLogConsumer.hpp>
 
+#include <ddspipe_core/types/dds/LogConfiguration.hpp>
 #include <ddspipe_core/types/dynamic_types/types.hpp>
 #include <ddspipe_core/types/topic/filter/ManualTopic.hpp>
 #include <ddspipe_core/types/topic/filter/WildcardDdsFilterTopic.hpp>
@@ -316,6 +318,13 @@ void RecorderConfiguration::load_specs_configuration_(
     if (YamlReader::is_tag_present(yml, RECORDER_SPECS_CLEANUP_PERIOD_TAG))
     {
         cleanup_period = YamlReader::get_positive_int(yml, RECORDER_SPECS_CLEANUP_PERIOD_TAG);
+    }
+
+    /////
+    // Get optional Log Configuration
+    if (YamlReader::is_tag_present(yml, LOG_CONFIGURATION_TAG))
+    {
+        YamlReader::fill<LogConfiguration>(log_configuration, YamlReader::get_value_in_tag(yml, LOG_CONFIGURATION_TAG), version);
     }
 }
 

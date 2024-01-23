@@ -29,6 +29,7 @@
 #include <cpp_utils/ReturnCode.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/utils.hpp>
+#include <cpp_utils/types/Fuzzy.hpp>
 
 #include <ddsrecorder_yaml/replayer/YamlReaderConfiguration.hpp>
 
@@ -117,8 +118,15 @@ int main(
     eprosima::utils::Duration_ms reload_time = 0;
 
     // Debug options
-    std::string log_filter = "DDSREPLAYER";
-    eprosima::fastdds::dds::Log::Kind log_verbosity = eprosima::fastdds::dds::Log::Kind::Warning;
+    std::string log_filter_default = "DDSREPLAYER";
+    eprosima::utils::Fuzzy<eprosima::fastdds::dds::Log::Kind> log_verbosity = eprosima::fastdds::dds::Log::Kind::Warning;
+    log_verbosity.set_level(eprosima::utils::FuzzyLevelValues::fuzzy_level_default);
+
+    // Convert log_filter_default into a map
+    std::map<eprosima::fastdds::dds::Log::Kind, std::string> log_filter_map;
+    log_filter_map[log_verbosity] = log_filter_default;
+    eprosima::utils::Fuzzy<std::map<eprosima::fastdds::dds::Log::Kind, std::string>> log_filter;
+    log_filter.set_value(log_filter_map, eprosima::utils::FuzzyLevelValues::fuzzy_level_default);
 
     // Parse arguments
     ProcessReturnCode arg_parse_result =
@@ -164,18 +172,6 @@ int main(
 
     logUser(DDSREPLAYER_EXECUTION, "Starting DDS Replayer execution.");
 
-    // Logging
-    {
-        // Remove every consumer
-        eprosima::utils::Log::ClearConsumers();
-
-        // Activate log with verbosity, as this will avoid running log thread with not desired kind
-        eprosima::utils::Log::SetVerbosity(log_verbosity);
-
-        eprosima::utils::Log::RegisterConsumer(
-            std::make_unique<eprosima::utils::CustomStdLogConsumer>(log_filter, log_verbosity));
-    }
-
     // Encapsulating execution in block to erase all memory correctly before closing process
     try
     {
@@ -195,6 +191,27 @@ int main(
 
         // Load configuration from YAML
         eprosima::ddsrecorder::yaml::ReplayerConfiguration configuration(file_path);
+
+        if (log_verbosity.is_set() && !configuration.log_configuration.verbosity.is_set())
+        {
+            configuration.log_configuration.verbosity.set_value(log_verbosity, eprosima::utils::FuzzyLevelValues::fuzzy_level_fuzzy);
+        }
+
+        if (log_filter.is_set() && !configuration.log_configuration.filter.is_set())
+        {
+            configuration.log_configuration.filter.set_value(log_filter, eprosima::utils::FuzzyLevelValues::fuzzy_level_fuzzy);
+        }
+
+        /////
+        // Logging
+        {
+            // Remove every consumer
+            eprosima::utils::Log::ClearConsumers();
+            eprosima::utils::Log::SetVerbosity(configuration.log_configuration.verbosity);
+            eprosima::utils::Log::RegisterConsumer(
+                std::make_unique<eprosima::utils::CustomStdLogConsumer>(configuration.log_configuration.filter, configuration.log_configuration.verbosity));
+        }
+
 
         // Use MCAP input from YAML configuration file if not provided via executable arg
         if (input_file == "")

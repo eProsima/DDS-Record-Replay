@@ -24,6 +24,7 @@
 
 #include <ddspipe_core/configuration/DdsPipeConfiguration.hpp>
 #include <ddspipe_core/types/dds/TopicQoS.hpp>
+#include <ddspipe_core/types/dds/LogConfiguration.hpp>
 #include <ddspipe_core/types/topic/dds/DistributedTopic.hpp>
 #include <ddspipe_core/types/topic/filter/IFilterTopic.hpp>
 
@@ -88,6 +89,7 @@ public:
     int max_pending_samples = 5000;  // -1 <-> no limit || 0 <-> no pending samples
     unsigned int cleanup_period;
     ddspipe::core::types::TopicQoS topic_qos{};
+    ddspipe::core::types::LogConfiguration log_configuration{};
 
 protected:
 
