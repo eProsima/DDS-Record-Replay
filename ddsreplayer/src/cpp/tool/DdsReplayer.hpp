@@ -33,7 +33,13 @@
 #include <ddspipe_core/types/dds/TopicQoS.hpp>
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
-#include <ddsrecorder_participants/common/types/DynamicTypesCollection.hpp>
+#if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
+    #include <ddsrecorder_participants/common/types/v1/DynamicTypesCollection.hpp>
+#else
+    #include <ddsrecorder_participants/common/types/v2/DynamicTypesCollection.hpp>
+#endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
+
+
 #include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
 #include <ddsrecorder_participants/replayer/ReplayerParticipant.hpp>
 

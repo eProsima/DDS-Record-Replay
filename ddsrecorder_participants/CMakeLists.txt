@@ -60,10 +60,34 @@ project(
 # - Configure log depending on LOG_INFO flag and CMake type
 configure_project_cpp()
 
+# Determine Fast DDS version
+if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
+    set(DDS_TYPES_VERSION "/v1/")
+else()
+    set(DDS_TYPES_VERSION "/v2/")
+endif()
+
+file(
+    GLOB_RECURSE SOURCES_FILES
+        "${PROJECT_SOURCE_DIR}/src/cpp/replayer/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/cpp/recorder/**/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/cpp/**/**${DDS_TYPES_VERSION}*.cpp"
+    )
+
+file(
+    GLOB_RECURSE HEADERS_FILES
+        ${PROJECT_SOURCE_DIR}/include/constants.hpp
+        ${PROJECT_SOURCE_DIR}/include/replayer/*.hpp
+        ${PROJECT_SOURCE_DIR}/include/recorder/**/*.hpp
+        ${PROJECT_SOURCE_DIR}/include/**/**${DDS_TYPES_VERSION}*.hpp
+    )
+
 # Compile C++ library
 compile_library(
     "${PROJECT_SOURCE_DIR}/src/cpp" # Source directory
     "${PROJECT_SOURCE_DIR}/include" # Include directory
+    "${SOURCES_FILES}"
+    "${HEADERS_FILES}"
 )
 
 ###############################################################################

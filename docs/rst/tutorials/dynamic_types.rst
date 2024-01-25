@@ -70,11 +70,11 @@ At the moment, there are two data types that can be used:
 
 * `HelloWorld.idl <https://github.com/eProsima/DDS-Record-Replay/blob/main/resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl>`_
 
-.. literalinclude:: ../../../resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl
+.. literalinclude:: ../../../resources/dds/TypeLookupService/types/v2/hello_world/HelloWorld.idl
 
 * `Complete.idl <https://github.com/eProsima/DDS-Record-Replay/blob/main/resources/dds/TypeLookupService/types/complete/Complete.idl>`_
 
-.. literalinclude:: ../../../resources/dds/TypeLookupService/types/complete/Complete.idl
+.. literalinclude:: ../../../resources/dds/TypeLookupService/types/v2/complete/Complete.idl
 
 Examining the code
 ==================

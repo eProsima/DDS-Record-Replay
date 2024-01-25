@@ -60,18 +60,28 @@ project(
 # - Configure log depending on LOG_INFO flag and CMake type
 configure_project_cpp()
 
-# Compile C++ library
+# Determine Fast DDS version
+if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
+    set(DDS_TYPES_VERSION "v1")
+else()
+    set(DDS_TYPES_VERSION "v2")
+endif()
+
+file(
+    GLOB_RECURSE SOURCES_FILES
+        "${PROJECT_SOURCE_DIR}/src/cpp/tool/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/cpp/user_interface/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/cpp/main.cpp"
+        "${PROJECT_SOURCE_DIR}/src/cpp/command_receiver/Command*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/cpp/*/*/${DDS_TYPES_VERSION}/*/*.cxx"
+    )
+
 compile_tool(
-    "${PROJECT_SOURCE_DIR}/src/cpp" # Source directory
+    "${PROJECT_SOURCE_DIR}/src/cpp/" # Source directory
+    "${SOURCES_FILES}"
 )
 
-###############################################################################
-# Test
-###############################################################################
-# Compile tests if CMake options requires it
-compile_test_tool(
-    "${PROJECT_SOURCE_DIR}/test" # Test directory
-)
+compile_test_tool("${PROJECT_SOURCE_DIR}/test/")
 
 ###############################################################################
 # Packaging

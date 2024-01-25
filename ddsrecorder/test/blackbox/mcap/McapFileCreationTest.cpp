@@ -33,8 +33,13 @@
 
 #include <mcap/reader.hpp>
 
-#include "types/hello_world/HelloWorldTypeObject.h"
-#include "types/hello_world/HelloWorldPubSubTypes.h"
+#if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
+    #include "types/v1/hello_world/HelloWorldTypeObject.h"
+    #include "types/v1/hello_world/HelloWorldPubSubTypes.h"
+#else
+    #include "types/v2/hello_world/HelloWorldTypeObject.h"
+    #include "types/v2/hello_world/HelloWorldPubSubTypes.h"
+#endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
 
 #include <iostream>
 #include <thread>
