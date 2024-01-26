@@ -40,6 +40,37 @@ This release includes the following **DDS Replayer tool configuration features**
 * Remove the support for `Built-in Topics <https://dds-recorder.readthedocs.io/en/v0.2.0/rst/replaying/usage/configuration.html#built-in-topics>`_.
 * Read data in either ROS 2 format or the raw DDS format.
 
+This release includes the following **Dependencies Update**:
+
+.. list-table::
+    :header-rows: 1
+
+    *   -
+        - Repository
+        - Old Version
+        - New Version
+    *   - Foonathan Memory Vendor
+        - `eProsima/foonathan_memory_vendor <https://github.com/eProsima/foonathan_memory_vendor>`_
+        - `v1.3.1 <https://github.com/eProsima/foonathan_memory_vendor/releases/tag/v1.3.1>`_
+        - `v1.3.1 <https://github.com/eProsima/foonathan_memory_vendor/releases/tag/v1.3.1>`_
+    *   - Fast CDR
+        - `eProsima/Fast-CDR <https://github.com/eProsima/Fast-CDR>`_
+        - `v1.1.0 <https://github.com/eProsima/Fast-CDR/releases/tag/v1.1.0>`_
+        - `v2.1.3 <https://github.com/eProsima/Fast-CDR/releases/tag/v2.1.3>`_
+    *   - Fast DDS
+        - `eProsima/Fast-DDS <https://github.com/eProsima/Fast-DDS>`_
+        - `v2.11.0 <https://github.com/eProsima/Fast-DDS/releases/tag/v2.11.0>`_
+        - `2.13.1 <https://github.com/eProsima/Fast-DDS/releases/tag/2.13.1>`_
+    *   - Dev Utils
+        - `eProsima/dev-utils <https://github.com/eProsima/dev-utils>`_
+        - `v0.4.0 <https://github.com/eProsima/dev-utils/releases/tag/v0.4.0>`_
+        - `v0.5.0 <https://github.com/eProsima/dev-utils/releases/tag/v0.5.0>`_
+    *   - DDS Pipe
+        - `eProsima/DDS-Pipe <https://github.com/eProsima/DDS-Pipe.git>`_
+        - `v0.2.0 <https://github.com/eProsima/DDS-Pipe/releases/tag/v0.2.0>`_
+        - `v0.3.0 <https://github.com/eProsima/DDS-Pipe/releases/tag/v0.3.0>`_
+
+
 #################
 Previous Versions
 #################
