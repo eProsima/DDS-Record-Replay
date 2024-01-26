@@ -22,7 +22,7 @@ This release includes the following **DDS Recorder & Replay internal adjustments
 
 .. warning::
 
-    Types recorded with previous versions of *DDS Record & Replay* is no longer "replayable" after this update.
+    Types recorded with previous versions of *DDS Record & Replay* are no longer "replayable" after this update.
 
 This release includes the following **DDS Recorder tool configuration features**:
 
