@@ -3,82 +3,46 @@
 .. _notes:
 
 .. TODO uncomment when there are forthcoming notes
-.. include:: forthcoming_version.rst
+.. .. include:: forthcoming_version.rst
 
 ##############
-Version v0.2.0
+Version v0.3.0
 ##############
-
-This release includes *DDS Replay tool*, supporting the following **Replay features**:
-
-* Supports setting :ref:`begin <replayer_replay_configuration_begintime>` and :ref:`end <replayer_replay_configuration_endtime>` times (``begin-time`` / ``end-time``).
-* Supports setting a replay :ref:`start <replayer_replay_configuration_startreplaytime>` time (``start-replay-time``).
-* Supports playing stored data at a specific playback :ref:`rate <replayer_replay_configuration_playbackrate>` (``rate``).
-* Supports sending dynamic types stored in input MCAP file.
-
-This release includes the following **User Interface features**:
-
-* :ref:`Replay Service Command-Line Parameters <replayer_usage_usage_application_arguments>`.
-
-This release includes the following (*DDS Replay tool*) **Configuration features**:
-
-* Support YAML :ref:`configuration file <replayer_usage_configuration>`.
-* Support for allow and block topic filters at execution time and in run-time.
-* Support configuration related to DDS communication.
-* Support configuration of playback settings.
-* Support configuration of the internal operation of the DDS Replayer.
-* Support enabling/disabling dynamic types dispatch (see :ref:`Only With Type <replayer_replay_configuration_replaytypes>`).
-* Support :ref:`Interface Whitelisting <replayer_interface_whitelist>`.
-* Support :ref:`Custom Transport Descriptors <replayer_custom_transport_descriptors>` (UDP or Shared Memory only).
-* Support :ref:`Ignore Participant Flags <replayer_ignore_participant_flags>`.
 
 This release includes the following **Recording features**:
 
-* Supports recording messages with unknown (dynamic) data type, and to only record data whose type is known (see :ref:`Only With Type <recorder_usage_configuration_onlywithtype>`).
+* New DDS Recorder suspended (active stopped) state (see :ref:`remote controller <recorder_remote_controller>` for more details).
 
-This release includes the following (*DDS Recorder tool*) **Configuration features**:
+This release includes the following **DDS Recorder & Replay internal adjustments**:
 
-* Support record only data whose (dynamic) type is known: ``only-with-type: true`` (see :ref:`Only With Type <recorder_usage_configuration_onlywithtype>`).
-* Support :ref:`Interface Whitelisting <recorder_interface_whitelist>`.
-* Support :ref:`Custom Transport Descriptors <recorder_custom_transport_descriptors>` (UDP or Shared Memory only).
-* Support :ref:`Ignore Participant Flags <recorder_ignore_participant_flags>`.
+* Store *DDS Record & Replay* version in metadata record of the generated MCAP files.
+* Move dynamic types storage from metadata to attachments MCAP section.
+* Set `app_id` and `app_metadata` attributes on  *DDS Record & Replay* participants.
+* Store schemas in OMG IDL and ROS 2 msg format.
 
-This release includes the following **Documentation features**:
+.. warning::
 
-* Updated documentation with Replay service configuration and usage instructions.
+    Types recorded with previous versions of *DDS Record & Replay* is no longer "replayable" after this update.
 
-This release includes the following **Dependencies Update**:
+This release includes the following **DDS Recorder tool configuration features**:
 
-.. list-table::
-    :header-rows: 1
+* Support :ref:`Compression Settings <recorder_usage_configuration_compression>`.
+* Allow disabling the storage of received types (see :ref:`Record Types <recorder_usage_configuration_recordtypes>`).
+* New configuration options (``timestamp-format`` and ``local-timestamp``) available for :ref:`output file <recorder_usage_configuration_outputfile>` settings.
+* New configuration option (``topics``) to configure the :ref:`Manual Topics <recorder_manual_topics>`.
+* Rename ``max-reception-rate`` to ``max-rx-rate``.
+* Record data in either ROS 2 format or the raw DDS format (see :ref:`Topic Type Format <recorder_usage_configuration_topictypeformat>`).
 
-    *   -
-        - Repository
-        - Old Version
-        - New Version
-    *   - Foonathan Memory Vendor
-        - `eProsima/foonathan_memory_vendor <https://github.com/eProsima/foonathan_memory_vendor>`_
-        - `v1.3.0 <https://github.com/eProsima/foonathan_memory_vendor/releases/tag/v1.3.0>`_
-        - `v1.3.1 <https://github.com/eProsima/foonathan_memory_vendor/releases/tag/v1.3.1>`_
-    *   - Fast CDR
-        - `eProsima/Fast-CDR <https://github.com/eProsima/Fast-CDR>`_
-        - `v1.0.27 <https://github.com/eProsima/Fast-CDR/releases/tag/v1.0.27>`_
-        - `v1.1.0 <https://github.com/eProsima/Fast-CDR/releases/tag/v1.1.0>`_
-    *   - Fast DDS
-        - `eProsima/Fast-DDS <https://github.com/eProsima/Fast-DDS>`_
-        - `v2.10.1 <https://github.com/eProsima/Fast-DDS/releases/tag/v2.10.1>`_
-        - `v2.11.0 <https://github.com/eProsima/Fast-DDS/releases/tag/v2.11.0>`_
-    *   - Dev Utils
-        - `eProsima/dev-utils <https://github.com/eProsima/dev-utils>`_
-        - `v0.3.0 <https://github.com/eProsima/dev-utils/releases/tag/v0.3.0>`_
-        - `v0.4.0 <https://github.com/eProsima/dev-utils/releases/tag/v0.4.0>`_
-    *   - DDS Pipe
-        - `eProsima/DDS-Pipe <https://github.com/eProsima/DDS-Pipe.git>`_
-        - `v0.1.0 <https://github.com/eProsima/DDS-Pipe/releases/tag/v0.1.0>`_
-        - `v0.2.0 <https://github.com/eProsima/DDS-Pipe/releases/tag/v0.2.0>`_
+This release includes the following **DDS Replayer tool configuration features**:
+
+* New configuration option (``topics``) to configure the :ref:`Manual Topics <replayer_manual_topics>`.
+* New configuration option (``max-tx-rate``) to configure the :ref:`Max transmission rate <replayer_max_tx_rate>`.
+* Remove the support for `Built-in Topics <https://dds-recorder.readthedocs.io/en/v0.2.0/rst/replaying/usage/configuration.html#built-in-topics>`_.
+* Read data in either ROS 2 format or the raw DDS format.
 
 #################
 Previous Versions
 #################
 
+.. include:: previous_versions/v0.2.0.rst
 .. include:: previous_versions/v0.1.0.rst
