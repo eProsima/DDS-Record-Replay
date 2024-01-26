@@ -61,7 +61,7 @@ project(
 configure_project_cpp()
 
 # Determine Fast DDS version
-if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
+if ("${fastcdr_VERSION}" VERSION_LESS 2)
     set(DDS_TYPES_VERSION "/v1/")
 else()
     set(DDS_TYPES_VERSION "/v2/")
