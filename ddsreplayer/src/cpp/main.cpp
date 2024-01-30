@@ -118,15 +118,8 @@ int main(
     eprosima::utils::Duration_ms reload_time = 0;
 
     // Debug options
-    std::string log_filter_default = "DDSREPLAYER";
-    eprosima::utils::Fuzzy<eprosima::fastdds::dds::Log::Kind> log_verbosity = eprosima::fastdds::dds::Log::Kind::Warning;
-    log_verbosity.set_level(eprosima::utils::FuzzyLevelValues::fuzzy_level_default);
-
-    // Convert log_filter_default into a map
-    std::map<eprosima::fastdds::dds::Log::Kind, std::string> log_filter_map;
-    log_filter_map[log_verbosity] = log_filter_default;
     eprosima::utils::Fuzzy<std::map<eprosima::fastdds::dds::Log::Kind, std::string>> log_filter;
-    log_filter.set_value(log_filter_map, eprosima::utils::FuzzyLevelValues::fuzzy_level_default);
+    eprosima::utils::Fuzzy<eprosima::fastdds::dds::Log::Kind> log_verbosity;
 
     // Parse arguments
     ProcessReturnCode arg_parse_result =
@@ -194,12 +187,21 @@ int main(
 
         if (log_verbosity.is_set() && !configuration.log_configuration.verbosity.is_set())
         {
-            configuration.log_configuration.verbosity.set_value(log_verbosity, eprosima::utils::FuzzyLevelValues::fuzzy_level_fuzzy);
+            configuration.log_configuration.verbosity = log_verbosity;
         }
 
         if (log_filter.is_set() && !configuration.log_configuration.filter.is_set())
         {
-            configuration.log_configuration.filter.set_value(log_filter, eprosima::utils::FuzzyLevelValues::fuzzy_level_fuzzy);
+            configuration.log_configuration.filter = log_filter;
+        }
+
+        if (!log_filter.is_set() && !configuration.log_configuration.filter.is_set())
+        {
+            configuration.log_configuration.filter.set_value({
+                        {eprosima::fastdds::dds::Log::Kind::Error, ""},
+                        {eprosima::fastdds::dds::Log::Kind::Warning, "DDSREPLAYER"},
+                        {eprosima::fastdds::dds::Log::Kind::Info, ""}});
+            configuration.log_configuration.verbosity = eprosima::fastdds::dds::Log::Kind::Warning;
         }
 
         /////

@@ -20,7 +20,7 @@
 #include <cpp_utils/utils.hpp>
 #include <cpp_utils/logging/CustomStdLogConsumer.hpp>
 
-#include <ddspipe_core/types/dds/LogConfiguration.hpp>
+#include <ddspipe_core/configuration/LogConfiguration.hpp>
 #include <ddspipe_core/types/dynamic_types/types.hpp>
 #include <ddspipe_core/types/topic/filter/ManualTopic.hpp>
 #include <ddspipe_core/types/topic/filter/WildcardDdsFilterTopic.hpp>
