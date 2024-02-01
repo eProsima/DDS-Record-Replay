@@ -23,6 +23,7 @@
 
 #include <optionparser.h>
 
+#include <cpp_utils/logging/CustomStdLogConsumer.hpp>
 #include <cpp_utils/macros/custom_enumeration.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/types/Fuzzy.hpp>
@@ -125,16 +126,14 @@ extern const option::Descriptor usage[];
  * @return \c REQUIRED_ARGUMENT_FAILED if required arguments not given
  */
 
-using LogFilter = std::map<eprosima::fastdds::dds::Log::Kind, std::string>;
-
 ProcessReturnCode parse_arguments(
         int argc,
         char** argv,
         std::string& input_file,
         std::string& file_path,
         utils::Duration_ms& reload_time,
-        eprosima::utils::Fuzzy<LogFilter>& log_filter,
-        eprosima::utils::Fuzzy<eprosima::fastdds::dds::Log::Kind>& log_verbosity);
+        utils::Fuzzy<utils::LogFilter>& log_filter,
+        utils::Fuzzy<utils::VerbosityKind>& log_verbosity);
 
 //! \c Option to stream serializator
 std::ostream& operator <<(

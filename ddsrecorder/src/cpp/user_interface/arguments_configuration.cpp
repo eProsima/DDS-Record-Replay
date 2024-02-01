@@ -22,8 +22,8 @@
 #include <vector>
 
 #include <cpp_utils/Log.hpp>
-#include <cpp_utils/utils.hpp>
 #include <cpp_utils/types/Fuzzy.hpp>
+#include <cpp_utils/utils.hpp>
 
 #include <ddsrecorder_participants/library/config.h>
 
@@ -32,8 +32,6 @@
 namespace eprosima {
 namespace ddsrecorder {
 namespace recorder {
-
-using LogFilter = std::map<fastdds::dds::Log::Kind, std::string>;
 
 const option::Descriptor usage[] = {
     {
@@ -182,8 +180,8 @@ ProcessReturnCode parse_arguments(
         std::string& file_path,
         utils::Duration_ms& reload_time,
         utils::Duration_ms& timeout,
-        utils::Fuzzy<LogFilter>& log_filter,
-        utils::Fuzzy<fastdds::dds::Log::Kind>& log_verbosity)
+        utils::Fuzzy<utils::LogFilter>& log_filter,
+        utils::Fuzzy<utils::VerbosityKind>& log_verbosity)
 {
     // Variable to pretty print usage help
     int columns;
@@ -258,10 +256,11 @@ ProcessReturnCode parse_arguments(
 
                 case optionIndex::ACTIVATE_DEBUG:
                     log_filter.set_value({
-                        {fastdds::dds::Log::Kind::Error, "DDSRECORDER"},
-                        {fastdds::dds::Log::Kind::Warning, "DDSRECORDER"},
-                        {fastdds::dds::Log::Kind::Info, "DDSRECORDER"}}, utils::FuzzyLevelValues::fuzzy_level_fuzzy);
-                    log_verbosity = fastdds::dds::Log::Kind::Info;
+                                {utils::VerbosityKind::Error, ""},
+                                {utils::VerbosityKind::Warning, "(DDSRECORDER|DDSPIPE)"},
+                                {utils::VerbosityKind::Info, "DDSRECORDER"}},
+                            utils::FuzzyLevelValues::fuzzy_level_fuzzy);
+                    log_verbosity = utils::VerbosityKind::Info;
                     break;
 
                 case optionIndex::TIMEOUT:
@@ -270,13 +269,13 @@ ProcessReturnCode parse_arguments(
 
                 case optionIndex::LOG_FILTER:
                     log_filter.set_value({
-                        {fastdds::dds::Log::Kind::Error, opt.arg},
-                        {fastdds::dds::Log::Kind::Warning, opt.arg},
-                        {fastdds::dds::Log::Kind::Info, opt.arg}});
+                                {utils::VerbosityKind::Error, opt.arg},
+                                {utils::VerbosityKind::Warning, opt.arg},
+                                {utils::VerbosityKind::Info, opt.arg}});
                     break;
 
                 case optionIndex::LOG_VERBOSITY:
-                    log_verbosity = fastdds::dds::Log::Kind(static_cast<int>(from_string_LogKind(opt.arg)));
+                    log_verbosity = utils::VerbosityKind(static_cast<int>(from_string_LogKind(opt.arg)));
                     break;
 
                 case optionIndex::UNKNOWN_OPT:

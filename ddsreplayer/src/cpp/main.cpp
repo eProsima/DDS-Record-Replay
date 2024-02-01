@@ -26,10 +26,11 @@
 #include <cpp_utils/exception/ConfigurationException.hpp>
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/logging/CustomStdLogConsumer.hpp>
+#include <cpp_utils/logging/LogConfiguration.hpp>
 #include <cpp_utils/ReturnCode.hpp>
 #include <cpp_utils/time/time_utils.hpp>
-#include <cpp_utils/utils.hpp>
 #include <cpp_utils/types/Fuzzy.hpp>
+#include <cpp_utils/utils.hpp>
 
 #include <ddsrecorder_yaml/replayer/YamlReaderConfiguration.hpp>
 
@@ -118,8 +119,8 @@ int main(
     eprosima::utils::Duration_ms reload_time = 0;
 
     // Debug options
-    eprosima::utils::Fuzzy<std::map<eprosima::fastdds::dds::Log::Kind, std::string>> log_filter;
-    eprosima::utils::Fuzzy<eprosima::fastdds::dds::Log::Kind> log_verbosity;
+    eprosima::utils::Fuzzy<eprosima::utils::LogFilter> log_filter;
+    eprosima::utils::Fuzzy<eprosima::utils::VerbosityKind> log_verbosity;
 
     // Parse arguments
     ProcessReturnCode arg_parse_result =
@@ -198,10 +199,10 @@ int main(
         if (!log_filter.is_set() && !configuration.log_configuration.filter.is_set())
         {
             configuration.log_configuration.filter.set_value({
-                        {eprosima::fastdds::dds::Log::Kind::Error, ""},
-                        {eprosima::fastdds::dds::Log::Kind::Warning, "DDSREPLAYER"},
-                        {eprosima::fastdds::dds::Log::Kind::Info, ""}});
-            configuration.log_configuration.verbosity = eprosima::fastdds::dds::Log::Kind::Warning;
+                {eprosima::utils::VerbosityKind::Error, ""},
+                {eprosima::utils::VerbosityKind::Warning, "(DDSREPLAYER|DDSPIPE)"},
+                {eprosima::utils::VerbosityKind::Info, ""}});
+            configuration.log_configuration.verbosity = eprosima::utils::VerbosityKind::Warning;
         }
 
         /////
@@ -211,7 +212,7 @@ int main(
             eprosima::utils::Log::ClearConsumers();
             eprosima::utils::Log::SetVerbosity(configuration.log_configuration.verbosity);
             eprosima::utils::Log::RegisterConsumer(
-                std::make_unique<eprosima::utils::CustomStdLogConsumer>(configuration.log_configuration.filter, configuration.log_configuration.verbosity));
+                std::make_unique<eprosima::utils::CustomStdLogConsumer>(configuration.log_configuration));
         }
 
 

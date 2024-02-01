@@ -589,6 +589,28 @@ void McapHandler::add_data_nts_(
 void McapHandler::write_message_nts_(
         const Message& msg)
 {
+    // ByteOffset current_offset = RecordOffset()
+    // std::cout << "RecordOffset" << sdt::to_string(current_offset) << std::endl;
+    // auto status = mcap_writer_.write(msg);
+    // if (mcap_writer_.statistics().fileSize >= configuration_.max_file_size)
+    // {
+    //     // File is full
+    //     std::cout << "Aleluya" << std::endl;
+    // }
+
+    // mcap::McapReader mcap_reader;
+    // auto status_reader = mcap_reader.open(mcap_filename_);
+    // if (status_reader.code != mcap::StatusCode::Success)
+    // {
+    //     throw utils::InconsistencyException(
+    //               STR_ENTRY << "Failed MCAP read."
+    //               );
+    // }
+    // std::cout << "summaryStart: " << mcap_reader.footer().value().summaryStart << std::endl;
+    // std::cout << "summaryOffsetStart: " << mcap_reader.footer().value().summaryOffsetStart << std::endl;
+    // std::cout << "summaryCrc: " << mcap_reader.footer().value().summaryCrc << std::endl;
+    // mcap_reader.close();
+
     auto status = mcap_writer_.write(msg);
     if (!status.ok())
     {

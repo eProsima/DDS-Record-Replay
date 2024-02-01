@@ -18,9 +18,7 @@
  */
 
 #include <cpp_utils/utils.hpp>
-#include <cpp_utils/logging/CustomStdLogConsumer.hpp>
 
-#include <ddspipe_core/configuration/LogConfiguration.hpp>
 #include <ddspipe_core/types/dynamic_types/types.hpp>
 #include <ddspipe_core/types/topic/filter/ManualTopic.hpp>
 #include <ddspipe_core/types/topic/filter/WildcardDdsFilterTopic.hpp>
@@ -224,7 +222,7 @@ void ReplayerConfiguration::load_specs_configuration_(
     // Get optional Log Configuration
     if (YamlReader::is_tag_present(yml, LOG_CONFIGURATION_TAG))
     {
-        YamlReader::fill<LogConfiguration>(log_configuration, YamlReader::get_value_in_tag(yml, LOG_CONFIGURATION_TAG), version);
+        log_configuration = YamlReader::get<utils::LogConfiguration>(yml, LOG_CONFIGURATION_TAG, version);
     }
 }
 
