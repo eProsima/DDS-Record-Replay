@@ -115,7 +115,7 @@ namespace swig {
 
 // Include the class interfaces
 %include "DdsRecorderCommand.h"
+%include "DdsRecorderCommandv1.h"
 
 // Include the corresponding TopicDataType
 %include "DdsRecorderCommandPubSubTypes.i"
-
