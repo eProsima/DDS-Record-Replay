@@ -89,7 +89,6 @@ public:
     int max_pending_samples = 5000;  // -1 <-> no limit || 0 <-> no pending samples
     unsigned int cleanup_period;
     ddspipe::core::types::TopicQoS topic_qos{};
-    utils::LogConfiguration log_configuration{};
 
 protected:
 

@@ -73,7 +73,6 @@ public:
     // Specs
     unsigned int n_threads = 12;
     ddspipe::core::types::TopicQoS topic_qos{};
-    utils::LogConfiguration log_configuration{};
 
 protected:
 

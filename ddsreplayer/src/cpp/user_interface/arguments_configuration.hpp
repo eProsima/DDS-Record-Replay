@@ -23,7 +23,7 @@
 
 #include <optionparser.h>
 
-#include <cpp_utils/logging/CustomStdLogConsumer.hpp>
+#include <cpp_utils/logging/LogConfiguration.hpp>
 #include <cpp_utils/macros/custom_enumeration.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/types/Fuzzy.hpp>

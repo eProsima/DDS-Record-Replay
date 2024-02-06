@@ -222,7 +222,7 @@ void ReplayerConfiguration::load_specs_configuration_(
     // Get optional Log Configuration
     if (YamlReader::is_tag_present(yml, LOG_CONFIGURATION_TAG))
     {
-        log_configuration = YamlReader::get<utils::LogConfiguration>(yml, LOG_CONFIGURATION_TAG, version);
+        ddspipe_configuration.log_configuration = YamlReader::get<utils::LogConfiguration>(yml, LOG_CONFIGURATION_TAG, version);
     }
 }
 

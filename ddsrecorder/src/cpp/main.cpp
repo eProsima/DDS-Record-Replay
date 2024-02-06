@@ -267,27 +267,22 @@ int main(
         // Load configuration from YAML
         eprosima::ddsrecorder::yaml::RecorderConfiguration configuration(file_path);
 
-        if (log_verbosity.is_set() && !configuration.log_configuration.verbosity.is_set())
+        if (log_verbosity.is_set() && !configuration.ddspipe_configuration.log_configuration.verbosity.is_set())
         {
-            configuration.log_configuration.verbosity.set_value(log_verbosity);
-            std::cout << "Verbosity: " << configuration.log_configuration.verbosity << std::endl;
+            configuration.ddspipe_configuration.log_configuration.verbosity.set_value(log_verbosity);
         }
 
-        if (log_filter.is_set() && !configuration.log_configuration.filter.is_set())
+        if (log_filter.is_set() && !configuration.ddspipe_configuration.log_configuration.filter.is_set())
         {
-            configuration.log_configuration.filter = log_filter;
+            configuration.ddspipe_configuration.log_configuration.filter = log_filter;
         }
 
-        if (!log_filter.is_set() && !configuration.log_configuration.filter.is_set())
+        if (!log_filter.is_set() && !configuration.ddspipe_configuration.log_configuration.filter.is_set())
         {
-            configuration.log_configuration.filter.set_value({
+            configuration.ddspipe_configuration.log_configuration.filter.set_value({
                 {eprosima::utils::VerbosityKind::Error, ""},
                 {eprosima::utils::VerbosityKind::Warning, "(DDSRECORDER|DDSPIPE)"},
-                {eprosima::utils::VerbosityKind::Info, ""}});
-        }
-        if (!log_verbosity.is_set() && !configuration.log_configuration.verbosity.is_set())
-        {
-            configuration.log_configuration.verbosity = eprosima::utils::VerbosityKind::Warning;
+                {eprosima::utils::VerbosityKind::Info, "DDSRECORDER"}});
         }
 
         /////
@@ -295,9 +290,9 @@ int main(
         {
             // Remove every consumer
             eprosima::utils::Log::ClearConsumers();
-            eprosima::utils::Log::SetVerbosity(configuration.log_configuration.verbosity);
+            eprosima::utils::Log::SetVerbosity(configuration.ddspipe_configuration.log_configuration.verbosity);
             eprosima::utils::Log::RegisterConsumer(
-                std::make_unique<eprosima::utils::CustomStdLogConsumer>(configuration.log_configuration));
+                std::make_unique<eprosima::utils::CustomStdLogConsumer>(configuration.ddspipe_configuration.log_configuration));
         }
 
         logUser(DDSRECORDER_EXECUTION, "DDS Recorder running.");

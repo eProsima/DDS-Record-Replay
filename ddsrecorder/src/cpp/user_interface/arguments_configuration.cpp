@@ -258,8 +258,7 @@ ProcessReturnCode parse_arguments(
                     log_filter.set_value({
                                 {utils::VerbosityKind::Error, ""},
                                 {utils::VerbosityKind::Warning, "(DDSRECORDER|DDSPIPE)"},
-                                {utils::VerbosityKind::Info, "DDSRECORDER"}},
-                            utils::FuzzyLevelValues::fuzzy_level_fuzzy);
+                                {utils::VerbosityKind::Info, "DDSRECORDER"}});
                     log_verbosity = utils::VerbosityKind::Info;
                     break;
 
