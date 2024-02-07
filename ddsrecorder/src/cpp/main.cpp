@@ -189,7 +189,7 @@ int main(
     eprosima::utils::Duration_ms timeout = 0;
 
     // Debug options
-    eprosima::utils::Fuzzy<eprosima::utils::LogFilter> log_filter;
+    eprosima::utils::LogFilter log_filter;
     eprosima::utils::Fuzzy<eprosima::utils::VerbosityKind> log_verbosity;
 
     // Parse arguments
@@ -272,17 +272,31 @@ int main(
             configuration.ddspipe_configuration.log_configuration.verbosity.set_value(log_verbosity);
         }
 
-        if (log_filter.is_set() && !configuration.ddspipe_configuration.log_configuration.filter.is_set())
+        for (auto& [kind, regex] : log_filter)
         {
-            configuration.ddspipe_configuration.log_configuration.filter = log_filter;
-        }
+            if (!configuration.ddspipe_configuration.log_configuration.filter[kind].is_set())
+            {
+                if (regex.is_set())
+                {
+                    configuration.ddspipe_configuration.log_configuration.filter[kind] = regex;
+                }
 
-        if (!log_filter.is_set() && !configuration.ddspipe_configuration.log_configuration.filter.is_set())
-        {
-            configuration.ddspipe_configuration.log_configuration.filter.set_value({
-                {eprosima::utils::VerbosityKind::Error, ""},
-                {eprosima::utils::VerbosityKind::Warning, "(DDSRECORDER|DDSPIPE)"},
-                {eprosima::utils::VerbosityKind::Info, "DDSRECORDER"}});
+                else
+                {
+                    switch (kind)
+                    {
+                        case eprosima::utils::VerbosityKind::Error:
+                            configuration.ddspipe_configuration.log_configuration.filter[eprosima::utils::VerbosityKind::Error].set_value("");
+                            break;
+                        case eprosima::utils::VerbosityKind::Warning:
+                            configuration.ddspipe_configuration.log_configuration.filter[eprosima::utils::VerbosityKind::Warning].set_value("(DDSRECORDER|DDSPIPE)");
+                            break;
+                        case eprosima::utils::VerbosityKind::Info:
+                            configuration.ddspipe_configuration.log_configuration.filter[eprosima::utils::VerbosityKind::Info].set_value("DDSRECORDER");
+                            break;
+                    }
+                }
+            }
         }
 
         /////

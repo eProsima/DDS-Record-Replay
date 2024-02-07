@@ -23,7 +23,6 @@
 
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/utils.hpp>
-#include <cpp_utils/types/Fuzzy.hpp>
 
 #include <ddsrecorder_participants/library/config.h>
 
@@ -178,7 +177,7 @@ ProcessReturnCode parse_arguments(
         std::string& input_file,
         std::string& file_path,
         utils::Duration_ms& reload_time,
-        utils::Fuzzy<utils::LogFilter>& log_filter,
+        utils::LogFilter& log_filter,
         utils::Fuzzy<utils::VerbosityKind>& log_verbosity)
 {
     // Variable to pretty print usage help
@@ -257,18 +256,16 @@ ProcessReturnCode parse_arguments(
                     break;
 
                 case optionIndex::ACTIVATE_DEBUG:
-                    log_filter.set_value({
-                                {utils::VerbosityKind::Error, ""},
-                                {utils::VerbosityKind::Warning, "(DDSREPLAYER|DDSPIPE)"},
-                                {utils::VerbosityKind::Info, "DDSREPLAYER"}});
+                    log_filter[utils::VerbosityKind::Error].set_value("");
+                    log_filter[utils::VerbosityKind::Warning].set_value("(DDSREPLAYER|DDSPIPE)");
+                    log_filter[utils::VerbosityKind::Info].set_value("DDSREPLAYER");
                     log_verbosity = utils::VerbosityKind::Info;
                     break;
 
                 case optionIndex::LOG_FILTER:
-                    log_filter.set_value({
-                                {utils::VerbosityKind::Error, opt.arg},
-                                {utils::VerbosityKind::Warning, opt.arg},
-                                {utils::VerbosityKind::Info, opt.arg}});
+                    log_filter[utils::VerbosityKind::Error].set_value(opt.arg);
+                    log_filter[utils::VerbosityKind::Warning].set_value(opt.arg);
+                    log_filter[utils::VerbosityKind::Info].set_value(opt.arg);
                     break;
 
                 case optionIndex::LOG_VERBOSITY:

@@ -20,7 +20,6 @@
 
 #include <mcap/mcap.hpp>
 
-#include <cpp_utils/logging/LogConfiguration.hpp>
 #include <cpp_utils/memory/Heritable.hpp>
 
 #include <ddspipe_core/configuration/DdsPipeConfiguration.hpp>

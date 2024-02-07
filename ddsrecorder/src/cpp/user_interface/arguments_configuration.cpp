@@ -22,7 +22,6 @@
 #include <vector>
 
 #include <cpp_utils/Log.hpp>
-#include <cpp_utils/types/Fuzzy.hpp>
 #include <cpp_utils/utils.hpp>
 
 #include <ddsrecorder_participants/library/config.h>
@@ -180,7 +179,7 @@ ProcessReturnCode parse_arguments(
         std::string& file_path,
         utils::Duration_ms& reload_time,
         utils::Duration_ms& timeout,
-        utils::Fuzzy<utils::LogFilter>& log_filter,
+        utils::LogFilter& log_filter,
         utils::Fuzzy<utils::VerbosityKind>& log_verbosity)
 {
     // Variable to pretty print usage help
@@ -255,10 +254,9 @@ ProcessReturnCode parse_arguments(
                     break;
 
                 case optionIndex::ACTIVATE_DEBUG:
-                    log_filter.set_value({
-                                {utils::VerbosityKind::Error, ""},
-                                {utils::VerbosityKind::Warning, "(DDSRECORDER|DDSPIPE)"},
-                                {utils::VerbosityKind::Info, "DDSRECORDER"}});
+                    log_filter[utils::VerbosityKind::Error].set_value("");
+                    log_filter[utils::VerbosityKind::Warning].set_value("(DDSRECORDER|DDSPIPE)");
+                    log_filter[utils::VerbosityKind::Info].set_value("DDSRECORDER");
                     log_verbosity = utils::VerbosityKind::Info;
                     break;
 
@@ -267,10 +265,9 @@ ProcessReturnCode parse_arguments(
                     break;
 
                 case optionIndex::LOG_FILTER:
-                    log_filter.set_value({
-                                {utils::VerbosityKind::Error, opt.arg},
-                                {utils::VerbosityKind::Warning, opt.arg},
-                                {utils::VerbosityKind::Info, opt.arg}});
+                    log_filter[utils::VerbosityKind::Error].set_value(opt.arg);
+                    log_filter[utils::VerbosityKind::Warning].set_value(opt.arg);
+                    log_filter[utils::VerbosityKind::Info].set_value(opt.arg);
                     break;
 
                 case optionIndex::LOG_VERBOSITY:

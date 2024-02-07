@@ -133,7 +133,7 @@ ProcessReturnCode parse_arguments(
         std::string& file_path,
         utils::Duration_ms& reload_time,
         utils::Duration_ms& timeout,
-        utils::Fuzzy<utils::LogFilter>& log_filter,
+        utils::LogFilter& log_filter,
         utils::Fuzzy<utils::VerbosityKind>& log_verbosity);
 
 //! \c Option to stream serializator

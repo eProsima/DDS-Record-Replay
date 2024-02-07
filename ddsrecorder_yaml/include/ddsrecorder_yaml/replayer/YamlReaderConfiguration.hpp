@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include <cpp_utils/logging/LogConfiguration.hpp>
 #include <cpp_utils/memory/Heritable.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/types/Fuzzy.hpp>
