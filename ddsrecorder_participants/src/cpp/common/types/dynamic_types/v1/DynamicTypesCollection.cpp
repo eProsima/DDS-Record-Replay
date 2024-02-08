@@ -26,7 +26,7 @@ char dummy;
 }  // namespace
 #endif  // _WIN32
 
-#include <ddsrecorder_participants/common/types/v1/DynamicTypesCollection.hpp>
+#include <ddsrecorder_participants/common/types/dynamic_types/v1/DynamicTypesCollection.hpp>
 #include <fastcdr/Cdr.h>
 
 #include <fastcdr/exceptions/BadParamException.h>
