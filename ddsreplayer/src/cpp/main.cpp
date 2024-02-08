@@ -120,7 +120,12 @@ int main(
 
     // Debug options
     eprosima::utils::LogFilter log_filter;
+    log_filter[eprosima::utils::VerbosityKind::Error].set_value("");
+    log_filter[eprosima::utils::VerbosityKind::Error].set_value("DDSREPLAYER|DDSPIPE");
+    log_filter[eprosima::utils::VerbosityKind::Error].set_value("DDSREPLAYER");
+
     eprosima::utils::Fuzzy<eprosima::utils::VerbosityKind> log_verbosity;
+    log_verbosity = eprosima::utils::VerbosityKind::Warning;
 
     // Parse arguments
     ProcessReturnCode arg_parse_result =
@@ -186,37 +191,9 @@ int main(
         // Load configuration from YAML
         eprosima::ddsrecorder::yaml::ReplayerConfiguration configuration(file_path);
 
-        if (log_verbosity.is_set() && !configuration.ddspipe_configuration.log_configuration.verbosity.is_set())
-        {
-            configuration.ddspipe_configuration.log_configuration.verbosity = log_verbosity;
-        }
-
-        for (auto& [kind, regex] : log_filter)
-        {
-            if (!configuration.ddspipe_configuration.log_configuration.filter[kind].is_set())
-            {
-                if (regex.is_set())
-                {
-                    configuration.ddspipe_configuration.log_configuration.filter[kind] = regex;
-                }
-
-                else
-                {
-                    switch (kind)
-                    {
-                        case eprosima::utils::VerbosityKind::Error:
-                            configuration.ddspipe_configuration.log_configuration.filter[eprosima::utils::VerbosityKind::Error].set_value("");
-                            break;
-                        case eprosima::utils::VerbosityKind::Warning:
-                            configuration.ddspipe_configuration.log_configuration.filter[eprosima::utils::VerbosityKind::Warning].set_value("(DDSREPLAYER|DDSPIPE)");
-                            break;
-                        case eprosima::utils::VerbosityKind::Info:
-                            configuration.ddspipe_configuration.log_configuration.filter[eprosima::utils::VerbosityKind::Info].set_value("DDSREPLAYER");
-                            break;
-                    }
-                }
-            }
-        }
+        // Set verbosity and filter if unset
+        configuration.ddspipe_configuration.log_configuration.set_if_unset(log_verbosity);
+        configuration.ddspipe_configuration.log_configuration.set_if_unset(log_filter);
 
         /////
         // Logging
