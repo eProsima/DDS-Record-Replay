@@ -13,7 +13,6 @@
 // limitations under the License.
 
 
-#include <ddspipe_core/configuration/MonitorStatusConfiguration.hpp>
 #include <ddspipe_core/monitoring/consumers/DdsMonitorConsumer.hpp>
 #include <ddspipe_core/monitoring/consumers/StdoutMonitorConsumer.hpp>
 
@@ -23,17 +22,17 @@ namespace eprosima {
 namespace ddspipe {
 namespace core {
 
-void DdsRecorderStatusMonitorProducer::init(const MonitorStatusConfiguration* configuration)
+void DdsRecorderStatusMonitorProducer::init(const MonitorProducerConfiguration& configuration)
 {
     // Store the period so it can be used by the Monitor
-    period = configuration->period;
+    period = configuration.period;
 
     // Register the type
     fastdds::dds::TypeSupport type(new DdsRecorderMonitoringStatusPubSubType());
 
     // Create the consumers
-    consumers_.push_back(new DdsMonitorConsumer<DdsRecorderMonitoringStatus>(configuration, type));
-    consumers_.push_back(new StdoutMonitorConsumer<DdsRecorderMonitoringStatus>(configuration));
+    consumers_.push_back(new DdsMonitorConsumer<DdsRecorderMonitoringStatus>(configuration.domain.get_value(), configuration.topic_name, type));
+    consumers_.push_back(new StdoutMonitorConsumer<DdsRecorderMonitoringStatus>());
 }
 
 void DdsRecorderStatusMonitorProducer::consume()

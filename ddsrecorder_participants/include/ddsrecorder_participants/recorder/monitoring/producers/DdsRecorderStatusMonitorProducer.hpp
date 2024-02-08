@@ -16,7 +16,7 @@
 
 #include <mutex>
 
-#include <ddspipe_core/configuration/MonitorStatusConfiguration.hpp>
+#include <ddspipe_core/configuration/MonitorProducerConfiguration.hpp>
 #include <ddspipe_core/monitoring/consumers/IMonitorConsumer.hpp>
 #include <ddspipe_core/monitoring/producers/IMonitorProducer.hpp>
 #include <ddspipe_core/monitoring/producers/StatusMonitorProducer.hpp>
@@ -45,7 +45,7 @@ class DdsRecorderStatusMonitorProducer : public StatusMonitorProducer
 public:
 
     // TODO
-    void init(const MonitorStatusConfiguration* configuration) override;
+    void init(const MonitorProducerConfiguration& configuration) override;
 
     // TODO
     void consume() override;
