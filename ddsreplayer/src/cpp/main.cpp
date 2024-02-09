@@ -32,6 +32,7 @@
 #include <cpp_utils/types/Fuzzy.hpp>
 #include <cpp_utils/utils.hpp>
 
+#include <ddsrecorder_yaml/replayer/CommandlineArgsReplayer.hpp>
 #include <ddsrecorder_yaml/replayer/YamlReaderConfiguration.hpp>
 
 #include "user_interface/arguments_configuration.hpp"
@@ -109,27 +110,18 @@ int main(
         int argc,
         char** argv)
 {
-    // Input MCAP File path
-    std::string input_file = "";
-
-    // Configuration File path
-    std::string file_path = "";
-
-    // Reload time
-    eprosima::utils::Duration_ms reload_time = 0;
+    // Initialize CommandlineArgsReplayer
+    eprosima::ddsrecorder::yaml::CommandlineArgsReplayer commandline_args;
 
     // Debug options
     eprosima::utils::LogFilter log_filter;
-    log_filter[eprosima::utils::VerbosityKind::Error].set_value("");
-    log_filter[eprosima::utils::VerbosityKind::Error].set_value("DDSREPLAYER|DDSPIPE");
-    log_filter[eprosima::utils::VerbosityKind::Error].set_value("DDSREPLAYER");
-
-    eprosima::utils::Fuzzy<eprosima::utils::VerbosityKind> log_verbosity;
-    log_verbosity = eprosima::utils::VerbosityKind::Warning;
+    commandline_args.log_filter[eprosima::utils::VerbosityKind::Error].set_value("");
+    commandline_args.log_filter[eprosima::utils::VerbosityKind::Warning].set_value("DDSREPLAYER|DDSPIPE");
+    commandline_args.log_filter[eprosima::utils::VerbosityKind::Info].set_value("DDSREPLAYER");
 
     // Parse arguments
     ProcessReturnCode arg_parse_result =
-            parse_arguments(argc, argv, input_file, file_path, reload_time, log_filter, log_verbosity);
+            parse_arguments(argc, argv, commandline_args);
 
     if (arg_parse_result == ProcessReturnCode::help_argument)
     {
@@ -145,26 +137,26 @@ int main(
     }
 
     // Check file is in args, else get the default file
-    if (file_path == "")
+    if (commandline_args.file_path == "")
     {
         if (is_file_accessible(DEFAULT_CONFIGURATION_FILE_NAME, eprosima::utils::FileAccessMode::read))
         {
-            file_path = DEFAULT_CONFIGURATION_FILE_NAME;
+            commandline_args.file_path = DEFAULT_CONFIGURATION_FILE_NAME;
 
             logUser(
                 DDSREPLAYER_EXECUTION,
-                "Not configuration file given, using default file " << file_path << ".");
+                "Not configuration file given, using default file " << commandline_args.file_path << ".");
         }
     }
     else
     {
         // Check file exists and it is readable
         // NOTE: this check is redundant with option parse arg check
-        if (!is_file_accessible(file_path.c_str(), eprosima::utils::FileAccessMode::read))
+        if (!is_file_accessible(commandline_args.file_path.c_str(), eprosima::utils::FileAccessMode::read))
         {
             logError(
                 DDSREPLAYER_ARGS,
-                "File '" << file_path << "' does not exist or it is not accessible.");
+                "File '" << commandline_args.file_path << "' does not exist or it is not accessible.");
             return static_cast<int>(ProcessReturnCode::required_argument_failed);
         }
     }
@@ -189,11 +181,7 @@ int main(
         // DDS Replayer Initialization
 
         // Load configuration from YAML
-        eprosima::ddsrecorder::yaml::ReplayerConfiguration configuration(file_path);
-
-        // Set verbosity and filter if unset
-        configuration.ddspipe_configuration.log_configuration.set_if_unset(log_verbosity);
-        configuration.ddspipe_configuration.log_configuration.set_if_unset(log_filter);
+        eprosima::ddsrecorder::yaml::ReplayerConfiguration configuration(commandline_args.file_path, &commandline_args);
 
         /////
         // Logging
@@ -207,17 +195,17 @@ int main(
 
 
         // Use MCAP input from YAML configuration file if not provided via executable arg
-        if (input_file == "")
+        if (commandline_args.input_file == "")
         {
             if (configuration.input_file != "")
             {
-                input_file = configuration.input_file;
+                commandline_args.input_file = configuration.input_file;
                 // Check file exists and it is readable
-                if (!is_file_accessible(input_file.c_str(), eprosima::utils::FileAccessMode::read))
+                if (!is_file_accessible(commandline_args.input_file.c_str(), eprosima::utils::FileAccessMode::read))
                 {
                     logError(
                         DDSREPLAYER_ARGS,
-                        "File '" << input_file << "' does not exist or it is not accessible.");
+                        "File '" << commandline_args.input_file << "' does not exist or it is not accessible.");
                     return static_cast<int>(ProcessReturnCode::required_argument_failed);
                 }
             }
@@ -239,20 +227,20 @@ int main(
 
 
         // Create replayer instance
-        auto replayer = std::make_unique<DdsReplayer>(configuration, input_file);
+        auto replayer = std::make_unique<DdsReplayer>(configuration, commandline_args.input_file);
 
         // Create File Watcher Handler
         std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;
-        if (file_path != "")
+        if (commandline_args.file_path != "")
         {
-            file_watcher_handler = create_filewatcher(replayer, file_path);
+            file_watcher_handler = create_filewatcher(replayer, commandline_args.file_path);
         }
 
         // Create Periodic Handler
         std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> periodic_handler;
-        if (reload_time > 0 && file_path != "")
+        if (commandline_args.reload_time > 0 && commandline_args.file_path != "")
         {
-            periodic_handler = create_periodic_handler(replayer, file_path, reload_time);
+            periodic_handler = create_periodic_handler(replayer, commandline_args.file_path, commandline_args.reload_time);
         }
 
         // Start replaying data
@@ -295,7 +283,7 @@ int main(
     catch (const eprosima::utils::ConfigurationException& e)
     {
         logError(DDSREPLAYER_ERROR,
-                "Error Loading DDS Replayer Configuration from file " << file_path <<
+                "Error Loading DDS Replayer Configuration from file " << commandline_args.file_path <<
                 ". Error message:\n " <<
                 e.what());
         return static_cast<int>(ProcessReturnCode::execution_failed);

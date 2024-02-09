@@ -33,6 +33,7 @@
 #include <cpp_utils/utils.hpp>
 
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
+#include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
 
 #include "user_interface/constants.hpp"
 #include "user_interface/arguments_configuration.hpp"
@@ -179,27 +180,17 @@ int main(
         int argc,
         char** argv)
 {
-    // Configuration File path
-    std::string file_path = "";
-
-    // Reload time
-    eprosima::utils::Duration_ms reload_time = 0;
-
-    // Maximum timeout
-    eprosima::utils::Duration_ms timeout = 0;
+    // Initialize CommandlineArgs
+    eprosima::ddsrecorder::yaml::CommandlineArgsRecorder commandline_args;
 
     // Debug options
-    eprosima::utils::LogFilter log_filter;
-    log_filter[eprosima::utils::VerbosityKind::Error].set_value("");
-    log_filter[eprosima::utils::VerbosityKind::Error].set_value("DDSRECORDER|DDSPIPE");
-    log_filter[eprosima::utils::VerbosityKind::Error].set_value("DDSRECORDER");
-
-    eprosima::utils::Fuzzy<eprosima::utils::VerbosityKind> log_verbosity;
-    log_verbosity = eprosima::utils::VerbosityKind::Warning;
+    commandline_args.log_filter[eprosima::utils::VerbosityKind::Error].set_value("");
+    commandline_args.log_filter[eprosima::utils::VerbosityKind::Warning].set_value("DDSRECORDER|DDSPIPE");
+    commandline_args.log_filter[eprosima::utils::VerbosityKind::Info].set_value("DDSRECORDER");
 
     // Parse arguments
     ProcessReturnCode arg_parse_result =
-            parse_arguments(argc, argv, file_path, reload_time, timeout, log_filter, log_verbosity);
+            parse_arguments(argc, argv, commandline_args);
 
     if (arg_parse_result == ProcessReturnCode::help_argument)
     {
@@ -215,26 +206,26 @@ int main(
     }
 
     // Check file is in args, else get the default file
-    if (file_path == "")
+    if (commandline_args.file_path == "")
     {
         if (is_file_accessible(DEFAULT_CONFIGURATION_FILE_NAME, eprosima::utils::FileAccessMode::read))
         {
-            file_path = DEFAULT_CONFIGURATION_FILE_NAME;
+            commandline_args.file_path = DEFAULT_CONFIGURATION_FILE_NAME;
 
             logUser(
                 DDSRECORDER_EXECUTION,
-                "No configuration file given, using default file " << file_path << ".");
+                "No configuration file given, using default file " << commandline_args.file_path << ".");
         }
     }
     else
     {
         // Check file exists and it is readable
         // NOTE: this check is redundant with option parse arg check
-        if (!is_file_accessible(file_path.c_str(), eprosima::utils::FileAccessMode::read))
+        if (!is_file_accessible(commandline_args.file_path.c_str(), eprosima::utils::FileAccessMode::read))
         {
             logError(
                 DDSRECORDER_ARGS,
-                "File '" << file_path << "' does not exist or it is not accessible.");
+                "File '" << commandline_args.file_path << "' does not exist or it is not accessible.");
             return static_cast<int>(ProcessReturnCode::required_argument_failed);
         }
     }
@@ -256,25 +247,21 @@ int main(
             std::make_unique<eprosima::utils::event::SignalEventHandler<eprosima::utils::event::Signal::sigterm>>());    // Add SIGTERM
 
         // If it must be a maximum time, register a periodic handler to finish handlers
-        if (timeout > 0)
+        if (commandline_args.timeout > 0)
         {
             close_handler->register_event_handler<eprosima::utils::event::PeriodicEventHandler>(
                 std::make_unique<eprosima::utils::event::PeriodicEventHandler>(
                     []()
                     {
                         /* Do nothing */ },
-                    timeout));
+                    commandline_args.timeout));
         }
 
         /////
         // DDS Recorder Initialization
 
         // Load configuration from YAML
-        eprosima::ddsrecorder::yaml::RecorderConfiguration configuration(file_path);
-
-        // Set verbosity and filter if unset
-        configuration.ddspipe_configuration.log_configuration.set_if_unset(log_verbosity);
-        configuration.ddspipe_configuration.log_configuration.set_if_unset(log_filter);
+        eprosima::ddsrecorder::yaml::RecorderConfiguration configuration(commandline_args.file_path, &commandline_args);
 
         /////
         // Logging
@@ -386,16 +373,16 @@ int main(
 
                 // Create File Watcher Handler
                 std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;
-                if (file_path != "")
+                if (commandline_args.file_path != "")
                 {
-                    file_watcher_handler = create_filewatcher(recorder, file_path);
+                    file_watcher_handler = create_filewatcher(recorder, commandline_args.file_path);
                 }
 
                 // Create Periodic Handler
                 std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> periodic_handler;
-                if (reload_time > 0 && file_path != "")
+                if (commandline_args.reload_time > 0 && commandline_args.file_path != "")
                 {
-                    periodic_handler = create_periodic_handler(recorder, file_path, reload_time);
+                    periodic_handler = create_periodic_handler(recorder, commandline_args.file_path, commandline_args.reload_time);
                 }
 
                 // Use flag to avoid ugly warning (start/pause an already started/paused instance)
@@ -518,16 +505,16 @@ int main(
 
             // Create File Watcher Handler
             std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;
-            if (file_path != "")
+            if (commandline_args.file_path != "")
             {
-                file_watcher_handler = create_filewatcher(recorder, file_path);
+                file_watcher_handler = create_filewatcher(recorder, commandline_args.file_path);
             }
 
             // Create Periodic Handler
             std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> periodic_handler;
-            if (reload_time > 0 && file_path != "")
+            if (commandline_args.reload_time > 0 && commandline_args.file_path != "")
             {
-                periodic_handler = create_periodic_handler(recorder, file_path, reload_time);
+                periodic_handler = create_periodic_handler(recorder, commandline_args.file_path, commandline_args.reload_time);
             }
 
             // Wait until signal arrives
@@ -541,7 +528,7 @@ int main(
     catch (const eprosima::utils::ConfigurationException& e)
     {
         logError(DDSRECORDER_ERROR,
-                "Error Loading DDS Recorder Configuration from file " << file_path <<
+                "Error Loading DDS Recorder Configuration from file " << commandline_args.file_path <<
                 ". Error message:\n " <<
                 e.what());
         return static_cast<int>(ProcessReturnCode::execution_failed);

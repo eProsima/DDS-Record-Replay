@@ -46,15 +46,29 @@ using namespace eprosima::ddspipe::yaml;
 using namespace eprosima::ddsrecorder::participants;
 
 ReplayerConfiguration::ReplayerConfiguration(
-        const Yaml& yml)
+        const Yaml& yml,
+        const CommandlineArgsReplayer* args /*= nullptr*/)
 {
     load_ddsreplayer_configuration_(yml);
+
+    if (args != nullptr)
+    {
+        ddspipe_configuration.log_configuration.set_if_unset(args->log_verbosity);
+        ddspipe_configuration.log_configuration.set_if_unset(args->log_filter);
+    }
 }
 
 ReplayerConfiguration::ReplayerConfiguration(
-        const std::string& file_path)
+        const std::string& file_path,
+        const CommandlineArgsReplayer* args /*= nullptr*/)
 {
     load_ddsreplayer_configuration_from_file_(file_path);
+
+    if (args != nullptr)
+    {
+        ddspipe_configuration.log_configuration.set_if_unset(args->log_verbosity);
+        ddspipe_configuration.log_configuration.set_if_unset(args->log_filter);
+    }
 }
 
 void ReplayerConfiguration::load_ddsreplayer_configuration_(

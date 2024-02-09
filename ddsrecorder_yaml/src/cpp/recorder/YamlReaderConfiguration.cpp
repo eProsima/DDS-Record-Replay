@@ -43,15 +43,29 @@ using namespace eprosima::ddspipe::participants::types;
 using namespace eprosima::ddspipe::yaml;
 
 RecorderConfiguration::RecorderConfiguration(
-        const Yaml& yml)
+        const Yaml& yml,
+        const CommandlineArgsRecorder* args /*= nullptr*/)
 {
     load_ddsrecorder_configuration_(yml);
+
+    if (args != nullptr)
+    {
+        ddspipe_configuration.log_configuration.set_if_unset(args->log_verbosity);
+        ddspipe_configuration.log_configuration.set_if_unset(args->log_filter);
+    }
 }
 
 RecorderConfiguration::RecorderConfiguration(
-        const std::string& file_path)
+        const std::string& file_path,
+        const CommandlineArgsRecorder* args /*= nullptr*/)
 {
     load_ddsrecorder_configuration_from_file_(file_path);
+
+    if (args != nullptr)
+    {
+        ddspipe_configuration.log_configuration.set_if_unset(args->log_verbosity);
+        ddspipe_configuration.log_configuration.set_if_unset(args->log_filter);
+    }
 }
 
 void RecorderConfiguration::load_ddsrecorder_configuration_(

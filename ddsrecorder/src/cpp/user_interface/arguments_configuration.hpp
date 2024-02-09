@@ -28,6 +28,8 @@
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/types/Fuzzy.hpp>
 
+#include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
+
 #include "ProcessReturnCode.hpp"
 
 namespace eprosima {
@@ -130,11 +132,7 @@ extern const option::Descriptor usage[];
 ProcessReturnCode parse_arguments(
         int argc,
         char** argv,
-        std::string& file_path,
-        utils::Duration_ms& reload_time,
-        utils::Duration_ms& timeout,
-        utils::LogFilter& log_filter,
-        utils::Fuzzy<utils::VerbosityKind>& log_verbosity);
+        yaml::CommandlineArgsRecorder& commandline_args);
 
 //! \c Option to stream serializator
 std::ostream& operator <<(
