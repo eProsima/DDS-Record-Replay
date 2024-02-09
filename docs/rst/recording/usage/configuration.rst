@@ -663,17 +663,17 @@ The type of the logs published is defined as follows:
 Monitor
 ^^^^^^^
 
-``specs`` supports a ``monitor`` **optional** tag to publish inside information from the |ddsrecorder|.
-The monitor can be configured to publish this information on a ``domain``, under a ``topic-name``, once every ``period`` (in milliseconds).
-If the monitor is not enabled, the |ddsrecorder| will not collect or publish any tracking data.
+``specs`` supports a ``monitor`` **optional** tag to publish internal data from the |ddsrecorder|.
+The monitor can be configured to publish this data on a ``domain``, under a ``topic-name``, once every ``period`` (in milliseconds).
+If the monitor is not enabled, the |ddsrecorder| will not collect or publish any data.
 
 .. note::
 
-    The information published is relative to each period.
-    The |ddsrecorder| will reset the counters after publishing the tracked information.
+    The data published is relative to each period.
+    The |ddsrecorder| will reset its tracked data after publishing it.
 
-In particular, the |ddsrecorder| can monitor its internal status and its topic information.
-When monitoring internal errors, the |ddsrecorder| will publish a structure with booleans that represent the status of the |ddsrecorder|.
+In particular, the |ddsrecorder| can monitor its internal status and its topics.
+When monitoring its internal status, the |ddsrecorder| will track different errors of the |ddsrecorder|.
 The type of the data published is defined as follows:
 
 **DdsRecorderMonitoringStatus.idl**
@@ -699,7 +699,7 @@ The type of the data published is defined as follows:
         DdsRecorderMonitoringErrorStatus ddsrecorder_error_status;
     };
 
-When monitoring topic information, the |ddsrecorder| will publish the number of messages lost, received, and the frequency of each topic.
+When monitoring its topics, the |ddsrecorder| will track the number of messages lost, received, and the frequency of each topic.
 The type of the data published is defined as follows:
 
 **MonitoringTopics.idl**
