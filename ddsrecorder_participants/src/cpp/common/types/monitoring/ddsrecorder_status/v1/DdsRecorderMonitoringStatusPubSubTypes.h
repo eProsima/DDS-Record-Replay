@@ -31,7 +31,7 @@
 
 #include "DdsRecorderMonitoringStatus.h"
 
-#include "../../../../../../../../../ddspipe/ddspipe_core/include/ddspipe_core/types/monitoring/status/v1/MonitoringStatusPubSubTypes.h"
+#include "ddspipe_core/types/monitoring/status/v2/MonitoringStatusPubSubTypes.h"
 
 #if !defined(GEN_API_VER) || (GEN_API_VER != 2)
 #error \
