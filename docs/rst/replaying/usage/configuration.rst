@@ -389,6 +389,16 @@ QoS
 
     The :ref:`Topic QoS <replayer_topic_qos>` configured in ``specs`` can be overwritten by the :ref:`Manual Topics <replayer_manual_topics>`.
 
+Logging Configuration
+^^^^^^^^^^^^^^^^^^^^^
+
+The ``specs`` section supports an optional ``logging`` configuration to set up logging via YAML.
+This configuration allows specifying both the Log Verbosity and the Log Filter.
+Log Verbosity determines the severity of the displayed logging messages, while the Log Filter is used to filter messages based on a regex string.
+
+It's important to note that logging configuration via Command-Line is still active and takes precedence over YAML configuration.
+If both methods are used simultaneously to set up logging configuration, the Command-Line configuration will be dominant.
+
 .. _replayer_usage_configuration_general_example:
 
 General Example
@@ -453,3 +463,10 @@ A complete example of all the configurations described on this page can be found
 
       qos:
         max-tx-rate: 20
+
+      logging:
+        verbosity: info
+        filter:
+          error: "DDSREPLAYER"
+          warning: "DDSREPLAYER"
+          info: "DDSPIPE|DDSREPLAYER"
