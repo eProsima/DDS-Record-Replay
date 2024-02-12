@@ -52,11 +52,11 @@ eProsima_user_DllExport size_t calculate_serialized_size(
                                 current_alignment)};
 
 
-        calculated_size += calculator.calculate_member_serialized_size(eprosima::fastcdr::MemberId(0),
-                data.mcap_file_creation_failure(), current_alignment);
+    calculated_size += calculator.calculate_member_serialized_size(eprosima::fastcdr::MemberId(0),
+                    data.mcap_file_creation_failure(), current_alignment);
 
-        calculated_size += calculator.calculate_member_serialized_size(eprosima::fastcdr::MemberId(1),
-                data.disk_full(), current_alignment);
+    calculated_size += calculator.calculate_member_serialized_size(eprosima::fastcdr::MemberId(1),
+                    data.disk_full(), current_alignment);
 
 
     calculated_size += calculator.end_calculate_type_serialized_size(previous_encoding, current_alignment);
@@ -78,7 +78,7 @@ eProsima_user_DllExport void serialize(
     scdr
         << eprosima::fastcdr::MemberId(0) << data.mcap_file_creation_failure()
         << eprosima::fastcdr::MemberId(1) << data.disk_full()
-;
+    ;
     scdr.end_serialize_type(current_state);
 }
 
@@ -95,13 +95,13 @@ eProsima_user_DllExport void deserialize(
                 bool ret_value = true;
                 switch (mid.id)
                 {
-                                        case 0:
-                                                dcdr >> data.mcap_file_creation_failure();
-                                            break;
+                    case 0:
+                        dcdr >> data.mcap_file_creation_failure();
+                        break;
 
-                                        case 1:
-                                                dcdr >> data.disk_full();
-                                            break;
+                    case 1:
+                        dcdr >> data.disk_full();
+                        break;
 
                     default:
                         ret_value = false;
@@ -119,9 +119,6 @@ void serialize_key(
     static_cast<void>(data);
 }
 
-
-
-
 template<>
 eProsima_user_DllExport size_t calculate_serialized_size(
         eprosima::fastcdr::CdrSizeCalculator& calculator,
@@ -138,14 +135,14 @@ eProsima_user_DllExport size_t calculate_serialized_size(
                                 current_alignment)};
 
 
-        calculated_size += calculator.calculate_member_serialized_size(eprosima::fastcdr::MemberId(0),
-                data.error_status(), current_alignment);
+    calculated_size += calculator.calculate_member_serialized_size(eprosima::fastcdr::MemberId(0),
+                    data.error_status(), current_alignment);
 
-        calculated_size += calculator.calculate_member_serialized_size(eprosima::fastcdr::MemberId(1),
-                data.has_errors(), current_alignment);
+    calculated_size += calculator.calculate_member_serialized_size(eprosima::fastcdr::MemberId(1),
+                    data.has_errors(), current_alignment);
 
-        calculated_size += calculator.calculate_member_serialized_size(eprosima::fastcdr::MemberId(2),
-                data.ddsrecorder_error_status(), current_alignment);
+    calculated_size += calculator.calculate_member_serialized_size(eprosima::fastcdr::MemberId(2),
+                    data.ddsrecorder_error_status(), current_alignment);
 
 
     calculated_size += calculator.end_calculate_type_serialized_size(previous_encoding, current_alignment);
@@ -168,7 +165,7 @@ eProsima_user_DllExport void serialize(
         << eprosima::fastcdr::MemberId(0) << data.error_status()
         << eprosima::fastcdr::MemberId(1) << data.has_errors()
         << eprosima::fastcdr::MemberId(2) << data.ddsrecorder_error_status()
-;
+    ;
     scdr.end_serialize_type(current_state);
 }
 
@@ -185,17 +182,17 @@ eProsima_user_DllExport void deserialize(
                 bool ret_value = true;
                 switch (mid.id)
                 {
-                                        case 0:
-                                                dcdr >> data.error_status();
-                                            break;
+                    case 0:
+                        dcdr >> data.error_status();
+                        break;
 
-                                        case 1:
-                                                dcdr >> data.has_errors();
-                                            break;
+                    case 1:
+                        dcdr >> data.has_errors();
+                        break;
 
-                                        case 2:
-                                                dcdr >> data.ddsrecorder_error_status();
-                                            break;
+                    case 2:
+                        dcdr >> data.ddsrecorder_error_status();
+                        break;
 
                     default:
                         ret_value = false;
@@ -212,8 +209,6 @@ void serialize_key(
     static_cast<void>(scdr);
     static_cast<void>(data);
 }
-
-
 
 } // namespace fastcdr
 } // namespace eprosima

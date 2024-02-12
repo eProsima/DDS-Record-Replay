@@ -393,7 +393,8 @@ int main(
                     if (configuration.monitor.status.enabled)
                     {
                         // Initialize the Status Monitor Producer with the DDS Recorder Status
-                        static eprosima::ddsrecorder::participants::DdsRecorderStatusMonitorProducer ddsrecorder_status_producer;
+                        static eprosima::ddsrecorder::participants::DdsRecorderStatusMonitorProducer
+                                ddsrecorder_status_producer;
                         core::StatusMonitorProducer::init_instance(&ddsrecorder_status_producer);
 
                         // Register the Status Monitor Producer in the Monitor

@@ -122,7 +122,6 @@ bool& DdsRecorderMonitoringErrorStatus::mcap_file_creation_failure()
     return m_mcap_file_creation_failure;
 }
 
-
 /*!
  * @brief This function sets a value in member disk_full
  * @param _disk_full New value for member disk_full
@@ -150,9 +149,6 @@ bool& DdsRecorderMonitoringErrorStatus::disk_full()
 {
     return m_disk_full;
 }
-
-
-
 
 DdsRecorderMonitoringStatus::DdsRecorderMonitoringStatus()
     : MonitoringStatus()
@@ -202,9 +198,9 @@ bool DdsRecorderMonitoringStatus::operator ==(
         const DdsRecorderMonitoringStatus& x) const
 {
     if (MonitoringStatus::operator !=(x))
-        {
-            return false;
-        }
+    {
+        return false;
+    }
     return (m_ddsrecorder_error_status == x.m_ddsrecorder_error_status);
 }
 
@@ -251,7 +247,6 @@ DdsRecorderMonitoringErrorStatus& DdsRecorderMonitoringStatus::ddsrecorder_error
 {
     return m_ddsrecorder_error_status;
 }
-
 
 // Include auxiliary functions like for serializing/deserializing.
 #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v1/DdsRecorderMonitoringStatusCdrAux.ipp>
