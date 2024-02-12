@@ -38,7 +38,7 @@
 #include <fastcdr/xcdr/external.hpp>
 #include <fastcdr/xcdr/optional.hpp>
 
-#include "../../../../../../../../../ddspipe/ddspipe_core/include/ddspipe_core/types/monitoring/status/v2/MonitoringStatus.h"
+#include "ddspipe_core/types/monitoring/status/v2/MonitoringStatus.h"
 
 
 #if defined(_WIN32)
