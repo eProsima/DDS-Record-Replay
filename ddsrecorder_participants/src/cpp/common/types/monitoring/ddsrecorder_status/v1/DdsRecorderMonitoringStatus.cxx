@@ -26,7 +26,7 @@ char dummy;
 }  // namespace
 #endif  // _WIN32
 
-#include "DdsRecorderMonitoringStatus.h"
+#include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v1/DdsRecorderMonitoringStatus.h>
 
 #include <fastcdr/Cdr.h>
 
@@ -432,7 +432,3 @@ DdsRecorderMonitoringErrorStatus& DdsRecorderMonitoringStatus::ddsrecorder_error
 {
     return m_ddsrecorder_error_status;
 }
-
-
-
-

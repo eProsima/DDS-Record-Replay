@@ -22,8 +22,8 @@
 
 #include <fastdds/rtps/common/CdrSerialization.hpp>
 
-#include "DdsRecorderMonitoringStatusPubSubTypes.h"
-#include "DdsRecorderMonitoringStatusCdrAux.hpp"
+#include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatusPubSubTypes.h>
+#include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatusCdrAux.hpp>
 
 using SerializedPayload_t = eprosima::fastrtps::rtps::SerializedPayload_t;
 using InstanceHandle_t = eprosima::fastrtps::rtps::InstanceHandle_t;
@@ -408,4 +408,3 @@ bool DdsRecorderMonitoringStatusPubSubType::getKey(
     }
     return true;
 }
-
