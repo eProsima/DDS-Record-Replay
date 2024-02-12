@@ -37,7 +37,7 @@
 #include <ddspipe_core/monitoring/producers/StatusMonitorProducer.hpp>
 #include <ddspipe_core/monitoring/producers/TopicsMonitorProducer.hpp>
 
-// #include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
+#include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
 #include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
@@ -393,8 +393,8 @@ int main(
                     if (configuration.monitor.status.enabled)
                     {
                         // Initialize the Status Monitor Producer with the DDS Recorder Status
-                        // static core::DdsRecorderStatusMonitorProducer ddsrecorder_status_producer;
-                        // core::StatusMonitorProducer::init_instance(&ddsrecorder_status_producer);
+                        static core::DdsRecorderStatusMonitorProducer ddsrecorder_status_producer;
+                        core::StatusMonitorProducer::init_instance(&ddsrecorder_status_producer);
 
                         // Register the Status Monitor Producer to the Monitor
                         auto status_producer = core::StatusMonitorProducer::get_instance();
