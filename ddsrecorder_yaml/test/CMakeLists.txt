@@ -12,4 +12,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO add tests
+###########################
+# Parse Yaml Test #
+###########################
+
+set(TEST_NAME ParseYamlTest)
+
+set(TEST_SOURCES
+        ${PROJECT_SOURCE_DIR}/test/ParseYamlTest.cpp
+    )
+
+set(TEST_LIST
+        is_valid_log_config
+        parse_yaml_log_config
+        parse_correct_log_config_1
+        parse_correct_log_config_2
+        parse_correct_log_config_3
+    )
+
+set(TEST_EXTRA_LIBRARIES
+        yaml-cpp
+        fastcdr
+        fastrtps
+        cpp_utils
+        ddspipe_core
+        ddspipe_participants
+        ddspipe_yaml
+        ddsrecorder_yaml
+    )
+
+add_unittest_executable(
+    "${TEST_NAME}"
+    "${TEST_SOURCES}"
+    "${TEST_LIST}"
+    "${TEST_EXTRA_LIBRARIES}")
