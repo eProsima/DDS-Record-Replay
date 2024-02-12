@@ -23,11 +23,7 @@ set(TEST_SOURCES
     )
 
 set(TEST_LIST
-        is_valid_log_config
-        parse_yaml_log_config
-        parse_correct_log_config_1
-        parse_correct_log_config_2
-        parse_correct_log_config_3
+        parse_correct_log_config_yaml_vs_commandline
     )
 
 set(TEST_EXTRA_LIBRARIES

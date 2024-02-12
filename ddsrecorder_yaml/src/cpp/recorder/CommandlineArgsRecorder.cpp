@@ -21,13 +21,15 @@ namespace yaml {
 CommandlineArgsRecorder::CommandlineArgsRecorder()
     : timeout{0}
 {
-
+    log_filter[utils::VerbosityKind::Info].set_value("DDSRECORDER", utils::FuzzyLevelValues::fuzzy_level_default);
+    log_filter[utils::VerbosityKind::Warning].set_value("DDSRECORDER|DDSPIPE", utils::FuzzyLevelValues::fuzzy_level_default);
+    log_filter[utils::VerbosityKind::Error].set_value("", utils::FuzzyLevelValues::fuzzy_level_default);
 }
 
 bool CommandlineArgsRecorder::is_valid(
         utils::Formatter& error_msg) const noexcept
 {
-    return true;
+    return is_valid(error_msg);
 }
 
 } /* namespace yaml */

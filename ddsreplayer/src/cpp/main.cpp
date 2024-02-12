@@ -113,12 +113,6 @@ int main(
     // Initialize CommandlineArgsReplayer
     eprosima::ddsrecorder::yaml::CommandlineArgsReplayer commandline_args;
 
-    // Debug options
-    eprosima::utils::LogFilter log_filter;
-    commandline_args.log_filter[eprosima::utils::VerbosityKind::Error].set_value("");
-    commandline_args.log_filter[eprosima::utils::VerbosityKind::Warning].set_value("DDSREPLAYER|DDSPIPE");
-    commandline_args.log_filter[eprosima::utils::VerbosityKind::Info].set_value("DDSREPLAYER");
-
     // Parse arguments
     ProcessReturnCode arg_parse_result =
             parse_arguments(argc, argv, commandline_args);

@@ -32,11 +32,11 @@
 #include <cpp_utils/types/Fuzzy.hpp>
 #include <cpp_utils/utils.hpp>
 
-#include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 #include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
+#include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
-#include "user_interface/constants.hpp"
 #include "user_interface/arguments_configuration.hpp"
+#include "user_interface/constants.hpp"
 #include "user_interface/ProcessReturnCode.hpp"
 
 #include "command_receiver/CommandReceiver.hpp"
@@ -182,11 +182,6 @@ int main(
 {
     // Initialize CommandlineArgs
     eprosima::ddsrecorder::yaml::CommandlineArgsRecorder commandline_args;
-
-    // Debug options
-    commandline_args.log_filter[eprosima::utils::VerbosityKind::Error].set_value("");
-    commandline_args.log_filter[eprosima::utils::VerbosityKind::Warning].set_value("DDSRECORDER|DDSPIPE");
-    commandline_args.log_filter[eprosima::utils::VerbosityKind::Info].set_value("DDSRECORDER");
 
     // Parse arguments
     ProcessReturnCode arg_parse_result =

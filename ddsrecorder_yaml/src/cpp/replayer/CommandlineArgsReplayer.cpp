@@ -21,13 +21,15 @@ namespace yaml {
 CommandlineArgsReplayer::CommandlineArgsReplayer()
     : input_file{""}
 {
-
+    log_filter[utils::VerbosityKind::Info].set_value("DDSREPLAYER", utils::FuzzyLevelValues::fuzzy_level_default);
+    log_filter[utils::VerbosityKind::Warning].set_value("DDSREPLAYER|DDSPIPE", utils::FuzzyLevelValues::fuzzy_level_default);
+    log_filter[utils::VerbosityKind::Error].set_value("", utils::FuzzyLevelValues::fuzzy_level_default);
 }
 
 bool CommandlineArgsReplayer::is_valid(
         utils::Formatter& error_msg) const noexcept
 {
-    return true;
+    return is_valid(error_msg);
 }
 
 } /* namespace yaml */
