@@ -22,7 +22,7 @@
 #ifndef _FAST_DDS_GENERATED_DDSRECORDERMONITORINGSTATUS_H_
 #define _FAST_DDS_GENERATED_DDSRECORDERMONITORINGSTATUS_H_
 
-#include "ddspipe_core/types/monitoring/status/v2/MonitoringStatus.h"
+#include "ddspipe_core/types/monitoring/status/v1/MonitoringStatus.h"
 
 #include <fastrtps/utils/fixed_size_string.hpp>
 
