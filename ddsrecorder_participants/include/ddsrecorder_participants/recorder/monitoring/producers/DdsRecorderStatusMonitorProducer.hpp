@@ -22,10 +22,12 @@
 
 #if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
     #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v1/DdsRecorderMonitoringStatus.h>
-    #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v1/DdsRecorderMonitoringStatusPubSubTypes.h>
+    #include \
+    <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v1/DdsRecorderMonitoringStatusPubSubTypes.h>
 #else
     #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatus.h>
-    #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatusPubSubTypes.h>
+    #include \
+    <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatusPubSubTypes.h>
 #endif // if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
 
 
@@ -41,7 +43,8 @@ class DdsRecorderStatusMonitorProducer : public ddspipe::core::StatusMonitorProd
 public:
 
     // TODO
-    void init(const ddspipe::core::MonitorProducerConfiguration& configuration) override;
+    void init(
+            const ddspipe::core::MonitorProducerConfiguration& configuration) override;
 
     // TODO
     void consume() override;
@@ -62,7 +65,9 @@ protected:
     std::vector<ddspipe::core::IMonitorConsumer<DdsRecorderMonitoringStatus>*> consumers_;
 };
 
-std::ostream& operator<<(std::ostream& os, const DdsRecorderMonitoringStatus& data);
+std::ostream& operator <<(
+        std::ostream& os,
+        const DdsRecorderMonitoringStatus& data);
 
 } // namespace participants
 } // namespace ddsrecorder

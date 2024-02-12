@@ -38,16 +38,20 @@ using namespace eprosima::fastcdr::exception;
 
 #include <utility>
 
-namespace helper { namespace internal {
+namespace helper {
+namespace internal {
 
-enum class Size {
+enum class Size
+{
     UInt8,
     UInt16,
     UInt32,
     UInt64,
 };
 
-constexpr Size get_size(int s) {
+constexpr Size get_size(
+        int s)
+{
     return (s <= 8 ) ? Size::UInt8:
            (s <= 16) ? Size::UInt16:
            (s <= 32) ? Size::UInt32: Size::UInt64;
@@ -57,31 +61,36 @@ template<Size s>
 struct FindTypeH;
 
 template<>
-struct FindTypeH<Size::UInt8> {
+struct FindTypeH<Size::UInt8>
+{
     using type = std::uint8_t;
 };
 
 template<>
-struct FindTypeH<Size::UInt16> {
+struct FindTypeH<Size::UInt16>
+{
     using type = std::uint16_t;
 };
 
 template<>
-struct FindTypeH<Size::UInt32> {
+struct FindTypeH<Size::UInt32>
+{
     using type = std::uint32_t;
 };
 
 template<>
-struct FindTypeH<Size::UInt64> {
+struct FindTypeH<Size::UInt64>
+{
     using type = std::uint64_t;
 };
-}
+} // namespace internal
 
 template<int S>
-struct FindType {
+struct FindType
+{
     using type = typename internal::FindTypeH<internal::get_size(S)>::type;
 };
-}
+} // namespace helper
 
 #define MonitoringErrorStatus_max_cdr_typesize 6ULL;
 #define DdsRecorderMonitoringErrorStatus_max_cdr_typesize 6ULL;
@@ -182,7 +191,6 @@ size_t DdsRecorderMonitoringErrorStatus::getCdrSerializedSize(
     return current_alignment - initial_alignment;
 }
 
-
 void DdsRecorderMonitoringErrorStatus::serialize(
         eprosima::fastcdr::Cdr& scdr) const
 {
@@ -203,7 +211,6 @@ void DdsRecorderMonitoringErrorStatus::deserialize(
 
 
 }
-
 
 bool DdsRecorderMonitoringErrorStatus::isKeyDefined()
 {
@@ -244,7 +251,6 @@ bool& DdsRecorderMonitoringErrorStatus::mcap_file_creation_failure()
     return m_mcap_file_creation_failure;
 }
 
-
 /*!
  * @brief This function sets a value in member disk_full
  * @param _disk_full New value for member disk_full
@@ -272,10 +278,6 @@ bool& DdsRecorderMonitoringErrorStatus::disk_full()
 {
     return m_disk_full;
 }
-
-
-
-
 
 DdsRecorderMonitoringStatus::DdsRecorderMonitoringStatus()
     : MonitoringStatus()
@@ -308,7 +310,7 @@ DdsRecorderMonitoringStatus::DdsRecorderMonitoringStatus(
 DdsRecorderMonitoringStatus& DdsRecorderMonitoringStatus::operator =(
         const DdsRecorderMonitoringStatus& x)
 {
-        MonitoringStatus::operator =(x);
+    MonitoringStatus::operator =(x);
 
     m_ddsrecorder_error_status = x.m_ddsrecorder_error_status;
 
@@ -318,7 +320,7 @@ DdsRecorderMonitoringStatus& DdsRecorderMonitoringStatus::operator =(
 DdsRecorderMonitoringStatus& DdsRecorderMonitoringStatus::operator =(
         DdsRecorderMonitoringStatus&& x) noexcept
 {
-        MonitoringStatus::operator =(std::move(x));
+    MonitoringStatus::operator =(std::move(x));
 
     m_ddsrecorder_error_status = std::move(x.m_ddsrecorder_error_status);
 
@@ -328,7 +330,10 @@ DdsRecorderMonitoringStatus& DdsRecorderMonitoringStatus::operator =(
 bool DdsRecorderMonitoringStatus::operator ==(
         const DdsRecorderMonitoringStatus& x) const
 {
-        if (MonitoringStatus::operator !=(x)) return false;
+    if (MonitoringStatus::operator !=(x))
+    {
+        return false;
+    }
 
     return (m_ddsrecorder_error_status == x.m_ddsrecorder_error_status);
 }
@@ -353,19 +358,19 @@ size_t DdsRecorderMonitoringStatus::getCdrSerializedSize(
     (void)data;
     size_t initial_alignment = current_alignment;
 
-        current_alignment += MonitoringStatus::getCdrSerializedSize(data, current_alignment);
+    current_alignment += MonitoringStatus::getCdrSerializedSize(data, current_alignment);
 
-    current_alignment += DdsRecorderMonitoringErrorStatus::getCdrSerializedSize(data.ddsrecorder_error_status(), current_alignment);
+    current_alignment += DdsRecorderMonitoringErrorStatus::getCdrSerializedSize(
+        data.ddsrecorder_error_status(), current_alignment);
 
 
     return current_alignment - initial_alignment;
 }
 
-
 void DdsRecorderMonitoringStatus::serialize(
         eprosima::fastcdr::Cdr& scdr) const
 {
-        MonitoringStatus::serialize(scdr);
+    MonitoringStatus::serialize(scdr);
 
     scdr << m_ddsrecorder_error_status;
 
@@ -374,18 +379,19 @@ void DdsRecorderMonitoringStatus::serialize(
 void DdsRecorderMonitoringStatus::deserialize(
         eprosima::fastcdr::Cdr& dcdr)
 {
-        MonitoringStatus::deserialize(dcdr);
+    MonitoringStatus::deserialize(dcdr);
 
     dcdr >> m_ddsrecorder_error_status;
 
 
 }
 
-
 bool DdsRecorderMonitoringStatus::isKeyDefined()
 {
     if (MonitoringStatus::isKeyDefined())
+    {
         return true;
+    }
 
     return false;
 }
@@ -394,7 +400,7 @@ void DdsRecorderMonitoringStatus::serializeKey(
         eprosima::fastcdr::Cdr& scdr) const
 {
     (void) scdr;
-     MonitoringStatus::serializeKey(scdr);
+    MonitoringStatus::serializeKey(scdr);
 }
 
 /*!
@@ -434,8 +440,5 @@ DdsRecorderMonitoringErrorStatus& DdsRecorderMonitoringStatus::ddsrecorder_error
 {
     return m_ddsrecorder_error_status;
 }
-
-
-
 
 #endif // FASTCDR_VERSION_MAJOR == 1

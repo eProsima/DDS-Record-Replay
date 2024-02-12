@@ -22,7 +22,8 @@ namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
 
-void DdsRecorderStatusMonitorProducer::init(const ddspipe::core::MonitorProducerConfiguration& configuration)
+void DdsRecorderStatusMonitorProducer::init(
+        const ddspipe::core::MonitorProducerConfiguration& configuration)
 {
     // Store whether the producer is enabled
     enabled_ = configuration.enabled;
@@ -40,7 +41,8 @@ void DdsRecorderStatusMonitorProducer::init(const ddspipe::core::MonitorProducer
     fastdds::dds::TypeSupport type(new DdsRecorderMonitoringStatusPubSubType());
 
     // Create the consumers
-    consumers_.push_back(new ddspipe::core::DdsMonitorConsumer<DdsRecorderMonitoringStatus>(configuration.domain.get_value(), configuration.topic_name, type));
+    consumers_.push_back(new ddspipe::core::DdsMonitorConsumer<DdsRecorderMonitoringStatus>(configuration.domain.
+                    get_value(), configuration.topic_name, type));
     consumers_.push_back(new ddspipe::core::StdoutMonitorConsumer<DdsRecorderMonitoringStatus>());
 }
 
@@ -104,21 +106,24 @@ DdsRecorderMonitoringStatus* DdsRecorderStatusMonitorProducer::save_data_() cons
     return data_;
 }
 
-std::ostream& operator<<(std::ostream& os, const DdsRecorderMonitoringStatus& data) {
+std::ostream& operator <<(
+        std::ostream& os,
+        const DdsRecorderMonitoringStatus& data)
+{
     os << "DdsRecorder Monitoring Status: [";
 
     bool is_first_error = true;
 
     auto print_error = [&](const std::string& error)
-    {
-        if (!is_first_error)
-        {
-            os << ", ";
-        }
+            {
+                if (!is_first_error)
+                {
+                    os << ", ";
+                }
 
-        os << error;
-        is_first_error = false;
-    };
+                os << error;
+                is_first_error = false;
+            };
 
     const auto& status = data.ddsrecorder_error_status();
 
