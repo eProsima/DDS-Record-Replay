@@ -700,6 +700,7 @@ The type of the data published is defined as follows:
     };
 
 When monitoring its topics, the |ddsrecorder| will track the number of messages lost, received, and the frequency of each topic.
+It will also track if a topic's type is discovered, if there is a type mismatch, and if there is a QoS mismatch.
 The type of the data published is defined as follows:
 
 **MonitoringTopics.idl**
@@ -717,7 +718,10 @@ The type of the data published is defined as follows:
     struct DdsTopic
     {
         string name;
-        string data_type_name;
+        string type_name;
+        boolean type_discovered;
+        boolean type_mismatch;
+        boolean qos_mismatch;
         sequence<DdsTopicData> data;
     };
 
@@ -732,17 +736,17 @@ The type of the data published is defined as follows:
 
     monitor:
       domain: 10
-      topics:
-        enable: true
-        domain: 11
-        period: 1000
-        topic-name: "DdsRecorderTopics"
-
       status:
         enable: true
-        domain: 12
+        domain: 11
         period: 2000
         topic-name: "DdsRecorderStatus"
+
+      topics:
+        enable: true
+        domain: 12
+        period: 1500
+        topic-name: "DdsRecorderTopics"
 
 .. _recorder_usage_configuration_general_example:
 

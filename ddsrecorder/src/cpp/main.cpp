@@ -393,10 +393,10 @@ int main(
                     if (configuration.monitor.status.enabled)
                     {
                         // Initialize the Status Monitor Producer with the DDS Recorder Status
-                        static core::DdsRecorderStatusMonitorProducer ddsrecorder_status_producer;
+                        static eprosima::ddsrecorder::participants::DdsRecorderStatusMonitorProducer ddsrecorder_status_producer;
                         core::StatusMonitorProducer::init_instance(&ddsrecorder_status_producer);
 
-                        // Register the Status Monitor Producer to the Monitor
+                        // Register the Status Monitor Producer in the Monitor
                         auto status_producer = core::StatusMonitorProducer::get_instance();
                         status_producer->init(configuration.monitor.status);
                         monitor.register_producer(status_producer);
@@ -404,7 +404,7 @@ int main(
 
                     if (configuration.monitor.topics.enabled)
                     {
-                        // Register the Topics Monitor Producer to the Monitor
+                        // Register the Topics Monitor Producer in the Monitor
                         auto topics_producer = core::TopicsMonitorProducer::get_instance();
                         topics_producer->init(configuration.monitor.topics);
                         monitor.register_producer(topics_producer);
