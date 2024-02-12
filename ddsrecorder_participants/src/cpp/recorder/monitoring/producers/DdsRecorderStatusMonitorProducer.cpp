@@ -19,11 +19,20 @@
 #include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
 
 namespace eprosima {
-namespace ddspipe {
-namespace core {
+namespace ddsrecorder {
+namespace participants {
 
-void DdsRecorderStatusMonitorProducer::init(const MonitorProducerConfiguration& configuration)
+void DdsRecorderStatusMonitorProducer::init(const ddspipe::core::MonitorProducerConfiguration& configuration)
 {
+    // Store whether the producer is enabled
+    enabled_ = configuration.enabled;
+
+    if (!enabled_)
+    {
+        // Don't register the consumers if the producer is not enabled
+        return;
+    }
+
     // Store the period so it can be used by the Monitor
     period = configuration.period;
 
@@ -31,12 +40,18 @@ void DdsRecorderStatusMonitorProducer::init(const MonitorProducerConfiguration& 
     fastdds::dds::TypeSupport type(new DdsRecorderMonitoringStatusPubSubType());
 
     // Create the consumers
-    consumers_.push_back(new DdsMonitorConsumer<DdsRecorderMonitoringStatus>(configuration.domain.get_value(), configuration.topic_name, type));
-    consumers_.push_back(new StdoutMonitorConsumer<DdsRecorderMonitoringStatus>());
+    consumers_.push_back(new ddspipe::core::DdsMonitorConsumer<DdsRecorderMonitoringStatus>(configuration.domain.get_value(), configuration.topic_name, type));
+    consumers_.push_back(new ddspipe::core::StdoutMonitorConsumer<DdsRecorderMonitoringStatus>());
 }
 
 void DdsRecorderStatusMonitorProducer::consume()
 {
+    if (!enabled_)
+    {
+        // Don't consume if the producer is not enabled
+        return;
+    }
+
     const auto data = save_data_();
 
     for (auto consumer : consumers_)
@@ -48,6 +63,12 @@ void DdsRecorderStatusMonitorProducer::consume()
 void DdsRecorderStatusMonitorProducer::add_error_to_status(
         const std::string& error)
 {
+    if (!enabled_)
+    {
+        // Don't save the data if the producer is not enabled
+        return;
+    }
+
     // Take the lock to prevent:
     //      1. Changing the data while it's being saved.
     //      2. Simultaneous calls to add_error_to_status.
@@ -126,6 +147,6 @@ std::ostream& operator<<(std::ostream& os, const DdsRecorderMonitoringStatus& da
     return os;
 }
 
-} //namespace core
-} //namespace ddspipe
+} //namespace participants
+} //namespace ddsrecorder
 } //namespace eprosima

@@ -18,7 +18,6 @@
 
 #include <ddspipe_core/configuration/MonitorProducerConfiguration.hpp>
 #include <ddspipe_core/monitoring/consumers/IMonitorConsumer.hpp>
-#include <ddspipe_core/monitoring/producers/IMonitorProducer.hpp>
 #include <ddspipe_core/monitoring/producers/StatusMonitorProducer.hpp>
 
 #if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
@@ -29,23 +28,20 @@
     #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatusPubSubTypes.h>
 #endif // if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
 
-// Monitoring API:
-
-// DDSPIPE MONITOR MACROS
 
 namespace eprosima {
-namespace ddspipe {
-namespace core {
+namespace ddsrecorder {
+namespace participants {
 
 /**
  * TODO
  */
-class DdsRecorderStatusMonitorProducer : public StatusMonitorProducer
+class DdsRecorderStatusMonitorProducer : public ddspipe::core::StatusMonitorProducer
 {
 public:
 
     // TODO
-    void init(const MonitorProducerConfiguration& configuration) override;
+    void init(const ddspipe::core::MonitorProducerConfiguration& configuration) override;
 
     // TODO
     void consume() override;
@@ -63,11 +59,11 @@ protected:
     DdsRecorderMonitoringStatus* data_ = new DdsRecorderMonitoringStatus();
 
     // TODO
-    std::vector<IMonitorConsumer<DdsRecorderMonitoringStatus>*> consumers_;
+    std::vector<ddspipe::core::IMonitorConsumer<DdsRecorderMonitoringStatus>*> consumers_;
 };
 
 std::ostream& operator<<(std::ostream& os, const DdsRecorderMonitoringStatus& data);
 
-} // namespace core
-} // namespace ddspipe
+} // namespace participants
+} // namespace ddsrecorder
 } // namespace eprosima
