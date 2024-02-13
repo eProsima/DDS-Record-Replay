@@ -38,7 +38,6 @@
 #include <ddspipe_core/monitoring/producers/TopicsMonitorProducer.hpp>
 
 #include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
-#include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
 #include "user_interface/arguments_configuration.hpp"
