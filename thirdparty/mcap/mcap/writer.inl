@@ -7,6 +7,8 @@
 #include <zstd.h>
 #include <zstd_errors.h>
 
+#include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
+
 namespace mcap {
 
 // IWritable ///////////////////////////////////////////////////////////////////

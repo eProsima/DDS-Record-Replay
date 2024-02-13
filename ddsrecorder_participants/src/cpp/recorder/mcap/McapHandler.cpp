@@ -50,8 +50,8 @@
 #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
 
 #include <ddsrecorder_participants/constants.hpp>
-
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
+#include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -499,6 +499,8 @@ void McapHandler::open_file_nts_()
     auto status = mcap_writer_.open(tmp_filename.c_str(), configuration_.mcap_writer_options);
     if (!status.ok())
     {
+        monitor_error("MCAP_FILE_CREATION_FAILURE");
+
         throw utils::InitializationException(
                   STR_ENTRY << "Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
     }
