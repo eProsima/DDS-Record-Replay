@@ -62,7 +62,7 @@ protected:
     DdsRecorderMonitoringStatus* data_ = new DdsRecorderMonitoringStatus();
 
     // TODO
-    std::vector<ddspipe::core::IMonitorConsumer<DdsRecorderMonitoringStatus>*> consumers_;
+    std::vector<std::unique_ptr<ddspipe::core::IMonitorConsumer<DdsRecorderMonitoringStatus>>> consumers_;
 };
 
 std::ostream& operator <<(
