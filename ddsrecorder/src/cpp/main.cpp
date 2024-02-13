@@ -289,6 +289,30 @@ int main(
 
         logUser(DDSRECORDER_EXECUTION, "DDS Recorder running.");
 
+        // Monitoring
+        core::Monitor monitor;
+
+        if (configuration.monitor.status.enabled)
+        {
+            // Initialize the Status Monitor Producer with the DDS Recorder Status
+            static eprosima::ddsrecorder::participants::DdsRecorderStatusMonitorProducer
+                    ddsrecorder_status_producer;
+            core::StatusMonitorProducer::init_instance(&ddsrecorder_status_producer);
+
+            // Register the Status Monitor Producer
+            auto status_producer = core::StatusMonitorProducer::get_instance();
+            status_producer->init(configuration.monitor.status);
+            monitor.register_producer(status_producer);
+        }
+
+        if (configuration.monitor.topics.enabled)
+        {
+            // Register the Topics Monitor Producer
+            auto topics_producer = core::TopicsMonitorProducer::get_instance();
+            topics_producer->init(configuration.monitor.topics);
+            monitor.register_producer(topics_producer);
+        }
+
         if (configuration.enable_remote_controller)
         {
             logUser(DDSRECORDER_EXECUTION, "Waiting for instructions...");
@@ -385,32 +409,6 @@ int main(
                 // Reload YAML configuration file, in case it changed during STOPPED state
                 // NOTE: Changes to all (but controller specific) recorder configuration options are taken into account
                 configuration = eprosima::ddsrecorder::yaml::RecorderConfiguration(file_path);
-
-                // Monitoring Topics
-                {
-                    static core::Monitor monitor;
-
-                    if (configuration.monitor.status.enabled)
-                    {
-                        // Initialize the Status Monitor Producer with the DDS Recorder Status
-                        static eprosima::ddsrecorder::participants::DdsRecorderStatusMonitorProducer
-                                ddsrecorder_status_producer;
-                        core::StatusMonitorProducer::init_instance(&ddsrecorder_status_producer);
-
-                        // Register the Status Monitor Producer in the Monitor
-                        auto status_producer = core::StatusMonitorProducer::get_instance();
-                        status_producer->init(configuration.monitor.status);
-                        monitor.register_producer(status_producer);
-                    }
-
-                    if (configuration.monitor.topics.enabled)
-                    {
-                        // Register the Topics Monitor Producer in the Monitor
-                        auto topics_producer = core::TopicsMonitorProducer::get_instance();
-                        topics_producer->init(configuration.monitor.topics);
-                        monitor.register_producer(topics_producer);
-                    }
-                }
 
                 // Create DDS Recorder
                 auto recorder = std::make_unique<DdsRecorder>(configuration, initial_state);
