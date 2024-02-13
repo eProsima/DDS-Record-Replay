@@ -41,9 +41,9 @@ void DdsRecorderStatusMonitorProducer::init(
     fastdds::dds::TypeSupport type(new DdsRecorderMonitoringStatusPubSubType());
 
     // Create the consumers
-    consumers_.push_back(new ddspipe::core::DdsMonitorConsumer<DdsRecorderMonitoringStatus>(configuration.domain.
-                    get_value(), configuration.topic_name, type));
-    consumers_.push_back(new ddspipe::core::StdoutMonitorConsumer<DdsRecorderMonitoringStatus>());
+    consumers_.push_back(std::make_unique<ddspipe::core::DdsMonitorConsumer<DdsRecorderMonitoringStatus>>(
+                configuration.domain.get_value(), configuration.topic_name, type));
+    consumers_.push_back(std::make_unique<ddspipe::core::StdoutMonitorConsumer<DdsRecorderMonitoringStatus>>());
 }
 
 void DdsRecorderStatusMonitorProducer::consume()
@@ -56,7 +56,7 @@ void DdsRecorderStatusMonitorProducer::consume()
 
     const auto data = save_data_();
 
-    for (auto consumer : consumers_)
+    for (auto& consumer : consumers_)
     {
         consumer->consume(data);
     }
