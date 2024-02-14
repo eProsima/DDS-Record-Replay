@@ -565,11 +565,11 @@ Logging Configuration
 ^^^^^^^^^^^^^^^^^^^^^
 
 The ``specs`` section supports an optional ``logging`` configuration to set up logging via YAML.
-This configuration allows specifying both the Log Verbosity and the Log Filter.
-Log Verbosity determines the severity of the displayed logging messages, while the Log Filter is used to filter messages based on a regex string.
+Under the logging tag, users can configure the types of logs to display (errors, warnings, or infos) and filter the logs (with a regex) based on their content and category.
 
-It's important to note that logging configuration via Command-Line is still active and takes precedence over YAML configuration.
-If both methods are used simultaneously to set up logging configuration, the Command-Line configuration will be dominant.
+.. note::
+
+    Logging configuration via Command-Line is still active and takes precedence over YAML configuration when both methods are used simultaneously.
 
 .. _recorder_usage_configuration_general_example:
 
