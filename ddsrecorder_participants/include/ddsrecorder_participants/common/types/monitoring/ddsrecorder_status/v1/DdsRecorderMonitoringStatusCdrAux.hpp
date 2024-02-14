@@ -22,7 +22,7 @@
 #ifndef _FAST_DDS_GENERATED_DDSRECORDERMONITORINGSTATUSCDRAUX_HPP_
 #define _FAST_DDS_GENERATED_DDSRECORDERMONITORINGSTATUSCDRAUX_HPP_
 
-#include "DdsRecorderMonitoringStatus.h"
+#include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v1/DdsRecorderMonitoringStatus.h>
 
 constexpr uint32_t DdsRecorderMonitoringErrorStatus_max_cdr_typesize {6UL};
 constexpr uint32_t DdsRecorderMonitoringErrorStatus_max_key_cdr_typesize {0UL};
@@ -55,4 +55,3 @@ eProsima_user_DllExport void serialize_key(
 } // namespace eprosima
 
 #endif // _FAST_DDS_GENERATED_DDSRECORDERMONITORINGSTATUSCDRAUX_HPP_
-
