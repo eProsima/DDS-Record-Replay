@@ -29,7 +29,7 @@
 #include <fastdds/rtps/common/SerializedPayload.h>
 #include <fastrtps/utils/md5.h>
 
-#include "DdsRecorderMonitoringStatus.h"
+#include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatus.h>
 
 #include "ddspipe_core/types/monitoring/status/v2/MonitoringStatusPubSubTypes.h"
 
@@ -220,4 +220,3 @@ public:
 };
 
 #endif // _FAST_DDS_GENERATED_DDSRECORDERMONITORINGSTATUS_PUBSUBTYPES_H_
-
