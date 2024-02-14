@@ -46,30 +46,19 @@ RecorderConfiguration::RecorderConfiguration(
         const Yaml& yml,
         const CommandlineArgsRecorder* args /*= nullptr*/)
 {
-    load_ddsrecorder_configuration_(yml);
-
-    if (args != nullptr)
-    {
-        ddspipe_configuration.log_configuration.set_if_unset(args->log_verbosity);
-        ddspipe_configuration.log_configuration.set_if_unset(args->log_filter);
-    }
+    load_ddsrecorder_configuration_(yml, args);
 }
 
 RecorderConfiguration::RecorderConfiguration(
         const std::string& file_path,
         const CommandlineArgsRecorder* args /*= nullptr*/)
 {
-    load_ddsrecorder_configuration_from_file_(file_path);
-
-    if (args != nullptr)
-    {
-        ddspipe_configuration.log_configuration.set_if_unset(args->log_verbosity);
-        ddspipe_configuration.log_configuration.set_if_unset(args->log_filter);
-    }
+    load_ddsrecorder_configuration_from_file_(file_path, args);
 }
 
 void RecorderConfiguration::load_ddsrecorder_configuration_(
-        const Yaml& yml)
+        const Yaml& yml,
+        const CommandlineArgsRecorder* args)
 {
     try
     {
@@ -163,6 +152,12 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
     {
         throw eprosima::utils::ConfigurationException(
                   utils::Formatter() << "Error loading DDS Recorder configuration from yaml:\n " << e.what());
+    }
+
+    if (args != nullptr)
+    {
+        ddspipe_configuration.log_configuration.set(args->log_verbosity);
+        ddspipe_configuration.log_configuration.set(args->log_filter);
     }
 }
 
@@ -418,7 +413,8 @@ void RecorderConfiguration::load_dds_configuration_(
 }
 
 void RecorderConfiguration::load_ddsrecorder_configuration_from_file_(
-        const std::string& file_path)
+        const std::string& file_path,
+        const CommandlineArgsRecorder* args)
 {
     Yaml yml;
 
@@ -437,7 +433,7 @@ void RecorderConfiguration::load_ddsrecorder_configuration_from_file_(
                       "> :\n " << e.what());
     }
 
-    RecorderConfiguration::load_ddsrecorder_configuration_(yml);
+    RecorderConfiguration::load_ddsrecorder_configuration_(yml, args);
 }
 
 } /* namespace yaml */

@@ -43,14 +43,17 @@ struct CommandlineArgsRecorder: public ddspipe::core::CommandlineArgs
      * @brief \c is_valid method.
      */
     bool is_valid(
-            utils::Formatter& error_msg) const noexcept;
+            utils::Formatter& error_msg) const noexcept override;
 
     /////////////////////////
     // VARIABLES
     /////////////////////////
 
     // Maximum timeout
-    utils::Duration_ms timeout;
+    utils::Duration_ms timeout{0};
+
+    // Verbosity level for logging
+    utils::Fuzzy<utils::VerbosityKind> log_verbosity{utils::VerbosityKind::Warning, utils::FuzzyLevelValues::fuzzy_level_fuzzy};
 };
 
 } /* namespace yaml */

@@ -23,7 +23,6 @@
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
 using namespace eprosima;
-// using namespace eprosima::ddsrecorder;
 using namespace eprosima::ddsrecorder::yaml;
 
 /**
@@ -54,6 +53,9 @@ TEST(ParseYamlTest, parse_correct_log_config_yaml_vs_commandline)
     // Load configuration from YAML
     RecorderConfiguration configuration(yml, &commandline_args);
 
+    utils::Formatter error_msg;
+
+    ASSERT_TRUE(configuration.ddspipe_configuration.log_configuration.is_valid(error_msg));
     ASSERT_EQ(configuration.ddspipe_configuration.log_configuration.verbosity.get_value(), utils::VerbosityKind::Info);
     ASSERT_EQ(configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Error].get_value(), "");
     ASSERT_EQ(configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Warning].get_value(), "DDSRECORDER|DDSPIPE|DEBUG");

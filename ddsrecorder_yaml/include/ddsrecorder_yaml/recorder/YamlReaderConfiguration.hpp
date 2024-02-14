@@ -95,7 +95,8 @@ public:
 protected:
 
     void load_ddsrecorder_configuration_(
-            const Yaml& yml);
+            const Yaml& yml,
+            const CommandlineArgsRecorder* args);
 
     void load_recorder_configuration_(
             const Yaml& yml,
@@ -114,7 +115,8 @@ protected:
             const ddspipe::yaml::YamlReaderVersion& version);
 
     void load_ddsrecorder_configuration_from_file_(
-            const std::string& file_path);
+            const std::string& file_path,
+            const CommandlineArgsRecorder* args);
 };
 
 } /* namespace yaml */

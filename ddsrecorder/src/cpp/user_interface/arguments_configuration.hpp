@@ -128,7 +128,6 @@ extern const option::Descriptor usage[];
  * @return \c HELP_ARGUMENT if arguments help given
  * @return \c REQUIRED_ARGUMENT_FAILED if required arguments not given
  */
-
 ProcessReturnCode parse_arguments(
         int argc,
         char** argv,

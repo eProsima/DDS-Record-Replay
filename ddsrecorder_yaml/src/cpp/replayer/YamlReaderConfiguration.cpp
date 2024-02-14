@@ -49,30 +49,19 @@ ReplayerConfiguration::ReplayerConfiguration(
         const Yaml& yml,
         const CommandlineArgsReplayer* args /*= nullptr*/)
 {
-    load_ddsreplayer_configuration_(yml);
-
-    if (args != nullptr)
-    {
-        ddspipe_configuration.log_configuration.set_if_unset(args->log_verbosity);
-        ddspipe_configuration.log_configuration.set_if_unset(args->log_filter);
-    }
+    load_ddsreplayer_configuration_(yml, args);
 }
 
 ReplayerConfiguration::ReplayerConfiguration(
         const std::string& file_path,
         const CommandlineArgsReplayer* args /*= nullptr*/)
 {
-    load_ddsreplayer_configuration_from_file_(file_path);
-
-    if (args != nullptr)
-    {
-        ddspipe_configuration.log_configuration.set_if_unset(args->log_verbosity);
-        ddspipe_configuration.log_configuration.set_if_unset(args->log_filter);
-    }
+    load_ddsreplayer_configuration_from_file_(file_path, args);
 }
 
 void ReplayerConfiguration::load_ddsreplayer_configuration_(
-        const Yaml& yml)
+        const Yaml& yml,
+        const CommandlineArgsReplayer* args)
 {
     try
     {
@@ -155,6 +144,12 @@ void ReplayerConfiguration::load_ddsreplayer_configuration_(
     {
         throw eprosima::utils::ConfigurationException(
                   utils::Formatter() << "Error loading DDS Replayer configuration from yaml:\n " << e.what());
+    }
+
+    if (args != nullptr)
+    {
+        ddspipe_configuration.log_configuration.set(args->log_verbosity);
+        ddspipe_configuration.log_configuration.set(args->log_filter);
     }
 }
 
@@ -315,7 +310,8 @@ void ReplayerConfiguration::load_dds_configuration_(
 }
 
 void ReplayerConfiguration::load_ddsreplayer_configuration_from_file_(
-        const std::string& file_path)
+        const std::string& file_path,
+        const CommandlineArgsReplayer* args)
 {
     Yaml yml;
 
@@ -334,7 +330,7 @@ void ReplayerConfiguration::load_ddsreplayer_configuration_from_file_(
                       "> :\n " << e.what());
     }
 
-    ReplayerConfiguration::load_ddsreplayer_configuration_(yml);
+    ReplayerConfiguration::load_ddsreplayer_configuration_(yml, args);
 }
 
 } /* namespace yaml */

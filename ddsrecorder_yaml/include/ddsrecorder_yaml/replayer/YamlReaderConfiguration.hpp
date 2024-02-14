@@ -79,7 +79,8 @@ public:
 protected:
 
     void load_ddsreplayer_configuration_(
-            const Yaml& yml);
+            const Yaml& yml,
+            const CommandlineArgsReplayer* args);
 
     void load_replay_configuration_(
             const Yaml& yml,
@@ -94,7 +95,8 @@ protected:
             const ddspipe::yaml::YamlReaderVersion& version);
 
     void load_ddsreplayer_configuration_from_file_(
-            const std::string& file_path);
+            const std::string& file_path,
+            const CommandlineArgsReplayer* args);
 };
 
 } /* namespace yaml */

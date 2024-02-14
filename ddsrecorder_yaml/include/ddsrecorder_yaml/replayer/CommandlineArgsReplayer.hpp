@@ -42,14 +42,17 @@ struct CommandlineArgsReplayer: public ddspipe::core::CommandlineArgs
      * @brief \c is_valid method.
      */
     bool is_valid(
-            utils::Formatter& error_msg) const noexcept;
+            utils::Formatter& error_msg) const noexcept override;
 
     /////////////////////////
     // VARIABLES
     /////////////////////////
 
     // Input file path
-    std::string input_file;
+    std::string input_file{""};
+
+    // Verbosity level for logging
+    utils::Fuzzy<utils::VerbosityKind> log_verbosity{utils::VerbosityKind::Warning, utils::FuzzyLevelValues::fuzzy_level_fuzzy};
 };
 
 } /* namespace yaml */
