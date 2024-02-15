@@ -32,8 +32,12 @@
 #include <cpp_utils/types/Fuzzy.hpp>
 #include <cpp_utils/utils.hpp>
 
+#include <ddspipe_core/logging/DdsLogConsumer.hpp>
+
 #include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
+
+#include <ddsrecorder_participants/common/types/logging/DdsRecorderLogEntry.h>
 
 #include "user_interface/arguments_configuration.hpp"
 #include "user_interface/constants.hpp"
@@ -265,9 +269,19 @@ int main(
             eprosima::utils::Log::ClearConsumers();
             eprosima::utils::Log::SetVerbosity(configuration.ddspipe_configuration.log_configuration.verbosity);
 
-            eprosima::utils::LogConfiguration log_config = configuration.ddspipe_configuration.log_configuration;
+            // Stdout Log Consumer
             eprosima::utils::Log::RegisterConsumer(
-                std::make_unique<eprosima::utils::CustomStdLogConsumer>(&log_config));
+                std::make_unique<eprosima::utils::CustomStdLogConsumer>(configuration.ddspipe_configuration.log_configuration));
+
+            // DDS Log Consumer
+            auto consumer = std::make_unique<eprosima::ddspipe::core::DdsLogConsumer>(
+                configuration.ddspipe_configuration.log_configuration);
+
+            // Add DdsRecorder specific events
+            consumer->add_event("FAIL_MCAP_CREATION", FAIL_MCAP_CREATION);
+            consumer->add_event("FAIL_MCAP_WRITE", FAIL_MCAP_WRITE);
+
+            eprosima::utils::Log::RegisterConsumer(std::move(consumer));
         }
 
         logUser(DDSRECORDER_EXECUTION, "DDS Recorder running.");
