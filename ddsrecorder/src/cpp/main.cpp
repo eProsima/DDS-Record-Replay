@@ -37,7 +37,11 @@
 #include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
-#include <ddsrecorder_participants/common/types/logging/DdsRecorderLogEntry.h>
+#if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
+    #include <ddsrecorder_participants/common/types/logging/v1/DdsRecorderLogEntry.h>
+#else
+    #include <ddsrecorder_participants/common/types/logging/v2/DdsRecorderLogEntry.h>
+#endif // if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
 
 #include "user_interface/arguments_configuration.hpp"
 #include "user_interface/constants.hpp"
@@ -270,18 +274,24 @@ int main(
             eprosima::utils::Log::SetVerbosity(configuration.ddspipe_configuration.log_configuration.verbosity);
 
             // Stdout Log Consumer
-            eprosima::utils::Log::RegisterConsumer(
-                std::make_unique<eprosima::utils::CustomStdLogConsumer>(configuration.ddspipe_configuration.log_configuration));
+            if (configuration.ddspipe_configuration.log_configuration.stdout_enable)
+            {
+                eprosima::utils::Log::RegisterConsumer(
+                    std::make_unique<eprosima::utils::CustomStdLogConsumer>(&configuration.ddspipe_configuration.log_configuration));
+            }
 
             // DDS Log Consumer
-            auto consumer = std::make_unique<eprosima::ddspipe::core::DdsLogConsumer>(
-                configuration.ddspipe_configuration.log_configuration);
+            if (configuration.ddspipe_configuration.log_configuration.publish.enable)
+            {
+                auto consumer = std::make_unique<eprosima::ddspipe::core::DdsLogConsumer>(
+                    configuration.ddspipe_configuration.log_configuration);
 
-            // Add DdsRecorder specific events
-            consumer->add_event("FAIL_MCAP_CREATION", FAIL_MCAP_CREATION);
-            consumer->add_event("FAIL_MCAP_WRITE", FAIL_MCAP_WRITE);
+                // Add DdsRecorder specific events
+                consumer->add_event("FAIL_MCAP_CREATION", FAIL_MCAP_CREATION);
+                consumer->add_event("FAIL_MCAP_WRITE", FAIL_MCAP_WRITE);
 
-            eprosima::utils::Log::RegisterConsumer(std::move(consumer));
+                eprosima::utils::Log::RegisterConsumer(std::move(consumer));
+            }
         }
 
         logUser(DDSRECORDER_EXECUTION, "DDS Recorder running.");
