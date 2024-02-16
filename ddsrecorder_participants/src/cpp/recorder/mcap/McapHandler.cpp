@@ -19,6 +19,7 @@
 #define MCAP_IMPLEMENTATION  // Define this in exactly one .cpp file
 
 #include <cstdio>
+#include <filesystem>
 #include <mcap/reader.hpp>
 
 #include <yaml-cpp/yaml.h>
@@ -517,19 +518,44 @@ mcap::Timestamp McapHandler::now()
 
 void McapHandler::open_file_nts_()
 {
-    // Generate filename with current timestamp if applies
+    // Update the file id
+    mcap_file_id_ += 1;
+    mcap_file_id_ %= configuration_.max_files;
+
+    if (mcap_file_id_to_filename_.count(mcap_file_id_))
+    {
+        std::filesystem::remove(mcap_file_id_to_filename_[mcap_file_id_]);
+    }
+
+    // Reset file size
+    mcap_file_size_ = 0;
+
+    // Generate the filename
+    mcap_filename_ = configuration_.mcap_output_settings.output_filepath + "/";
+
     if (configuration_.mcap_output_settings.prepend_timestamp)
     {
-        mcap_filename_ = configuration_.mcap_output_settings.output_filepath + "/" + utils::timestamp_to_string(
+        // Include the timestamp in the filename
+        const auto timestamp = utils::timestamp_to_string(
             utils::now(), configuration_.mcap_output_settings.output_timestamp_format,
-            configuration_.mcap_output_settings.output_local_timestamp) + "_" +
-                configuration_.mcap_output_settings.output_filename  + ".mcap";
+            configuration_.mcap_output_settings.output_local_timestamp);
+
+        mcap_filename_ = timestamp + "_";
     }
-    else
+
+    mcap_filename_ += configuration_.mcap_output_settings.output_filename;
+
+    if (configuration_.max_files > 1)
     {
-        mcap_filename_ = configuration_.mcap_output_settings.output_filepath + "/" +
-                configuration_.mcap_output_settings.output_filename;
+        // Include the file id in the filename
+        mcap_filename_ += "~" + std::to_string(mcap_file_id_);
     }
+
+    mcap_filename_ += ".mcap";
+
+    mcap_file_id_to_filename_[mcap_file_id_] = mcap_filename_;
+
+    std::cout << "OPENING " << mcap_filename_ << std::endl;
 
     // Append temporal suffix
     std::string tmp_filename = tmp_filename_(mcap_filename_);
@@ -635,14 +661,16 @@ void McapHandler::add_data_nts_(
 void McapHandler::write_message_nts_(
         const Message& msg)
 {
-    mcap::Status status;
-    status = mcap_writer_.write(msg);
+    auto status = mcap_writer_.write(msg);
+
     if (!status.ok())
     {
         throw utils::InconsistencyException(
                   STR_ENTRY << "FAIL_MCAP_WRITE | Error writting in MCAP, error message: " << status.message
                   );
     }
+
+    mcap_file_size_ += msg.dataSize;
 }
 
 void McapHandler::add_to_pending_nts_(

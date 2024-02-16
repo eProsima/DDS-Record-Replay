@@ -101,6 +101,12 @@ struct McapHandlerConfiguration
 
     //! Whether to generate schemas as OMG IDL or ROS2 msg
     bool ros2_types;
+
+    //! TODO
+    int max_file_size{3000};
+
+    //! TODO
+    int max_files{3};
 };
 
 } /* namespace participants */
