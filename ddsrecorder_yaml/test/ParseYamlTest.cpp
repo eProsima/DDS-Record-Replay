@@ -26,10 +26,14 @@ using namespace eprosima;
 using namespace eprosima::ddsrecorder::yaml;
 
 /**
- * Check RecorderConfiguration.
+ * Check RecorderConfiguration structure creation.
  *
  * CASES:
  *  Check if chooses correctly log configuration when parsing from terminal and from YAML.
+ *  In this case, it checks that:
+ *    - The error filter is the one configured through the YAML
+ *    - The warning filter is the one configured through the Command-Line
+ *    - The info filter is the default (DDSRECORDER)
  */
 TEST(ParseYamlTest, parse_correct_log_config_yaml_vs_commandline)
 {
@@ -44,8 +48,8 @@ TEST(ParseYamlTest, parse_correct_log_config_yaml_vs_commandline)
               logging:
                 verbosity: info
                 filter:
+                  error: "DEBUG"
                   warning: "DDSRECORDER"
-                  info: "DDSRECORDER|DEBUG"
         )";
 
     Yaml yml = YAML::Load(yml_str);
@@ -57,9 +61,9 @@ TEST(ParseYamlTest, parse_correct_log_config_yaml_vs_commandline)
 
     ASSERT_TRUE(configuration.ddspipe_configuration.log_configuration.is_valid(error_msg));
     ASSERT_EQ(configuration.ddspipe_configuration.log_configuration.verbosity.get_value(), utils::VerbosityKind::Info);
-    ASSERT_EQ(configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Error].get_value(), "");
+    ASSERT_EQ(configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Error].get_value(), "DEBUG");
     ASSERT_EQ(configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Warning].get_value(), "DDSRECORDER|DDSPIPE|DEBUG");
-    ASSERT_EQ(configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Info].get_value(), "DDSRECORDER|DEBUG");
+    ASSERT_EQ(configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Info].get_value(), "DDSRECORDER");
 }
 
 int main(
