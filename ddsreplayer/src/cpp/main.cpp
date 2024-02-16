@@ -183,8 +183,10 @@ int main(
             // Remove every consumer
             eprosima::utils::Log::ClearConsumers();
             eprosima::utils::Log::SetVerbosity(configuration.ddspipe_configuration.log_configuration.verbosity);
+
+            eprosima::utils::LogConfiguration log_config = configuration.ddspipe_configuration.log_configuration;
             eprosima::utils::Log::RegisterConsumer(
-                std::make_unique<eprosima::utils::CustomStdLogConsumer>(configuration.ddspipe_configuration.log_configuration));
+                std::make_unique<eprosima::utils::CustomStdLogConsumer>(&log_config));
         }
 
 

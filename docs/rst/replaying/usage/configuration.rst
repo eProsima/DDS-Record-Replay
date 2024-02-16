@@ -389,15 +389,41 @@ QoS
 
     The :ref:`Topic QoS <replayer_topic_qos>` configured in ``specs`` can be overwritten by the :ref:`Manual Topics <replayer_manual_topics>`.
 
-Logging Configuration
-^^^^^^^^^^^^^^^^^^^^^
+.. _replayer_specs_logging:
 
-The ``specs`` section supports an optional ``logging`` configuration to set up logging via YAML.
-This configuration allows specifying both the Log Verbosity and the Log Filter.
-Log Verbosity determines the severity of the displayed logging messages, while the Log Filter is used to filter messages based on a regex string.
+Logging
+^^^^^^^
 
-It's important to note that logging configuration via Command-Line is still active and takes precedence over YAML configuration.
-If both methods are used simultaneously to set up logging configuration, the Command-Line configuration will be dominant.
+``specs`` section supports an **optional** ``logging`` configuration to set up logging via YAML.
+Under the logging tag, users can configure the minimum importance type of logs to display (being info, warning and error the types of logs in ascending importance) and filter the logs (with a regex) based on their content and category.
+
+.. note::
+
+    Logging configuration via Command-Line is still active and takes precedence over YAML configuration when both methods are used simultaneously.
+
+.. list-table::
+    :header-rows: 1
+
+    *   - Logging
+        - Yaml tag
+        - Description
+        - Data type
+        - Default value
+        - Logging set
+
+    *   - Verbosity
+        - ``verbosity``
+        - Set the verbosity level so only log messages with equal or higher importance level are shown.
+        - *bool*
+        - ``warning``
+        - ``info`` / ``warning`` / ``error``
+
+    *   - Filter
+        - ``filter``
+        - Set a regex string as filter.
+        - String
+        - ``DDSPIPE`` / ``DDSREPLAYER``
+        - Regex category or content
 
 .. _replayer_usage_configuration_general_example:
 
@@ -467,6 +493,6 @@ A complete example of all the configurations described on this page can be found
       logging:
         verbosity: info
         filter:
-          error: "DDSREPLAYER"
-          warning: "DDSREPLAYER"
-          info: "DDSPIPE|DDSREPLAYER"
+          error: "DDSPIPE|DDSREPLAYER"
+          warning: "DDSPIPE|DDSREPLAYER"
+          info: "DDSREPLAYER"
