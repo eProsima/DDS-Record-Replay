@@ -56,7 +56,7 @@ struct CommandlineArgsReplayer: public ddspipe::core::CommandlineArgs
     std::string input_file{""};
 
     // Verbosity level for logging
-    utils::Fuzzy<utils::VerbosityKind> log_verbosity{utils::VerbosityKind::Warning, utils::FuzzyLevelValues::fuzzy_level_fuzzy};
+    utils::Fuzzy<utils::VerbosityKind> log_verbosity{utils::VerbosityKind::Warning, utils::FuzzyLevelValues::fuzzy_level_default};
 };
 
 } /* namespace yaml */
