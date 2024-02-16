@@ -32,6 +32,8 @@
 #include <cpp_utils/types/Fuzzy.hpp>
 #include <cpp_utils/utils.hpp>
 
+#include <ddspipe_core/logging/DdsLogConsumer.hpp>
+
 #include <ddsrecorder_yaml/replayer/CommandlineArgsReplayer.hpp>
 #include <ddsrecorder_yaml/replayer/YamlReaderConfiguration.hpp>
 
@@ -184,9 +186,19 @@ int main(
             eprosima::utils::Log::ClearConsumers();
             eprosima::utils::Log::SetVerbosity(configuration.ddspipe_configuration.log_configuration.verbosity);
 
-            eprosima::utils::LogConfiguration log_config = configuration.ddspipe_configuration.log_configuration;
-            eprosima::utils::Log::RegisterConsumer(
-                std::make_unique<eprosima::utils::CustomStdLogConsumer>(&log_config));
+            // Stdout Log Consumer
+            if (configuration.ddspipe_configuration.log_configuration.stdout_enable)
+            {
+                eprosima::utils::Log::RegisterConsumer(
+                    std::make_unique<eprosima::utils::CustomStdLogConsumer>(&configuration.ddspipe_configuration.log_configuration));
+            }
+
+            // DDS Log Consumer
+            if (configuration.ddspipe_configuration.log_configuration.publish.enable)
+            {
+                eprosima::utils::Log::RegisterConsumer(
+                    std::make_unique<eprosima::ddspipe::core::DdsLogConsumer>(configuration.ddspipe_configuration.log_configuration));
+            }
         }
 
 
