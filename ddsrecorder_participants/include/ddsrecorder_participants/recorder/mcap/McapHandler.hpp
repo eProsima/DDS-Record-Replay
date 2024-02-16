@@ -514,6 +514,15 @@ protected:
     //! Name of open MCAP file
     std::string mcap_filename_;
 
+    //! TODO
+    int mcap_file_size_{0};
+
+    //! TODO
+    int mcap_file_id_{-1};
+
+    //! TODO
+    std::map<int, std::string> mcap_file_id_to_filename_;
+
     //! Payload pool
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;
 
