@@ -139,6 +139,12 @@ void ReplayerConfiguration::load_ddsreplayer_configuration_(
 
         // Don't trigger the DdsPipe's callbacks when discovering or removing external entities
         ddspipe_configuration.discovery_trigger = DiscoveryTrigger::NONE;
+
+        if (args != nullptr)
+        {
+            ddspipe_configuration.log_configuration.set(args->log_verbosity);
+            ddspipe_configuration.log_configuration.set(args->log_filter);
+        }
     }
     catch (const std::exception& e)
     {
@@ -146,11 +152,6 @@ void ReplayerConfiguration::load_ddsreplayer_configuration_(
                   utils::Formatter() << "Error loading DDS Replayer configuration from yaml:\n " << e.what());
     }
 
-    if (args != nullptr)
-    {
-        ddspipe_configuration.log_configuration.set(args->log_verbosity);
-        ddspipe_configuration.log_configuration.set(args->log_filter);
-    }
 }
 
 void ReplayerConfiguration::load_replay_configuration_(

@@ -147,6 +147,12 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
             auto controller_yml = YamlReader::get_value_in_tag(yml, RECORDER_REMOTE_CONTROLLER_TAG);
             load_controller_configuration_(controller_yml, version);
         }
+
+        if (args != nullptr)
+        {
+            ddspipe_configuration.log_configuration.set(args->log_verbosity);
+            ddspipe_configuration.log_configuration.set(args->log_filter);
+        }
     }
     catch (const std::exception& e)
     {
@@ -154,11 +160,6 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
                   utils::Formatter() << "Error loading DDS Recorder configuration from yaml:\n " << e.what());
     }
 
-    if (args != nullptr)
-    {
-        ddspipe_configuration.log_configuration.set(args->log_verbosity);
-        ddspipe_configuration.log_configuration.set(args->log_filter);
-    }
 }
 
 void RecorderConfiguration::load_recorder_configuration_(

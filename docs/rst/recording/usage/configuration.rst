@@ -566,12 +566,23 @@ QoS
 Logging
 ^^^^^^^
 
-``specs`` section supports an **optional** ``logging`` configuration to set up logging via YAML.
-Under the logging tag, users can configure the minimum importance type of logs to display (being info, warning and error the types of logs in ascending importance) and filter the logs (with a regex) based on their content and category.
+``specs`` supports a ``logging`` **optional** tag to configure the |ddsrecorder| logs.
+Under the ``logging`` tag, users can configure the type of logs to display and filter the logs based on their content and category.
+When configuring the verbosity to ``info``, all types of logs, including informational messages, warnings, and errors, will be displayed.
+Conversely, setting it to ``warning`` will only show warnings and errors, while choosing ``error`` will exclusively display errors.
+
+.. code-block:: yaml
+
+    logging:
+      verbosity: info
+      filter:
+        error: "DDSPIPE|DDSRECORDER"
+        warning: "DDSPIPE|DDSRECORDER"
+        info: "DDSRECORDER"
 
 .. note::
 
-    Logging configuration via Command-Line is still active and takes precedence over YAML configuration when both methods are used simultaneously.
+    Configuring the logs via the Command-Line is still active and takes precedence over YAML configuration when both methods are used simultaneously.
 
 .. list-table::
     :header-rows: 1
@@ -581,11 +592,14 @@ Under the logging tag, users can configure the minimum importance type of logs t
         - Description
         - Data type
         - Default value
-        - Logging set
+        - Possible values
 
     *   - Verbosity
         - ``verbosity``
-        - Set the verbosity level so only log messages with equal or higher importance level are shown.
+        - Set the verbosity level |br|
+          so only log messages with |br|
+          equal or higher importance |br|
+          level are shown.
         - *bool*
         - ``warning``
         - ``info`` / ``warning`` / ``error``
@@ -674,9 +688,9 @@ A complete example of all the configurations described on this page can be found
       logging:
         verbosity: info
         filter:
-          error: "DDSRECORDER"
-          warning: "DDSRECORDER"
-          info: "DDSPIPE|DDSRECORDER"
+          error: "DDSPIPE|DDSRECORDER"
+          warning: "DDSPIPE|DDSRECORDER"
+          info: "DDSRECORDER"
 
 
 .. _recorder_usage_fastdds_configuration:
