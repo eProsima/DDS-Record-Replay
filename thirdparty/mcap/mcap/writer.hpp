@@ -165,6 +165,8 @@ public:
 private:
   std::FILE* file_ = nullptr;
   uint64_t size_ = 0;
+  std::string directory_str_ = ".";
+  // std::string directory_ = ".";
 };
 
 /**
