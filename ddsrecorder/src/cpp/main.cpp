@@ -25,6 +25,7 @@
 #include <cpp_utils/event/SignalEventHandler.hpp>
 #include <cpp_utils/exception/ConfigurationException.hpp>
 #include <cpp_utils/exception/InitializationException.hpp>
+#include <cpp_utils/Formatter.hpp>
 #include <cpp_utils/logging/CustomStdLogConsumer.hpp>
 #include <cpp_utils/ReturnCode.hpp>
 #include <cpp_utils/time/time_utils.hpp>
@@ -276,6 +277,15 @@ int main(
 
         // Load configuration from YAML
         eprosima::ddsrecorder::yaml::RecorderConfiguration configuration(file_path);
+
+        // Verify that the configuration is correct
+        eprosima::utils::Formatter error_msg;
+        if (!configuration.is_valid(error_msg))
+        {
+            throw eprosima::utils::ConfigurationException(
+                    eprosima::utils::Formatter() <<
+                        "Configuration for the DDS Recorder is invalid: " << error_msg);
+        }
 
         logUser(DDSRECORDER_EXECUTION, "DDS Recorder running.");
 

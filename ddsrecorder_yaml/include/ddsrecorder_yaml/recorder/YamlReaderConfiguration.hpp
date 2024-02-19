@@ -20,6 +20,7 @@
 
 #include <mcap/mcap.hpp>
 
+#include <cpp_utils/Formatter.hpp>
 #include <cpp_utils/memory/Heritable.hpp>
 
 #include <ddspipe_core/configuration/DdsPipeConfiguration.hpp>
@@ -53,6 +54,9 @@ public:
 
     RecorderConfiguration(
             const std::string& file_path);
+
+    virtual bool is_valid(
+            utils::Formatter& error_msg) const noexcept;
 
     // DDS Pipe Configuration
     ddspipe::core::DdsPipeConfiguration ddspipe_configuration;
