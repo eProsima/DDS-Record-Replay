@@ -332,6 +332,41 @@ The recorder output file does support the following configuration settings under
         - ``boolean``
         - ``true``
 
+    *   - Resource limits
+        - ``resource-limits``
+        - :ref:`recorder_resource_limits`
+        - ``list``
+        - ``unlimited``
+
+.. _recorder_usage_configuration_resource_limits:
+
+Resource Limits
+"""""""""""""""
+
+The ``resource-limits`` tag allows to limit the size of the output file.
+The ``max-size`` and the ``max-file-size`` tags set the maximum size of the output file (e.g. ``100MB``, ``2GB``).
+A ``max-size`` or a ``max-file-size`` of ``0B`` imply an unlimited size.
+
+.. note::
+
+    For the |ddsrecorder| to work well, the ``max-size`` tag must at least be ``100KB``.
+    The minimum size of the output file, however, depends on the number of different types that are being recorded, the number of samples, and the size of the samples.
+
+The ``file-rotation`` tag enables the |ddsrecorder| to record data in multiple files, each with a maximum size of ``max-file-size``, and to overwrite the oldest file when the ``max-size`` is reached.
+
+.. note::
+
+    When the ``file-rotation`` tag is not set, the ``max-size`` and the ``max-file-size`` tags are equivalent.
+
+**Example of usage**
+
+.. code-block:: yaml
+
+    resource-limits:
+      file-rotation: true
+      max-file-size: 80Kb
+      max-size: 0.2Mb
+
 When DDS Recorder application is launched (or when remotely controlled, every time a ``start/pause`` command is received while in ``SUSPENDED/STOPPED`` state), a temporary file with ``filename`` name (+timestamp prefix) and ``.mcap.tmp~`` extension is created in ``path``.
 This file is not readable until the application is terminated (or a ``suspend/stop/close`` command is received).
 On such event, the temporal file is renamed to have ``.mcap`` extension in the same location, and is then ready to be processed.
@@ -794,6 +829,11 @@ A complete example of all the configurations described on this page can be found
         path: "."
         timestamp-format: "%Y-%m-%d_%H-%M-%S_%Z"
         local-timestamp: false
+
+        resource-limits:
+          file-rotation: true
+          max-file-size: 80KiB
+          max-size: 0.2MB
 
       buffer-size: 50
       event-window: 60
