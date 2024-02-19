@@ -518,17 +518,25 @@ mcap::Timestamp McapHandler::now()
 
 void McapHandler::open_file_nts_()
 {
-    // Update the file id
-    mcap_file_id_ += 1;
-    mcap_file_id_ %= configuration_.max_files;
-
-    if (mcap_file_id_to_filename_.count(mcap_file_id_))
-    {
-        std::filesystem::remove(mcap_file_id_to_filename_[mcap_file_id_]);
-    }
-
     // Reset file size
     mcap_file_size_ = 0;
+
+    // Update the file id
+    mcap_file_id_ += 1;
+
+    // Rotate output files
+    if (configuration_.mcap_output_settings.file_rotation)
+    {
+        if (configuration_.mcap_output_settings.max_files > 0)
+        {
+            mcap_file_id_ %= configuration_.mcap_output_settings.max_files;
+        }
+
+        if (mcap_file_id_to_filename_.count(mcap_file_id_))
+        {
+            std::filesystem::remove(mcap_file_id_to_filename_[mcap_file_id_]);
+        }
+    }
 
     // Generate the filename
     mcap_filename_ = configuration_.mcap_output_settings.output_filepath + "/";
@@ -545,7 +553,7 @@ void McapHandler::open_file_nts_()
 
     mcap_filename_ += configuration_.mcap_output_settings.output_filename;
 
-    if (configuration_.max_files > 1)
+    if (configuration_.mcap_output_settings.max_files > 1)
     {
         // Include the file id in the filename
         mcap_filename_ += "~" + std::to_string(mcap_file_id_);

@@ -41,6 +41,10 @@ constexpr const char* RECORDER_OUTPUT_PATH_FILE_TAG("path");
 constexpr const char* RECORDER_OUTPUT_FILE_NAME_TAG("filename");
 constexpr const char* RECORDER_OUTPUT_TIMESTAMP_FORMAT_TAG("timestamp-format");
 constexpr const char* RECORDER_OUTPUT_LOCAL_TIMESTAMP_TAG("local-timestamp");
+constexpr const char* RECORDER_OUTPUT_RESOURCE_LIMITS_TAG("resource-limits");
+constexpr const char* RECORDER_OUTPUT_RESOURCE_LIMITS_FILE_ROTATION_TAG("file-rotation");
+constexpr const char* RECORDER_OUTPUT_RESOURCE_LIMITS_MAX_SIZE_TAG("max-size");
+constexpr const char* RECORDER_OUTPUT_RESOURCE_LIMITS_MAX_FILE_SIZE_TAG("max-file-size");
 
 // Advanced recorder configuration options
 constexpr const char* RECORDER_BUFFER_SIZE_TAG("buffer-size");

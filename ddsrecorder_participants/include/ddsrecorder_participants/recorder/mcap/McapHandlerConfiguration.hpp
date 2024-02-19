@@ -41,6 +41,15 @@ struct McapOutputSettings
 
     //! Whether to use local or global timestamp
     bool output_local_timestamp;
+
+    //! TODO
+    bool file_rotation{false};
+
+    //! TODO
+    unsigned long long max_file_size{0};
+
+    //! TODO
+    unsigned long long max_files{0};
 };
 
 /**
@@ -101,12 +110,6 @@ struct McapHandlerConfiguration
 
     //! Whether to generate schemas as OMG IDL or ROS2 msg
     bool ros2_types;
-
-    //! TODO
-    int max_file_size{3000};
-
-    //! TODO
-    int max_files{3};
 };
 
 } /* namespace participants */
