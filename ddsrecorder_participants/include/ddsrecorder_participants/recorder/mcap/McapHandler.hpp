@@ -567,6 +567,9 @@ protected:
 
     //! Unique sequence number assigned to received messages. It is incremented with every sample added.
     unsigned int unique_sequence_number_{0};
+
+    //! TODO
+    static constexpr const int VERSION_METADATA_SIZE{1000};
 };
 
 } /* namespace participants */

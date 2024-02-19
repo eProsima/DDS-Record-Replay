@@ -224,7 +224,7 @@ void McapHandler::add_data(
                   );
     }
 
-    if (mcap_file_size_ > configuration_.mcap_output_settings.max_file_size)
+    if (mcap_file_size_ + VERSION_METADATA_SIZE > configuration_.mcap_output_settings.max_file_size)
     {
         std::cout << "Closing Mcap with a size of: " << mcap_file_size_ << std::endl;
 
