@@ -552,18 +552,9 @@ void McapHandler::open_file_nts_()
     }
 
     mcap_filename_ += configuration_.mcap_output_settings.output_filename;
-
-    if (configuration_.mcap_output_settings.max_files > 1)
-    {
-        // Include the file id in the filename
-        mcap_filename_ += "~" + std::to_string(mcap_file_id_);
-    }
-
     mcap_filename_ += ".mcap";
 
     mcap_file_id_to_filename_[mcap_file_id_] = mcap_filename_;
-
-    std::cout << "OPENING " << mcap_filename_ << std::endl;
 
     // Append temporal suffix
     std::string tmp_filename = tmp_filename_(mcap_filename_);
