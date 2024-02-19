@@ -43,6 +43,9 @@ FileWriter::~FileWriter() {
 Status FileWriter::open(std::string_view filename) {
   end();
   file_ = std::fopen(filename.data(), "wb");
+  std::filesystem::path filepath(filename);
+  std::filesystem::path directory_ = filepath.parent_path();
+  std::string directory_str_ = directory_.string();
   if (!file_) {
     const auto msg = internal::StrCat("failed to open file \"", filename, "\" for writing");
     return Status(StatusCode::OpenFailed, msg);
@@ -56,12 +59,7 @@ void FileWriter::handleWrite(const std::byte* data, uint64_t size) {
   (void)written;
   if (written != size)
   {
-#ifdef _WIN32
-    std::filesystem::space_info space = std::filesystem::space("C:\\");
-#else
-    std::filesystem::space_info space = std::filesystem::space("/");
-#endif
-
+    std::filesystem::space_info space = std::filesystem::space(directory_str_);
     if (space.available < size)
     {
       logError(
