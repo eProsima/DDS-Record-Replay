@@ -72,12 +72,12 @@ bool RecorderConfiguration::is_valid(
             error_msg << "The max size cannot be unlimited when file rotation is enabled.";
             return false;
         }
-    }
 
-    if (output_resource_limits_max_size > 0 && output_resource_limits_max_size < output_resource_limits_max_file_size)
-    {
-        error_msg << "The max size cannot be lower than the max file size.";
-        return false;
+        if (output_resource_limits_max_size < output_resource_limits_max_file_size)
+        {
+            error_msg << "The max-size cannot be lower than the max-file-size.";
+            return false;
+        }
     }
 
     return true;
