@@ -596,11 +596,10 @@ Conversely, setting it to ``warning`` will only show warnings and errors, while 
 
     *   - Verbosity
         - ``verbosity``
-        - Set the verbosity level |br|
-          so only log messages with |br|
-          equal or higher importance |br|
-          level are shown.
-        - *bool*
+        - Set the verbosity to show |br|
+          messages of equal or higher |br|
+          importance.
+        - *enum*
         - ``warning``
         - ``info`` / ``warning`` / ``error``
 

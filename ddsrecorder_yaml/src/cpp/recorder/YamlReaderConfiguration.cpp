@@ -148,6 +148,13 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
             load_controller_configuration_(controller_yml, version);
         }
 
+        /////
+        // Log Configuration's set methods: Depending on where Log Configuration has been configured
+        // (Yaml, Command-Line and/or by default) these methods will set DdsPipeConfiguration's log_configuration
+        // taking into account this precedence:
+        //  1. Log Configuration set on Command-line.
+        //  2. Log Configuration set by YAML.
+        //  3. Log Configuration set by default.
         if (args != nullptr)
         {
             ddspipe_configuration.log_configuration.set(args->log_verbosity);
