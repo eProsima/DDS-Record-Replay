@@ -596,16 +596,15 @@ Conversely, setting it to ``warning`` will only show warnings and errors, while 
 
     *   - Verbosity
         - ``verbosity``
-        - Set the verbosity to show |br|
-          messages of equal or higher |br|
-          importance.
+        - Show messages of equal |br|
+          or higher importance.
         - *enum*
         - ``warning``
         - ``info`` / ``warning`` / ``error``
 
     *   - Filter
         - ``filter``
-        - Set a regex string as filter.
+        - Regex string as filter.
         - String
         - ``DDSPIPE`` / ``DDSRECORDER``
         - Regex category or content
