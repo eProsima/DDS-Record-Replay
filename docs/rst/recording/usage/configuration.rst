@@ -343,20 +343,27 @@ The recorder output file does support the following configuration settings under
 Resource Limits
 """""""""""""""
 
-The ``resource-limits`` tag allows to limit the size of the output file.
-The ``max-size`` and the ``max-file-size`` tags set the maximum size of the output file (e.g. ``100MB``, ``2GB``).
-A ``max-size`` or a ``max-file-size`` of ``0B`` imply an unlimited size.
+The ``resource-limits`` tag allows users to limit the size consumed by the DDS Recorder's output file.
+The ``max-file-size`` tag specifies the maximum size of the output file.
+A ``max-file-size`` of ``0B`` (default) implies an unlimited size.
+The |ddsrecorder| will stop recording data after reaching the ``max-file-size``.
 
 .. note::
 
-    For the |ddsrecorder| to work well, the ``max-size`` tag must at least be ``100KB``.
+    The size of files is approximate.
+    The actual size of the file may be slightly larger or smaller than the specified limit.
+
+.. note::
+
+    For the |ddsrecorder| to work well, the ``max-file-size`` should never be lower than ``100KB``.
     The minimum size of the output file, however, depends on the number of different types that are being recorded, the number of samples, and the size of the samples.
 
-The ``file-rotation`` tag enables the |ddsrecorder| to record data in multiple files, each with a maximum size of ``max-file-size``, and to overwrite the oldest file when the ``max-size`` is reached.
+The ``file-rotation`` tag enables the |ddsrecorder| to record data in multiple files (with a maximum size of ``max-file-size``).
+When the aggregate size of all the output files reaches the ``max-size``, the |ddsrecorder| will start overwriting the oldest files to continue recording.
 
-.. note::
+.. warning::
 
-    When the ``file-rotation`` tag is not set, the ``max-size`` and the ``max-file-size`` tags are equivalent.
+    If the ``file-rotation`` is set to ``false``, the ``max-file-size`` tag is ignored.
 
 **Example of usage**
 
