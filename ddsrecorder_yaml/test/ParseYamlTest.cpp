@@ -61,9 +61,15 @@ TEST(ParseYamlTest, parse_correct_log_config_yaml_vs_commandline)
 
     ASSERT_TRUE(configuration.ddspipe_configuration.log_configuration.is_valid(error_msg));
     ASSERT_EQ(configuration.ddspipe_configuration.log_configuration.verbosity.get_value(), utils::VerbosityKind::Info);
-    ASSERT_EQ(configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Error].get_value(), "DEBUG");
-    ASSERT_EQ(configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Warning].get_value(), "DDSRECORDER|DDSPIPE|DEBUG");
-    ASSERT_EQ(configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Info].get_value(), "DDSRECORDER");
+    ASSERT_EQ(
+        configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Error].get_value(),
+        "DEBUG");
+    ASSERT_EQ(
+        configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Warning].get_value(),
+        "DDSRECORDER|DDSPIPE|DEBUG");
+    ASSERT_EQ(
+        configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Info].get_value(),
+        "DDSRECORDER");
 }
 
 int main(

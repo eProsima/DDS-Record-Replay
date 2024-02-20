@@ -29,7 +29,7 @@ namespace yaml {
 /*
  * Struct to parse the executable arguments
  */
-struct CommandlineArgsReplayer: public ddspipe::core::CommandlineArgs
+struct CommandlineArgsReplayer : public ddspipe::core::CommandlineArgs
 {
 
     /////////////////////////

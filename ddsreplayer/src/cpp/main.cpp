@@ -236,7 +236,8 @@ int main(
         std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> periodic_handler;
         if (commandline_args.reload_time > 0 && commandline_args.file_path != "")
         {
-            periodic_handler = create_periodic_handler(replayer, commandline_args.file_path, commandline_args.reload_time);
+            periodic_handler = create_periodic_handler(replayer, commandline_args.file_path,
+                            commandline_args.reload_time);
         }
 
         // Start replaying data

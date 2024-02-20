@@ -21,7 +21,8 @@ namespace yaml {
 CommandlineArgsRecorder::CommandlineArgsRecorder()
 {
     log_filter[utils::VerbosityKind::Info].set_value("DDSRECORDER", utils::FuzzyLevelValues::fuzzy_level_default);
-    log_filter[utils::VerbosityKind::Warning].set_value("DDSRECORDER|DDSPIPE", utils::FuzzyLevelValues::fuzzy_level_default);
+    log_filter[utils::VerbosityKind::Warning].set_value("DDSRECORDER|DDSPIPE",
+            utils::FuzzyLevelValues::fuzzy_level_default);
     log_filter[utils::VerbosityKind::Error].set_value("", utils::FuzzyLevelValues::fuzzy_level_default);
 }
 
