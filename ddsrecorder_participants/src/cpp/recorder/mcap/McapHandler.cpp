@@ -226,11 +226,21 @@ void McapHandler::add_data(
 
     if (mcap_file_size_ + VERSION_METADATA_SIZE > configuration_.mcap_output_settings.max_file_size)
     {
-        logInfo(DDSRECORDER_MCAP_HANDLER, "Max file size reached, closing file and opening a new one...");
-
         lock.unlock();
-        stop();
-        start();
+
+        if (configuration_.mcap_output_settings.file_rotation)
+        {
+            logInfo(DDSRECORDER_MCAP_HANDLER, "Max file size reached, closing file and opening a new one...");
+            stop();
+            start();
+        }
+        else
+        {
+            logInfo(DDSRECORDER_MCAP_HANDLER, "Max file size reached, stopping...");
+            stop();
+            return;
+        }
+
         lock.lock();
     }
 

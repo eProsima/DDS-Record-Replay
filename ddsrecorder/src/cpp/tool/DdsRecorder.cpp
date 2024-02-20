@@ -64,11 +64,12 @@ DdsRecorder::DdsRecorder(
         mcap_output_settings.prepend_timestamp = false;
     }
 
-    mcap_output_settings.file_rotation = configuration_.output_resource_limits_file_rotation;
     mcap_output_settings.max_file_size = configuration_.output_resource_limits_max_file_size;
+    mcap_output_settings.file_rotation = configuration_.output_resource_limits_file_rotation;
 
-    if (configuration_.output_resource_limits_max_file_size > 0)
+    if (configuration_.output_resource_limits_file_rotation)
     {
+        // The is_valid guarantees that if file-rotation is enabled, the max-file-size is higher than 0
         mcap_output_settings.max_files = configuration_.output_resource_limits_max_size /
                 configuration_.output_resource_limits_max_file_size;
     }
