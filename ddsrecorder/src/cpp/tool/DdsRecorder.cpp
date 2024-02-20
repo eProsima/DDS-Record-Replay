@@ -69,7 +69,8 @@ DdsRecorder::DdsRecorder(
 
     if (configuration_.output_resource_limits_max_file_size > 0)
     {
-        mcap_output_settings.max_files = configuration_.output_resource_limits_max_size / configuration_.output_resource_limits_max_file_size;
+        mcap_output_settings.max_files = configuration_.output_resource_limits_max_size /
+                configuration_.output_resource_limits_max_file_size;
     }
 
     // Create MCAP Handler configuration
