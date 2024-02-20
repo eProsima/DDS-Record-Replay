@@ -77,8 +77,8 @@ public:
 
     // Output resource limits
     bool output_resource_limits_file_rotation = false;
-    unsigned long long output_resource_limits_max_size = 0;
-    unsigned long long output_resource_limits_max_file_size = 0;
+    uint64_t output_resource_limits_max_size = 0;
+    uint64_t output_resource_limits_max_file_size = 0;
 
     // Recording params
     unsigned int buffer_size = 100;

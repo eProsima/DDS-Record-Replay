@@ -46,10 +46,10 @@ struct McapOutputSettings
     bool file_rotation{false};
 
     //! TODO
-    unsigned long long max_file_size{0};
+    uint64_t max_file_size{0};
 
     //! TODO
-    unsigned long long max_files{0};
+    uint64_t max_files{0};
 };
 
 /**
