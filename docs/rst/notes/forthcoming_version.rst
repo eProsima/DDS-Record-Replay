@@ -6,10 +6,10 @@
 Forthcoming Version
 ###################
 
-This release will include the following **Recording features**:
+This release will include the following **DDS Recorder tool configuration features**:
 
-* Support configuring logging messages with a YAML :ref:`configuration file <recorder_specs_logging>`.
+* New configuration option ``logging`` to configure the :ref:`Logs <recorder_specs_logging>`.
 
-This release will include the following **Replaying features**:
+This release will include the following **DDS Replayer tool configuration features**:
 
-* Support configuring logging messages with a YAML :ref:`configuration file <replayer_specs_logging>`.
+* New configuration option ``logging`` to configure the :ref:`Logs <replayer_specs_logging>`.
