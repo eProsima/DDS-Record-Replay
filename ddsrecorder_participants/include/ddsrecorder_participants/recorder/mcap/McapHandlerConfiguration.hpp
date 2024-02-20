@@ -49,7 +49,7 @@ struct McapOutputSettings
     uint64_t max_file_size{0};
 
     //! TODO
-    uint64_t max_files{0};
+    int max_files{1};
 };
 
 /**
