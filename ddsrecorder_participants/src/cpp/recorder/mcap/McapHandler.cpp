@@ -523,10 +523,8 @@ void McapHandler::open_file_nts_()
     // Rotate output files
     if (configuration_.mcap_output_settings.file_rotation)
     {
-        if (configuration_.mcap_output_settings.max_files > 0)
-        {
-            mcap_file_id_ %= configuration_.mcap_output_settings.max_files;
-        }
+        // The is_valid guarantees that max-files is greater than 0
+        mcap_file_id_ %= configuration_.mcap_output_settings.max_files;
 
         if (mcap_file_id_to_filename_.count(mcap_file_id_))
         {
@@ -547,9 +545,9 @@ void McapHandler::open_file_nts_()
         mcap_filename_ = timestamp + "_";
     }
 
-    mcap_filename_ += configuration_.mcap_output_settings.output_filename;
-    mcap_filename_ += ".mcap";
+    mcap_filename_ += configuration_.mcap_output_settings.output_filename + ".mcap";
 
+    // Store the filename in case of rotation
     mcap_file_id_to_filename_[mcap_file_id_] = mcap_filename_;
 
     // Append temporal suffix

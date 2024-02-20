@@ -371,8 +371,8 @@ When the aggregate size of all the output files reaches the ``max-size``, the |d
 
     resource-limits:
       file-rotation: true
-      max-file-size: 80Kb
-      max-size: 0.2Mb
+      max-file-size: 80KB
+      max-size: 2MiB
 
 When DDS Recorder application is launched (or when remotely controlled, every time a ``start/pause`` command is received while in ``SUSPENDED/STOPPED`` state), a temporary file with ``filename`` name (+timestamp prefix) and ``.mcap.tmp~`` extension is created in ``path``.
 This file is not readable until the application is terminated (or a ``suspend/stop/close`` command is received).
@@ -839,8 +839,8 @@ A complete example of all the configurations described on this page can be found
 
         resource-limits:
           file-rotation: true
-          max-file-size: 80KiB
-          max-size: 0.2MB
+          max-file-size: 80KB
+          max-size: 2MiB
 
       buffer-size: 50
       event-window: 60
