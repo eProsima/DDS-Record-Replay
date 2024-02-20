@@ -234,7 +234,9 @@ void RecorderConfiguration::load_recorder_configuration_(
             // Get optional max file size
             if (YamlReader::is_tag_present(resource_limits_yml, RECORDER_OUTPUT_RESOURCE_LIMITS_MAX_FILE_SIZE_TAG))
             {
-                const auto& max_file_size = YamlReader::get<std::string>(resource_limits_yml, RECORDER_OUTPUT_RESOURCE_LIMITS_MAX_FILE_SIZE_TAG, version);
+                const auto& max_file_size = YamlReader::get<std::string>(resource_limits_yml,
+                                RECORDER_OUTPUT_RESOURCE_LIMITS_MAX_FILE_SIZE_TAG,
+                                version);
                 output_resource_limits_max_file_size = eprosima::utils::to_bytes(max_file_size);
             }
 
@@ -242,7 +244,9 @@ void RecorderConfiguration::load_recorder_configuration_(
             // Get optional max size
             if (YamlReader::is_tag_present(resource_limits_yml, RECORDER_OUTPUT_RESOURCE_LIMITS_MAX_SIZE_TAG))
             {
-                const auto& max_size = YamlReader::get<std::string>(resource_limits_yml, RECORDER_OUTPUT_RESOURCE_LIMITS_MAX_SIZE_TAG, version);
+                const auto& max_size = YamlReader::get<std::string>(resource_limits_yml,
+                                RECORDER_OUTPUT_RESOURCE_LIMITS_MAX_SIZE_TAG,
+                                version);
                 output_resource_limits_max_size = eprosima::utils::to_bytes(max_size);
             }
         }
