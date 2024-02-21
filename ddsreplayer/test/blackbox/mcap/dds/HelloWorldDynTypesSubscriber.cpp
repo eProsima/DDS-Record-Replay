@@ -28,7 +28,7 @@
 #include <fastrtps/types/DynamicDataFactory.h>
 #include <fastrtps/types/DynamicDataHelper.hpp>
 #include <fastrtps/types/TypeObjectFactory.h>
-#include <fastrtps/types/TypesBase.h>
+#include <fastdds/dds/xtypes/Types.hpp>
 
 #include "HelloWorldDynTypesSubscriber.h"
 

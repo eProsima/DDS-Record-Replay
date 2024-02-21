@@ -32,7 +32,7 @@
 #include <fastrtps/types/DynamicTypeBuilderFactory.h>
 #include <fastrtps/types/DynamicTypeBuilderPtr.h>
 #include <fastrtps/types/TypeObjectFactory.h>
-#include <fastrtps/types/TypesBase.h>
+#include <fastdds/dds/xtypes/Types.hpp>
 
 #include "TypeLookupServicePublisher.h"
 #include "types/complete/CompleteTypeObject.h"
