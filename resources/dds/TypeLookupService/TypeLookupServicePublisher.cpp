@@ -25,7 +25,7 @@
 #include <fastdds/dds/publisher/Publisher.hpp>
 #include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
 #include <fastdds/dds/publisher/qos/PublisherQos.hpp>
-#include <fastrtps/types/DynamicDataFactory.h>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicDataFactory.hpp>
 #include <fastrtps/types/DynamicDataHelper.hpp>
 #include <fastrtps/types/DynamicDataPtr.h>
 #include <fastrtps/types/DynamicPubSubType.h>

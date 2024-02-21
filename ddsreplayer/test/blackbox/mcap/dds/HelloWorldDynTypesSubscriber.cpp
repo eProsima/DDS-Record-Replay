@@ -25,7 +25,7 @@
 #include <fastdds/dds/subscriber/qos/DataReaderQos.hpp>
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
 #include <fastdds/dds/subscriber/Subscriber.hpp>
-#include <fastrtps/types/DynamicDataFactory.h>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicDataFactory.hpp>
 #include <fastrtps/types/DynamicDataHelper.hpp>
 #include <fastrtps/types/TypeObjectFactory.h>
 #include <fastdds/dds/xtypes/Types.hpp>

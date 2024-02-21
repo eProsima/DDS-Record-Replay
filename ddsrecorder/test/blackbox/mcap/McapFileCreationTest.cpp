@@ -28,7 +28,7 @@
 #include <fastdds/dds/publisher/Publisher.hpp>
 #include <fastrtps/types/DynamicDataPtr.h>
 #include <fastrtps/types/DynamicType.h>
-#include <fastrtps/types/DynamicDataFactory.h>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicDataFactory.hpp>
 #include <fastrtps/types/TypeObjectFactory.h>
 
 #include <mcap/reader.hpp>
