@@ -3,6 +3,7 @@
 #include "types.hpp"
 #include "visibility.hpp"
 #include <cstdio>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <unordered_set>
@@ -152,21 +153,23 @@ private:
  * @brief Implements the IWritable interface used by McapWriter by wrapping a
  * FILE* pointer created by fopen().
  */
-class MCAP_PUBLIC FileWriter final : public IWritable {
+class MCAP_PUBLIC FileWriter : public IWritable {
 public:
   ~FileWriter() override;
 
-  Status open(std::string_view filename);
+  virtual Status open(std::string_view filename);
 
   void handleWrite(const std::byte* data, uint64_t size) override;
   void end() override;
   uint64_t size() const override;
 
-private:
+protected:
+  virtual size_t write_(const void* data, size_t size, std::FILE* stream) const;
+  virtual std::uintmax_t get_space_available_(const std::string& path);
+
   std::FILE* file_ = nullptr;
   uint64_t size_ = 0;
   std::string directory_str_ = ".";
-  // std::string directory_ = ".";
 };
 
 /**

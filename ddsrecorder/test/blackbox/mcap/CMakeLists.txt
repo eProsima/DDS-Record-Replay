@@ -85,3 +85,33 @@ add_blackbox_executable(
     "${TEST_EXTRA_HEADERS}"
     "${TEST_LIBRARY_SOURCES}"
 )
+
+
+############################
+# Disk Full Log Error Test #
+############################
+
+set(TEST_NAME DiskFullLogErrorMockTest)
+
+set(TEST_SOURCES
+        DiskFullLogErrorMockTest.cpp
+    )
+
+set(TEST_LIST
+        log_error_when_disk_is_full
+    )
+
+set(TEST_NEEDED_SOURCES
+    )
+
+set(TEST_TEST_EXTRA_HEADERS
+    )
+
+add_blackbox_executable(
+    "${TEST_NAME}"
+    "${TEST_SOURCES}"
+    "${TEST_LIST}"
+    "${TEST_NEEDED_SOURCES}"
+    "${TEST_EXTRA_HEADERS}"
+    "${TEST_LIBRARY_SOURCES}"
+)
