@@ -55,16 +55,16 @@ Status FileWriter::open(std::string_view filename) {
 
 void FileWriter::handleWrite(const std::byte* data, uint64_t size) {
   assert(file_);
-  const size_t written = std::fwrite(data, 1, size, file_);
+  const size_t written = write_(data, size, file_);
   (void)written;
   if (written != size)
   {
-    std::filesystem::space_info space = std::filesystem::space(directory_str_);
-    if (space.available < size)
+    const std::uintmax_t space_available = get_space_available_(directory_str_);
+    if (space_available < size)
     {
       logError(
             DDSRECORDER_MCAP_HANDLER,
-            "Not enough space available in disk. Space available: " << space.available);
+            "Not enough space available in disk. Space available: " << space_available);
     }
   }
   size_ += size;
@@ -80,6 +80,17 @@ void FileWriter::end() {
 
 uint64_t FileWriter::size() const {
   return size_;
+}
+
+size_t FileWriter::write_(const void* data, size_t size, std::FILE* stream) const {
+  const size_t written = std::fwrite(data, 1, size, stream);
+  return written;
+}
+
+std::uintmax_t FileWriter::get_space_available_(const std::string& path)
+{
+  std::filesystem::space_info space = std::filesystem::space(path);
+  return space.available;
 }
 
 // StreamWriter ////////////////////////////////////////////////////////////////
