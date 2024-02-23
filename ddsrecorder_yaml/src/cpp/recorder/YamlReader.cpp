@@ -15,6 +15,7 @@
 #include <mcap/mcap.hpp>
 
 #include <ddspipe_yaml/YamlReader.hpp>
+#include <ddspipe_yaml/YamlValidator.hpp>
 
 #include <ddsrecorder_yaml/recorder/yaml_configuration_tags.hpp>
 
@@ -30,6 +31,14 @@ YamlReader::get<mcap::McapWriterOptions>(
         const Yaml& yml,
         const YamlReaderVersion version)
 {
+    const std::set<TagType> tags = {
+        RECORDER_COMPRESSION_SETTINGS_ALGORITHM_TAG,
+        RECORDER_COMPRESSION_SETTINGS_LEVEL_TAG,
+        RECORDER_COMPRESSION_SETTINGS_FORCE_TAG,
+    };
+
+    YamlValidator::validate_tags(yml, tags);
+
     mcap::McapWriterOptions mcap_writer_options{"ros2"};
 
     // Parse optional compression algorithm
