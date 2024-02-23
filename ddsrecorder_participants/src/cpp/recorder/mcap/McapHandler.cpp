@@ -549,7 +549,16 @@ void McapHandler::open_file_nts_()
         mcap_filename_ = timestamp + "_";
     }
 
-    mcap_filename_ += configuration_.mcap_output_settings.output_filename + ".mcap";
+    mcap_filename_ += configuration_.mcap_output_settings.output_filename;
+
+    if (configuration_.mcap_output_settings.file_rotation && !configuration_.mcap_output_settings.prepend_timestamp)
+    {
+        // If the timestamp is not included, then the file-rotation files would all have the same name.
+        // To make their names unique, we include their file id.
+        mcap_filename_ += "~" + std::to_string(mcap_file_id_);
+    }
+
+    mcap_filename_ += ".mcap";
 
     // Store the filename in case of rotation
     mcap_file_id_to_filename_[mcap_file_id_] = mcap_filename_;
