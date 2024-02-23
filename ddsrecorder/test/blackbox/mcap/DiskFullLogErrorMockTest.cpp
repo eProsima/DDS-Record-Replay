@@ -4,6 +4,7 @@
 #include <mcap/mcap.hpp>
 #include <mcap/errors.hpp>
 
+#include <cpp_utils/testing/gtest_aux.hpp>
 #include <cpp_utils/testing/LogChecker.hpp>
 
 namespace mcap {
