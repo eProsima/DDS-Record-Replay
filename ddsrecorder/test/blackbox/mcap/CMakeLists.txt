@@ -101,17 +101,17 @@ set(TEST_LIST
         log_error_when_disk_is_full
     )
 
-set(TEST_NEEDED_SOURCES
+set(EXTRA_LIBRARIES
+        ${MODULE_FIND_PACKAGES}
+        $<$<BOOL:${WIN32}>:iphlpapi$<SEMICOLON>Shlwapi>
     )
 
-set(TEST_TEST_EXTRA_HEADERS
-    )
 
 add_blackbox_executable(
     "${TEST_NAME}"
     "${TEST_SOURCES}"
     "${TEST_LIST}"
     "${TEST_NEEDED_SOURCES}"
+    "${EXTRA_LIBRARIES}"
     "${TEST_EXTRA_HEADERS}"
-    "${TEST_LIBRARY_SOURCES}"
 )
