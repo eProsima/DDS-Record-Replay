@@ -1,8 +1,8 @@
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
 #include <filesystem>
-#include <mcap/mcap.hpp>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <mcap/errors.hpp>
+#include <mcap/mcap.hpp>
 
 #include <cpp_utils/testing/gtest_aux.hpp>
 #include <cpp_utils/testing/LogChecker.hpp>
