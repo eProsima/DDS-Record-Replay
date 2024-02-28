@@ -99,11 +99,11 @@ set(TEST_SOURCES
 
 set(TEST_LIST
         log_error_when_disk_is_full
+        log_error_when_file_not_opened
     )
 
 set(EXTRA_LIBRARIES
         ${MODULE_FIND_PACKAGES}
-        $<$<BOOL:${WIN32}>:iphlpapi$<SEMICOLON>Shlwapi>
     )
 
 
