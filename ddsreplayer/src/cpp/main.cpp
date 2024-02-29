@@ -25,7 +25,7 @@
 #include <cpp_utils/event/SignalEventHandler.hpp>
 #include <cpp_utils/exception/ConfigurationException.hpp>
 #include <cpp_utils/exception/InitializationException.hpp>
-#include <cpp_utils/logging/CustomStdLogConsumer.hpp>
+#include <cpp_utils/logging/StdLogConsumer.hpp>
 #include <cpp_utils/logging/LogConfiguration.hpp>
 #include <cpp_utils/ReturnCode.hpp>
 #include <cpp_utils/time/time_utils.hpp>
@@ -190,7 +190,7 @@ int main(
             if (configuration.ddspipe_configuration.log_configuration.stdout_enable)
             {
                 eprosima::utils::Log::RegisterConsumer(
-                    std::make_unique<eprosima::utils::CustomStdLogConsumer>(&configuration.ddspipe_configuration.log_configuration));
+                    std::make_unique<eprosima::utils::StdLogConsumer>(&configuration.ddspipe_configuration.log_configuration));
             }
 
             // DDS Log Consumer
