@@ -32,16 +32,9 @@
 #include <cpp_utils/types/Fuzzy.hpp>
 #include <cpp_utils/utils.hpp>
 
-#include <ddspipe_core/logging/DdsLogConsumer.hpp>
-
+#include <ddsrecorder_participants/recorder/logging/DdsRecorderLogConsumer.hpp>
 #include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
-
-#if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
-    #include <ddsrecorder_participants/common/types/logging/v1/DdsRecorderLogEntry.h>
-#else
-    #include <ddsrecorder_participants/common/types/logging/v2/DdsRecorderLogEntry.h>
-#endif // if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
 
 #include "user_interface/arguments_configuration.hpp"
 #include "user_interface/constants.hpp"
@@ -285,13 +278,8 @@ int main(
             // DDS Log Consumer
             if (log_configuration.publish.enable)
             {
-                auto consumer = std::make_unique<eprosima::ddspipe::core::DdsLogConsumer>(&log_configuration);
-
-                // Add DdsRecorder specific events
-                consumer->add_event("FAIL_MCAP_CREATION", FAIL_MCAP_CREATION);
-                consumer->add_event("FAIL_MCAP_WRITE", FAIL_MCAP_WRITE);
-
-                eprosima::utils::Log::RegisterConsumer(std::move(consumer));
+                eprosima::utils::Log::RegisterConsumer(
+                    std::make_unique<eprosima::ddsrecorder::participants::DdsRecorderLogConsumer>(&log_configuration));
             }
         }
 

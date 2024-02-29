@@ -1,0 +1,41 @@
+// Copyright 2024 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @file DdsRecorderLogConsumer.cpp
+ */
+
+#if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
+    #include <ddsrecorder_participants/common/types/logging/v1/DdsRecorderLogEntry.h>
+#else
+    #include <ddsrecorder_participants/common/types/logging/v2/DdsRecorderLogEntry.h>
+#endif // if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
+
+#include <ddsrecorder_participants/recorder/logging/DdsRecorderLogConsumer.hpp>
+
+namespace eprosima {
+namespace ddsrecorder {
+namespace participants {
+
+DdsRecorderLogConsumer::DdsRecorderLogConsumer(
+        const ddspipe::core::DdsPipeLogConfiguration* configuration)
+    : ddspipe::core::DdsLogConsumer(configuration)
+{
+    events_["FAIL_MCAP_CREATION"] = FAIL_MCAP_CREATION;
+    events_["FAIL_MCAP_WRITE"] = FAIL_MCAP_WRITE;
+}
+
+} /* namespace participants */
+} /* namespace ddsrecorder */
+} /* namespace eprosima */
