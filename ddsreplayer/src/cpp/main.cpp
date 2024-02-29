@@ -26,7 +26,7 @@
 #include <cpp_utils/exception/ConfigurationException.hpp>
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/logging/StdLogConsumer.hpp>
-#include <cpp_utils/logging/LogConfiguration.hpp>
+#include <cpp_utils/logging/BaseLogConfiguration.hpp>
 #include <cpp_utils/ReturnCode.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/types/Fuzzy.hpp>
@@ -182,22 +182,24 @@ int main(
         /////
         // Logging
         {
+            const auto log_configuration = configuration.ddspipe_configuration.log_configuration;
+
             // Remove every consumer
             eprosima::utils::Log::ClearConsumers();
-            eprosima::utils::Log::SetVerbosity(configuration.ddspipe_configuration.log_configuration.verbosity);
+            eprosima::utils::Log::SetVerbosity(log_configuration.verbosity);
 
             // Stdout Log Consumer
-            if (configuration.ddspipe_configuration.log_configuration.stdout_enable)
+            if (log_configuration.stdout_enable)
             {
                 eprosima::utils::Log::RegisterConsumer(
-                    std::make_unique<eprosima::utils::StdLogConsumer>(&configuration.ddspipe_configuration.log_configuration));
+                    std::make_unique<eprosima::utils::StdLogConsumer>(&log_configuration));
             }
 
             // DDS Log Consumer
-            if (configuration.ddspipe_configuration.log_configuration.publish.enable)
+            if (log_configuration.publish.enable)
             {
                 eprosima::utils::Log::RegisterConsumer(
-                    std::make_unique<eprosima::ddspipe::core::DdsLogConsumer>(configuration.ddspipe_configuration.log_configuration));
+                    std::make_unique<eprosima::ddspipe::core::DdsLogConsumer>(&log_configuration));
             }
         }
 
