@@ -1,15 +1,15 @@
+#include <filesystem>
+
 #include <cpp_utils/testing/gtest_aux.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-
-#include <mcap/errors.hpp>
-#include <mcap/mcap.hpp>
 
 #include <cpp_utils/testing/LogChecker.hpp>
 
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
 
-#include <filesystem>
+#include <mcap/errors.hpp>
+#include <mcap/mcap.hpp>
 
 namespace mcap {
 namespace test {
@@ -22,7 +22,7 @@ public:
     using FileWriter::write_;
     using FileWriter::get_space_available_;
 
-    // Mock of the write_ and get_space_available_ methods
+    // Mock of the open, write_ and get_space_available_ methods
     MOCK_METHOD(Status, open, (std::string_view filename), (override));
     MOCK_CONST_METHOD3(write_, size_t(const void* data, size_t size, std::FILE* stream));
     MOCK_METHOD(std::uintmax_t, get_space_available_, (const std::string& path), (override));
@@ -39,6 +39,7 @@ public:
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
+
 // Mock class for McapHandler to allow access to private members
 class MCAP_PUBLIC MockMcapHandler : public McapHandler {
 public:
@@ -67,7 +68,7 @@ public:
  *  of 100 bytes. As it does not have enough available space a Log Error will be displayed.
  *  The Log Error will be captured by the Log Checker.
  */
-TEST(DiskFullLogErrorMockTest, log_error_when_disk_is_full) {
+TEST(LogErrorMockTests, disk_full) {
 
     // Create an instance of the Log Checker, in charge of capturing 1 LogError
     eprosima::utils::testing::LogChecker log_checker(
@@ -92,7 +93,7 @@ TEST(DiskFullLogErrorMockTest, log_error_when_disk_is_full) {
     ON_CALL(mock_writer, write_(::testing::_, ::testing::_, ::testing::_))
         .WillByDefault(testing::Return(10));
 
-    // Function to set behaviour of write_ method: It will return 0 every time
+    // Function to set behaviour of get_space_available_ method: It will return 0 every time
     ON_CALL(mock_writer, get_space_available_(::testing::_))
         .WillByDefault(testing::Return(0));
 
@@ -109,11 +110,10 @@ TEST(DiskFullLogErrorMockTest, log_error_when_disk_is_full) {
  * Test case to verify logError callback when the opening mcap file fails
  *
  * CASES:
- *  This test simulates a disk size available of 0 bytes and a desired writing message
- *  of 100 bytes. As it does not have enough available space a Log Error will be displayed.
- *  The Log Error will be captured by the Log Checker.
+ *  This test attemps to open a mcap file in a folder that does not exist, leading to
+ *  its correspondent Log Error and exception.
  */
-TEST(DiskFullLogErrorMockTest, log_error_when_file_not_opened) {
+TEST(LogErrorMockTests, fail_to_open_file) {
 
     // Create an instance of the Log Checker, in charge of capturing 1 LogError
     eprosima::utils::testing::LogChecker log_checker(
@@ -126,7 +126,7 @@ TEST(DiskFullLogErrorMockTest, log_error_when_file_not_opened) {
 
     try {
         eprosima::ddsrecorder::participants::McapOutputSettings mcap_output_settings;
-        mcap_output_settings.output_filepath = "./fake_folder"; // This folder does not exist -> error opening file in it
+        mcap_output_settings.output_filepath = "./fake_folder"; // This folder does not exist -> error opening file
         mcap_output_settings.output_filename = "output_dummy.mcap";
         mcap_output_settings.prepend_timestamp = false;
         mcap_output_settings.output_timestamp_format = "%Y-%m-%d_%H-%M-%S";
