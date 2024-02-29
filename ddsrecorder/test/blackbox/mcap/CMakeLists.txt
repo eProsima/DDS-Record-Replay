@@ -91,15 +91,15 @@ add_blackbox_executable(
 # Disk Full Log Error Test #
 ############################
 
-set(TEST_NAME DiskFullLogErrorMockTest)
+set(TEST_NAME LogErrorMockTests)
 
 set(TEST_SOURCES
-        DiskFullLogErrorMockTest.cpp
+        LogErrorMockTests.cpp
     )
 
 set(TEST_LIST
-        log_error_when_disk_is_full
-        log_error_when_file_not_opened
+        disk_full
+        fail_to_open_file
     )
 
 set(EXTRA_LIBRARIES
