@@ -16,14 +16,15 @@
 # Parse Yaml Test #
 ###################
 
-set(TEST_NAME ParseYamlTest)
+set(TEST_NAME YamlGetConfigurationDdsRecorderReplayerTest)
 
 set(TEST_SOURCES
-        ${PROJECT_SOURCE_DIR}/test/ParseYamlTest.cpp
+        ${PROJECT_SOURCE_DIR}/test/YamlGetConfigurationDdsRecorderReplayerTest.cpp
     )
 
 set(TEST_LIST
-        parse_correct_log_config_yaml_vs_commandline
+        recorder_parse_correct_log_config_yaml_vs_commandline
+        replayer_parse_correct_log_config_yaml_vs_commandline
     )
 
 set(TEST_EXTRA_LIBRARIES

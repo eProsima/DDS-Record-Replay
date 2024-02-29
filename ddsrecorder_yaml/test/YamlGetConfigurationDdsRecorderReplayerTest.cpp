@@ -21,6 +21,8 @@
 
 #include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
+#include <ddsrecorder_yaml/replayer/CommandlineArgsReplayer.hpp>
+#include <ddsrecorder_yaml/replayer/YamlReaderConfiguration.hpp>
 
 using namespace eprosima;
 using namespace eprosima::ddsrecorder::yaml;
@@ -35,7 +37,7 @@ using namespace eprosima::ddsrecorder::yaml;
  *    - The warning filter is the one configured through the Command-Line
  *    - The info filter is the default (DDSRECORDER)
  */
-TEST(ParseYamlTest, parse_correct_log_config_yaml_vs_commandline)
+TEST(YamlGetConfigurationDdsRecorderReplayerTest, recorder_parse_correct_log_config_yaml_vs_commandline)
 {
     CommandlineArgsRecorder commandline_args;
 
@@ -70,6 +72,53 @@ TEST(ParseYamlTest, parse_correct_log_config_yaml_vs_commandline)
     ASSERT_EQ(
         configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Info].get_value(),
         "DDSRECORDER");
+}
+
+/**
+ * Check ReplayerConfiguration structure creation.
+ *
+ * CASES:
+ *  Check if chooses correctly log configuration when parsing from terminal and from YAML.
+ *  In this case, it checks that:
+ *    - The error filter is the one configured through the YAML
+ *    - The warning filter is the one configured through the Command-Line
+ *    - The info filter is the default (DDSREPLAYER)
+ */
+TEST(YamlGetConfigurationDdsRecorderReplayerTest, replayer_parse_correct_log_config_yaml_vs_commandline)
+{
+    CommandlineArgsReplayer commandline_args;
+
+    // Setting CommandLine arguments as if configured from CommandLine
+    commandline_args.log_filter[eprosima::utils::VerbosityKind::Warning].set_value("DDSREPLAYER|DDSPIPE|DEBUG");
+
+    const char* yml_str =
+            R"(
+            specs:
+              logging:
+                verbosity: info
+                filter:
+                  error: "DEBUG"
+                  warning: "DDSREPLAYER"
+        )";
+
+    Yaml yml = YAML::Load(yml_str);
+
+    // Load configuration from YAML
+    ReplayerConfiguration configuration(yml, &commandline_args);
+
+    utils::Formatter error_msg;
+
+    ASSERT_TRUE(configuration.ddspipe_configuration.log_configuration.is_valid(error_msg));
+    ASSERT_EQ(configuration.ddspipe_configuration.log_configuration.verbosity.get_value(), utils::VerbosityKind::Info);
+    ASSERT_EQ(
+        configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Error].get_value(),
+        "DEBUG");
+    ASSERT_EQ(
+        configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Warning].get_value(),
+        "DDSREPLAYER|DDSPIPE|DEBUG");
+    ASSERT_EQ(
+        configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Info].get_value(),
+        "DDSREPLAYER");
 }
 
 int main(
