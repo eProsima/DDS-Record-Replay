@@ -25,8 +25,8 @@
 #include <cpp_utils/event/SignalEventHandler.hpp>
 #include <cpp_utils/exception/ConfigurationException.hpp>
 #include <cpp_utils/exception/InitializationException.hpp>
-#include <cpp_utils/logging/StdLogConsumer.hpp>
 #include <cpp_utils/logging/BaseLogConfiguration.hpp>
+#include <cpp_utils/logging/StdLogConsumer.hpp>
 #include <cpp_utils/ReturnCode.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/types/Fuzzy.hpp>
@@ -121,6 +121,7 @@ int main(
 
     if (arg_parse_result == ProcessReturnCode::help_argument)
     {
+            // Remove every consumer
         return static_cast<int>(ProcessReturnCode::success);
     }
     else if (arg_parse_result == ProcessReturnCode::version_argument)
@@ -184,7 +185,6 @@ int main(
         {
             const auto log_configuration = configuration.ddspipe_configuration.log_configuration;
 
-            // Remove every consumer
             eprosima::utils::Log::ClearConsumers();
             eprosima::utils::Log::SetVerbosity(log_configuration.verbosity);
 

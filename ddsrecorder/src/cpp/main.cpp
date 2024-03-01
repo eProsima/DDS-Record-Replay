@@ -25,8 +25,8 @@
 #include <cpp_utils/event/SignalEventHandler.hpp>
 #include <cpp_utils/exception/ConfigurationException.hpp>
 #include <cpp_utils/exception/InitializationException.hpp>
-#include <cpp_utils/logging/StdLogConsumer.hpp>
 #include <cpp_utils/logging/BaseLogConfiguration.hpp>
+#include <cpp_utils/logging/StdLogConsumer.hpp>
 #include <cpp_utils/ReturnCode.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/types/Fuzzy.hpp>
@@ -264,18 +264,17 @@ int main(
         {
             const auto log_configuration = configuration.ddspipe_configuration.log_configuration;
 
-            // Remove every consumer
             eprosima::utils::Log::ClearConsumers();
             eprosima::utils::Log::SetVerbosity(log_configuration.verbosity);
 
-            // Stdout Log Consumer
+            // Std Log Consumer
             if (log_configuration.stdout_enable)
             {
                 eprosima::utils::Log::RegisterConsumer(
                     std::make_unique<eprosima::utils::StdLogConsumer>(&log_configuration));
             }
 
-            // DDS Log Consumer
+            // DDS Recorder Log Consumer
             if (log_configuration.publish.enable)
             {
                 eprosima::utils::Log::RegisterConsumer(
