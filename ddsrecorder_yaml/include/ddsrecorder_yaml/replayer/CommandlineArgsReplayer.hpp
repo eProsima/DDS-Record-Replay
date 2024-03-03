@@ -14,13 +14,7 @@
 
 #pragma once
 
-#include <string>
-
-#include <cpp_utils/types/Fuzzy.hpp>
-
 #include <ddspipe_core/configuration/CommandlineArgs.hpp>
-
-#include <ddspipe_core/library/library_dll.h>
 
 namespace eprosima {
 namespace ddsrecorder {

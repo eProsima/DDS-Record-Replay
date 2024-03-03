@@ -398,6 +398,7 @@ Logging
 Under the ``logging`` tag, users can configure the type of logs to display and filter the logs based on their content and category.
 When configuring the verbosity to ``info``, all types of logs, including informational messages, warnings, and errors, will be displayed.
 Conversely, setting it to ``warning`` will only show warnings and errors, while choosing ``error`` will exclusively display errors.
+By default, the filter allows all errors to be displayed, while selectively permitting warning messages from "DDSPIPE|DDSREPLAYER" and informational messages from the "DDSREPLAYER" category.
 
 .. code-block:: yaml
 
@@ -436,6 +437,10 @@ Conversely, setting it to ``warning`` will only show warnings and errors, while 
         - String
         - ``DDSPIPE`` / ``DDSREPLAYER``
         - Regex category or content
+
+.. note::
+
+    Please note that for the logs to function properly, the -DLOG_INFO=ON compilation flag is required.
 
 .. _replayer_usage_configuration_general_example:
 
