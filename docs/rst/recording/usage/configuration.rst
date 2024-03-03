@@ -607,7 +607,7 @@ By default, the filter allows all errors to be displayed, while selectively perm
         - ``filter``
         - Regex string as filter.
         - String
-        - ``DDSPIPE`` / ``DDSRECORDER``
+        - ``DDSRECORDER`` / ``DDSPIPE|DDSRECORDER`` / ``""``
         - Regex category or content
 
 .. note::

@@ -435,7 +435,7 @@ By default, the filter allows all errors to be displayed, while selectively perm
         - ``filter``
         - Regex string as filter.
         - String
-        - ``DDSPIPE`` / ``DDSREPLAYER``
+        - ``DDSREPLAYER`` / ``DDSPIPE|DDSREPLAYER`` / ``""``
         - Regex category or content
 
 .. note::
