@@ -45,8 +45,8 @@ class DdsRecorderStatusMonitorProducer : public ddspipe::core::StatusMonitorProd
 public:
 
     // TODO
-    void init(
-            const ddspipe::core::MonitorProducerConfiguration& configuration) override;
+    void register_consumer(
+            std::unique_ptr<ddspipe::core::IMonitorConsumer<DdsRecorderMonitoringStatus>> consumer);
 
     // TODO
     void consume() override;

@@ -22,31 +22,16 @@ namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
 
-void DdsRecorderStatusMonitorProducer::init(
-        const ddspipe::core::MonitorProducerConfiguration& configuration)
+void DdsRecorderStatusMonitorProducer::register_consumer(
+        std::unique_ptr<ddspipe::core::IMonitorConsumer<DdsRecorderMonitoringStatus>> consumer)
 {
-    // Store whether the producer is enabled
-    enabled_ = configuration.enabled;
-
     if (!enabled_)
     {
-        // Don't register the consumers if the producer is not enabled
+        // Don't register the consumer if the producer is not enabled
         return;
     }
 
-    // Store the period so it can be used by the Monitor
-    period = configuration.period;
-
-    // Register the type
-    fastdds::dds::TypeSupport type(new DdsRecorderMonitoringStatusPubSubType());
-
-    // Register the type object
-    registerDdsRecorderMonitoringStatusTypes();
-
-    // Create the consumers
-    consumers_.push_back(std::make_unique<ddspipe::core::DdsMonitorConsumer<DdsRecorderMonitoringStatus>>(
-                configuration.domain.get_value(), configuration.topic_name, type));
-    consumers_.push_back(std::make_unique<ddspipe::core::StdoutMonitorConsumer<DdsRecorderMonitoringStatus>>());
+    consumers_.push_back(std::move(consumer));
 }
 
 void DdsRecorderStatusMonitorProducer::consume()
