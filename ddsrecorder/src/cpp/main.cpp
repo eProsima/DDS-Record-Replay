@@ -34,8 +34,26 @@
 
 #include <ddsrecorder_participants/recorder/logging/DdsRecorderLogConsumer.hpp>
 #include <ddspipe_core/monitoring/Monitor.hpp>
+#include <ddspipe_core/monitoring/consumers/DdsMonitorConsumer.hpp>
+#include <ddspipe_core/monitoring/consumers/StdoutMonitorConsumer.hpp>
 #include <ddspipe_core/monitoring/producers/StatusMonitorProducer.hpp>
 #include <ddspipe_core/monitoring/producers/TopicsMonitorProducer.hpp>
+
+#if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
+    #include <ddspipe_core/types/monitoring/topics/v1/MonitoringTopics.h>
+    #include <ddspipe_core/types/monitoring/topics/v1/MonitoringTopicsPubSubTypes.h>
+    #include <ddspipe_core/types/monitoring/topics/v1/MonitoringTopicsTypeObject.h>
+    #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v1/DdsRecorderMonitoringStatus.h>
+    #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v1/DdsRecorderMonitoringStatusPubSubTypes.h>
+    #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v1/DdsRecorderMonitoringStatusTypeObject.h>
+#else
+    #include <ddspipe_core/types/monitoring/topics/v2/MonitoringTopics.h>
+    #include <ddspipe_core/types/monitoring/topics/v2/MonitoringTopicsPubSubTypes.h>
+    #include <ddspipe_core/types/monitoring/topics/v2/MonitoringTopicsTypeObject.h>
+    #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatus.h>
+    #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatusPubSubTypes.h>
+    #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatusTypeObject.h>
+#endif // if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
 
 #include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
@@ -47,6 +65,7 @@
 #include "command_receiver/CommandReceiver.hpp"
 #include "tool/DdsRecorder.hpp"
 
+using namespace eprosima;
 using namespace eprosima::ddspipe;
 using namespace eprosima::ddsrecorder::recorder;
 
@@ -55,10 +74,10 @@ using DdsRecorderState = eprosima::ddsrecorder::recorder::DdsRecorderStateCode;
 using json = nlohmann::json;
 
 const std::string NEXT_STATE_TAG = "next_state";
-constexpr auto string_to_command = eprosima::ddsrecorder::recorder::receiver::string_to_enumeration;
-// constexpr auto string_to_state = eprosima::ddsrecorder::recorder::string_to_enumeration;  // TODO: fix compilation error
+constexpr auto string_to_command = ddsrecorder::recorder::receiver::string_to_enumeration;
+// constexpr auto string_to_state = ddsrecorder::recorder::string_to_enumeration;  // TODO: fix compilation error
 
-std::unique_ptr<eprosima::utils::event::FileWatcherHandler> create_filewatcher(
+std::unique_ptr<utils::event::FileWatcherHandler> create_filewatcher(
         const std::unique_ptr<DdsRecorder>& recorder,
         const std::string& file_path)
 {
@@ -74,7 +93,7 @@ std::unique_ptr<eprosima::utils::event::FileWatcherHandler> create_filewatcher(
 
                 try
                 {
-                    eprosima::ddsrecorder::yaml::RecorderConfiguration new_configuration(file_path);
+                    ddsrecorder::yaml::RecorderConfiguration new_configuration(file_path);
                     recorder->reload_configuration(new_configuration);
                 }
                 catch (const std::exception& e)
@@ -86,13 +105,13 @@ std::unique_ptr<eprosima::utils::event::FileWatcherHandler> create_filewatcher(
             };
 
     // Creating FileWatcher event handler
-    return std::make_unique<eprosima::utils::event::FileWatcherHandler>(filewatcher_callback, file_path);
+    return std::make_unique<utils::event::FileWatcherHandler>(filewatcher_callback, file_path);
 }
 
-std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> create_periodic_handler(
+std::unique_ptr<utils::event::PeriodicEventHandler> create_periodic_handler(
         const std::unique_ptr<DdsRecorder>& recorder,
         const std::string& file_path,
-        const eprosima::utils::Duration_ms& reload_time)
+        const utils::Duration_ms& reload_time)
 {
     // Callback will reload configuration and pass it to DdsPipe
     std::function<void()> periodic_callback =
@@ -105,7 +124,7 @@ std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> create_periodic_ha
 
                 try
                 {
-                    eprosima::ddsrecorder::yaml::RecorderConfiguration new_configuration(file_path);
+                    ddsrecorder::yaml::RecorderConfiguration new_configuration(file_path);
                     recorder->reload_configuration(new_configuration);
                 }
                 catch (const std::exception& e)
@@ -117,7 +136,7 @@ std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> create_periodic_ha
             };
 
     // Creating periodic handler
-    return std::make_unique<eprosima::utils::event::PeriodicEventHandler>(periodic_callback, reload_time);
+    return std::make_unique<utils::event::PeriodicEventHandler>(periodic_callback, reload_time);
 }
 
 void parse_command(
@@ -130,7 +149,7 @@ void parse_command(
 
     std::string command_str = command.command();
     // Case insensitive
-    eprosima::utils::to_lowercase(command_str);
+    utils::to_lowercase(command_str);
     std::string args_str = command.args();
 
     bool found = string_to_command(command_str, command_code);
@@ -175,8 +194,8 @@ CommandCode state_to_command(
 
         default:
             // Unreachable
-            eprosima::utils::tsnh(
-                eprosima::utils::Formatter() << "Trying to convert to command an invalid state.");
+            utils::tsnh(
+                utils::Formatter() << "Trying to convert to command an invalid state.");
             return CommandCode::stop;
     }
 }
@@ -208,7 +227,7 @@ int main(
     // Check file is in args, else get the default file
     if (commandline_args.file_path == "")
     {
-        if (is_file_accessible(DEFAULT_CONFIGURATION_FILE_NAME, eprosima::utils::FileAccessMode::read))
+        if (is_file_accessible(DEFAULT_CONFIGURATION_FILE_NAME, utils::FileAccessMode::read))
         {
             commandline_args.file_path = DEFAULT_CONFIGURATION_FILE_NAME;
 
@@ -236,21 +255,21 @@ int main(
     try
     {
         // Create a multiple event handler that handles all events that make the recorder stop
-        auto close_handler = std::make_shared<eprosima::utils::event::MultipleEventHandler>();
+        auto close_handler = std::make_shared<utils::event::MultipleEventHandler>();
 
         // First of all, create signal handler so SIGINT and SIGTERM do not break the program while initializing
-        close_handler->register_event_handler<eprosima::utils::event::EventHandler<eprosima::utils::event::Signal>,
-                eprosima::utils::event::Signal>(
-            std::make_unique<eprosima::utils::event::SignalEventHandler<eprosima::utils::event::Signal::sigint>>());     // Add SIGINT
-        close_handler->register_event_handler<eprosima::utils::event::EventHandler<eprosima::utils::event::Signal>,
-                eprosima::utils::event::Signal>(
-            std::make_unique<eprosima::utils::event::SignalEventHandler<eprosima::utils::event::Signal::sigterm>>());    // Add SIGTERM
+        close_handler->register_event_handler<utils::event::EventHandler<utils::event::Signal>,
+                utils::event::Signal>(
+            std::make_unique<utils::event::SignalEventHandler<utils::event::Signal::sigint>>());     // Add SIGINT
+        close_handler->register_event_handler<utils::event::EventHandler<utils::event::Signal>,
+                utils::event::Signal>(
+            std::make_unique<utils::event::SignalEventHandler<utils::event::Signal::sigterm>>());    // Add SIGTERM
 
         // If it must be a maximum time, register a periodic handler to finish handlers
         if (commandline_args.timeout > 0)
         {
-            close_handler->register_event_handler<eprosima::utils::event::PeriodicEventHandler>(
-                std::make_unique<eprosima::utils::event::PeriodicEventHandler>(
+            close_handler->register_event_handler<utils::event::PeriodicEventHandler>(
+                std::make_unique<utils::event::PeriodicEventHandler>(
                     []()
                     {
                         /* Do nothing */ },
@@ -291,31 +310,56 @@ int main(
         // Monitoring
         core::Monitor monitor;
 
-        if (configuration.monitor.status.enabled)
+        if (configuration.monitor.producers["status"].enabled)
         {
             // Initialize the Status Monitor Producer with the DDS Recorder Status
-            static eprosima::ddsrecorder::participants::DdsRecorderStatusMonitorProducer
-                    ddsrecorder_status_producer;
-            core::StatusMonitorProducer::init_instance(&ddsrecorder_status_producer);
+            static auto ddsrecorder_status_producer =
+                    std::make_unique<ddsrecorder::participants::DdsRecorderStatusMonitorProducer>();
+            // Register the type object
+            registerDdsRecorderMonitoringStatusTypes();
 
-            // Register the Status Monitor Producer
+            // Register the type
+            fastdds::dds::TypeSupport type(new DdsRecorderMonitoringStatusPubSubType());
+
+            // Register the consumers
+            ddsrecorder_status_producer->register_consumer(std::make_unique<core::StdoutMonitorConsumer<DdsRecorderMonitoringStatus>>());
+            ddsrecorder_status_producer->register_consumer(std::make_unique<core::DdsMonitorConsumer<DdsRecorderMonitoringStatus>>(
+                    configuration.monitor.consumers["status"], type));
+
+            core::StatusMonitorProducer::init_instance(std::move(ddsrecorder_status_producer));
+
+            // Register the Topics Monitor Producer
             auto status_producer = core::StatusMonitorProducer::get_instance();
-            status_producer->init(configuration.monitor.status);
+            status_producer->init(configuration.monitor.producers["status"]);
+
+
             monitor.register_producer(status_producer);
         }
 
-        if (configuration.monitor.topics.enabled)
+        if (configuration.monitor.producers["topics"].enabled)
         {
             // Register the Topics Monitor Producer
             auto topics_producer = core::TopicsMonitorProducer::get_instance();
-            topics_producer->init(configuration.monitor.topics);
+            topics_producer->init(configuration.monitor.producers["topics"]);
+
+            // Register the type object
+            registerMonitoringTopicsTypes();
+
+            // Register the type
+            fastdds::dds::TypeSupport type(new MonitoringTopicsPubSubType());
+
+            // Register the consumers
+            topics_producer->register_consumer(std::make_unique<core::StdoutMonitorConsumer<MonitoringTopics>>());
+            topics_producer->register_consumer(std::make_unique<core::DdsMonitorConsumer<MonitoringTopics>>(
+                    configuration.monitor.consumers["topics"], type));
+
             monitor.register_producer(topics_producer);
         }
 
         if (configuration.enable_remote_controller)
         {
             logUser(DDSRECORDER_EXECUTION, "Waiting for instructions...");
-            eprosima::ddsrecorder::recorder::receiver::CommandReceiver receiver(configuration.controller_domain,
+            ddsrecorder::recorder::receiver::CommandReceiver receiver(configuration.controller_domain,
                     configuration.command_topic_name,
                     configuration.status_topic_name, close_handler, configuration.simple_configuration);
             receiver.init();
@@ -326,7 +370,7 @@ int main(
 
             // Parse and convert initial state to initial command
             DdsRecorderState initial_state;
-            bool found = eprosima::ddsrecorder::recorder::string_to_enumeration(configuration.initial_state,
+            bool found = ddsrecorder::recorder::string_to_enumeration(configuration.initial_state,
                             initial_state);
             if (!found)
             {
@@ -400,14 +444,14 @@ int main(
                 else
                 {
                     // Unreachable
-                    eprosima::utils::tsnh(
-                        eprosima::utils::Formatter() << "Trying to initiate DDS Recorder with invalid " << command <<
+                    utils::tsnh(
+                        utils::Formatter() << "Trying to initiate DDS Recorder with invalid " << command <<
                             " command.");
                 }
 
                 // Reload YAML configuration file, in case it changed during STOPPED state
                 // NOTE: Changes to all (but controller specific) recorder configuration options are taken into account
-                configuration = eprosima::ddsrecorder::yaml::RecorderConfiguration(file_path);
+                configuration = ddsrecorder::yaml::RecorderConfiguration(file_path);
 
                 // Create DDS Recorder
                 auto recorder = std::make_unique<DdsRecorder>(configuration, initial_state);
@@ -423,10 +467,6 @@ int main(
                 std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> periodic_handler;
                 if (commandline_args.reload_time > 0 && commandline_args.file_path != "")
                 {
-                    periodic_handler = create_periodic_handler(recorder, commandline_args.file_path,
-                                    commandline_args.reload_time);
-                }
-
                 // Use flag to avoid ugly warning (start/pause an already started/paused instance)
                 bool first_iter = true;
                 prev_command = command;
@@ -488,9 +528,9 @@ int main(
                                     {
                                         std::string next_state_str = *it;
                                         // Case insensitive
-                                        eprosima::utils::to_uppercase(next_state_str);
+                                        utils::to_uppercase(next_state_str);
                                         DdsRecorderState next_state;
-                                        bool found = eprosima::ddsrecorder::recorder::string_to_enumeration(
+                                        bool found = ddsrecorder::recorder::string_to_enumeration(
                                             next_state_str, next_state);
                                         if (!found ||
                                                 (next_state != DdsRecorderState::RUNNING &&
@@ -556,10 +596,6 @@ int main(
             std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> periodic_handler;
             if (commandline_args.reload_time > 0 && commandline_args.file_path != "")
             {
-                periodic_handler = create_periodic_handler(recorder, commandline_args.file_path,
-                                commandline_args.reload_time);
-            }
-
             // Wait until signal arrives
             close_handler->wait_for_event();
         }
@@ -568,7 +604,7 @@ int main(
 
         logUser(DDSRECORDER_EXECUTION, "DDS Recorder stopped correctly.");
     }
-    catch (const eprosima::utils::ConfigurationException& e)
+    catch (const utils::ConfigurationException& e)
     {
         logError(DDSRECORDER_ERROR,
                 "Error Loading DDS Recorder Configuration from file " << commandline_args.file_path <<
@@ -576,7 +612,7 @@ int main(
                 e.what());
         return static_cast<int>(ProcessReturnCode::execution_failed);
     }
-    catch (const eprosima::utils::InitializationException& e)
+    catch (const utils::InitializationException& e)
     {
         logError(DDSRECORDER_ERROR,
                 "Error Initializing DDS Recorder. Error message:\n " <<
@@ -587,7 +623,7 @@ int main(
     logUser(DDSRECORDER_EXECUTION, "Finishing DDS Recorder execution correctly.");
 
     // Force print every log before closing
-    eprosima::utils::Log::Flush();
+    utils::Log::Flush();
 
     // Delete the consumers before closing
     eprosima::utils::Log::ClearConsumers();
