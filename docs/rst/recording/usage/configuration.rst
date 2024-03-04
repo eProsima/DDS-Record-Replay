@@ -605,11 +605,12 @@ By default, the filter allows all errors to be displayed, while selectively perm
 
     *   - Filter
         - ``filter``
-        - Regex string as filter.
-        - String
+        - Regex to filter the category  |br|
+          or message of the logs.
+        - *string*
         - info : ``DDSRECORDER`` |br|
           warning : ``DDSPIPE|DDSRECORDER`` |br|
-          error: ``""``
+          error : ``""``
         - Regex string
 
 .. note::

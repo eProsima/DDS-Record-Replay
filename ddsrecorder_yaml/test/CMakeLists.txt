@@ -23,8 +23,8 @@ set(TEST_SOURCES
     )
 
 set(TEST_LIST
-        recorder_parse_correct_log_config_yaml_vs_commandline
-        replayer_parse_correct_log_config_yaml_vs_commandline
+        get_ddsrecorder_configuration_yaml_vs_commandline
+        get_ddsreplayer_configuration_yaml_vs_commandline
     )
 
 set(TEST_EXTRA_LIBRARIES

@@ -37,7 +37,7 @@ using namespace eprosima::ddsrecorder::yaml;
  *    - The warning filter is the one configured through the Command-Line
  *    - The info filter is the default (DDSRECORDER)
  */
-TEST(YamlGetConfigurationDdsRecorderReplayerTest, recorder_parse_correct_log_config_yaml_vs_commandline)
+TEST(YamlGetConfigurationDdsRecorderReplayerTest, get_ddsrecorder_configuration_yaml_vs_commandline)
 {
     CommandlineArgsRecorder commandline_args;
 
@@ -84,7 +84,7 @@ TEST(YamlGetConfigurationDdsRecorderReplayerTest, recorder_parse_correct_log_con
  *    - The warning filter is the one configured through the Command-Line
  *    - The info filter is the default (DDSREPLAYER)
  */
-TEST(YamlGetConfigurationDdsRecorderReplayerTest, replayer_parse_correct_log_config_yaml_vs_commandline)
+TEST(YamlGetConfigurationDdsRecorderReplayerTest, get_ddsreplayer_configuration_yaml_vs_commandline)
 {
     CommandlineArgsReplayer commandline_args;
 
