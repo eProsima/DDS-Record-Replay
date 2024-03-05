@@ -16,6 +16,8 @@
 
 #include <ddspipe_core/configuration/CommandlineArgs.hpp>
 
+#include <ddsrecorder_yaml/library/library_dll.h>
+
 namespace eprosima {
 namespace ddsrecorder {
 namespace yaml {
@@ -23,7 +25,7 @@ namespace yaml {
 /*
  * Struct to parse the executable arguments
  */
-struct CommandlineArgsReplayer : public ddspipe::core::CommandlineArgs
+struct DDSRECORDER_YAML_DllAPI CommandlineArgsReplayer : public ddspipe::core::CommandlineArgs
 {
 
     /////////////////////////
