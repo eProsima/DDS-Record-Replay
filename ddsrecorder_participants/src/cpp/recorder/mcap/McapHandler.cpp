@@ -499,11 +499,8 @@ void McapHandler::open_file_nts_()
     auto status = mcap_writer_.open(tmp_filename.c_str(), configuration_.mcap_writer_options);
     if (!status.ok())
     {
-        logError(
-            DDSRECORDER_MCAP_HANDLER,
-            "Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
         throw utils::InitializationException(
-                  STR_ENTRY << "Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
+                  STR_ENTRY << "FAIL_MCAP_CREATION | Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
     }
 
     // Write in new file schemas already received before
@@ -592,11 +589,21 @@ void McapHandler::add_data_nts_(
 void McapHandler::write_message_nts_(
         const Message& msg)
 {
-    auto status = mcap_writer_.write(msg);
+    mcap::Status status;
+    try
+    {
+        status = mcap_writer_.write(msg);
+    }
+    catch(const std::overflow_error& e)
+    {
+        throw utils::InconsistencyException(
+                  STR_ENTRY << "FAIL_MCAP_WRITE | Error writting in MCAP, error message: " << e.what()
+                  );
+    }
     if (!status.ok())
     {
         throw utils::InconsistencyException(
-                  STR_ENTRY << "Error writting in MCAP, error message: " << status.message
+                  STR_ENTRY << "FAIL_MCAP_WRITE | Error writting in MCAP, error message: " << status.message
                   );
     }
 }
