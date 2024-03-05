@@ -43,19 +43,22 @@ using namespace eprosima::ddspipe::participants::types;
 using namespace eprosima::ddspipe::yaml;
 
 RecorderConfiguration::RecorderConfiguration(
-        const Yaml& yml)
+        const Yaml& yml,
+        const CommandlineArgsRecorder* args /*= nullptr*/)
 {
-    load_ddsrecorder_configuration_(yml);
+    load_ddsrecorder_configuration_(yml, args);
 }
 
 RecorderConfiguration::RecorderConfiguration(
-        const std::string& file_path)
+        const std::string& file_path,
+        const CommandlineArgsRecorder* args /*= nullptr*/)
 {
-    load_ddsrecorder_configuration_from_file_(file_path);
+    load_ddsrecorder_configuration_from_file_(file_path, args);
 }
 
 void RecorderConfiguration::load_ddsrecorder_configuration_(
-        const Yaml& yml)
+        const Yaml& yml,
+        const CommandlineArgsRecorder* args)
 {
     try
     {
@@ -144,12 +147,26 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
             auto controller_yml = YamlReader::get_value_in_tag(yml, RECORDER_REMOTE_CONTROLLER_TAG);
             load_controller_configuration_(controller_yml, version);
         }
+
+        /////
+        // Log Configuration's set methods: Depending on where Log Configuration has been configured
+        // (Yaml, Command-Line and/or by default) these methods will set DdsPipeConfiguration's log_configuration
+        // taking into account this precedence:
+        //  1. Log Configuration set on Command-line.
+        //  2. Log Configuration set by YAML.
+        //  3. Log Configuration set by default.
+        if (args != nullptr)
+        {
+            ddspipe_configuration.log_configuration.set(args->log_verbosity);
+            ddspipe_configuration.log_configuration.set(args->log_filter);
+        }
     }
     catch (const std::exception& e)
     {
         throw eprosima::utils::ConfigurationException(
                   utils::Formatter() << "Error loading DDS Recorder configuration from yaml:\n " << e.what());
     }
+
 }
 
 void RecorderConfiguration::load_recorder_configuration_(
@@ -317,6 +334,14 @@ void RecorderConfiguration::load_specs_configuration_(
     {
         cleanup_period = YamlReader::get_positive_int(yml, RECORDER_SPECS_CLEANUP_PERIOD_TAG);
     }
+
+    /////
+    // Get optional Log Configuration
+    if (YamlReader::is_tag_present(yml, LOG_CONFIGURATION_TAG))
+    {
+        ddspipe_configuration.log_configuration = YamlReader::get<utils::LogConfiguration>(yml, LOG_CONFIGURATION_TAG,
+                        version);
+    }
 }
 
 void RecorderConfiguration::load_dds_configuration_(
@@ -397,7 +422,8 @@ void RecorderConfiguration::load_dds_configuration_(
 }
 
 void RecorderConfiguration::load_ddsrecorder_configuration_from_file_(
-        const std::string& file_path)
+        const std::string& file_path,
+        const CommandlineArgsRecorder* args)
 {
     Yaml yml;
 
@@ -416,7 +442,7 @@ void RecorderConfiguration::load_ddsrecorder_configuration_from_file_(
                       "> :\n " << e.what());
     }
 
-    RecorderConfiguration::load_ddsrecorder_configuration_(yml);
+    RecorderConfiguration::load_ddsrecorder_configuration_(yml, args);
 }
 
 } /* namespace yaml */

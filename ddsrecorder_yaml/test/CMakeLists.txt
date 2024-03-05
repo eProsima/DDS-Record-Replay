@@ -12,4 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO add tests
+###################
+# Parse Yaml Test #
+###################
+
+set(TEST_NAME YamlGetConfigurationDdsRecorderReplayerTest)
+
+set(TEST_SOURCES
+        ${PROJECT_SOURCE_DIR}/test/YamlGetConfigurationDdsRecorderReplayerTest.cpp
+    )
+
+set(TEST_LIST
+        get_ddsrecorder_configuration_yaml_vs_commandline
+        get_ddsreplayer_configuration_yaml_vs_commandline
+    )
+
+set(TEST_EXTRA_LIBRARIES
+        yaml-cpp
+        fastcdr
+        fastrtps
+        cpp_utils
+        ddspipe_core
+        ddspipe_participants
+        ddspipe_yaml
+        ddsrecorder_yaml
+    )
+
+add_unittest_executable(
+    "${TEST_NAME}"
+    "${TEST_SOURCES}"
+    "${TEST_LIST}"
+    "${TEST_EXTRA_LIBRARIES}")

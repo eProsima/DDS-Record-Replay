@@ -34,6 +34,7 @@
 #include <ddspipe_yaml/YamlReader.hpp>
 
 #include <ddsrecorder_yaml/library/library_dll.h>
+#include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -49,10 +50,12 @@ class DDSRECORDER_YAML_DllAPI RecorderConfiguration
 public:
 
     RecorderConfiguration(
-            const Yaml& yml);
+            const Yaml& yml,
+            const CommandlineArgsRecorder* args = nullptr);
 
     RecorderConfiguration(
-            const std::string& file_path);
+            const std::string& file_path,
+            const CommandlineArgsRecorder* args = nullptr);
 
     // DDS Pipe Configuration
     ddspipe::core::DdsPipeConfiguration ddspipe_configuration;
@@ -92,7 +95,8 @@ public:
 protected:
 
     void load_ddsrecorder_configuration_(
-            const Yaml& yml);
+            const Yaml& yml,
+            const CommandlineArgsRecorder* args);
 
     void load_recorder_configuration_(
             const Yaml& yml,
@@ -111,7 +115,8 @@ protected:
             const ddspipe::yaml::YamlReaderVersion& version);
 
     void load_ddsrecorder_configuration_from_file_(
-            const std::string& file_path);
+            const std::string& file_path,
+            const CommandlineArgsRecorder* args);
 };
 
 } /* namespace yaml */

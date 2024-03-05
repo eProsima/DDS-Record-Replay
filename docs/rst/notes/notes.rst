@@ -2,8 +2,7 @@
 
 .. _notes:
 
-.. TODO uncomment when there are forthcoming notes
-.. .. include:: forthcoming_version.rst
+.. include:: forthcoming_version.rst
 
 ##############
 Version v0.3.0

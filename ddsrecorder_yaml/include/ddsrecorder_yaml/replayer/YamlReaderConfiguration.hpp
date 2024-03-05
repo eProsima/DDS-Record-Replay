@@ -34,6 +34,7 @@
 
 #include <ddsrecorder_participants/replayer/McapReaderParticipantConfiguration.hpp>
 #include <ddsrecorder_yaml/library/library_dll.h>
+#include <ddsrecorder_yaml/replayer/CommandlineArgsReplayer.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -49,10 +50,12 @@ class DDSRECORDER_YAML_DllAPI ReplayerConfiguration
 public:
 
     ReplayerConfiguration(
-            const Yaml& yml);
+            const Yaml& yml,
+            const CommandlineArgsReplayer* args = nullptr);
 
     ReplayerConfiguration(
-            const std::string& file_path);
+            const std::string& file_path,
+            const CommandlineArgsReplayer* args = nullptr);
 
     // DDS Pipe Configuration
     ddspipe::core::DdsPipeConfiguration ddspipe_configuration;
@@ -76,7 +79,8 @@ public:
 protected:
 
     void load_ddsreplayer_configuration_(
-            const Yaml& yml);
+            const Yaml& yml,
+            const CommandlineArgsReplayer* args);
 
     void load_replay_configuration_(
             const Yaml& yml,
@@ -91,7 +95,8 @@ protected:
             const ddspipe::yaml::YamlReaderVersion& version);
 
     void load_ddsreplayer_configuration_from_file_(
-            const std::string& file_path);
+            const std::string& file_path,
+            const CommandlineArgsReplayer* args);
 };
 
 } /* namespace yaml */

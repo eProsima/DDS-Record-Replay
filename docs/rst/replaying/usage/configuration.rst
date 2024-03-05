@@ -389,6 +389,61 @@ QoS
 
     The :ref:`Topic QoS <replayer_topic_qos>` configured in ``specs`` can be overwritten by the :ref:`Manual Topics <replayer_manual_topics>`.
 
+.. _replayer_specs_logging:
+
+Logging
+^^^^^^^
+
+``specs`` supports a ``logging`` **optional** tag to configure the |ddsreplayer| logs.
+Under the ``logging`` tag, users can configure the type of logs to display and filter the logs based on their content and category.
+When configuring the verbosity to ``info``, all types of logs, including informational messages, warnings, and errors, will be displayed.
+Conversely, setting it to ``warning`` will only show warnings and errors, while choosing ``error`` will exclusively display errors.
+By default, the filter allows all errors to be displayed, while selectively permitting warning messages from ``DDSPIPE|DDSREPLAYER`` and informational messages from the ``DDSREPLAYER`` category.
+
+.. code-block:: yaml
+
+    logging:
+      verbosity: info
+      filter:
+        error: "DDSPIPE|DDSREPLAYER"
+        warning: "DDSPIPE|DDSREPLAYER"
+        info: "DDSREPLAYER"
+
+.. note::
+
+    Configuring the logs via the Command-Line is still active and takes precedence over YAML configuration when both methods are used simultaneously.
+
+.. list-table::
+    :header-rows: 1
+
+    *   - Logging
+        - Yaml tag
+        - Description
+        - Data type
+        - Default value
+        - Possible values
+
+    *   - Verbosity
+        - ``verbosity``
+        - Show messages of equal |br|
+          or higher importance.
+        - *enum*
+        - ``warning``
+        - ``info`` / ``warning`` / ``error``
+
+    *   - Filter
+        - ``filter``
+        - Regex to filter the category  |br|
+          or message of the logs.
+        - *string*
+        - info : ``DDSREPLAYER`` |br|
+          warning : ``DDSPIPE|DDSREPLAYER`` |br|
+          error : ``""``
+        - Regex string
+.. note::
+
+    For the logs to function properly, the ``-DLOG_INFO=ON`` compilation flag is required.
+
 .. _replayer_usage_configuration_general_example:
 
 General Example
@@ -453,3 +508,10 @@ A complete example of all the configurations described on this page can be found
 
       qos:
         max-tx-rate: 20
+
+      logging:
+        verbosity: info
+        filter:
+          error: "DDSPIPE|DDSREPLAYER"
+          warning: "DDSPIPE|DDSREPLAYER"
+          info: "DDSREPLAYER"
