@@ -7,6 +7,7 @@
 #include <zstd.h>
 #include <zstd_errors.h>
 #include <filesystem>
+#include <stdexcept>
 
 namespace mcap {
 
@@ -62,9 +63,8 @@ void FileWriter::handleWrite(const std::byte* data, uint64_t size) {
     const std::uintmax_t space_available = get_space_available_(directory_str_);
     if (space_available < size)
     {
-      logError(
-            DDSRECORDER_MCAP_HANDLER,
-            "Not enough space available in disk. Space available: " << space_available);
+      throw std::overflow_error(
+            "Not enough space available in disk. Space available: " + std::to_string(space_available));
     }
   }
   size_ += size;
