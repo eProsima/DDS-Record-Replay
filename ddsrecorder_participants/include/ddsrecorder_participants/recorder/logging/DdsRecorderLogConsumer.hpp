@@ -31,6 +31,7 @@ namespace participants {
  * DDS Recorder Log Consumer with Standard (logical) behaviour.
  *
  * Registering this consumer in Fast DDS's Log publishes the log entries accepted by the \c BaseLogConsumer.
+ * In addition to the \c DdsLogConsumer, it adds new event types specific to the DDS Recorder.
  */
 class DdsRecorderLogConsumer : public ddspipe::core::DdsLogConsumer
 {

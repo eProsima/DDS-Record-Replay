@@ -121,7 +121,6 @@ int main(
 
     if (arg_parse_result == ProcessReturnCode::help_argument)
     {
-            // Remove every consumer
         return static_cast<int>(ProcessReturnCode::success);
     }
     else if (arg_parse_result == ProcessReturnCode::version_argument)
