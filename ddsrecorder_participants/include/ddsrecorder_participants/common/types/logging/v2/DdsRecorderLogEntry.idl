@@ -1,2 +1,0 @@
-const long FAIL_MCAP_CREATION = 0x12000001;
-const long FAIL_MCAP_WRITE = 0x12000002;
