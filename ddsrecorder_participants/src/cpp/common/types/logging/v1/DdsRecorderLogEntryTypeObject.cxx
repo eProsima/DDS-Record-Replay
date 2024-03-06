@@ -21,8 +21,10 @@
 
 #ifdef _WIN32
 // Remove linker warning LNK4221 on Visual Studio
-namespace { char dummy; }
-#endif
+namespace {
+char dummy;
+} // namespace
+#endif // ifdef _WIN32
 
 #include <ddsrecorder_participants/common/types/logging/v1/DdsRecorderLogEntry.h>
 #include <ddsrecorder_participants/common/types/logging/v1/DdsRecorderLogEntryTypeObject.h>
@@ -43,6 +45,6 @@ void registerDdsRecorderLogEntryTypes()
     static std::once_flag once_flag;
     std::call_once(once_flag, []()
             {
-                TypeObjectFactory *factory = TypeObjectFactory::get_instance();
+                TypeObjectFactory* factory = TypeObjectFactory::get_instance();
             });
 }

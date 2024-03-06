@@ -38,16 +38,20 @@ using namespace eprosima::fastcdr::exception;
 
 #include <utility>
 
-namespace helper { namespace internal {
+namespace helper {
+namespace internal {
 
-enum class Size {
+enum class Size
+{
     UInt8,
     UInt16,
     UInt32,
     UInt64,
 };
 
-constexpr Size get_size(int s) {
+constexpr Size get_size(
+        int s)
+{
     return (s <= 8 ) ? Size::UInt8:
            (s <= 16) ? Size::UInt16:
            (s <= 32) ? Size::UInt32: Size::UInt64;
@@ -57,28 +61,33 @@ template<Size s>
 struct FindTypeH;
 
 template<>
-struct FindTypeH<Size::UInt8> {
+struct FindTypeH<Size::UInt8>
+{
     using type = std::uint8_t;
 };
 
 template<>
-struct FindTypeH<Size::UInt16> {
+struct FindTypeH<Size::UInt16>
+{
     using type = std::uint16_t;
 };
 
 template<>
-struct FindTypeH<Size::UInt32> {
+struct FindTypeH<Size::UInt32>
+{
     using type = std::uint32_t;
 };
 
 template<>
-struct FindTypeH<Size::UInt64> {
+struct FindTypeH<Size::UInt64>
+{
     using type = std::uint64_t;
 };
-}
+} // namespace internal
 
 template<int S>
-struct FindType {
+struct FindType
+{
     using type = typename internal::FindTypeH<internal::get_size(S)>::type;
 };
-}
+} // namespace helper
