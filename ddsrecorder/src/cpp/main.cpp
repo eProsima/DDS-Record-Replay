@@ -33,30 +33,6 @@
 #include <cpp_utils/utils.hpp>
 
 #include <ddsrecorder_participants/recorder/logging/DdsRecorderLogConsumer.hpp>
-#include <ddspipe_core/monitoring/Monitor.hpp>
-#include <ddspipe_core/monitoring/consumers/DdsMonitorConsumer.hpp>
-#include <ddspipe_core/monitoring/consumers/DdsMonitorParticipantRegistry.hpp>
-#include <ddspipe_core/monitoring/consumers/StdoutMonitorConsumer.hpp>
-#include <ddspipe_core/monitoring/producers/StatusMonitorProducer.hpp>
-#include <ddspipe_core/monitoring/producers/TopicsMonitorProducer.hpp>
-
-#if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
-    #include <ddspipe_core/types/monitoring/topics/v1/MonitoringTopics.h>
-    #include <ddspipe_core/types/monitoring/topics/v1/MonitoringTopicsPubSubTypes.h>
-    #include <ddspipe_core/types/monitoring/topics/v1/MonitoringTopicsTypeObject.h>
-    #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v1/DdsRecorderMonitoringStatus.h>
-    #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v1/DdsRecorderMonitoringStatusPubSubTypes.h>
-    #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v1/DdsRecorderMonitoringStatusTypeObject.h>
-#else
-    #include <ddspipe_core/types/monitoring/topics/v2/MonitoringTopics.h>
-    #include <ddspipe_core/types/monitoring/topics/v2/MonitoringTopicsPubSubTypes.h>
-    #include <ddspipe_core/types/monitoring/topics/v2/MonitoringTopicsTypeObject.h>
-    #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatus.h>
-    #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatusPubSubTypes.h>
-    #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatusTypeObject.h>
-#endif // if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
-
-#include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
 #include "user_interface/arguments_configuration.hpp"
@@ -65,6 +41,7 @@
 
 #include "command_receiver/CommandReceiver.hpp"
 #include "tool/DdsRecorder.hpp"
+#include "tool/DdsRecorderMonitor.hpp"
 
 using namespace eprosima;
 using namespace eprosima::ddspipe;
@@ -309,48 +286,16 @@ int main(
         logUser(DDSRECORDER_EXECUTION, "DDS Recorder running.");
 
         // Monitoring
-        core::Monitor monitor;
-        core::DdsMonitorParticipantRegistry registry;
+        DdsRecorderMonitor monitor(configuration.monitor);
 
         if (configuration.monitor.producers["status"].enabled)
         {
-            // Initialize the Status Monitor Producer with the DDS Recorder Status
-            static auto ddsrecorder_status_producer =
-                    std::make_unique<ddsrecorder::participants::DdsRecorderStatusMonitorProducer>();
-
-            // Register the type
-            fastdds::dds::TypeSupport type(new DdsRecorderMonitoringStatusPubSubType());
-
-            // Register the consumers
-            ddsrecorder_status_producer->register_consumer(std::make_unique<core::StdoutMonitorConsumer<DdsRecorderMonitoringStatus>>());
-            ddsrecorder_status_producer->register_consumer(std::make_unique<core::DdsMonitorConsumer<DdsRecorderMonitoringStatus>>(
-                    configuration.monitor.consumers["status"], registry, type));
-
-            core::StatusMonitorProducer::init_instance(std::move(ddsrecorder_status_producer));
-
-            // Register the Topics Monitor Producer
-            auto status_producer = core::StatusMonitorProducer::get_instance();
-            status_producer->init(configuration.monitor.producers["status"]);
-
-
-            monitor.register_producer(status_producer);
+            monitor.monitorize_status();
         }
 
         if (configuration.monitor.producers["topics"].enabled)
         {
-            // Register the Topics Monitor Producer
-            auto topics_producer = core::TopicsMonitorProducer::get_instance();
-            topics_producer->init(configuration.monitor.producers["topics"]);
-
-            // Register the type
-            fastdds::dds::TypeSupport type(new MonitoringTopicsPubSubType());
-
-            // Register the consumers
-            topics_producer->register_consumer(std::make_unique<core::StdoutMonitorConsumer<MonitoringTopics>>());
-            topics_producer->register_consumer(std::make_unique<core::DdsMonitorConsumer<MonitoringTopics>>(
-                    configuration.monitor.consumers["topics"], registry, type));
-
-            monitor.register_producer(topics_producer);
+            monitor.monitorize_topics();
         }
 
         if (configuration.enable_remote_controller)
