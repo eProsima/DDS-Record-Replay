@@ -26,9 +26,9 @@ char dummy;
 }  // namespace
 #endif  // _WIN32
 
-#include <ddsrecorder_participants/common/types/v2/DynamicTypesCollection.hpp>
+#include <ddsrecorder_participants/common/types/dynamic_types/v2/DynamicTypesCollection.hpp>
 
-#if FASTCDR_VERSION_MAJOR == 1
+#if FASTCDR_VERSION_MAJOR > 1
 
 #include <fastcdr/Cdr.h>
 
@@ -37,63 +37,6 @@ char dummy;
 using namespace eprosima::fastcdr::exception;
 
 #include <utility>
-
-namespace helper {
-namespace internal {
-
-enum class Size
-{
-    UInt8,
-    UInt16,
-    UInt32,
-    UInt64,
-};
-
-constexpr Size get_size(
-        int s)
-{
-    return (s <= 8 ) ? Size::UInt8:
-           (s <= 16) ? Size::UInt16:
-           (s <= 32) ? Size::UInt32: Size::UInt64;
-}
-
-template<Size s>
-struct FindTypeH;
-
-template<>
-struct FindTypeH<Size::UInt8>
-{
-    using type = std::uint8_t;
-};
-
-template<>
-struct FindTypeH<Size::UInt16>
-{
-    using type = std::uint16_t;
-};
-
-template<>
-struct FindTypeH<Size::UInt32>
-{
-    using type = std::uint32_t;
-};
-
-template<>
-struct FindTypeH<Size::UInt64>
-{
-    using type = std::uint64_t;
-};
-} // namespace internal
-
-template<int S>
-struct FindType
-{
-    using type = typename internal::FindTypeH<internal::get_size(S)>::type;
-};
-} // namespace helper
-
-#define eprosima_ddsrecorder_participants_DynamicTypesCollection_max_cdr_typesize 78412ULL;
-#define eprosima_ddsrecorder_participants_DynamicType_max_cdr_typesize 784ULL;
 
 
 namespace eprosima {
@@ -106,13 +49,6 @@ namespace participants {
 
 DynamicType::DynamicType()
 {
-    // /type_d() m_type_name
-
-    // /type_d() m_type_information
-
-    // /type_d() m_type_object
-
-
 }
 
 DynamicType::~DynamicType()
@@ -123,53 +59,35 @@ DynamicType::DynamicType(
         const DynamicType& x)
 {
     m_type_name = x.m_type_name;
-
-
     m_type_information = x.m_type_information;
-
-
     m_type_object = x.m_type_object;
-
 }
 
 DynamicType::DynamicType(
         DynamicType&& x) noexcept
 {
     m_type_name = std::move(x.m_type_name);
-
-
     m_type_information = std::move(x.m_type_information);
-
-
     m_type_object = std::move(x.m_type_object);
-
 }
 
 DynamicType& DynamicType::operator =(
         const DynamicType& x)
 {
+
     m_type_name = x.m_type_name;
-
-
     m_type_information = x.m_type_information;
-
-
     m_type_object = x.m_type_object;
-
     return *this;
 }
 
 DynamicType& DynamicType::operator =(
         DynamicType&& x) noexcept
 {
+
     m_type_name = std::move(x.m_type_name);
-
-
     m_type_information = std::move(x.m_type_information);
-
-
     m_type_object = std::move(x.m_type_object);
-
     return *this;
 }
 
@@ -185,71 +103,6 @@ bool DynamicType::operator !=(
         const DynamicType& x) const
 {
     return !(*this == x);
-}
-
-size_t DynamicType::getMaxCdrSerializedSize(
-        size_t current_alignment)
-{
-    static_cast<void>(current_alignment);
-    return eprosima_ddsrecorder_participants_DynamicType_max_cdr_typesize;
-}
-
-size_t DynamicType::getCdrSerializedSize(
-        const DynamicType& data,
-        size_t current_alignment)
-{
-    (void)data;
-    size_t initial_alignment = current_alignment;
-
-    current_alignment += 4 + eprosima::fastcdr::Cdr::alignment(current_alignment, 4) + data.type_name().size() + 1;
-
-
-    current_alignment += 4 +
-            eprosima::fastcdr::Cdr::alignment(current_alignment, 4) + data.type_information().size() + 1;
-
-
-    current_alignment += 4 + eprosima::fastcdr::Cdr::alignment(current_alignment, 4) + data.type_object().size() + 1;
-
-
-    return current_alignment - initial_alignment;
-}
-
-void DynamicType::serialize(
-        eprosima::fastcdr::Cdr& scdr) const
-{
-    scdr << m_type_name.c_str();
-
-    scdr << m_type_information.c_str();
-
-    scdr << m_type_object.c_str();
-
-}
-
-void DynamicType::deserialize(
-        eprosima::fastcdr::Cdr& dcdr)
-{
-    dcdr >> m_type_name;
-
-
-
-    dcdr >> m_type_information;
-
-
-
-    dcdr >> m_type_object;
-
-
-}
-
-bool DynamicType::isKeyDefined()
-{
-    return false;
-}
-
-void DynamicType::serializeKey(
-        eprosima::fastcdr::Cdr& scdr) const
-{
-    (void) scdr;
 }
 
 /*!
@@ -368,9 +221,6 @@ std::string& DynamicType::type_object()
 
 DynamicTypesCollection::DynamicTypesCollection()
 {
-    // sequence<eprosima::ddsrecorder::participants::DynamicType> m_dynamic_types
-
-
 }
 
 DynamicTypesCollection::~DynamicTypesCollection()
@@ -381,29 +231,27 @@ DynamicTypesCollection::DynamicTypesCollection(
         const DynamicTypesCollection& x)
 {
     m_dynamic_types = x.m_dynamic_types;
-
 }
 
 DynamicTypesCollection::DynamicTypesCollection(
         DynamicTypesCollection&& x) noexcept
 {
     m_dynamic_types = std::move(x.m_dynamic_types);
-
 }
 
 DynamicTypesCollection& DynamicTypesCollection::operator =(
         const DynamicTypesCollection& x)
 {
-    m_dynamic_types = x.m_dynamic_types;
 
+    m_dynamic_types = x.m_dynamic_types;
     return *this;
 }
 
 DynamicTypesCollection& DynamicTypesCollection::operator =(
         DynamicTypesCollection&& x) noexcept
 {
-    m_dynamic_types = std::move(x.m_dynamic_types);
 
+    m_dynamic_types = std::move(x.m_dynamic_types);
     return *this;
 }
 
@@ -417,61 +265,6 @@ bool DynamicTypesCollection::operator !=(
         const DynamicTypesCollection& x) const
 {
     return !(*this == x);
-}
-
-size_t DynamicTypesCollection::getMaxCdrSerializedSize(
-        size_t current_alignment)
-{
-    static_cast<void>(current_alignment);
-    return eprosima_ddsrecorder_participants_DynamicTypesCollection_max_cdr_typesize;
-}
-
-size_t DynamicTypesCollection::getCdrSerializedSize(
-        const DynamicTypesCollection& data,
-        size_t current_alignment)
-{
-    (void)data;
-    size_t initial_alignment = current_alignment;
-
-    current_alignment += 4 + eprosima::fastcdr::Cdr::alignment(current_alignment, 4);
-
-
-    for (size_t a = 0; a < data.dynamic_types().size(); ++a)
-    {
-        current_alignment += eprosima::ddsrecorder::participants::DynamicType::getCdrSerializedSize(
-            data.dynamic_types().at(a), current_alignment);
-    }
-
-
-
-    return current_alignment - initial_alignment;
-}
-
-void DynamicTypesCollection::serialize(
-        eprosima::fastcdr::Cdr& scdr) const
-{
-    scdr << m_dynamic_types;
-
-
-}
-
-void DynamicTypesCollection::deserialize(
-        eprosima::fastcdr::Cdr& dcdr)
-{
-    dcdr >> m_dynamic_types;
-
-
-}
-
-bool DynamicTypesCollection::isKeyDefined()
-{
-    return false;
-}
-
-void DynamicTypesCollection::serializeKey(
-        eprosima::fastcdr::Cdr& scdr) const
-{
-    (void) scdr;
 }
 
 /*!
@@ -519,5 +312,7 @@ std::vector<eprosima::ddsrecorder::participants::DynamicType>& DynamicTypesColle
 
 
 } // namespace eprosima
+// Include auxiliary functions like for serializing/deserializing.
+#include "DynamicTypesCollectionCdrAux.ipp"
 
-#endif // FASTCDR_VERSION_MAJOR == 1
+#endif // FASTCDR_VERSION_MAJOR > 1

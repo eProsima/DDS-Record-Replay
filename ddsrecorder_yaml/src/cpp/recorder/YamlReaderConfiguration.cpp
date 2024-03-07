@@ -19,6 +19,7 @@
 
 #include <cpp_utils/utils.hpp>
 
+#include <ddspipe_core/configuration/DdsPipeLogConfiguration.hpp>
 #include <ddspipe_core/types/dynamic_types/types.hpp>
 #include <ddspipe_core/types/topic/filter/ManualTopic.hpp>
 #include <ddspipe_core/types/topic/filter/WildcardDdsFilterTopic.hpp>
@@ -29,7 +30,6 @@
 #include <ddspipe_yaml/YamlManager.hpp>
 
 #include <ddsrecorder_yaml/recorder/yaml_configuration_tags.hpp>
-
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
 namespace eprosima {
@@ -339,7 +339,7 @@ void RecorderConfiguration::load_specs_configuration_(
     // Get optional Log Configuration
     if (YamlReader::is_tag_present(yml, LOG_CONFIGURATION_TAG))
     {
-        ddspipe_configuration.log_configuration = YamlReader::get<utils::LogConfiguration>(yml, LOG_CONFIGURATION_TAG,
+        ddspipe_configuration.log_configuration = YamlReader::get<DdsPipeLogConfiguration>(yml, LOG_CONFIGURATION_TAG,
                         version);
     }
 }

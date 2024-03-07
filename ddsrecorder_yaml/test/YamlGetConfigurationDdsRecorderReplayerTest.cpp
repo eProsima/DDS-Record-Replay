@@ -15,8 +15,6 @@
 #include <cpp_utils/testing/gtest_aux.hpp>
 #include <gtest/gtest.h>
 
-#include <cpp_utils/logging/LogConfiguration.hpp>
-
 #include <ddspipe_yaml/YamlReader.hpp>
 
 #include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>

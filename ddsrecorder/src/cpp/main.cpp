@@ -25,13 +25,14 @@
 #include <cpp_utils/event/SignalEventHandler.hpp>
 #include <cpp_utils/exception/ConfigurationException.hpp>
 #include <cpp_utils/exception/InitializationException.hpp>
-#include <cpp_utils/logging/CustomStdLogConsumer.hpp>
-#include <cpp_utils/logging/LogConfiguration.hpp>
+#include <cpp_utils/logging/BaseLogConfiguration.hpp>
+#include <cpp_utils/logging/StdLogConsumer.hpp>
 #include <cpp_utils/ReturnCode.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/types/Fuzzy.hpp>
 #include <cpp_utils/utils.hpp>
 
+#include <ddsrecorder_participants/recorder/logging/DdsRecorderLogConsumer.hpp>
 #include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
@@ -261,13 +262,24 @@ int main(
         /////
         // Logging
         {
-            // Remove every consumer
-            eprosima::utils::Log::ClearConsumers();
-            eprosima::utils::Log::SetVerbosity(configuration.ddspipe_configuration.log_configuration.verbosity);
+            const auto log_configuration = configuration.ddspipe_configuration.log_configuration;
 
-            eprosima::utils::LogConfiguration log_config = configuration.ddspipe_configuration.log_configuration;
-            eprosima::utils::Log::RegisterConsumer(
-                std::make_unique<eprosima::utils::CustomStdLogConsumer>(&log_config));
+            eprosima::utils::Log::ClearConsumers();
+            eprosima::utils::Log::SetVerbosity(log_configuration.verbosity);
+
+            // Std Log Consumer
+            if (log_configuration.stdout_enable)
+            {
+                eprosima::utils::Log::RegisterConsumer(
+                    std::make_unique<eprosima::utils::StdLogConsumer>(&log_configuration));
+            }
+
+            // DDS Recorder Log Consumer
+            if (log_configuration.publish.enable)
+            {
+                eprosima::utils::Log::RegisterConsumer(
+                    std::make_unique<eprosima::ddsrecorder::participants::DdsRecorderLogConsumer>(&log_configuration));
+            }
         }
 
         logUser(DDSRECORDER_EXECUTION, "DDS Recorder running.");
@@ -544,6 +556,9 @@ int main(
 
     // Force print every log before closing
     eprosima::utils::Log::Flush();
+
+    // Delete the consumers before closing
+    eprosima::utils::Log::ClearConsumers();
 
     return static_cast<int>(ProcessReturnCode::success);
 }

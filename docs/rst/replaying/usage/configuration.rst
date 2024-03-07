@@ -444,6 +444,55 @@ By default, the filter allows all errors to be displayed, while selectively perm
 
     For the logs to function properly, the ``-DLOG_INFO=ON`` compilation flag is required.
 
+The |ddsreplayer| prints the logs by default (warnings and errors in the standard error and infos in the standard output).
+The |ddsreplayer|, however, can also publish the logs in a DDS topic.
+To publish the logs, under the tag ``publish``, set ``enable: true`` and set a ``domain`` and a ``topic-name``.
+The type of the logs published is defined as follows:
+
+**LogEntry.idl**
+
+.. code-block:: idl
+
+    const long UNDEFINED = 0x10000000;
+    const long SAMPLE_LOST = 0x10000001;
+    const long TOPIC_MISMATCH_TYPE = 0x10000002;
+    const long TOPIC_MISMATCH_QOS = 0x10000003;
+
+    enum Kind {
+      Info,
+      Warning,
+      Error
+    };
+
+    struct LogEntry {
+      @key long event;
+      Kind kind;
+      string category;
+      string message;
+      string timestamp;
+    };
+
+.. note::
+
+    The type of the logs can be published by setting ``publish-type: true``.
+
+**Example of usage**
+
+.. code-block:: yaml
+
+    logging:
+      verbosity: info
+      filter:
+        error: "DDSPIPE|FASTDDSSPY"
+        warning: "DDSPIPE|FASTDDSSPY"
+        info: "FASTDDSSPY"
+      publish:
+        enable: true
+        domain: 84
+        topic-name: "FastDdsSpyLogs"
+        publish-type: false
+      stdout: true
+
 .. _replayer_usage_configuration_general_example:
 
 General Example
@@ -515,3 +564,9 @@ A complete example of all the configurations described on this page can be found
           error: "DDSPIPE|DDSREPLAYER"
           warning: "DDSPIPE|DDSREPLAYER"
           info: "DDSREPLAYER"
+        publish:
+          enable: true
+          domain: 84
+          topic-name: "FastDdsSpyLogs"
+          publish-type: false
+        stdout: true

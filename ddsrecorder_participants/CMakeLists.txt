@@ -71,7 +71,7 @@ file(
     GLOB_RECURSE SOURCES_FILES
         "${PROJECT_SOURCE_DIR}/src/cpp/replayer/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/cpp/recorder/**/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/cpp/**/**${DDS_TYPES_VERSION}*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/cpp/**/**/**${DDS_TYPES_VERSION}*.cpp"
     )
 
 file(
@@ -79,7 +79,7 @@ file(
         ${PROJECT_SOURCE_DIR}/include/constants.hpp
         ${PROJECT_SOURCE_DIR}/include/replayer/*.hpp
         ${PROJECT_SOURCE_DIR}/include/recorder/**/*.hpp
-        ${PROJECT_SOURCE_DIR}/include/**/**${DDS_TYPES_VERSION}*.hpp
+        ${PROJECT_SOURCE_DIR}/include/**/**/**${DDS_TYPES_VERSION}*.hpp
     )
 
 # Compile C++ library
