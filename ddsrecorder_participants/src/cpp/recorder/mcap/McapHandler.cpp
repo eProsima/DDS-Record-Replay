@@ -19,6 +19,7 @@
 #define MCAP_IMPLEMENTATION  // Define this in exactly one .cpp file
 
 #include <cstdio>
+#include <filesystem>
 #include <mcap/reader.hpp>
 
 #include <yaml-cpp/yaml.h>
@@ -167,7 +168,7 @@ void McapHandler::add_data(
         const DdsTopic& topic,
         RtpsPayloadData& data)
 {
-    std::lock_guard<std::mutex> lock(mtx_);
+    std::unique_lock<std::mutex> lock(mtx_);
 
     if (state_ == McapHandlerStateCode::STOPPED)
     {
@@ -223,6 +224,26 @@ void McapHandler::add_data(
                   );
     }
 
+    if (mcap_file_size_ + VERSION_METADATA_SIZE > configuration_.mcap_output_settings.max_file_size)
+    {
+        lock.unlock();
+
+        if (configuration_.mcap_output_settings.file_rotation)
+        {
+            logInfo(DDSRECORDER_MCAP_HANDLER, "Max file size reached, closing file and opening a new one...");
+            stop();
+            start();
+        }
+        else
+        {
+            logInfo(DDSRECORDER_MCAP_HANDLER, "Max file size reached, stopping...");
+            stop();
+            return;
+        }
+
+        lock.lock();
+    }
+
     if (received_types_.count(topic.type_name) != 0)
     {
         // Schema available -> add to buffer
@@ -261,6 +282,7 @@ void McapHandler::add_data(
                 "Schema for topic " << topic << " not yet available, inserting to (paused) pending samples queue.");
 
             pending_samples_paused_[topic.type_name].push_back({topic, msg});
+            mcap_file_size_ += msg.dataSize;
         }
         else
         {
@@ -492,19 +514,41 @@ mcap::Timestamp McapHandler::now()
 
 void McapHandler::open_file_nts_()
 {
-    // Generate filename with current timestamp if applies
+    // Reset file size
+    mcap_file_size_ = 0;
+
+    // Update the file id
+    mcap_file_id_ += 1;
+
+    // Rotate output files
+    if (configuration_.mcap_output_settings.file_rotation)
+    {
+        // The is_valid guarantees that max-files is greater than 0
+        mcap_file_id_ %= configuration_.mcap_output_settings.max_files;
+
+        if (mcap_file_id_to_filename_.count(mcap_file_id_))
+        {
+            std::filesystem::remove(mcap_file_id_to_filename_[mcap_file_id_]);
+        }
+    }
+
+    // Generate the filename
+    mcap_filename_ = configuration_.mcap_output_settings.output_filepath + "/";
+
     if (configuration_.mcap_output_settings.prepend_timestamp)
     {
-        mcap_filename_ = configuration_.mcap_output_settings.output_filepath + "/" + utils::timestamp_to_string(
+        // Include the timestamp in the filename
+        const auto timestamp = utils::timestamp_to_string(
             utils::now(), configuration_.mcap_output_settings.output_timestamp_format,
-            configuration_.mcap_output_settings.output_local_timestamp) + "_" +
-                configuration_.mcap_output_settings.output_filename  + ".mcap";
+            configuration_.mcap_output_settings.output_local_timestamp);
+
+        mcap_filename_ = timestamp + "_";
     }
-    else
-    {
-        mcap_filename_ = configuration_.mcap_output_settings.output_filepath + "/" +
-                configuration_.mcap_output_settings.output_filename;
-    }
+
+    mcap_filename_ += configuration_.mcap_output_settings.output_filename + ".mcap";
+
+    // Store the filename in case of rotation
+    mcap_file_id_to_filename_[mcap_file_id_] = mcap_filename_;
 
     // Append temporal suffix
     std::string tmp_filename = tmp_filename_(mcap_filename_);
@@ -567,6 +611,7 @@ void McapHandler::add_data_nts_(
         {
             // Write to MCAP file
             write_message_nts_(msg);
+            mcap_file_size_ += msg.dataSize;
         }
         catch (const utils::InconsistencyException& e)
         {
@@ -577,6 +622,8 @@ void McapHandler::add_data_nts_(
     else
     {
         samples_buffer_.push_back(msg);
+        mcap_file_size_ += msg.dataSize;
+
         if (state_ == McapHandlerStateCode::RUNNING && samples_buffer_.size() == configuration_.buffer_size)
         {
             logInfo(DDSRECORDER_MCAP_HANDLER, "Full buffer, writting to disk...");
@@ -601,6 +648,7 @@ void McapHandler::add_data_nts_(
                 e.what());
         return;
     }
+
     add_data_nts_(msg, direct_write);
 }
 
@@ -618,6 +666,7 @@ void McapHandler::write_message_nts_(
                   STR_ENTRY << "FAIL_MCAP_WRITE | Error writting in MCAP, error message: " << e.what()
                   );
     }
+
     if (!status.ok())
     {
         throw utils::InconsistencyException(
@@ -631,6 +680,7 @@ void McapHandler::add_to_pending_nts_(
         const DdsTopic& topic)
 {
     assert(configuration_.max_pending_samples != 0);
+
     if (configuration_.max_pending_samples > 0 &&
             pending_samples_[topic.type_name].size() == static_cast<unsigned int>(configuration_.max_pending_samples))
     {
@@ -650,10 +700,16 @@ void McapHandler::add_to_pending_nts_(
             // Write oldest message without schema
             auto& oldest_sample = pending_samples_[topic.type_name].front();
             add_data_nts_(oldest_sample.second, oldest_sample.first);
+
+            // Substract the sample's size to avoid counting it twice
+            mcap_file_size_ -= oldest_sample.second.dataSize;
         }
+
         pending_samples_[topic.type_name].pop_front();
     }
+
     pending_samples_[topic.type_name].push_back({topic, msg});
+    mcap_file_size_ += msg.dataSize;
 }
 
 void McapHandler::add_pending_samples_nts_(
@@ -687,7 +743,12 @@ void McapHandler::add_pending_samples_nts_(
     {
         // Move samples from pending list to buffer, or write them directly to MCAP file
         auto& sample = pending_samples.front();
+
         add_data_nts_(sample.second, sample.first, direct_write);
+
+        // Substract the sample's size to avoid counting it twice
+        mcap_file_size_ -= sample.second.dataSize;
+
         pending_samples.pop_front();
     }
 }
@@ -829,6 +890,7 @@ void McapHandler::stop_event_thread_nts_(
     assert(state_ != McapHandlerStateCode::PAUSED);
 
     logInfo(DDSRECORDER_MCAP_HANDLER, "Stopping event thread.");
+
     if (event_thread_.joinable())
     {
         event_flag_ = EventCode::stopped;
@@ -836,6 +898,7 @@ void McapHandler::stop_event_thread_nts_(
         event_cv_.notify_all(); // Need to notify all as not possible to notify a specific thread
         event_thread_.join();
     }
+
     samples_buffer_.clear();
     pending_samples_paused_.clear();
 }
@@ -1049,6 +1112,8 @@ void McapHandler::store_dynamic_types_()
     dynamic_attachment.dataSize = serialized_payload.length;
     dynamic_attachment.createTime = now();
     auto status = mcap_writer_.write(dynamic_attachment);
+
+    mcap_file_size_ += dynamic_attachment.dataSize;
 
     return;
 }

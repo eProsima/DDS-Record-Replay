@@ -283,6 +283,15 @@ int main(
             }
         }
 
+        // Verify that the configuration is correct
+        eprosima::utils::Formatter error_msg;
+        if (!configuration.is_valid(error_msg))
+        {
+            throw eprosima::utils::ConfigurationException(
+                      eprosima::utils::Formatter() <<
+                          "Invalid configuration: " << error_msg);
+        }
+
         logUser(DDSRECORDER_EXECUTION, "DDS Recorder running.");
 
         // Monitoring

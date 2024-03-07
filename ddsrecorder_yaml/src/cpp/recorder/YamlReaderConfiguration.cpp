@@ -56,6 +56,33 @@ RecorderConfiguration::RecorderConfiguration(
     load_ddsrecorder_configuration_from_file_(file_path, args);
 }
 
+bool RecorderConfiguration::is_valid(
+        utils::Formatter& error_msg) const noexcept
+{
+    if (output_resource_limits_file_rotation)
+    {
+        if (output_resource_limits_max_file_size == 0)
+        {
+            error_msg << "The max file size cannot be unlimited when file rotation is enabled.";
+            return false;
+        }
+
+        if (output_resource_limits_max_size == 0)
+        {
+            error_msg << "The max size cannot be unlimited when file rotation is enabled.";
+            return false;
+        }
+
+        if (output_resource_limits_max_size < output_resource_limits_max_file_size)
+        {
+            error_msg << "The max-size cannot be lower than the max-file-size.";
+            return false;
+        }
+    }
+
+    return true;
+}
+
 void RecorderConfiguration::load_ddsrecorder_configuration_(
         const Yaml& yml,
         const CommandlineArgsRecorder* args)
@@ -204,6 +231,41 @@ void RecorderConfiguration::load_recorder_configuration_(
         if (YamlReader::is_tag_present(output_yml, RECORDER_OUTPUT_LOCAL_TIMESTAMP_TAG))
         {
             output_local_timestamp = YamlReader::get<bool>(output_yml, RECORDER_OUTPUT_LOCAL_TIMESTAMP_TAG, version);
+        }
+
+        /////
+        // Get optional resource limits
+        if (YamlReader::is_tag_present(output_yml, RECORDER_OUTPUT_RESOURCE_LIMITS_TAG))
+        {
+            auto resource_limits_yml = YamlReader::get_value_in_tag(output_yml, RECORDER_OUTPUT_RESOURCE_LIMITS_TAG);
+
+            /////
+            // Get optional file rotation
+            if (YamlReader::is_tag_present(resource_limits_yml, RECORDER_OUTPUT_RESOURCE_LIMITS_FILE_ROTATION_TAG))
+            {
+                output_resource_limits_file_rotation = YamlReader::get<bool>(resource_limits_yml,
+                                RECORDER_OUTPUT_RESOURCE_LIMITS_FILE_ROTATION_TAG, version);
+            }
+
+            /////
+            // Get optional max file size
+            if (YamlReader::is_tag_present(resource_limits_yml, RECORDER_OUTPUT_RESOURCE_LIMITS_MAX_FILE_SIZE_TAG))
+            {
+                const auto& max_file_size = YamlReader::get<std::string>(resource_limits_yml,
+                                RECORDER_OUTPUT_RESOURCE_LIMITS_MAX_FILE_SIZE_TAG,
+                                version);
+                output_resource_limits_max_file_size = eprosima::utils::to_bytes(max_file_size);
+            }
+
+            /////
+            // Get optional max size
+            if (YamlReader::is_tag_present(resource_limits_yml, RECORDER_OUTPUT_RESOURCE_LIMITS_MAX_SIZE_TAG))
+            {
+                const auto& max_size = YamlReader::get<std::string>(resource_limits_yml,
+                                RECORDER_OUTPUT_RESOURCE_LIMITS_MAX_SIZE_TAG,
+                                version);
+                output_resource_limits_max_size = eprosima::utils::to_bytes(max_size);
+            }
         }
     }
 

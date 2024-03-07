@@ -41,6 +41,15 @@ struct McapOutputSettings
 
     //! Whether to use local or global timestamp
     bool output_local_timestamp;
+
+    //! TODO
+    bool file_rotation{false};
+
+    //! TODO
+    uint64_t max_file_size{0};
+
+    //! TODO
+    int max_files{1};
 };
 
 /**

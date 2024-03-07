@@ -20,6 +20,7 @@
 
 #include <mcap/mcap.hpp>
 
+#include <cpp_utils/Formatter.hpp>
 #include <cpp_utils/memory/Heritable.hpp>
 
 #include <ddspipe_core/configuration/DdsPipeConfiguration.hpp>
@@ -58,6 +59,9 @@ public:
             const std::string& file_path,
             const CommandlineArgsRecorder* args = nullptr);
 
+    virtual bool is_valid(
+            utils::Formatter& error_msg) const noexcept;
+
     // DDS Pipe Configuration
     ddspipe::core::DdsPipeConfiguration ddspipe_configuration;
 
@@ -70,6 +74,11 @@ public:
     std::string output_filename = "output";
     std::string output_timestamp_format = "%Y-%m-%d_%H-%M-%S_%Z";
     bool output_local_timestamp = true;
+
+    // Output resource limits
+    bool output_resource_limits_file_rotation = false;
+    uint64_t output_resource_limits_max_size = 0;
+    uint64_t output_resource_limits_max_file_size = 0;
 
     // Recording params
     unsigned int buffer_size = 100;
