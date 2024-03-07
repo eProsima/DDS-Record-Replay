@@ -822,7 +822,6 @@ A complete example of all the configurations described on this page can be found
         max-rx-rate: 20
         downsampling: 3
 
-<<<<<<< HEAD
       logging:
         verbosity: info
         filter:
@@ -836,7 +835,6 @@ A complete example of all the configurations described on this page can be found
           publish-type: false
         stdout: true
 
-=======
       monitor:
         domain: 10
         topics:
@@ -850,7 +848,6 @@ A complete example of all the configurations described on this page can be found
           domain: 12
           period: 2000
           topic-name: "DdsRecorderStatus"
->>>>>>> 8777c98 (Documentation)
 
 .. _recorder_usage_fastdds_configuration:
 
