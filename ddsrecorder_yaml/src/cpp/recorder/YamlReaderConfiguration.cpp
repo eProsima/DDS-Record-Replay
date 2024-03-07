@@ -334,37 +334,20 @@ void RecorderConfiguration::load_specs_configuration_(
     {
         cleanup_period = YamlReader::get_positive_int(yml, RECORDER_SPECS_CLEANUP_PERIOD_TAG);
     }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
->>>>>>> 60aa223 (Refactor)
 
     /////
     // Get optional Log Configuration
     if (YamlReader::is_tag_present(yml, LOG_CONFIGURATION_TAG))
     {
-<<<<<<< HEAD
         ddspipe_configuration.log_configuration = YamlReader::get<DdsPipeLogConfiguration>(yml, LOG_CONFIGURATION_TAG,
                         version);
     }
-=======
-        ddspipe_configuration.log_configuration = YamlReader::get<utils::LogConfiguration>(yml, LOG_CONFIGURATION_TAG, version);
-    }
-=======
->>>>>>> be002c0 (Rebase fix)
 
     // Get optional monitor tag
     if (YamlReader::is_tag_present(yml, MONITOR_TAG))
     {
         monitor = YamlReader::get<MonitorConfiguration>(yml, MONITOR_TAG, version);
     }
-<<<<<<< HEAD
->>>>>>> ceaae76 (Refactor)
->>>>>>> 60aa223 (Refactor)
-=======
->>>>>>> be002c0 (Rebase fix)
 }
 
 void RecorderConfiguration::load_dds_configuration_(

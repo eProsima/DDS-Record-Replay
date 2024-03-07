@@ -393,22 +393,26 @@ int main(
 
                 // Reload YAML configuration file, in case it changed during STOPPED state
                 // NOTE: Changes to all (but controller specific) recorder configuration options are taken into account
-                configuration = ddsrecorder::yaml::RecorderConfiguration(file_path);
+                configuration = ddsrecorder::yaml::RecorderConfiguration(commandline_args.file_path);
 
                 // Create DDS Recorder
                 auto recorder = std::make_unique<DdsRecorder>(configuration, initial_state);
 
                 // Create File Watcher Handler
-                std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;
+                std::unique_ptr<utils::event::FileWatcherHandler> file_watcher_handler;
                 if (commandline_args.file_path != "")
                 {
                     file_watcher_handler = create_filewatcher(recorder, commandline_args.file_path);
                 }
 
                 // Create Periodic Handler
-                std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> periodic_handler;
+                std::unique_ptr<utils::event::PeriodicEventHandler> periodic_handler;
                 if (commandline_args.reload_time > 0 && commandline_args.file_path != "")
                 {
+                    periodic_handler = create_periodic_handler(recorder, commandline_args.file_path,
+                                    commandline_args.reload_time);
+                }
+
                 // Use flag to avoid ugly warning (start/pause an already started/paused instance)
                 bool first_iter = true;
                 prev_command = command;
@@ -528,16 +532,20 @@ int main(
             auto recorder = std::make_unique<DdsRecorder>(configuration, DdsRecorderState::RUNNING);
 
             // Create File Watcher Handler
-            std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;
+            std::unique_ptr<utils::event::FileWatcherHandler> file_watcher_handler;
             if (commandline_args.file_path != "")
             {
                 file_watcher_handler = create_filewatcher(recorder, commandline_args.file_path);
             }
 
             // Create Periodic Handler
-            std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> periodic_handler;
+            std::unique_ptr<utils::event::PeriodicEventHandler> periodic_handler;
             if (commandline_args.reload_time > 0 && commandline_args.file_path != "")
             {
+                periodic_handler = create_periodic_handler(recorder, commandline_args.file_path,
+                                commandline_args.reload_time);
+            }
+
             // Wait until signal arrives
             close_handler->wait_for_event();
         }
@@ -568,7 +576,7 @@ int main(
     utils::Log::Flush();
 
     // Delete the consumers before closing
-    eprosima::utils::Log::ClearConsumers();
+    utils::Log::ClearConsumers();
 
     return static_cast<int>(ProcessReturnCode::success);
 }
