@@ -169,7 +169,7 @@ protected:
 
   std::FILE* file_ = nullptr;
   uint64_t size_ = 0;
-  std::string directory_str_ = ".";
+  std::filesystem::path directory_ = ".";
 };
 
 /**

@@ -87,14 +87,14 @@ add_blackbox_executable(
 )
 
 
-############################
-# Disk Full Log Error Test #
-############################
+#########################
+# Mcap Log Error Tests #
+#########################
 
-set(TEST_NAME LogErrorMockTests)
+set(TEST_NAME McapLogErrorTests)
 
 set(TEST_SOURCES
-        LogErrorMockTests.cpp
+        McapLogErrorTests.cpp
     )
 
 set(TEST_LIST
