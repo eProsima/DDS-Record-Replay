@@ -1,13 +1,13 @@
 #include "crc32.hpp"
 #include <algorithm>
 #include <cassert>
+#include <filesystem>
 #include <iostream>
 #include <lz4frame.h>
 #include <lz4hc.h>
-#include <zstd.h>
-#include <zstd_errors.h>
-#include <filesystem>
 #include <stdexcept>
+#include <zstd_errors.h>
+#include <zstd.h>
 
 namespace mcap {
 
@@ -45,8 +45,7 @@ Status FileWriter::open(std::string_view filename) {
   end();
   file_ = std::fopen(filename.data(), "wb");
   std::filesystem::path filepath(filename);
-  std::filesystem::path directory_ = filepath.parent_path();
-  std::string directory_str_ = directory_.string();
+  directory_ = filepath.parent_path();
   if (!file_) {
     const auto msg = internal::StrCat("failed to open file \"", filename, "\" for writing");
     return Status(StatusCode::OpenFailed, msg);
@@ -60,11 +59,12 @@ void FileWriter::handleWrite(const std::byte* data, uint64_t size) {
   (void)written;
   if (written != size)
   {
-    const std::uintmax_t space_available = get_space_available_(directory_str_);
-    if (space_available < size)
+    const auto space_available = get_space_available_(directory_.string());
+    if (space_available < size - written)
     {
-      throw std::overflow_error(
-            "Not enough space available in disk. Space available: " + std::to_string(space_available));
+      throw std::overflow_error("Not enough space available in disk. "
+                          "Data size: " + std::to_string(size - written) +
+                          ", Space available: " + std::to_string(space_available));
     }
   }
   size_ += size;
@@ -89,7 +89,7 @@ size_t FileWriter::write_(const void* data, size_t size, std::FILE* stream) cons
 
 std::uintmax_t FileWriter::get_space_available_(const std::string& path)
 {
-  std::filesystem::space_info space = std::filesystem::space(path);
+  const std::filesystem::space_info space = std::filesystem::space(path);
   return space.available;
 }
 
