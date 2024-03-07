@@ -303,7 +303,15 @@ void McapHandler::start()
 
         if (prev_state == McapHandlerStateCode::STOPPED)
         {
-            open_file_nts_();
+            try
+            {
+                open_file_nts_();
+            }
+            catch (const utils::InitializationException& e)
+            {
+                logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_OPEN | Failed to open MCAP file. " << "Error message:\n " <<
+                    e.what());
+            }
         }
         else if (prev_state == McapHandlerStateCode::PAUSED)
         {
@@ -405,7 +413,15 @@ void McapHandler::pause()
 
         if (prev_state == McapHandlerStateCode::STOPPED)
         {
-            open_file_nts_();
+            try
+            {
+                open_file_nts_();
+            }
+            catch (const utils::InitializationException& e)
+            {
+                logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_OPEN | Failed to open MCAP file. " << "Error message:\n " <<
+                    e.what());
+            }
         }
         else if (prev_state == McapHandlerStateCode::RUNNING)
         {
@@ -502,7 +518,7 @@ void McapHandler::open_file_nts_()
         monitor_error("MCAP_FILE_CREATION_FAILURE");
 
         throw utils::InitializationException(
-                  STR_ENTRY << "FAIL_MCAP_CREATION | Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
+                  STR_ENTRY << "Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
     }
 
     // Write in new file schemas already received before
