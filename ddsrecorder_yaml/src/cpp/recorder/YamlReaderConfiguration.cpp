@@ -17,6 +17,7 @@
  *
  */
 
+#include <cpp_utils/Log.hpp>
 #include <cpp_utils/utils.hpp>
 
 #include <ddspipe_core/configuration/DdsPipeLogConfiguration.hpp>
@@ -65,6 +66,11 @@ bool RecorderConfiguration::is_valid(
         {
             error_msg << "The max file size cannot be unlimited when file rotation is enabled.";
             return false;
+        }
+
+        if (output_resource_limits_max_file_size < 100000)
+        {
+            logWarning(DDSRECORDER_CONFIGURATION, "A max-file-size lower than 100KB may cause the DDS Recorder to fail.");
         }
 
         if (output_resource_limits_max_size == 0)
