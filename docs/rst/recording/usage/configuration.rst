@@ -712,7 +712,7 @@ The type of the data published is defined as follows:
         string participant_id;
         unsigned long msgs_lost;
         unsigned long msgs_received;
-        double frequency;
+        double msg_rx_rate;
     };
 
     struct DdsTopic
