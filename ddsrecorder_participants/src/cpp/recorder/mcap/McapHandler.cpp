@@ -167,7 +167,7 @@ void McapHandler::add_data(
         const DdsTopic& topic,
         RtpsPayloadData& data)
 {
-    std::lock_guard<std::mutex> lock(mtx_);
+    std::unique_lock<std::mutex> lock(mtx_);
 
     if (state_ == McapHandlerStateCode::STOPPED)
     {
@@ -226,7 +226,19 @@ void McapHandler::add_data(
     if (received_types_.count(topic.type_name) != 0)
     {
         // Schema available -> add to buffer
-        add_data_nts_(msg, topic);
+        try
+        {
+            add_data_nts_(msg, topic);
+        }
+        catch (const utils::Exception& e)
+        {
+            lock.unlock();
+            logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add data to buffer. Error message:\n " <<
+                e.what());
+            stop();
+            lock.lock();
+            return;
+        }
     }
     else
     {
@@ -242,7 +254,19 @@ void McapHandler::add_data(
                 else
                 {
                     // No schema available + no pending samples -> Add to buffer with blank schema
-                    add_data_nts_(msg, topic);
+                    try
+                    {
+                        add_data_nts_(msg, topic);
+                    }
+                    catch (const utils::Exception& e)
+                    {
+                        lock.unlock();
+                        logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add data to buffer. Error message:\n " <<
+                            e.what());
+                        stop();
+                        lock.lock();
+                        return;
+                    }
                 }
             }
             else
@@ -288,6 +312,7 @@ void McapHandler::start()
     // Store previous state to act differently depending on its value
     McapHandlerStateCode prev_state = state_;
     state_ = McapHandlerStateCode::RUNNING;
+    // Check available space in disk when starting
     std::filesystem::space_info space_ = std::filesystem::space(configuration_.mcap_output_settings.output_filepath);
     space_available_ = space_.available;
 
@@ -341,7 +366,6 @@ void McapHandler::stop(
     // Store previous state to act differently depending on its value
     McapHandlerStateCode prev_state = state_;
     state_ = McapHandlerStateCode::STOPPED;
-
     if (prev_state == McapHandlerStateCode::STOPPED)
     {
         if (!on_destruction)
@@ -534,17 +558,31 @@ void McapHandler::open_file_nts_()
 void McapHandler::close_file_nts_()
 {
     std::string tmp_filename = tmp_filename_(mcap_filename_);
-
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "Closing file <" << tmp_filename << "> .");
 
-    // Write version metadata in MCAP file
-    write_version_metadata_();
-
+    try
+    {
+        // Write version metadata in MCAP file
+        write_version_metadata_();
+    }
+    catch (const std::overflow_error& e)
+    {
+        logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Error writting metadata. Error message:\n " <<
+                e.what());
+    }
     // Serialize and store dynamic types associated to all added schemas
     if (configuration_.record_types)
     {
-        store_dynamic_types_();
+        try
+        {
+            store_dynamic_types_();
+        }
+        catch (const std::overflow_error& e)
+        {
+            logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Error storing dynamic types. Error message:\n " <<
+                    e.what());
+        }
     }
 
     // Close writer and output file
@@ -572,20 +610,19 @@ void McapHandler::add_data_nts_(
         }
         catch (const utils::InconsistencyException& e)
         {
-            logError(DDSRECORDER_MCAP_HANDLER, "Error writting message in channel " << msg.channelId << ". Error message:\n " <<
+            logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Error writting message in channel " << msg.channelId << ". Error message:\n " <<
                     e.what());
         }
     }
     else
     {
-        if (buffer_size_ > space_available_)
+        if (buffer_size_ + FOOTER_SIZE > space_available_)
         {
-            logError(DDSRECORDER_MCAP_HANDLER, "Not enough space available in disk. Space available: " << std::to_string(space_available_));
-            stop();
+            throw utils::Exception(
+                    STR_ENTRY << "Not enough space available in disk to continue filling the buffer. Space available: " << space_available_);
         }
         samples_buffer_.push_back(msg);
         buffer_size_ += msg.dataSize;
-        std::cout << "Buffer size:" << buffer_size_ << std::endl;
         if (state_ == McapHandlerStateCode::RUNNING && samples_buffer_.size() == configuration_.buffer_size)
         {
             logInfo(DDSRECORDER_MCAP_HANDLER, "Full buffer, writting to disk...");
@@ -658,7 +695,17 @@ void McapHandler::add_to_pending_nts_(
 
             // Write oldest message without schema
             auto& oldest_sample = pending_samples_[topic.type_name].front();
-            add_data_nts_(oldest_sample.second, oldest_sample.first);
+            try
+            {
+                add_data_nts_(oldest_sample.second, oldest_sample.first);
+            }
+            catch (const utils::Exception& e)
+            {
+                logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add data to buffer. " << "Error message:\n " <<
+                    e.what());
+                stop();
+                return;
+            }
         }
         pending_samples_[topic.type_name].pop_front();
     }
@@ -703,6 +750,12 @@ void McapHandler::add_pending_samples_nts_(
 
 void McapHandler::add_pending_samples_nts_()
 {
+    if (buffer_size_ + FOOTER_SIZE > space_available_)
+    {
+        pending_samples_.clear();
+        return;
+    }
+
     logInfo(DDSRECORDER_MCAP_HANDLER, "Adding pending samples for all types.");
 
     auto pending_types = utils::get_keys(pending_samples_);
@@ -852,6 +905,12 @@ void McapHandler::stop_event_thread_nts_(
 
 void McapHandler::dump_data_nts_()
 {
+    if (buffer_size_ + FOOTER_SIZE > space_available_)
+    {
+        samples_buffer_.clear();
+        return;
+    }
+
     logInfo(DDSRECORDER_MCAP_HANDLER, "Writing data stored in buffer.");
 
     while (!samples_buffer_.empty())
@@ -871,15 +930,7 @@ void McapHandler::dump_data_nts_()
         // Pop written sample (even if exception thrown)
         samples_buffer_.pop_front();
     }
-    std::filesystem::space_info space_ = std::filesystem::space(configuration_.mcap_output_settings.output_filepath);
-    space_available_ = space_.available;
-    // If the space available in disk is lower than the previous size of the full buffer the recorder calls stop to close the file, making
-    // sure all the remaining parts of the MCAP (as the footer) will have enough space to be written in the file
-    if (space_available_ < buffer_size_)
-    {
-        logError(DDSRECORDER_MCAP_HANDLER, "Not enough space available in disk. Space available: " << std::to_string(space_available_));
-        stop();
-    }
+    space_available_ -= buffer_size_;
     buffer_size_ = 0;
 }
 
