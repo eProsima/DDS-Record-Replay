@@ -94,6 +94,13 @@ DdsRecorderMonitoringStatus* DdsRecorderStatusMonitorProducer::save_data_() cons
     return data_;
 }
 
+} //namespace participants
+} //namespace ddsrecorder
+} //namespace eprosima
+
+namespace std
+{
+
 std::ostream& operator <<(
         std::ostream& os,
         const DdsRecorderMonitoringStatus& data)
@@ -140,6 +147,4 @@ std::ostream& operator <<(
     return os;
 }
 
-} //namespace participants
-} //namespace ddsrecorder
-} //namespace eprosima
+} // namespace std

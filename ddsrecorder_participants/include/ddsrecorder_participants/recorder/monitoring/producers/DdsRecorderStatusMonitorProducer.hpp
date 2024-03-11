@@ -67,10 +67,15 @@ protected:
     std::vector<std::unique_ptr<ddspipe::core::IMonitorConsumer<DdsRecorderMonitoringStatus>>> consumers_;
 };
 
+} // namespace participants
+} // namespace ddsrecorder
+} // namespace eprosima
+
+namespace std
+{
+
 std::ostream& operator <<(
         std::ostream& os,
         const DdsRecorderMonitoringStatus& data);
 
-} // namespace participants
-} // namespace ddsrecorder
-} // namespace eprosima
+} // namespace std
