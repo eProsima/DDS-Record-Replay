@@ -19,6 +19,7 @@
 #pragma once
 
 #include <condition_variable>
+#include <filesystem>
 #include <list>
 #include <map>
 #include <thread>
@@ -532,8 +533,14 @@ protected:
     //! Channels map
     std::map<ddspipe::core::types::DdsTopic, mcap::Channel> channels_;
 
+    //! TODO
+    std::uintmax_t space_available_;
+
     //! Samples buffer
     std::list<Message> samples_buffer_;
+
+    //! Current buffer size
+    std::uintmax_t buffer_size_{0};
 
     //! Structure where messages (received in RUNNING state) with unknown type are kept
     std::map<std::string, pending_list> pending_samples_;
