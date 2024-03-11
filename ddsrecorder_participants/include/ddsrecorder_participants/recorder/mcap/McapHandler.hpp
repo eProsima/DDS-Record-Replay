@@ -542,6 +542,9 @@ protected:
     //! Current buffer size
     std::uintmax_t buffer_size_{0};
 
+    //! TODO
+    static constexpr const int FOOTER_SIZE{50000};
+
     //! Structure where messages (received in RUNNING state) with unknown type are kept
     std::map<std::string, pending_list> pending_samples_;
 
