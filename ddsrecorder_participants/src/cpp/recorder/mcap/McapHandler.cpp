@@ -312,10 +312,6 @@ void McapHandler::start()
     // Store previous state to act differently depending on its value
     McapHandlerStateCode prev_state = state_;
     state_ = McapHandlerStateCode::RUNNING;
-    // Check available space in disk when starting
-    std::filesystem::space_info space_ = std::filesystem::space(configuration_.mcap_output_settings.output_filepath);
-    space_available_ = space_.available;
-
     if (prev_state == McapHandlerStateCode::RUNNING)
     {
         logWarning(
@@ -544,6 +540,10 @@ void McapHandler::open_file_nts_()
         throw utils::InitializationException(
                   STR_ENTRY << "Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
     }
+
+    // Check available space in disk when opening file
+    std::filesystem::space_info space_ = std::filesystem::space(configuration_.mcap_output_settings.output_filepath);
+    space_available_ = space_.available;
 
     // Write in new file schemas already received before
     // NOTE: This is necessary since dynamic types are only sent/received once on discovery
