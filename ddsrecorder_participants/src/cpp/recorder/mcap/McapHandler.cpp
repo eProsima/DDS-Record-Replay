@@ -288,6 +288,8 @@ void McapHandler::start()
     // Store previous state to act differently depending on its value
     McapHandlerStateCode prev_state = state_;
     state_ = McapHandlerStateCode::RUNNING;
+    std::filesystem::space_info space_ = std::filesystem::space(configuration_.mcap_output_settings.output_filepath);
+    space_available_ = space_.available;
 
     if (prev_state == McapHandlerStateCode::RUNNING)
     {
@@ -576,7 +578,14 @@ void McapHandler::add_data_nts_(
     }
     else
     {
+        if (buffer_size_ > space_available_)
+        {
+            logError(DDSRECORDER_MCAP_HANDLER, "Not enough space available in disk. Space available: " << std::to_string(space_available_));
+            stop();
+        }
         samples_buffer_.push_back(msg);
+        buffer_size_ += msg.dataSize;
+        std::cout << "Buffer size:" << buffer_size_ << std::endl;
         if (state_ == McapHandlerStateCode::RUNNING && samples_buffer_.size() == configuration_.buffer_size)
         {
             logInfo(DDSRECORDER_MCAP_HANDLER, "Full buffer, writting to disk...");
@@ -838,6 +847,7 @@ void McapHandler::stop_event_thread_nts_(
     }
     samples_buffer_.clear();
     pending_samples_paused_.clear();
+    buffer_size_ = 0;
 }
 
 void McapHandler::dump_data_nts_()
@@ -861,6 +871,16 @@ void McapHandler::dump_data_nts_()
         // Pop written sample (even if exception thrown)
         samples_buffer_.pop_front();
     }
+    std::filesystem::space_info space_ = std::filesystem::space(configuration_.mcap_output_settings.output_filepath);
+    space_available_ = space_.available;
+    // If the space available in disk is lower than the previous size of the full buffer the recorder calls stop to close the file, making
+    // sure all the remaining parts of the MCAP (as the footer) will have enough space to be written in the file
+    if (space_available_ < buffer_size_)
+    {
+        logError(DDSRECORDER_MCAP_HANDLER, "Not enough space available in disk. Space available: " << std::to_string(space_available_));
+        stop();
+    }
+    buffer_size_ = 0;
 }
 
 mcap::ChannelId McapHandler::create_channel_id_nts_(
