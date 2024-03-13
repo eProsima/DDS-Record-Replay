@@ -52,7 +52,7 @@ public:
      * The DdsRecorder status is monitored by the \c DdsRecorderStatusMonitorProducer, which is a
      * \c StatusMonitorProducer that produces the \c DdsRecorderMonitoringStatus.
      */
-    void monitorize_status() override;
+    void monitor_status() override;
 };
 
 } // namespace recorder

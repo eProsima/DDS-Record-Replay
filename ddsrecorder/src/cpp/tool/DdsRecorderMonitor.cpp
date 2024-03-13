@@ -40,7 +40,7 @@ DdsRecorderMonitor::DdsRecorderMonitor(
 {
 }
 
-void DdsRecorderMonitor::monitorize_status()
+void DdsRecorderMonitor::monitor_status()
 {
     // Initialize the Status Monitor Producer with the DDS Recorder Status
     static auto ddsrecorder_status_producer =

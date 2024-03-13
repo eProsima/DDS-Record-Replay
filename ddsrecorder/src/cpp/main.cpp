@@ -290,12 +290,12 @@ int main(
 
         if (configuration.monitor.producers["status"].enabled)
         {
-            monitor.monitorize_status();
+            monitor.monitor_status();
         }
 
         if (configuration.monitor.producers["topics"].enabled)
         {
-            monitor.monitorize_topics();
+            monitor.monitor_topics();
         }
 
         if (configuration.enable_remote_controller)
