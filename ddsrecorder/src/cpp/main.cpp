@@ -33,6 +33,7 @@
 #include <cpp_utils/utils.hpp>
 
 #include <ddsrecorder_participants/recorder/logging/DdsRecorderLogConsumer.hpp>
+#include <ddsrecorder_participants/recorder/monitoring/DdsRecorderMonitor.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
 #include "user_interface/arguments_configuration.hpp"
@@ -41,7 +42,6 @@
 
 #include "command_receiver/CommandReceiver.hpp"
 #include "tool/DdsRecorder.hpp"
-#include "tool/DdsRecorderMonitor.hpp"
 
 using namespace eprosima;
 using namespace eprosima::ddspipe;
@@ -286,7 +286,7 @@ int main(
         logUser(DDSRECORDER_EXECUTION, "DDS Recorder running.");
 
         // Monitoring
-        DdsRecorderMonitor monitor(configuration.monitor);
+        ddsrecorder::participants::DdsRecorderMonitor monitor(configuration.monitor);
 
         if (configuration.monitor.producers["status"].enabled)
         {

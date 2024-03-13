@@ -20,7 +20,6 @@
 
 #include <cpp_utils/event/PeriodicEventHandler.hpp>
 
-
 #include <ddspipe_core/configuration/MonitorConfiguration.hpp>
 #include <ddspipe_core/library/library_dll.h>
 #include <ddspipe_core/monitoring/consumers/DdsMonitorParticipantRegistry.hpp>
@@ -29,7 +28,7 @@
 
 namespace eprosima {
 namespace ddsrecorder {
-namespace recorder {
+namespace participants {
 
 /**
  * The \c DdsRecorderMonitor is the entity that reports internal data of the \c DdsRecorder.
@@ -55,6 +54,6 @@ public:
     void monitor_status() override;
 };
 
-} // namespace recorder
+} // namespace participants
 } // namespace ddsrecorder
 } // namespace eprosima

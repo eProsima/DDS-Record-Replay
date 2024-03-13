@@ -27,12 +27,12 @@
     #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatusPubSubTypes.h>
 #endif // if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
 
-#include "DdsRecorderMonitor.hpp"
+#include <ddsrecorder_participants/recorder/monitoring/DdsRecorderMonitor.hpp>
 
 
 namespace eprosima {
 namespace ddsrecorder {
-namespace recorder {
+namespace participants {
 
 DdsRecorderMonitor::DdsRecorderMonitor(
         const ddspipe::core::MonitorConfiguration& configuration)
@@ -51,6 +51,9 @@ void DdsRecorderMonitor::monitor_status()
     // Register the type
     fastdds::dds::TypeSupport type(new DdsRecorderMonitoringStatusPubSubType());
 
+    // Initialize the DdsRecorder Status Producer
+    ddsrecorder_status_producer->init(configuration_.producers.at("status"));
+
     // Register the consumers
     ddsrecorder_status_producer->register_consumer(std::make_unique<ddspipe::core::StdoutMonitorConsumer<DdsRecorderMonitoringStatus>>());
     ddsrecorder_status_producer->register_consumer(std::make_unique<ddspipe::core::DdsMonitorConsumer<DdsRecorderMonitoringStatus>>(
@@ -60,11 +63,10 @@ void DdsRecorderMonitor::monitor_status()
 
     // Register the Status Monitor Producer
     auto status_producer = ddspipe::core::StatusMonitorProducer::get_instance();
-    status_producer->init(configuration_.producers["status"]);
 
     register_producer_(status_producer);
 }
 
-} //namespace recorder
+} //namespace participants
 } //namespace ddsrecorder
 } //namespace eprosima
