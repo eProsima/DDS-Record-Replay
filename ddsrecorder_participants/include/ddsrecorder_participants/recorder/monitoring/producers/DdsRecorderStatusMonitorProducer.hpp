@@ -49,6 +49,9 @@ public:
             std::unique_ptr<ddspipe::core::IMonitorConsumer<DdsRecorderMonitoringStatus>> consumer);
 
     // TODO
+    void produce() override;
+
+    // TODO
     void consume() override;
 
     // TODO
@@ -58,10 +61,10 @@ public:
 protected:
 
     // TODO
-    DdsRecorderMonitoringStatus* save_data_() const;
+    DdsRecorderMonitoringStatus data_;
 
     // TODO
-    DdsRecorderMonitoringStatus* data_ = new DdsRecorderMonitoringStatus();
+    DdsRecorderMonitoringErrorStatus ddsrecorder_error_status_;
 
     // TODO
     std::vector<std::unique_ptr<ddspipe::core::IMonitorConsumer<DdsRecorderMonitoringStatus>>> consumers_;

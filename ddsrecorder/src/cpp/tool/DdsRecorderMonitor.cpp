@@ -42,6 +42,8 @@ DdsRecorderMonitor::DdsRecorderMonitor(
 
 void DdsRecorderMonitor::monitor_status()
 {
+    logInfo(DDSRECORDER_MONITOR, "MONITOR | Registering DdsRecorder Status Monitor Producer.");
+
     // Initialize the Status Monitor Producer with the DDS Recorder Status
     static auto ddsrecorder_status_producer =
             std::make_unique<ddsrecorder::participants::DdsRecorderStatusMonitorProducer>();

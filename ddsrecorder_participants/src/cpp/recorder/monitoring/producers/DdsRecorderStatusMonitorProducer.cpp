@@ -27,11 +27,35 @@ void DdsRecorderStatusMonitorProducer::register_consumer(
 {
     if (!enabled_)
     {
-        // Don't register the consumer if the producer is not enabled
+        logWarning(DDSPIPE_MONITOR, "MONITOR | Not registering consumer " << consumer->get_name() << " on "
+                "DdsRecorderStatusMonitorProducer since the DdsRecorderStatusMonitorProducer is disabled.");
+
         return;
     }
 
+    logInfo(DDSPIPE_MONITOR, "MONITOR | Registering consumer " << consumer->get_name() << " on DdsRecorderStatusMonitorProducer.");
+
     consumers_.push_back(std::move(consumer));
+}
+
+void DdsRecorderStatusMonitorProducer::produce()
+{
+    if (!enabled_)
+    {
+        // Don't consume if the producer is not enabled
+        return;
+    }
+
+    // Take the lock to prevent:
+    //      1. Changing the data while it's being saved.
+    //      2. Simultaneous calls to produce.
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    logInfo(DDSPIPE_MONITOR, "MONITOR | Producing DdsRecorderMonitoringStatus.");
+
+    data_.error_status(error_status_);
+    data_.ddsrecorder_error_status(ddsrecorder_error_status_);
+    data_.has_errors(has_errors_);
 }
 
 void DdsRecorderStatusMonitorProducer::consume()
@@ -42,11 +66,11 @@ void DdsRecorderStatusMonitorProducer::consume()
         return;
     }
 
-    const auto data = save_data_();
+    logInfo(DDSPIPE_MONITOR, "MONITOR | Consuming DdsRecorderMonitoringStatus.");
 
     for (auto& consumer : consumers_)
     {
-        consumer->consume(data);
+        consumer->consume(data_);
     }
 }
 
@@ -64,34 +88,26 @@ void DdsRecorderStatusMonitorProducer::add_error_to_status(
     //      2. Simultaneous calls to add_error_to_status.
     std::lock_guard<std::mutex> lock(mutex_);
 
-    auto error_status = data_->error_status();
-    auto ddsrecorder_error_status = data_->ddsrecorder_error_status();
+    logInfo(DDSPIPE_MONITOR, "MONITOR | Adding error " << error << " to status.");
 
     if (error == "TYPE_MISMATCH")
     {
-        error_status.type_mismatch(true);
+        error_status_.type_mismatch(true);
     }
     else if (error == "QOS_MISMATCH")
     {
-        error_status.qos_mismatch(true);
+        error_status_.qos_mismatch(true);
     }
     else if (error == "MCAP_FILE_CREATION_FAILURE")
     {
-        ddsrecorder_error_status.mcap_file_creation_failure(true);
+        ddsrecorder_error_status_.mcap_file_creation_failure(true);
     }
     else if (error == "DISK_FULL")
     {
-        ddsrecorder_error_status.disk_full(true);
+        ddsrecorder_error_status_.disk_full(true);
     }
 
-    data_->error_status(error_status);
-    data_->ddsrecorder_error_status(ddsrecorder_error_status);
-    data_->has_errors(true);
-}
-
-DdsRecorderMonitoringStatus* DdsRecorderStatusMonitorProducer::save_data_() const
-{
-    return data_;
+    has_errors_  = true;
 }
 
 } //namespace participants
