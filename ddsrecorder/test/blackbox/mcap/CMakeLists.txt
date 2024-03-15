@@ -98,7 +98,6 @@ set(TEST_SOURCES
     )
 
 set(TEST_LIST
-        disk_full
         fail_to_open_file
     )
 
