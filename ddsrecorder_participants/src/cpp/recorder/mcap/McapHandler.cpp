@@ -571,28 +571,15 @@ void McapHandler::close_file_nts_()
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "Closing file <" << tmp_filename << "> .");
 
-    try
-    {
-        // Write version metadata in MCAP file
-        write_version_metadata_();
-    }
-    catch (const std::overflow_error& e)
-    {
-        logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Error writting metadata. Error message:\n " <<
-                e.what());
-    }
+    // Write version metadata in MCAP file
+    write_version_metadata_();
+
     // Serialize and store dynamic types associated to all added schemas
     if (configuration_.record_types)
     {
-        try
-        {
-            write_attachment_();
-        }
-        catch (const std::overflow_error& e)
-        {
-            logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Error writing attachment. Error message:\n " <<
-                    e.what());
-        }
+
+        write_attachment_();
+
     }
 
     // Close writer and output file
@@ -658,16 +645,7 @@ void McapHandler::write_message_nts_(
         const Message& msg)
 {
     mcap::Status status;
-    try
-    {
-        status = mcap_writer_.write(msg);
-    }
-    catch(const std::overflow_error& e)
-    {
-        throw utils::InconsistencyException(
-                  STR_ENTRY << "FAIL_MCAP_WRITE | Error writting in MCAP, error message: " << e.what()
-                  );
-    }
+    status = mcap_writer_.write(msg);
     if (!status.ok())
     {
         throw utils::InconsistencyException(

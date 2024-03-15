@@ -444,7 +444,8 @@ protected:
             const std::string& schema_name);
 
     /**
-     * TODO
+     * @brief Serialize current dynamic types.
+     *
      */
     void serialize_dynamic_types_();
 
@@ -548,35 +549,32 @@ protected:
     //! Serialized payload
     fastrtps::rtps::SerializedPayload_t serialized_payload_;
 
-    //! TODO
+    //! Exact size of the MCAP header
     static constexpr std::uint64_t MCAP_HEADER_SIZE{17 + 17}; // Header + Write Header
 
-    //! TODO
+    //! Additional overhead size for a MCAP message
     static constexpr std::uint64_t MCAP_MESSAGE_OVERHEAD{31 + 8 + 8}; // Write Message + TimeStamp + TimeOffSet
 
-    //! TODO
+    //! Exact size of MCAP metadata
     static constexpr std::uint64_t MCAP_METADATA_SIZE{75 + 24 + 36}; // Metadata + Write Metadata + Write MetadataIndex
 
-    //! TODO
+    //! Additional overhead size for a MCAP attachment
     static constexpr std::uint64_t MCAP_ATTACHMENT_OVERHEAD{58 + 70}; // Write Attachment + Write AttachmentIndex
 
-    //! TODO
+    //! Additional overhead size for a MCAP chunk
     static constexpr std::uint64_t MCAP_CHUNK_OVERHEAD{73}; // Write ChunckIndex
 
-    //! TODO
+    //! Additional overhead size for MCAP statistics
     static constexpr std::uint64_t MCAP_STATISTICS_OVERHEAD{55}; // Write Statistics
 
-    //! TODO
+    //! Additional overhead size for closing the MCAP, including writing DataEnd and SummaryOffSets
     static constexpr std::uint64_t MCAP_CLOSE_OVERHEAD{13 + 17*6}; // Write DataEnd + Write SummaryOffSets
 
-    //! TODO
+    //! Additional overhead size for a MCAP schema
     static constexpr std::uint64_t MCAP_SCHEMAS_OVERHEAD{23}; // Write Schemas
 
-    //! TODO
+    //! Additional overhead size for a MCAP channel
     static constexpr std::uint64_t MCAP_CHANNEL_OVERHEAD{25 + 10 + 10}; // Write Channel + messageIndexOffsetsSize + channelMessageCountsSize
-
-    //! TODO
-    std::unordered_map<mcap::ChannelId, mcap::MessageIndex> currentMessageIndex_;
 
     //! Dynamic types reserved storage
     uint64_t storage_dynamic_types_{0};
