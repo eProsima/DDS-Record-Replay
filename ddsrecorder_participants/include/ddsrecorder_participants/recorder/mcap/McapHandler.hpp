@@ -19,6 +19,7 @@
 #pragma once
 
 #include <condition_variable>
+#include <cstdint>
 #include <filesystem>
 #include <list>
 #include <map>
@@ -443,16 +444,21 @@ protected:
             const std::string& schema_name);
 
     /**
+     * TODO
+     */
+    void serialize_dynamic_types_();
+
+    /**
      * @brief Rewrite all received schemas into currently open MCAP file.
      *
      */
     void rewrite_schemas_nts_();
 
     /**
-     * @brief Store in MCAP attachments the dynamic types associated to all added schemas, and their dependencies.
+     * @brief Write in MCAP attachments the dynamic types associated to all added schemas, and their dependencies.
      *
      */
-    void store_dynamic_types_();
+    void write_attachment_();
 
     /**
      * @brief Serialize type identifier and object, and insert the result into a \c DynamicTypesCollection .
@@ -539,11 +545,50 @@ protected:
     //! Samples buffer
     std::list<Message> samples_buffer_;
 
-    //! Current buffer size
-    std::uintmax_t buffer_size_{0};
+    //! Serialized payload
+    fastrtps::rtps::SerializedPayload_t serialized_payload_;
 
     //! TODO
-    static constexpr const int FOOTER_SIZE{50000};
+    static constexpr std::uint64_t MCAP_HEADER_SIZE{17 + 17}; // Header + Write Header
+
+    //! TODO
+    static constexpr std::uint64_t MCAP_MESSAGE_OVERHEAD{31 + 8 + 8}; // Write Message + TimeStamp + TimeOffSet
+
+    //! TODO
+    static constexpr std::uint64_t MCAP_METADATA_SIZE{75 + 24 + 36}; // Metadata + Write Metadata + Write MetadataIndex
+
+    //! TODO
+    static constexpr std::uint64_t MCAP_ATTACHMENT_OVERHEAD{58 + 70}; // Write Attachment + Write AttachmentIndex
+
+    //! TODO
+    static constexpr std::uint64_t MCAP_CHUNK_OVERHEAD{73}; // Write ChunckIndex
+
+    //! TODO
+    static constexpr std::uint64_t MCAP_STATISTICS_OVERHEAD{55}; // Write Statistics
+
+    //! TODO
+    static constexpr std::uint64_t MCAP_CLOSE_OVERHEAD{13 + 17*6}; // Write DataEnd + Write SummaryOffSets
+
+    //! TODO
+    static constexpr std::uint64_t MCAP_SCHEMAS_OVERHEAD{23}; // Write Schemas
+
+    //! TODO
+    static constexpr std::uint64_t MCAP_CHANNEL_OVERHEAD{25 + 10 + 10}; // Write Channel + messageIndexOffsetsSize + channelMessageCountsSize
+
+    //! TODO
+    std::unordered_map<mcap::ChannelId, mcap::MessageIndex> currentMessageIndex_;
+
+    //! Dynamic types reserved storage
+    uint64_t storage_dynamic_types_{0};
+
+    //! Total file size (without footer)
+    uint64_t file_size_{0};
+
+    //! TODO
+    int number_dynamic_squemas_{0};
+
+    //! TODO
+    int number_pending_types_{0};
 
     //! Structure where messages (received in RUNNING state) with unknown type are kept
     std::map<std::string, pending_list> pending_samples_;
