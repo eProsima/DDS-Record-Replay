@@ -15,7 +15,7 @@
 #include <fastdds/dds/topic/TypeSupport.hpp>
 
 #include <ddspipe_core/monitoring/consumers/DdsMonitorConsumer.hpp>
-#include <ddspipe_core/monitoring/consumers/StdoutMonitorConsumer.hpp>
+#include <ddspipe_core/monitoring/consumers/LogMonitorConsumer.hpp>
 
 #include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
 
@@ -55,7 +55,7 @@ void DdsRecorderMonitor::monitor_status()
     ddsrecorder_status_producer->init(configuration_.producers.at("status"));
 
     // Register the consumers
-    ddsrecorder_status_producer->register_consumer(std::make_unique<ddspipe::core::StdoutMonitorConsumer<DdsRecorderMonitoringStatus>>());
+    ddsrecorder_status_producer->register_consumer(std::make_unique<ddspipe::core::LogMonitorConsumer<DdsRecorderMonitoringStatus>>());
     ddsrecorder_status_producer->register_consumer(std::make_unique<ddspipe::core::DdsMonitorConsumer<DdsRecorderMonitoringStatus>>(
             configuration_.consumers["status"], registry_, type));
 

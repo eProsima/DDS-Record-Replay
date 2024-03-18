@@ -13,4 +13,5 @@
 # limitations under the License.
 
 add_subdirectory(dds)
+add_subdirectory(logging)
 add_subdirectory(stdout)
