@@ -38,6 +38,20 @@ void DdsRecorderStatusMonitorProducer::register_consumer(
     consumers_.push_back(std::move(consumer));
 }
 
+void DdsRecorderStatusMonitorProducer::produce_and_consume()
+{
+    if (!enabled_)
+    {
+        // Don't produce and consume if the producer is not enabled
+        return;
+    }
+
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    produce_nts_();
+    consume_nts_();
+}
+
 void DdsRecorderStatusMonitorProducer::produce()
 {
     if (!enabled_)
@@ -51,11 +65,7 @@ void DdsRecorderStatusMonitorProducer::produce()
     //      2. Simultaneous calls to produce.
     std::lock_guard<std::mutex> lock(mutex_);
 
-    logInfo(DDSPIPE_MONITOR, "MONITOR | Producing DdsRecorderMonitoringStatus.");
-
-    data_.error_status(error_status_);
-    data_.ddsrecorder_error_status(ddsrecorder_error_status_);
-    data_.has_errors(has_errors_);
+    produce_nts_();
 }
 
 void DdsRecorderStatusMonitorProducer::consume()
@@ -66,12 +76,12 @@ void DdsRecorderStatusMonitorProducer::consume()
         return;
     }
 
-    logInfo(DDSPIPE_MONITOR, "MONITOR | Consuming DdsRecorderMonitoringStatus.");
+    // Take the lock to prevent:
+    //      1. Changing the data while it's being saved.
+    //      2. Simultaneous calls to consume.
+    std::lock_guard<std::mutex> lock(mutex_);
 
-    for (auto& consumer : consumers_)
-    {
-        consumer->consume(data_);
-    }
+    consume_nts_();
 }
 
 void DdsRecorderStatusMonitorProducer::add_error_to_status(
@@ -108,6 +118,25 @@ void DdsRecorderStatusMonitorProducer::add_error_to_status(
     }
 
     has_errors_  = true;
+}
+
+void DdsRecorderStatusMonitorProducer::produce_nts_()
+{
+    logInfo(DDSPIPE_MONITOR, "MONITOR | Producing DdsRecorderMonitoringStatus.");
+
+    data_.error_status(error_status_);
+    data_.ddsrecorder_error_status(ddsrecorder_error_status_);
+    data_.has_errors(has_errors_);
+}
+
+void DdsRecorderStatusMonitorProducer::consume_nts_()
+{
+    logInfo(DDSPIPE_MONITOR, "MONITOR | Consuming DdsRecorderMonitoringStatus.");
+
+    for (auto& consumer : consumers_)
+    {
+        consumer->consume(data_);
+    }
 }
 
 } //namespace participants

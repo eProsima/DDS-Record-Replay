@@ -49,6 +49,9 @@ public:
             std::unique_ptr<ddspipe::core::IMonitorConsumer<DdsRecorderMonitoringStatus>> consumer);
 
     // TODO
+    void produce_and_consume() override;
+
+    // TODO
     void produce() override;
 
     // TODO
@@ -59,6 +62,12 @@ public:
             const std::string& error) override;
 
 protected:
+
+    // TODO
+    void produce_nts_();
+
+    // TODO
+    void consume_nts_();
 
     // TODO
     DdsRecorderMonitoringStatus data_;
