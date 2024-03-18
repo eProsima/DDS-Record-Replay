@@ -14,4 +14,3 @@
 
 add_subdirectory(dds)
 add_subdirectory(logging)
-add_subdirectory(stdout)
