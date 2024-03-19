@@ -270,6 +270,8 @@ protected:
     /**
      * @brief Open a new MCAP file according to configuration settings.
      *
+     * @throw InitializationException if failing to open file.
+     *
      * A temporal suffix is appended after the '.mcap' extension, and additionally a timestamp prefix if applies.
      *
      */
@@ -450,8 +452,9 @@ protected:
     void rewrite_schemas_nts_();
 
     /**
-     * @brief TODO
+     * @brief Generate dynamic type from type_name
      *
+     * @param [in] type_name Name of the dynamic type to generate
      */
     void generate_dynamic_type_(
         const std::string& type_name);
@@ -469,7 +472,7 @@ protected:
             const std::string& type_name);
 
     /**
-     * @brief Serialize current dynamic types.
+     * @brief Serialize current dynamic types every time a new dynamic type is generated in \c generate_dynamic_type_ .
      *
      */
     void serialize_dynamic_types_();
@@ -485,6 +488,27 @@ protected:
      *
      */
     void write_version_metadata_();
+
+    /**
+     * @brief Get space needed to write message
+     *
+     */
+    std::uint64_t get_message_size_(
+            const Message& msg);
+
+    /**
+     * @brief Get space needed to write schema
+     *
+     */
+    std::uint64_t get_schema_size_(
+            const mcap::Schema& schema);
+
+    /**
+     * @brief Get space needed to write channel
+     *
+     */
+    std::uint64_t get_channel_size_(
+            const mcap::Channel& channel);
 
     /**
      * @brief Convert given \c filename to temporal format.
@@ -554,26 +578,19 @@ protected:
     //! Dynamic types
     DynamicTypesCollection dynamic_types_;
 
-    //! Exact size of the MCAP header
-    static constexpr std::uint64_t MCAP_HEADER_SIZE{18}; // Header + Write Header
+    //! MCAP file overhead
+    /**
+     * To reach this number, we use the following constants:
+     *   - Header + Write Header = 18
+     *   - Metadata + Write Metadata + Write MetadataIndex = 75 + 24 + 36
+     *   - Write ChunkIndex = 73
+     *   - Write Statistics = 55
+     *   - Write DataEnd + Write SummaryOffSets = 13 + 26*6
+     */
+    static constexpr std::uint64_t MCAP_FILE_OVERHEAD{450};
 
     //! Additional overhead size for a MCAP message
     static constexpr std::uint64_t MCAP_MESSAGE_OVERHEAD{31 + 8 + 8}; // Write Message + TimeStamp + TimeOffSet
-
-    //! Exact size of MCAP metadata
-    static constexpr std::uint64_t MCAP_METADATA_SIZE{75 + 24 + 36}; // Metadata + Write Metadata + Write MetadataIndex
-
-    //! Additional overhead size for a MCAP attachment
-    static constexpr std::uint64_t MCAP_ATTACHMENT_OVERHEAD{58 + 70}; // Write Attachment + Write AttachmentIndex
-
-    //! Additional overhead size for a MCAP chunk
-    static constexpr std::uint64_t MCAP_CHUNK_OVERHEAD{73}; // Write ChunkIndex
-
-    //! Additional overhead size for MCAP statistics
-    static constexpr std::uint64_t MCAP_STATISTICS_OVERHEAD{55}; // Write Statistics
-
-    //! Additional overhead size for closing the MCAP, including writing DataEnd and SummaryOffSets
-    static constexpr std::uint64_t MCAP_CLOSE_OVERHEAD{13 + 26*6}; // Write DataEnd + Write SummaryOffSets
 
     //! Additional overhead size for a MCAP schema
     static constexpr std::uint64_t MCAP_SCHEMAS_OVERHEAD{23}; // Write Schemas
@@ -581,11 +598,14 @@ protected:
     //! Additional overhead size for a MCAP channel
     static constexpr std::uint64_t MCAP_CHANNEL_OVERHEAD{25 + 10 + 10}; // Write Channel + messageIndexOffsetsSize + channelMessageCountsSize
 
+    //! Additional overhead size for a MCAP attachment
+    static constexpr std::uint64_t MCAP_ATTACHMENT_OVERHEAD{58 + 70}; // Write Attachment + Write AttachmentIndex
+
     //! Dynamic types reserved storage
     uint64_t storage_dynamic_types_{0};
 
     //! Total file size
-    uint64_t file_size_{0};
+    uint64_t file_size_{MCAP_FILE_OVERHEAD}; // MCAP file size is initialized with MCAP_FILE_OVERHEAD
 
     //! Structure where messages (received in RUNNING state) with unknown type are kept
     std::map<std::string, pending_list> pending_samples_;
