@@ -140,8 +140,10 @@ void McapHandler::add_schema(
     mcap::Schema new_schema(configuration_.ros2_types ? utils::demangle_if_ros_type(dynamic_type->get_name()) :
             dynamic_type
                     ->get_name(), encoding, schema_text);
+
+    // Add schema reserved space to be written on MCAP (Schemas are written twice)
+    file_size_ += (MCAP_SCHEMAS_OVERHEAD + new_schema.name.size() + new_schema.encoding.size() + new_schema.data.size())*2 - 5;
     // WARNING: passing as non-const to MCAP library
-    file_size_ += MCAP_SCHEMAS_OVERHEAD + new_schema.name.size() + new_schema.encoding.size() + new_schema.data.size();
     mcap_writer_.addSchema(new_schema);
 
     logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << type_name << ".");
@@ -162,12 +164,9 @@ void McapHandler::add_schema(
     {
         add_pending_samples_nts_(type_name);
     }
-    // Every time an element of schemas_ (map of dynamic types with schemas) or pending_samples (map of dynamic
-    // types without schemas) changes the attachment is newly calculated
-    if (schemas_.size() != number_dynamic_squemas_ || pending_samples_.size() != number_pending_types_)
-    {
-        serialize_dynamic_types_();
-    }
+    // Every time an element of schemas_ (map of dynamic types with schemas) is added the attachment is newly calculated
+    generate_dynamic_type_(type_name);
+    serialize_dynamic_types_();
 }
 
 void McapHandler::add_data(
@@ -233,12 +232,9 @@ void McapHandler::add_data(
     {
         // Schema available -> add to buffer
         file_size_ += MCAP_MESSAGE_OVERHEAD + msg.dataSize;
-        if (file_size_ + storage_dynamic_types_ > space_available_)
+        // Check if there is enough space available before adding the message to buffer
+        if (!is_enough_space_available_())
         {
-            logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add data to buffer. Space available in disk: " << space_available_);
-            lock.unlock();
-            stop();
-            lock.lock();
             return;
         }
         add_data_nts_(msg, topic);
@@ -258,12 +254,8 @@ void McapHandler::add_data(
                 {
                     // No schema available + no pending samples -> Add to buffer with blank schema
                     file_size_ += MCAP_MESSAGE_OVERHEAD + msg.dataSize;
-                    if (file_size_ + storage_dynamic_types_ > space_available_)
+                    if (!is_enough_space_available_())
                     {
-                        logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add data to buffer. Space available in disk: " << space_available_);
-                        lock.unlock();
-                        stop();
-                        lock.lock();
                         return;
                     }
                     add_data_nts_(msg, topic);
@@ -276,12 +268,8 @@ void McapHandler::add_data(
                     "Schema for topic " << topic << " not yet available, inserting to pending samples queue.");
 
                 file_size_ += MCAP_MESSAGE_OVERHEAD + msg.dataSize;
-                if (file_size_ + storage_dynamic_types_ > space_available_)
+                if (!is_enough_space_available_())
                 {
-                    logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add data to buffer. Space available in disk: " << space_available_);
-                    lock.unlock();
-                    stop();
-                    lock.lock();
                     return;
                 }
 
@@ -586,6 +574,8 @@ void McapHandler::close_file_nts_()
 
     // Close writer and output file
     mcap_writer_.close();
+
+    std::cout << "Predicted MCAP file size: " << file_size_ + storage_dynamic_types_ << std::endl;
 
     // Rename temp file to configuration file_name
     if (std::rename(tmp_filename.c_str(), mcap_filename_.c_str()))
@@ -909,7 +899,8 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
 
             std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
             mcap::Schema blank_schema(topic.type_name, encoding, "");
-            file_size_ += MCAP_SCHEMAS_OVERHEAD + blank_schema.name.size() + blank_schema.encoding.size() + blank_schema.data.size();
+            // Add schema reserved space to be written on MCAP (Schemas are written twice)
+            file_size_ += (MCAP_SCHEMAS_OVERHEAD + blank_schema.name.size() + blank_schema.encoding.size() + blank_schema.data.size())*2 - 5;
             mcap_writer_.addSchema(blank_schema);
             schemas_.insert({topic.type_name, std::move(blank_schema)});
 
@@ -930,7 +921,7 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     // Set ROS2_TYPES to "false" if the given topic_name is equal to topic.m_topic_name, otherwise set it to "true".
     metadata[ROS2_TYPES] = topic_name.compare(topic.m_topic_name) ? "true" : "false";
     mcap::Channel new_channel(topic_name, "cdr", schema_id, metadata);
-    file_size_ += MCAP_CHANNEL_OVERHEAD + new_channel.topic.size() + new_channel.messageEncoding.size() +  mcap::internal::KeyValueMapSize(new_channel.metadata);
+    file_size_ += (MCAP_CHANNEL_OVERHEAD + new_channel.topic.size() + new_channel.messageEncoding.size() +  mcap::internal::KeyValueMapSize(new_channel.metadata))*2;
     mcap_writer_.addChannel(new_channel);
     auto channel_id = new_channel.id;
     channels_.insert({topic, std::move(new_channel)});
@@ -964,7 +955,7 @@ void McapHandler::update_channels_nts_(
 
             assert(channel.first.m_topic_name == channel.second.topic);
             mcap::Channel new_channel(channel.second.topic, "cdr", new_schema_id, channel.second.metadata);
-            file_size_ += MCAP_CHANNEL_OVERHEAD + new_channel.topic.size() + new_channel.messageEncoding.size() + mcap::internal::KeyValueMapSize(new_channel.metadata);
+            file_size_ += (MCAP_CHANNEL_OVERHEAD + new_channel.topic.size() + new_channel.messageEncoding.size() + mcap::internal::KeyValueMapSize(new_channel.metadata))*2;
             mcap_writer_.addChannel(new_channel);
             channel.second = std::move(new_channel);
         }
@@ -996,9 +987,10 @@ void McapHandler::rewrite_schemas_nts_()
         std::string type_name = schema.first;
         mcap::Schema new_schema = schema.second;
 
+        // Add schema reserved space to be written on MCAP (Schemas are written twice)
+        file_size_ += (MCAP_SCHEMAS_OVERHEAD + new_schema.name.size() + new_schema.encoding.size() + new_schema.data.size())*2 - 5;
         // WARNING: passing as non-const to MCAP library
         mcap_writer_.addSchema(new_schema);
-        file_size_ += MCAP_SCHEMAS_OVERHEAD + new_schema.name.size() + new_schema.encoding.size() + new_schema.data.size();
         new_schemas[type_name] = std::move(new_schema);
 
         logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << type_name << ".");
@@ -1008,90 +1000,65 @@ void McapHandler::rewrite_schemas_nts_()
     schemas_ = new_schemas;
 }
 
-void McapHandler::serialize_dynamic_types_()
+void McapHandler::generate_dynamic_type_(
+        const std::string& type_name)
 {
-    DynamicTypesCollection dynamic_types;
+    const eprosima::fastrtps::types::TypeIdentifier* type_identifier = nullptr;
+    const eprosima::fastrtps::types::TypeObject* type_object = nullptr;
+    const eprosima::fastrtps::types::TypeInformation* type_information = nullptr;
 
-    auto type_names = utils::get_keys(schemas_);
-    auto pending_type_names = utils::get_keys(pending_samples_);
-
-    number_dynamic_squemas_ = schemas_.size();
-    number_pending_types_ = pending_samples_.size();
-
-    std::set<std::string> combined_set;
-    std::set_union(type_names.begin(), type_names.end(),
-               pending_type_names.begin(), pending_type_names.end(),
-               std::inserter(combined_set, combined_set.begin()));
-
-    for (auto& type_name : combined_set)
+    type_information =
+            eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_information(type_name);
+    if (type_information != nullptr)
     {
-        const eprosima::fastrtps::types::TypeIdentifier* type_identifier = nullptr;
-        const eprosima::fastrtps::types::TypeObject* type_object = nullptr;
-        const eprosima::fastrtps::types::TypeInformation* type_information = nullptr;
-
-        type_information =
-                eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_information(type_name);
-        if (type_information != nullptr)
+        auto dependencies = type_information->complete().dependent_typeids();
+        std::string dependency_name;
+        unsigned int dependency_index = 0;
+        for (auto dependency: dependencies)
         {
-            auto dependencies = type_information->complete().dependent_typeids();
-            std::string dependency_name;
-            unsigned int dependency_index = 0;
-            for (auto dependency: dependencies)
-            {
-                type_identifier = &dependency.type_id();
-                type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(
-                    type_identifier);
-                dependency_name = type_name + "_" + std::to_string(dependency_index);
+            type_identifier = &dependency.type_id();
+            type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(
+                type_identifier);
+            dependency_name = type_name + "_" + std::to_string(dependency_index);
 
-                // Serialize dynamic type in a string and store in map
-                store_dynamic_type_(type_identifier, type_object, dependency_name, dynamic_types);
+            // Serialize dynamic type in a string and store in map
+            store_dynamic_type_(type_identifier, type_object, dependency_name);
 
-                // Increment suffix counter
-                dependency_index++;
-            }
+            // Increment suffix counter
+            dependency_index++;
         }
-        type_identifier = nullptr;
-        type_object = nullptr;
+    }
+    type_identifier = nullptr;
+    type_object = nullptr;
 
-        type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(type_name,
-                        true);
-        if (type_identifier)
-        {
-            type_object =
-                    eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name, true);
-        }
-
-        // If complete not found, try with minimal
-        if (!type_object)
-        {
-            type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(
-                type_name, false);
-            if (type_identifier)
-            {
-                type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name,
-                                false);
-            }
-        }
-
-        // Serialize dynamic type in a string and store in map
-        store_dynamic_type_(type_identifier, type_object, type_name, dynamic_types);
+    type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(type_name,
+                    true);
+    if (type_identifier)
+    {
+        type_object =
+                eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name, true);
     }
 
-    // Serialize dynamic types collection using CDR
-    eprosima::fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
-    eprosima::fastrtps::rtps::SerializedPayload_t serialized_payload =
-            eprosima::fastrtps::rtps::SerializedPayload_t(
-        type_support.get_serialized_size_provider(&dynamic_types)());
-    type_support.serialize(&dynamic_types, &serialized_payload);
+    // If complete not found, try with minimal
+    if (!type_object)
+    {
+        type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(
+            type_name, false);
+        if (type_identifier)
+        {
+            type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name,
+                            false);
+        }
+    }
 
-    storage_dynamic_types_ = MCAP_ATTACHMENT_OVERHEAD + serialized_payload.length;
+    // Store dynamic type in dynamic_types_
+    store_dynamic_type_(type_identifier, type_object, type_name);
 }
 
 void McapHandler::store_dynamic_type_(
         const eprosima::fastrtps::types::TypeIdentifier* type_identifier,
         const eprosima::fastrtps::types::TypeObject* type_object,
-        const std::string& type_name,
-        DynamicTypesCollection& dynamic_types)
+        const std::string& type_name)
 {
     if (type_identifier != nullptr && type_object != nullptr)
     {
@@ -1100,17 +1067,37 @@ void McapHandler::store_dynamic_type_(
         dynamic_type.type_information(utils::base64_encode(serialize_type_identifier_(type_identifier)));
         dynamic_type.type_object(utils::base64_encode(serialize_type_object_(type_object)));
 
-        dynamic_types.dynamic_types().push_back(dynamic_type);
+        dynamic_types_.dynamic_types().push_back(dynamic_type);
     }
+}
+
+void McapHandler::serialize_dynamic_types_()
+{
+    // Serialize dynamic types collection using CDR
+    eprosima::fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
+    eprosima::fastrtps::rtps::SerializedPayload_t serialized_payload =
+            eprosima::fastrtps::rtps::SerializedPayload_t(
+        type_support.get_serialized_size_provider(&dynamic_types_)());
+    type_support.serialize(&dynamic_types_, &serialized_payload);
+
+    // Recalculate storage_dynamic_types_ when serializing dynamic_types_
+    storage_dynamic_types_ = MCAP_ATTACHMENT_OVERHEAD + serialized_payload.length;
 }
 
 void McapHandler::write_attachment_()
 {
+    // Serialize dynamic types collection using CDR
+    eprosima::fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
+    eprosima::fastrtps::rtps::SerializedPayload_t serialized_payload =
+            eprosima::fastrtps::rtps::SerializedPayload_t(
+        type_support.get_serialized_size_provider(&dynamic_types_)());
+    type_support.serialize(&dynamic_types_, &serialized_payload);
+
     // Write serialized dynamic types into attachments section
     mcap::Attachment dynamic_attachment;
     dynamic_attachment.name = DYNAMIC_TYPES_ATTACHMENT_NAME;
-    dynamic_attachment.data = reinterpret_cast<std::byte*>(serialized_payload_.data);
-    dynamic_attachment.dataSize = serialized_payload_.length;
+    dynamic_attachment.data = reinterpret_cast<std::byte*>(serialized_payload.data);
+    dynamic_attachment.dataSize = serialized_payload.length;
     dynamic_attachment.createTime = now();
     auto status = mcap_writer_.write(dynamic_attachment);
 
@@ -1129,6 +1116,18 @@ void McapHandler::write_version_metadata_()
     version_metadata.name = VERSION_METADATA_NAME;
     version_metadata.metadata = version;
     auto status = mcap_writer_.write(version_metadata);
+}
+
+bool McapHandler::is_enough_space_available_()
+{
+    if (file_size_ + storage_dynamic_types_ > space_available_)
+    {
+        logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add data to buffer. Space available in disk: " << space_available_);
+        stop();
+        return false;
+    }
+
+    return true;
 }
 
 std::string McapHandler::tmp_filename_(

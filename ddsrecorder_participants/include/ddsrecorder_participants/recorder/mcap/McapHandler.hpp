@@ -444,16 +444,35 @@ protected:
             const std::string& schema_name);
 
     /**
-     * @brief Serialize current dynamic types.
-     *
-     */
-    void serialize_dynamic_types_();
-
-    /**
      * @brief Rewrite all received schemas into currently open MCAP file.
      *
      */
     void rewrite_schemas_nts_();
+
+    /**
+     * @brief TODO
+     *
+     */
+    void generate_dynamic_type_(
+        const std::string& type_name);
+
+    /**
+     * @brief Serialize type identifier and object, and insert the result into a \c DynamicTypesCollection .
+     *
+     * @param [in] type_identifier Type identifier to be serialized and stored.
+     * @param [in] type_object Type object to be serialized and stored.
+     * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
+     */
+    void store_dynamic_type_(
+            const eprosima::fastrtps::types::TypeIdentifier* type_identifier,
+            const eprosima::fastrtps::types::TypeObject* type_object,
+            const std::string& type_name);
+
+    /**
+     * @brief Serialize current dynamic types.
+     *
+     */
+    void serialize_dynamic_types_();
 
     /**
      * @brief Write in MCAP attachments the dynamic types associated to all added schemas, and their dependencies.
@@ -462,24 +481,16 @@ protected:
     void write_attachment_();
 
     /**
-     * @brief Serialize type identifier and object, and insert the result into a \c DynamicTypesCollection .
-     *
-     * @param [in] type_identifier Type identifier to be serialized and stored.
-     * @param [in] type_object Type object to be serialized and stored.
-     * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
-     * @param [in,out] dynamic_types Collection where to store serialized dynamic type.
-     */
-    void store_dynamic_type_(
-            const eprosima::fastrtps::types::TypeIdentifier* type_identifier,
-            const eprosima::fastrtps::types::TypeObject* type_object,
-            const std::string& type_name,
-            DynamicTypesCollection& dynamic_types);
-
-    /**
      * @brief Write version metadata (release and commit hash) in MCAP file.
      *
      */
     void write_version_metadata_();
+
+    /**
+     * @brief TODO
+     *
+     */
+    bool is_enough_space_available_();
 
     /**
      * @brief Convert given \c filename to temporal format.
@@ -540,17 +551,17 @@ protected:
     //! Channels map
     std::map<ddspipe::core::types::DdsTopic, mcap::Channel> channels_;
 
-    //! TODO
+    //! Space available in disk
     std::uintmax_t space_available_;
 
     //! Samples buffer
     std::list<Message> samples_buffer_;
 
-    //! Serialized payload
-    fastrtps::rtps::SerializedPayload_t serialized_payload_;
+    //! Dynamic types
+    DynamicTypesCollection dynamic_types_;
 
     //! Exact size of the MCAP header
-    static constexpr std::uint64_t MCAP_HEADER_SIZE{17 + 17}; // Header + Write Header
+    static constexpr std::uint64_t MCAP_HEADER_SIZE{18}; // Header + Write Header
 
     //! Additional overhead size for a MCAP message
     static constexpr std::uint64_t MCAP_MESSAGE_OVERHEAD{31 + 8 + 8}; // Write Message + TimeStamp + TimeOffSet
@@ -562,13 +573,13 @@ protected:
     static constexpr std::uint64_t MCAP_ATTACHMENT_OVERHEAD{58 + 70}; // Write Attachment + Write AttachmentIndex
 
     //! Additional overhead size for a MCAP chunk
-    static constexpr std::uint64_t MCAP_CHUNK_OVERHEAD{73}; // Write ChunckIndex
+    static constexpr std::uint64_t MCAP_CHUNK_OVERHEAD{73}; // Write ChunkIndex
 
     //! Additional overhead size for MCAP statistics
     static constexpr std::uint64_t MCAP_STATISTICS_OVERHEAD{55}; // Write Statistics
 
     //! Additional overhead size for closing the MCAP, including writing DataEnd and SummaryOffSets
-    static constexpr std::uint64_t MCAP_CLOSE_OVERHEAD{13 + 17*6}; // Write DataEnd + Write SummaryOffSets
+    static constexpr std::uint64_t MCAP_CLOSE_OVERHEAD{13 + 26*6}; // Write DataEnd + Write SummaryOffSets
 
     //! Additional overhead size for a MCAP schema
     static constexpr std::uint64_t MCAP_SCHEMAS_OVERHEAD{23}; // Write Schemas
@@ -581,12 +592,6 @@ protected:
 
     //! Total file size (without footer)
     uint64_t file_size_{0};
-
-    //! TODO
-    int number_dynamic_squemas_{0};
-
-    //! TODO
-    int number_pending_types_{0};
 
     //! Structure where messages (received in RUNNING state) with unknown type are kept
     std::map<std::string, pending_list> pending_samples_;
