@@ -24,13 +24,14 @@ void DdsRecorderStatusMonitorProducer::register_consumer(
 {
     if (!enabled_)
     {
-        logWarning(DDSPIPE_MONITOR, "MONITOR | Not registering consumer " << consumer->get_name() << " on "
+        logWarning(DDSRECORDER_MONITOR, "MONITOR | Not registering consumer " << consumer->get_name() << " on "
                 "DdsRecorderStatusMonitorProducer since the DdsRecorderStatusMonitorProducer is disabled.");
 
         return;
     }
 
-    logInfo(DDSPIPE_MONITOR, "MONITOR | Registering consumer " << consumer->get_name() << " on DdsRecorderStatusMonitorProducer.");
+    logInfo(DDSRECORDER_MONITOR, "MONITOR | Registering consumer " << consumer->get_name() << " on "
+            "DdsRecorderStatusMonitorProducer.");
 
     consumers_.push_back(std::move(consumer));
 }

@@ -346,7 +346,7 @@ void RecorderConfiguration::load_specs_configuration_(
     // Get optional monitor tag
     if (YamlReader::is_tag_present(yml, MONITOR_TAG))
     {
-        monitor = YamlReader::get<MonitorConfiguration>(yml, MONITOR_TAG, version);
+        monitor_configuration = YamlReader::get<MonitorConfiguration>(yml, MONITOR_TAG, version);
     }
 }
 

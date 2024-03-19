@@ -52,12 +52,12 @@ void DdsRecorderMonitor::monitor_status()
     fastdds::dds::TypeSupport type(new DdsRecorderMonitoringStatusPubSubType());
 
     // Initialize the DdsRecorder Status Producer
-    ddsrecorder_status_producer->init(configuration_.producers.at("status"));
+    ddsrecorder_status_producer->init(configuration_.producers.at(ddspipe::core::STATUS_MONITOR_PRODUCER_ID));
 
     // Register the consumers
     ddsrecorder_status_producer->register_consumer(std::make_unique<ddspipe::core::LogMonitorConsumer<DdsRecorderMonitoringStatus>>());
     ddsrecorder_status_producer->register_consumer(std::make_unique<ddspipe::core::DdsMonitorConsumer<DdsRecorderMonitoringStatus>>(
-            configuration_.consumers["status"], registry_, type));
+            configuration_.consumers[ddspipe::core::STATUS_MONITOR_PRODUCER_ID], registry_, type));
 
     ddspipe::core::StatusMonitorProducer::init_instance(std::move(ddsrecorder_status_producer));
 
