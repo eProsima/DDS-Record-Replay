@@ -487,12 +487,6 @@ protected:
     void write_version_metadata_();
 
     /**
-     * @brief TODO
-     *
-     */
-    bool is_enough_space_available_();
-
-    /**
      * @brief Convert given \c filename to temporal format.
      *
      * @param [in] filename Filename to be converted.
@@ -590,7 +584,7 @@ protected:
     //! Dynamic types reserved storage
     uint64_t storage_dynamic_types_{0};
 
-    //! Total file size (without footer)
+    //! Total file size
     uint64_t file_size_{0};
 
     //! Structure where messages (received in RUNNING state) with unknown type are kept
