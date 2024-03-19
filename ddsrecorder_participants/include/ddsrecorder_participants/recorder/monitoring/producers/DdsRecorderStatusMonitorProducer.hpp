@@ -20,6 +20,8 @@
 #include <ddspipe_core/monitoring/consumers/IMonitorConsumer.hpp>
 #include <ddspipe_core/monitoring/producers/StatusMonitorProducer.hpp>
 
+#include <ddsrecorder_participants/library/library_dll.h>
+
 #if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
     #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v1/DdsRecorderMonitoringStatus.h>
     #include \
@@ -40,44 +42,84 @@ namespace ddsrecorder {
 namespace participants {
 
 /**
- * TODO
+ * @brief Producer of the \c DdsRecorderMonitoringStatus.
+ *
+ * The \c DdsRecorderStatusMonitorProducer produces the \c DdsRecorderMonitoringStatus by gathering data with the
+ * \c StatusMonitorProducer's macros:
+ * - \c monitor_error
+ *
+ * The \c DdsRecorderStatusMonitorProducer consumes the \c DdsRecorderMonitoringStatus by using its consumers.
  */
 class DdsRecorderStatusMonitorProducer : public ddspipe::core::StatusMonitorProducer
 {
 public:
 
-    // TODO
+    virtual ~DdsRecorderStatusMonitorProducer() = default;
+
+    /**
+     * @brief Register a consumer.
+     *
+     * The consumer can be any class that implements the \c IMonitorConsumer interface as long as it is a template class
+     * that accepts the \c DdsRecorderMonitoringStatus as a template parameter.
+     *
+     * @param consumer Consumer to be registered.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     void register_consumer(
             std::unique_ptr<ddspipe::core::IMonitorConsumer<DdsRecorderMonitoringStatus>> consumer);
 
-    // TODO
+    /**
+     * @brief Remove all consumers.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    void clear_consumers() override;
+
+    /**
+     * @brief Produce and consume the \c DdsRecorderMonitoringStatus.
+     *
+     * Produces a \c DdsRecorderMonitoringStatus with the data gathered and consumes it.
+     */
     void produce_and_consume() override;
 
-    // TODO
+    /**
+     * @brief Produce the \c DdsRecorderMonitoringStatus.
+     *
+     * Generates a \c DdsRecorderMonitoringStatus with the data gathered by the producer.
+     */
     void produce() override;
 
-    // TODO
+    /**
+     * @brief Consume the \c DdsRecorderMonitoringStatus.
+     *
+     * Calls the consume method of its consumers.
+     */
     void consume() override;
 
-    // TODO
+    /**
+     * @brief Add an error to the \c DdsRecorderMonitoringStatus.
+     *
+     * Method called by the \c monitor_error macro to.
+     *
+     * @param error String identifying the error to be added to the \c DdsRecorderMonitoringStatus.
+     */
     virtual void add_error_to_status(
             const std::string& error) override;
 
 protected:
 
-    // TODO
+    // Produce data_.
     void produce_nts_();
 
-    // TODO
+    // Consume data_.
     void consume_nts_();
 
-    // TODO
+    // The produced data.
     DdsRecorderMonitoringStatus data_;
 
-    // TODO
+    // DDS Recorder specific errors gathered by the producer.
     DdsRecorderMonitoringErrorStatus ddsrecorder_error_status_;
 
-    // TODO
+    // Vector of consumers of the DdsRecorderMonitoringStatus.
     std::vector<std::unique_ptr<ddspipe::core::IMonitorConsumer<DdsRecorderMonitoringStatus>>> consumers_;
 };
 

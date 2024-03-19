@@ -30,10 +30,21 @@ void DdsRecorderStatusMonitorProducer::register_consumer(
         return;
     }
 
+    std::lock_guard<std::mutex> lock(mutex_);
+
     logInfo(DDSRECORDER_MONITOR, "MONITOR | Registering consumer " << consumer->get_name() << " on "
             "DdsRecorderStatusMonitorProducer.");
 
     consumers_.push_back(std::move(consumer));
+}
+
+void DdsRecorderStatusMonitorProducer::clear_consumers()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    logInfo(DDSRECORDER_MONITOR, "MONITOR | Clearing consumers on DdsRecorderStatusMonitorProducer.");
+
+    consumers_.clear();
 }
 
 void DdsRecorderStatusMonitorProducer::produce_and_consume()
@@ -96,7 +107,7 @@ void DdsRecorderStatusMonitorProducer::add_error_to_status(
     //      2. Simultaneous calls to add_error_to_status.
     std::lock_guard<std::mutex> lock(mutex_);
 
-    logInfo(DDSPIPE_MONITOR, "MONITOR | Adding error " << error << " to status.");
+    logInfo(DDSRECORDER_MONITOR, "MONITOR | Adding error " << error << " to status.");
 
     if (error == "TYPE_MISMATCH")
     {
@@ -120,7 +131,7 @@ void DdsRecorderStatusMonitorProducer::add_error_to_status(
 
 void DdsRecorderStatusMonitorProducer::produce_nts_()
 {
-    logInfo(DDSPIPE_MONITOR, "MONITOR | Producing DdsRecorderMonitoringStatus.");
+    logInfo(DDSRECORDER_MONITOR, "MONITOR | Producing DdsRecorderMonitoringStatus.");
 
     data_.error_status(error_status_);
     data_.ddsrecorder_error_status(ddsrecorder_error_status_);
@@ -129,7 +140,7 @@ void DdsRecorderStatusMonitorProducer::produce_nts_()
 
 void DdsRecorderStatusMonitorProducer::consume_nts_()
 {
-    logInfo(DDSPIPE_MONITOR, "MONITOR | Consuming DdsRecorderMonitoringStatus.");
+    logInfo(DDSRECORDER_MONITOR, "MONITOR | Consuming DdsRecorderMonitoringStatus.");
 
     for (auto& consumer : consumers_)
     {

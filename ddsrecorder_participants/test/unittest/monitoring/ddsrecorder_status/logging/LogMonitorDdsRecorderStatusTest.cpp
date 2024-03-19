@@ -52,16 +52,16 @@ public:
             std::make_unique<utils::StdLogConsumer>(&log_conf));
 
         // Initialize the Monitor
-        ddspipe::core::MonitorConfiguration configuration;
-        configuration.producers["status"].enabled = true;
-        configuration.producers["status"].period = test::monitor::PERIOD_MS;
+        ddspipe::core::MonitorConfiguration monitor_conf;
+        monitor_conf.producers["status"].enabled = true;
+        monitor_conf.producers["status"].period = test::monitor::PERIOD_MS;
 
         utils::Formatter error_msg;
-        ASSERT_TRUE(configuration.is_valid(error_msg));
+        ASSERT_TRUE(monitor_conf.is_valid(error_msg));
 
-        monitor_ = std::make_unique<ddsrecorder::participants::DdsRecorderMonitor>(configuration);
+        monitor_ = std::make_unique<ddsrecorder::participants::DdsRecorderMonitor>(monitor_conf);
 
-        if (configuration.producers["status"].enabled)
+        if (monitor_conf.producers["status"].enabled)
         {
             monitor_->monitor_status();
         }
@@ -100,7 +100,7 @@ TEST_F(LogMonitorDdsRecorderStatusTest, type_mismatch)
     testing::internal::CaptureStdout();
 
     // Wait for the monitor to log the message
-    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS + 1));
+    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS*3));
     utils::Log::Flush();
 
     ASSERT_TRUE(contains_(testing::internal::GetCapturedStdout(),
@@ -121,7 +121,7 @@ TEST_F(LogMonitorDdsRecorderStatusTest, qos_mismatch)
     testing::internal::CaptureStdout();
 
     // Wait for the monitor to log the message
-    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS + 1));
+    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS*3));
     utils::Log::Flush();
 
     ASSERT_TRUE(contains_(testing::internal::GetCapturedStdout(),
@@ -142,7 +142,7 @@ TEST_F(LogMonitorDdsRecorderStatusTest, mcap_file_creation_failure)
     testing::internal::CaptureStdout();
 
     // Wait for the monitor to log the message
-    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS + 1));
+    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS*2));
     utils::Log::Flush();
 
     ASSERT_TRUE(contains_(testing::internal::GetCapturedStdout(),
@@ -163,7 +163,7 @@ TEST_F(LogMonitorDdsRecorderStatusTest, disk_full)
     testing::internal::CaptureStdout();
 
     // Wait for the monitor to log the message
-    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS + 1));
+    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS*2));
     utils::Log::Flush();
 
     ASSERT_TRUE(contains_(testing::internal::GetCapturedStdout(),

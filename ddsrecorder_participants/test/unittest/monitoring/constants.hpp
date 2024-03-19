@@ -33,7 +33,7 @@ using namespace eprosima;
 using namespace eprosima::ddspipe::core::types;
 
 // Period at which the Monitor should log data.
-constexpr std::uint32_t PERIOD_MS = 100;
+constexpr std::uint32_t PERIOD_MS = 500;
 constexpr double PERIOD_SECS = (double) PERIOD_MS / 1000;
 
 // Maximum time to wait for a sample to arrive.

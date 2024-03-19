@@ -664,7 +664,7 @@ Monitor
 ^^^^^^^
 
 ``specs`` supports a ``monitor`` **optional** tag to publish internal data from the |ddsrecorder|.
-The monitor can be configured to publish this data on a ``domain``, under a ``topic-name``, once every ``period`` (in milliseconds).
+If the monitor is enabled, it publishes (and logs under the ``MONITOR_DATA`` :ref:`log filter <recorder_specs_logging>`) the *DDS Recorder's* internal data on a ``domain``, under a ``topic-name``, once every ``period`` (in milliseconds).
 If the monitor is not enabled, the |ddsrecorder| will not collect or publish any data.
 
 .. note::
@@ -699,7 +699,7 @@ The type of the data published is defined as follows:
         DdsRecorderMonitoringErrorStatus ddsrecorder_error_status;
     };
 
-When monitoring its topics, the |ddsrecorder| will track the number of messages lost, received, and the frequency of each topic.
+When monitoring its topics, the |ddsrecorder| will track the number of messages lost, received, and the message reception rate [Hz] of each topic.
 It will also track if a topic's type is discovered, if there is a type mismatch, and if there is a QoS mismatch.
 The type of the data published is defined as follows:
 
