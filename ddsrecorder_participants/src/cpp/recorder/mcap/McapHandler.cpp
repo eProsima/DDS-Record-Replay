@@ -138,11 +138,17 @@ void McapHandler::add_schema(
     // Create schema and add it to writer and to schemas map
     std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
     mcap::Schema new_schema(configuration_.ros2_types ? utils::demangle_if_ros_type(dynamic_type->get_name()) :
-            dynamic_type
-                    ->get_name(), encoding, schema_text);
+            dynamic_type->get_name(), encoding, schema_text);
 
-    // Add schema reserved space to be written on MCAP (Schemas are written twice)
-    file_size_ += (MCAP_SCHEMAS_OVERHEAD + new_schema.name.size() + new_schema.encoding.size() + new_schema.data.size())*2 - 5;
+    // Add schema reserved space to write it on MCAP
+    file_size_ += get_schema_size_(new_schema);
+    if (file_size_ > space_available_)
+    {
+        logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add schema. Attempted to write an MCAP of size: "
+                << file_size_ << ", but there is not enough space available on disk: " << space_available_);
+        stop();
+        return;
+    }
     // WARNING: passing as non-const to MCAP library
     mcap_writer_.addSchema(new_schema);
 
@@ -231,11 +237,12 @@ void McapHandler::add_data(
     if (received_types_.count(topic.type_name) != 0)
     {
         // Schema available -> add to buffer
-        file_size_ += MCAP_MESSAGE_OVERHEAD + msg.dataSize;
+        file_size_ += get_message_size_(msg);
         // Check if there is enough space available before adding the message to buffer
-        if (file_size_ + storage_dynamic_types_ > space_available_)
+        if (file_size_ > space_available_)
         {
-            logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add data to buffer. Space available in disk: " << space_available_);
+            logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add data to buffer. Attempted to write an MCAP of size: "
+                    << file_size_ << ", but there is not enough space available on disk: " << space_available_);
             lock.unlock();
             stop();
             lock.lock();
@@ -257,10 +264,11 @@ void McapHandler::add_data(
                 else
                 {
                     // No schema available + no pending samples -> Add to buffer with blank schema
-                    file_size_ += MCAP_MESSAGE_OVERHEAD + msg.dataSize;
-                    if (file_size_ + storage_dynamic_types_ > space_available_)
+                    file_size_ += get_message_size_(msg);
+                    if (file_size_ > space_available_)
                     {
-                        logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add data to buffer. Space available in disk: " << space_available_);
+                        logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add data to buffer. Attempted to write an MCAP of size: "
+                                << file_size_ << ", but there is not enough space available on disk: " << space_available_);
                         lock.unlock();
                         stop();
                         lock.lock();
@@ -275,10 +283,11 @@ void McapHandler::add_data(
                     DDSRECORDER_MCAP_HANDLER,
                     "Schema for topic " << topic << " not yet available, inserting to pending samples queue.");
 
-                file_size_ += MCAP_MESSAGE_OVERHEAD + msg.dataSize;
-                if (file_size_ + storage_dynamic_types_ > space_available_)
+                file_size_ += get_message_size_(msg);
+                if (file_size_ > space_available_)
                 {
-                    logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add data to buffer. Space available in disk: " << space_available_);
+                    logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add data to buffer. Attempted to write an MCAP of size: "
+                            << file_size_ << ", but there is not enough space available on disk: " << space_available_);
                     lock.unlock();
                     stop();
                     lock.lock();
@@ -550,9 +559,6 @@ void McapHandler::open_file_nts_()
                   STR_ENTRY << "Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
     }
 
-    // Add header, metadata, statistics, chunk and close constants
-    file_size_ += MCAP_HEADER_SIZE + MCAP_METADATA_SIZE + MCAP_STATISTICS_OVERHEAD + MCAP_CHUNK_OVERHEAD + MCAP_CLOSE_OVERHEAD;
-
     // Check available space in disk when opening file
     std::filesystem::space_info space_ = std::filesystem::space(configuration_.mcap_output_settings.output_filepath);
     space_available_ = space_.available;
@@ -585,7 +591,7 @@ void McapHandler::close_file_nts_()
     // Close writer and output file
     mcap_writer_.close();
 
-    std::cout << "Predicted MCAP file size: " << file_size_ + storage_dynamic_types_ << std::endl;
+    std::cout << "Predicted MCAP file size: " << file_size_ << std::endl;
 
     // Rename temp file to configuration file_name
     if (std::rename(tmp_filename.c_str(), mcap_filename_.c_str()))
@@ -909,8 +915,8 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
 
             std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
             mcap::Schema blank_schema(topic.type_name, encoding, "");
-            // Add schema reserved space to be written on MCAP (Schemas are written twice)
-            file_size_ += (MCAP_SCHEMAS_OVERHEAD + blank_schema.name.size() + blank_schema.encoding.size() + blank_schema.data.size())*2 - 5;
+            // Add schema reserved space to write it on MCAP
+            file_size_ += get_schema_size_(blank_schema);
             mcap_writer_.addSchema(blank_schema);
             schemas_.insert({topic.type_name, std::move(blank_schema)});
 
@@ -931,7 +937,7 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     // Set ROS2_TYPES to "false" if the given topic_name is equal to topic.m_topic_name, otherwise set it to "true".
     metadata[ROS2_TYPES] = topic_name.compare(topic.m_topic_name) ? "true" : "false";
     mcap::Channel new_channel(topic_name, "cdr", schema_id, metadata);
-    file_size_ += (MCAP_CHANNEL_OVERHEAD + new_channel.topic.size() + new_channel.messageEncoding.size() +  mcap::internal::KeyValueMapSize(new_channel.metadata))*2;
+    file_size_ += get_channel_size_(new_channel);
     mcap_writer_.addChannel(new_channel);
     auto channel_id = new_channel.id;
     channels_.insert({topic, std::move(new_channel)});
@@ -965,7 +971,14 @@ void McapHandler::update_channels_nts_(
 
             assert(channel.first.m_topic_name == channel.second.topic);
             mcap::Channel new_channel(channel.second.topic, "cdr", new_schema_id, channel.second.metadata);
-            file_size_ += (MCAP_CHANNEL_OVERHEAD + new_channel.topic.size() + new_channel.messageEncoding.size() + mcap::internal::KeyValueMapSize(new_channel.metadata))*2;
+            file_size_ += get_channel_size_(new_channel);
+            if (file_size_ > space_available_)
+            {
+                logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add channel. Attempted to write an MCAP of size: "
+                        << file_size_ << ", but there is not enough space available on disk: " << space_available_);
+                stop();
+                return;
+            }
             mcap_writer_.addChannel(new_channel);
             channel.second = std::move(new_channel);
         }
@@ -997,8 +1010,15 @@ void McapHandler::rewrite_schemas_nts_()
         std::string type_name = schema.first;
         mcap::Schema new_schema = schema.second;
 
-        // Add schema reserved space to be written on MCAP (Schemas are written twice)
-        file_size_ += (MCAP_SCHEMAS_OVERHEAD + new_schema.name.size() + new_schema.encoding.size() + new_schema.data.size())*2 - 5;
+        // Add schema reserved space to write it on MCAP
+        file_size_ += get_schema_size_(new_schema);
+        if (file_size_ > space_available_)
+        {
+            logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add schema. Attempted to write an MCAP of size: "
+                    << file_size_ << ", but there is not enough space available on disk: " << space_available_);
+            stop();
+            return;
+        }
         // WARNING: passing as non-const to MCAP library
         mcap_writer_.addSchema(new_schema);
         new_schemas[type_name] = std::move(new_schema);
@@ -1091,7 +1111,16 @@ void McapHandler::serialize_dynamic_types_()
     type_support.serialize(&dynamic_types_, &serialized_payload);
 
     // Recalculate storage_dynamic_types_ when serializing dynamic_types_
+    file_size_ -= storage_dynamic_types_;
     storage_dynamic_types_ = MCAP_ATTACHMENT_OVERHEAD + serialized_payload.length;
+    file_size_ += storage_dynamic_types_;
+    if (file_size_ > space_available_)
+    {
+        logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add dyanmic type. Attempted to write an MCAP of size: "
+                << file_size_ << ", but there is not enough space available on disk: " << space_available_);
+        stop();
+        return;
+    }
 }
 
 void McapHandler::write_attachment_()
@@ -1126,6 +1155,43 @@ void McapHandler::write_version_metadata_()
     version_metadata.name = VERSION_METADATA_NAME;
     version_metadata.metadata = version;
     auto status = mcap_writer_.write(version_metadata);
+}
+
+std::uint64_t McapHandler::get_message_size_(
+        const Message& msg)
+{
+    constexpr std::uint64_t NUMBER_OF_TIMES_COPIED = 1;
+
+    std::uint64_t size = MCAP_MESSAGE_OVERHEAD;
+    size += msg.dataSize;
+
+    return size * NUMBER_OF_TIMES_COPIED;
+}
+
+std::uint64_t McapHandler::get_schema_size_(
+        const mcap::Schema& schema)
+{
+    constexpr std::uint64_t NUMBER_OF_TIMES_COPIED = 2;
+
+    std::uint64_t size = MCAP_SCHEMAS_OVERHEAD;
+    size += schema.name.size();
+    size += schema.encoding.size();
+    size += schema.data.size();
+
+    return (size * NUMBER_OF_TIMES_COPIED) - 5;
+}
+
+std::uint64_t McapHandler::get_channel_size_(
+        const mcap::Channel& channel)
+{
+    constexpr int NUMBER_OF_TIMES_COPIED = 2;
+
+    std::uint64_t size = MCAP_CHANNEL_OVERHEAD;
+    size += channel.topic.size();
+    size += channel.messageEncoding.size();
+    size += mcap::internal::KeyValueMapSize(channel.metadata);
+
+    return size * NUMBER_OF_TIMES_COPIED;
 }
 
 std::string McapHandler::tmp_filename_(
