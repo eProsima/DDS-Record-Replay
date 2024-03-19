@@ -233,8 +233,12 @@ void McapHandler::add_data(
         // Schema available -> add to buffer
         file_size_ += MCAP_MESSAGE_OVERHEAD + msg.dataSize;
         // Check if there is enough space available before adding the message to buffer
-        if (!is_enough_space_available_())
+        if (file_size_ + storage_dynamic_types_ > space_available_)
         {
+            logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add data to buffer. Space available in disk: " << space_available_);
+            lock.unlock();
+            stop();
+            lock.lock();
             return;
         }
         add_data_nts_(msg, topic);
@@ -254,8 +258,12 @@ void McapHandler::add_data(
                 {
                     // No schema available + no pending samples -> Add to buffer with blank schema
                     file_size_ += MCAP_MESSAGE_OVERHEAD + msg.dataSize;
-                    if (!is_enough_space_available_())
+                    if (file_size_ + storage_dynamic_types_ > space_available_)
                     {
+                        logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add data to buffer. Space available in disk: " << space_available_);
+                        lock.unlock();
+                        stop();
+                        lock.lock();
                         return;
                     }
                     add_data_nts_(msg, topic);
@@ -268,8 +276,12 @@ void McapHandler::add_data(
                     "Schema for topic " << topic << " not yet available, inserting to pending samples queue.");
 
                 file_size_ += MCAP_MESSAGE_OVERHEAD + msg.dataSize;
-                if (!is_enough_space_available_())
+                if (file_size_ + storage_dynamic_types_ > space_available_)
                 {
+                    logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add data to buffer. Space available in disk: " << space_available_);
+                    lock.unlock();
+                    stop();
+                    lock.lock();
                     return;
                 }
 
@@ -1116,18 +1128,6 @@ void McapHandler::write_version_metadata_()
     version_metadata.name = VERSION_METADATA_NAME;
     version_metadata.metadata = version;
     auto status = mcap_writer_.write(version_metadata);
-}
-
-bool McapHandler::is_enough_space_available_()
-{
-    if (file_size_ + storage_dynamic_types_ > space_available_)
-    {
-        logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add data to buffer. Space available in disk: " << space_available_);
-        stop();
-        return false;
-    }
-
-    return true;
 }
 
 std::string McapHandler::tmp_filename_(
