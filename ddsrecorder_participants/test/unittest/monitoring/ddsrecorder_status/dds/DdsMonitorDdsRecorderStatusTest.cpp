@@ -54,17 +54,17 @@ public:
     {
         // Initialize the Monitor
         ddspipe::core::MonitorConfiguration configuration;
-        configuration.producers["status"].enabled = true;
-        configuration.producers["status"].period = test::monitor::PERIOD_MS;
-        configuration.consumers["status"].domain = test::monitor::DOMAIN;
-        configuration.consumers["status"].topic_name = test::monitor::TOPIC_NAME;
+        configuration.producers[ddspipe::core::STATUS_MONITOR_PRODUCER_ID].enabled = true;
+        configuration.producers[ddspipe::core::STATUS_MONITOR_PRODUCER_ID].period = test::monitor::PERIOD_MS;
+        configuration.consumers[ddspipe::core::STATUS_MONITOR_PRODUCER_ID].domain = test::monitor::DOMAIN;
+        configuration.consumers[ddspipe::core::STATUS_MONITOR_PRODUCER_ID].topic_name = test::monitor::TOPIC_NAME;
 
         utils::Formatter error_msg;
         ASSERT_TRUE(configuration.is_valid(error_msg));
 
         monitor_ = std::make_unique<ddsrecorder::participants::DdsRecorderMonitor>(configuration);
 
-        if (configuration.producers["status"].enabled)
+        if (configuration.producers[ddspipe::core::STATUS_MONITOR_PRODUCER_ID].enabled)
         {
             monitor_->monitor_status();
         }

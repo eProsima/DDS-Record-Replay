@@ -37,6 +37,7 @@
 
 #include <ddsrecorder_participants/recorder/logging/DdsRecorderLogConsumer.hpp>
 #include <ddsrecorder_participants/recorder/monitoring/DdsRecorderMonitor.hpp>
+#include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
 #include "user_interface/arguments_configuration.hpp"
