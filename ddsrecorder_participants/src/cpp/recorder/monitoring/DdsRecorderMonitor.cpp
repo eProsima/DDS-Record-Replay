@@ -21,10 +21,12 @@
 
 #if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
     #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v1/DdsRecorderMonitoringStatus.h>
-    #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v1/DdsRecorderMonitoringStatusPubSubTypes.h>
+    #include \
+    <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v1/DdsRecorderMonitoringStatusPubSubTypes.h>
 #else
     #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatus.h>
-    #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatusPubSubTypes.h>
+    #include \
+    <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatusPubSubTypes.h>
 #endif // if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
 
 #include <ddsrecorder_participants/recorder/monitoring/DdsRecorderMonitor.hpp>
@@ -36,7 +38,7 @@ namespace participants {
 
 DdsRecorderMonitor::DdsRecorderMonitor(
         const ddspipe::core::MonitorConfiguration& configuration)
-        : ddspipe::core::Monitor(configuration)
+    : ddspipe::core::Monitor(configuration)
 {
 }
 
@@ -55,9 +57,11 @@ void DdsRecorderMonitor::monitor_status()
     ddsrecorder_status_producer->init(configuration_.producers.at(ddspipe::core::STATUS_MONITOR_PRODUCER_ID));
 
     // Register the consumers
-    ddsrecorder_status_producer->register_consumer(std::make_unique<ddspipe::core::LogMonitorConsumer<DdsRecorderMonitoringStatus>>());
+    ddsrecorder_status_producer->register_consumer(
+        std::make_unique<ddspipe::core::LogMonitorConsumer<DdsRecorderMonitoringStatus>>());
     ddsrecorder_status_producer->register_consumer(std::make_unique<ddspipe::core::DdsMonitorConsumer<DdsRecorderMonitoringStatus>>(
-            configuration_.consumers[ddspipe::core::STATUS_MONITOR_PRODUCER_ID], registry_, type));
+                configuration_.consumers[ddspipe::core::STATUS_MONITOR_PRODUCER_ID], registry_,
+                type));
 
     ddspipe::core::StatusMonitorProducer::init_instance(std::move(ddsrecorder_status_producer));
 

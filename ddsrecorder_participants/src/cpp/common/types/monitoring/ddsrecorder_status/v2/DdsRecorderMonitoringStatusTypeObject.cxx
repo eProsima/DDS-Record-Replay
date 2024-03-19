@@ -21,11 +21,14 @@
 
 #ifdef _WIN32
 // Remove linker warning LNK4221 on Visual Studio
-namespace { char dummy; }
-#endif
+namespace {
+char dummy;
+} // namespace
+#endif // ifdef _WIN32
 
 #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatus.h>
-#include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatusTypeObject.h>
+#include \
+    <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatusTypeObject.h>
 #include <mutex>
 #include <utility>
 #include <sstream>
@@ -43,7 +46,7 @@ void registerDdsRecorderMonitoringStatusTypes()
     static std::once_flag once_flag;
     std::call_once(once_flag, []()
             {
-                TypeObjectFactory *factory = TypeObjectFactory::get_instance();
+                TypeObjectFactory* factory = TypeObjectFactory::get_instance();
                 factory->add_type_object("MonitoringErrorStatus", GetMonitoringErrorStatusIdentifier(true),
                 GetMonitoringErrorStatusObject(true));
                 factory->add_type_object("MonitoringErrorStatus", GetMonitoringErrorStatusIdentifier(false),
@@ -56,9 +59,11 @@ void registerDdsRecorderMonitoringStatusTypes()
                 GetMonitoringStatusObject(false));
 
 
-                factory->add_type_object("DdsRecorderMonitoringErrorStatus", GetDdsRecorderMonitoringErrorStatusIdentifier(true),
+                factory->add_type_object("DdsRecorderMonitoringErrorStatus",
+                GetDdsRecorderMonitoringErrorStatusIdentifier(true),
                 GetDdsRecorderMonitoringErrorStatusObject(true));
-                factory->add_type_object("DdsRecorderMonitoringErrorStatus", GetDdsRecorderMonitoringErrorStatusIdentifier(false),
+                factory->add_type_object("DdsRecorderMonitoringErrorStatus",
+                GetDdsRecorderMonitoringErrorStatusIdentifier(false),
                 GetDdsRecorderMonitoringErrorStatusObject(false));
 
 
@@ -70,11 +75,11 @@ void registerDdsRecorderMonitoringStatusTypes()
             });
 }
 
-
-
-const TypeIdentifier* GetDdsRecorderMonitoringErrorStatusIdentifier(bool complete)
+const TypeIdentifier* GetDdsRecorderMonitoringErrorStatusIdentifier(
+        bool complete)
 {
-    const TypeIdentifier * c_identifier = TypeObjectFactory::get_instance()->get_type_identifier("DdsRecorderMonitoringErrorStatus", complete);
+    const TypeIdentifier* c_identifier = TypeObjectFactory::get_instance()->get_type_identifier(
+        "DdsRecorderMonitoringErrorStatus", complete);
     if (c_identifier != nullptr && (!complete || c_identifier->_d() == EK_COMPLETE))
     {
         return c_identifier;
@@ -84,9 +89,11 @@ const TypeIdentifier* GetDdsRecorderMonitoringErrorStatusIdentifier(bool complet
     return TypeObjectFactory::get_instance()->get_type_identifier("DdsRecorderMonitoringErrorStatus", complete);
 }
 
-const TypeObject* GetDdsRecorderMonitoringErrorStatusObject(bool complete)
+const TypeObject* GetDdsRecorderMonitoringErrorStatusObject(
+        bool complete)
 {
-    const TypeObject* c_type_object = TypeObjectFactory::get_instance()->get_type_object("DdsRecorderMonitoringErrorStatus", complete);
+    const TypeObject* c_type_object = TypeObjectFactory::get_instance()->get_type_object(
+        "DdsRecorderMonitoringErrorStatus", complete);
     if (c_type_object != nullptr)
     {
         return c_type_object;
@@ -101,13 +108,14 @@ const TypeObject* GetDdsRecorderMonitoringErrorStatusObject(bool complete)
 
 const TypeObject* GetMinimalDdsRecorderMonitoringErrorStatusObject()
 {
-    const TypeObject* c_type_object = TypeObjectFactory::get_instance()->get_type_object("DdsRecorderMonitoringErrorStatus", false);
+    const TypeObject* c_type_object = TypeObjectFactory::get_instance()->get_type_object(
+        "DdsRecorderMonitoringErrorStatus", false);
     if (c_type_object != nullptr)
     {
         return c_type_object;
     }
 
-    TypeObject *type_object = new TypeObject();
+    TypeObject* type_object = new TypeObject();
     type_object->_d(EK_MINIMAL);
     type_object->minimal()._d(TK_STRUCTURE);
 
@@ -127,11 +135,12 @@ const TypeObject* GetMinimalDdsRecorderMonitoringErrorStatusObject()
     mst_mcap_file_creation_failure.common().member_flags().IS_MUST_UNDERSTAND(false);
     mst_mcap_file_creation_failure.common().member_flags().IS_KEY(false);
     mst_mcap_file_creation_failure.common().member_flags().IS_DEFAULT(false); // Doesn't apply
-    mst_mcap_file_creation_failure.common().member_type_id(*TypeObjectFactory::get_instance()->get_type_identifier("bool", false));
+    mst_mcap_file_creation_failure.common().member_type_id(*TypeObjectFactory::get_instance()->get_type_identifier(
+                "bool", false));
 
 
     MD5 mcap_file_creation_failure_hash("mcap_file_creation_failure");
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         mst_mcap_file_creation_failure.detail().name_hash()[i] = mcap_file_creation_failure_hash.digest[i];
     }
@@ -150,7 +159,7 @@ const TypeObject* GetMinimalDdsRecorderMonitoringErrorStatusObject()
 
 
     MD5 disk_full_hash("disk_full");
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         mst_disk_full.detail().name_hash()[i] = disk_full_hash.digest[i];
     }
@@ -167,7 +176,7 @@ const TypeObject* GetMinimalDdsRecorderMonitoringErrorStatusObject()
     eprosima::fastcdr::CdrSizeCalculator calculator(eprosima::fastcdr::CdrVersion::XCDRv1);
     size_t current_alignment {0};
     SerializedPayload_t payload(static_cast<uint32_t>(
-        calculator.calculate_serialized_size(type_object->minimal().struct_type(), current_alignment) + 4));
+                calculator.calculate_serialized_size(type_object->minimal().struct_type(), current_alignment) + 4));
     eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
     // Fixed endian (Page 221, EquivalenceHash definition of Extensible and Dynamic Topic Types for DDS document)
     eprosima::fastcdr::Cdr ser(
@@ -184,7 +193,7 @@ const TypeObject* GetMinimalDdsRecorderMonitoringErrorStatusObject()
     MD5 objectHash;
     objectHash.update((char*)payload.data, payload.length);
     objectHash.finalize();
-    for(int i = 0; i < 14; ++i)
+    for (int i = 0; i < 14; ++i)
     {
         identifier.equivalence_hash()[i] = objectHash.digest[i];
     }
@@ -196,13 +205,14 @@ const TypeObject* GetMinimalDdsRecorderMonitoringErrorStatusObject()
 
 const TypeObject* GetCompleteDdsRecorderMonitoringErrorStatusObject()
 {
-    const TypeObject* c_type_object = TypeObjectFactory::get_instance()->get_type_object("DdsRecorderMonitoringErrorStatus", true);
+    const TypeObject* c_type_object = TypeObjectFactory::get_instance()->get_type_object(
+        "DdsRecorderMonitoringErrorStatus", true);
     if (c_type_object != nullptr && c_type_object->_d() == EK_COMPLETE)
     {
         return c_type_object;
     }
 
-    TypeObject *type_object = new TypeObject();
+    TypeObject* type_object = new TypeObject();
     type_object->_d(EK_COMPLETE);
     type_object->complete()._d(TK_STRUCTURE);
 
@@ -222,7 +232,8 @@ const TypeObject* GetCompleteDdsRecorderMonitoringErrorStatusObject()
     cst_mcap_file_creation_failure.common().member_flags().IS_MUST_UNDERSTAND(false);
     cst_mcap_file_creation_failure.common().member_flags().IS_KEY(false);
     cst_mcap_file_creation_failure.common().member_flags().IS_DEFAULT(false); // Doesn't apply
-    cst_mcap_file_creation_failure.common().member_type_id(*TypeObjectFactory::get_instance()->get_type_identifier("bool", false));
+    cst_mcap_file_creation_failure.common().member_type_id(*TypeObjectFactory::get_instance()->get_type_identifier(
+                "bool", false));
 
 
     cst_mcap_file_creation_failure.detail().name("mcap_file_creation_failure");
@@ -255,7 +266,7 @@ const TypeObject* GetCompleteDdsRecorderMonitoringErrorStatusObject()
     eprosima::fastcdr::CdrSizeCalculator calculator(eprosima::fastcdr::CdrVersion::XCDRv1);
     size_t current_alignment {0};
     SerializedPayload_t payload(static_cast<uint32_t>(
-        calculator.calculate_serialized_size(type_object->complete().struct_type(), current_alignment) + 4));
+                calculator.calculate_serialized_size(type_object->complete().struct_type(), current_alignment) + 4));
     eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
     // Fixed endian (Page 221, EquivalenceHash definition of Extensible and Dynamic Topic Types for DDS document)
     eprosima::fastcdr::Cdr ser(
@@ -272,7 +283,7 @@ const TypeObject* GetCompleteDdsRecorderMonitoringErrorStatusObject()
     MD5 objectHash;
     objectHash.update((char*)payload.data, payload.length);
     objectHash.finalize();
-    for(int i = 0; i < 14; ++i)
+    for (int i = 0; i < 14; ++i)
     {
         identifier.equivalence_hash()[i] = objectHash.digest[i];
     }
@@ -282,11 +293,11 @@ const TypeObject* GetCompleteDdsRecorderMonitoringErrorStatusObject()
     return TypeObjectFactory::get_instance()->get_type_object("DdsRecorderMonitoringErrorStatus", true);
 }
 
-
-
-const TypeIdentifier* GetDdsRecorderMonitoringStatusIdentifier(bool complete)
+const TypeIdentifier* GetDdsRecorderMonitoringStatusIdentifier(
+        bool complete)
 {
-    const TypeIdentifier * c_identifier = TypeObjectFactory::get_instance()->get_type_identifier("DdsRecorderMonitoringStatus", complete);
+    const TypeIdentifier* c_identifier = TypeObjectFactory::get_instance()->get_type_identifier(
+        "DdsRecorderMonitoringStatus", complete);
     if (c_identifier != nullptr && (!complete || c_identifier->_d() == EK_COMPLETE))
     {
         return c_identifier;
@@ -296,9 +307,11 @@ const TypeIdentifier* GetDdsRecorderMonitoringStatusIdentifier(bool complete)
     return TypeObjectFactory::get_instance()->get_type_identifier("DdsRecorderMonitoringStatus", complete);
 }
 
-const TypeObject* GetDdsRecorderMonitoringStatusObject(bool complete)
+const TypeObject* GetDdsRecorderMonitoringStatusObject(
+        bool complete)
 {
-    const TypeObject* c_type_object = TypeObjectFactory::get_instance()->get_type_object("DdsRecorderMonitoringStatus", complete);
+    const TypeObject* c_type_object = TypeObjectFactory::get_instance()->get_type_object("DdsRecorderMonitoringStatus",
+                    complete);
     if (c_type_object != nullptr)
     {
         return c_type_object;
@@ -313,13 +326,14 @@ const TypeObject* GetDdsRecorderMonitoringStatusObject(bool complete)
 
 const TypeObject* GetMinimalDdsRecorderMonitoringStatusObject()
 {
-    const TypeObject* c_type_object = TypeObjectFactory::get_instance()->get_type_object("DdsRecorderMonitoringStatus", false);
+    const TypeObject* c_type_object = TypeObjectFactory::get_instance()->get_type_object("DdsRecorderMonitoringStatus",
+                    false);
     if (c_type_object != nullptr)
     {
         return c_type_object;
     }
 
-    TypeObject *type_object = new TypeObject();
+    TypeObject* type_object = new TypeObject();
     type_object->_d(EK_MINIMAL);
     type_object->minimal()._d(TK_STRUCTURE);
 
@@ -342,7 +356,7 @@ const TypeObject* GetMinimalDdsRecorderMonitoringStatusObject()
     mst_ddsrecorder_error_status.common().member_type_id(*GetDdsRecorderMonitoringErrorStatusIdentifier(false));
 
     MD5 ddsrecorder_error_status_hash("ddsrecorder_error_status");
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         mst_ddsrecorder_error_status.detail().name_hash()[i] = ddsrecorder_error_status_hash.digest[i];
     }
@@ -361,7 +375,7 @@ const TypeObject* GetMinimalDdsRecorderMonitoringStatusObject()
     eprosima::fastcdr::CdrSizeCalculator calculator(eprosima::fastcdr::CdrVersion::XCDRv1);
     size_t current_alignment {0};
     SerializedPayload_t payload(static_cast<uint32_t>(
-        calculator.calculate_serialized_size(type_object->minimal().struct_type(), current_alignment) + 4));
+                calculator.calculate_serialized_size(type_object->minimal().struct_type(), current_alignment) + 4));
     eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
     // Fixed endian (Page 221, EquivalenceHash definition of Extensible and Dynamic Topic Types for DDS document)
     eprosima::fastcdr::Cdr ser(
@@ -378,7 +392,7 @@ const TypeObject* GetMinimalDdsRecorderMonitoringStatusObject()
     MD5 objectHash;
     objectHash.update((char*)payload.data, payload.length);
     objectHash.finalize();
-    for(int i = 0; i < 14; ++i)
+    for (int i = 0; i < 14; ++i)
     {
         identifier.equivalence_hash()[i] = objectHash.digest[i];
     }
@@ -390,13 +404,14 @@ const TypeObject* GetMinimalDdsRecorderMonitoringStatusObject()
 
 const TypeObject* GetCompleteDdsRecorderMonitoringStatusObject()
 {
-    const TypeObject* c_type_object = TypeObjectFactory::get_instance()->get_type_object("DdsRecorderMonitoringStatus", true);
+    const TypeObject* c_type_object = TypeObjectFactory::get_instance()->get_type_object("DdsRecorderMonitoringStatus",
+                    true);
     if (c_type_object != nullptr && c_type_object->_d() == EK_COMPLETE)
     {
         return c_type_object;
     }
 
-    TypeObject *type_object = new TypeObject();
+    TypeObject* type_object = new TypeObject();
     type_object->_d(EK_COMPLETE);
     type_object->complete()._d(TK_STRUCTURE);
 
@@ -434,7 +449,7 @@ const TypeObject* GetCompleteDdsRecorderMonitoringStatusObject()
     eprosima::fastcdr::CdrSizeCalculator calculator(eprosima::fastcdr::CdrVersion::XCDRv1);
     size_t current_alignment {0};
     SerializedPayload_t payload(static_cast<uint32_t>(
-        calculator.calculate_serialized_size(type_object->complete().struct_type(), current_alignment) + 4));
+                calculator.calculate_serialized_size(type_object->complete().struct_type(), current_alignment) + 4));
     eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
     // Fixed endian (Page 221, EquivalenceHash definition of Extensible and Dynamic Topic Types for DDS document)
     eprosima::fastcdr::Cdr ser(
@@ -451,7 +466,7 @@ const TypeObject* GetCompleteDdsRecorderMonitoringStatusObject()
     MD5 objectHash;
     objectHash.update((char*)payload.data, payload.length);
     objectHash.finalize();
-    for(int i = 0; i < 14; ++i)
+    for (int i = 0; i < 14; ++i)
     {
         identifier.equivalence_hash()[i] = objectHash.digest[i];
     }

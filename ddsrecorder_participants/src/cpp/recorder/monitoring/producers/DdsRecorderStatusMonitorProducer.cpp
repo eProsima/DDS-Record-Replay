@@ -141,8 +141,7 @@ void DdsRecorderStatusMonitorProducer::consume_nts_()
 } //namespace ddsrecorder
 } //namespace eprosima
 
-namespace std
-{
+namespace std {
 
 std::ostream& operator <<(
         std::ostream& os,

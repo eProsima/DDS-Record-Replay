@@ -49,7 +49,7 @@ public:
         utils::Log::SetVerbosity(log_conf.verbosity);
 
         utils::Log::RegisterConsumer(
-                std::make_unique<utils::StdLogConsumer>(&log_conf));
+            std::make_unique<utils::StdLogConsumer>(&log_conf));
 
         // Initialize the Monitor
         ddspipe::core::MonitorConfiguration configuration;
@@ -100,7 +100,7 @@ TEST_F(LogMonitorDdsRecorderStatusTest, type_mismatch)
     testing::internal::CaptureStdout();
 
     // Wait for the monitor to log the message
-    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS+1));
+    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS + 1));
     utils::Log::Flush();
 
     ASSERT_TRUE(contains_(testing::internal::GetCapturedStdout(),
@@ -121,7 +121,7 @@ TEST_F(LogMonitorDdsRecorderStatusTest, qos_mismatch)
     testing::internal::CaptureStdout();
 
     // Wait for the monitor to log the message
-    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS+1));
+    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS + 1));
     utils::Log::Flush();
 
     ASSERT_TRUE(contains_(testing::internal::GetCapturedStdout(),
@@ -142,7 +142,7 @@ TEST_F(LogMonitorDdsRecorderStatusTest, mcap_file_creation_failure)
     testing::internal::CaptureStdout();
 
     // Wait for the monitor to log the message
-    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS+1));
+    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS + 1));
     utils::Log::Flush();
 
     ASSERT_TRUE(contains_(testing::internal::GetCapturedStdout(),
@@ -163,7 +163,7 @@ TEST_F(LogMonitorDdsRecorderStatusTest, disk_full)
     testing::internal::CaptureStdout();
 
     // Wait for the monitor to log the message
-    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS+1));
+    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS + 1));
     utils::Log::Flush();
 
     ASSERT_TRUE(contains_(testing::internal::GetCapturedStdout(),

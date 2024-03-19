@@ -43,7 +43,8 @@ public:
      *
      * @param configuration The \c MonitorConfiguration to initialize the \c DdsRecorderMonitor.
      */
-    DdsRecorderMonitor(const ddspipe::core::MonitorConfiguration& configuration);
+    DdsRecorderMonitor(
+            const ddspipe::core::MonitorConfiguration& configuration);
 
     /**
      * @brief Monitorize the DdsRecorder status.
