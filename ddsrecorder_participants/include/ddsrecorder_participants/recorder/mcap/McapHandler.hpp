@@ -463,6 +463,7 @@ protected:
     /**
      * @brief Serialize current dynamic types every time a new dynamic type is saved in \c save_dynamic_type_ .
      *
+     * This function serializes the dynamic types stored in the dynamic_types_ variable by generating a DynamicTypesCollection and serializing it.
      */
     void serialize_dynamic_types_();
 
@@ -569,34 +570,11 @@ protected:
     //! Dynamic types
     DynamicTypesCollection dynamic_types_;
 
-    //! MCAP file overhead
-    /**
-     * To reach this number, we use the following constants:
-     *   - Header + Write Header = 18
-     *   - Metadata + Write Metadata + Write MetadataIndex = 75 + 24 + 36
-     *   - Write ChunkIndex = 73
-     *   - Write Statistics = 55
-     *   - Write DataEnd + Write SummaryOffSets = 13 + 26*6
-     */
-    static constexpr std::uint64_t MCAP_FILE_OVERHEAD{450};
-
-    //! Additional overhead size for a MCAP message
-    static constexpr std::uint64_t MCAP_MESSAGE_OVERHEAD{31 + 8 + 8}; // Write Message + TimeStamp + TimeOffSet
-
-    //! Additional overhead size for a MCAP schema
-    static constexpr std::uint64_t MCAP_SCHEMAS_OVERHEAD{23}; // Write Schemas
-
-    //! Additional overhead size for a MCAP channel
-    static constexpr std::uint64_t MCAP_CHANNEL_OVERHEAD{25 + 10 + 10}; // Write Channel + messageIndexOffsetsSize + channelMessageCountsSize
-
-    //! Additional overhead size for a MCAP attachment
-    static constexpr std::uint64_t MCAP_ATTACHMENT_OVERHEAD{58 + 70}; // Write Attachment + Write AttachmentIndex
-
     //! Dynamic types reserved storage
     std::uint64_t storage_dynamic_types_{0};
 
     //! Total file size
-    std::uint64_t file_size_{MCAP_FILE_OVERHEAD}; // MCAP file size is initialized with MCAP_FILE_OVERHEAD
+    std::uint64_t mcap_size_{MCAP_FILE_OVERHEAD}; // MCAP file size is initialized with MCAP_FILE_OVERHEAD
 
     //! Structure where messages (received in RUNNING state) with unknown type are kept
     std::map<std::string, pending_list> pending_samples_;
@@ -621,6 +599,29 @@ protected:
 
     //! Unique sequence number assigned to received messages. It is incremented with every sample added.
     unsigned int unique_sequence_number_{0};
+
+    //! MCAP file overhead
+    /**
+     * To reach this number, we use the following constants:
+     *   - Header + Write Header = 18
+     *   - Metadata + Write Metadata + Write MetadataIndex = 75 + 24 + 36
+     *   - Write ChunkIndex = 73
+     *   - Write Statistics = 55
+     *   - Write DataEnd + Write SummaryOffSets = 13 + 26*6
+     */
+    static constexpr std::uint64_t MCAP_FILE_OVERHEAD{450};
+
+    //! Additional overhead size for a MCAP message
+    static constexpr std::uint64_t MCAP_MESSAGE_OVERHEAD{31 + 8 + 8}; // Write Message + TimeStamp + TimeOffSet
+
+    //! Additional overhead size for a MCAP schema
+    static constexpr std::uint64_t MCAP_SCHEMAS_OVERHEAD{23}; // Write Schemas
+
+    //! Additional overhead size for a MCAP channel
+    static constexpr std::uint64_t MCAP_CHANNEL_OVERHEAD{25 + 10 + 10}; // Write Channel + messageIndexOffsetsSize + channelMessageCountsSize
+
+    //! Additional overhead size for a MCAP attachment
+    static constexpr std::uint64_t MCAP_ATTACHMENT_OVERHEAD{58 + 70}; // Write Attachment + Write AttachmentIndex
 };
 
 } /* namespace participants */
