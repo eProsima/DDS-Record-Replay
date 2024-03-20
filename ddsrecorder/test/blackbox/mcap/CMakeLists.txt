@@ -18,28 +18,27 @@
 
 set(TEST_NAME McapFileCreationTest)
 
-# Determine Fast DDS version
-if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
-    set(DDS_TYPES_VERSION "v1")
-else()
-    set(DDS_TYPES_VERSION "v2")
-endif()
+file(
+    GLOB_RECURSE TEST_SOURCES
+    McapFileCreationTest.cpp
+    "${PROJECT_SOURCE_DIR}/test/resources/types/hello_world/*.c*"
+    )
 
 file(
     GLOB_RECURSE TEST_LIBRARY_SOURCES
-        "${PROJECT_SOURCE_DIR}/src/cpp/tool/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/cpp/user_interface/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/cpp/command_receiver/Command*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/cpp/*/*/${DDS_TYPES_VERSION}/*/*.cxx"
+    "${PROJECT_SOURCE_DIR}/src/cpp/*.c*"
     )
 
-set(TEST_SOURCES
-        McapFileCreationTest.cpp
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/${DDS_TYPES_VERSION}/hello_world/HelloWorld.cxx
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/${DDS_TYPES_VERSION}/hello_world/HelloWorldPubSubTypes.cxx
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/${DDS_TYPES_VERSION}/hello_world/HelloWorldTypeObject.cxx
-        $<$<STREQUAL:${DDS_TYPES_VERSION},v2>:${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/v2/hello_world/HelloWorldv1.cxx>
-    )
+list(FILTER TEST_LIBRARY_SOURCES EXCLUDE REGEX "/main.cpp")
+
+# Exclude types' files depending on the Fast DDS version
+if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
+    list(FILTER TEST_SOURCES EXCLUDE REGEX "v2/")
+    list(FILTER TEST_LIBRARY_SOURCES EXCLUDE REGEX "v2/")
+else()
+    list(FILTER TEST_SOURCES EXCLUDE REGEX "v1/")
+    list(FILTER TEST_LIBRARY_SOURCES EXCLUDE REGEX "v1/")
+endif()
 
 set(TEST_LIST
         mcap_data_msgs
@@ -74,8 +73,8 @@ set(TEST_NEEDED_SOURCES
     )
 
 set(TEST_EXTRA_HEADERS
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/${DDS_TYPES_VERSION}/hello_world
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/types/${DDS_TYPES_VERSION})
+    ${PROJECT_SOURCE_DIR}/test/resources/types/hello_world/v2/
+    )
 
 add_blackbox_executable(
     "${TEST_NAME}"
