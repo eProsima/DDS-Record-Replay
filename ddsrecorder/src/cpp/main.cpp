@@ -32,11 +32,7 @@
 #include <cpp_utils/types/Fuzzy.hpp>
 #include <cpp_utils/utils.hpp>
 
-#include <ddspipe_core/monitoring/producers/StatusMonitorProducer.hpp>
-#include <ddspipe_core/monitoring/producers/TopicsMonitorProducer.hpp>
-
 #include <ddsrecorder_participants/recorder/logging/DdsRecorderLogConsumer.hpp>
-#include <ddsrecorder_participants/recorder/monitoring/DdsRecorderMonitor.hpp>
 #include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
@@ -287,20 +283,6 @@ int main(
         }
 
         logUser(DDSRECORDER_EXECUTION, "DDS Recorder running.");
-
-        // Monitor
-        auto monitor_configuration = configuration.monitor_configuration;
-        eprosima::ddsrecorder::participants::DdsRecorderMonitor monitor(monitor_configuration);
-
-        if (monitor_configuration.producers[eprosima::ddspipe::core::STATUS_MONITOR_PRODUCER_ID].enabled)
-        {
-            monitor.monitor_status();
-        }
-
-        if (monitor_configuration.producers[eprosima::ddspipe::core::TOPICS_MONITOR_PRODUCER_ID].enabled)
-        {
-            monitor.monitor_topics();
-        }
 
         if (configuration.enable_remote_controller)
         {

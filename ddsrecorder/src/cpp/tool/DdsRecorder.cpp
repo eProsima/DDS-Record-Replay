@@ -15,6 +15,8 @@
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/utils.hpp>
 
+#include <ddspipe_core/monitoring/producers/StatusMonitorProducer.hpp>
+#include <ddspipe_core/monitoring/producers/TopicsMonitorProducer.hpp>
 #include <ddspipe_core/types/dynamic_types/types.hpp>
 
 #include "DdsRecorder.hpp"
@@ -117,6 +119,20 @@ DdsRecorder::DdsRecorder(
         payload_pool_,
         participants_database_,
         thread_pool_);
+
+    // Create a Monitor
+    auto monitor_configuration = configuration.monitor_configuration;
+    monitor_ = std::make_unique<Monitor>(monitor_configuration);
+
+    if (monitor_configuration.producers[eprosima::ddspipe::core::STATUS_MONITOR_PRODUCER_ID].enabled)
+    {
+        monitor_->monitor_status();
+    }
+
+    if (monitor_configuration.producers[eprosima::ddspipe::core::TOPICS_MONITOR_PRODUCER_ID].enabled)
+    {
+        monitor_->monitor_topics();
+    }
 }
 
 utils::ReturnCode DdsRecorder::reload_configuration(
