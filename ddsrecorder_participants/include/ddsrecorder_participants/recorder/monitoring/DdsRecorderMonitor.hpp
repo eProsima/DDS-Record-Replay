@@ -21,10 +21,11 @@
 #include <cpp_utils/event/PeriodicEventHandler.hpp>
 
 #include <ddspipe_core/configuration/MonitorConfiguration.hpp>
-#include <ddspipe_core/library/library_dll.h>
 #include <ddspipe_core/monitoring/consumers/DdsMonitorParticipantRegistry.hpp>
 #include <ddspipe_core/monitoring/Monitor.hpp>
 #include <ddspipe_core/monitoring/producers/IMonitorProducer.hpp>
+
+#include <ddsrecorder_participants/library/library_dll.h>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -43,8 +44,15 @@ public:
      *
      * @param configuration The \c MonitorConfiguration to initialize the \c DdsRecorderMonitor.
      */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     DdsRecorderMonitor(
             const ddspipe::core::MonitorConfiguration& configuration);
+
+    /**
+     * @brief Destruct the \c DdsRecorderMonitor.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    virtual ~DdsRecorderMonitor() = default;
 
     /**
      * @brief Monitorize the DdsRecorder status.
@@ -52,6 +60,7 @@ public:
      * The DdsRecorder status is monitored by the \c DdsRecorderStatusMonitorProducer, which is a
      * \c StatusMonitorProducer that produces the \c DdsRecorderMonitoringStatus.
      */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     void monitor_status() override;
 };
 

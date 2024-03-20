@@ -54,6 +54,10 @@ class DdsRecorderStatusMonitorProducer : public ddspipe::core::StatusMonitorProd
 {
 public:
 
+    /**
+     * @brief Destroy the \c DdsRecorderStatusMonitorProducer.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     virtual ~DdsRecorderStatusMonitorProducer() = default;
 
     /**
@@ -79,6 +83,7 @@ public:
      *
      * Produces a \c DdsRecorderMonitoringStatus with the data gathered and consumes it.
      */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     void produce_and_consume() override;
 
     /**
@@ -86,6 +91,7 @@ public:
      *
      * Generates a \c DdsRecorderMonitoringStatus with the data gathered by the producer.
      */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     void produce() override;
 
     /**
@@ -93,6 +99,7 @@ public:
      *
      * Calls the consume method of its consumers.
      */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     void consume() override;
 
     /**
@@ -102,6 +109,7 @@ public:
      *
      * @param error String identifying the error to be added to the \c DdsRecorderMonitoringStatus.
      */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     virtual void add_error_to_status(
             const std::string& error) override;
 
