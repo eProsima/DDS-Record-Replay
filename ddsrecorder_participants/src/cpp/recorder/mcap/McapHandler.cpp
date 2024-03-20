@@ -114,65 +114,74 @@ McapHandler::~McapHandler()
 void McapHandler::add_schema(
         const fastrtps::types::DynamicType_ptr& dynamic_type)
 {
-    std::lock_guard<std::mutex> lock(mtx_);
-
-    // NOTE: Process schemas even if in STOPPED state to avoid losing them (only sent/received once in discovery)
-
-    assert(nullptr != dynamic_type);
-
-    std::string type_name = dynamic_type->get_name();
-
-    // Check if it exists already
-    if (received_types_.find(type_name) != received_types_.end())
+    try
     {
-        return;
+        std::lock_guard<std::mutex> lock(mtx_);
+
+        // NOTE: Process schemas even if in STOPPED state to avoid losing them (only sent/received once in discovery)
+
+        assert(nullptr != dynamic_type);
+
+        std::string type_name = dynamic_type->get_name();
+
+        // Check if it exists already
+        if (received_types_.find(type_name) != received_types_.end())
+        {
+            return;
+        }
+
+        // Schema not found, generate from dynamic type and store
+        std::string schema_text =
+                configuration_.ros2_types ? msg::generate_ros2_schema(dynamic_type) : idl::generate_idl_schema(
+            dynamic_type);
+
+        logInfo(DDSRECORDER_MCAP_HANDLER, "\nAdding schema with name " << type_name << " :\n" << schema_text << "\n");
+
+        // Create schema and add it to writer and to schemas map
+        std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
+        mcap::Schema new_schema(configuration_.ros2_types ? utils::demangle_if_ros_type(dynamic_type->get_name()) :
+                dynamic_type->get_name(), encoding, schema_text);
+
+        // Add schema reserved space to write it on MCAP
+        file_size_ += get_schema_size_(new_schema);
+        //Check if there is enough space on disk to write the schema
+        if (file_size_ > space_available_when_open_)
+        {
+            logError(DDSRECORDER_MCAP_HANDLER,"FAIL_MCAP_WRITE | Attempted to write an MCAP of size: " << file_size_ <<
+                    ", but there is not enough space available on disk: " << space_available_when_open_);
+            stop();
+            return;
+        }
+        // WARNING: passing as non-const to MCAP library
+        mcap_writer_.addSchema(new_schema);
+
+        logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << type_name << ".");
+
+        auto it = schemas_.find(type_name);
+        if (it != schemas_.end())
+        {
+            // Update channels previously created with blank schema
+            update_channels_nts_(it->second.id, new_schema.id);
+        }
+        schemas_[type_name] = std::move(new_schema);
+        received_types_.insert(type_name);
+
+        // Check if there are any pending samples for this new schema. If so, add them.
+        if ((pending_samples_.find(type_name) != pending_samples_.end()) ||
+                (state_ == McapHandlerStateCode::PAUSED &&
+                (pending_samples_paused_.find(type_name) != pending_samples_paused_.end())))
+        {
+            add_pending_samples_nts_(type_name);
+        }
+        // Every time an element of schemas_ (map of dynamic types with schemas) is added the attachment is newly calculated
+        save_dynamic_type_(type_name);
+        serialize_dynamic_types_();
     }
-
-    // Schema not found, generate from dynamic type and store
-    std::string schema_text =
-            configuration_.ros2_types ? msg::generate_ros2_schema(dynamic_type) : idl::generate_idl_schema(
-        dynamic_type);
-
-    logInfo(DDSRECORDER_MCAP_HANDLER, "\nAdding schema with name " << type_name << " :\n" << schema_text << "\n");
-
-    // Create schema and add it to writer and to schemas map
-    std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
-    mcap::Schema new_schema(configuration_.ros2_types ? utils::demangle_if_ros_type(dynamic_type->get_name()) :
-            dynamic_type->get_name(), encoding, schema_text);
-
-    // Add schema reserved space to write it on MCAP
-    file_size_ += get_schema_size_(new_schema);
-    if (file_size_ > space_available_)
+    catch (const std::overflow_error& e)
     {
-        logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add schema. Attempted to write an MCAP of size: "
-                << file_size_ << ", but there is not enough space available on disk: " << space_available_);
-        stop();
-        return;
+        logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_OPEN | Failed to write on MCAP file. " << "Error message:\n " <<
+            e.what());
     }
-    // WARNING: passing as non-const to MCAP library
-    mcap_writer_.addSchema(new_schema);
-
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << type_name << ".");
-
-    auto it = schemas_.find(type_name);
-    if (it != schemas_.end())
-    {
-        // Update channels previously created with blank schema
-        update_channels_nts_(it->second.id, new_schema.id);
-    }
-    schemas_[type_name] = std::move(new_schema);
-    received_types_.insert(type_name);
-
-    // Check if there are any pending samples for this new schema. If so, add them.
-    if ((pending_samples_.find(type_name) != pending_samples_.end()) ||
-            (state_ == McapHandlerStateCode::PAUSED &&
-            (pending_samples_paused_.find(type_name) != pending_samples_paused_.end())))
-    {
-        add_pending_samples_nts_(type_name);
-    }
-    // Every time an element of schemas_ (map of dynamic types with schemas) is added the attachment is newly calculated
-    generate_dynamic_type_(type_name);
-    serialize_dynamic_types_();
 }
 
 void McapHandler::add_data(
@@ -239,10 +248,10 @@ void McapHandler::add_data(
         // Schema available -> add to buffer
         file_size_ += get_message_size_(msg);
         // Check if there is enough space available before adding the message to buffer
-        if (file_size_ > space_available_)
+        if (file_size_ > space_available_when_open_)
         {
             logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add data to buffer. Attempted to write an MCAP of size: "
-                    << file_size_ << ", but there is not enough space available on disk: " << space_available_);
+                    << file_size_ << ", but there is not enough space available on disk: " << space_available_when_open_);
             lock.unlock();
             stop();
             lock.lock();
@@ -265,10 +274,10 @@ void McapHandler::add_data(
                 {
                     // No schema available + no pending samples -> Add to buffer with blank schema
                     file_size_ += get_message_size_(msg);
-                    if (file_size_ > space_available_)
+                    if (file_size_ > space_available_when_open_)
                     {
                         logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add data to buffer. Attempted to write an MCAP of size: "
-                                << file_size_ << ", but there is not enough space available on disk: " << space_available_);
+                                << file_size_ << ", but there is not enough space available on disk: " << space_available_when_open_);
                         lock.unlock();
                         stop();
                         lock.lock();
@@ -284,10 +293,10 @@ void McapHandler::add_data(
                     "Schema for topic " << topic << " not yet available, inserting to pending samples queue.");
 
                 file_size_ += get_message_size_(msg);
-                if (file_size_ > space_available_)
+                if (file_size_ > space_available_when_open_)
                 {
                     logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add data to buffer. Attempted to write an MCAP of size: "
-                            << file_size_ << ", but there is not enough space available on disk: " << space_available_);
+                            << file_size_ << ", but there is not enough space available on disk: " << space_available_when_open_);
                     lock.unlock();
                     stop();
                     lock.lock();
@@ -514,7 +523,7 @@ void McapHandler::trigger_event()
 mcap::Timestamp McapHandler::fastdds_timestamp_to_mcap_timestamp(
         const DataTime& time)
 {
-    uint64_t mcap_time = time.seconds();
+    std::uint64_t mcap_time = time.seconds();
     mcap_time *= 1000000000;
     return mcap_time + time.nanosec();
 }
@@ -560,8 +569,8 @@ void McapHandler::open_file_nts_()
     }
 
     // Check available space in disk when opening file
-    std::filesystem::space_info space_ = std::filesystem::space(configuration_.mcap_output_settings.output_filepath);
-    space_available_ = space_.available;
+    std::filesystem::space_info space = std::filesystem::space(configuration_.mcap_output_settings.output_filepath);
+    space_available_when_open_ = space.available;
 
     // Write in new file schemas already received before
     // NOTE: This is necessary since dynamic types are only sent/received once on discovery
@@ -583,9 +592,7 @@ void McapHandler::close_file_nts_()
     // Serialize and store dynamic types associated to all added schemas
     if (configuration_.record_types)
     {
-
         write_attachment_();
-
     }
 
     // Close writer and output file
@@ -972,10 +979,11 @@ void McapHandler::update_channels_nts_(
             assert(channel.first.m_topic_name == channel.second.topic);
             mcap::Channel new_channel(channel.second.topic, "cdr", new_schema_id, channel.second.metadata);
             file_size_ += get_channel_size_(new_channel);
-            if (file_size_ > space_available_)
+            // Check if there is enough space available to write the channel
+            if (file_size_ > space_available_when_open_)
             {
-                logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add channel. Attempted to write an MCAP of size: "
-                        << file_size_ << ", but there is not enough space available on disk: " << space_available_);
+                logError(DDSRECORDER_MCAP_HANDLER,"FAIL_MCAP_WRITE | Attempted to write an MCAP of size: " << file_size_ <<
+                        ", but there is not enough space available on disk: " << space_available_when_open_);
                 stop();
                 return;
             }
@@ -1012,10 +1020,11 @@ void McapHandler::rewrite_schemas_nts_()
 
         // Add schema reserved space to write it on MCAP
         file_size_ += get_schema_size_(new_schema);
-        if (file_size_ > space_available_)
+        // Check if there is enough space available to write the schema
+        if (file_size_ > space_available_when_open_)
         {
-            logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add schema. Attempted to write an MCAP of size: "
-                    << file_size_ << ", but there is not enough space available on disk: " << space_available_);
+            logError(DDSRECORDER_MCAP_HANDLER,"FAIL_MCAP_WRITE | Attempted to write an MCAP of size: " << file_size_ <<
+                    ", but there is not enough space available on disk: " << space_available_when_open_);
             stop();
             return;
         }
@@ -1030,7 +1039,7 @@ void McapHandler::rewrite_schemas_nts_()
     schemas_ = new_schemas;
 }
 
-void McapHandler::generate_dynamic_type_(
+void McapHandler::save_dynamic_type_(
         const std::string& type_name)
 {
     const eprosima::fastrtps::types::TypeIdentifier* type_identifier = nullptr;
@@ -1051,13 +1060,22 @@ void McapHandler::generate_dynamic_type_(
                 type_identifier);
             dependency_name = type_name + "_" + std::to_string(dependency_index);
 
-            // Serialize dynamic type in a string and store in map
-            store_dynamic_type_(type_identifier, type_object, dependency_name);
+            // Store dynamic type in dynamic_types_
+            if (type_identifier != nullptr && type_object != nullptr)
+            {
+                DynamicType dynamic_type;
+                dynamic_type.type_name(type_name);
+                dynamic_type.type_information(utils::base64_encode(serialize_type_identifier_(type_identifier)));
+                dynamic_type.type_object(utils::base64_encode(serialize_type_object_(type_object)));
+
+                dynamic_types_.dynamic_types().push_back(dynamic_type);
+            }
 
             // Increment suffix counter
             dependency_index++;
         }
     }
+
     type_identifier = nullptr;
     type_object = nullptr;
 
@@ -1082,14 +1100,6 @@ void McapHandler::generate_dynamic_type_(
     }
 
     // Store dynamic type in dynamic_types_
-    store_dynamic_type_(type_identifier, type_object, type_name);
-}
-
-void McapHandler::store_dynamic_type_(
-        const eprosima::fastrtps::types::TypeIdentifier* type_identifier,
-        const eprosima::fastrtps::types::TypeObject* type_object,
-        const std::string& type_name)
-{
     if (type_identifier != nullptr && type_object != nullptr)
     {
         DynamicType dynamic_type;
@@ -1114,10 +1124,11 @@ void McapHandler::serialize_dynamic_types_()
     file_size_ -= storage_dynamic_types_;
     storage_dynamic_types_ = MCAP_ATTACHMENT_OVERHEAD + serialized_payload.length;
     file_size_ += storage_dynamic_types_;
-    if (file_size_ > space_available_)
+    // Check if there is enough space available to write the schema
+    if (file_size_ > space_available_when_open_)
     {
-        logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to add dyanmic type. Attempted to write an MCAP of size: "
-                << file_size_ << ", but there is not enough space available on disk: " << space_available_);
+        logError(DDSRECORDER_MCAP_HANDLER,"FAIL_MCAP_WRITE | Attempted to write an MCAP of size: " << file_size_ <<
+                ", but there is not enough space available on disk: " << space_available_when_open_);
         stop();
         return;
     }
@@ -1125,7 +1136,7 @@ void McapHandler::serialize_dynamic_types_()
 
 void McapHandler::write_attachment_()
 {
-    // Serialize dynamic types collection using CDR
+    // Serialize dynamic types collection
     eprosima::fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
     eprosima::fastrtps::rtps::SerializedPayload_t serialized_payload =
             eprosima::fastrtps::rtps::SerializedPayload_t(

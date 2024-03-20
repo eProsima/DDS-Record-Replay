@@ -23,6 +23,7 @@
 #include <filesystem>
 #include <list>
 #include <map>
+#include <stdexcept>
 #include <thread>
 
 #include <mcap/mcap.hpp>
@@ -452,33 +453,23 @@ protected:
     void rewrite_schemas_nts_();
 
     /**
-     * @brief Generate dynamic type from type_name
+     * @brief Generate dynamic type from type_name and save in in \c dynamic_types_ .
      *
      * @param [in] type_name Name of the dynamic type to generate
      */
-    void generate_dynamic_type_(
+    void save_dynamic_type_(
         const std::string& type_name);
 
     /**
-     * @brief Serialize type identifier and object, and insert the result into a \c DynamicTypesCollection .
-     *
-     * @param [in] type_identifier Type identifier to be serialized and stored.
-     * @param [in] type_object Type object to be serialized and stored.
-     * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
-     */
-    void store_dynamic_type_(
-            const eprosima::fastrtps::types::TypeIdentifier* type_identifier,
-            const eprosima::fastrtps::types::TypeObject* type_object,
-            const std::string& type_name);
-
-    /**
-     * @brief Serialize current dynamic types every time a new dynamic type is generated in \c generate_dynamic_type_ .
+     * @brief Serialize current dynamic types every time a new dynamic type is saved in \c save_dynamic_type_ .
      *
      */
     void serialize_dynamic_types_();
 
     /**
-     * @brief Write in MCAP attachments the dynamic types associated to all added schemas, and their dependencies.
+     * @brief Write in MCAP attachments.
+     *
+     * Its main purpose is to write the dynamic types associated to all added schemas, and their dependencies.
      *
      */
     void write_attachment_();
@@ -570,7 +561,7 @@ protected:
     std::map<ddspipe::core::types::DdsTopic, mcap::Channel> channels_;
 
     //! Space available in disk
-    std::uintmax_t space_available_;
+    std::uintmax_t space_available_when_open_;
 
     //! Samples buffer
     std::list<Message> samples_buffer_;
@@ -602,10 +593,10 @@ protected:
     static constexpr std::uint64_t MCAP_ATTACHMENT_OVERHEAD{58 + 70}; // Write Attachment + Write AttachmentIndex
 
     //! Dynamic types reserved storage
-    uint64_t storage_dynamic_types_{0};
+    std::uint64_t storage_dynamic_types_{0};
 
     //! Total file size
-    uint64_t file_size_{MCAP_FILE_OVERHEAD}; // MCAP file size is initialized with MCAP_FILE_OVERHEAD
+    std::uint64_t file_size_{MCAP_FILE_OVERHEAD}; // MCAP file size is initialized with MCAP_FILE_OVERHEAD
 
     //! Structure where messages (received in RUNNING state) with unknown type are kept
     std::map<std::string, pending_list> pending_samples_;
