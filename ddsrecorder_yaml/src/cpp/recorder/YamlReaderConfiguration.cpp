@@ -342,6 +342,12 @@ void RecorderConfiguration::load_specs_configuration_(
         ddspipe_configuration.log_configuration = YamlReader::get<DdsPipeLogConfiguration>(yml, LOG_CONFIGURATION_TAG,
                         version);
     }
+
+    // Get optional monitor tag
+    if (YamlReader::is_tag_present(yml, MONITOR_TAG))
+    {
+        monitor_configuration = YamlReader::get<MonitorConfiguration>(yml, MONITOR_TAG, version);
+    }
 }
 
 void RecorderConfiguration::load_dds_configuration_(

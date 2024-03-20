@@ -560,7 +560,6 @@ QoS
 
     The :ref:`Topic QoS <recorder_topic_qos>` configured in ``specs`` can be overwritten by the :ref:`Manual Topics <recorder_manual_topics>`.
 
-
 .. _recorder_specs_logging:
 
 Logging
@@ -659,6 +658,96 @@ The type of the logs published is defined as follows:
         publish-type: false
       stdout: true
 
+.. _recorder_specs_monitor:
+
+Monitor
+^^^^^^^
+
+``specs`` supports a ``monitor`` **optional** tag to publish internal data from the |ddsrecorder|.
+If the monitor is enabled, it publishes (and logs under the ``MONITOR_DATA`` :ref:`log filter <recorder_specs_logging>`) the *DDS Recorder's* internal data on a ``domain``, under a ``topic-name``, once every ``period`` (in milliseconds).
+If the monitor is not enabled, the |ddsrecorder| will not collect or publish any data.
+
+.. note::
+
+    The data published is relative to each period.
+    The |ddsrecorder| will reset its tracked data after publishing it.
+
+In particular, the |ddsrecorder| can monitor its internal status and its topics.
+When monitoring its internal status, the |ddsrecorder| will track different errors of the |ddsrecorder|.
+The type of the data published is defined as follows:
+
+**DdsRecorderMonitoringStatus.idl**
+
+.. code-block:: idl
+
+    struct MonitoringErrorStatus {
+        boolean type_mismatch;
+        boolean qos_mismatch;
+    };
+
+    struct MonitoringStatus {
+        MonitoringErrorStatus error_status;
+        boolean has_errors;
+    };
+
+    struct DdsRecorderMonitoringErrorStatus {
+        boolean mcap_file_creation_failure;
+        boolean disk_full;
+    };
+
+    struct DdsRecorderMonitoringStatus : MonitoringStatus {
+        DdsRecorderMonitoringErrorStatus ddsrecorder_error_status;
+    };
+
+When monitoring its topics, the |ddsrecorder| will track the number of messages lost, received, and the message reception rate [Hz] of each topic.
+It will also track if a topic's type is discovered, if there is a type mismatch, and if there is a QoS mismatch.
+The type of the data published is defined as follows:
+
+**MonitoringTopics.idl**
+
+.. code-block:: idl
+
+    struct DdsTopicData
+    {
+        string participant_id;
+        unsigned long msgs_lost;
+        unsigned long msgs_received;
+        double msg_rx_rate;
+    };
+
+    struct DdsTopic
+    {
+        string name;
+        string type_name;
+        boolean type_discovered;
+        boolean type_mismatch;
+        boolean qos_mismatch;
+        sequence<DdsTopicData> data;
+    };
+
+    struct MonitoringTopics
+    {
+        sequence<DdsTopic> topics;
+    };
+
+**Example of usage**
+
+.. code-block:: yaml
+
+    monitor:
+      domain: 10
+      status:
+        enable: true
+        domain: 11
+        period: 2000
+        topic-name: "DdsRecorderStatus"
+
+      topics:
+        enable: true
+        domain: 12
+        period: 1500
+        topic-name: "DdsRecorderTopics"
+
 .. _recorder_usage_configuration_general_example:
 
 General Example
@@ -746,6 +835,19 @@ A complete example of all the configurations described on this page can be found
           publish-type: false
         stdout: true
 
+      monitor:
+        domain: 10
+        topics:
+          enable: true
+          domain: 11
+          period: 1000
+          topic-name: "DdsRecorderTopics"
+
+        status:
+          enable: true
+          domain: 12
+          period: 2000
+          topic-name: "DdsRecorderStatus"
 
 .. _recorder_usage_fastdds_configuration:
 

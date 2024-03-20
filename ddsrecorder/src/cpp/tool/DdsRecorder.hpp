@@ -32,6 +32,7 @@
 
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
+#include <ddsrecorder_participants/recorder/monitoring/DdsRecorderMonitor.hpp>
 
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
@@ -134,6 +135,9 @@ protected:
 
     //! DDS Pipe
     std::unique_ptr<ddspipe::core::DdsPipe> pipe_;
+
+    //! Monitor
+    std::unique_ptr<ddspipe::core::Monitor> monitor_;
 };
 
 } /* namespace recorder */

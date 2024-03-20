@@ -287,7 +287,7 @@ int main(
         if (configuration.enable_remote_controller)
         {
             logUser(DDSRECORDER_EXECUTION, "Waiting for instructions...");
-            eprosima::ddsrecorder::recorder::receiver::CommandReceiver receiver(configuration.controller_domain,
+            receiver::CommandReceiver receiver(configuration.controller_domain,
                     configuration.command_topic_name,
                     configuration.status_topic_name, close_handler, configuration.simple_configuration);
             receiver.init();
@@ -298,7 +298,7 @@ int main(
 
             // Parse and convert initial state to initial command
             DdsRecorderState initial_state;
-            bool found = eprosima::ddsrecorder::recorder::string_to_enumeration(configuration.initial_state,
+            bool found = string_to_enumeration(configuration.initial_state,
                             initial_state);
             if (!found)
             {
@@ -376,6 +376,10 @@ int main(
                         eprosima::utils::Formatter() << "Trying to initiate DDS Recorder with invalid " << command <<
                             " command.");
                 }
+
+                // Reload YAML configuration file, in case it changed during STOPPED state
+                // NOTE: Changes to all (but controller specific) recorder configuration options are taken into account
+                configuration = eprosima::ddsrecorder::yaml::RecorderConfiguration(commandline_args.file_path);
 
                 // Create DDS Recorder
                 auto recorder = std::make_unique<DdsRecorder>(configuration, initial_state);
@@ -458,7 +462,7 @@ int main(
                                         // Case insensitive
                                         eprosima::utils::to_uppercase(next_state_str);
                                         DdsRecorderState next_state;
-                                        bool found = eprosima::ddsrecorder::recorder::string_to_enumeration(
+                                        bool found = string_to_enumeration(
                                             next_state_str, next_state);
                                         if (!found ||
                                                 (next_state != DdsRecorderState::RUNNING &&

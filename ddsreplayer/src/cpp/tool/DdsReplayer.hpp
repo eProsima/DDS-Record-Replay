@@ -34,9 +34,9 @@
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
 #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    #include <ddsrecorder_participants/common/types/dynamic_types/v1/DynamicTypesCollection.hpp>
+    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
 #else
-    #include <ddsrecorder_participants/common/types/dynamic_types/v2/DynamicTypesCollection.hpp>
+    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollection.hpp>
 #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
 
 

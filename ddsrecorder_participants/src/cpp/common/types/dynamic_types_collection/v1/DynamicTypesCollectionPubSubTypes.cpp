@@ -23,7 +23,7 @@
 #include <fastcdr/FastBuffer.h>
 #include <fastcdr/Cdr.h>
 
-#include <ddsrecorder_participants/common/types/dynamic_types/v1/DynamicTypesCollectionPubSubTypes.hpp>
+#include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollectionPubSubTypes.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {

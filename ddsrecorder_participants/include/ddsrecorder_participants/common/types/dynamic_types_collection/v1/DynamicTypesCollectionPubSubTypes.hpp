@@ -25,7 +25,7 @@
 #include <fastdds/dds/topic/TopicDataType.hpp>
 #include <fastrtps/utils/md5.h>
 
-#include <ddsrecorder_participants/common/types/dynamic_types/v1/DynamicTypesCollection.hpp>
+#include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {

@@ -41,17 +41,17 @@
     #include <fastcdr/Cdr.h>
     #include <fastcdr/FastBuffer.h>
     #include <fastcdr/FastCdr.h>
-    #include <ddsrecorder_participants/common/types/dynamic_types/v1/DynamicTypesCollection.hpp>
-    #include <ddsrecorder_participants/common/types/dynamic_types/v1/DynamicTypesCollectionPubSubTypes.hpp>
+    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
+    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollectionPubSubTypes.hpp>
 #else
     #include <fastdds/rtps/common/CdrSerialization.hpp>
-    #include <ddsrecorder_participants/common/types/dynamic_types/v2/DynamicTypesCollection.hpp>
-    #include <ddsrecorder_participants/common/types/dynamic_types/v2/DynamicTypesCollectionPubSubTypes.hpp>
+    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollection.hpp>
+    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollectionPubSubTypes.hpp>
 #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
 
 #include <ddsrecorder_participants/constants.hpp>
-
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
+#include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -499,6 +499,8 @@ void McapHandler::open_file_nts_()
     auto status = mcap_writer_.open(tmp_filename.c_str(), configuration_.mcap_writer_options);
     if (!status.ok())
     {
+        monitor_error("MCAP_FILE_CREATION_FAILURE");
+
         throw utils::InitializationException(
                   STR_ENTRY << "Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
     }
