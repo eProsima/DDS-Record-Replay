@@ -503,6 +503,18 @@ protected:
             const mcap::Channel& channel);
 
     /**
+     * @brief Get space needed to write attachment
+     *
+     */
+    std::uint64_t get_attachment_size_();
+
+    /**
+     * @brief Check if there is enough space to write the actual file
+     *
+     */
+    void check_space();
+
+    /**
      * @brief Convert given \c filename to temporal format.
      *
      * @param [in] filename Filename to be converted.
@@ -540,6 +552,9 @@ protected:
     //! Handler configuration
     McapHandlerConfiguration configuration_;
 
+    //!
+    fastrtps::rtps::SerializedPayload_t serialized_payload_;
+
     //! Name of open MCAP file
     std::string mcap_filename_;
 
@@ -571,7 +586,7 @@ protected:
     DynamicTypesCollection dynamic_types_;
 
     //! Dynamic types reserved storage
-    std::uint64_t storage_dynamic_types_{0};
+    std::uint64_t attachment_size_{0};
 
     //! Total file size
     std::uint64_t mcap_size_{MCAP_FILE_OVERHEAD}; // MCAP file size is initialized with MCAP_FILE_OVERHEAD
