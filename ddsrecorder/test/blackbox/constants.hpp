@@ -42,4 +42,18 @@ const ParticipantId PARTICIPANT_ID = "DdsRecorderBlackboxTestParticipant";
 // The maximum amount of time (in seconds) to wait for the subscriber to acknowledge messages.
 const fastrtps::Duration_t MAX_WAITING_TIME(10);
 
+namespace limits {
+
+constexpr std::uint32_t MAX_SIZE = 30000;
+constexpr std::uint32_t MAX_FILE_SIZE = 7500;
+constexpr std::uint32_t MAX_FILES = MAX_SIZE / MAX_FILE_SIZE;
+
+constexpr double ACCEPTABLE_ERROR = 0.05;
+constexpr std::uint32_t MAX_ACCEPTABLE_FILE_SIZE = MAX_FILE_SIZE * (1 + ACCEPTABLE_ERROR);
+constexpr std::uint32_t MIN_ACCEPTABLE_FILE_SIZE = MAX_FILE_SIZE * (1 - ACCEPTABLE_ERROR);
+
+// The minimum number of messages that cause the DDS Recorder to create a new file
+constexpr std::uint32_t FILE_OVERFLOW_THRESHOLD = 110;
+
+} // namespace limits
 } // namespace test
