@@ -18,6 +18,10 @@
 
 #pragma once
 
+#include <cstdint>
+#include <string>
+#include <vector>
+
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
@@ -46,10 +50,7 @@ struct McapOutputSettings
     bool file_rotation{false};
 
     //! TODO
-    uint64_t max_file_size{0};
-
-    //! TODO
-    int max_files{1};
+    std::vector<std::uint64_t> files_max_size;
 };
 
 /**

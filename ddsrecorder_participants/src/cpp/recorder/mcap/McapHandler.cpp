@@ -521,15 +521,15 @@ void McapHandler::open_file_nts_()
     // Reset file size
     mcap_size_ = MCAP_FILE_OVERHEAD;
 
-    // Update the file id
-    mcap_file_id_ += 1;
-
     // Rotate output files
-    const auto mcap_file_index = mcap_file_id_ % configuration_.mcap_output_settings.max_files;
+    mcap_file_index_ = mcap_file_id_ % configuration_.mcap_output_settings.files_max_size.size();
 
-    if (configuration_.mcap_output_settings.file_rotation && mcap_file_id_to_filename_.count(mcap_file_index))
+    // Update the file id
+    mcap_file_id_++;
+
+    if (configuration_.mcap_output_settings.file_rotation && mcap_file_id_to_filename_.count(mcap_file_index_))
     {
-        std::filesystem::remove(mcap_file_id_to_filename_[mcap_file_index]);
+        std::filesystem::remove(mcap_file_id_to_filename_[mcap_file_index_]);
     }
 
     // Generate the filename
@@ -557,7 +557,7 @@ void McapHandler::open_file_nts_()
     mcap_filename_ += ".mcap";
 
     // Store the filename in case of rotation
-    mcap_file_id_to_filename_[mcap_file_index] = mcap_filename_;
+    mcap_file_id_to_filename_[mcap_file_index_] = mcap_filename_;
 
     // Append temporal suffix
     std::string tmp_filename = tmp_filename_(mcap_filename_);
@@ -575,9 +575,9 @@ void McapHandler::open_file_nts_()
     // Check available space in disk when opening file
     std::filesystem::space_info space = std::filesystem::space(configuration_.mcap_output_settings.output_filepath);
 
-    if (configuration_.mcap_output_settings.max_file_size == 0)
+    if (configuration_.mcap_output_settings.files_max_size.empty())
     {
-        configuration_.mcap_output_settings.max_file_size = space.available;
+        configuration_.mcap_output_settings.files_max_size.push_back(space.available);
     }
 
     // Write in new file schemas already received before
@@ -1216,12 +1216,12 @@ std::uint64_t McapHandler::get_attachment_size_()
 
 void McapHandler::check_space()
 {
-    if (mcap_size_ <= configuration_.mcap_output_settings.max_file_size)
+    if (mcap_size_ <= configuration_.mcap_output_settings.files_max_size[mcap_file_index_])
     {
         return;
     }
 
-    const bool keep_recording = mcap_file_id_ < configuration_.mcap_output_settings.max_files ||
+    const bool keep_recording = mcap_file_id_ < configuration_.mcap_output_settings.files_max_size.size() ||
             configuration_.mcap_output_settings.file_rotation;
 
     if (keep_recording)

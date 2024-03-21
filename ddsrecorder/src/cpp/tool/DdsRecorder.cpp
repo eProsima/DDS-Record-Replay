@@ -64,21 +64,30 @@ DdsRecorder::DdsRecorder(
         mcap_output_settings.prepend_timestamp = false;
     }
 
-    mcap_output_settings.max_file_size = configuration_.output_resource_limits_max_file_size;
     mcap_output_settings.file_rotation = configuration_.output_resource_limits_file_rotation;
 
-    if (configuration_.output_resource_limits_max_file_size > 0)
+    const auto max_file_size = configuration_.output_resource_limits_max_file_size;
+    const auto max_size = configuration_.output_resource_limits_max_size;
+
+    if (max_file_size > 0)
     {
-        if (configuration_.output_resource_limits_max_size == 0)
+        if (max_size == 0)
         {
-            // If the max size is not set, set it to the max file size
-            mcap_output_settings.max_files = 1;
+            mcap_output_settings.files_max_size.push_back(max_file_size);
         }
         else
         {
-            // If the max size is set, calculate the number of files
-            mcap_output_settings.max_files = configuration_.output_resource_limits_max_size /
-                    configuration_.output_resource_limits_max_file_size;
+            const int num_files = max_size / max_file_size;
+            const int remaining_size = max_size % max_file_size;
+
+            // There can be at most num_files files of max_file_size size
+            mcap_output_settings.files_max_size.assign(num_files, max_file_size);
+
+            if (remaining_size > 0)
+            {
+                // There can also be an additional file of remaining_size size
+                mcap_output_settings.files_max_size.push_back(remaining_size);
+            }
         }
     }
 

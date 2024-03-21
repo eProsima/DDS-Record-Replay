@@ -559,6 +559,9 @@ protected:
     std::string mcap_filename_;
 
     //! TODO
+    int mcap_file_index_{0};
+
+    //! TODO
     int mcap_file_id_{0};
 
     //! TODO
