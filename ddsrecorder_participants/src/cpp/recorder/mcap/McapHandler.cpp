@@ -1135,9 +1135,6 @@ void McapHandler::serialize_dynamic_types_()
 
 void McapHandler::write_attachment_()
 {
-    // Serialize dynamic types collection
-    serialize_dynamic_types_();
-
     // Write serialized dynamic types into attachments section
     mcap::Attachment dynamic_attachment;
     dynamic_attachment.name = DYNAMIC_TYPES_ATTACHMENT_NAME;
@@ -1233,7 +1230,7 @@ void McapHandler::check_space()
     else
     {
         logError(DDSRECORDER_MCAP_HANDLER,"FAIL_MCAP_WRITE | Attempted to write an MCAP of size: " << mcap_size_ <<
-                ", but there is not enough space available on disk: " << space_available_when_open_);
+                ", but there is not enough space available on disk: " << configuration_.mcap_output_settings.files_max_size[mcap_file_index_]);
         stop();
     }
 }
