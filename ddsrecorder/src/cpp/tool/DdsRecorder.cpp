@@ -33,8 +33,10 @@ using namespace eprosima::utils;
 DdsRecorder::DdsRecorder(
         const yaml::RecorderConfiguration& configuration,
         const DdsRecorderStateCode& init_state,
-        const std::string& file_name)
-    : configuration_(configuration)
+        const std::string& file_name,
+        std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler)
+    : configuration_(configuration),
+      event_handler_(event_handler)
 {
     load_internal_topics_(configuration_);
 
@@ -82,6 +84,8 @@ DdsRecorder::DdsRecorder(
         handler_config,
         payload_pool_,
         recorder_to_handler_state_(init_state));
+
+    mcap_handler_->set_on_disk_full_callback(std::bind(&DdsRecorder::on_disk_full_, this));
 
     // Create DynTypes Participant
     dyn_participant_ = std::make_shared<DynTypesParticipant>(
@@ -153,6 +157,11 @@ void DdsRecorder::stop()
 void DdsRecorder::trigger_event()
 {
     mcap_handler_->trigger_event();
+}
+
+void DdsRecorder::on_disk_full_()
+{
+    event_handler_->simulate_event_occurred();
 }
 
 void DdsRecorder::load_internal_topics_(

@@ -89,6 +89,7 @@ McapHandler::McapHandler(
     : configuration_(config)
     , payload_pool_(payload_pool)
     , state_(McapHandlerStateCode::STOPPED)
+    , on_disk_full_lambda_set_(false)
 {
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "Creating MCAP handler instance.");
@@ -142,11 +143,8 @@ void McapHandler::add_schema(
         mcap::Schema new_schema(configuration_.ros2_types ? utils::demangle_if_ros_type(dynamic_type->get_name()) :
                 dynamic_type->get_name(), encoding, schema_text);
 
-        // Add schema reserved space to write it on MCAP
-        mcap_size_ += get_schema_size_(new_schema);
-
         //Check if there is enough space on disk to write the schema
-        check_space();
+        check_mcap_size_(get_schema_size_(new_schema));
         // WARNING: passing as non-const to MCAP library
         mcap_writer_.addSchema(new_schema);
 
@@ -174,8 +172,10 @@ void McapHandler::add_schema(
     }
     catch (const std::overflow_error& e)
     {
-        logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_OPEN | Failed to write on MCAP file. " << "Error message:\n " <<
+        logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to write on MCAP file. " << "Error message:\n " <<
             e.what());
+
+        on_disk_full_();
     }
 }
 
@@ -183,119 +183,126 @@ void McapHandler::add_data(
         const DdsTopic& topic,
         RtpsPayloadData& data)
 {
-    std::unique_lock<std::mutex> lock(mtx_);
-    if (state_ == McapHandlerStateCode::STOPPED)
-    {
-        logInfo(DDSRECORDER_MCAP_HANDLER, "Attempting to add sample through a stopped handler, dropping...");
-        return;
-    }
-
-    logInfo(
-        DDSRECORDER_MCAP_HANDLER,
-        "Adding data in topic " << topic);
-
-    // Add data to channel
-    Message msg;
-    msg.sequence = unique_sequence_number_++;
-    msg.publishTime = fastdds_timestamp_to_mcap_timestamp(data.source_timestamp);
-    if (configuration_.log_publishTime)
-    {
-        msg.logTime = msg.publishTime;
-    }
-    else
-    {
-        msg.logTime = now();
-    }
-    msg.dataSize = data.payload.length;
-
-    if (data.payload.length > 0)
-    {
-        auto payload_owner =
-                const_cast<eprosima::fastrtps::rtps::IPayloadPool*>((eprosima::fastrtps::rtps::IPayloadPool*)data.
-                        payload_owner);
-
-        if (payload_owner)
+    try
         {
-            payload_pool_->get_payload(
-                data.payload,
-                payload_owner,
-                msg.payload);
+        std::unique_lock<std::mutex> lock(mtx_);
+        if (state_ == McapHandlerStateCode::STOPPED)
+        {
+            logInfo(DDSRECORDER_MCAP_HANDLER, "Attempting to add sample through a stopped handler, dropping...");
+            return;
+        }
 
-            msg.payload_owner = payload_pool_.get();
-            msg.data = reinterpret_cast<std::byte*>(msg.payload.data);
+        logInfo(
+            DDSRECORDER_MCAP_HANDLER,
+            "Adding data in topic " << topic);
+
+        // Add data to channel
+        Message msg;
+        msg.sequence = unique_sequence_number_++;
+        msg.publishTime = fastdds_timestamp_to_mcap_timestamp(data.source_timestamp);
+        if (configuration_.log_publishTime)
+        {
+            msg.logTime = msg.publishTime;
+        }
+        else
+        {
+            msg.logTime = now();
+        }
+        msg.dataSize = data.payload.length;
+
+        if (data.payload.length > 0)
+        {
+            auto payload_owner =
+                    const_cast<eprosima::fastrtps::rtps::IPayloadPool*>((eprosima::fastrtps::rtps::IPayloadPool*)data.
+                            payload_owner);
+
+            if (payload_owner)
+            {
+                payload_pool_->get_payload(
+                    data.payload,
+                    payload_owner,
+                    msg.payload);
+
+                msg.payload_owner = payload_pool_.get();
+                msg.data = reinterpret_cast<std::byte*>(msg.payload.data);
+            }
+            else
+            {
+                throw utils::InconsistencyException(
+                        STR_ENTRY << "Payload owner not found in data received."
+                        );
+            }
         }
         else
         {
             throw utils::InconsistencyException(
-                      STR_ENTRY << "Payload owner not found in data received."
-                      );
+                    STR_ENTRY << "Received sample with no payload."
+                    );
         }
-    }
-    else
-    {
-        throw utils::InconsistencyException(
-                  STR_ENTRY << "Received sample with no payload."
-                  );
-    }
 
-    if (received_types_.count(topic.type_name) != 0)
-    {
-        // Schema available -> add to buffer
-        mcap_size_ += get_message_size_(msg);
-        // Check if there is enough space available before adding the message to buffer
-        lock.unlock();
-        check_space();
-        lock.lock();
-        add_data_nts_(msg, topic);
-    }
-    else
-    {
-        if (state_ == McapHandlerStateCode::RUNNING)
+        if (received_types_.count(topic.type_name) != 0)
         {
-            if (configuration_.max_pending_samples == 0)
-            {
-                if (configuration_.only_with_schema)
-                {
-                    // No schema available + no pending samples + only_with_schema -> Discard message
-                    return;
-                }
-                else
-                {
-                    // No schema available + no pending samples -> Add to buffer with blank schema
-                    mcap_size_ += get_message_size_(msg);
-                    lock.unlock();
-                    check_space();
-                    lock.lock();
-                    add_data_nts_(msg, topic);
-                }
-            }
-            else
-            {
-                logInfo(
-                    DDSRECORDER_MCAP_HANDLER,
-                    "Schema for topic " << topic << " not yet available, inserting to pending samples queue.");
-
-                mcap_size_ += get_message_size_(msg);
-                lock.unlock();
-                check_space();
-                lock.lock();
-                add_to_pending_nts_(msg, topic);
-            }
-        }
-        else if (state_ == McapHandlerStateCode::PAUSED)
-        {
-            logInfo(
-                DDSRECORDER_MCAP_HANDLER,
-                "Schema for topic " << topic << " not yet available, inserting to (paused) pending samples queue.");
-
-            pending_samples_paused_[topic.type_name].push_back({topic, msg});
+            // Schema available -> add to buffer
+            // Check if there is enough space available before adding the message to buffer
+            lock.unlock();
+            check_mcap_size_(get_message_size_(msg));
+            lock.lock();
+            add_data_nts_(msg, topic);
         }
         else
         {
-            // Should not happen, protected with mutex and state verified at beginning
-            utils::tsnh(
-                utils::Formatter() << "Trying to add sample from a stopped instance.");
+            if (state_ == McapHandlerStateCode::RUNNING)
+            {
+                if (configuration_.max_pending_samples == 0)
+                {
+                    if (configuration_.only_with_schema)
+                    {
+                        // No schema available + no pending samples + only_with_schema -> Discard message
+                        return;
+                    }
+                    else
+                    {
+                        // No schema available + no pending samples -> Add to buffer with blank schema
+                        lock.unlock();
+                        check_mcap_size_(get_message_size_(msg));
+                        lock.lock();
+                        add_data_nts_(msg, topic);
+                    }
+                }
+                else
+                {
+                    logInfo(
+                        DDSRECORDER_MCAP_HANDLER,
+                        "Schema for topic " << topic << " not yet available, inserting to pending samples queue.");
+
+                    lock.unlock();
+                    check_mcap_size_(get_message_size_(msg));
+                    lock.lock();
+                    add_to_pending_nts_(msg, topic);
+                }
+            }
+            else if (state_ == McapHandlerStateCode::PAUSED)
+            {
+                logInfo(
+                    DDSRECORDER_MCAP_HANDLER,
+                    "Schema for topic " << topic << " not yet available, inserting to (paused) pending samples queue.");
+
+                pending_samples_paused_[topic.type_name].push_back({topic, msg});
+            }
+            else
+            {
+                // Should not happen, protected with mutex and state verified at beginning
+                utils::tsnh(
+                    utils::Formatter() << "Trying to add sample from a stopped instance.");
+            }
         }
+    }
+    catch (const std::overflow_error& e)
+    {
+        logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to write on MCAP file. " << "Error message:\n " <<
+            e.what());
+
+        on_disk_full_();
     }
 }
 
@@ -899,7 +906,7 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
             std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
             mcap::Schema blank_schema(topic.type_name, encoding, "");
             // Add schema reserved space to write it on MCAP
-            mcap_size_ += get_schema_size_(blank_schema);
+            check_mcap_size_(get_schema_size_(blank_schema));
             mcap_writer_.addSchema(blank_schema);
             schemas_.insert({topic.type_name, std::move(blank_schema)});
 
@@ -920,7 +927,7 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     // Set ROS2_TYPES to "false" if the given topic_name is equal to topic.m_topic_name, otherwise set it to "true".
     metadata[ROS2_TYPES] = topic_name.compare(topic.m_topic_name) ? "true" : "false";
     mcap::Channel new_channel(topic_name, "cdr", schema_id, metadata);
-    mcap_size_ += get_channel_size_(new_channel);
+    check_mcap_size_(get_channel_size_(new_channel));
     mcap_writer_.addChannel(new_channel);
     auto channel_id = new_channel.id;
     channels_.insert({topic, std::move(new_channel)});
@@ -954,9 +961,8 @@ void McapHandler::update_channels_nts_(
 
             assert(channel.first.m_topic_name == channel.second.topic);
             mcap::Channel new_channel(channel.second.topic, "cdr", new_schema_id, channel.second.metadata);
-            mcap_size_ += get_channel_size_(new_channel);
             // Check if there is enough space available to write the channel
-            check_space();
+            check_mcap_size_(get_channel_size_(new_channel));
             mcap_writer_.addChannel(new_channel);
             channel.second = std::move(new_channel);
         }
@@ -988,10 +994,8 @@ void McapHandler::rewrite_schemas_nts_()
         std::string type_name = schema.first;
         mcap::Schema new_schema = schema.second;
 
-        // Add schema reserved space to write it on MCAP
-        mcap_size_ += get_schema_size_(new_schema);
         // Check if there is enough space available to write the schema
-        check_space();
+        check_mcap_size_(get_schema_size_(new_schema));
         // WARNING: passing as non-const to MCAP library
         mcap_writer_.addSchema(new_schema);
         new_schemas[type_name] = std::move(new_schema);
@@ -1087,9 +1091,8 @@ void McapHandler::serialize_dynamic_types_()
     // Recalculate attachment_size_ when serializing dynamic_types_
     mcap_size_ -= attachment_size_;
     attachment_size_ = get_attachment_size_();
-    mcap_size_ += attachment_size_;
     // Check if there is enough space available to write the schema
-    check_space();
+    check_mcap_size_(attachment_size_);
 }
 
 void McapHandler::write_attachment_()
@@ -1173,15 +1176,43 @@ std::uint64_t McapHandler::get_attachment_size_()
     return size;
 }
 
-void McapHandler::check_space()
+void McapHandler::check_mcap_size_(
+        const std::uint64_t size)
 {
+    mcap_size_ += size;
+
     if (mcap_size_ > space_available_when_open_)
     {
-        logError(DDSRECORDER_MCAP_HANDLER,"FAIL_MCAP_WRITE | Attempted to write an MCAP of size: " << mcap_size_ <<
+        throw std::overflow_error(
+                      STR_ENTRY << "Attempted to write an MCAP of size: " << mcap_size_ <<
                 ", but there is not enough space available on disk: " << space_available_when_open_);
-        stop();
-        return;
     }
+}
+
+void McapHandler::on_disk_full_() const noexcept
+{
+    if (on_disk_full_lambda_set_)
+    {
+        on_disk_full_lambda_();
+    }
+    else
+    {
+        logError(DDSRECORDER_MCAP_HANDLER, "Calling not set on_disk_full callback");
+    }
+}
+
+void McapHandler::set_on_disk_full_callback(
+        std::function<void()> on_disk_full_lambda) noexcept
+{
+    // std::lock_guard<std::recursive_mutex> lock(mtx_);
+
+    if (on_disk_full_lambda_set_)
+    {
+        logInfo(DDSRECORDER_MCAP_HANDLER, "Changing on_disk_full callback");
+    }
+
+    on_disk_full_lambda_ = on_disk_full_lambda;
+    on_disk_full_lambda_set_ = true;
 }
 
 std::string McapHandler::tmp_filename_(

@@ -258,6 +258,16 @@ public:
     DDSRECORDER_PARTICIPANTS_DllAPI
     static mcap::Timestamp now();
 
+    /**
+     * @brief TODO
+     *
+     * It sets \c on_disk_full_lambda_set_ to true
+     *
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    void set_on_disk_full_callback(
+            std::function<void()> on_disk_full_lambda) noexcept;
+
 protected:
 
     //! Flag code controlling the event thread routine
@@ -512,7 +522,8 @@ protected:
      * @brief Check if there is enough space to write the actual file
      *
      */
-    void check_space();
+    void check_mcap_size_(
+            const std::uint64_t size);
 
     /**
      * @brief Convert given \c filename to temporal format.
@@ -548,6 +559,14 @@ protected:
      */
     static std::string serialize_type_object_(
             const eprosima::fastrtps::types::TypeObject* type_object);
+
+    /**
+     * @brief TODO
+     *
+     * It calls the \c on_disk_full_lambda_
+     *
+     */
+    void on_disk_full_() const noexcept;
 
     //! Handler configuration
     McapHandlerConfiguration configuration_;
@@ -614,6 +633,12 @@ protected:
 
     //! Unique sequence number assigned to received messages. It is incremented with every sample added.
     unsigned int unique_sequence_number_{0};
+
+    //! Lambda to call the callback whenever a new data arrives
+    std::function<void()> on_disk_full_lambda_;
+
+    //! True if lambda callback is set
+    bool on_disk_full_lambda_set_;
 
     //! MCAP file overhead
     /**
