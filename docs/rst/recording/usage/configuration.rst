@@ -338,32 +338,27 @@ The recorder output file does support the following configuration settings under
         - ``list``
         - ``unlimited``
 
+When DDS Recorder application is launched (or when remotely controlled, every time a ``start/pause`` command is received while in ``SUSPENDED/STOPPED`` state), a temporary file with ``filename`` name (+timestamp prefix) and ``.mcap.tmp~`` extension is created in ``path``.
+This file is not readable until the application is terminated (or a ``suspend/stop/close`` command is received).
+On such event, the temporal file is renamed to have ``.mcap`` extension in the same location, and is then ready to be processed.
+
 .. _recorder_usage_configuration_resource_limits:
 
 Resource Limits
 """""""""""""""
 
 The ``resource-limits`` tag allows users to limit the size consumed by the DDS Recorder's output file.
-The ``max-file-size`` tag specifies the maximum size of the output file.
-A ``max-file-size`` of ``0B`` (default) implies an unlimited size.
-The |ddsrecorder| will stop recording data after reaching the ``max-file-size``.
+The ``max-file-size`` tag specifies the maximum size of each output file, and the ``max-size`` tag specifies the maximum size of all the output files tags.
+By default, the ``max-size`` is the ``max-file-size`` and the ``max-file-size`` is unlimited.
 
 .. note::
 
     The size of files is approximate.
     The actual size of the file may be slightly larger or smaller than the specified limit.
 
-.. note::
-
-    For the |ddsrecorder| to work well, the ``max-file-size`` should never be lower than ``100KB``.
-    The minimum size of the output file, however, depends on the number of different types that are being recorded, the number of samples, and the size of the samples.
-
-The ``file-rotation`` tag enables the |ddsrecorder| to record data in multiple files (with a maximum size of ``max-file-size``).
-When the aggregate size of all the output files reaches the ``max-size``, the |ddsrecorder| will start overwriting the oldest files to continue recording.
-
-.. warning::
-
-    If the ``file-rotation`` is set to ``false``, the ``max-file-size`` tag is ignored.
+When the aggregate size of all the output files (each with a maximum size of ``max-file-size``) reaches the ``max-size``, the |ddsrecorder| will stop recording.
+To make the |ddsrecorder| continue recording after reaching the ``max-size``, users can set the ``file-rotation`` tag to ``true``.
+If ``file-rotation`` is set to true, the |ddsrecorder| overwrites old files to free space for new ones.
 
 **Example of usage**
 
@@ -373,10 +368,6 @@ When the aggregate size of all the output files reaches the ``max-size``, the |d
       file-rotation: true
       max-file-size: 250KB
       max-size: 2MiB
-
-When DDS Recorder application is launched (or when remotely controlled, every time a ``start/pause`` command is received while in ``SUSPENDED/STOPPED`` state), a temporary file with ``filename`` name (+timestamp prefix) and ``.mcap.tmp~`` extension is created in ``path``.
-This file is not readable until the application is terminated (or a ``suspend/stop/close`` command is received).
-On such event, the temporal file is renamed to have ``.mcap`` extension in the same location, and is then ready to be processed.
 
 Buffer size
 ^^^^^^^^^^^

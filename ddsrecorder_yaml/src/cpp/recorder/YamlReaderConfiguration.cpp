@@ -60,17 +60,27 @@ RecorderConfiguration::RecorderConfiguration(
 bool RecorderConfiguration::is_valid(
         utils::Formatter& error_msg) const noexcept
 {
+    if (output_resource_limits_max_size > 0)
+    {
+        if (output_resource_limits_max_file_size == 0)
+        {
+            error_msg << "The max file size cannot be unlimited when the max size is limited.";
+            return false;
+        }
+
+        if (output_resource_limits_max_size < output_resource_limits_max_file_size)
+        {
+            error_msg << "The max size cannot be lower than the max file size.";
+            return false;
+        }
+    }
+
     if (output_resource_limits_file_rotation)
     {
         if (output_resource_limits_max_file_size == 0)
         {
             error_msg << "The max file size cannot be unlimited when file rotation is enabled.";
             return false;
-        }
-
-        if (output_resource_limits_max_file_size < 100000)
-        {
-            logWarning(DDSRECORDER_CONFIGURATION, "A max-file-size lower than 100KB may cause the DDS Recorder to fail.");
         }
 
         if (output_resource_limits_max_size == 0)
@@ -81,7 +91,7 @@ bool RecorderConfiguration::is_valid(
 
         if (output_resource_limits_max_size < output_resource_limits_max_file_size)
         {
-            error_msg << "The max-size cannot be lower than the max-file-size.";
+            error_msg << "The max size cannot be lower than the max file size.";
             return false;
         }
     }
