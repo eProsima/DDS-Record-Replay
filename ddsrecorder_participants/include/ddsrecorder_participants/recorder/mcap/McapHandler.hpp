@@ -572,7 +572,7 @@ protected:
     McapHandlerConfiguration configuration_;
 
     //!
-    fastrtps::rtps::SerializedPayload_t serialized_payload_;
+    std::unique_ptr<fastrtps::rtps::SerializedPayload_t> serialized_payload_;
 
     //! Name of open MCAP file
     std::string mcap_filename_;
@@ -639,6 +639,8 @@ protected:
 
     //! True if lambda callback is set
     bool on_disk_full_lambda_set_;
+
+    bool disk_full_ = false;
 
     //! MCAP file overhead
     /**
