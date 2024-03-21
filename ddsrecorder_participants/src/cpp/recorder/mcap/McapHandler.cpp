@@ -184,7 +184,8 @@ void McapHandler::add_data(
         RtpsPayloadData& data)
 {
     try
-        {
+    {
+        std::cout << "Mcap size: " << mcap_size_ << std::endl;
         std::unique_lock<std::mutex> lock(mtx_);
         if (state_ == McapHandlerStateCode::STOPPED)
         {
@@ -1085,10 +1086,10 @@ void McapHandler::serialize_dynamic_types_()
 {
     // Serialize dynamic types collection using CDR
     eprosima::fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
-    eprosima::fastrtps::rtps::SerializedPayload_t serialized_payload_ =
-            eprosima::fastrtps::rtps::SerializedPayload_t(
+    eprosima::fastrtps::rtps::SerializedPayload_t* new_payload = new eprosima::fastrtps::rtps::SerializedPayload_t(
         type_support.get_serialized_size_provider(&dynamic_types_)());
-    type_support.serialize(&dynamic_types_, &serialized_payload_);
+    serialized_payload_.reset(new_payload);
+    type_support.serialize(&dynamic_types_, serialized_payload_.get());
 
     // Recalculate attachment_size_ when serializing dynamic_types_
     mcap_size_ -= attachment_size_;
@@ -1099,14 +1100,11 @@ void McapHandler::serialize_dynamic_types_()
 
 void McapHandler::write_attachment_()
 {
-    // Serialize dynamic types collection
-    serialize_dynamic_types_();
-
     // Write serialized dynamic types into attachments section
     mcap::Attachment dynamic_attachment;
     dynamic_attachment.name = DYNAMIC_TYPES_ATTACHMENT_NAME;
-    dynamic_attachment.data = reinterpret_cast<std::byte*>(serialized_payload_.data);
-    dynamic_attachment.dataSize = serialized_payload_.length;
+    dynamic_attachment.data = reinterpret_cast<std::byte*>(serialized_payload_->data);
+    dynamic_attachment.dataSize = serialized_payload_->length;
     dynamic_attachment.createTime = now();
     auto status = mcap_writer_.write(dynamic_attachment);
 
@@ -1172,7 +1170,7 @@ std::uint64_t McapHandler::get_attachment_size_()
     constexpr std::uint64_t NUMBER_OF_TIMES_COPIED = 1;
 
     std::uint64_t size = MCAP_ATTACHMENT_OVERHEAD;
-    size += serialized_payload_.length;
+    size += serialized_payload_->length;
     size *= NUMBER_OF_TIMES_COPIED;
 
     return size;
@@ -1183,8 +1181,9 @@ void McapHandler::check_mcap_size_(
 {
     mcap_size_ += size;
 
-    if (mcap_size_ > space_available_when_open_)
+    if (mcap_size_ > space_available_when_open_ && !disk_full_)
     {
+        disk_full_ = true;
         throw std::overflow_error(
                       STR_ENTRY << "Attempted to write an MCAP of size: " << mcap_size_ <<
                 ", but there is not enough space available on disk: " << space_available_when_open_);

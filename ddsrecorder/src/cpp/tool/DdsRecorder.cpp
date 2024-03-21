@@ -177,7 +177,10 @@ void DdsRecorder::trigger_event()
 
 void DdsRecorder::on_disk_full_()
 {
-    event_handler_->simulate_event_occurred();
+    if (nullptr != event_handler_)
+    {
+        event_handler_->simulate_event_occurred();
+    }
 }
 
 void DdsRecorder::load_internal_topics_(
