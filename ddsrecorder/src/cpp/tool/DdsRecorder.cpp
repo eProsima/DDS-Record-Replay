@@ -67,11 +67,19 @@ DdsRecorder::DdsRecorder(
     mcap_output_settings.max_file_size = configuration_.output_resource_limits_max_file_size;
     mcap_output_settings.file_rotation = configuration_.output_resource_limits_file_rotation;
 
-    if (configuration_.output_resource_limits_file_rotation)
+    if (configuration_.output_resource_limits_max_file_size > 0)
     {
-        // The is_valid guarantees that if file-rotation is enabled, the max-file-size is higher than 0
-        mcap_output_settings.max_files = configuration_.output_resource_limits_max_size /
-                configuration_.output_resource_limits_max_file_size;
+        if (configuration_.output_resource_limits_max_size == 0)
+        {
+            // If the max size is not set, set it to the max file size
+            mcap_output_settings.max_files = 1;
+        }
+        else
+        {
+            // If the max size is set, calculate the number of files
+            mcap_output_settings.max_files = configuration_.output_resource_limits_max_size /
+                    configuration_.output_resource_limits_max_file_size;
+        }
     }
 
     // Create MCAP Handler configuration

@@ -519,21 +519,17 @@ mcap::Timestamp McapHandler::now()
 void McapHandler::open_file_nts_()
 {
     // Reset file size
-    mcap_file_size_ = 0;
+    mcap_size_ = MCAP_FILE_OVERHEAD;
 
     // Update the file id
     mcap_file_id_ += 1;
 
     // Rotate output files
-    if (configuration_.mcap_output_settings.file_rotation)
-    {
-        // The is_valid guarantees that max-files is greater than 0
-        mcap_file_id_ %= configuration_.mcap_output_settings.max_files;
+    const auto mcap_file_index = mcap_file_id_ % configuration_.mcap_output_settings.max_files;
 
-        if (mcap_file_id_to_filename_.count(mcap_file_id_))
-        {
-            std::filesystem::remove(mcap_file_id_to_filename_[mcap_file_id_]);
-        }
+    if (configuration_.mcap_output_settings.file_rotation && mcap_file_id_to_filename_.count(mcap_file_index))
+    {
+        std::filesystem::remove(mcap_file_id_to_filename_[mcap_file_index]);
     }
 
     // Generate the filename
@@ -551,17 +547,17 @@ void McapHandler::open_file_nts_()
 
     mcap_filename_ += configuration_.mcap_output_settings.output_filename;
 
-    if (configuration_.mcap_output_settings.file_rotation && !configuration_.mcap_output_settings.prepend_timestamp)
+    if (configuration_.mcap_output_settings.file_rotation || !configuration_.mcap_output_settings.prepend_timestamp)
     {
-        // If the timestamp is not included, then the file-rotation files would all have the same name.
+        // When the timestamp isn't included in the file's name, the output files all have the same name.
         // To make their names unique, we include their file id.
-        mcap_filename_ += "~" + std::to_string(mcap_file_id_);
+        mcap_filename_ += "_" + std::to_string(mcap_file_id_);
     }
 
     mcap_filename_ += ".mcap";
 
     // Store the filename in case of rotation
-    mcap_file_id_to_filename_[mcap_file_id_] = mcap_filename_;
+    mcap_file_id_to_filename_[mcap_file_index] = mcap_filename_;
 
     // Append temporal suffix
     std::string tmp_filename = tmp_filename_(mcap_filename_);
@@ -578,7 +574,11 @@ void McapHandler::open_file_nts_()
 
     // Check available space in disk when opening file
     std::filesystem::space_info space = std::filesystem::space(configuration_.mcap_output_settings.output_filepath);
-    space_available_when_open_ = space.available;
+
+    if (configuration_.mcap_output_settings.max_file_size == 0)
+    {
+        configuration_.mcap_output_settings.max_file_size = space.available;
+    }
 
     // Write in new file schemas already received before
     // NOTE: This is necessary since dynamic types are only sent/received once on discovery
@@ -627,7 +627,6 @@ void McapHandler::add_data_nts_(
         {
             // Write to MCAP file
             write_message_nts_(msg);
-            mcap_file_size_ += msg.dataSize;
         }
         catch (const utils::InconsistencyException& e)
         {
@@ -638,7 +637,6 @@ void McapHandler::add_data_nts_(
     else
     {
         samples_buffer_.push_back(msg);
-        mcap_file_size_ += msg.dataSize;
 
         if (state_ == McapHandlerStateCode::RUNNING && samples_buffer_.size() == configuration_.buffer_size)
         {
@@ -706,16 +704,12 @@ void McapHandler::add_to_pending_nts_(
             // Write oldest message without schema
             auto& oldest_sample = pending_samples_[topic.type_name].front();
             add_data_nts_(oldest_sample.second, oldest_sample.first);
-
-            // Substract the sample's size to avoid counting it twice
-            mcap_file_size_ -= oldest_sample.second.dataSize;
         }
 
         pending_samples_[topic.type_name].pop_front();
     }
 
     pending_samples_[topic.type_name].push_back({topic, msg});
-    mcap_file_size_ += msg.dataSize;
 }
 
 void McapHandler::add_pending_samples_nts_(
@@ -749,9 +743,6 @@ void McapHandler::add_pending_samples_nts_(
         auto& sample = pending_samples.front();
 
         add_data_nts_(sample.second, sample.first, direct_write);
-
-        // Substract the sample's size to avoid counting it twice
-        mcap_file_size_ -= sample.second.dataSize;
 
         pending_samples.pop_front();
     }
@@ -1155,8 +1146,6 @@ void McapHandler::write_attachment_()
     dynamic_attachment.createTime = now();
     auto status = mcap_writer_.write(dynamic_attachment);
 
-    mcap_file_size_ += dynamic_attachment.dataSize;
-
     return;
 }
 
@@ -1227,12 +1216,25 @@ std::uint64_t McapHandler::get_attachment_size_()
 
 void McapHandler::check_space()
 {
-    if (mcap_size_ > space_available_when_open_)
+    if (mcap_size_ <= configuration_.mcap_output_settings.max_file_size)
+    {
+        return;
+    }
+
+    const bool keep_recording = mcap_file_id_ < configuration_.mcap_output_settings.max_files ||
+            configuration_.mcap_output_settings.file_rotation;
+
+    if (keep_recording)
+    {
+        logInfo(DDSRECORDER_MCAP_HANDLER, "Max file size reached, closing file and opening a new one...");
+        stop();
+        start();
+    }
+    else
     {
         logError(DDSRECORDER_MCAP_HANDLER,"FAIL_MCAP_WRITE | Attempted to write an MCAP of size: " << mcap_size_ <<
                 ", but there is not enough space available on disk: " << space_available_when_open_);
         stop();
-        return;
     }
 }
 

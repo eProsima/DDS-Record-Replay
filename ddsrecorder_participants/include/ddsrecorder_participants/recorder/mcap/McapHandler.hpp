@@ -559,10 +559,7 @@ protected:
     std::string mcap_filename_;
 
     //! TODO
-    int mcap_file_size_{0};
-
-    //! TODO
-    int mcap_file_id_{-1};
+    int mcap_file_id_{0};
 
     //! TODO
     std::map<int, std::string> mcap_file_id_to_filename_;
