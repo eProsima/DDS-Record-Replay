@@ -93,6 +93,23 @@ void DdsRecorderStatusMonitorProducer::consume()
     consume_nts_();
 }
 
+void DdsRecorderStatusMonitorProducer::clear_data()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    logInfo(DDSRECORDER_MONITOR, "MONITOR | Clearing data on DdsRecorderStatusMonitorProducer.");
+
+    error_status_.type_mismatch(false);
+    error_status_.qos_mismatch(false);
+    ddsrecorder_error_status_.mcap_file_creation_failure(false);
+    ddsrecorder_error_status_.disk_full(false);
+    has_errors_ = false;
+
+    data_.error_status(error_status_);
+    data_.ddsrecorder_error_status(ddsrecorder_error_status_);
+    data_.has_errors(has_errors_);
+}
+
 void DdsRecorderStatusMonitorProducer::add_error_to_status(
         const std::string& error)
 {

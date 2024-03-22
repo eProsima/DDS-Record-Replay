@@ -102,6 +102,16 @@ public:
     DDSRECORDER_PARTICIPANTS_DllAPI
     void consume() override;
 
+    ///////////////////
+    // Data methods ///
+    ///////////////////
+
+    /**
+     * @brief Clear the data gathered.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    void clear_data() override;
+
     /**
      * @brief Add an error to the \c DdsRecorderMonitoringStatus.
      *
