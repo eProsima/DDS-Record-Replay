@@ -143,8 +143,19 @@ void McapHandler::add_schema(
         mcap::Schema new_schema(configuration_.ros2_types ? utils::demangle_if_ros_type(dynamic_type->get_name()) :
                 dynamic_type->get_name(), encoding, schema_text);
 
+        if ((pending_samples_.find(type_name) != pending_samples_.end()) ||
+                (state_ == McapHandlerStateCode::PAUSED &&
+                (pending_samples_paused_.find(type_name) != pending_samples_paused_.end())))
+        {
+            // std::cout << "Deleting blank schema with name " << type_name << "... size: " << get_blank_schema_size_(type_name) << std::endl;
+            mcap_size_ -= get_blank_schema_size_(type_name);
+            // std::cout << "Deleting blank channel with name " << type_name << "... size: " << get_blank_channel_size_(type_name) << std::endl;
+            mcap_size_ -= get_blank_channel_size_(type_name); // Fix: type_name (topic.type_name) should be topic.m_topic_name
+        }
+
         //Check if there is enough space on disk to write the schema
-        check_mcap_size_(get_schema_size_(new_schema));
+        check_and_update_mcap_size_(new_schema);
+        // std::cout << "Writing NEW schema Lucia1" << new_schema.name << "..." << get_schema_size_(new_schema) << std::endl;
         // WARNING: passing as non-const to MCAP library
         mcap_writer_.addSchema(new_schema);
 
@@ -185,11 +196,16 @@ void McapHandler::add_data(
 {
     try
     {
-        std::cout << "Mcap size: " << mcap_size_ << std::endl;
         std::unique_lock<std::mutex> lock(mtx_);
         if (state_ == McapHandlerStateCode::STOPPED)
         {
             logInfo(DDSRECORDER_MCAP_HANDLER, "Attempting to add sample through a stopped handler, dropping...");
+            return;
+        }
+
+        if (disk_full_)
+        {
+            logInfo(DDSRECORDER_MCAP_HANDLER, "Disk full");
             return;
         }
 
@@ -245,9 +261,7 @@ void McapHandler::add_data(
         {
             // Schema available -> add to buffer
             // Check if there is enough space available before adding the message to buffer
-            lock.unlock();
             check_mcap_size_(get_message_size_(msg));
-            lock.lock();
             add_data_nts_(msg, topic);
         }
         else
@@ -264,9 +278,21 @@ void McapHandler::add_data(
                     else
                     {
                         // No schema available + no pending samples -> Add to buffer with blank schema
-                        lock.unlock();
                         check_mcap_size_(get_message_size_(msg));
-                        lock.lock();
+                        if ((pending_samples_.find(topic.type_name) == pending_samples_.end()) ||
+                            (state_ == McapHandlerStateCode::PAUSED &&
+                            (pending_samples_paused_.find(topic.type_name) == pending_samples_paused_.end())))
+                        {
+                            std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
+                            mcap::Schema blank_schema(topic.type_name, encoding, "");
+                            check_and_update_mcap_size_(blank_schema);
+                            // std::cout << "Writing schema Lucia1" << topic.type_name << "..." << get_blank_schema_size_(topic.type_name) << std::endl;
+                        }
+                        if (!received_topics_.count(topic.m_topic_name))
+                        {
+                            received_topics_.insert(topic.m_topic_name);
+                            check_mcap_size_(get_blank_channel_size_(topic.m_topic_name));
+                        }
                         add_data_nts_(msg, topic);
                     }
                 }
@@ -276,9 +302,22 @@ void McapHandler::add_data(
                         DDSRECORDER_MCAP_HANDLER,
                         "Schema for topic " << topic << " not yet available, inserting to pending samples queue.");
 
-                    lock.unlock();
                     check_mcap_size_(get_message_size_(msg));
-                    lock.lock();
+                    if ((pending_samples_.find(topic.type_name) == pending_samples_.end()) ||
+                            (state_ == McapHandlerStateCode::PAUSED &&
+                            (pending_samples_paused_.find(topic.type_name) == pending_samples_paused_.end())))
+                    {
+                        std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
+                        mcap::Schema blank_schema(topic.type_name, encoding, "");
+                        check_and_update_mcap_size_(blank_schema);
+                        // std::cout << "Writing schema Lucia2" << topic.type_name << "..." << get_schema_size_(blank_schema) << std::endl;
+                    }
+                    if (!received_topics_.count(topic.m_topic_name))
+                    {
+                        received_topics_.insert(topic.m_topic_name);
+                        check_mcap_size_(get_blank_channel_size_(topic.m_topic_name));
+                        std::cout << "Writing channel Lucia2" << topic.type_name << "..." << get_blank_channel_size_(topic.m_topic_name) << std::endl;
+                    }
                     add_to_pending_nts_(msg, topic);
                 }
             }
@@ -300,6 +339,7 @@ void McapHandler::add_data(
     }
     catch (const std::overflow_error& e)
     {
+        std::cout << "Catching exception..." << std::endl;
         logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to write on MCAP file. " << "Error message:\n " <<
             e.what());
 
@@ -554,7 +594,7 @@ void McapHandler::open_file_nts_()
 
     // Check available space in disk when opening file
     std::filesystem::space_info space = std::filesystem::space(configuration_.mcap_output_settings.output_filepath);
-    space_available_when_open_ = space.available;
+    space_available_when_open_ = 10000;
 
     // Write in new file schemas already received before
     // NOTE: This is necessary since dynamic types are only sent/received once on discovery
@@ -893,6 +933,7 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
 {
     // Find schema
     mcap::SchemaId schema_id;
+    bool blank_schema_created = false;
     try
     {
         schema_id = get_schema_id_nts_(topic.type_name);
@@ -907,17 +948,24 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
             std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
             mcap::Schema blank_schema(topic.type_name, encoding, "");
             // Add schema reserved space to write it on MCAP
-            check_mcap_size_(get_schema_size_(blank_schema));
+            // check_and_update_mcap_size_(blank_schema); // constant already summed
             mcap_writer_.addSchema(blank_schema);
             schemas_.insert({topic.type_name, std::move(blank_schema)});
 
             schema_id = blank_schema.id;
+            blank_schema_created = true;
         }
         else
         {
             // Propagate exception
             throw;
         }
+    }
+
+    if (blank_schema_created)
+    {
+        std::cout << "Deleting blank channel" << topic.m_topic_name << "... size: " << get_blank_channel_size_(topic.m_topic_name) << std::endl;
+        mcap_size_ -= get_blank_channel_size_(topic.m_topic_name);
     }
 
     // Create new channel
@@ -996,7 +1044,8 @@ void McapHandler::rewrite_schemas_nts_()
         mcap::Schema new_schema = schema.second;
 
         // Check if there is enough space available to write the schema
-        check_mcap_size_(get_schema_size_(new_schema));
+        check_and_update_mcap_size_(new_schema);
+
         // WARNING: passing as non-const to MCAP library
         mcap_writer_.addSchema(new_schema);
         new_schemas[type_name] = std::move(new_schema);
@@ -1139,12 +1188,33 @@ std::uint64_t McapHandler::get_schema_size_(
         const mcap::Schema& schema)
 {
     constexpr std::uint64_t NUMBER_OF_TIMES_COPIED = 2;
+    constexpr std::uint64_t MAGIC_LUCIA = 5;
 
     std::uint64_t size = MCAP_SCHEMAS_OVERHEAD;
     size += schema.name.size();
     size += schema.encoding.size();
     size += schema.data.size();
     size *= NUMBER_OF_TIMES_COPIED;
+
+    // std::uint64_t schema_constant = size/NUMBER_OF_TIMES_COPIED - schema.name.size();
+    // std::cout << "Schema size: " << schema.name.size() << ", " << schema.encoding.size() << ", " << schema.data.size() << std::endl;
+    // std::cout << "Schema constant: " << schema_constant << std::endl; //29
+    size -= MAGIC_LUCIA;
+
+    return size;
+}
+
+std::uint64_t McapHandler::get_blank_schema_size_(
+            const std::string& schema_name)
+{
+    constexpr std::uint64_t FIXED_SIZE = 29;
+    constexpr int NUMBER_OF_TIMES_COPIED = 2;
+    constexpr std::uint64_t MAGIC_LUCIA = 5;
+
+    std::uint64_t size = FIXED_SIZE;
+    size += schema_name.size();
+    size *= NUMBER_OF_TIMES_COPIED;
+    size -= MAGIC_LUCIA;
 
     return size;
 }
@@ -1158,6 +1228,24 @@ std::uint64_t McapHandler::get_channel_size_(
     size += channel.topic.size();
     size += channel.messageEncoding.size();
     size += mcap::internal::KeyValueMapSize(channel.metadata);
+    size *= NUMBER_OF_TIMES_COPIED;
+
+    // std::uint64_t channel_constant = size/NUMBER_OF_TIMES_COPIED - channel.topic.size();
+    // std::cout << "Channel size: " << channel.topic.size() << ", " << channel.messageEncoding.size() << ", " << mcap::internal::KeyValueMapSize(channel.metadata) << std::endl;
+    // std::cout << "Channel constant: " << channel_constant << std::endl; //148
+
+    return size;
+}
+
+std::uint64_t McapHandler::get_blank_channel_size_(
+            const std::string& channel_name)
+{
+    // TODO: Add different constants
+    constexpr std::uint64_t FIXED_SIZE = 148; // 308 / 301
+    constexpr int NUMBER_OF_TIMES_COPIED = 2;
+
+    std::uint64_t size = FIXED_SIZE;
+    size += channel_name.size();
     size *= NUMBER_OF_TIMES_COPIED;
 
     return size;
@@ -1177,15 +1265,74 @@ std::uint64_t McapHandler::get_attachment_size_()
 void McapHandler::check_mcap_size_(
         const std::uint64_t size)
 {
-    mcap_size_ += size;
+    // mcap_size_ += size;
+    std::cout << "Mcap size: " << mcap_size_ << std::endl;
+    if (!disk_full_)
+    {
+        if ((mcap_size_ + size) > space_available_when_open_)
+        {
+            disk_full_ = true;
+            throw std::overflow_error(
+                        STR_ENTRY << "Attempted to write an MCAP of size: " << mcap_size_ <<
+                    ", but there is not enough space available on disk: " << space_available_when_open_);
+        }
+        else
+        {
+            mcap_size_ += size;
+            std::cout << "[1] Mcap size after sum: " << mcap_size_ + size << std::endl;
+        }
+    }
+    else
+    {
+        std::cout << "Disk is full, adding data previously taken into account (should always fit)" << std::endl;
+        // assert(false);
+        assert((mcap_size_ + size) <= space_available_when_open_);
+        mcap_size_ += size;
+        std::cout << "[2] Mcap size after sum: " << mcap_size_ + size << std::endl;
+    }
+}
 
-    if (mcap_size_ > space_available_when_open_ && !disk_full_)
+void McapHandler::check_and_update_mcap_size_(
+        const std::uint64_t& size)
+
+    if ((mcap_size_ + size) > space_available_when_open_)
     {
         disk_full_ = true;
         throw std::overflow_error(
-                      STR_ENTRY << "Attempted to write an MCAP of size: " << mcap_size_ <<
+                    STR_ENTRY << "Attempted to write an MCAP of size: " << mcap_size_ <<
                 ", but there is not enough space available on disk: " << space_available_when_open_);
     }
+    else
+    {
+        mcap_size_ += size;
+    }
+}
+
+void McapHandler::check_and_update_mcap_size_(
+        const Message& msg)
+{
+    // Calculate message size
+    std::uint64_t size = get_message_size_(msg);
+
+    check_and_update_mcap_size_(size);
+}
+
+void McapHandler::check_and_update_mcap_size_(
+        const mcap::Schema& schema)
+{
+    // Calculate schema size
+    std::uint64_t size = get_schema_size_(schema);
+
+    check_and_update_mcap_size_(size);
+}
+
+void McapHandler::check_and_update_mcap_size_(
+        const mcap::Channel& channel)
+{
+    // Calculate channel size
+    std::uint64_t size = get_message_size_(msg);
+
+    check_and_update_mcap_size_(size);
 }
 
 void McapHandler::on_disk_full_() const noexcept

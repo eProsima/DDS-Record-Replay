@@ -506,11 +506,25 @@ protected:
             const mcap::Schema& schema);
 
     /**
+     * @brief Get space needed to write blank schema
+     *
+     */
+    std::uint64_t get_blank_schema_size_(
+            const std::string& schema_name);
+
+    /**
      * @brief Get space needed to write channel
      *
      */
     std::uint64_t get_channel_size_(
             const mcap::Channel& channel);
+
+    /**
+     * @brief Get space needed to write blank channel
+     *
+     */
+    std::uint64_t get_blank_channel_size_(
+            const std::string& channel_name);
 
     /**
      * @brief Get space needed to write attachment
@@ -519,11 +533,39 @@ protected:
     std::uint64_t get_attachment_size_();
 
     /**
-     * @brief Check if there is enough space to write the actual file
+     * @brief Check if there is enough space to write the current file
      *
      */
     void check_mcap_size_(
             const std::uint64_t size);
+
+    /**
+     * @brief Check if there is enough space to write the current file
+     *
+     */
+    void check_and_update_mcap_size_(
+            const std::uint64_t& size);
+
+    /**
+     * @brief Check if there is enough space to write the current file
+     *
+     */
+    void check_and_update_mcap_size_(
+            const Message& msg);
+
+    /**
+     * @brief Check if there is enough space to write the current file
+     *
+     */
+    void check_and_update_mcap_size_(
+            const mcap::Schema& schema);
+
+    /**
+     * @brief Check if there is enough space to write the current file
+     *
+     */
+    void check_and_update_mcap_size_(
+            const mcap::Channel& channel);
 
     /**
      * @brief Convert given \c filename to temporal format.
@@ -636,6 +678,8 @@ protected:
 
     //! Lambda to call the callback whenever a new data arrives
     std::function<void()> on_disk_full_lambda_;
+
+    std::set<std::string> received_topics_;
 
     //! True if lambda callback is set
     bool on_disk_full_lambda_set_;
