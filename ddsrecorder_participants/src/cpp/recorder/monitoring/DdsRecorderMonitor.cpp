@@ -59,9 +59,13 @@ void DdsRecorderMonitor::monitor_status()
     // Register the consumers
     ddsrecorder_status_producer->register_consumer(
         std::make_unique<ddspipe::core::LogMonitorConsumer<DdsRecorderMonitoringStatus>>());
-    ddsrecorder_status_producer->register_consumer(std::make_unique<ddspipe::core::DdsMonitorConsumer<DdsRecorderMonitoringStatus>>(
-                configuration_.consumers[ddspipe::core::STATUS_MONITOR_PRODUCER_ID], registry_,
-                type));
+
+    if (configuration_.consumers.count(ddspipe::core::STATUS_MONITOR_PRODUCER_ID) > 0)
+    {
+        ddsrecorder_status_producer->register_consumer(std::make_unique<ddspipe::core::DdsMonitorConsumer<DdsRecorderMonitoringStatus>>(
+                    configuration_.consumers[ddspipe::core::STATUS_MONITOR_PRODUCER_ID], registry_,
+                    type));
+    }
 
     ddspipe::core::StatusMonitorProducer::init_instance(std::move(ddsrecorder_status_producer));
 
