@@ -10,8 +10,8 @@ Version v0.4.0
 
 This release includes the following **Recording features**:
 
-* Publish the :ref:`Logs <recorder_specs_logging>`.
-* :ref:`Monitor <recorder_specs_monitor>`.
+* Publish the :ref:`Logs <recorder_specs_logging>` in a DDS topic.
+* New :ref:`Monitor <recorder_specs_monitor>` module.
 
 This release includes the following **DDS Recorder tool configuration features**:
 
