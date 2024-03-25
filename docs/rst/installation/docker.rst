@@ -51,7 +51,7 @@ The steps to run |ddsrecord| in a Docker container are explained below.
             --ipc=host \
             --privileged \
             -v /<dds_recorder_ws>/DDS_RECORDER_CONFIGURATION.yaml:/root/DDS_RECORDER_CONFIGURATION.yaml \
-            ubuntu-ddsrecorder:v0.3.0
+            ubuntu-ddsrecorder:v0.4.0
 
     It is important to mention that both the path to the configuration file hosted in the local machine and the one
     created in the Docker container must be absolute paths in order to share just one single file as a shared volume.
