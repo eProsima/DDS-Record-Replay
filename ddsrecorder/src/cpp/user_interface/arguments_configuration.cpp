@@ -251,7 +251,7 @@ ProcessReturnCode parse_arguments(
 
                 case optionIndex::ACTIVATE_DEBUG:
                     commandline_args.log_filter[utils::VerbosityKind::Error].set_value("");
-                    commandline_args.log_filter[utils::VerbosityKind::Warning].set_value("(DDSRECORDER|DDSPIPE)");
+                    commandline_args.log_filter[utils::VerbosityKind::Warning].set_value("DDSRECORDER");
                     commandline_args.log_filter[utils::VerbosityKind::Info].set_value("DDSRECORDER");
                     commandline_args.log_verbosity = utils::VerbosityKind::Info;
                     break;
