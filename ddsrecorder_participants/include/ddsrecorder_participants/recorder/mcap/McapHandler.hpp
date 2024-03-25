@@ -41,6 +41,7 @@
 
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
+#include <ddsrecorder_participants/recorder/size_tracker/McapSizeTracker.hpp>
 
 #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
     #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
@@ -259,7 +260,7 @@ public:
     static mcap::Timestamp now();
 
     /**
-     * @brief TODO
+     * @brief Set the callback that should be called whenever disk is full
      *
      * It sets \c on_disk_full_lambda_set_ to true
      *
@@ -463,19 +464,15 @@ protected:
     void rewrite_schemas_nts_();
 
     /**
-     * @brief Generate dynamic type from type_name and save in in \c dynamic_types_ .
+     * @brief Save and serialize dynamic tipes.
+     *
+     * Its main purpose is to generate dynamic type from type_name, save it in \c dynamic_types_ and serialize the
+     * updated list of dynamic typesby generating a DynamicTypesCollection and serializing it.
      *
      * @param [in] type_name Name of the dynamic type to generate
      */
-    void save_dynamic_type_(
+    void save_and_serialize_dynamic_types_(
         const std::string& type_name);
-
-    /**
-     * @brief Serialize current dynamic types every time a new dynamic type is saved in \c save_dynamic_type_ .
-     *
-     * This function serializes the dynamic types stored in the dynamic_types_ variable by generating a DynamicTypesCollection and serializing it.
-     */
-    void serialize_dynamic_types_();
 
     /**
      * @brief Write in MCAP attachments.
@@ -492,46 +489,20 @@ protected:
     void write_version_metadata_();
 
     /**
-     * @brief Get space needed to write message
-     *
-     */
-    std::uint64_t get_message_size_(
-            const Message& msg);
-
-    /**
-     * @brief Get space needed to write schema
-     *
-     */
-    std::uint64_t get_schema_size_(
-            const mcap::Schema& schema);
-
-    /**
-     * @brief Get space needed to write channel
-     *
-     */
-    std::uint64_t get_channel_size_(
-            const mcap::Channel& channel);
-
-    /**
-     * @brief Get space needed to write attachment
-     *
-     */
-    std::uint64_t get_attachment_size_();
-
-    /**
-     * @brief Check if there is enough space to write the actual file
-     *
-     */
-    void check_mcap_size_(
-            const std::uint64_t size);
-
-    /**
      * @brief Convert given \c filename to temporal format.
      *
      * @param [in] filename Filename to be converted.
      */
     static std::string tmp_filename_(
             const std::string& filename);
+
+    /**
+     * @brief Call whenever disk is full
+     *
+     * It calls the \c on_disk_full_lambda_
+     *
+     */
+    void on_disk_full_() const noexcept;
 
     /**
      * @brief Serialize a \c TopicQoS struct into a string.
@@ -560,19 +531,11 @@ protected:
     static std::string serialize_type_object_(
             const eprosima::fastrtps::types::TypeObject* type_object);
 
-    /**
-     * @brief TODO
-     *
-     * It calls the \c on_disk_full_lambda_
-     *
-     */
-    void on_disk_full_() const noexcept;
-
     //! Handler configuration
     McapHandlerConfiguration configuration_;
 
-    //!
-    std::unique_ptr<fastrtps::rtps::SerializedPayload_t> serialized_payload_;
+    //! Serialized payload of the dynamic types
+    std::unique_ptr<fastrtps::rtps::SerializedPayload_t> dynamic_attachment_serialized_payload_;
 
     //! Name of open MCAP file
     std::string mcap_filename_;
@@ -586,6 +549,9 @@ protected:
     //! MCAP writer
     mcap::McapWriter mcap_writer_;
 
+    //! MCAP size tracker
+    participants::McapSizeTracker mcap_size_tracker_;
+
     //! Schemas map
     std::map<std::string, mcap::Schema> schemas_;
 
@@ -594,9 +560,6 @@ protected:
 
     //! Channels map
     std::map<ddspipe::core::types::DdsTopic, mcap::Channel> channels_;
-
-    //! Space available in disk
-    std::uintmax_t space_available_when_open_;
 
     //! Samples buffer
     std::list<Message> samples_buffer_;
@@ -607,14 +570,14 @@ protected:
     //! Dynamic types reserved storage
     std::uint64_t attachment_size_{0};
 
-    //! Total file size
-    std::uint64_t mcap_size_{MCAP_FILE_OVERHEAD}; // MCAP file size is initialized with MCAP_FILE_OVERHEAD
-
     //! Structure where messages (received in RUNNING state) with unknown type are kept
     std::map<std::string, pending_list> pending_samples_;
 
     //! Structure where messages (received in PAUSED state) with unknown type are kept
     std::map<std::string, pending_list> pending_samples_paused_;
+
+    //! Pending topics map
+    std::map<std::string, std::set<std::string>> pending_topics_;
 
     //! Mutex synchronizing state transitions and access to object's data structures
     std::mutex mtx_;
@@ -639,31 +602,6 @@ protected:
 
     //! True if lambda callback is set
     bool on_disk_full_lambda_set_;
-
-    bool disk_full_ = false;
-
-    //! MCAP file overhead
-    /**
-     * To reach this number, we use the following constants:
-     *   - Header + Write Header = 18
-     *   - Metadata + Write Metadata + Write MetadataIndex = 75 + 24 + 36
-     *   - Write ChunkIndex = 73
-     *   - Write Statistics = 55
-     *   - Write DataEnd + Write SummaryOffSets = 13 + 26*6
-     */
-    static constexpr std::uint64_t MCAP_FILE_OVERHEAD{450};
-
-    //! Additional overhead size for a MCAP message
-    static constexpr std::uint64_t MCAP_MESSAGE_OVERHEAD{31 + 8 + 8}; // Write Message + TimeStamp + TimeOffSet
-
-    //! Additional overhead size for a MCAP schema
-    static constexpr std::uint64_t MCAP_SCHEMAS_OVERHEAD{23}; // Write Schemas
-
-    //! Additional overhead size for a MCAP channel
-    static constexpr std::uint64_t MCAP_CHANNEL_OVERHEAD{25 + 10 + 10}; // Write Channel + messageIndexOffsetsSize + channelMessageCountsSize
-
-    //! Additional overhead size for a MCAP attachment
-    static constexpr std::uint64_t MCAP_ATTACHMENT_OVERHEAD{58 + 70}; // Write Attachment + Write AttachmentIndex
 };
 
 } /* namespace participants */
