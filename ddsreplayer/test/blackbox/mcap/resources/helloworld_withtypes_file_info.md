@@ -1,6 +1,6 @@
 # RECORDING
 
-## Run [publisher](https://github.com/eProsima/DDS-Record-Replay/tree/main/resources/dds/TypeLookupService)
+## Run [publisher](https://github.com/eProsima/DDS-Record-Replay/tree/v0.4.0/resources/dds/TypeLookupService)
 
 * PUBLISHER_QOS_DEFAULT
 * TOPIC_QOS_DEFAULT
