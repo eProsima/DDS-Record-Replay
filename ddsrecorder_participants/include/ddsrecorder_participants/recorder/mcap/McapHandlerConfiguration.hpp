@@ -18,6 +18,10 @@
 
 #pragma once
 
+#include <cstdint>
+#include <string>
+#include <vector>
+
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
@@ -41,6 +45,12 @@ struct McapOutputSettings
 
     //! Whether to use local or global timestamp
     bool output_local_timestamp;
+
+    //! TODO
+    bool file_rotation{false};
+
+    //! TODO
+    std::vector<std::uint64_t> files_max_size;
 };
 
 /**

@@ -19,8 +19,11 @@
 #pragma once
 
 #include <condition_variable>
+#include <cstdint>
+#include <filesystem>
 #include <list>
 #include <map>
+#include <stdexcept>
 #include <thread>
 
 #include <mcap/mcap.hpp>
@@ -268,6 +271,8 @@ protected:
     /**
      * @brief Open a new MCAP file according to configuration settings.
      *
+     * @throw InitializationException if failing to open file.
+     *
      * A temporal suffix is appended after the '.mcap' extension, and additionally a timestamp prefix if applies.
      *
      */
@@ -448,30 +453,66 @@ protected:
     void rewrite_schemas_nts_();
 
     /**
-     * @brief Store in MCAP attachments the dynamic types associated to all added schemas, and their dependencies.
+     * @brief Generate dynamic type from type_name and save in in \c dynamic_types_ .
      *
+     * @param [in] type_name Name of the dynamic type to generate
      */
-    void store_dynamic_types_();
+    void save_dynamic_type_(
+        const std::string& type_name);
 
     /**
-     * @brief Serialize type identifier and object, and insert the result into a \c DynamicTypesCollection .
+     * @brief Serialize current dynamic types every time a new dynamic type is saved in \c save_dynamic_type_ .
      *
-     * @param [in] type_identifier Type identifier to be serialized and stored.
-     * @param [in] type_object Type object to be serialized and stored.
-     * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
-     * @param [in,out] dynamic_types Collection where to store serialized dynamic type.
+     * This function serializes the dynamic types stored in the dynamic_types_ variable by generating a DynamicTypesCollection and serializing it.
      */
-    void store_dynamic_type_(
-            const eprosima::fastrtps::types::TypeIdentifier* type_identifier,
-            const eprosima::fastrtps::types::TypeObject* type_object,
-            const std::string& type_name,
-            DynamicTypesCollection& dynamic_types);
+    void serialize_dynamic_types_();
+
+    /**
+     * @brief Write in MCAP attachments.
+     *
+     * Its main purpose is to write the dynamic types associated to all added schemas, and their dependencies.
+     *
+     */
+    void write_attachment_();
 
     /**
      * @brief Write version metadata (release and commit hash) in MCAP file.
      *
      */
     void write_version_metadata_();
+
+    /**
+     * @brief Get space needed to write message
+     *
+     */
+    std::uint64_t get_message_size_(
+            const Message& msg);
+
+    /**
+     * @brief Get space needed to write schema
+     *
+     */
+    std::uint64_t get_schema_size_(
+            const mcap::Schema& schema);
+
+    /**
+     * @brief Get space needed to write channel
+     *
+     */
+    std::uint64_t get_channel_size_(
+            const mcap::Channel& channel);
+
+    /**
+     * @brief Get space needed to write attachment
+     *
+     */
+    std::uint64_t get_attachment_size_();
+
+    /**
+     * @brief Check if there is enough space to write the actual file
+     *
+     */
+    void check_space();
 
     /**
      * @brief Convert given \c filename to temporal format.
@@ -511,8 +552,20 @@ protected:
     //! Handler configuration
     McapHandlerConfiguration configuration_;
 
+    //!
+    fastrtps::rtps::SerializedPayload_t serialized_payload_;
+
     //! Name of open MCAP file
     std::string mcap_filename_;
+
+    //! TODO
+    int mcap_file_index_{0};
+
+    //! TODO
+    int mcap_file_id_{0};
+
+    //! TODO
+    std::map<int, std::string> mcap_file_id_to_filename_;
 
     //! Payload pool
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;
@@ -532,8 +585,20 @@ protected:
     //! Channels map
     std::map<ddspipe::core::types::DdsTopic, mcap::Channel> channels_;
 
+    //! Space available in disk
+    std::uintmax_t space_available_when_open_;
+
     //! Samples buffer
     std::list<Message> samples_buffer_;
+
+    //! Dynamic types
+    DynamicTypesCollection dynamic_types_;
+
+    //! Dynamic types reserved storage
+    std::uint64_t attachment_size_{0};
+
+    //! Total file size
+    std::uint64_t mcap_size_{MCAP_FILE_OVERHEAD}; // MCAP file size is initialized with MCAP_FILE_OVERHEAD
 
     //! Structure where messages (received in RUNNING state) with unknown type are kept
     std::map<std::string, pending_list> pending_samples_;
@@ -558,6 +623,29 @@ protected:
 
     //! Unique sequence number assigned to received messages. It is incremented with every sample added.
     unsigned int unique_sequence_number_{0};
+
+    //! MCAP file overhead
+    /**
+     * To reach this number, we use the following constants:
+     *   - Header + Write Header = 18
+     *   - Metadata + Write Metadata + Write MetadataIndex = 75 + 24 + 36
+     *   - Write ChunkIndex = 73
+     *   - Write Statistics = 55
+     *   - Write DataEnd + Write SummaryOffSets = 13 + 26*6
+     */
+    static constexpr std::uint64_t MCAP_FILE_OVERHEAD{450};
+
+    //! Additional overhead size for a MCAP message
+    static constexpr std::uint64_t MCAP_MESSAGE_OVERHEAD{31 + 8 + 8}; // Write Message + TimeStamp + TimeOffSet
+
+    //! Additional overhead size for a MCAP schema
+    static constexpr std::uint64_t MCAP_SCHEMAS_OVERHEAD{23}; // Write Schemas
+
+    //! Additional overhead size for a MCAP channel
+    static constexpr std::uint64_t MCAP_CHANNEL_OVERHEAD{25 + 10 + 10}; // Write Channel + messageIndexOffsetsSize + channelMessageCountsSize
+
+    //! Additional overhead size for a MCAP attachment
+    static constexpr std::uint64_t MCAP_ATTACHMENT_OVERHEAD{58 + 70}; // Write Attachment + Write AttachmentIndex
 };
 
 } /* namespace participants */
