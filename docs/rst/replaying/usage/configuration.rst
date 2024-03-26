@@ -398,7 +398,7 @@ Logging
 Under the ``logging`` tag, users can configure the type of logs to display and filter the logs based on their content and category.
 When configuring the verbosity to ``info``, all types of logs, including informational messages, warnings, and errors, will be displayed.
 Conversely, setting it to ``warning`` will only show warnings and errors, while choosing ``error`` will exclusively display errors.
-By default, the filter allows all errors to be displayed, while selectively permitting warning messages from ``DDSREPLAYER`` and informational messages from the ``DDSREPLAYER`` category.
+By default, the filter allows all errors to be displayed, while selectively permitting warning and informational messages from ``DDSREPLAYER`` category.
 
 .. code-block:: yaml
 
@@ -428,7 +428,7 @@ By default, the filter allows all errors to be displayed, while selectively perm
         - Show messages of equal |br|
           or higher importance.
         - *enum*
-        - ``warning``
+        - ``error``
         - ``info`` / ``warning`` / ``error``
 
     *   - Filter
