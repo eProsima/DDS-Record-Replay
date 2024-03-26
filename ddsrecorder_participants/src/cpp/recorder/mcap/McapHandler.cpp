@@ -89,6 +89,7 @@ McapHandler::McapHandler(
     : configuration_(config)
     , payload_pool_(payload_pool)
     , state_(McapHandlerStateCode::STOPPED)
+    , on_disk_full_lambda_set_(false)
 {
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "Creating MCAP handler instance.");
@@ -114,52 +115,79 @@ McapHandler::~McapHandler()
 void McapHandler::add_schema(
         const fastrtps::types::DynamicType_ptr& dynamic_type)
 {
-    std::lock_guard<std::mutex> lock(mtx_);
-
-    // NOTE: Process schemas even if in STOPPED state to avoid losing them (only sent/received once in discovery)
-
-    assert(nullptr != dynamic_type);
-
-    std::string type_name = dynamic_type->get_name();
-
-    // Check if it exists already
-    if (received_types_.find(type_name) != received_types_.end())
+    try
     {
-        return;
+        std::lock_guard<std::mutex> lock(mtx_);
+
+        // NOTE: Process schemas even if in STOPPED state to avoid losing them (only sent/received once in discovery)
+
+        assert(nullptr != dynamic_type);
+
+        std::string type_name = dynamic_type->get_name();
+
+        // Check if it exists already
+        if (received_types_.find(type_name) != received_types_.end())
+        {
+            return;
+        }
+
+        // Schema not found, generate from dynamic type and store
+        std::string schema_text =
+                configuration_.ros2_types ? msg::generate_ros2_schema(dynamic_type) : idl::generate_idl_schema(
+            dynamic_type);
+
+        logInfo(DDSRECORDER_MCAP_HANDLER, "\nAdding schema with name " << type_name << " :\n" << schema_text << "\n");
+
+        // Create schema and add it to writer and to schemas map
+        std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
+        mcap::Schema new_schema(configuration_.ros2_types ? utils::demangle_if_ros_type(dynamic_type->get_name()) :
+                dynamic_type->get_name(), encoding, schema_text);
+
+        auto pending_it = pending_topics_.find(type_name);
+        if (pending_it != pending_topics_.end())
+        {
+            for (const auto& topic_name : pending_topics_[type_name])
+            {
+                mcap_size_tracker_.decrease_mcap_size(mcap_size_tracker_.get_blank_channel_size(topic_name));
+            }
+            mcap_size_tracker_.decrease_mcap_size(mcap_size_tracker_.get_blank_schema_size(configuration_.ros2_types, type_name));
+            pending_topics_[type_name].clear();
+            pending_topics_.erase(pending_it);
+        }
+
+        //Check if there is enough space on disk to write the schema
+        mcap_size_tracker_.check_and_increase_mcap_size(new_schema);
+
+        // WARNING: passing as non-const to MCAP library
+        mcap_writer_.addSchema(new_schema);
+
+        logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << type_name << ".");
+
+        auto it = schemas_.find(type_name);
+        if (it != schemas_.end())
+        {
+            // Update channels previously created with blank schema
+            update_channels_nts_(it->second.id, new_schema.id);
+        }
+        schemas_[type_name] = std::move(new_schema);
+        received_types_.insert(type_name);
+
+        // Check if there are any pending samples for this new schema. If so, add them.
+        if ((pending_samples_.find(type_name) != pending_samples_.end()) ||
+                (state_ == McapHandlerStateCode::PAUSED &&
+                (pending_samples_paused_.find(type_name) != pending_samples_paused_.end())))
+        {
+            add_pending_samples_nts_(type_name);
+        }
+        // Every time an element of schemas_ (map of dynamic types with schemas) is added the attachment is newly calculated
+        save_and_serialize_dynamic_types_(type_name);
     }
-
-    // Schema not found, generate from dynamic type and store
-    std::string schema_text =
-            configuration_.ros2_types ? msg::generate_ros2_schema(dynamic_type) : idl::generate_idl_schema(
-        dynamic_type);
-
-    logInfo(DDSRECORDER_MCAP_HANDLER, "\nAdding schema with name " << type_name << " :\n" << schema_text << "\n");
-
-    // Create schema and add it to writer and to schemas map
-    std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
-    mcap::Schema new_schema(configuration_.ros2_types ? utils::demangle_if_ros_type(dynamic_type->get_name()) :
-            dynamic_type
-                    ->get_name(), encoding, schema_text);
-    // WARNING: passing as non-const to MCAP library
-    mcap_writer_.addSchema(new_schema);
-
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << type_name << ".");
-
-    auto it = schemas_.find(type_name);
-    if (it != schemas_.end())
+    catch (const std::overflow_error& e)
     {
-        // Update channels previously created with blank schema
-        update_channels_nts_(it->second.id, new_schema.id);
-    }
-    schemas_[type_name] = std::move(new_schema);
-    received_types_.insert(type_name);
+        logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to write on MCAP file. " << "Error message:\n " <<
+            e.what());
 
-    // Check if there are any pending samples for this new schema. If so, add them.
-    if ((pending_samples_.find(type_name) != pending_samples_.end()) ||
-            (state_ == McapHandlerStateCode::PAUSED &&
-            (pending_samples_paused_.find(type_name) != pending_samples_paused_.end())))
-    {
-        add_pending_samples_nts_(type_name);
+        on_disk_full_();
     }
 }
 
@@ -167,107 +195,145 @@ void McapHandler::add_data(
         const DdsTopic& topic,
         RtpsPayloadData& data)
 {
-    std::lock_guard<std::mutex> lock(mtx_);
-
-    if (state_ == McapHandlerStateCode::STOPPED)
+    try
     {
-        logInfo(DDSRECORDER_MCAP_HANDLER, "Attempting to add sample through a stopped handler, dropping...");
-        return;
-    }
-
-    logInfo(
-        DDSRECORDER_MCAP_HANDLER,
-        "Adding data in topic " << topic);
-
-    // Add data to channel
-    Message msg;
-    msg.sequence = unique_sequence_number_++;
-    msg.publishTime = fastdds_timestamp_to_mcap_timestamp(data.source_timestamp);
-    if (configuration_.log_publishTime)
-    {
-        msg.logTime = msg.publishTime;
-    }
-    else
-    {
-        msg.logTime = now();
-    }
-    msg.dataSize = data.payload.length;
-
-    if (data.payload.length > 0)
-    {
-        auto payload_owner =
-                const_cast<eprosima::fastrtps::rtps::IPayloadPool*>((eprosima::fastrtps::rtps::IPayloadPool*)data.
-                        payload_owner);
-
-        if (payload_owner)
+        std::unique_lock<std::mutex> lock(mtx_);
+        if (state_ == McapHandlerStateCode::STOPPED)
         {
-            payload_pool_->get_payload(
-                data.payload,
-                payload_owner,
-                msg.payload);
+            logInfo(DDSRECORDER_MCAP_HANDLER, "Attempting to add sample through a stopped handler, dropping...");
+            return;
+        }
 
-            msg.payload_owner = payload_pool_.get();
-            msg.data = reinterpret_cast<std::byte*>(msg.payload.data);
+        logInfo(
+            DDSRECORDER_MCAP_HANDLER,
+            "Adding data in topic " << topic);
+
+        // Add data to channel
+        Message msg;
+        msg.sequence = unique_sequence_number_++;
+        msg.publishTime = fastdds_timestamp_to_mcap_timestamp(data.source_timestamp);
+        if (configuration_.log_publishTime)
+        {
+            msg.logTime = msg.publishTime;
+        }
+        else
+        {
+            msg.logTime = now();
+        }
+        msg.dataSize = data.payload.length;
+
+        if (data.payload.length > 0)
+        {
+            auto payload_owner =
+                    const_cast<eprosima::fastrtps::rtps::IPayloadPool*>((eprosima::fastrtps::rtps::IPayloadPool*)data.
+                            payload_owner);
+
+            if (payload_owner)
+            {
+                payload_pool_->get_payload(
+                    data.payload,
+                    payload_owner,
+                    msg.payload);
+
+                msg.payload_owner = payload_pool_.get();
+                msg.data = reinterpret_cast<std::byte*>(msg.payload.data);
+            }
+            else
+            {
+                throw utils::InconsistencyException(
+                        STR_ENTRY << "Payload owner not found in data received."
+                        );
+            }
         }
         else
         {
             throw utils::InconsistencyException(
-                      STR_ENTRY << "Payload owner not found in data received."
-                      );
+                    STR_ENTRY << "Received sample with no payload."
+                    );
         }
-    }
-    else
-    {
-        throw utils::InconsistencyException(
-                  STR_ENTRY << "Received sample with no payload."
-                  );
-    }
 
-    if (received_types_.count(topic.type_name) != 0)
-    {
-        // Schema available -> add to buffer
-        add_data_nts_(msg, topic);
-    }
-    else
-    {
-        if (state_ == McapHandlerStateCode::RUNNING)
+        if (received_types_.count(topic.type_name) != 0)
         {
-            if (configuration_.max_pending_samples == 0)
-            {
-                if (configuration_.only_with_schema)
-                {
-                    // No schema available + no pending samples + only_with_schema -> Discard message
-                    return;
-                }
-                else
-                {
-                    // No schema available + no pending samples -> Add to buffer with blank schema
-                    add_data_nts_(msg, topic);
-                }
-            }
-            else
-            {
-                logInfo(
-                    DDSRECORDER_MCAP_HANDLER,
-                    "Schema for topic " << topic << " not yet available, inserting to pending samples queue.");
-
-                add_to_pending_nts_(msg, topic);
-            }
-        }
-        else if (state_ == McapHandlerStateCode::PAUSED)
-        {
-            logInfo(
-                DDSRECORDER_MCAP_HANDLER,
-                "Schema for topic " << topic << " not yet available, inserting to (paused) pending samples queue.");
-
-            pending_samples_paused_[topic.type_name].push_back({topic, msg});
+            // Schema available -> add to buffer
+            // Check if there is enough space available before adding the message to buffer
+            mcap_size_tracker_.check_and_increase_mcap_size(msg.dataSize);
+            add_data_nts_(msg, topic);
         }
         else
         {
-            // Should not happen, protected with mutex and state verified at beginning
-            utils::tsnh(
-                utils::Formatter() << "Trying to add sample from a stopped instance.");
+            if (state_ == McapHandlerStateCode::RUNNING)
+            {
+                if (configuration_.max_pending_samples == 0)
+                {
+                    if (configuration_.only_with_schema)
+                    {
+                        // No schema available + no pending samples + only_with_schema -> Discard message
+                        return;
+                    }
+                    else
+                    {
+                        // No schema available + no pending samples -> Add to buffer with blank schema
+                        mcap_size_tracker_.check_and_increase_mcap_size(msg.dataSize);
+
+                        if (pending_topics_.find(topic.type_name) == pending_topics_.end())
+                        {
+                            pending_topics_[topic.type_name].insert(topic.m_topic_name);
+                            mcap_size_tracker_.check_and_increase_mcap_size_final(mcap_size_tracker_.get_blank_schema_size(configuration_.ros2_types, topic.type_name));
+                            mcap_size_tracker_.check_and_increase_mcap_size_final(mcap_size_tracker_.get_blank_channel_size(topic.m_topic_name));
+                        }
+                        else if (!pending_topics_[topic.type_name].count(topic.m_topic_name))
+                        {
+                            pending_topics_[topic.type_name].insert(topic.m_topic_name);
+                            mcap_size_tracker_.check_and_increase_mcap_size_final(mcap_size_tracker_.get_blank_channel_size(topic.m_topic_name));
+                        }
+
+                        add_data_nts_(msg, topic);
+                    }
+                }
+                else
+                {
+                    logInfo(
+                        DDSRECORDER_MCAP_HANDLER,
+                        "Schema for topic " << topic << " not yet available, inserting to pending samples queue.");
+
+                    mcap_size_tracker_.check_and_increase_mcap_size(msg.dataSize);
+
+                    if (pending_topics_.find(topic.type_name) == pending_topics_.end())
+                    {
+                        pending_topics_[topic.type_name].insert(topic.m_topic_name);
+                        mcap_size_tracker_.check_and_increase_mcap_size_final(mcap_size_tracker_.get_blank_schema_size(configuration_.ros2_types, topic.type_name));
+                        mcap_size_tracker_.check_and_increase_mcap_size_final(mcap_size_tracker_.get_blank_channel_size(topic.m_topic_name));
+                    }
+                    else if (!pending_topics_[topic.type_name].count(topic.m_topic_name))
+                    {
+                        pending_topics_[topic.type_name].insert(topic.m_topic_name);
+                        mcap_size_tracker_.check_and_increase_mcap_size_final(mcap_size_tracker_.get_blank_channel_size(topic.m_topic_name));
+                    }
+                    add_to_pending_nts_(msg, topic);
+                }
+            }
+            else if (state_ == McapHandlerStateCode::PAUSED)
+            {
+                logInfo(
+                    DDSRECORDER_MCAP_HANDLER,
+                    "Schema for topic " << topic << " not yet available, inserting to (paused) pending samples queue.");
+
+                pending_samples_paused_[topic.type_name].push_back({topic, msg});
+            }
+            else
+            {
+                // Should not happen, protected with mutex and state verified at beginning
+                utils::tsnh(
+                    utils::Formatter() << "Trying to add sample from a stopped instance.");
+            }
         }
+    }
+    catch (const std::overflow_error& e)
+    {
+        logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to write on MCAP file. " << "Error message:\n " <<
+            e.what());
+
+        on_disk_full_();
     }
 }
 
@@ -288,7 +354,6 @@ void McapHandler::start()
     // Store previous state to act differently depending on its value
     McapHandlerStateCode prev_state = state_;
     state_ = McapHandlerStateCode::RUNNING;
-
     if (prev_state == McapHandlerStateCode::RUNNING)
     {
         logWarning(
@@ -303,7 +368,15 @@ void McapHandler::start()
 
         if (prev_state == McapHandlerStateCode::STOPPED)
         {
-            open_file_nts_();
+            try
+            {
+                open_file_nts_();
+            }
+            catch (const utils::InitializationException& e)
+            {
+                logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_OPEN | Failed to open MCAP file. " << "Error message:\n " <<
+                    e.what());
+            }
         }
         else if (prev_state == McapHandlerStateCode::PAUSED)
         {
@@ -331,7 +404,6 @@ void McapHandler::stop(
     // Store previous state to act differently depending on its value
     McapHandlerStateCode prev_state = state_;
     state_ = McapHandlerStateCode::STOPPED;
-
     if (prev_state == McapHandlerStateCode::STOPPED)
     {
         if (!on_destruction)
@@ -365,7 +437,6 @@ void McapHandler::stop(
         }
         dump_data_nts_();  // if prev_state == RUNNING -> writes buffer + added pending samples (if !only_with_schema)
                            // if prev_state == PAUSED  -> writes added pending samples (if !only_with_schema)
-
         // Close and rename MCAP file
         close_file_nts_();
 
@@ -405,7 +476,15 @@ void McapHandler::pause()
 
         if (prev_state == McapHandlerStateCode::STOPPED)
         {
-            open_file_nts_();
+            try
+            {
+                open_file_nts_();
+            }
+            catch (const utils::InitializationException& e)
+            {
+                logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_OPEN | Failed to open MCAP file. " << "Error message:\n " <<
+                    e.what());
+            }
         }
         else if (prev_state == McapHandlerStateCode::RUNNING)
         {
@@ -458,7 +537,7 @@ void McapHandler::trigger_event()
 mcap::Timestamp McapHandler::fastdds_timestamp_to_mcap_timestamp(
         const DataTime& time)
 {
-    uint64_t mcap_time = time.seconds();
+    std::uint64_t mcap_time = time.seconds();
     mcap_time *= 1000000000;
     return mcap_time + time.nanosec();
 }
@@ -472,6 +551,18 @@ mcap::Timestamp McapHandler::std_timepoint_to_mcap_timestamp(
 mcap::Timestamp McapHandler::now()
 {
     return std_timepoint_to_mcap_timestamp(utils::now());
+}
+
+void McapHandler::set_on_disk_full_callback(
+        std::function<void()> on_disk_full_lambda) noexcept
+{
+    if (on_disk_full_lambda_set_)
+    {
+        logInfo(DDSRECORDER_MCAP_HANDLER, "Changing on_disk_full callback");
+    }
+
+    on_disk_full_lambda_ = on_disk_full_lambda;
+    on_disk_full_lambda_set_ = true;
 }
 
 void McapHandler::open_file_nts_()
@@ -505,6 +596,9 @@ void McapHandler::open_file_nts_()
                   STR_ENTRY << "Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
     }
 
+    // Check available space in disk when opening file
+    mcap_size_tracker_.check_available_space(configuration_.mcap_output_settings.output_filepath);
+
     // Write in new file schemas already received before
     // NOTE: This is necessary since dynamic types are only sent/received once on discovery
     if (!schemas_.empty())
@@ -516,7 +610,6 @@ void McapHandler::open_file_nts_()
 void McapHandler::close_file_nts_()
 {
     std::string tmp_filename = tmp_filename_(mcap_filename_);
-
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "Closing file <" << tmp_filename << "> .");
 
@@ -526,7 +619,7 @@ void McapHandler::close_file_nts_()
     // Serialize and store dynamic types associated to all added schemas
     if (configuration_.record_types)
     {
-        store_dynamic_types_();
+        write_attachment_();
     }
 
     // Close writer and output file
@@ -554,7 +647,7 @@ void McapHandler::add_data_nts_(
         }
         catch (const utils::InconsistencyException& e)
         {
-            logError(DDSRECORDER_MCAP_HANDLER, "Error writting message in channel " << msg.channelId << ". Error message:\n " <<
+            logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Error writting message in channel " << msg.channelId << ". Error message:\n " <<
                     e.what());
         }
     }
@@ -591,11 +684,12 @@ void McapHandler::add_data_nts_(
 void McapHandler::write_message_nts_(
         const Message& msg)
 {
-    auto status = mcap_writer_.write(msg);
+    mcap::Status status;
+    status = mcap_writer_.write(msg);
     if (!status.ok())
     {
         throw utils::InconsistencyException(
-                  STR_ENTRY << "Error writting in MCAP, error message: " << status.message
+                  STR_ENTRY << "FAIL_MCAP_WRITE | Error writting in MCAP, error message: " << status.message
                   );
     }
 }
@@ -634,7 +728,6 @@ void McapHandler::add_pending_samples_nts_(
         const std::string& schema_name)
 {
     logInfo(DDSRECORDER_MCAP_HANDLER, "Adding pending samples for type: " << schema_name << ".");
-
     if (pending_samples_.find(schema_name) != pending_samples_.end())
     {
         // Move samples from pending_samples to buffer
@@ -643,7 +736,6 @@ void McapHandler::add_pending_samples_nts_(
         add_pending_samples_nts_(pending_samples_[schema_name], state_ == McapHandlerStateCode::PAUSED);
         pending_samples_.erase(schema_name);
     }
-
     if (state_ == McapHandlerStateCode::PAUSED &&
             (pending_samples_paused_.find(schema_name) != pending_samples_paused_.end()))
     {
@@ -855,6 +947,7 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
 
             std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
             mcap::Schema blank_schema(topic.type_name, encoding, "");
+            // Add schema reserved space to write it on MCAP
             mcap_writer_.addSchema(blank_schema);
             schemas_.insert({topic.type_name, std::move(blank_schema)});
 
@@ -875,6 +968,17 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     // Set ROS2_TYPES to "false" if the given topic_name is equal to topic.m_topic_name, otherwise set it to "true".
     metadata[ROS2_TYPES] = topic_name.compare(topic.m_topic_name) ? "true" : "false";
     mcap::Channel new_channel(topic_name, "cdr", schema_id, metadata);
+    if (pending_topics_.find(topic.type_name) != pending_topics_.end())
+    {
+        if (!pending_topics_[topic.type_name].count(topic.m_topic_name))
+        {
+            mcap_size_tracker_.check_and_increase_mcap_size(new_channel, mcap::internal::KeyValueMapSize(new_channel.metadata));
+        }
+    }
+    else
+    {
+        mcap_size_tracker_.check_and_increase_mcap_size(new_channel, mcap::internal::KeyValueMapSize(new_channel.metadata));
+    }
     mcap_writer_.addChannel(new_channel);
     auto channel_id = new_channel.id;
     channels_.insert({topic, std::move(new_channel)});
@@ -908,6 +1012,8 @@ void McapHandler::update_channels_nts_(
 
             assert(channel.first.m_topic_name == channel.second.topic);
             mcap::Channel new_channel(channel.second.topic, "cdr", new_schema_id, channel.second.metadata);
+            // Check if there is enough space available to write the channel
+            mcap_size_tracker_.check_and_increase_mcap_size(new_channel, mcap::internal::KeyValueMapSize(new_channel.metadata));
             mcap_writer_.addChannel(new_channel);
             channel.second = std::move(new_channel);
         }
@@ -939,6 +1045,9 @@ void McapHandler::rewrite_schemas_nts_()
         std::string type_name = schema.first;
         mcap::Schema new_schema = schema.second;
 
+        // Check if there is enough space available to write the schema
+        mcap_size_tracker_.check_and_increase_mcap_size(new_schema);
+
         // WARNING: passing as non-const to MCAP library
         mcap_writer_.addSchema(new_schema);
         new_schemas[type_name] = std::move(new_schema);
@@ -950,89 +1059,67 @@ void McapHandler::rewrite_schemas_nts_()
     schemas_ = new_schemas;
 }
 
-void McapHandler::store_dynamic_types_()
+void McapHandler::save_and_serialize_dynamic_types_(
+        const std::string& type_name)
 {
-    auto type_names = utils::get_keys(schemas_);
-    DynamicTypesCollection dynamic_types;
+    const eprosima::fastrtps::types::TypeIdentifier* type_identifier = nullptr;
+    const eprosima::fastrtps::types::TypeObject* type_object = nullptr;
+    const eprosima::fastrtps::types::TypeInformation* type_information = nullptr;
 
-    for (auto& type_name: type_names)
+    type_information =
+            eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_information(type_name);
+    if (type_information != nullptr)
     {
-        const eprosima::fastrtps::types::TypeIdentifier* type_identifier = nullptr;
-        const eprosima::fastrtps::types::TypeObject* type_object = nullptr;
-        const eprosima::fastrtps::types::TypeInformation* type_information = nullptr;
-
-        type_information =
-                eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_information(type_name);
-        if (type_information != nullptr)
+        auto dependencies = type_information->complete().dependent_typeids();
+        std::string dependency_name;
+        unsigned int dependency_index = 0;
+        for (auto dependency: dependencies)
         {
-            auto dependencies = type_information->complete().dependent_typeids();
-            std::string dependency_name;
-            unsigned int dependency_index = 0;
-            for (auto dependency: dependencies)
+            type_identifier = &dependency.type_id();
+            type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(
+                type_identifier);
+            dependency_name = type_name + "_" + std::to_string(dependency_index);
+
+            // Store dynamic type in dynamic_types_
+            if (type_identifier != nullptr && type_object != nullptr)
             {
-                type_identifier = &dependency.type_id();
-                type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(
-                    type_identifier);
-                dependency_name = type_name + "_" + std::to_string(dependency_index);
+                DynamicType dynamic_type;
+                dynamic_type.type_name(type_name);
+                dynamic_type.type_information(utils::base64_encode(serialize_type_identifier_(type_identifier)));
+                dynamic_type.type_object(utils::base64_encode(serialize_type_object_(type_object)));
 
-                // Serialize dynamic type in a string and store in map
-                store_dynamic_type_(type_identifier, type_object, dependency_name, dynamic_types);
-
-                // Increment suffix counter
-                dependency_index++;
+                dynamic_types_.dynamic_types().push_back(dynamic_type);
             }
-        }
-        type_identifier = nullptr;
-        type_object = nullptr;
 
-        type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(type_name,
-                        true);
-        if (type_identifier)
-        {
-            type_object =
-                    eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name, true);
+            // Increment suffix counter
+            dependency_index++;
         }
-
-        // If complete not found, try with minimal
-        if (!type_object)
-        {
-            type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(
-                type_name, false);
-            if (type_identifier)
-            {
-                type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name,
-                                false);
-            }
-        }
-
-        // Serialize dynamic type in a string and store in map
-        store_dynamic_type_(type_identifier, type_object, type_name, dynamic_types);
     }
 
-    // Serialize dynamic types collection using CDR
-    eprosima::fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
-    eprosima::fastrtps::rtps::SerializedPayload_t serialized_payload =
-            eprosima::fastrtps::rtps::SerializedPayload_t(
-        type_support.get_serialized_size_provider(&dynamic_types)());
-    type_support.serialize(&dynamic_types, &serialized_payload);
+    type_identifier = nullptr;
+    type_object = nullptr;
 
-    // Write serialized dynamic types into attachments section
-    mcap::Attachment dynamic_attachment;
-    dynamic_attachment.name = DYNAMIC_TYPES_ATTACHMENT_NAME;
-    dynamic_attachment.data = reinterpret_cast<std::byte*>(serialized_payload.data);
-    dynamic_attachment.dataSize = serialized_payload.length;
-    dynamic_attachment.createTime = now();
-    auto status = mcap_writer_.write(dynamic_attachment);
+    type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(type_name,
+                    true);
+    if (type_identifier)
+    {
+        type_object =
+                eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name, true);
+    }
 
-    return;
-}
+    // If complete not found, try with minimal
+    if (!type_object)
+    {
+        type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(
+            type_name, false);
+        if (type_identifier)
+        {
+            type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name,
+                            false);
+        }
+    }
 
-void McapHandler::store_dynamic_type_(
-        const eprosima::fastrtps::types::TypeIdentifier* type_identifier,
-        const eprosima::fastrtps::types::TypeObject* type_object,
-        const std::string& type_name,
-        DynamicTypesCollection& dynamic_types)
-{
+    // Store dynamic type in dynamic_types_
     if (type_identifier != nullptr && type_object != nullptr)
     {
         DynamicType dynamic_type;
@@ -1040,8 +1127,35 @@ void McapHandler::store_dynamic_type_(
         dynamic_type.type_information(utils::base64_encode(serialize_type_identifier_(type_identifier)));
         dynamic_type.type_object(utils::base64_encode(serialize_type_object_(type_object)));
 
-        dynamic_types.dynamic_types().push_back(dynamic_type);
+        dynamic_types_.dynamic_types().push_back(dynamic_type);
     }
+
+    // Serialize dynamic types collection using CDR
+    eprosima::fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
+    eprosima::fastrtps::rtps::SerializedPayload_t* new_payload = new eprosima::fastrtps::rtps::SerializedPayload_t(
+        type_support.get_serialized_size_provider(&dynamic_types_)());
+    dynamic_attachment_serialized_payload_.reset(new_payload);
+    type_support.serialize(&dynamic_types_, dynamic_attachment_serialized_payload_.get());
+
+    // Recalculate attachment_size_ when serializing dynamic_types_
+    mcap_size_tracker_.decrease_mcap_size(attachment_size_);
+    attachment_size_ = mcap_size_tracker_.get_attachment_size(dynamic_attachment_serialized_payload_);
+    // Check if there is enough space available to write the schema
+    mcap_size_tracker_.check_and_increase_mcap_size_final(attachment_size_);
+
+}
+
+void McapHandler::write_attachment_()
+{
+    // Write serialized dynamic types into attachments section
+    mcap::Attachment dynamic_attachment;
+    dynamic_attachment.name = DYNAMIC_TYPES_ATTACHMENT_NAME;
+    dynamic_attachment.data = reinterpret_cast<std::byte*>(dynamic_attachment_serialized_payload_->data);
+    dynamic_attachment.dataSize = dynamic_attachment_serialized_payload_->length;
+    dynamic_attachment.createTime = now();
+    auto status = mcap_writer_.write(dynamic_attachment);
+
+    return;
 }
 
 void McapHandler::write_version_metadata_()
@@ -1056,6 +1170,18 @@ void McapHandler::write_version_metadata_()
     version_metadata.name = VERSION_METADATA_NAME;
     version_metadata.metadata = version;
     auto status = mcap_writer_.write(version_metadata);
+}
+
+void McapHandler::on_disk_full_() const noexcept
+{
+    if (on_disk_full_lambda_set_)
+    {
+        on_disk_full_lambda_();
+    }
+    else
+    {
+        logError(DDSRECORDER_MCAP_HANDLER, "Calling not set on_disk_full callback");
+    }
 }
 
 std::string McapHandler::tmp_filename_(

@@ -17,8 +17,9 @@
 #include <memory>
 #include <set>
 
-#include <cpp_utils/thread_pool/pool/SlotThreadPool.hpp>
+#include <cpp_utils/event/MultipleEventHandler.hpp>
 #include <cpp_utils/ReturnCode.hpp>
+#include <cpp_utils/thread_pool/pool/SlotThreadPool.hpp>
 
 #include <ddspipe_core/core/DdsPipe.hpp>
 #include <ddspipe_core/dynamic/AllowedTopicList.hpp>
@@ -68,7 +69,8 @@ public:
     DdsRecorder(
             const yaml::RecorderConfiguration& configuration,
             const DdsRecorderStateCode& init_state,
-            const std::string& file_name = "");
+            const std::string& file_name = "",
+            std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler = nullptr);
 
     /**
      * Reconfigure the Recorder with the new configuration.
@@ -95,6 +97,9 @@ public:
 
     //! Trigger event (in \c mcap_handler_)
     void trigger_event();
+
+    //! TODO
+    void on_disk_full_();
 
 protected:
 
@@ -138,6 +143,8 @@ protected:
 
     //! Monitor
     std::unique_ptr<ddspipe::core::Monitor> monitor_;
+    //! TODO
+    std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler_;
 };
 
 } /* namespace recorder */

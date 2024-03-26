@@ -19,8 +19,11 @@
 #pragma once
 
 #include <condition_variable>
+#include <cstdint>
+#include <filesystem>
 #include <list>
 #include <map>
+#include <stdexcept>
 #include <thread>
 
 #include <mcap/mcap.hpp>
@@ -38,6 +41,7 @@
 
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
+#include <ddsrecorder_participants/recorder/size_tracker/McapSizeTracker.hpp>
 
 #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
     #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
@@ -255,6 +259,16 @@ public:
     DDSRECORDER_PARTICIPANTS_DllAPI
     static mcap::Timestamp now();
 
+    /**
+     * @brief Set the callback that should be called whenever disk is full
+     *
+     * It sets \c on_disk_full_lambda_set_ to true
+     *
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    void set_on_disk_full_callback(
+            std::function<void()> on_disk_full_lambda) noexcept;
+
 protected:
 
     //! Flag code controlling the event thread routine
@@ -267,6 +281,8 @@ protected:
 
     /**
      * @brief Open a new MCAP file according to configuration settings.
+     *
+     * @throw InitializationException if failing to open file.
      *
      * A temporal suffix is appended after the '.mcap' extension, and additionally a timestamp prefix if applies.
      *
@@ -448,24 +464,23 @@ protected:
     void rewrite_schemas_nts_();
 
     /**
-     * @brief Store in MCAP attachments the dynamic types associated to all added schemas, and their dependencies.
+     * @brief Save and serialize dynamic tipes.
      *
+     * Its main purpose is to generate dynamic type from type_name, save it in \c dynamic_types_ and serialize the
+     * updated list of dynamic typesby generating a DynamicTypesCollection and serializing it.
+     *
+     * @param [in] type_name Name of the dynamic type to generate
      */
-    void store_dynamic_types_();
+    void save_and_serialize_dynamic_types_(
+        const std::string& type_name);
 
     /**
-     * @brief Serialize type identifier and object, and insert the result into a \c DynamicTypesCollection .
+     * @brief Write in MCAP attachments.
      *
-     * @param [in] type_identifier Type identifier to be serialized and stored.
-     * @param [in] type_object Type object to be serialized and stored.
-     * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
-     * @param [in,out] dynamic_types Collection where to store serialized dynamic type.
+     * Its main purpose is to write the dynamic types associated to all added schemas, and their dependencies.
+     *
      */
-    void store_dynamic_type_(
-            const eprosima::fastrtps::types::TypeIdentifier* type_identifier,
-            const eprosima::fastrtps::types::TypeObject* type_object,
-            const std::string& type_name,
-            DynamicTypesCollection& dynamic_types);
+    void write_attachment_();
 
     /**
      * @brief Write version metadata (release and commit hash) in MCAP file.
@@ -480,6 +495,14 @@ protected:
      */
     static std::string tmp_filename_(
             const std::string& filename);
+
+    /**
+     * @brief Call whenever disk is full
+     *
+     * It calls the \c on_disk_full_lambda_
+     *
+     */
+    void on_disk_full_() const noexcept;
 
     /**
      * @brief Serialize a \c TopicQoS struct into a string.
@@ -511,6 +534,9 @@ protected:
     //! Handler configuration
     McapHandlerConfiguration configuration_;
 
+    //! Serialized payload of the dynamic types
+    std::unique_ptr<fastrtps::rtps::SerializedPayload_t> dynamic_attachment_serialized_payload_;
+
     //! Name of open MCAP file
     std::string mcap_filename_;
 
@@ -522,6 +548,9 @@ protected:
 
     //! MCAP writer
     mcap::McapWriter mcap_writer_;
+
+    //! MCAP size tracker
+    participants::McapSizeTracker mcap_size_tracker_;
 
     //! Schemas map
     std::map<std::string, mcap::Schema> schemas_;
@@ -535,11 +564,20 @@ protected:
     //! Samples buffer
     std::list<Message> samples_buffer_;
 
+    //! Dynamic types
+    DynamicTypesCollection dynamic_types_;
+
+    //! Dynamic types reserved storage
+    std::uint64_t attachment_size_{0};
+
     //! Structure where messages (received in RUNNING state) with unknown type are kept
     std::map<std::string, pending_list> pending_samples_;
 
     //! Structure where messages (received in PAUSED state) with unknown type are kept
     std::map<std::string, pending_list> pending_samples_paused_;
+
+    //! Pending topics map
+    std::map<std::string, std::set<std::string>> pending_topics_;
 
     //! Mutex synchronizing state transitions and access to object's data structures
     std::mutex mtx_;
@@ -558,6 +596,12 @@ protected:
 
     //! Unique sequence number assigned to received messages. It is incremented with every sample added.
     unsigned int unique_sequence_number_{0};
+
+    //! Lambda to call the callback whenever a new data arrives
+    std::function<void()> on_disk_full_lambda_;
+
+    //! True if lambda callback is set
+    bool on_disk_full_lambda_set_;
 };
 
 } /* namespace participants */
