@@ -87,9 +87,9 @@ add_blackbox_executable(
 )
 
 
-#########################
+########################
 # Mcap Log Error Tests #
-#########################
+########################
 
 set(TEST_NAME McapLogErrorTests)
 

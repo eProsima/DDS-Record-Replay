@@ -20,10 +20,8 @@
 
 #include <condition_variable>
 #include <cstdint>
-#include <filesystem>
 #include <list>
 #include <map>
-#include <stdexcept>
 #include <thread>
 
 #include <mcap/mcap.hpp>
@@ -41,7 +39,7 @@
 
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
-#include <ddsrecorder_participants/recorder/size_tracker/McapSizeTracker.hpp>
+#include <ddsrecorder_participants/recorder/mcap/McapSizeTracker.hpp>
 
 #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
     #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
@@ -463,24 +461,41 @@ protected:
      */
     void rewrite_schemas_nts_();
 
+    // TODO
     /**
-     * @brief Save and serialize dynamic tipes.
+     * @brief Save and serialize dynamic types.
      *
      * Its main purpose is to generate dynamic type from type_name, save it in \c dynamic_types_ and serialize the
-     * updated list of dynamic typesby generating a DynamicTypesCollection and serializing it.
+     * updated list of dynamic types by generating a DynamicTypesCollection and serializing it.
      *
      * @param [in] type_name Name of the dynamic type to generate
      */
-    void save_and_serialize_dynamic_types_(
-        const std::string& type_name);
+    void store_dynamic_type_(
+            const std::string& type_name,
+            DynamicTypesCollection& dynamic_types) const;
 
+    void store_dynamic_type_(
+            const eprosima::fastrtps::types::TypeIdentifier* type_identifier,
+            const eprosima::fastrtps::types::TypeObject* type_object,
+            const std::string& type_name,
+            DynamicTypesCollection& dynamic_types) const;
+
+    // TODO
+    fastrtps::rtps::SerializedPayload_t* serialize_dynamic_types_(
+            DynamicTypesCollection& dynamic_types) const;
+
+    // TODO
+    void add_dynamic_type_(
+            const std::string& type_name);
+
+    // TODO
     /**
      * @brief Write in MCAP attachments.
      *
      * Its main purpose is to write the dynamic types associated to all added schemas, and their dependencies.
      *
      */
-    void write_attachment_();
+    void write_dynamic_types_();
 
     /**
      * @brief Write version metadata (release and commit hash) in MCAP file.
@@ -499,7 +514,7 @@ protected:
     /**
      * @brief Call whenever disk is full
      *
-     * It calls the \c on_disk_full_lambda_
+     * It calls \c on_disk_full_lambda_ if set
      *
      */
     void on_disk_full_() const noexcept;
@@ -534,9 +549,6 @@ protected:
     //! Handler configuration
     McapHandlerConfiguration configuration_;
 
-    //! Serialized payload of the dynamic types
-    std::unique_ptr<fastrtps::rtps::SerializedPayload_t> dynamic_attachment_serialized_payload_;
-
     //! Name of open MCAP file
     std::string mcap_filename_;
 
@@ -550,7 +562,7 @@ protected:
     mcap::McapWriter mcap_writer_;
 
     //! MCAP size tracker
-    participants::McapSizeTracker mcap_size_tracker_;
+    McapSizeTracker mcap_size_tracker_;
 
     //! Schemas map
     std::map<std::string, mcap::Schema> schemas_;
@@ -564,8 +576,11 @@ protected:
     //! Samples buffer
     std::list<Message> samples_buffer_;
 
-    //! Dynamic types
+    //! Dynamic types collection
     DynamicTypesCollection dynamic_types_;
+
+    //! Serialized payload for dynamic types collection (dynamic_types_)
+    std::unique_ptr<fastrtps::rtps::SerializedPayload_t> dynamic_types_payload_;
 
     //! Dynamic types reserved storage
     std::uint64_t attachment_size_{0};
@@ -597,7 +612,7 @@ protected:
     //! Unique sequence number assigned to received messages. It is incremented with every sample added.
     unsigned int unique_sequence_number_{0};
 
-    //! Lambda to call the callback whenever a new data arrives
+    //! Lambda to call when disk limit is reached
     std::function<void()> on_disk_full_lambda_;
 
     //! True if lambda callback is set
