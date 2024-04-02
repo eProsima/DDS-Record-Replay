@@ -69,7 +69,9 @@ TEST(McapLogErrorTests, fail_to_open_file) {
             eprosima::ddsrecorder::participants::McapHandlerStateCode::RUNNING;
 
     // Check if an InitializationException is thrown
-    eprosima::ddsrecorder::participants::McapHandler mcap_handler(config, payload_pool, init_state);
+    ASSERT_THROW(
+        eprosima::ddsrecorder::participants::McapHandler mcap_handler(config, payload_pool, init_state),
+        eprosima::utils::InitializationException);
 
     // Assert that logErrors were captured
     ASSERT_TRUE(log_checker.check_valid());
