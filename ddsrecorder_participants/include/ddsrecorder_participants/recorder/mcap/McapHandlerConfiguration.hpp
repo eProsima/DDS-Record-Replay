@@ -41,6 +41,9 @@ struct McapOutputSettings
 
     //! Whether to use local or global timestamp
     bool output_local_timestamp;
+
+    //! Safety margin on MCAP file's size estimation
+    uint64_t safety_margin;
 };
 
 /**

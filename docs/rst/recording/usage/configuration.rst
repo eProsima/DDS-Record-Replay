@@ -332,6 +332,13 @@ The recorder output file does support the following configuration settings under
         - ``boolean``
         - ``true``
 
+    *   - Safety margin
+        - ``safety_margin``
+        - Configure safety margin (bytes) used |br|
+          in MCAP file size estimations.
+        - ``unsigned int``
+        - ``0``
+
 When DDS Recorder application is launched (or when remotely controlled, every time a ``start/pause`` command is received while in ``SUSPENDED/STOPPED`` state), a temporary file with ``filename`` name (+timestamp prefix) and ``.mcap.tmp~`` extension is created in ``path``.
 This file is not readable until the application is terminated (or a ``suspend/stop/close`` command is received).
 On such event, the temporal file is renamed to have ``.mcap`` extension in the same location, and is then ready to be processed.
@@ -794,6 +801,7 @@ A complete example of all the configurations described on this page can be found
         path: "."
         timestamp-format: "%Y-%m-%d_%H-%M-%S_%Z"
         local-timestamp: false
+        safety-margin: 500
 
       buffer-size: 50
       event-window: 60

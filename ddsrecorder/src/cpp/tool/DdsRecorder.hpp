@@ -69,8 +69,23 @@ public:
     DdsRecorder(
             const yaml::RecorderConfiguration& configuration,
             const DdsRecorderStateCode& init_state,
-            const std::string& file_name = "",
-            std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler = nullptr);
+            const std::string& file_name = "");
+
+    /**
+     * DdsRecorder constructor by required values and event handler reference.
+     *
+     * Creates DdsRecorder instance with given configuration, initial state and mcap file name.
+     *
+     * @param configuration: Structure encapsulating all recorder configuration options.
+     * @param init_state:    Initial instance state (RUNNING/PAUSED/SUSPENDED/STOPPED).
+     * @param event_handler: Reference to event handler used for thread synchronization in main application.
+     * @param file_name:     Name of the mcap file where data is recorded. If not provided, the one from configuration is used instead.
+     */
+    DdsRecorder(
+            const yaml::RecorderConfiguration& configuration,
+            const DdsRecorderStateCode& init_state,
+            std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler,
+            const std::string& file_name = "");
 
     /**
      * Reconfigure the Recorder with the new configuration.
@@ -98,8 +113,8 @@ public:
     //! Trigger event (in \c mcap_handler_)
     void trigger_event();
 
-    //! TODO
-    void on_disk_full_();
+    //! Callback to execute when disk is full
+    void on_disk_full();
 
 protected:
 
@@ -143,7 +158,8 @@ protected:
 
     //! Monitor
     std::unique_ptr<ddspipe::core::Monitor> monitor_;
-    //! TODO
+
+    //! Reference to event handler used for thread synchronization in main application
     std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler_;
 };
 
