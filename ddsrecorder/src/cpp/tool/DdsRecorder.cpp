@@ -45,8 +45,8 @@ DdsRecorder::DdsRecorder(
         const DdsRecorderStateCode& init_state,
         std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler,
         const std::string& file_name)
-    : configuration_(configuration),
-      event_handler_(event_handler)
+    : configuration_(configuration)
+    , event_handler_(event_handler)
 {
     load_internal_topics_(configuration_);
 

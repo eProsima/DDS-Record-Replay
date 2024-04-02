@@ -59,12 +59,12 @@ public:
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void init(
-        const std::string& path,
-        const uint64_t& safety_margin);
+            const std::string& path,
+            const uint64_t& safety_margin);
 
     DDSRECORDER_PARTICIPANTS_DllAPI
     void reset(
-        const std::string& filepath);
+            const std::string& filepath);
 
     DDSRECORDER_PARTICIPANTS_DllAPI
     void message_to_write(
