@@ -150,7 +150,10 @@ void McapHandler::add_schema(
         }
         catch (const std::overflow_error& e)
         {
-            on_mcap_full_(e, [&](){mcap_size_tracker_.schema_to_write(new_schema);});
+            on_mcap_full_(e, [&]()
+                    {
+                        mcap_size_tracker_.schema_to_write(new_schema);
+                    });
         }
 
         // WARNING: passing as non-const to MCAP library
@@ -190,7 +193,7 @@ void McapHandler::add_schema(
     catch (const std::overflow_error& e)
     {
         logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to write on MCAP file while adding schema. " << "Error message:\n " <<
-            e.what());
+                e.what());
 
         on_disk_full_();
     }
@@ -246,15 +249,15 @@ void McapHandler::add_data(
             else
             {
                 throw utils::InconsistencyException(
-                        STR_ENTRY << "Payload owner not found in data received."
-                        );
+                          STR_ENTRY << "Payload owner not found in data received."
+                          );
             }
         }
         else
         {
             throw utils::InconsistencyException(
-                    STR_ENTRY << "Received sample with no payload."
-                    );
+                      STR_ENTRY << "Received sample with no payload."
+                      );
         }
 
         if (received_types_.count(topic.type_name) != 0)
@@ -307,7 +310,7 @@ void McapHandler::add_data(
     catch (const std::overflow_error& e)
     {
         logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to write on MCAP file while adding data. " << "Error message:\n " <<
-            e.what());
+                e.what());
 
         on_disk_full_();
     }
@@ -570,13 +573,14 @@ void McapHandler::open_file_nts_()
         monitor_error("MCAP_FILE_CREATION_FAILURE");
 
         utils::InitializationException e(
-                  STR_ENTRY << "Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
+            STR_ENTRY << "Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
         logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_OPEN | " << e.what());
         throw e;
     }
 
     // Reset tracker's available space for the given path
-    mcap_size_tracker_.init(configuration_.mcap_output_settings.output_filepath, configuration_.mcap_output_settings.safety_margin);
+    mcap_size_tracker_.init(configuration_.mcap_output_settings.output_filepath,
+            configuration_.mcap_output_settings.safety_margin);
 
     // Write version metadata in MCAP file
     write_version_metadata_();
@@ -676,7 +680,10 @@ void McapHandler::write_message_nts_(
     }
     catch (const std::overflow_error& e)
     {
-        on_mcap_full_(e, [&](){mcap_size_tracker_.message_to_write(msg.dataSize);});
+        on_mcap_full_(e, [&]()
+                {
+                    mcap_size_tracker_.message_to_write(msg.dataSize);
+                });
     }
     mcap::Status status;
     status = mcap_writer_.write(msg);
@@ -956,7 +963,10 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
             }
             catch (const std::overflow_error& e)
             {
-                on_mcap_full_(e, [&](){mcap_size_tracker_.schema_to_write(blank_schema);});
+                on_mcap_full_(e, [&]()
+                        {
+                            mcap_size_tracker_.schema_to_write(blank_schema);
+                        });
             }
 
             // Add schema reserved space to write it on MCAP
@@ -988,7 +998,10 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     }
     catch (const std::overflow_error& e)
     {
-        on_mcap_full_(e, [&](){mcap_size_tracker_.channel_to_write(new_channel);});
+        on_mcap_full_(e, [&]()
+                {
+                    mcap_size_tracker_.channel_to_write(new_channel);
+                });
     }
 
     mcap_writer_.addChannel(new_channel);
@@ -1165,18 +1178,21 @@ void McapHandler::add_dynamic_type_(
 {
     store_dynamic_type_(type_name, dynamic_types_);
 
-    std::unique_ptr<fastrtps::rtps::SerializedPayload_t> new_dynamic_types_payload(serialize_dynamic_types_(dynamic_types_));
+    std::unique_ptr<fastrtps::rtps::SerializedPayload_t> new_dynamic_types_payload(serialize_dynamic_types_(
+                dynamic_types_));
 
-    auto write_attachment = [&](){
-        if (nullptr == dynamic_types_payload_)
-        {
-            mcap_size_tracker_.attachment_to_write(new_dynamic_types_payload->length);
-        }
-        else
-        {
-            mcap_size_tracker_.attachment_to_write(new_dynamic_types_payload->length, dynamic_types_payload_->length);
-        }
-    };
+    auto write_attachment = [&]()
+            {
+                if (nullptr == dynamic_types_payload_)
+                {
+                    mcap_size_tracker_.attachment_to_write(new_dynamic_types_payload->length);
+                }
+                else
+                {
+                    mcap_size_tracker_.attachment_to_write(new_dynamic_types_payload->length,
+                            dynamic_types_payload_->length);
+                }
+            };
 
     // Check if there is enough space available to write the new attachment
     try

@@ -152,7 +152,8 @@ void McapSizeTracker::attachment_to_write(
         const uint64_t& payload_size_to_write,
         const uint64_t& payload_size_to_remove)
 {
-    if (can_increase_potential_mcap_size_(get_attachment_size_(payload_size_to_write), get_attachment_size_(payload_size_to_remove)))
+    if (can_increase_potential_mcap_size_(get_attachment_size_(payload_size_to_write),
+            get_attachment_size_(payload_size_to_remove)))
     {
         decrease_potential_mcap_size_(get_attachment_size_(payload_size_to_remove));
         attachment_to_write(payload_size_to_write);
@@ -160,8 +161,8 @@ void McapSizeTracker::attachment_to_write(
     else
     {
         throw std::overflow_error(
-                    STR_ENTRY << "Attempted attachment write of size: " << potential_mcap_size_ <<
-                ", but there is not enough space available on disk: " << space_available_);
+                  STR_ENTRY << "Attempted attachment write of size: " << potential_mcap_size_ <<
+                      ", but there is not enough space available on disk: " << space_available_);
     }
 }
 
@@ -236,15 +237,15 @@ void McapSizeTracker::check_and_increase_potential_mcap_size_(
         {
             disk_full_ = true;
             throw std::overflow_error(
-                        STR_ENTRY << "Attempted write of size: " << potential_mcap_size_ <<
-                    ", but there is not enough space available on disk: " << space_available_);
+                      STR_ENTRY << "Attempted write of size: " << potential_mcap_size_ <<
+                          ", but there is not enough space available on disk: " << space_available_);
         }
     }
     else
     {
         throw std::overflow_error(
-                    STR_ENTRY << "Attempted write of size: " << potential_mcap_size_ <<
-                ", but there is not enough space available on disk: " << space_available_);
+                  STR_ENTRY << "Attempted write of size: " << potential_mcap_size_ <<
+                      ", but there is not enough space available on disk: " << space_available_);
     }
 }
 

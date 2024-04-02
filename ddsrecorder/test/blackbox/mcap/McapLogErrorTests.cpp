@@ -62,10 +62,11 @@ TEST(McapLogErrorTests, fail_to_open_file) {
         mcap_writer_options,
         COMPRESS,
         ENCRYPT
-    );
+        );
 
     std::shared_ptr<eprosima::ddspipe::core::PayloadPool> payload_pool;
-    eprosima::ddsrecorder::participants::McapHandlerStateCode init_state = eprosima::ddsrecorder::participants::McapHandlerStateCode::RUNNING;
+    eprosima::ddsrecorder::participants::McapHandlerStateCode init_state =
+            eprosima::ddsrecorder::participants::McapHandlerStateCode::RUNNING;
 
     // Check if an InitializationException is thrown
     eprosima::ddsrecorder::participants::McapHandler mcap_handler(config, payload_pool, init_state);
