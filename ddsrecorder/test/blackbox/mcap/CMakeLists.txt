@@ -85,3 +85,32 @@ add_blackbox_executable(
     "${TEST_EXTRA_HEADERS}"
     "${TEST_LIBRARY_SOURCES}"
 )
+
+
+########################
+# Mcap Log Error Tests #
+########################
+
+set(TEST_NAME McapLogErrorTests)
+
+set(TEST_SOURCES
+        McapLogErrorTests.cpp
+    )
+
+set(TEST_LIST
+        fail_to_open_file
+    )
+
+set(EXTRA_LIBRARIES
+        ${MODULE_FIND_PACKAGES}
+    )
+
+
+add_blackbox_executable(
+    "${TEST_NAME}"
+    "${TEST_SOURCES}"
+    "${TEST_LIST}"
+    "${TEST_NEEDED_SOURCES}"
+    "${EXTRA_LIBRARIES}"
+    "${TEST_EXTRA_HEADERS}"
+)

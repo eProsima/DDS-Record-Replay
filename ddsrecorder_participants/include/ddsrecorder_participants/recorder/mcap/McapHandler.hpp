@@ -19,8 +19,11 @@
 #pragma once
 
 #include <condition_variable>
+#include <cstdint>
+#include <functional>
 #include <list>
 #include <map>
+#include <stdexcept>
 #include <thread>
 
 #include <mcap/mcap.hpp>
@@ -38,6 +41,7 @@
 
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
+#include <ddsrecorder_participants/recorder/mcap/McapSizeTracker.hpp>
 
 #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
     #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
@@ -255,6 +259,16 @@ public:
     DDSRECORDER_PARTICIPANTS_DllAPI
     static mcap::Timestamp now();
 
+    /**
+     * @brief Set the callback that should be called whenever disk is full
+     *
+     * It sets \c on_disk_full_lambda_set_ to true
+     *
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    void set_on_disk_full_callback(
+            std::function<void()> on_disk_full_lambda) noexcept;
+
 protected:
 
     //! Flag code controlling the event thread routine
@@ -267,6 +281,8 @@ protected:
 
     /**
      * @brief Open a new MCAP file according to configuration settings.
+     *
+     * @throw InitializationException if failing to open file.
      *
      * A temporal suffix is appended after the '.mcap' extension, and additionally a timestamp prefix if applies.
      *
@@ -448,10 +464,13 @@ protected:
     void rewrite_schemas_nts_();
 
     /**
-     * @brief Store in MCAP attachments the dynamic types associated to all added schemas, and their dependencies.
+     * @brief Serialize type identifier and object, and insert the result into a \c DynamicTypesCollection .
      *
+     * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
      */
-    void store_dynamic_types_();
+    void store_dynamic_type_(
+            const std::string& type_name,
+            DynamicTypesCollection& dynamic_types) const;
 
     /**
      * @brief Serialize type identifier and object, and insert the result into a \c DynamicTypesCollection .
@@ -465,13 +484,62 @@ protected:
             const eprosima::fastrtps::types::TypeIdentifier* type_identifier,
             const eprosima::fastrtps::types::TypeObject* type_object,
             const std::string& type_name,
-            DynamicTypesCollection& dynamic_types);
+            DynamicTypesCollection& dynamic_types) const;
+
+    /**
+     * @brief Serialize given \c DynamicTypesCollection into a \c SerializedPayload .
+     *
+     * @param [in] dynamic_types Dynamic types collection to be serialized.
+     * @return Serialized payload for the given dynamic types collection.
+     */
+    fastrtps::rtps::SerializedPayload_t* serialize_dynamic_types_(
+            DynamicTypesCollection& dynamic_types) const;
+
+    /**
+     * @brief Add type to \c dynamic_types_ collection, and update the value of \c dynamic_types_payload_ attribute.
+     *
+     * @param [in] type_name Name of the type to be added.
+     */
+    void add_dynamic_type_(
+            const std::string& type_name);
+
+    /**
+     * @brief Write serialized \c dynamic_types_ collection (\c dynamic_types_payload_) into MCAP file's attachments section.
+     *
+     */
+    void write_dynamic_types_();
 
     /**
      * @brief Write version metadata (release and commit hash) in MCAP file.
      *
      */
     void write_version_metadata_();
+
+    /**
+     * @brief Callback to be executed when the current MCAP file becomes full.
+     *
+     * @param [in] e Captured overflow exception.
+     */
+    void on_mcap_full_(
+            const std::overflow_error& e);
+
+    /**
+     * @brief Callback to be executed when the current MCAP file becomes full.
+     *
+     * @param [in] e Captured overflow exception.
+     * @param [in] func Function to execute after handling overflow exception.
+     */
+    void on_mcap_full_(
+            const std::overflow_error& e,
+            std::function<void()> func);
+
+    /**
+     * @brief Callback to be executed whenever disk is full
+     *
+     * It calls \c on_disk_full_lambda_ if set
+     *
+     */
+    void on_disk_full_() const noexcept;
 
     /**
      * @brief Convert given \c filename to temporal format.
@@ -523,6 +591,9 @@ protected:
     //! MCAP writer
     mcap::McapWriter mcap_writer_;
 
+    //! MCAP size tracker
+    McapSizeTracker mcap_size_tracker_;
+
     //! Schemas map
     std::map<std::string, mcap::Schema> schemas_;
 
@@ -534,6 +605,12 @@ protected:
 
     //! Samples buffer
     std::list<Message> samples_buffer_;
+
+    //! Dynamic types collection
+    DynamicTypesCollection dynamic_types_;
+
+    //! Serialized payload for dynamic types collection (dynamic_types_)
+    std::unique_ptr<fastrtps::rtps::SerializedPayload_t> dynamic_types_payload_;
 
     //! Structure where messages (received in RUNNING state) with unknown type are kept
     std::map<std::string, pending_list> pending_samples_;
@@ -558,6 +635,12 @@ protected:
 
     //! Unique sequence number assigned to received messages. It is incremented with every sample added.
     unsigned int unique_sequence_number_{0};
+
+    //! Lambda to call when disk limit is reached
+    std::function<void()> on_disk_full_lambda_;
+
+    //! True if lambda callback is set
+    bool on_disk_full_lambda_set_;
 };
 
 } /* namespace participants */

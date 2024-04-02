@@ -36,7 +36,17 @@ DdsRecorder::DdsRecorder(
         const yaml::RecorderConfiguration& configuration,
         const DdsRecorderStateCode& init_state,
         const std::string& file_name)
+    : DdsRecorder(configuration, init_state, nullptr, file_name)
+{
+}
+
+DdsRecorder::DdsRecorder(
+        const yaml::RecorderConfiguration& configuration,
+        const DdsRecorderStateCode& init_state,
+        std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler,
+        const std::string& file_name)
     : configuration_(configuration)
+    , event_handler_(event_handler)
 {
     load_internal_topics_(configuration_);
 
@@ -65,6 +75,7 @@ DdsRecorder::DdsRecorder(
         mcap_output_settings.output_filepath = ".";
         mcap_output_settings.prepend_timestamp = false;
     }
+    mcap_output_settings.safety_margin = configuration_.safety_margin;
 
     // Create MCAP Handler configuration
     participants::McapHandlerConfiguration handler_config(
@@ -84,6 +95,8 @@ DdsRecorder::DdsRecorder(
         handler_config,
         payload_pool_,
         recorder_to_handler_state_(init_state));
+
+    mcap_handler_->set_on_disk_full_callback(std::bind(&DdsRecorder::on_disk_full, this));
 
     // Create DynTypes Participant
     dyn_participant_ = std::make_shared<DynTypesParticipant>(
@@ -169,6 +182,15 @@ void DdsRecorder::stop()
 void DdsRecorder::trigger_event()
 {
     mcap_handler_->trigger_event();
+}
+
+void DdsRecorder::on_disk_full()
+{
+    if (nullptr != event_handler_)
+    {
+        // Notify main application to proceed and close
+        event_handler_->simulate_event_occurred();
+    }
 }
 
 void DdsRecorder::load_internal_topics_(

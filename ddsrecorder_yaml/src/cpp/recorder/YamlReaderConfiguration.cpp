@@ -205,6 +205,15 @@ void RecorderConfiguration::load_recorder_configuration_(
         {
             output_local_timestamp = YamlReader::get<bool>(output_yml, RECORDER_OUTPUT_LOCAL_TIMESTAMP_TAG, version);
         }
+
+        /////
+        // Get optional safety margin
+        if (YamlReader::is_tag_present(output_yml, RECORDER_OUTPUT_SAFETY_MARGIN_TAG))
+        {
+            safety_margin =
+                    static_cast<uint64_t>(YamlReader::get_nonnegative_int(output_yml,
+                    RECORDER_OUTPUT_SAFETY_MARGIN_TAG));
+        }
     }
 
     /////

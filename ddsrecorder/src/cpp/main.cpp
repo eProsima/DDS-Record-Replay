@@ -382,7 +382,7 @@ int main(
                 configuration = eprosima::ddsrecorder::yaml::RecorderConfiguration(commandline_args.file_path);
 
                 // Create DDS Recorder
-                auto recorder = std::make_unique<DdsRecorder>(configuration, initial_state);
+                auto recorder = std::make_unique<DdsRecorder>(configuration, initial_state, close_handler);
 
                 // Create File Watcher Handler
                 std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;
@@ -515,7 +515,7 @@ int main(
         else
         {
             // Start recording right away
-            auto recorder = std::make_unique<DdsRecorder>(configuration, DdsRecorderState::RUNNING);
+            auto recorder = std::make_unique<DdsRecorder>(configuration, DdsRecorderState::RUNNING, close_handler);
 
             // Create File Watcher Handler
             std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;
