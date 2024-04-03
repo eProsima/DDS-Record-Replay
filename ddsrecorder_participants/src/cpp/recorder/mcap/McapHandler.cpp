@@ -548,18 +548,26 @@ void McapHandler::set_on_disk_full_callback(
 
 void McapHandler::open_file_nts_()
 {
-    // Rotate output files
+    int mcap_file_index = 0;
+
     if (configuration_.mcap_output_settings.files_max_size.size() > 0)
     {
-        mcap_file_index_ = mcap_file_id_ % configuration_.mcap_output_settings.files_max_size.size();
+        mcap_file_index = mcap_file_id_ % configuration_.mcap_output_settings.files_max_size.size();
     }
 
     // Update the file id
     mcap_file_id_++;
 
-    if (configuration_.mcap_output_settings.file_rotation && mcap_file_id_to_filename_.count(mcap_file_index_))
+    if (configuration_.mcap_output_settings.file_rotation && mcap_filenames_.count(mcap_file_index))
     {
-        std::filesystem::remove(mcap_file_id_to_filename_[mcap_file_index_]);
+        const auto ret = std::filesystem::remove(mcap_filenames_[mcap_file_index]);
+
+        if (!ret)
+        {
+            logError(
+                DDSRECORDER_MCAP_HANDLER,
+                "Failed to remove file " << mcap_filenames_[mcap_file_index] << " on file rotation.");
+        }
     }
 
     // Generate the filename
@@ -588,7 +596,7 @@ void McapHandler::open_file_nts_()
     mcap_filename_ += ".mcap";
 
     // Store the filename in case of rotation
-    mcap_file_id_to_filename_[mcap_file_index_] = mcap_filename_;
+    mcap_filenames_[mcap_file_index] = mcap_filename_;
 
     // Append temporal suffix
     std::string tmp_filename = tmp_filename_(mcap_filename_);
@@ -607,8 +615,9 @@ void McapHandler::open_file_nts_()
         throw e;
     }
 
-    mcap_size_tracker_.init(configuration_.mcap_output_settings.files_max_size[mcap_file_index_],
-            configuration_.mcap_output_settings.safety_margin);
+    mcap_size_tracker_.init(
+        configuration_.mcap_output_settings.files_max_size[mcap_file_index],
+        configuration_.mcap_output_settings.safety_margin);
 
     // Write version metadata in MCAP file
     write_version_metadata_();

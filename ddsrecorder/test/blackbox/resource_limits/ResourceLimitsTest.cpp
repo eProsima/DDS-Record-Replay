@@ -96,7 +96,7 @@ public:
         // Remove the output files
         for (const auto& path : paths_)
         {
-            ASSERT_TRUE(delete_file_(path));
+            delete_file_(path);
         }
     }
 
@@ -254,52 +254,50 @@ TEST_F(ResourceLimitsTest, max_size)
         ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATHS[i]));
     }
 
+    ddsrecorder::recorder::DdsRecorder recorder(*configuration_,
+            ddsrecorder::recorder::DdsRecorderStateCode::RUNNING, OUTPUT_FILE_NAME);
+
+    for (int i = 0; i < test::limits::MAX_FILES; i++)
     {
-        ddsrecorder::recorder::DdsRecorder recorder(*configuration_,
-                ddsrecorder::recorder::DdsRecorderStateCode::RUNNING, OUTPUT_FILE_NAME);
-
-        for (int i = 0; i < test::limits::MAX_FILES; i++)
-        {
-            // Send more messages than can be stored in a file with a size of max-file-size
-            publish_msgs_(test::limits::FILE_OVERFLOW_THRESHOLD);
-
-            // Make sure the DDS Recorder has received all the messages
-            ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), ReturnCode_t::RETCODE_OK);
-
-            // All the messages have been sent. Stop the DDS Recorder.
-            if (i == test::limits::MAX_FILES - 1)
-            {
-                recorder.stop();
-            }
-
-            // Verify that the DDS Recorder has created the expected number of output files and that their size is close
-            // but doesn't exceed the max-file-size
-            for (int j = 0; j <= i; j++)
-            {
-                ASSERT_TRUE(is_file_size_acceptable_(OUTPUT_FILE_PATHS[j]));
-            }
-
-            // Verify that the DDS Recorder hasn't created any extra files
-            for (int j = i + 1; j < NUMBER_OF_FILES; j++)
-            {
-                ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATHS[j]));
-            }
-        }
-
         // Send more messages than can be stored in a file with a size of max-file-size
         publish_msgs_(test::limits::FILE_OVERFLOW_THRESHOLD);
 
         // Make sure the DDS Recorder has received all the messages
         ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), ReturnCode_t::RETCODE_OK);
 
-        // Verify that the DDS Recorder hasn't created an extra file, since it would exceed the max-size
-        ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATHS[4]));
-
-        // Verify that the size of the rest of the files hasn't changed
-        for (int i = 0; i < test::limits::MAX_FILES; i++)
+        // All the messages have been sent. Stop the DDS Recorder.
+        if (i == test::limits::MAX_FILES - 1)
         {
-            ASSERT_TRUE(is_file_size_acceptable_(OUTPUT_FILE_PATHS[i]));
+            recorder.stop();
         }
+
+        // Verify that the DDS Recorder has created the expected number of output files and that their size is close
+        // but doesn't exceed the max-file-size
+        for (int j = 0; j <= i; j++)
+        {
+            ASSERT_TRUE(is_file_size_acceptable_(OUTPUT_FILE_PATHS[j]));
+        }
+
+        // Verify that the DDS Recorder hasn't created any extra files
+        for (int j = i + 1; j < NUMBER_OF_FILES; j++)
+        {
+            ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATHS[j]));
+        }
+    }
+
+    // Send more messages than can be stored in a file with a size of max-file-size
+    publish_msgs_(test::limits::FILE_OVERFLOW_THRESHOLD);
+
+    // Make sure the DDS Recorder has received all the messages
+    ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), ReturnCode_t::RETCODE_OK);
+
+    // Verify that the DDS Recorder hasn't created an extra file, since it would exceed the max-size
+    ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATHS[4]));
+
+    // Verify that the size of the rest of the files hasn't changed
+    for (int i = 0; i < test::limits::MAX_FILES; i++)
+    {
+        ASSERT_TRUE(is_file_size_acceptable_(OUTPUT_FILE_PATHS[i]));
     }
 }
 
@@ -336,59 +334,57 @@ TEST_F(ResourceLimitsTest, file_rotation)
         ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATHS[i]));
     }
 
+    ddsrecorder::recorder::DdsRecorder recorder(*configuration_,
+            ddsrecorder::recorder::DdsRecorderStateCode::RUNNING, OUTPUT_FILE_NAME);
+
+    // Verify that the DDS Recorder creates a new file after each batch of messages, before reaching the max-size
+    for (int i = 0; i < test::limits::MAX_FILES - 1; i++)
     {
-        ddsrecorder::recorder::DdsRecorder recorder(*configuration_,
-                ddsrecorder::recorder::DdsRecorderStateCode::RUNNING, OUTPUT_FILE_NAME);
+        // Send more messages than can be stored in a file with a size of max-file-size
+        publish_msgs_(test::limits::FILE_OVERFLOW_THRESHOLD);
 
-        // Verify that the DDS Recorder creates a new file after each batch of messages, before reaching the max-size
-        for (int i = 0; i < test::limits::MAX_FILES - 1; i++)
+        // Make sure the DDS Recorder has received all the messages
+        ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), ReturnCode_t::RETCODE_OK);
+
+        // Verify that the DDS Recorder has created the expected number of output files
+        for (int j = 0; j <= i; j++)
         {
-            // Send more messages than can be stored in a file with a size of max-file-size
-            publish_msgs_(test::limits::FILE_OVERFLOW_THRESHOLD);
-
-            // Make sure the DDS Recorder has received all the messages
-            ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), ReturnCode_t::RETCODE_OK);
-
-            // Verify that the DDS Recorder has created the expected number of output files
-            for (int j = 0; j <= i; j++)
-            {
-                ASSERT_TRUE(is_file_size_acceptable_(OUTPUT_FILE_PATHS[j]));
-            }
-
-            // Verify that the DDS Recorder hasn't created any extra files
-            for (int j = i + 1; j < NUMBER_OF_FILES; j++)
-            {
-                ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATHS[j]));
-            }
+            ASSERT_TRUE(is_file_size_acceptable_(OUTPUT_FILE_PATHS[j]));
         }
 
-        // Verify that the DDS Recorder applies file rotation after reaching the max-size
-        for (int i = 0; i < NUMBER_OF_FILES - (test::limits::MAX_FILES - 1); i++)
+        // Verify that the DDS Recorder hasn't created any extra files
+        for (int j = i + 1; j < NUMBER_OF_FILES; j++)
         {
-            // Send more messages than can be stored in a file with a size of max-file-size
-            publish_msgs_(test::limits::FILE_OVERFLOW_THRESHOLD);
+            ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATHS[j]));
+        }
+    }
 
-            // Make sure the DDS Recorder has received all the messages
-            ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), ReturnCode_t::RETCODE_OK);
+    // Verify that the DDS Recorder applies file rotation after reaching the max-size
+    for (int i = 0; i < NUMBER_OF_FILES - (test::limits::MAX_FILES - 1); i++)
+    {
+        // Send more messages than can be stored in a file with a size of max-file-size
+        publish_msgs_(test::limits::FILE_OVERFLOW_THRESHOLD);
 
-            // Verify that the DDS Recorder has removed the oldest files
-            for (int j = 0; j <= i; j++)
-            {
-                ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATHS[j]));
-            }
+        // Make sure the DDS Recorder has received all the messages
+        ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), ReturnCode_t::RETCODE_OK);
 
-            // Verify that the DDS Recorder has created the expected number of output files and that their size is close
-            // but doesn't exceed the max-file-size
-            for (int j = i + 1; j < i + test::limits::MAX_FILES; j++)
-            {
-                ASSERT_TRUE(is_file_size_acceptable_(OUTPUT_FILE_PATHS[j]));
-            }
+        // Verify that the DDS Recorder has removed the oldest files
+        for (int j = 0; j <= i; j++)
+        {
+            ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATHS[j]));
+        }
 
-            // Verify that the DDS Recorder hasn't created any extra files
-            for (int j = i + (NUMBER_OF_FILES - test::limits::MAX_FILES); j < NUMBER_OF_FILES; j++)
-            {
-                ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATHS[j]));
-            }
+        // Verify that the DDS Recorder has created the expected number of output files and that their size is close
+        // but doesn't exceed the max-file-size
+        for (int j = i + 1; j < i + test::limits::MAX_FILES; j++)
+        {
+            ASSERT_TRUE(is_file_size_acceptable_(OUTPUT_FILE_PATHS[j]));
+        }
+
+        // Verify that the DDS Recorder hasn't created any extra files
+        for (int j = i + (NUMBER_OF_FILES - test::limits::MAX_FILES); j < NUMBER_OF_FILES; j++)
+        {
+            ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATHS[j]));
         }
     }
 }

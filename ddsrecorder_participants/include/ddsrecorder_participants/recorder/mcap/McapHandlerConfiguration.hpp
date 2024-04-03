@@ -49,10 +49,10 @@ struct McapOutputSettings
     //! Safety margin on MCAP file's size estimation
     uint64_t safety_margin;
 
-    //! TODO
+    //! Whether to rotate output files after reaching the max-size
     bool file_rotation{false};
 
-    //! TODO
+    //! Maximum sizes of the output files
     std::vector<std::uint64_t> files_max_size;
 };
 
