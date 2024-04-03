@@ -48,7 +48,7 @@ struct McapOutputSettings
 
     //! Safety margin on MCAP file's size estimation
     uint64_t safety_margin;
-    
+
     //! TODO
     bool file_rotation{false};
 
