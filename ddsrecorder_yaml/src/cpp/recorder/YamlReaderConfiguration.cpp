@@ -17,6 +17,7 @@
  *
  */
 
+#include <cpp_utils/Log.hpp>
 #include <cpp_utils/utils.hpp>
 
 #include <ddspipe_core/configuration/DdsPipeLogConfiguration.hpp>
@@ -54,6 +55,48 @@ RecorderConfiguration::RecorderConfiguration(
         const CommandlineArgsRecorder* args /*= nullptr*/)
 {
     load_ddsrecorder_configuration_from_file_(file_path, args);
+}
+
+bool RecorderConfiguration::is_valid(
+        utils::Formatter& error_msg) const noexcept
+{
+    if (output_resource_limits_max_size > 0)
+    {
+        if (output_resource_limits_max_file_size == 0)
+        {
+            error_msg << "The max file size cannot be unlimited when the max size is limited.";
+            return false;
+        }
+
+        if (output_resource_limits_max_size < output_resource_limits_max_file_size)
+        {
+            error_msg << "The max size cannot be lower than the max file size.";
+            return false;
+        }
+    }
+
+    if (output_resource_limits_file_rotation)
+    {
+        if (output_resource_limits_max_file_size == 0)
+        {
+            error_msg << "The max file size cannot be unlimited when file rotation is enabled.";
+            return false;
+        }
+
+        if (output_resource_limits_max_size == 0)
+        {
+            error_msg << "The max size cannot be unlimited when file rotation is enabled.";
+            return false;
+        }
+
+        if (output_resource_limits_max_size < output_resource_limits_max_file_size)
+        {
+            error_msg << "The max size cannot be lower than the max file size.";
+            return false;
+        }
+    }
+
+    return true;
 }
 
 void RecorderConfiguration::load_ddsrecorder_configuration_(
