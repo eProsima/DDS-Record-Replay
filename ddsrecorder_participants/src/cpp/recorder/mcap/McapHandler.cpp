@@ -549,7 +549,10 @@ void McapHandler::set_on_disk_full_callback(
 void McapHandler::open_file_nts_()
 {
     // Rotate output files
-    mcap_file_index_ = mcap_file_id_ % configuration_.mcap_output_settings.files_max_size.size();
+    if (configuration_.mcap_output_settings.files_max_size.size() > 0)
+    {
+        mcap_file_index_ = mcap_file_id_ % configuration_.mcap_output_settings.files_max_size.size();
+    }
 
     // Update the file id
     mcap_file_id_++;
@@ -574,7 +577,8 @@ void McapHandler::open_file_nts_()
 
     mcap_filename_ += configuration_.mcap_output_settings.output_filename;
 
-    if (!configuration_.mcap_output_settings.prepend_timestamp)
+    if (!configuration_.mcap_output_settings.prepend_timestamp &&
+            configuration_.mcap_output_settings.files_max_size.size() > 1)
     {
         // When the timestamp isn't included in the file's name, the output files all have the same name.
         // To make their names unique, we include their file id.
@@ -603,19 +607,8 @@ void McapHandler::open_file_nts_()
         throw e;
     }
 
-    std::uint64_t space_available;
-
-    if (configuration_.mcap_output_settings.files_max_size.empty())
-    {
-        // Check available space in disk when opening file
-        space_available = std::filesystem::space(mcap_filename_).available;
-    }
-    else
-    {
-        space_available = configuration_.mcap_output_settings.files_max_size[mcap_file_index_];
-    }
-
-    mcap_size_tracker_.init(space_available, configuration_.mcap_output_settings.safety_margin);
+    mcap_size_tracker_.init(configuration_.mcap_output_settings.files_max_size[mcap_file_index_],
+            configuration_.mcap_output_settings.safety_margin);
 
     // Write version metadata in MCAP file
     write_version_metadata_();

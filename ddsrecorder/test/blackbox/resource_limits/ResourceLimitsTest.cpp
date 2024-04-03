@@ -144,11 +144,16 @@ protected:
     {
         for (std::uint32_t i = 1; i <= number_of_files; i++)
         {
-            const auto full_file_name = output_file_name + "_" + std::to_string(i) + ".mcap";
-            paths_.push_back(std::filesystem::current_path() / full_file_name);
+            paths_.push_back(get_output_file_path_(output_file_name + "_" + std::to_string(i)));
         }
 
         return paths_;
+    }
+
+    std::filesystem::path get_output_file_path_(
+            const std::string& output_file_name)
+    {
+        return std::filesystem::current_path() / (output_file_name + ".mcap");
     }
 
     bool delete_file_(
@@ -196,7 +201,7 @@ protected:
 TEST_F(ResourceLimitsTest, max_file_size)
 {
     const std::string OUTPUT_FILE_NAME = "max_file_size_test";
-    const auto OUTPUT_FILE_PATH = get_output_file_paths_(1, OUTPUT_FILE_NAME)[0];
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME);
 
     configuration_->output_resource_limits_max_file_size = test::limits::MAX_FILE_SIZE;
 

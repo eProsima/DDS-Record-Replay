@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <filesystem>
+
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/utils.hpp>
 
@@ -79,28 +81,30 @@ DdsRecorder::DdsRecorder(
 
     mcap_output_settings.file_rotation = configuration_.output_resource_limits_file_rotation;
 
-    const auto max_file_size = configuration_.output_resource_limits_max_file_size;
+    auto max_file_size = configuration_.output_resource_limits_max_file_size;
     const auto max_size = configuration_.output_resource_limits_max_size;
 
-    if (max_file_size > 0)
+    if (max_file_size == 0)
     {
-        if (max_size == 0)
-        {
-            mcap_output_settings.files_max_size.push_back(max_file_size);
-        }
-        else
-        {
-            const int num_files = max_size / max_file_size;
-            const int remaining_size = max_size % max_file_size;
+        max_file_size = std::filesystem::space(mcap_output_settings.output_filepath).available;
+    }
 
-            // There can be at most num_files files of max_file_size size
-            mcap_output_settings.files_max_size.assign(num_files, max_file_size);
+    if (max_size == 0)
+    {
+        mcap_output_settings.files_max_size.push_back(max_file_size);
+    }
+    else
+    {
+        const int num_files = max_size / max_file_size;
+        const int remaining_size = max_size % max_file_size;
 
-            if (remaining_size > 0)
-            {
-                // There can also be an additional file of remaining_size size
-                mcap_output_settings.files_max_size.push_back(remaining_size);
-            }
+        // There can be at most num_files files of max_file_size size
+        mcap_output_settings.files_max_size.assign(num_files, max_file_size);
+
+        if (remaining_size > 0)
+        {
+            // There can also be an additional file of remaining_size size
+            mcap_output_settings.files_max_size.push_back(remaining_size);
         }
     }
 
