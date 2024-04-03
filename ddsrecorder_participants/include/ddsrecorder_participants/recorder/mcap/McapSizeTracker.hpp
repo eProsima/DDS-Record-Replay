@@ -54,13 +54,12 @@ public:
     ~McapSizeTracker();
 
     /**
-     * @brief Initialize tracker with space available for the given \c path
-     *
+     * @brief Initialize the tracker with a given \c space_available and \c safety_margin.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void init(
-            const std::string& path,
-            const uint64_t& safety_margin);
+            const std::uint64_t& space_available,
+            const std::uint64_t& safety_margin);
 
     DDSRECORDER_PARTICIPANTS_DllAPI
     void reset(

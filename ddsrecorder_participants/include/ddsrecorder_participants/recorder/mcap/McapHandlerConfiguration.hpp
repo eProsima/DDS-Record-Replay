@@ -18,6 +18,10 @@
 
 #pragma once
 
+#include <cstdint>
+#include <string>
+#include <vector>
+
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
@@ -44,6 +48,12 @@ struct McapOutputSettings
 
     //! Safety margin on MCAP file's size estimation
     uint64_t safety_margin;
+    
+    //! TODO
+    bool file_rotation{false};
+
+    //! TODO
+    std::vector<std::uint64_t> files_max_size;
 };
 
 /**

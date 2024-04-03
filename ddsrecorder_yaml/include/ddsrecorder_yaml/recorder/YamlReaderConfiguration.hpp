@@ -72,6 +72,11 @@ public:
     bool output_local_timestamp = true;
     uint64_t safety_margin = 0;
 
+    // Output resource limits
+    bool output_resource_limits_file_rotation = false;
+    std::uint64_t output_resource_limits_max_size = 0;
+    std::uint64_t output_resource_limits_max_file_size = 0;
+
     // Recording params
     unsigned int buffer_size = 100;
     unsigned int event_window = 20;

@@ -458,6 +458,11 @@ protected:
             const std::string& schema_name);
 
     /**
+     * @brief Rewrite the channels that already exist.
+     */
+    void rewrite_channels_nts_();
+
+    /**
      * @brief Rewrite all received schemas into currently open MCAP file.
      *
      */
@@ -581,6 +586,15 @@ protected:
 
     //! Name of open MCAP file
     std::string mcap_filename_;
+
+    //! TODO
+    int mcap_file_index_{0};
+
+    //! TODO
+    int mcap_file_id_{0};
+
+    //! TODO
+    std::map<int, std::string> mcap_file_id_to_filename_;
 
     //! Payload pool
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;
