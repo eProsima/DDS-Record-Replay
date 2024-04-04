@@ -82,11 +82,20 @@ DdsRecorder::DdsRecorder(
     mcap_output_settings.file_rotation = configuration_.output_resource_limits_file_rotation;
 
     auto max_file_size = configuration_.output_resource_limits_max_file_size;
-    const auto max_size = configuration_.output_resource_limits_max_size;
+    auto max_size = configuration_.output_resource_limits_max_size;
+
+    const auto space_available = std::filesystem::space(mcap_output_settings.output_filepath).available;
 
     if (max_file_size == 0)
     {
-        max_file_size = std::filesystem::space(mcap_output_settings.output_filepath).available;
+        max_file_size = space_available;
+    }
+    else if (max_file_size > space_available)
+    {
+        logWarning(DDSRECORDER, "The maximum file size is greater than the available space. "
+            "The maximum file size will be set to the available space; i.e. " << space_available << " bytes.");
+
+        max_file_size = space_available;
     }
 
     if (max_size == 0)
@@ -95,6 +104,14 @@ DdsRecorder::DdsRecorder(
     }
     else
     {
+        if (max_size > space_available)
+        {
+            logWarning(DDSRECORDER, "The maximum size is greater than the available space. "
+                "The maximum size will be set to the available space; i.e. " << space_available << " bytes.");
+
+            max_size = space_available;
+        }
+
         const int num_files = max_size / max_file_size;
         const int remaining_size = max_size % max_file_size;
 

@@ -338,10 +338,10 @@ The recorder output file does support the following configuration settings under
           in MCAP file size estimations.
         - ``unsigned int``
         - ``0``
-        
+
     *   - Resource limits
         - ``resource-limits``
-        - :ref:`recorder_resource_limits`
+        - :ref:`recorder_usage_configuration_resource_limits`
         - ``list``
         - ``unlimited``
 
@@ -354,27 +354,30 @@ On such event, the temporal file is renamed to have ``.mcap`` extension in the s
 Resource Limits
 """""""""""""""
 
-The ``resource-limits`` tag allows users to limit the size consumed by the DDS Recorder's output file.
-The ``max-file-size`` tag specifies the maximum size of each output file, and the ``max-size`` tag specifies the maximum size of all the output files tags.
-By default, the ``max-size`` is the ``max-file-size`` and the ``max-file-size`` is unlimited.
+The ``resource-limits`` tag allows users to limit the size of the *DDS Recorder's* output.
+The ``max-file-size`` tag specifies the maximum size of each output file and the ``max-size`` tag specifies the maximum aggregate size of all output files.
+If the ``max-size`` is higher than the ``max-file-size``, the |ddsrecorder| will create multiple files with a maximum size of ``max-file-size``.
+By default, however, the ``max-file-size`` is unlimited (``0B``) and the ``max-size`` is the same as the ``max-file-size``; that is, by default the |ddsrecorder| creates a single file of unlimited size.
+
+.. warning::
+
+    If the ``max-file-size`` or the ``max-size`` are set to a value lower than the available space in the disk, the |ddsrecorder| will replace them with the available space in the disk.
+
+To keep the |ddsrecorder| recording after reaching the ``max-size``, users can set the ``file-rotation`` tag to ``true``.
+Enabling ``file-rotation`` allows the |ddsrecorder| to overwrite old files to free space for new ones.
 
 .. note::
 
-    The size of files is approximate.
-    The actual size of the file may be slightly larger or smaller than the specified limit.
-
-When the aggregate size of all the output files (each with a maximum size of ``max-file-size``) reaches the ``max-size``, the |ddsrecorder| will stop recording.
-To make the |ddsrecorder| continue recording after reaching the ``max-size``, users can set the ``file-rotation`` tag to ``true``.
-If ``file-rotation`` is set to true, the |ddsrecorder| overwrites old files to free space for new ones.
+    If the *DDS Recorder's* state changes to ``stop`` while ``file-rotation`` is set, the |ddsrecorder| will save its current output files from being overwritten in the future.
 
 **Example of usage**
 
 .. code-block:: yaml
 
     resource-limits:
-      file-rotation: true
       max-file-size: 250KB
       max-size: 2MiB
+      file-rotation: true
 
 Buffer size
 ^^^^^^^^^^^
@@ -837,9 +840,9 @@ A complete example of all the configurations described on this page can be found
         safety-margin: 500
 
         resource-limits:
-          file-rotation: true
           max-file-size: 250KB
           max-size: 2MiB
+          file-rotation: true
 
       buffer-size: 50
       event-window: 60
