@@ -73,7 +73,7 @@ set(TEST_NEEDED_SOURCES
     )
 
 set(TEST_EXTRA_HEADERS
-    ${PROJECT_SOURCE_DIR}/test/resources/types/hello_world/v2/
+    ${PROJECT_SOURCE_DIR}/test/resources/types/hello_world/
     )
 
 add_blackbox_executable(

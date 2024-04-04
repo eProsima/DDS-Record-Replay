@@ -564,7 +564,7 @@ void McapHandler::open_file_nts_()
 
         if (!ret)
         {
-            logError(
+            logWarning(
                 DDSRECORDER_MCAP_HANDLER,
                 "Failed to remove file " << mcap_filenames_[mcap_file_index] << " on file rotation.");
         }
