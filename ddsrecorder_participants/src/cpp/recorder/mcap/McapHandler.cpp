@@ -18,8 +18,11 @@
 
 #define MCAP_IMPLEMENTATION  // Define this in exactly one .cpp file
 
+#include <algorithm>
 #include <cstdio>
 #include <filesystem>
+#include <vector>
+
 #include <mcap/reader.hpp>
 
 #include <yaml-cpp/yaml.h>
@@ -1118,18 +1121,28 @@ void McapHandler::rewrite_channels_nts_()
 {
     logInfo(DDSRECORDER_MCAP_HANDLER, "Rewriting received channels.");
 
-    for (const auto& channel : channels_)
+    // Sort channels by id
+    std::map<mcap::ChannelId, mcap::Channel> channels;
+
+    for (auto& channel : channels_)
     {
-        mcap::Channel new_channel = channel.second;
+        channels[channel.second.id] = channel.second;
+    }
+
+    // Write channels to MCAP file
+    for (const auto& it : channels)
+    {
+        const auto& id = it.first;
+        const auto& channel = it.second;
 
         // Check if there is enough space available to write the channel
-        mcap_size_tracker_.channel_to_write(new_channel);
+        mcap_size_tracker_.channel_to_write(channel);
 
         // WARNING: passing as non-const to MCAP library
-        mcap_writer_.addChannel(new_channel);
-        mcap_size_tracker_.channel_written(new_channel);
+        mcap_writer_.addChannel(const_cast<mcap::Channel&>(channel));
+        mcap_size_tracker_.channel_written(channel);
 
-        logInfo(DDSRECORDER_MCAP_HANDLER, "Channel created: " << channel.first << ".");
+        logInfo(DDSRECORDER_MCAP_HANDLER, "Channel created: " << id << ".");
     }
 }
 
@@ -1137,25 +1150,29 @@ void McapHandler::rewrite_schemas_nts_()
 {
     logInfo(DDSRECORDER_MCAP_HANDLER, "Rewriting received schemas.");
 
-    std::map<std::string, mcap::Schema> new_schemas;
-    for (const auto& schema : schemas_)
+    // Sort schemas by id
+    std::map<mcap::SchemaId, mcap::Schema> schemas;
+
+    for (auto& schema : schemas_)
     {
-        std::string type_name = schema.first;
-        mcap::Schema new_schema = schema.second;
-
-        // Check if there is enough space available to write the schema
-        mcap_size_tracker_.schema_to_write(new_schema);
-
-        // WARNING: passing as non-const to MCAP library
-        mcap_writer_.addSchema(new_schema);
-        mcap_size_tracker_.schema_written(new_schema);
-        new_schemas[type_name] = std::move(new_schema);
-
-        logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << type_name << ".");
+        schemas[schema.second.id] = schema.second;
     }
 
-    // Overwrite schemas map
-    schemas_ = new_schemas;
+    // Write schemas to MCAP file
+    for (const auto& it : schemas)
+    {
+        const auto& id = it.first;
+        const auto& schema = it.second;
+
+        // Check if there is enough space available to write the schema
+        mcap_size_tracker_.schema_to_write(schema);
+
+        // WARNING: passing as non-const to MCAP library
+        mcap_writer_.addSchema(const_cast<mcap::Schema&>(schema));
+        mcap_size_tracker_.schema_written(schema);
+
+        logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << id << ".");
+    }
 }
 
 void McapHandler::store_dynamic_type_(
