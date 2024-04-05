@@ -92,7 +92,7 @@ DdsRecorder::DdsRecorder(
     }
     else if (max_file_size > space_available)
     {
-        logWarning(DDSRECORDER, "The maximum file size is greater than the available space. "
+        logWarning(DDSRECORDER, "RESOURCE_LIMITS | The maximum file size is greater than the available space. "
                 "The maximum file size will be set to the available space; i.e. " << space_available << " bytes.");
 
         max_file_size = space_available;
@@ -106,7 +106,7 @@ DdsRecorder::DdsRecorder(
     {
         if (max_size > space_available)
         {
-            logWarning(DDSRECORDER, "The maximum size is greater than the available space. "
+            logWarning(DDSRECORDER, "RESOURCE_LIMITS | The maximum size is greater than the available space. "
                     "The maximum size will be set to the available space; i.e. " << space_available << " bytes.");
 
             max_size = space_available;

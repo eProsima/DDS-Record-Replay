@@ -569,7 +569,7 @@ void McapHandler::open_file_nts_()
         {
             logWarning(
                 DDSRECORDER_MCAP_HANDLER,
-                "Failed to remove file " << mcap_filenames_[mcap_file_index] << " on file rotation.");
+                "RESOURCE_LIMITS | Failed to remove file " << mcap_filenames_[mcap_file_index] << " on file rotation.");
         }
     }
 
@@ -1337,7 +1337,7 @@ void McapHandler::on_mcap_full_(
     }
 
     // The recording must go on. Close the current file and open a new one.
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Max file size reached, closing file and opening a new one...");
+    logInfo(DDSRECORDER_MCAP_HANDLER, "RESOURCE_LIMITS | Max file size reached, closing file and opening a new one...");
 
     close_file_nts_();
     open_file_nts_();
