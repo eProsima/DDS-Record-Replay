@@ -142,7 +142,7 @@ protected:
             const std::uint32_t number_of_files,
             const std::string& output_file_name)
     {
-        for (std::uint32_t i = 1; i <= number_of_files; i++)
+        for (std::uint32_t i = 0; i < number_of_files; i++)
         {
             paths_.push_back(get_output_file_path_(output_file_name + "_" + std::to_string(i)));
         }

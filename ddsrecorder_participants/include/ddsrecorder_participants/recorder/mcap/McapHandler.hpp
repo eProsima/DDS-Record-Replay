@@ -584,13 +584,7 @@ protected:
     //! Handler configuration
     McapHandlerConfiguration configuration_;
 
-    //! Name of open MCAP file
-    std::string mcap_filename_;
-
-    //! Id of the current MCAP file
-    int mcap_file_id_{0};
-
-    //! Map of MCAP file index to filename
+    //! Map of MCAP file id to filename
     std::map<int, std::string> mcap_filenames_;
 
     //! Payload pool
