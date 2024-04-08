@@ -164,7 +164,7 @@ void McapHandler::add_schema(
         mcap_writer_.addSchema(new_schema);
         mcap_size_tracker_.schema_written(new_schema);
 
-        logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << type_name << ".");
+        logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << new_schema.name << ".");
 
         auto it = schemas_.find(type_name);
         if (it != schemas_.end())
@@ -551,8 +551,6 @@ void McapHandler::set_on_disk_full_callback(
 
 void McapHandler::open_file_nts_()
 {
-    check_and_free_space_();
-
     // Generate the filename
     auto mcap_filename = configuration_.mcap_output_settings.output_filepath + "/";
 
@@ -604,7 +602,7 @@ void McapHandler::open_file_nts_()
 
     mcap_size_tracker_.init(max_file_size, configuration_.mcap_output_settings.safety_margin);
 
-    // Store the filename in case of rotation
+    // Store the filename
     mcap_filenames_.push_back(mcap_filename);
 
     // Write version metadata in MCAP file
@@ -1131,7 +1129,7 @@ void McapHandler::rewrite_channels_nts_()
         mcap_writer_.addChannel(const_cast<mcap::Channel&>(channel));
         mcap_size_tracker_.channel_written(channel);
 
-        logInfo(DDSRECORDER_MCAP_HANDLER, "Channel created: " << id << ".");
+        logInfo(DDSRECORDER_MCAP_HANDLER, "Channel created: " << channel.topic << ".");
     }
 }
 
@@ -1160,7 +1158,7 @@ void McapHandler::rewrite_schemas_nts_()
         mcap_writer_.addSchema(const_cast<mcap::Schema&>(schema));
         mcap_size_tracker_.schema_written(schema);
 
-        logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << id << ".");
+        logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << schema.name << ".");
     }
 }
 
@@ -1320,7 +1318,7 @@ void McapHandler::on_mcap_full_(
     if (mcap_filenames_.size() == configuration_.mcap_output_settings.max_files &&
             !configuration_.mcap_output_settings.file_rotation)
     {
-        // The mcap is full and there's no more space to keep writing.
+        // The mcap is full and there's no more space to keep writing. Propagate exception.
         throw e;
     }
 
@@ -1328,6 +1326,7 @@ void McapHandler::on_mcap_full_(
     logInfo(DDSRECORDER_MCAP_HANDLER, "RESOURCE_LIMITS | Max file size reached, closing file and opening a new one...");
 
     close_file_nts_();
+    check_and_free_space_();
     open_file_nts_();
 }
 
@@ -1367,6 +1366,10 @@ void McapHandler::check_and_free_space_()
     {
         const auto oldest_file = mcap_filenames_.front();
         const auto oldest_file_size = std::filesystem::file_size(oldest_file);
+
+        logInfo(
+            DDSRECORDER_MCAP_HANDLER,
+            "RESOURCE_LIMITS | Removing file " << oldest_file << " on file rotation.");
 
         const auto ret = std::filesystem::remove(oldest_file);
 
