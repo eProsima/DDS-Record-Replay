@@ -182,6 +182,11 @@ void McapSizeTracker::metadata_written(
     check_and_increase_written_mcap_size_(get_metadata_size_(metadata));
 }
 
+std::uint64_t McapSizeTracker::get_written_mcap_size() const
+{
+    return written_mcap_size_;
+}
+
 bool McapSizeTracker::can_increase_potential_mcap_size_(
         const std::uint64_t& size)
 {

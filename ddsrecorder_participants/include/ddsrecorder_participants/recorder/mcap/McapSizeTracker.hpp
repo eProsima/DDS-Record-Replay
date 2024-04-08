@@ -110,6 +110,9 @@ public:
     void metadata_written(
             const mcap::Metadata& metadata);
 
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    std::uint64_t get_written_mcap_size() const;
+
 protected:
 
     bool can_increase_potential_mcap_size_(

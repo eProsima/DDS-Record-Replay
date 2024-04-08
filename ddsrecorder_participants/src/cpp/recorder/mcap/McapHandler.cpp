@@ -551,30 +551,10 @@ void McapHandler::set_on_disk_full_callback(
 
 void McapHandler::open_file_nts_()
 {
-    int mcap_file_index = 0;
-
-    if (configuration_.mcap_output_settings.files_max_size.size() > 0)
-    {
-        mcap_file_index = mcap_file_id_ % configuration_.mcap_output_settings.files_max_size.size();
-    }
-
-    // Update the file id
-    mcap_file_id_++;
-
-    if (configuration_.mcap_output_settings.file_rotation && mcap_filenames_.count(mcap_file_index))
-    {
-        const auto ret = std::filesystem::remove(mcap_filenames_[mcap_file_index]);
-
-        if (!ret)
-        {
-            logWarning(
-                DDSRECORDER_MCAP_HANDLER,
-                "RESOURCE_LIMITS | Failed to remove file " << mcap_filenames_[mcap_file_index] << " on file rotation.");
-        }
-    }
+    check_and_free_space_();
 
     // Generate the filename
-    mcap_filename_ = configuration_.mcap_output_settings.output_filepath + "/";
+    auto mcap_filename = configuration_.mcap_output_settings.output_filepath + "/";
 
     if (configuration_.mcap_output_settings.prepend_timestamp)
     {
@@ -583,26 +563,22 @@ void McapHandler::open_file_nts_()
             utils::now(), configuration_.mcap_output_settings.output_timestamp_format,
             configuration_.mcap_output_settings.output_local_timestamp);
 
-        mcap_filename_ = timestamp + "_";
+        mcap_filename = timestamp + "_";
     }
 
-    mcap_filename_ += configuration_.mcap_output_settings.output_filename;
+    mcap_filename += configuration_.mcap_output_settings.output_filename;
 
-    if (!configuration_.mcap_output_settings.prepend_timestamp &&
-            configuration_.mcap_output_settings.files_max_size.size() > 1)
+    if (!configuration_.mcap_output_settings.prepend_timestamp && configuration_.mcap_output_settings.max_files > 1)
     {
         // When the timestamp isn't included in the file's name, the output files all have the same name.
         // To make their names unique, we include their file id.
-        mcap_filename_ += "_" + std::to_string(mcap_file_id_);
+        mcap_filename += "_" + std::to_string(mcap_file_id_);
     }
 
-    mcap_filename_ += ".mcap";
-
-    // Store the filename in case of rotation
-    mcap_filenames_[mcap_file_index] = mcap_filename_;
+    mcap_filename += ".mcap";
 
     // Append temporal suffix
-    std::string tmp_filename = tmp_filename_(mcap_filename_);
+    const auto tmp_filename = tmp_filename_(mcap_filename);
 
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "Opening file <" << tmp_filename << "> .");
@@ -618,9 +594,18 @@ void McapHandler::open_file_nts_()
         throw e;
     }
 
-    mcap_size_tracker_.init(
-        configuration_.mcap_output_settings.files_max_size[mcap_file_index],
-        configuration_.mcap_output_settings.safety_margin);
+    // Update the MCAP file id
+    mcap_file_id_++;
+
+    // Calculate the maximum size of the file
+    const auto max_file_size = std::min(
+        configuration_.mcap_output_settings.max_file_size,
+        configuration_.mcap_output_settings.max_size - output_size_);
+
+    mcap_size_tracker_.init(max_file_size, configuration_.mcap_output_settings.safety_margin);
+
+    // Store the filename in case of rotation
+    mcap_filenames_.push_back(mcap_filename);
 
     // Write version metadata in MCAP file
     write_version_metadata_();
@@ -645,7 +630,9 @@ void McapHandler::open_file_nts_()
 
 void McapHandler::close_file_nts_()
 {
-    std::string tmp_filename = tmp_filename_(mcap_filename_);
+    const auto mcap_filename = mcap_filenames_.back();
+    const auto tmp_filename = tmp_filename_(mcap_filename);
+
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "Closing file <" << tmp_filename << "> .");
 
@@ -658,15 +645,18 @@ void McapHandler::close_file_nts_()
     // Close writer and output file
     mcap_writer_.close();
 
+    // Update output size
+    output_size_ += std::filesystem::file_size(tmp_filename);
+
     // Reset mcap size tracker
     mcap_size_tracker_.reset(tmp_filename);
 
     // Rename temp file to configuration file_name
-    if (std::rename(tmp_filename.c_str(), mcap_filename_.c_str()))
+    if (std::rename(tmp_filename.c_str(), mcap_filename.c_str()))
     {
         logError(
             DDSRECORDER_MCAP_HANDLER,
-            "Failed to rename " << tmp_filename << " into " << mcap_filename_ << " on handler destruction.");
+            "Failed to rename " << tmp_filename << " into " << mcap_filename << " on handler destruction.");
     }
 }
 
@@ -806,7 +796,6 @@ void McapHandler::add_pending_samples_nts_(
     {
         // Move samples from pending list to buffer, or write them directly to MCAP file
         auto& sample = pending_samples.front();
-
         add_data_nts_(sample.second, sample.first, direct_write);
 
         pending_samples.pop_front();
@@ -1328,11 +1317,10 @@ void McapHandler::write_version_metadata_()
 void McapHandler::on_mcap_full_(
         const std::overflow_error& e)
 {
-    const bool can_write_another_file = mcap_file_id_ < configuration_.mcap_output_settings.files_max_size.size();
-
-    if (!configuration_.mcap_output_settings.file_rotation && !can_write_another_file)
+    if (mcap_filenames_.size() == configuration_.mcap_output_settings.max_files &&
+            !configuration_.mcap_output_settings.file_rotation)
     {
-        // The mcap is full and there's no more space to keep writing. Throw exception.
+        // The mcap is full and there's no more space to keep writing.
         throw e;
     }
 
@@ -1365,6 +1353,33 @@ std::string McapHandler::tmp_filename_(
 {
     static const std::string TMP_SUFFIX = ".tmp~";
     return filename + TMP_SUFFIX;
+}
+
+void McapHandler::check_and_free_space_()
+{
+    if (mcap_filenames_.size() < configuration_.mcap_output_settings.max_files)
+    {
+        // There still is enough free space.
+        return;
+    }
+
+    if (configuration_.mcap_output_settings.file_rotation)
+    {
+        const auto oldest_file = mcap_filenames_.front();
+        const auto oldest_file_size = std::filesystem::file_size(oldest_file);
+
+        const auto ret = std::filesystem::remove(oldest_file);
+
+        if (!ret)
+        {
+            logWarning(
+                DDSRECORDER_MCAP_HANDLER,
+                "RESOURCE_LIMITS | Failed to remove file " << oldest_file << " on file rotation.");
+        }
+
+        mcap_filenames_.erase(mcap_filenames_.begin());
+        output_size_ -= oldest_file_size;
+    }
 }
 
 std::string McapHandler::serialize_qos_(

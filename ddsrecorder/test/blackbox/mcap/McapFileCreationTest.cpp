@@ -205,7 +205,7 @@ mcap::LinearMessageView get_msgs_mcap(
         const std::string file_name,
         mcap::McapReader& mcap_reader_)
 {
-    auto status = mcap_reader_.open(file_name);
+    auto status = mcap_reader_.open(file_name + ".mcap");
 
     auto messages = mcap_reader_.readMessages();
 
@@ -294,7 +294,7 @@ std::tuple<unsigned int, double> record_with_transitions(
     }
 
     mcap::McapReader mcap_reader;
-    auto messages = get_msgs_mcap(file_name + ".mcap", mcap_reader);
+    auto messages = get_msgs_mcap(file_name, mcap_reader);
 
     unsigned int n_received_msgs = 0;
     double max_timestamp = 0;
@@ -329,7 +329,7 @@ TEST(McapFileCreationTest, mcap_data_msgs)
     pubsubType.serialize(send_data.get(), &payload);
 
     mcap::McapReader mcap_reader;
-    auto messages = get_msgs_mcap(file_name + ".mcap", mcap_reader);
+    auto messages = get_msgs_mcap(file_name, mcap_reader);
 
     for (auto it = messages.begin(); it != messages.end(); it++)
     {
@@ -352,7 +352,7 @@ TEST(McapFileCreationTest, mcap_dds_topic)
     record(file_name);
 
     mcap::McapReader mcap_reader;
-    auto messages = get_msgs_mcap(file_name + ".mcap", mcap_reader);
+    auto messages = get_msgs_mcap(file_name, mcap_reader);
 
     std::string received_topic = "";
     std::string received_data_type_name =  "";
@@ -378,7 +378,7 @@ TEST(McapFileCreationTest, mcap_ros2_topic)
     record(file_name, 1, 1, true);
 
     mcap::McapReader mcap_reader;
-    auto messages = get_msgs_mcap(file_name + ".mcap", mcap_reader);
+    auto messages = get_msgs_mcap(file_name, mcap_reader);
 
     std::string received_topic = "";
     std::string received_data_type_name =  "";
@@ -404,7 +404,7 @@ TEST(McapFileCreationTest, mcap_data_num_msgs)
     record(file_name, test::n_msgs);
 
     mcap::McapReader mcap_reader;
-    auto messages = get_msgs_mcap(file_name + ".mcap", mcap_reader);
+    auto messages = get_msgs_mcap(file_name, mcap_reader);
 
     unsigned int n_received_msgs = 0;
     for (auto it = messages.begin(); it != messages.end(); it++)
@@ -426,7 +426,7 @@ TEST(McapFileCreationTest, mcap_data_num_msgs_downsampling)
     record(file_name, test::n_msgs, test::downsampling);
 
     mcap::McapReader mcap_reader;
-    auto messages = get_msgs_mcap(file_name + ".mcap", mcap_reader);
+    auto messages = get_msgs_mcap(file_name, mcap_reader);
 
     unsigned int n_received_msgs = 0;
     for (auto it = messages.begin(); it != messages.end(); it++)
