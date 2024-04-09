@@ -1389,7 +1389,7 @@ void McapHandler::check_and_free_space_()
         }
 
         logWarning(DDSRECORDER_MCAP_HANDLER, "RESOURCE_LIMITS | File " << oldest_file << " doesn't exist and could not "
-            "be deleted on file rotation.");
+                "be deleted on file rotation.");
         configuration_.mcap_output_settings.max_files--;
     }
 
