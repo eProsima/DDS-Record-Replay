@@ -372,7 +372,7 @@ Enabling ``file-rotation`` allows the |ddsrecorder| to overwrite old files to fr
 
 .. note::
 
-    If an output file is moved, deleted, or renamed, the |ddsrecorder| will account for the size of the file in question and rotate between the remaining files.
+    If an output file is moved, deleted, or renamed, the |ddsrecorder| will keep the size of the file reserved and rotate between the remaining files.
 
 **Example of usage**
 
