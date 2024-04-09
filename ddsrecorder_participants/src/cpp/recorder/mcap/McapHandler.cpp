@@ -1357,15 +1357,15 @@ std::string McapHandler::tmp_filename_(
 
 void McapHandler::check_and_free_space_()
 {
-    if (mcap_filenames_.size() < configuration_.mcap_output_settings.max_files)
-    {
-        // There still is enough free space.
-        return;
-    }
-
     if (!configuration_.mcap_output_settings.file_rotation)
     {
         // File rotation mode is disabled.
+        return;
+    }
+
+    if (mcap_filenames_.size() < configuration_.mcap_output_settings.max_files)
+    {
+        // There still is enough free space.
         return;
     }
 
@@ -1409,8 +1409,10 @@ void McapHandler::check_and_free_space_()
             DDSRECORDER_MCAP_HANDLER,
             "RESOURCE_LIMITS | Failed to remove file " << oldest_file << " on file rotation.");
     }
-
-    output_size_ -= oldest_file_size;
+    else
+    {
+        output_size_ -= oldest_file_size;
+    }
 }
 
 std::string McapHandler::serialize_qos_(
