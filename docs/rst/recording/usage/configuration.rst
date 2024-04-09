@@ -370,6 +370,10 @@ Enabling ``file-rotation`` allows the |ddsrecorder| to overwrite old files to fr
 
     If the *DDS Recorder's* state changes to ``stop`` while ``file-rotation`` is set, the |ddsrecorder| will save its current output files from being overwritten in the future.
 
+.. note::
+
+    If an output file is moved, deleted, or renamed, the |ddsrecorder| will keep the size of the file reserved and rotate between the remaining files.
+
 **Example of usage**
 
 .. code-block:: yaml

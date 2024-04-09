@@ -1341,6 +1341,7 @@ void McapHandler::on_mcap_full_(
 void McapHandler::on_disk_full_() const noexcept
 {
     monitor_error("DISK_FULL");
+
     if (on_disk_full_lambda_set_)
     {
         on_disk_full_lambda_();
@@ -1356,31 +1357,60 @@ std::string McapHandler::tmp_filename_(
 
 void McapHandler::check_and_free_space_()
 {
+    if (!configuration_.mcap_output_settings.file_rotation)
+    {
+        // File rotation mode is disabled.
+        return;
+    }
+
     if (mcap_filenames_.size() < configuration_.mcap_output_settings.max_files)
     {
         // There still is enough free space.
         return;
     }
 
-    if (configuration_.mcap_output_settings.file_rotation)
+    // Find the oldest file that still exists
+    std::string oldest_file;
+
+    while (true)
     {
-        const auto oldest_file = mcap_filenames_.front();
-        const auto oldest_file_size = std::filesystem::file_size(oldest_file);
-
-        logInfo(
-            DDSRECORDER_MCAP_HANDLER,
-            "RESOURCE_LIMITS | Removing file " << oldest_file << " on file rotation.");
-
-        const auto ret = std::filesystem::remove(oldest_file);
-
-        if (!ret)
+        if (mcap_filenames_.empty())
         {
-            logWarning(
-                DDSRECORDER_MCAP_HANDLER,
-                "RESOURCE_LIMITS | Failed to remove file " << oldest_file << " on file rotation.");
+            logWarning(DDSRECORDER_MCAP_HANDLER, "RESOURCE_LIMITS | No files to remove on file rotation.");
+            return;
         }
 
+        oldest_file = mcap_filenames_.front();
         mcap_filenames_.erase(mcap_filenames_.begin());
+
+        if (std::filesystem::exists(oldest_file))
+        {
+            break;
+        }
+
+        logWarning(DDSRECORDER_MCAP_HANDLER, "RESOURCE_LIMITS | File " << oldest_file << " doesn't exist and could not "
+                "be deleted on file rotation.");
+        configuration_.mcap_output_settings.max_files--;
+    }
+
+    // Find the oldest file's size
+    const auto oldest_file_size = std::filesystem::file_size(oldest_file);
+
+    // Remove the oldest file
+    logInfo(
+        DDSRECORDER_MCAP_HANDLER,
+        "RESOURCE_LIMITS | Removing file " << oldest_file << " on file rotation.");
+
+    const auto ret = std::filesystem::remove(oldest_file);
+
+    if (!ret)
+    {
+        logWarning(
+            DDSRECORDER_MCAP_HANDLER,
+            "RESOURCE_LIMITS | Failed to remove file " << oldest_file << " on file rotation.");
+    }
+    else
+    {
         output_size_ -= oldest_file_size;
     }
 }
