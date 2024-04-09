@@ -18,6 +18,10 @@
 
 #pragma once
 
+#include <cstdint>
+#include <string>
+#include <vector>
+
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
@@ -43,7 +47,19 @@ struct McapOutputSettings
     bool output_local_timestamp;
 
     //! Safety margin on MCAP file's size estimation
-    uint64_t safety_margin;
+    std::uint64_t safety_margin;
+
+    //! Maximum size of the output file
+    std::uint64_t max_file_size;
+
+    //! Maximum aggregate size of the output files
+    std::uint64_t max_size;
+
+    //! Maximum number of output files
+    std::uint64_t max_files;
+
+    //! Whether to rotate output files after reaching the max-size
+    bool file_rotation{false};
 };
 
 /**

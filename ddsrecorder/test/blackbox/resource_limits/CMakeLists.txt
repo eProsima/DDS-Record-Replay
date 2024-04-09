@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-########################
-# McapFileCreationTest #
-########################
+######################
+# ResourceLimitsTest #
+######################
 
-set(TEST_NAME McapFileCreationTest)
+set(TEST_NAME ResourceLimitsTest)
 
 file(
     GLOB_RECURSE TEST_SOURCES
-    McapFileCreationTest.cpp
+    ResourceLimitsTest.cpp
     "${PROJECT_SOURCE_DIR}/test/resources/types/hello_world/*.c*"
     )
 
@@ -41,32 +41,9 @@ else()
 endif()
 
 set(TEST_LIST
-        mcap_data_msgs
-        mcap_dds_topic
-        mcap_ros2_topic
-        mcap_data_num_msgs
-        mcap_data_num_msgs_downsampling
-        transition_running
-        transition_paused
-        transition_stopped
-        transition_suspended
-        transition_running_paused
-        transition_running_stopped
-        transition_running_suspended
-        transition_paused_running
-        transition_paused_stopped
-        transition_paused_suspended
-        transition_stopped_running
-        transition_stopped_paused
-        transition_stopped_suspended
-        transition_suspended_running
-        transition_suspended_paused
-        transition_suspended_stopped
-        transition_paused_event_less_window
-        transition_paused_event_max_window
-        transition_paused_event_start
-        transition_paused_event_stop
-        transition_paused_event_suspend
+        max_file_size
+        max_size
+        file_rotation
     )
 
 set(TEST_NEEDED_SOURCES
@@ -76,6 +53,13 @@ set(TEST_EXTRA_HEADERS
     ${PROJECT_SOURCE_DIR}/test/resources/types/hello_world/
     )
 
+# Exclude types' files depending on the Fast DDS version
+if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
+    list(FILTER TEST_EXTRA_HEADERS EXCLUDE REGEX "v2/")
+else()
+    list(FILTER TEST_EXTRA_HEADERS EXCLUDE REGEX "v1/")
+endif()
+
 add_blackbox_executable(
     "${TEST_NAME}"
     "${TEST_SOURCES}"
@@ -83,33 +67,4 @@ add_blackbox_executable(
     "${TEST_NEEDED_SOURCES}"
     "${TEST_EXTRA_HEADERS}"
     "${TEST_LIBRARY_SOURCES}"
-)
-
-
-########################
-# Mcap Log Error Tests #
-########################
-
-set(TEST_NAME McapLogErrorTests)
-
-set(TEST_SOURCES
-        McapLogErrorTests.cpp
-    )
-
-set(TEST_LIST
-        fail_to_open_file
-    )
-
-set(EXTRA_LIBRARIES
-        ${MODULE_FIND_PACKAGES}
-    )
-
-
-add_blackbox_executable(
-    "${TEST_NAME}"
-    "${TEST_SOURCES}"
-    "${TEST_LIST}"
-    "${TEST_NEEDED_SOURCES}"
-    "${EXTRA_LIBRARIES}"
-    "${TEST_EXTRA_HEADERS}"
 )

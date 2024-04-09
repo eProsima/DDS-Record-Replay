@@ -458,6 +458,11 @@ protected:
             const std::string& schema_name);
 
     /**
+     * @brief Rewrite the channels that already exist.
+     */
+    void rewrite_channels_nts_();
+
+    /**
      * @brief Rewrite all received schemas into currently open MCAP file.
      *
      */
@@ -550,6 +555,13 @@ protected:
             const std::string& filename);
 
     /**
+     * @brief Free disk space if required and allowed.
+     *
+     * If there is no more space available and file rotation is enabled, it deletes the oldest file.
+     */
+    void check_and_free_space_();
+
+    /**
      * @brief Serialize a \c TopicQoS struct into a string.
      *
      * @param [in] qos TopicQoS to be serialized
@@ -579,8 +591,14 @@ protected:
     //! Handler configuration
     McapHandlerConfiguration configuration_;
 
-    //! Name of open MCAP file
-    std::string mcap_filename_;
+    //! MCAP file id
+    std::uint64_t mcap_file_id_{0};
+
+    //! List of MCAP filenames
+    std::vector<std::string> mcap_filenames_;
+
+    //! Aggregate sizes of the MCAP output files
+    std::uint64_t output_size_{0};
 
     //! Payload pool
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;

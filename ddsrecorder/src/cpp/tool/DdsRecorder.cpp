@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <filesystem>
+#include <math.h>
+
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/utils.hpp>
 
@@ -61,6 +64,7 @@ DdsRecorder::DdsRecorder(
 
     // Fill MCAP output file settings
     participants::McapOutputSettings mcap_output_settings;
+
     if (file_name == "")
     {
         mcap_output_settings.output_filename = configuration_.output_filename;
@@ -75,7 +79,25 @@ DdsRecorder::DdsRecorder(
         mcap_output_settings.output_filepath = ".";
         mcap_output_settings.prepend_timestamp = false;
     }
+
     mcap_output_settings.safety_margin = configuration_.safety_margin;
+    mcap_output_settings.file_rotation = configuration_.output_resource_limits_file_rotation;
+    mcap_output_settings.max_file_size = configuration_.output_resource_limits_max_file_size;
+
+    if (mcap_output_settings.max_file_size == 0)
+    {
+        mcap_output_settings.max_file_size = std::filesystem::space(mcap_output_settings.output_filepath).available;
+    }
+
+    mcap_output_settings.max_size = configuration_.output_resource_limits_max_size;
+
+    if (mcap_output_settings.max_size == 0)
+    {
+        mcap_output_settings.max_size = mcap_output_settings.max_file_size;
+    }
+
+    mcap_output_settings.max_files = ceil(
+        static_cast<double>(mcap_output_settings.max_size) / mcap_output_settings.max_file_size);
 
     // Create MCAP Handler configuration
     participants::McapHandlerConfiguration handler_config(

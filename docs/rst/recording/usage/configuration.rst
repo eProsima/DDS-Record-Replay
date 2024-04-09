@@ -339,9 +339,45 @@ The recorder output file does support the following configuration settings under
         - ``unsigned int``
         - ``0``
 
+    *   - Resource limits
+        - ``resource-limits``
+        - :ref:`recorder_usage_configuration_resource_limits`
+        - ``map``
+        - ``unlimited``
+
 When DDS Recorder application is launched (or when remotely controlled, every time a ``start/pause`` command is received while in ``SUSPENDED/STOPPED`` state), a temporary file with ``filename`` name (+timestamp prefix) and ``.mcap.tmp~`` extension is created in ``path``.
-This file is not readable until the application is terminated (or a ``suspend/stop/close`` command is received).
+This file is not readable until the application terminates, receives a ``suspend/stop/close`` command, or the file reaches its maximum size (see :ref:`<recorder_usage_configuration_resource_limits>`).
 On such event, the temporal file is renamed to have ``.mcap`` extension in the same location, and is then ready to be processed.
+
+.. _recorder_usage_configuration_resource_limits:
+
+Resource Limits
+"""""""""""""""
+
+The ``resource-limits`` tag allows users to limit the size of the *DDS Recorder's* output.
+The ``max-file-size`` tag specifies the maximum size of each output file and the ``max-size`` tag specifies the maximum aggregate size of all output files.
+If the ``max-size`` is higher than the ``max-file-size``, the |ddsrecorder| will create multiple files with a maximum size of ``max-file-size``.
+By default, however, the ``max-file-size`` is unlimited (``0B``) and the ``max-size`` is the same as the ``max-file-size``; that is, by default the |ddsrecorder| creates a single file of unlimited size.
+
+.. warning::
+
+    If the ``max-file-size`` or the ``max-size`` are set to a value lower than the available space in the disk, the |ddsrecorder| will replace them with the available space in the disk.
+
+To keep the |ddsrecorder| recording after reaching the ``max-size``, users can set the ``file-rotation`` tag to ``true``.
+Enabling ``file-rotation`` allows the |ddsrecorder| to overwrite old files to free space for new ones.
+
+.. note::
+
+    If the *DDS Recorder's* state changes to ``stop`` while ``file-rotation`` is set, the |ddsrecorder| will save its current output files from being overwritten in the future.
+
+**Example of usage**
+
+.. code-block:: yaml
+
+    resource-limits:
+      max-file-size: 250KB
+      max-size: 2MiB
+      file-rotation: true
 
 Buffer size
 ^^^^^^^^^^^
@@ -802,6 +838,11 @@ A complete example of all the configurations described on this page can be found
         timestamp-format: "%Y-%m-%d_%H-%M-%S_%Z"
         local-timestamp: false
         safety-margin: 500
+
+        resource-limits:
+          max-file-size: 250KB
+          max-size: 2MiB
+          file-rotation: true
 
       buffer-size: 50
       event-window: 60

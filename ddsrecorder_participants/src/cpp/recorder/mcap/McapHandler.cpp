@@ -18,7 +18,11 @@
 
 #define MCAP_IMPLEMENTATION  // Define this in exactly one .cpp file
 
+#include <algorithm>
 #include <cstdio>
+#include <filesystem>
+#include <vector>
+
 #include <mcap/reader.hpp>
 
 #include <yaml-cpp/yaml.h>
@@ -160,7 +164,7 @@ void McapHandler::add_schema(
         mcap_writer_.addSchema(new_schema);
         mcap_size_tracker_.schema_written(new_schema);
 
-        logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << type_name << ".");
+        logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << new_schema.name << ".");
 
         auto it = schemas_.find(type_name);
         if (it != schemas_.end())
@@ -547,22 +551,32 @@ void McapHandler::set_on_disk_full_callback(
 
 void McapHandler::open_file_nts_()
 {
-    // Generate filename with current timestamp if applies
+    // Generate the filename
+    auto mcap_filename = configuration_.mcap_output_settings.output_filepath + "/";
+
     if (configuration_.mcap_output_settings.prepend_timestamp)
     {
-        mcap_filename_ = configuration_.mcap_output_settings.output_filepath + "/" + utils::timestamp_to_string(
+        // Include the timestamp in the filename
+        const auto timestamp = utils::timestamp_to_string(
             utils::now(), configuration_.mcap_output_settings.output_timestamp_format,
-            configuration_.mcap_output_settings.output_local_timestamp) + "_" +
-                configuration_.mcap_output_settings.output_filename  + ".mcap";
-    }
-    else
-    {
-        mcap_filename_ = configuration_.mcap_output_settings.output_filepath + "/" +
-                configuration_.mcap_output_settings.output_filename;
+            configuration_.mcap_output_settings.output_local_timestamp);
+
+        mcap_filename = timestamp + "_";
     }
 
+    mcap_filename += configuration_.mcap_output_settings.output_filename;
+
+    if (!configuration_.mcap_output_settings.prepend_timestamp && configuration_.mcap_output_settings.max_files > 1)
+    {
+        // When the timestamp isn't included in the file's name, the output files all have the same name.
+        // To make their names unique, we include their file id.
+        mcap_filename += "_" + std::to_string(mcap_file_id_);
+    }
+
+    mcap_filename += ".mcap";
+
     // Append temporal suffix
-    std::string tmp_filename = tmp_filename_(mcap_filename_);
+    const auto tmp_filename = tmp_filename_(mcap_filename);
 
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "Opening file <" << tmp_filename << "> .");
@@ -578,12 +592,27 @@ void McapHandler::open_file_nts_()
         throw e;
     }
 
-    // Reset tracker's available space for the given path
-    mcap_size_tracker_.init(configuration_.mcap_output_settings.output_filepath,
-            configuration_.mcap_output_settings.safety_margin);
+    // Update the MCAP file id
+    mcap_file_id_++;
+
+    // Calculate the maximum size of the file
+    const auto max_file_size = std::min(
+        configuration_.mcap_output_settings.max_file_size,
+        configuration_.mcap_output_settings.max_size - output_size_);
+
+    mcap_size_tracker_.init(max_file_size, configuration_.mcap_output_settings.safety_margin);
+
+    // Store the filename
+    mcap_filenames_.push_back(mcap_filename);
 
     // Write version metadata in MCAP file
     write_version_metadata_();
+
+    // Write in the new file the channels that already exist.
+    if (!channels_.empty())
+    {
+        rewrite_channels_nts_();
+    }
 
     // Write in new file schemas already received before
     // NOTE: This is necessary since dynamic types are only sent/received once on discovery
@@ -599,7 +628,9 @@ void McapHandler::open_file_nts_()
 
 void McapHandler::close_file_nts_()
 {
-    std::string tmp_filename = tmp_filename_(mcap_filename_);
+    const auto mcap_filename = mcap_filenames_.back();
+    const auto tmp_filename = tmp_filename_(mcap_filename);
+
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "Closing file <" << tmp_filename << "> .");
 
@@ -612,15 +643,18 @@ void McapHandler::close_file_nts_()
     // Close writer and output file
     mcap_writer_.close();
 
+    // Update output size
+    output_size_ += std::filesystem::file_size(tmp_filename);
+
     // Reset mcap size tracker
     mcap_size_tracker_.reset(tmp_filename);
 
     // Rename temp file to configuration file_name
-    if (std::rename(tmp_filename.c_str(), mcap_filename_.c_str()))
+    if (std::rename(tmp_filename.c_str(), mcap_filename.c_str()))
     {
         logError(
             DDSRECORDER_MCAP_HANDLER,
-            "Failed to rename " << tmp_filename << " into " << mcap_filename_ << " on handler destruction.");
+            "Failed to rename " << tmp_filename << " into " << mcap_filename << " on handler destruction.");
     }
 }
 
@@ -644,6 +678,7 @@ void McapHandler::add_data_nts_(
     else
     {
         samples_buffer_.push_back(msg);
+
         if (state_ == McapHandlerStateCode::RUNNING && samples_buffer_.size() == configuration_.buffer_size)
         {
             logInfo(DDSRECORDER_MCAP_HANDLER, "Full buffer, writting to disk...");
@@ -668,6 +703,7 @@ void McapHandler::add_data_nts_(
                 e.what());
         return;
     }
+
     add_data_nts_(msg, direct_write);
 }
 
@@ -701,6 +737,7 @@ void McapHandler::add_to_pending_nts_(
         const DdsTopic& topic)
 {
     assert(configuration_.max_pending_samples != 0);
+
     if (configuration_.max_pending_samples > 0 &&
             pending_samples_[topic.type_name].size() == static_cast<unsigned int>(configuration_.max_pending_samples))
     {
@@ -721,8 +758,10 @@ void McapHandler::add_to_pending_nts_(
             auto& oldest_sample = pending_samples_[topic.type_name].front();
             add_data_nts_(oldest_sample.second, oldest_sample.first);
         }
+
         pending_samples_[topic.type_name].pop_front();
     }
+
     pending_samples_[topic.type_name].push_back({topic, msg});
 }
 
@@ -756,6 +795,7 @@ void McapHandler::add_pending_samples_nts_(
         // Move samples from pending list to buffer, or write them directly to MCAP file
         auto& sample = pending_samples.front();
         add_data_nts_(sample.second, sample.first, direct_write);
+
         pending_samples.pop_front();
     }
 }
@@ -904,6 +944,7 @@ void McapHandler::stop_event_thread_nts_(
     assert(state_ != McapHandlerStateCode::PAUSED);
 
     logInfo(DDSRECORDER_MCAP_HANDLER, "Stopping event thread.");
+
     if (event_thread_.joinable())
     {
         event_flag_ = EventCode::stopped;
@@ -911,6 +952,7 @@ void McapHandler::stop_event_thread_nts_(
         event_cv_.notify_all(); // Need to notify all as not possible to notify a specific thread
         event_thread_.join();
     }
+
     samples_buffer_.clear();
     pending_samples_paused_.clear();
 }
@@ -1062,29 +1104,62 @@ mcap::SchemaId McapHandler::get_schema_id_nts_(
     }
 }
 
+void McapHandler::rewrite_channels_nts_()
+{
+    logInfo(DDSRECORDER_MCAP_HANDLER, "Rewriting received channels.");
+
+    // Sort channels by id
+    std::map<mcap::ChannelId, mcap::Channel> channels;
+
+    for (auto& channel : channels_)
+    {
+        channels[channel.second.id] = channel.second;
+    }
+
+    // Write channels to MCAP file
+    for (const auto& it : channels)
+    {
+        const auto& id = it.first;
+        const auto& channel = it.second;
+
+        // Check if there is enough space available to write the channel
+        mcap_size_tracker_.channel_to_write(channel);
+
+        // WARNING: passing as non-const to MCAP library
+        mcap_writer_.addChannel(const_cast<mcap::Channel&>(channel));
+        mcap_size_tracker_.channel_written(channel);
+
+        logInfo(DDSRECORDER_MCAP_HANDLER, "Channel created: " << channel.topic << ".");
+    }
+}
+
 void McapHandler::rewrite_schemas_nts_()
 {
     logInfo(DDSRECORDER_MCAP_HANDLER, "Rewriting received schemas.");
 
-    std::map<std::string, mcap::Schema> new_schemas;
-    for (const auto& schema : schemas_)
+    // Sort schemas by id
+    std::map<mcap::SchemaId, mcap::Schema> schemas;
+
+    for (auto& schema : schemas_)
     {
-        std::string type_name = schema.first;
-        mcap::Schema new_schema = schema.second;
-
-        // Check if there is enough space available to write the schema
-        mcap_size_tracker_.schema_to_write(new_schema);
-
-        // WARNING: passing as non-const to MCAP library
-        mcap_writer_.addSchema(new_schema);
-        mcap_size_tracker_.schema_written(new_schema);
-        new_schemas[type_name] = std::move(new_schema);
-
-        logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << type_name << ".");
+        schemas[schema.second.id] = schema.second;
     }
 
-    // Overwrite schemas map
-    schemas_ = new_schemas;
+    // Write schemas to MCAP file
+    for (const auto& it : schemas)
+    {
+        const auto& id = it.first;
+        const auto& schema = it.second;
+
+        // Check if there is enough space available to write the schema
+        mcap_size_tracker_.schema_to_write(schema);
+
+        // WARNING: passing as non-const to MCAP library
+        mcap_writer_.addSchema(const_cast<mcap::Schema&>(schema));
+        mcap_size_tracker_.schema_written(schema);
+
+        logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << schema.name << ".");
+    }
 }
 
 void McapHandler::store_dynamic_type_(
@@ -1240,21 +1315,19 @@ void McapHandler::write_version_metadata_()
 void McapHandler::on_mcap_full_(
         const std::overflow_error& e)
 {
-    // TODO: file rotation
-    // if (file_rotation)
-    // {
-    //     file_rotation_stuff();
-    //     {
-    //         close_file_nts_();
-    //         open_file_nts_();
-    //         // etc.
-    //     }
-    // }
-    // else
+    if (mcap_filenames_.size() == configuration_.mcap_output_settings.max_files &&
+            !configuration_.mcap_output_settings.file_rotation)
     {
-        // Propagate exception
+        // The mcap is full and there's no more space to keep writing. Propagate exception.
         throw e;
     }
+
+    // The recording must go on. Close the current file and open a new one.
+    logInfo(DDSRECORDER_MCAP_HANDLER, "RESOURCE_LIMITS | Max file size reached, closing file and opening a new one...");
+
+    close_file_nts_();
+    check_and_free_space_();
+    open_file_nts_();
 }
 
 void McapHandler::on_mcap_full_(
@@ -1279,6 +1352,37 @@ std::string McapHandler::tmp_filename_(
 {
     static const std::string TMP_SUFFIX = ".tmp~";
     return filename + TMP_SUFFIX;
+}
+
+void McapHandler::check_and_free_space_()
+{
+    if (mcap_filenames_.size() < configuration_.mcap_output_settings.max_files)
+    {
+        // There still is enough free space.
+        return;
+    }
+
+    if (configuration_.mcap_output_settings.file_rotation)
+    {
+        const auto oldest_file = mcap_filenames_.front();
+        const auto oldest_file_size = std::filesystem::file_size(oldest_file);
+
+        logInfo(
+            DDSRECORDER_MCAP_HANDLER,
+            "RESOURCE_LIMITS | Removing file " << oldest_file << " on file rotation.");
+
+        const auto ret = std::filesystem::remove(oldest_file);
+
+        if (!ret)
+        {
+            logWarning(
+                DDSRECORDER_MCAP_HANDLER,
+                "RESOURCE_LIMITS | Failed to remove file " << oldest_file << " on file rotation.");
+        }
+
+        mcap_filenames_.erase(mcap_filenames_.begin());
+        output_size_ -= oldest_file_size;
+    }
 }
 
 std::string McapHandler::serialize_qos_(

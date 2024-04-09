@@ -39,11 +39,11 @@ McapSizeTracker::~McapSizeTracker()
 }
 
 void McapSizeTracker::init(
-        const std::string& path,
-        const uint64_t& safety_margin)
+        const std::uint64_t& space_available,
+        const std::uint64_t& safety_margin)
 {
     logInfo(DDSRECORDER_MCAP_SIZE_TRACKER,
-            "Initializing tracker for: " << path);
+            "Initializing tracker with a size of " << space_available);
 
     if (enabled_)
     {
@@ -59,9 +59,7 @@ void McapSizeTracker::init(
     potential_mcap_size_ = MCAP_FILE_OVERHEAD + safety_margin;
     written_mcap_size_ = MCAP_FILE_OVERHEAD + safety_margin;
 
-    // Check available space in disk when opening file
-    std::filesystem::space_info space = std::filesystem::space(path);
-    space_available_ = space.available;
+    space_available_ = space_available;
 
     enabled_ = true;
 }
