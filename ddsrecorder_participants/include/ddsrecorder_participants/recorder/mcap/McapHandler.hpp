@@ -129,7 +129,8 @@ public:
     McapHandler(
             const McapHandlerConfiguration& config,
             const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
-            const McapHandlerStateCode& init_state = McapHandlerStateCode::RUNNING);
+            const McapHandlerStateCode& init_state = McapHandlerStateCode::RUNNING,
+            std::shared_ptr<std::map<int, std::string>> mcap_filenames = std::make_shared<std::map<int, std::string>>());
 
     /**
      * @brief Destructor
@@ -585,7 +586,7 @@ protected:
     McapHandlerConfiguration configuration_;
 
     //! Map of MCAP file id to filename
-    std::map<int, std::string> mcap_filenames_;
+    std::shared_ptr<std::map<int, std::string>> mcap_filenames_;
 
     //! Payload pool
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;

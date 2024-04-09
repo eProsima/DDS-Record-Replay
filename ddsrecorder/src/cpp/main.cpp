@@ -318,6 +318,9 @@ int main(
             }
             command = state_to_command(initial_state);
 
+            // The mcap filenames must be stored outside of the loop since they are shared between instances
+            std::shared_ptr<std::map<int, std::string>> mcap_filenames = std::make_shared<std::map<int, std::string>>();
+
             prev_command = CommandCode::close;
             do
             {
@@ -334,8 +337,14 @@ int main(
                         receiver.publish_status(CommandCode::stop, prev_command);
                     }
 
+                    if (args["avoid_overwriting_files"])
+                    {
+                        mcap_filenames = std::make_shared<std::map<int, std::string>>();
+                    }
+
                     prev_command = CommandCode::stop;
                     parse_command(receiver.wait_for_command(), command, args);
+
                     switch (command)
                     {
                         case CommandCode::start:
@@ -391,7 +400,7 @@ int main(
                 configuration = eprosima::ddsrecorder::yaml::RecorderConfiguration(commandline_args.file_path);
 
                 // Create DDS Recorder
-                auto recorder = std::make_unique<DdsRecorder>(configuration, initial_state, close_handler);
+                auto recorder = std::make_unique<DdsRecorder>(configuration, initial_state, close_handler, "", mcap_filenames);
 
                 // Create File Watcher Handler
                 std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;

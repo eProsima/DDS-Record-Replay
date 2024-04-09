@@ -86,11 +86,13 @@ Message::~Message()
 McapHandler::McapHandler(
         const McapHandlerConfiguration& config,
         const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
-        const McapHandlerStateCode& init_state /* = McapHandlerStateCode::RUNNING */)
+        const McapHandlerStateCode& init_state /* = McapHandlerStateCode::RUNNING */,
+        std::shared_ptr<std::map<int, std::string>> mcap_filenames /* = std::make_shared<std::map<int, std::string>>() */)
     : configuration_(config)
     , payload_pool_(payload_pool)
     , state_(McapHandlerStateCode::STOPPED)
     , on_disk_full_lambda_set_(false)
+    , mcap_filenames_(mcap_filenames)
 {
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "Creating MCAP handler instance.");
@@ -551,19 +553,19 @@ void McapHandler::open_file_nts_()
     // Get the current file's id
     int mcap_file_id = 0;
 
-    if (!mcap_filenames_.empty())
+    if (!mcap_filenames_->empty())
     {
         // The current file's id is one more than the last one
-        mcap_file_id = mcap_filenames_.rbegin()->first + 1;
+        mcap_file_id = mcap_filenames_->rbegin()->first + 1;
     }
 
     // Remove the oldest file if necessary
     if (configuration_.mcap_output_settings.file_rotation &&
-            mcap_filenames_.size() == configuration_.mcap_output_settings.files_max_size.size())
+            mcap_filenames_->size() == configuration_.mcap_output_settings.files_max_size.size())
     {
-        const auto& oldest_file = mcap_filenames_.begin()->second;
+        const auto& oldest_file = mcap_filenames_->begin()->second;
         const auto ret = std::filesystem::remove(oldest_file);
-        mcap_filenames_.erase(mcap_filenames_.begin());
+        mcap_filenames_->erase(mcap_filenames_->begin());
 
         if (!ret)
         {
@@ -605,7 +607,7 @@ void McapHandler::open_file_nts_()
     mcap_filename += ".mcap";
 
     // Store the filename
-    mcap_filenames_[mcap_file_id] = mcap_filename;
+    (*mcap_filenames_)[mcap_file_id] = mcap_filename;
 
     // Append temporal suffix
     std::string tmp_filename = tmp_filename_(mcap_filename);
@@ -654,7 +656,7 @@ void McapHandler::open_file_nts_()
 
 void McapHandler::close_file_nts_()
 {
-    const auto mcap_filename = mcap_filenames_.rbegin()->second;
+    const auto mcap_filename = mcap_filenames_->rbegin()->second;
 
     const auto tmp_filename = tmp_filename_(mcap_filename);
     logInfo(DDSRECORDER_MCAP_HANDLER,
@@ -1325,7 +1327,7 @@ void McapHandler::write_version_metadata_()
 void McapHandler::on_mcap_full_(
         const std::overflow_error& e)
 {
-    if (mcap_filenames_.size() == configuration_.mcap_output_settings.files_max_size.size() &&
+    if (mcap_filenames_->size() == configuration_.mcap_output_settings.files_max_size.size() &&
             !configuration_.mcap_output_settings.file_rotation)
     {
         // The mcap is full and there's no more space to keep writing. Throw exception.
