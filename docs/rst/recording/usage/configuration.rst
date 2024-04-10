@@ -346,7 +346,7 @@ The recorder output file does support the following configuration settings under
         - ``unlimited``
 
 When DDS Recorder application is launched (or when remotely controlled, every time a ``start/pause`` command is received while in ``SUSPENDED/STOPPED`` state), a temporary file with ``filename`` name (+timestamp prefix) and ``.mcap.tmp~`` extension is created in ``path``.
-This file is not readable until the application terminates, receives a ``suspend/stop/close`` command, or the file reaches its maximum size (see :ref:`<recorder_usage_configuration_resource_limits>`).
+This file is not readable until the application terminates, receives a ``suspend/stop/close`` command, or the file reaches its maximum size (see :ref:`Resource Limits <recorder_usage_configuration_resource_limits>`).
 On such event, the temporal file is renamed to have ``.mcap`` extension in the same location, and is then ready to be processed.
 
 .. _recorder_usage_configuration_resource_limits:
