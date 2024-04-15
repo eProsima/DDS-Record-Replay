@@ -129,7 +129,9 @@ public:
     McapHandler(
             const McapHandlerConfiguration& config,
             const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
-            const McapHandlerStateCode& init_state = McapHandlerStateCode::RUNNING);
+            const McapHandlerStateCode& init_state = McapHandlerStateCode::RUNNING,
+            std::shared_ptr<std::vector<std::string>> mcap_filenames = std::make_shared<std::vector<std::string>>(),
+            std::shared_ptr<std::uint64_t> output_size = std::make_shared<std::uint64_t>());
 
     /**
      * @brief Destructor
@@ -595,10 +597,13 @@ protected:
     std::uint64_t mcap_file_id_{0};
 
     //! List of MCAP filenames
-    std::vector<std::string> mcap_filenames_;
+    std::shared_ptr<std::vector<std::string>> mcap_filenames_;
 
     //! Aggregate sizes of the MCAP output files
-    std::uint64_t output_size_{0};
+    std::shared_ptr<std::uint64_t> output_size_;
+
+    //! Maximum number of files
+    std::uint64_t max_files_;
 
     //! Payload pool
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;
