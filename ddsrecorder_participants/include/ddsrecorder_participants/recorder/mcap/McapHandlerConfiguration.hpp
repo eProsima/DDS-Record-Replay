@@ -22,6 +22,8 @@
 #include <string>
 #include <vector>
 
+#include <mcap/mcap.hpp>
+
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {

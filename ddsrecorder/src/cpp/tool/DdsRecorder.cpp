@@ -117,9 +117,7 @@ DdsRecorder::DdsRecorder(
     mcap_handler_ = std::make_shared<participants::McapHandler>(
         handler_config,
         payload_pool_,
-        recorder_to_handler_state_(init_state),
-        mcap_filenames,
-        output_size);
+        recorder_to_handler_state_(init_state));
 
     mcap_handler_->set_on_disk_full_callback(std::bind(&DdsRecorder::on_disk_full, this));
 

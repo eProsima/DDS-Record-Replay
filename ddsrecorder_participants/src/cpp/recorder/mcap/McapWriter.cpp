@@ -1,0 +1,336 @@
+// Copyright 2024 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @file McapWriter.cpp
+ */
+
+#include <filesystem>
+#include <stdexcept>
+
+#include <mcap/internal.hpp>
+
+#include <cpp_utils/exception/InconsistencyException.hpp>
+#include <cpp_utils/Formatter.hpp>
+#include <cpp_utils/Log.hpp>
+#include <cpp_utils/time/time_utils.hpp>
+
+#include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
+
+namespace eprosima {
+namespace ddsrecorder {
+namespace participants {
+
+McapWriter::McapWriter(
+        const McapOutputSettings& configuration,
+        const mcap::McapWriterOptions& mcap_configuration)
+    : configuration_(configuration)
+    , mcap_configuration_(mcap_configuration)
+    , file_tracker_(configuration)
+    , enabled_(true)
+{
+    open_new_file_nts_();
+}
+
+McapWriter::~McapWriter()
+{
+    if (enabled_)
+    {
+        close_current_file_nts_();
+    }
+}
+
+void McapWriter::close()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    close_current_file_nts_();
+}
+
+void McapWriter::update_dynamic_types(
+        const fastrtps::rtps::SerializedPayload_t& dynamic_types_payload)
+{
+    try
+    {
+        if (dynamic_types_payload_ == nullptr)
+        {
+            size_tracker_.attachment_to_write(dynamic_types_payload.length);
+        }
+        else
+        {
+            size_tracker_.attachment_to_write(dynamic_types_payload.length, dynamic_types_payload_->length);
+        }
+    }
+    catch (const std::overflow_error& e)
+    {
+        on_mcap_full_(e);
+    }
+
+    dynamic_types_payload_.reset(const_cast<fastrtps::rtps::SerializedPayload_t*>(&dynamic_types_payload));
+}
+
+template <>
+void McapWriter::write_nts_(const mcap::Attachment& attachment)
+{
+    // NOTE: There is no need to check if the MCAP is full, since it is checked when adding a new dynamic_type.
+
+    auto status = writer_.write(const_cast<mcap::Attachment&>(attachment));
+
+    if (!status.ok())
+    {
+        throw utils::InconsistencyException(
+                  STR_ENTRY << "FAIL_MCAP_WRITE | Error writting in MCAP, error message: " << status.message
+                  );
+    }
+
+    size_tracker_.attachment_written(attachment.dataSize);
+    file_tracker_.set_current_file_size(size_tracker_.get_written_mcap_size());
+}
+
+template <>
+void McapWriter::write_nts_(const mcap::Channel& channel)
+{
+    try
+    {
+        size_tracker_.channel_to_write(channel);
+    }
+    catch (const std::overflow_error& e)
+    {
+        on_mcap_full_(e);
+    }
+
+    writer_.addChannel(const_cast<mcap::Channel&>(channel));
+
+    size_tracker_.channel_written(channel);
+    file_tracker_.set_current_file_size(size_tracker_.get_written_mcap_size());
+
+    // Store the channel to write it down when the MCAP file is closed
+    channels_[channel.id] = channel;
+}
+
+template <>
+void McapWriter::write_nts_(const Message& msg)
+{
+    try
+    {
+        size_tracker_.message_to_write(msg.dataSize);
+    }
+    catch (const std::overflow_error& e)
+    {
+        on_mcap_full_(e, [&]()
+                {
+                    size_tracker_.message_to_write(msg.dataSize);
+                });
+    }
+
+    const auto status = writer_.write(msg);
+
+    if (!status.ok())
+    {
+        throw utils::InconsistencyException(
+                  STR_ENTRY << "FAIL_MCAP_WRITE | Error writting in MCAP, error message: " << status.message
+                  );
+    }
+
+    size_tracker_.message_written(msg.dataSize);
+    file_tracker_.set_current_file_size(size_tracker_.get_written_mcap_size());
+}
+
+template <>
+void McapWriter::write_nts_(const mcap::Metadata& metadata)
+{
+    try
+    {
+        size_tracker_.metadata_to_write(metadata);
+    }
+    catch (const std::overflow_error& e)
+    {
+        on_mcap_full_(e);
+    }
+
+    const auto status = writer_.write(metadata);
+
+    if (!status.ok())
+    {
+        throw utils::InconsistencyException(
+                  STR_ENTRY << "FAIL_MCAP_WRITE | Error writting in MCAP, error message: " << status.message
+                  );
+    }
+
+    size_tracker_.metadata_written(metadata);
+    file_tracker_.set_current_file_size(size_tracker_.get_written_mcap_size());
+}
+
+template <>
+void McapWriter::write_nts_(const mcap::Schema& schema)
+{
+    try
+    {
+        size_tracker_.schema_to_write(schema);
+    }
+    catch (const std::overflow_error& e)
+    {
+        on_mcap_full_(e);
+    }
+
+    writer_.addSchema(const_cast<mcap::Schema&>(schema));
+
+    size_tracker_.schema_written(schema);
+    file_tracker_.set_current_file_size(size_tracker_.get_written_mcap_size());
+
+    // Store the schema to write it down when the MCAP file is closed
+    schemas_[schema.id] = schema;
+}
+
+void McapWriter::open_new_file_nts_()
+{
+    try
+    {
+        file_tracker_.new_file(size_tracker_.get_min_mcap_size());
+    }
+    catch (const std::invalid_argument& e)
+    {
+        throw std::runtime_error("Error creating new MCAP file: " + std::string(e.what()));
+    }
+
+    // Calculate the maximum size of the file
+    const auto max_file_size = std::min(
+            configuration_.max_file_size,
+            configuration_.max_size - file_tracker_.get_total_size());
+
+    size_tracker_.init(max_file_size, configuration_.safety_margin);
+
+    const auto filename = file_tracker_.get_current_filename();
+    const auto status = writer_.open(filename, mcap_configuration_);
+
+    if (!status.ok())
+    {
+        throw std::runtime_error(
+                  STR_ENTRY << "FAIL_MCAP_OPEN | Error opening MCAP file: " << filename << ", error message: " <<
+                  status.message);
+    }
+
+    enabled_ = true;
+
+    write_metadata_nts_();
+    write_channels_nts_();
+    write_schemas_nts_();
+
+    if (dynamic_types_payload_ != nullptr)
+    {
+        // Recalculate the size of the attachment to update the min_mcap_size
+        size_tracker_.attachment_to_write(dynamic_types_payload_->length);
+    }
+}
+
+void McapWriter::close_current_file_nts_()
+{
+    //if (configuration_.record_types)
+    //{
+        write_attachment_nts_();
+    //}
+
+    file_tracker_.set_current_file_size(size_tracker_.get_written_mcap_size());
+    size_tracker_.reset(file_tracker_.get_current_filename());
+
+    file_tracker_.close_file();
+    writer_.close();
+
+    enabled_ = false;
+}
+
+void McapWriter::write_attachment_nts_()
+{
+    mcap::Attachment attachment;
+
+    // Write down the attachment with the dynamic types
+    attachment.name = DYNAMIC_TYPES_ATTACHMENT_NAME;
+    attachment.data = reinterpret_cast<std::byte*>(dynamic_types_payload_->data);
+    attachment.dataSize = dynamic_types_payload_->length;
+    attachment.createTime = mcap::Timestamp(std::chrono::duration_cast<std::chrono::nanoseconds>(utils::now().time_since_epoch()).count());
+
+    write_nts_(attachment);
+}
+
+void McapWriter::write_channels_nts_()
+{
+    if (channels_.empty())
+    {
+        return;
+    }
+
+    logInfo(DDSRECORDER_MCAP_WRITER, "Writing received channels.");
+
+    // Write channels to MCAP file
+    for (const auto& [_, channel] : channels_)
+    {
+        write_nts_(channel);
+    }
+}
+
+void McapWriter::write_metadata_nts_()
+{
+    mcap::Metadata metadata;
+
+    // Write down the metadata with the version
+    metadata.name = VERSION_METADATA_NAME;
+    metadata.metadata[VERSION_METADATA_NAME] = DDSRECORDER_PARTICIPANTS_VERSION_STRING;
+    metadata.metadata[VERSION_METADATA_COMMIT] = DDSRECORDER_PARTICIPANTS_COMMIT_HASH;
+
+    write_nts_(metadata);
+}
+
+void McapWriter::write_schemas_nts_()
+{
+    if (schemas_.empty())
+    {
+        return;
+    }
+
+    logInfo(DDSRECORDER_MCAP_WRITER, "Writing received schemas.");
+
+    // Write schemas to MCAP file
+    for (const auto& [_, schema] : schemas_)
+    {
+        write_nts_(schema);
+    }
+}
+
+void McapWriter::on_mcap_full_(
+        const std::overflow_error& e)
+{
+    close_current_file_nts_();
+
+    try
+    {
+        open_new_file_nts_();
+    }
+    catch(const std::exception& _)
+    {
+        throw e;
+    }
+
+}
+
+void McapWriter::on_mcap_full_(
+        const std::overflow_error& e,
+        std::function<void()> func)
+{
+    on_mcap_full_(e);
+    func();
+}
+
+} /* namespace participants */
+} /* namespace ddsrecorder */
+} /* namespace eprosima */

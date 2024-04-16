@@ -58,6 +58,7 @@ void McapSizeTracker::init(
 
     potential_mcap_size_ = MCAP_FILE_OVERHEAD + safety_margin;
     written_mcap_size_ = MCAP_FILE_OVERHEAD + safety_margin;
+    min_mcap_size_ = MCAP_FILE_OVERHEAD;
 
     space_available_ = space_available;
 
@@ -119,7 +120,8 @@ void McapSizeTracker::message_written(
 void McapSizeTracker::schema_to_write(
         const mcap::Schema& schema)
 {
-    check_and_increase_potential_mcap_size_(get_schema_size_(schema));
+    static constexpr bool INCREASE_MIN_MCAP_SIZE = true;
+    check_and_increase_potential_mcap_size_(get_schema_size_(schema), INCREASE_MIN_MCAP_SIZE);
 }
 
 void McapSizeTracker::schema_written(
@@ -131,7 +133,8 @@ void McapSizeTracker::schema_written(
 void McapSizeTracker::channel_to_write(
         const mcap::Channel& channel)
 {
-    check_and_increase_potential_mcap_size_(get_channel_size_(channel));
+    static constexpr bool INCREASE_MIN_MCAP_SIZE = true;
+    check_and_increase_potential_mcap_size_(get_channel_size_(channel), INCREASE_MIN_MCAP_SIZE);
 }
 
 void McapSizeTracker::channel_written(
@@ -143,15 +146,16 @@ void McapSizeTracker::channel_written(
 void McapSizeTracker::attachment_to_write(
         const uint64_t& payload_size)
 {
-    check_and_increase_potential_mcap_size_(get_attachment_size_(payload_size));
+    static constexpr bool INCREASE_MIN_MCAP_SIZE = true;
+    check_and_increase_potential_mcap_size_(get_attachment_size_(payload_size), INCREASE_MIN_MCAP_SIZE);
 }
 
 void McapSizeTracker::attachment_to_write(
         const uint64_t& payload_size_to_write,
         const uint64_t& payload_size_to_remove)
 {
-    if (can_increase_potential_mcap_size_(get_attachment_size_(payload_size_to_write),
-            get_attachment_size_(payload_size_to_remove)))
+    if (can_increase_potential_mcap_size_(
+            get_attachment_size_(payload_size_to_write), get_attachment_size_(payload_size_to_remove)))
     {
         decrease_potential_mcap_size_(get_attachment_size_(payload_size_to_remove));
         attachment_to_write(payload_size_to_write);
@@ -173,13 +177,29 @@ void McapSizeTracker::attachment_written(
 void McapSizeTracker::metadata_to_write(
         const mcap::Metadata& metadata)
 {
-    check_and_increase_potential_mcap_size_(get_metadata_size_(metadata));
+    static constexpr bool INCREASE_MIN_MCAP_SIZE = true;
+    check_and_increase_potential_mcap_size_(get_metadata_size_(metadata), INCREASE_MIN_MCAP_SIZE);
 }
 
 void McapSizeTracker::metadata_written(
         const mcap::Metadata& metadata)
 {
     check_and_increase_written_mcap_size_(get_metadata_size_(metadata));
+}
+
+std::uint64_t McapSizeTracker::get_potential_mcap_size() const
+{
+    return potential_mcap_size_;
+}
+
+std::uint64_t McapSizeTracker::get_written_mcap_size() const
+{
+    return written_mcap_size_;
+}
+
+std::uint64_t McapSizeTracker::get_min_mcap_size() const
+{
+    return min_mcap_size_;
 }
 
 bool McapSizeTracker::can_increase_potential_mcap_size_(
@@ -216,7 +236,8 @@ bool McapSizeTracker::can_increase_potential_mcap_size_(
 }
 
 void McapSizeTracker::check_and_increase_potential_mcap_size_(
-        const std::uint64_t& size)
+        const std::uint64_t& size,
+        const bool increase_min_mcap_size /* = false */)
 {
     if (!enabled_)
     {
@@ -227,6 +248,11 @@ void McapSizeTracker::check_and_increase_potential_mcap_size_(
 
     if (!disk_full_)
     {
+        if (increase_min_mcap_size)
+        {
+            min_mcap_size_ += size;
+        }
+
         if (can_increase_potential_mcap_size_(size))
         {
             potential_mcap_size_ += size;
