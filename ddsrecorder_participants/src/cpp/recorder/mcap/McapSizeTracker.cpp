@@ -155,7 +155,7 @@ void McapSizeTracker::attachment_to_write(
         const uint64_t& payload_size_to_remove)
 {
     if (can_increase_potential_mcap_size_(
-            get_attachment_size_(payload_size_to_write), get_attachment_size_(payload_size_to_remove)))
+                get_attachment_size_(payload_size_to_write), get_attachment_size_(payload_size_to_remove)))
     {
         static constexpr bool DECREASE_MIN_MCAP_SIZE = true;
         decrease_potential_mcap_size_(get_attachment_size_(payload_size_to_remove), DECREASE_MIN_MCAP_SIZE);

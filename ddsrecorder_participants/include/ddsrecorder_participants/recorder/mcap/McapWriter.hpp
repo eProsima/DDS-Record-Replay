@@ -66,7 +66,8 @@ public:
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     template <typename T>
-    void write(const T& data);
+    void write(
+            const T& data);
 
     /**
      * @brief Updates the dynamic types payload.
@@ -89,7 +90,8 @@ protected:
 
     // Writes data to the MCAP file.
     template <typename T>
-    void write_nts_(const T& data);
+    void write_nts_(
+            const T& data);
 
     // Write the attachment
     void write_attachment_nts_();

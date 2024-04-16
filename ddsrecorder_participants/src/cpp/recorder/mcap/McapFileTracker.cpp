@@ -31,7 +31,8 @@ namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
 
-McapFileTracker::McapFileTracker(const McapOutputSettings& configuration)
+McapFileTracker::McapFileTracker(
+        const McapOutputSettings& configuration)
     : configuration_(configuration)
 {
 }
@@ -54,7 +55,8 @@ std::string McapFileTracker::get_current_filename() const
     return make_filename_tmp_(current_file_.name);
 }
 
-void McapFileTracker::set_current_file_size(const std::uint64_t file_size)
+void McapFileTracker::set_current_file_size(
+        const std::uint64_t file_size)
 {
     if (file_size > configuration_.max_file_size)
     {
@@ -71,7 +73,8 @@ void McapFileTracker::set_current_file_size(const std::uint64_t file_size)
     current_file_.size = file_size;
 }
 
-void McapFileTracker::new_file(const std::uint64_t min_file_size)
+void McapFileTracker::new_file(
+        const std::uint64_t min_file_size)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
@@ -85,8 +88,9 @@ void McapFileTracker::new_file(const std::uint64_t min_file_size)
 
     if (space_to_free > 0 && !configuration_.file_rotation)
     {
-        throw std::runtime_error("Not enough free space to create a new file. Free space: " + std::to_string(free_space) +
-            ", minimum file size: " + std::to_string(min_file_size));
+        throw std::runtime_error("Not enough free space to create a new file. Free space: " + std::to_string(
+                          free_space) +
+                      ", minimum file size: " + std::to_string(min_file_size));
     }
 
     while (space_to_free > 0)
@@ -95,7 +99,8 @@ void McapFileTracker::new_file(const std::uint64_t min_file_size)
         if (closed_files_.empty())
         {
             throw std::runtime_error("All the files have been deleted and there is still not enough free space. "
-                "Free space: " + std::to_string(free_space) + ", space to free: " + std::to_string(space_to_free));
+                          "Free space: " + std::to_string(free_space) + ", space to free: " +
+                          std::to_string(space_to_free));
         }
 
         const auto oldest_file_size = remove_oldest_file_nts_();
@@ -130,7 +135,8 @@ void McapFileTracker::close_file()
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    logInfo(DDSRECORDER_MCAP_FILE_TRACKER, "Closing file " << current_file_.name << " of size " << current_file_.size << " bytes.")
+    logInfo(DDSRECORDER_MCAP_FILE_TRACKER,
+            "Closing file " << current_file_.name << " of size " << current_file_.size << " bytes.")
 
     if (current_file_.name.empty())
     {
@@ -179,15 +185,18 @@ std::uint64_t McapFileTracker::remove_oldest_file_nts_()
 
     if (!ret)
     {
-        logError(DDSRECORDER_MCAP_FILE_TRACKER, "File " << oldest_file.name << " doesn't exist and could not be deleted.");
+        logError(DDSRECORDER_MCAP_FILE_TRACKER,
+                "File " << oldest_file.name << " doesn't exist and could not be deleted.");
         return 0;
     }
 
-    logInfo(DDSRECORDER_MCAP_FILE_TRACKER, "File " << oldest_file.name << " of size " << oldest_file.size << " removed.");
+    logInfo(DDSRECORDER_MCAP_FILE_TRACKER,
+            "File " << oldest_file.name << " of size " << oldest_file.size << " removed.");
     return oldest_file.size;
 }
 
-std::string McapFileTracker::generate_filename_(const std::uint64_t id) const
+std::string McapFileTracker::generate_filename_(
+        const std::uint64_t id) const
 {
     static const std::string MCAP_EXTENSION = ".mcap";
     static const std::string SEPARATOR = "_";
@@ -219,12 +228,12 @@ std::string McapFileTracker::generate_filename_(const std::uint64_t id) const
     return filename;
 }
 
-std::string McapFileTracker::make_filename_tmp_(const std::string& filename) const
+std::string McapFileTracker::make_filename_tmp_(
+        const std::string& filename) const
 {
     static const std::string TMP_SUFFIX = ".tmp~";
     return filename + TMP_SUFFIX;
 }
-
 
 } /* namespace participants */
 } /* namespace ddsrecorder */

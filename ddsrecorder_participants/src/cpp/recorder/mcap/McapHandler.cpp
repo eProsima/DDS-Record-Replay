@@ -543,7 +543,8 @@ void McapHandler::add_data_nts_(
         catch (const utils::InconsistencyException& e)
         {
             logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Error writting message in channel " << msg.channelId
-                    << ". Error message:\n " << e.what());
+                                                                                                      << ". Error message:\n " <<
+                                e.what());
         }
     }
     else

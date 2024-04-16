@@ -119,8 +119,8 @@ void McapWriter::open_new_file_nts_()
 
     // Calculate the maximum size of the file
     const auto max_file_size = std::min(
-            configuration_.max_file_size,
-            configuration_.max_size - file_tracker_.get_total_size());
+        configuration_.max_file_size,
+        configuration_.max_size - file_tracker_.get_total_size());
 
     size_tracker_.init(max_file_size, configuration_.safety_margin);
 
@@ -131,7 +131,7 @@ void McapWriter::open_new_file_nts_()
     {
         throw std::runtime_error(
                   STR_ENTRY << "FAIL_MCAP_OPEN | Error opening MCAP file: " << filename << ", error message: " <<
-                  status.message);
+                      status.message);
     }
 
     write_metadata_nts_();
@@ -162,7 +162,8 @@ void McapWriter::close_current_file_nts_()
 }
 
 template <>
-void McapWriter::write_nts_(const mcap::Attachment& attachment)
+void McapWriter::write_nts_(
+        const mcap::Attachment& attachment)
 {
     // NOTE: There is no need to check if the MCAP is full, since it is checked when adding a new dynamic_type.
 
@@ -180,7 +181,8 @@ void McapWriter::write_nts_(const mcap::Attachment& attachment)
 }
 
 template <>
-void McapWriter::write_nts_(const mcap::Channel& channel)
+void McapWriter::write_nts_(
+        const mcap::Channel& channel)
 {
     try
     {
@@ -201,7 +203,8 @@ void McapWriter::write_nts_(const mcap::Channel& channel)
 }
 
 template <>
-void McapWriter::write_nts_(const Message& msg)
+void McapWriter::write_nts_(
+        const Message& msg)
 {
     try
     {
@@ -229,7 +232,8 @@ void McapWriter::write_nts_(const Message& msg)
 }
 
 template <>
-void McapWriter::write_nts_(const mcap::Metadata& metadata)
+void McapWriter::write_nts_(
+        const mcap::Metadata& metadata)
 {
     try
     {
@@ -254,7 +258,8 @@ void McapWriter::write_nts_(const mcap::Metadata& metadata)
 }
 
 template <>
-void McapWriter::write_nts_(const mcap::Schema& schema)
+void McapWriter::write_nts_(
+        const mcap::Schema& schema)
 {
     try
     {
@@ -282,7 +287,9 @@ void McapWriter::write_attachment_nts_()
     attachment.name = DYNAMIC_TYPES_ATTACHMENT_NAME;
     attachment.data = reinterpret_cast<std::byte*>(dynamic_types_payload_->data);
     attachment.dataSize = dynamic_types_payload_->length;
-    attachment.createTime = mcap::Timestamp(std::chrono::duration_cast<std::chrono::nanoseconds>(utils::now().time_since_epoch()).count());
+    attachment.createTime =
+            mcap::Timestamp(std::chrono::duration_cast<std::chrono::nanoseconds>(
+                        utils::now().time_since_epoch()).count());
 
     write_nts_(attachment);
 }
@@ -342,7 +349,7 @@ void McapWriter::on_mcap_full_nts_(
         open_new_file_nts_();
         enabled_ = true;
     }
-    catch(const std::exception& _)
+    catch (const std::exception& _)
     {
         throw e;
     }

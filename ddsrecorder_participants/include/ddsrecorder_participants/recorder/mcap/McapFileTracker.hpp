@@ -51,7 +51,8 @@ class McapFileTracker
 public:
 
     DDSRECORDER_PARTICIPANTS_DllAPI
-    McapFileTracker(const McapOutputSettings& configuration);
+    McapFileTracker(
+            const McapOutputSettings& configuration);
 
     DDSRECORDER_PARTICIPANTS_DllAPI
     virtual ~McapFileTracker();
@@ -72,7 +73,8 @@ public:
      * @param size The new size of the current file.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    void set_current_file_size(const std::uint64_t size);
+    void set_current_file_size(
+            const std::uint64_t size);
 
     /**
      * @brief Calculates the temporary filename of the current file.
@@ -94,7 +96,8 @@ public:
      * @param min_file_size The minimum size of the new file.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    void new_file(const std::uint64_t min_file_size);
+    void new_file(
+            const std::uint64_t min_file_size);
 
     /**
      * @brief Closes the current file.
@@ -116,7 +119,8 @@ protected:
      *
      * @return The generated filename.
      */
-    std::string generate_filename_(const std::uint64_t id) const;
+    std::string generate_filename_(
+            const std::uint64_t id) const;
 
     /**
      * @brief Generates a temporary filename for the given filename.
@@ -124,7 +128,8 @@ protected:
      * @param filename The filename to generate the temporary filename for.
      * @return The generated temporary filename.
      */
-    std::string make_filename_tmp_(const std::string& filename) const;
+    std::string make_filename_tmp_(
+            const std::string& filename) const;
 
     // Configuration options
     McapOutputSettings configuration_;
