@@ -94,7 +94,7 @@ McapHandler::McapHandler(
     , payload_pool_(payload_pool)
     , state_(McapHandlerStateCode::STOPPED)
     , on_disk_full_lambda_set_(false)
-    , mcap_writer_(config.mcap_output_settings, config.mcap_writer_options)
+    , mcap_writer_(config.mcap_output_settings, config.mcap_writer_options, config.record_types)
 {
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "Creating MCAP handler instance.");
@@ -317,25 +317,34 @@ void McapHandler::start()
     McapHandlerStateCode prev_state = state_;
     state_ = McapHandlerStateCode::RUNNING;
 
-    switch (prev_state)
+    if (prev_state == McapHandlerStateCode::RUNNING)
     {
-        case McapHandlerStateCode::RUNNING:
-            logWarning(
-                DDSRECORDER_MCAP_HANDLER,
-                "Ignoring start command, instance already started.");
-            break;
+        logWarning(
+            DDSRECORDER_MCAP_HANDLER,
+            "Ignoring start command, instance already started.");
+    }
+    else
+    {
+        logInfo(
+            DDSRECORDER_MCAP_HANDLER,
+            "Starting handler.");
 
-        case McapHandlerStateCode::PAUSED:
-
-            // Stop event routine (cleans buffers)
-            stop_event_thread_nts_(event_lock);
-
-            // no break
-
-        default:
-            logInfo(
-                DDSRECORDER_MCAP_HANDLER,
-                "Starting handler.");
+        try
+        {
+            if (prev_state == McapHandlerStateCode::STOPPED)
+            {
+                mcap_writer_.enable();
+            }
+            else if (prev_state == McapHandlerStateCode::PAUSED)
+            {
+                // Stop event routine (cleans buffers)
+                stop_event_thread_nts_(event_lock);
+            }
+        }
+        catch (const std::overflow_error&)
+        {
+            on_disk_full_();
+        }
     }
 }
 
@@ -400,7 +409,7 @@ void McapHandler::stop(
         }
 
         // Close the MCAP file and the writer
-        mcap_writer_.close();
+        mcap_writer_.disable();
 
         // Reset channels
         channels_.clear();
@@ -432,7 +441,11 @@ void McapHandler::pause()
 
         try
         {
-            if (prev_state == McapHandlerStateCode::RUNNING)
+            if (prev_state == McapHandlerStateCode::STOPPED)
+            {
+                mcap_writer_.enable();
+            }
+            else if (prev_state == McapHandlerStateCode::RUNNING)
             {
                 // Write data stored in buffer
                 dump_data_nts_();

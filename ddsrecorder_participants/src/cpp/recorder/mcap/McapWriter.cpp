@@ -34,33 +34,58 @@ namespace participants {
 
 McapWriter::McapWriter(
         const McapOutputSettings& configuration,
-        const mcap::McapWriterOptions& mcap_configuration)
+        const mcap::McapWriterOptions& mcap_configuration,
+        const bool record_types)
     : configuration_(configuration)
     , mcap_configuration_(mcap_configuration)
+    , record_types_(record_types)
     , file_tracker_(configuration)
-    , enabled_(true)
 {
-    open_new_file_nts_();
+    enable();
 }
 
 McapWriter::~McapWriter()
 {
-    if (enabled_)
-    {
-        close_current_file_nts_();
-    }
+    disable();
 }
 
-void McapWriter::close()
+void McapWriter::enable()
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
+    if (enabled_)
+    {
+        return;
+    }
+
+    logInfo(DDSRECORDER_MCAP_WRITER, "Enabling MCAP writer.")
+
+    open_new_file_nts_();
+
+    enabled_ = true;
+}
+
+void McapWriter::disable()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    if (!enabled_)
+    {
+        return;
+    }
+
+    logInfo(DDSRECORDER_MCAP_WRITER, "Disabling MCAP writer.")
+
     close_current_file_nts_();
+
+    enabled_ = false;
 }
 
 void McapWriter::update_dynamic_types(
         const fastrtps::rtps::SerializedPayload_t& dynamic_types_payload)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
+
     try
     {
         if (dynamic_types_payload_ == nullptr)
@@ -74,123 +99,11 @@ void McapWriter::update_dynamic_types(
     }
     catch (const std::overflow_error& e)
     {
-        on_mcap_full_(e);
+        on_mcap_full_nts_(e);
     }
 
     dynamic_types_payload_.reset(const_cast<fastrtps::rtps::SerializedPayload_t*>(&dynamic_types_payload));
-}
-
-template <>
-void McapWriter::write_nts_(const mcap::Attachment& attachment)
-{
-    // NOTE: There is no need to check if the MCAP is full, since it is checked when adding a new dynamic_type.
-
-    auto status = writer_.write(const_cast<mcap::Attachment&>(attachment));
-
-    if (!status.ok())
-    {
-        throw utils::InconsistencyException(
-                  STR_ENTRY << "FAIL_MCAP_WRITE | Error writting in MCAP, error message: " << status.message
-                  );
-    }
-
-    size_tracker_.attachment_written(attachment.dataSize);
-    file_tracker_.set_current_file_size(size_tracker_.get_written_mcap_size());
-}
-
-template <>
-void McapWriter::write_nts_(const mcap::Channel& channel)
-{
-    try
-    {
-        size_tracker_.channel_to_write(channel);
-    }
-    catch (const std::overflow_error& e)
-    {
-        on_mcap_full_(e);
-    }
-
-    writer_.addChannel(const_cast<mcap::Channel&>(channel));
-
-    size_tracker_.channel_written(channel);
-    file_tracker_.set_current_file_size(size_tracker_.get_written_mcap_size());
-
-    // Store the channel to write it down when the MCAP file is closed
-    channels_[channel.id] = channel;
-}
-
-template <>
-void McapWriter::write_nts_(const Message& msg)
-{
-    try
-    {
-        size_tracker_.message_to_write(msg.dataSize);
-    }
-    catch (const std::overflow_error& e)
-    {
-        on_mcap_full_(e, [&]()
-                {
-                    size_tracker_.message_to_write(msg.dataSize);
-                });
-    }
-
-    const auto status = writer_.write(msg);
-
-    if (!status.ok())
-    {
-        throw utils::InconsistencyException(
-                  STR_ENTRY << "FAIL_MCAP_WRITE | Error writting in MCAP, error message: " << status.message
-                  );
-    }
-
-    size_tracker_.message_written(msg.dataSize);
-    file_tracker_.set_current_file_size(size_tracker_.get_written_mcap_size());
-}
-
-template <>
-void McapWriter::write_nts_(const mcap::Metadata& metadata)
-{
-    try
-    {
-        size_tracker_.metadata_to_write(metadata);
-    }
-    catch (const std::overflow_error& e)
-    {
-        on_mcap_full_(e);
-    }
-
-    const auto status = writer_.write(metadata);
-
-    if (!status.ok())
-    {
-        throw utils::InconsistencyException(
-                  STR_ENTRY << "FAIL_MCAP_WRITE | Error writting in MCAP, error message: " << status.message
-                  );
-    }
-
-    size_tracker_.metadata_written(metadata);
-    file_tracker_.set_current_file_size(size_tracker_.get_written_mcap_size());
-}
-
-template <>
-void McapWriter::write_nts_(const mcap::Schema& schema)
-{
-    try
-    {
-        size_tracker_.schema_to_write(schema);
-    }
-    catch (const std::overflow_error& e)
-    {
-        on_mcap_full_(e);
-    }
-
-    writer_.addSchema(const_cast<mcap::Schema&>(schema));
-
-    size_tracker_.schema_written(schema);
-    file_tracker_.set_current_file_size(size_tracker_.get_written_mcap_size());
-
-    // Store the schema to write it down when the MCAP file is closed
-    schemas_[schema.id] = schema;
+    file_tracker_.set_current_file_size(size_tracker_.get_potential_mcap_size());
 }
 
 void McapWriter::open_new_file_nts_()
@@ -221,33 +134,144 @@ void McapWriter::open_new_file_nts_()
                   status.message);
     }
 
-    enabled_ = true;
-
     write_metadata_nts_();
-    write_channels_nts_();
     write_schemas_nts_();
+    write_channels_nts_();
 
     if (dynamic_types_payload_ != nullptr)
     {
         // Recalculate the size of the attachment to update the min_mcap_size
         size_tracker_.attachment_to_write(dynamic_types_payload_->length);
     }
+
+    file_tracker_.set_current_file_size(size_tracker_.get_potential_mcap_size());
 }
 
 void McapWriter::close_current_file_nts_()
 {
-    //if (configuration_.record_types)
-    //{
+    if (record_types_)
+    {
         write_attachment_nts_();
-    //}
+    }
 
     file_tracker_.set_current_file_size(size_tracker_.get_written_mcap_size());
     size_tracker_.reset(file_tracker_.get_current_filename());
 
     file_tracker_.close_file();
     writer_.close();
+}
 
-    enabled_ = false;
+template <>
+void McapWriter::write_nts_(const mcap::Attachment& attachment)
+{
+    // NOTE: There is no need to check if the MCAP is full, since it is checked when adding a new dynamic_type.
+
+    auto status = writer_.write(const_cast<mcap::Attachment&>(attachment));
+
+    if (!status.ok())
+    {
+        throw utils::InconsistencyException(
+                  STR_ENTRY << "FAIL_MCAP_WRITE | Error writting in MCAP, error message: " << status.message
+                  );
+    }
+
+    size_tracker_.attachment_written(attachment.dataSize);
+    file_tracker_.set_current_file_size(size_tracker_.get_potential_mcap_size());
+}
+
+template <>
+void McapWriter::write_nts_(const mcap::Channel& channel)
+{
+    try
+    {
+        size_tracker_.channel_to_write(channel);
+    }
+    catch (const std::overflow_error& e)
+    {
+        on_mcap_full_nts_(e);
+    }
+
+    writer_.addChannel(const_cast<mcap::Channel&>(channel));
+
+    size_tracker_.channel_written(channel);
+    file_tracker_.set_current_file_size(size_tracker_.get_potential_mcap_size());
+
+    // Store the channel to write it down when the MCAP file is closed
+    channels_[channel.id] = channel;
+}
+
+template <>
+void McapWriter::write_nts_(const Message& msg)
+{
+    try
+    {
+        size_tracker_.message_to_write(msg.dataSize);
+    }
+    catch (const std::overflow_error& e)
+    {
+        on_mcap_full_nts_(e, [&]()
+                {
+                    size_tracker_.message_to_write(msg.dataSize);
+                });
+    }
+
+    const auto status = writer_.write(msg);
+
+    if (!status.ok())
+    {
+        throw utils::InconsistencyException(
+                  STR_ENTRY << "FAIL_MCAP_WRITE | Error writting in MCAP, error message: " << status.message
+                  );
+    }
+
+    size_tracker_.message_written(msg.dataSize);
+    file_tracker_.set_current_file_size(size_tracker_.get_potential_mcap_size());
+}
+
+template <>
+void McapWriter::write_nts_(const mcap::Metadata& metadata)
+{
+    try
+    {
+        size_tracker_.metadata_to_write(metadata);
+    }
+    catch (const std::overflow_error& e)
+    {
+        on_mcap_full_nts_(e);
+    }
+
+    const auto status = writer_.write(metadata);
+
+    if (!status.ok())
+    {
+        throw utils::InconsistencyException(
+                  STR_ENTRY << "FAIL_MCAP_WRITE | Error writting in MCAP, error message: " << status.message
+                  );
+    }
+
+    size_tracker_.metadata_written(metadata);
+    file_tracker_.set_current_file_size(size_tracker_.get_potential_mcap_size());
+}
+
+template <>
+void McapWriter::write_nts_(const mcap::Schema& schema)
+{
+    try
+    {
+        size_tracker_.schema_to_write(schema);
+    }
+    catch (const std::overflow_error& e)
+    {
+        on_mcap_full_nts_(e);
+    }
+
+    writer_.addSchema(const_cast<mcap::Schema&>(schema));
+
+    size_tracker_.schema_written(schema);
+    file_tracker_.set_current_file_size(size_tracker_.get_potential_mcap_size());
+
+    // Store the schema to write it down when the MCAP file is closed
+    schemas_[schema.id] = schema;
 }
 
 void McapWriter::write_attachment_nts_()
@@ -307,14 +331,16 @@ void McapWriter::write_schemas_nts_()
     }
 }
 
-void McapWriter::on_mcap_full_(
+void McapWriter::on_mcap_full_nts_(
         const std::overflow_error& e)
 {
     close_current_file_nts_();
+    enabled_ = false;
 
     try
     {
         open_new_file_nts_();
+        enabled_ = true;
     }
     catch(const std::exception& _)
     {
@@ -323,11 +349,11 @@ void McapWriter::on_mcap_full_(
 
 }
 
-void McapWriter::on_mcap_full_(
+void McapWriter::on_mcap_full_nts_(
         const std::overflow_error& e,
         std::function<void()> func)
 {
-    on_mcap_full_(e);
+    on_mcap_full_nts_(e);
     func();
 }
 

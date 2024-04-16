@@ -42,10 +42,23 @@ public:
     DDSRECORDER_PARTICIPANTS_DllAPI
     McapWriter(
             const McapOutputSettings& configuration,
-            const mcap::McapWriterOptions& mcap_configuration);
+            const mcap::McapWriterOptions& mcap_configuration,
+            const bool record_types = true);
 
     DDSRECORDER_PARTICIPANTS_DllAPI
     ~McapWriter();
+
+    /**
+     * @brief Enable the writer.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    void enable();
+
+    /**
+     * @brief Disable the writer.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    void disable();
 
     /**
      * @brief Writes data to the MCAP file.
@@ -54,14 +67,6 @@ public:
     DDSRECORDER_PARTICIPANTS_DllAPI
     template <typename T>
     void write(const T& data);
-
-    /**
-     * @brief Closes the MCAP file.
-     *
-     * It locks the mutex and calls \c close_current_file_nts_().
-     */
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    void close();
 
     /**
      * @brief Updates the dynamic types payload.
@@ -76,18 +81,15 @@ public:
 
 protected:
 
-    /**
-     * @brief Writes data to the MCAP file.
-     * @param data Pointer to the data to be written.
-     */
-    template <typename T>
-    void write_nts_(const T& data);
-
     // Open a new file
     void open_new_file_nts_();
 
     // Close the current file
     void close_current_file_nts_();
+
+    // Writes data to the MCAP file.
+    template <typename T>
+    void write_nts_(const T& data);
 
     // Write the attachment
     void write_attachment_nts_();
@@ -102,11 +104,11 @@ protected:
     void write_schemas_nts_();
 
     // Callback when the MCAP library is full
-    void on_mcap_full_(
+    void on_mcap_full_nts_(
             const std::overflow_error& e);
 
     // Callback when the MCAP library is full and a retry is required
-    void on_mcap_full_(
+    void on_mcap_full_nts_(
             const std::overflow_error& e,
             std::function<void()> retry);
 
@@ -116,8 +118,14 @@ protected:
     // The configuration for the MCAP library
     mcap::McapWriterOptions mcap_configuration_;
 
+    // Whether to record the types
+    bool record_types_{false};
+
     // The mutex to protect the calls to write
     std::mutex mutex_;
+
+    // Whether the writer can write to the MCAP library
+    bool enabled_{false};
 
     // Track the files written by the MCAP library
     McapFileTracker file_tracker_;
@@ -136,9 +144,6 @@ protected:
 
     // The schemas that have been written
     std::map<mcap::SchemaId, mcap::Schema> schemas_;
-
-    // Whether the writer can write to the MCAP library
-    bool enabled_ = false;
 };
 
 } /* namespace participants */

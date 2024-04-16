@@ -58,7 +58,7 @@ void McapSizeTracker::init(
 
     potential_mcap_size_ = MCAP_FILE_OVERHEAD + safety_margin;
     written_mcap_size_ = MCAP_FILE_OVERHEAD + safety_margin;
-    min_mcap_size_ = MCAP_FILE_OVERHEAD;
+    min_mcap_size_ = MCAP_FILE_OVERHEAD + safety_margin;
 
     space_available_ = space_available;
 
@@ -157,7 +157,9 @@ void McapSizeTracker::attachment_to_write(
     if (can_increase_potential_mcap_size_(
             get_attachment_size_(payload_size_to_write), get_attachment_size_(payload_size_to_remove)))
     {
-        decrease_potential_mcap_size_(get_attachment_size_(payload_size_to_remove));
+        static constexpr bool DECREASE_MIN_MCAP_SIZE = true;
+        decrease_potential_mcap_size_(get_attachment_size_(payload_size_to_remove), DECREASE_MIN_MCAP_SIZE);
+
         attachment_to_write(payload_size_to_write);
     }
     else
@@ -274,7 +276,8 @@ void McapSizeTracker::check_and_increase_potential_mcap_size_(
 }
 
 void McapSizeTracker::decrease_potential_mcap_size_(
-        const std::uint64_t& size)
+        const std::uint64_t& size,
+        const bool decrease_min_mcap_size /* = false */)
 {
     if (!enabled_)
     {
@@ -292,6 +295,11 @@ void McapSizeTracker::decrease_potential_mcap_size_(
     else
     {
         potential_mcap_size_ -= size;
+
+        if (decrease_min_mcap_size)
+        {
+            min_mcap_size_ -= size;
+        }
     }
 }
 

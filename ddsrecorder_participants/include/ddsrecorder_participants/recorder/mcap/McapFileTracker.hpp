@@ -37,7 +37,8 @@ namespace participants {
  */
 struct McapFile
 {
-    std::string filename;
+    std::uint64_t id;
+    std::string name;
     std::uint64_t size;
 };
 
@@ -71,7 +72,7 @@ public:
      * @param size The new size of the current file.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    void set_current_file_size(const std::uint64_t& size);
+    void set_current_file_size(const std::uint64_t size);
 
     /**
      * @brief Calculates the temporary filename of the current file.
@@ -93,7 +94,7 @@ public:
      * @param min_file_size The minimum size of the new file.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    void new_file(const std::uint64_t& min_file_size);
+    void new_file(const std::uint64_t min_file_size);
 
     /**
      * @brief Closes the current file.
@@ -115,7 +116,7 @@ protected:
      *
      * @return The generated filename.
      */
-    std::string generate_filename_() const;
+    std::string generate_filename_(const std::uint64_t id) const;
 
     /**
      * @brief Generates a temporary filename for the given filename.
@@ -128,6 +129,9 @@ protected:
     // Configuration options
     McapOutputSettings configuration_;
 
+    // Mutex to protect the list of files
+    std::mutex mutex_;
+
     // The list of files that have been closed
     std::vector<McapFile> closed_files_;
 
@@ -136,12 +140,6 @@ protected:
 
     // The total size of all files in the tracker
     std::uint64_t size_{0};
-
-    // The ID of the current file
-    std::uint64_t file_id_{0};
-
-    // Mutex to protect the list of files
-    std::mutex mutex_;
 };
 
 } /* namespace participants */

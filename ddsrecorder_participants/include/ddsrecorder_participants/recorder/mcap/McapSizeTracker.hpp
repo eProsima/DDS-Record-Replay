@@ -133,7 +133,8 @@ protected:
             const bool increase_min_mcap_size = false);
 
     void decrease_potential_mcap_size_(
-            const std::uint64_t& size);
+            const std::uint64_t& size,
+            const bool decrease_min_mcap_size = false);
 
     void check_and_increase_written_mcap_size_(
             const std::uint64_t& size);
