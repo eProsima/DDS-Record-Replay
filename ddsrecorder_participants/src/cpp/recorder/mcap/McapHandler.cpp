@@ -94,8 +94,8 @@ McapHandler::McapHandler(
     : configuration_(config)
     , payload_pool_(payload_pool)
     , state_(McapHandlerStateCode::STOPPED)
-    , on_disk_full_lambda_set_(false)
     , mcap_writer_(config.mcap_output_settings, config.mcap_writer_options, config.record_types)
+    , on_disk_full_lambda_set_(false)
 {
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "Creating MCAP handler instance.");
