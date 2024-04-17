@@ -214,12 +214,10 @@ std::string McapFileTracker::generate_filename_(
 
     filename += configuration_.output_filename;
 
-    const auto is_filename_unique = configuration_.prepend_timestamp;
-    const auto possibly_multiple_files = configuration_.max_size > configuration_.max_file_size;
-
-    if (!is_filename_unique && possibly_multiple_files)
+    if (configuration_.max_size > configuration_.max_file_size)
     {
-        // Include the file's id to make its filename unique
+        // There may be multiple output files. Include the file's id to make the filename unique.
+        // NOTE: Appending the timestamp doesn't make the filename unique, since multiple can be created simultaneously.
         filename += SEPARATOR + std::to_string(id);
     }
 

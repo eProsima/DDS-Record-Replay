@@ -13,45 +13,26 @@
 // limitations under the License.
 
 /**
- * @file McapWriter.cpp
+ * @file McapFullException.cpp
  */
 
-#include <filesystem>
-#include <stdexcept>
-
-#include <mcap/internal.hpp>
-
-#include <cpp_utils/exception/InconsistencyException.hpp>
-#include <cpp_utils/Formatter.hpp>
-#include <cpp_utils/Log.hpp>
-#include <cpp_utils/time/time_utils.hpp>
-
-#include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
+#include <ddsrecorder_participants/recorder/mcap/McapFullException.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
 
-template <typename T>
-void McapWriter::write(
-        const T& data)
+McapFullException::McapFullException(
+        const std::string& message,
+        const std::uint64_t data_size_to_write)
+    : Exception(message)
+    , data_size_to_write_(data_size_to_write)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    if (!enabled_)
-    {
-        logWarning(DDSRECORDER_MCAP_WRITER, "Attempting to write in a disabled writer.");
-        return;
-    }
-
-    write_nts_(data);
 }
 
-template <typename T>
-void McapWriter::write_nts_(
-        const T& /* data */)
+std::uint64_t McapFullException::data_size_to_write() const
 {
-    logWarning(DDSRECORDER_MCAP_WRITER, "Attempting to write data of a not-supported type.");
+    return data_size_to_write_;
 }
 
 } /* namespace participants */

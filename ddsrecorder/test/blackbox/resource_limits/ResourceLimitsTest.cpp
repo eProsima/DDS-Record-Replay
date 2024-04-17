@@ -249,9 +249,9 @@ TEST_F(ResourceLimitsTest, max_size)
     configuration_->output_resource_limits_max_size = test::limits::MAX_SIZE;
 
     // Delete the output files if they exist
-    for (int i = 0; i < NUMBER_OF_FILES; i++)
+    for (const auto path : OUTPUT_FILE_PATHS)
     {
-        ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATHS[i]));
+        ASSERT_TRUE(delete_file_(path));
     }
 
     ddsrecorder::recorder::DdsRecorder recorder(*configuration_,
@@ -322,16 +322,16 @@ TEST_F(ResourceLimitsTest, file_rotation)
 {
     constexpr std::uint32_t NUMBER_OF_FILES = 9;
     const std::string OUTPUT_FILE_NAME = "file_rotation_test";
-    const auto OUTPUT_FILE_PATHS = get_output_file_paths_(NUMBER_OF_FILES, OUTPUT_FILE_NAME);
+    const auto OUTPUT_FILE_PATHS = get_output_file_paths_(NUMBER_OF_FILES + 1, OUTPUT_FILE_NAME);
 
     configuration_->output_resource_limits_max_file_size = test::limits::MAX_FILE_SIZE;
     configuration_->output_resource_limits_max_size = test::limits::MAX_SIZE;
     configuration_->output_resource_limits_file_rotation = true;
 
-    // Verify that the output files don't exist yet
-    for (int i = 0; i < NUMBER_OF_FILES; i++)
+    // Delete the output files if they exist
+    for (const auto path : OUTPUT_FILE_PATHS)
     {
-        ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATHS[i]));
+        ASSERT_TRUE(delete_file_(path));
     }
 
     ddsrecorder::recorder::DdsRecorder recorder(*configuration_,

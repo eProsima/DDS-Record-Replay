@@ -29,6 +29,7 @@
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapFileTracker.hpp>
+#include <ddsrecorder_participants/recorder/mcap/McapFullException.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapSizeTracker.hpp>
 
 namespace eprosima {
@@ -83,7 +84,8 @@ public:
 protected:
 
     // Open a new file
-    void open_new_file_nts_();
+    void open_new_file_nts_(
+            const std::uint64_t min_file_size);
 
     // Close the current file
     void close_current_file_nts_();
@@ -107,11 +109,11 @@ protected:
 
     // Callback when the MCAP library is full
     void on_mcap_full_nts_(
-            const std::overflow_error& e);
+            const McapFullException& e);
 
     // Callback when the MCAP library is full and a retry is required
     void on_mcap_full_nts_(
-            const std::overflow_error& e,
+            const McapFullException& e,
             std::function<void()> retry);
 
     // The configuration for the class

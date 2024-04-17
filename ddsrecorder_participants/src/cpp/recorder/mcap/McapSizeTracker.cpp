@@ -24,6 +24,7 @@
 #include <cpp_utils/Formatter.hpp>
 #include <cpp_utils/Log.hpp>
 
+#include <ddsrecorder_participants/recorder/mcap/McapFullException.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapSizeTracker.hpp>
 
 namespace eprosima {
@@ -164,9 +165,10 @@ void McapSizeTracker::attachment_to_write(
     }
     else
     {
-        throw std::overflow_error(
-                  STR_ENTRY << "Attempted attachment write of size: " << potential_mcap_size_ <<
-                      ", but there is not enough space available on disk: " << space_available_);
+        throw McapFullException(
+                  STR_ENTRY << "Attempted attachment write of size: " << payload_size_to_write <<
+                      ", but there is not enough space available on disk: " << space_available_,
+                      payload_size_to_write);
     }
 }
 
@@ -248,30 +250,22 @@ void McapSizeTracker::check_and_increase_potential_mcap_size_(
         return;
     }
 
-    if (!disk_full_)
+    if (disk_full_ || !can_increase_potential_mcap_size_(size))
     {
-        if (increase_min_mcap_size)
-        {
-            min_mcap_size_ += size;
-        }
-
-        if (can_increase_potential_mcap_size_(size))
-        {
-            potential_mcap_size_ += size;
-        }
-        else
-        {
-            disk_full_ = true;
-            throw std::overflow_error(
-                      STR_ENTRY << "Attempted write of size: " << potential_mcap_size_ <<
-                          ", but there is not enough space available on disk: " << space_available_);
-        }
+        disk_full_ = true;
+        throw McapFullException(
+                  STR_ENTRY << "Attempted to write " << size << " bytes on an MCAP of size: " << potential_mcap_size_
+                            << " bytes but there is not enough space available on disk: " << space_available_
+                            << " bytes."
+                      , size);
     }
-    else
+
+    potential_mcap_size_ += size;
+
+    if (increase_min_mcap_size)
     {
-        throw std::overflow_error(
-                  STR_ENTRY << "Attempted write of size: " << potential_mcap_size_ <<
-                      ", but there is not enough space available on disk: " << space_available_);
+        // NOTE: The minimum size must increase even if the potential size can't.
+        min_mcap_size_ += size;
     }
 }
 

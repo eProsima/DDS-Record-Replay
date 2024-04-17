@@ -26,6 +26,7 @@
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 
+#include <ddsrecorder_participants/recorder/mcap/McapFullException.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
 
 namespace eprosima {
@@ -60,7 +61,7 @@ void McapWriter::enable()
 
     logInfo(DDSRECORDER_MCAP_WRITER, "Enabling MCAP writer.")
 
-    open_new_file_nts_();
+    open_new_file_nts_(size_tracker_.get_min_mcap_size());
 
     enabled_ = true;
 }
@@ -97,7 +98,7 @@ void McapWriter::update_dynamic_types(
             size_tracker_.attachment_to_write(dynamic_types_payload.length, dynamic_types_payload_->length);
         }
     }
-    catch (const std::overflow_error& e)
+    catch (const McapFullException& e)
     {
         on_mcap_full_nts_(e);
     }
@@ -106,13 +107,14 @@ void McapWriter::update_dynamic_types(
     file_tracker_.set_current_file_size(size_tracker_.get_potential_mcap_size());
 }
 
-void McapWriter::open_new_file_nts_()
+void McapWriter::open_new_file_nts_(
+        const std::uint64_t min_file_size)
 {
     try
     {
-        file_tracker_.new_file(size_tracker_.get_min_mcap_size());
+        file_tracker_.new_file(min_file_size);
     }
-    catch (const std::invalid_argument& e)
+    catch (const std::exception& e)
     {
         throw std::runtime_error("Error creating new MCAP file: " + std::string(e.what()));
     }
@@ -134,11 +136,12 @@ void McapWriter::open_new_file_nts_()
                       status.message);
     }
 
+    // NOTE: These writes will never fail since the minimum size accounts for them.
     write_metadata_nts_();
     write_schemas_nts_();
     write_channels_nts_();
 
-    if (dynamic_types_payload_ != nullptr)
+    if (dynamic_types_payload_ != nullptr && record_types_)
     {
         // Recalculate the size of the attachment to update the min_mcap_size
         size_tracker_.attachment_to_write(dynamic_types_payload_->length);
@@ -165,8 +168,10 @@ template <>
 void McapWriter::write_nts_(
         const mcap::Attachment& attachment)
 {
-    // NOTE: There is no need to check if the MCAP is full, since it is checked when adding a new dynamic_type.
+    logInfo(DDSRECORDER_MCAP_WRITER,
+            "Writing attachment: " << attachment.name << " (" << attachment.dataSize << " bytes).");
 
+    // NOTE: There is no need to check if the MCAP is full, since it is checked when adding a new dynamic_type.
     auto status = writer_.write(const_cast<mcap::Attachment&>(attachment));
 
     if (!status.ok())
@@ -184,11 +189,13 @@ template <>
 void McapWriter::write_nts_(
         const mcap::Channel& channel)
 {
+    logInfo(DDSRECORDER_MCAP_WRITER, "Writing channel: " << channel.topic << " (" << channel.id << ").");
+
     try
     {
         size_tracker_.channel_to_write(channel);
     }
-    catch (const std::overflow_error& e)
+    catch (const McapFullException& e)
     {
         on_mcap_full_nts_(e);
     }
@@ -206,11 +213,13 @@ template <>
 void McapWriter::write_nts_(
         const Message& msg)
 {
+    logInfo(DDSRECORDER_MCAP_WRITER, "Writing message: " << msg.dataSize << " bytes.");
+
     try
     {
         size_tracker_.message_to_write(msg.dataSize);
     }
-    catch (const std::overflow_error& e)
+    catch (const McapFullException& e)
     {
         on_mcap_full_nts_(e, [&]()
                 {
@@ -235,11 +244,13 @@ template <>
 void McapWriter::write_nts_(
         const mcap::Metadata& metadata)
 {
+    logInfo(DDSRECORDER_MCAP_WRITER, "Writing metadata: " << metadata.name << ".");
+
     try
     {
         size_tracker_.metadata_to_write(metadata);
     }
-    catch (const std::overflow_error& e)
+    catch (const McapFullException& e)
     {
         on_mcap_full_nts_(e);
     }
@@ -261,11 +272,13 @@ template <>
 void McapWriter::write_nts_(
         const mcap::Schema& schema)
 {
+    logInfo(DDSRECORDER_MCAP_WRITER, "Writing schema: " << schema.name << " (" << schema.id << ").");
+
     try
     {
         size_tracker_.schema_to_write(schema);
     }
-    catch (const std::overflow_error& e)
+    catch (const McapFullException& e)
     {
         on_mcap_full_nts_(e);
     }
@@ -339,25 +352,33 @@ void McapWriter::write_schemas_nts_()
 }
 
 void McapWriter::on_mcap_full_nts_(
-        const std::overflow_error& e)
+        const McapFullException& e)
 {
     close_current_file_nts_();
+
+    // Disable the writer in case opening a new file fails
     enabled_ = false;
 
     try
     {
-        open_new_file_nts_();
+        // Open a new file to write the remaining data.
+        // Throw an exception if a file with the minimum size cannot be opened.
+        const auto min_file_size = size_tracker_.get_min_mcap_size() + e.data_size_to_write();
+        open_new_file_nts_(min_file_size);
+
+        // The file has been opened correctly. Enable the writer.
         enabled_ = true;
     }
-    catch (const std::exception& _)
+    catch (const std::exception& new_e)
     {
+        logError(DDSRECORDER_MCAP_WRITER,
+                "Error opening a new MCAP file: " << new_e.what());
         throw e;
     }
-
 }
 
 void McapWriter::on_mcap_full_nts_(
-        const std::overflow_error& e,
+        const McapFullException& e,
         std::function<void()> func)
 {
     on_mcap_full_nts_(e);

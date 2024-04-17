@@ -54,6 +54,7 @@
 #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
 
 #include <ddsrecorder_participants/constants.hpp>
+#include <ddsrecorder_participants/recorder/mcap/McapFullException.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
 #include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
 
@@ -163,7 +164,11 @@ void McapHandler::add_schema(
 
         // Every time a dynamic type is added the attachment is newly calculated
         store_dynamic_type_(type_name, dynamic_types_);
-        mcap_writer_.update_dynamic_types(*serialize_dynamic_types_(dynamic_types_));
+
+        if (configuration_.record_types)
+        {
+            mcap_writer_.update_dynamic_types(*serialize_dynamic_types_(dynamic_types_));
+        }
 
         // Check if there are any pending samples for this new schema. If so, add them.
         if ((pending_samples_.find(type_name) != pending_samples_.end()) ||
@@ -173,7 +178,7 @@ void McapHandler::add_schema(
             add_pending_samples_nts_(type_name);
         }
     }
-    catch (const std::overflow_error& e)
+    catch (const McapFullException& e)
     {
         logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to write on MCAP file while adding schema. " << "Error message:\n " <<
                 e.what());
@@ -290,7 +295,7 @@ void McapHandler::add_data(
             }
         }
     }
-    catch (const std::overflow_error& e)
+    catch (const McapFullException& e)
     {
         logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to write on MCAP file while adding data. " << "Error message:\n " <<
                 e.what());
@@ -341,7 +346,7 @@ void McapHandler::start()
                 stop_event_thread_nts_(event_lock);
             }
         }
-        catch (const std::overflow_error&)
+        catch (const McapFullException&)
         {
             on_disk_full_();
         }
@@ -402,7 +407,7 @@ void McapHandler::stop(
             dump_data_nts_();  // if prev_state == RUNNING -> writes buffer + added pending samples (if !only_with_schema)
                                // if prev_state == PAUSED  -> writes added pending samples (if !only_with_schema)
         }
-        catch (const std::overflow_error&)
+        catch (const McapFullException&)
         {
             on_disk_full_(); // TODO: check if this is the right approach (could be here from a
                              // previous callback execution, or normally on command reception)
@@ -454,7 +459,7 @@ void McapHandler::pause()
                 samples_buffer_.clear();
             }
         }
-        catch (const std::overflow_error&)
+        catch (const McapFullException&)
         {
             on_disk_full_();
         }
@@ -544,7 +549,7 @@ void McapHandler::add_data_nts_(
         {
             logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Error writting message in channel " << msg.channelId
                                                                                                       << ". Error message:\n " <<
-                                e.what());
+                    e.what());
         }
     }
     else
@@ -747,7 +752,7 @@ void McapHandler::event_thread_routine_()
                     }
                     dump_data_nts_();
                 }
-                catch (const std::overflow_error&)
+                catch (const McapFullException&)
                 {
                     on_disk_full_();
                 }
