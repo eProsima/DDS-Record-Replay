@@ -22,6 +22,8 @@
 #include <string>
 #include <vector>
 
+#include <mcap/mcap.hpp>
+
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
@@ -54,9 +56,6 @@ struct McapOutputSettings
 
     //! Maximum aggregate size of the output files
     std::uint64_t max_size;
-
-    //! Maximum number of output files
-    std::uint64_t max_files;
 
     //! Whether to rotate output files after reaching the max-size
     bool file_rotation{false};

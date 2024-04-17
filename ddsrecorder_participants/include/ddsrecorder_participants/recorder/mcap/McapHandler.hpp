@@ -41,7 +41,8 @@
 
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
-#include <ddsrecorder_participants/recorder/mcap/McapSizeTracker.hpp>
+#include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
+#include <ddsrecorder_participants/recorder/mcap/Message.hpp>
 
 #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
     #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
@@ -60,43 +61,6 @@ ENUMERATION_BUILDER(
     RUNNING,                  //! Messages are stored in buffer and dumped to disk when full.
     PAUSED                    //! Messages are stored in buffer and dumped to disk when event triggered.
     );
-
-/**
- * Structure extending \c mcap::Message with Fast DDS payload and its owner (a \c PayloadPool).
- */
-struct Message : public mcap::Message
-{
-    Message() = default;
-
-    /**
-     * Message copy constructor
-     *
-     * Copy message without copying payload through PayloadPool API (copy reference and increment counter).
-     *
-     * @note If using instead the default destructor and copy constructor, the destruction of the copied message would
-     * free the newly constructed sample (payload's data attribute), thus rendering the latter useless.
-     *
-     */
-    Message(
-            const Message& msg);
-
-    /**
-     * Message destructor
-     *
-     * Releases internal payload, decrementing its reference count and freeing only when no longer referenced.
-     *
-     * @note Releasing the payload correctly sets payload's internal data attribute to \c nullptr , which eludes
-     * the situation described in copy constructor's note.
-     *
-     */
-    ~Message();
-
-    //! Serialized payload
-    ddspipe::core::types::Payload payload{};
-
-    //! Payload owner (reference to \c PayloadPool which created/reserved it)
-    ddspipe::core::PayloadPool* payload_owner{nullptr};
-};
 
 /**
  * Class that manages the interaction between DDS Pipe (\c SchemaParticipant) and MCAP files through mcap library.
@@ -280,26 +244,6 @@ protected:
     };
 
     /**
-     * @brief Open a new MCAP file according to configuration settings.
-     *
-     * @throw InitializationException if failing to open file.
-     *
-     * A temporal suffix is appended after the '.mcap' extension, and additionally a timestamp prefix if applies.
-     *
-     */
-    void open_file_nts_();
-
-    /**
-     * @brief Close the file previously opened with \c open_file_nts_
-     *
-     * Before closure, the information relative to version and received dynamic types is written to file.
-     *
-     * After closure, the temporal file is renamed so no longer has a temporal suffix.
-     *
-     */
-    void close_file_nts_();
-
-    /**
      * @brief Add message to \c buffer_ structure, or directly write to MCAP file.
      *
      * If after adding the new sample (when not directly writting to file) the buffer reaches its maximum size, the
@@ -326,16 +270,6 @@ protected:
             Message& msg,
             const ddspipe::core::types::DdsTopic& topic,
             bool direct_write = false);
-
-    /**
-     * @brief Write message to MCAP file.
-     *
-     * @throw InconsistencyException if failing to write message.
-     *
-     * @param [in] msg Message to be written
-     */
-    void write_message_nts_(
-            const Message& msg);
 
     /**
      * @brief Add to pending samples collection.
@@ -458,17 +392,6 @@ protected:
             const std::string& schema_name);
 
     /**
-     * @brief Rewrite the channels that already exist.
-     */
-    void rewrite_channels_nts_();
-
-    /**
-     * @brief Rewrite all received schemas into currently open MCAP file.
-     *
-     */
-    void rewrite_schemas_nts_();
-
-    /**
      * @brief Serialize type identifier and object, and insert the result into a \c DynamicTypesCollection .
      *
      * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
@@ -501,65 +424,12 @@ protected:
             DynamicTypesCollection& dynamic_types) const;
 
     /**
-     * @brief Add type to \c dynamic_types_ collection, and update the value of \c dynamic_types_payload_ attribute.
-     *
-     * @param [in] type_name Name of the type to be added.
-     */
-    void add_dynamic_type_(
-            const std::string& type_name);
-
-    /**
-     * @brief Write serialized \c dynamic_types_ collection (\c dynamic_types_payload_) into MCAP file's attachments section.
-     *
-     */
-    void write_dynamic_types_();
-
-    /**
-     * @brief Write version metadata (release and commit hash) in MCAP file.
-     *
-     */
-    void write_version_metadata_();
-
-    /**
-     * @brief Callback to be executed when the current MCAP file becomes full.
-     *
-     * @param [in] e Captured overflow exception.
-     */
-    void on_mcap_full_(
-            const std::overflow_error& e);
-
-    /**
-     * @brief Callback to be executed when the current MCAP file becomes full.
-     *
-     * @param [in] e Captured overflow exception.
-     * @param [in] func Function to execute after handling overflow exception.
-     */
-    void on_mcap_full_(
-            const std::overflow_error& e,
-            std::function<void()> func);
-
-    /**
      * @brief Callback to be executed whenever disk is full
      *
      * It calls \c on_disk_full_lambda_ if set
      *
      */
     void on_disk_full_() const noexcept;
-
-    /**
-     * @brief Convert given \c filename to temporal format.
-     *
-     * @param [in] filename Filename to be converted.
-     */
-    static std::string tmp_filename_(
-            const std::string& filename);
-
-    /**
-     * @brief Free disk space if required and allowed.
-     *
-     * If there is no more space available and file rotation is enabled, it deletes the oldest file.
-     */
-    void check_and_free_space_();
 
     /**
      * @brief Serialize a \c TopicQoS struct into a string.
@@ -591,15 +461,6 @@ protected:
     //! Handler configuration
     McapHandlerConfiguration configuration_;
 
-    //! MCAP file id
-    std::uint64_t mcap_file_id_{0};
-
-    //! List of MCAP filenames
-    std::vector<std::string> mcap_filenames_;
-
-    //! Aggregate sizes of the MCAP output files
-    std::uint64_t output_size_{0};
-
     //! Payload pool
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;
 
@@ -607,10 +468,7 @@ protected:
     McapHandlerStateCode state_;
 
     //! MCAP writer
-    mcap::McapWriter mcap_writer_;
-
-    //! MCAP size tracker
-    McapSizeTracker mcap_size_tracker_;
+    McapWriter mcap_writer_;
 
     //! Schemas map
     std::map<std::string, mcap::Schema> schemas_;
@@ -626,9 +484,6 @@ protected:
 
     //! Dynamic types collection
     DynamicTypesCollection dynamic_types_;
-
-    //! Serialized payload for dynamic types collection (dynamic_types_)
-    std::unique_ptr<fastrtps::rtps::SerializedPayload_t> dynamic_types_payload_;
 
     //! Structure where messages (received in RUNNING state) with unknown type are kept
     std::map<std::string, pending_list> pending_samples_;

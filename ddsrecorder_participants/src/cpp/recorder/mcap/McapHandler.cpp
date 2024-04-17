@@ -54,6 +54,7 @@
 #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
 
 #include <ddsrecorder_participants/constants.hpp>
+#include <ddsrecorder_participants/recorder/mcap/McapFullException.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
 #include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
 
@@ -94,6 +95,7 @@ McapHandler::McapHandler(
     , payload_pool_(payload_pool)
     , state_(McapHandlerStateCode::STOPPED)
     , on_disk_full_lambda_set_(false)
+    , mcap_writer_(config.mcap_output_settings, config.mcap_writer_options, config.record_types)
 {
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "Creating MCAP handler instance.");
@@ -147,44 +149,26 @@ void McapHandler::add_schema(
         mcap::Schema new_schema(configuration_.ros2_types ? utils::demangle_if_ros_type(dynamic_type->get_name()) :
                 dynamic_type->get_name(), encoding, schema_text);
 
-        try
-        {
-            // Check if there is enough space on disk to write the schema
-            mcap_size_tracker_.schema_to_write(new_schema);
-        }
-        catch (const std::overflow_error& e)
-        {
-            on_mcap_full_(e, [&]()
-                    {
-                        mcap_size_tracker_.schema_to_write(new_schema);
-                    });
-        }
-
-        // WARNING: passing as non-const to MCAP library
-        mcap_writer_.addSchema(new_schema);
-        mcap_size_tracker_.schema_written(new_schema);
+        mcap_writer_.write(new_schema);
 
         logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << new_schema.name << ".");
 
         auto it = schemas_.find(type_name);
         if (it != schemas_.end())
         {
-            try
-            {
-                // Update channels previously created with blank schema
-                update_channels_nts_(it->second.id, new_schema.id);
-            }
-            catch (const std::overflow_error& e)
-            {
-                // Do not retry if channel update fails (channels are created on the fly when adding data)
-                on_mcap_full_(e);
-            }
+            // Update channels previously created with blank schema
+            update_channels_nts_(it->second.id, new_schema.id);
         }
         schemas_[type_name] = std::move(new_schema);
         received_types_.insert(type_name);
 
         // Every time a dynamic type is added the attachment is newly calculated
-        add_dynamic_type_(type_name);
+        store_dynamic_type_(type_name, dynamic_types_);
+
+        if (configuration_.record_types)
+        {
+            mcap_writer_.update_dynamic_types(*serialize_dynamic_types_(dynamic_types_));
+        }
 
         // Check if there are any pending samples for this new schema. If so, add them.
         if ((pending_samples_.find(type_name) != pending_samples_.end()) ||
@@ -194,10 +178,11 @@ void McapHandler::add_schema(
             add_pending_samples_nts_(type_name);
         }
     }
-    catch (const std::overflow_error& e)
+    catch (const McapFullException& e)
     {
-        logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to write on MCAP file while adding schema. " << "Error message:\n " <<
-                e.what());
+        logError(DDSRECORDER_MCAP_HANDLER,
+                "FAIL_MCAP_WRITE | Failed to write on MCAP file while adding schema. " <<
+                "Error message:\n " << e.what());
 
         on_disk_full_();
     }
@@ -311,7 +296,7 @@ void McapHandler::add_data(
             }
         }
     }
-    catch (const std::overflow_error& e)
+    catch (const McapFullException& e)
     {
         logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to write on MCAP file while adding data. " << "Error message:\n " <<
                 e.what());
@@ -337,6 +322,7 @@ void McapHandler::start()
     // Store previous state to act differently depending on its value
     McapHandlerStateCode prev_state = state_;
     state_ = McapHandlerStateCode::RUNNING;
+
     if (prev_state == McapHandlerStateCode::RUNNING)
     {
         logWarning(
@@ -353,7 +339,7 @@ void McapHandler::start()
         {
             if (prev_state == McapHandlerStateCode::STOPPED)
             {
-                open_file_nts_();
+                mcap_writer_.enable();
             }
             else if (prev_state == McapHandlerStateCode::PAUSED)
             {
@@ -361,7 +347,7 @@ void McapHandler::start()
                 stop_event_thread_nts_(event_lock);
             }
         }
-        catch (const std::overflow_error&)
+        catch (const McapFullException&)
         {
             on_disk_full_();
         }
@@ -422,14 +408,13 @@ void McapHandler::stop(
             dump_data_nts_();  // if prev_state == RUNNING -> writes buffer + added pending samples (if !only_with_schema)
                                // if prev_state == PAUSED  -> writes added pending samples (if !only_with_schema)
         }
-        catch (const std::overflow_error&)
+        catch (const McapFullException&)
         {
             on_disk_full_(); // TODO: check if this is the right approach (could be here from a
                              // previous callback execution, or normally on command reception)
         }
 
-        // Close and rename MCAP file
-        close_file_nts_();
+        mcap_writer_.disable();
 
         // Reset channels
         channels_.clear();
@@ -463,7 +448,7 @@ void McapHandler::pause()
         {
             if (prev_state == McapHandlerStateCode::STOPPED)
             {
-                open_file_nts_();
+                mcap_writer_.enable();
             }
             else if (prev_state == McapHandlerStateCode::RUNNING)
             {
@@ -474,7 +459,7 @@ void McapHandler::pause()
                 samples_buffer_.clear();
             }
         }
-        catch (const std::overflow_error&)
+        catch (const McapFullException&)
         {
             on_disk_full_();
         }
@@ -549,115 +534,6 @@ void McapHandler::set_on_disk_full_callback(
     on_disk_full_lambda_set_ = true;
 }
 
-void McapHandler::open_file_nts_()
-{
-    // Generate the filename
-    auto mcap_filename = configuration_.mcap_output_settings.output_filepath + "/";
-
-    if (configuration_.mcap_output_settings.prepend_timestamp)
-    {
-        // Include the timestamp in the filename
-        const auto timestamp = utils::timestamp_to_string(
-            utils::now(), configuration_.mcap_output_settings.output_timestamp_format,
-            configuration_.mcap_output_settings.output_local_timestamp);
-
-        mcap_filename = timestamp + "_";
-    }
-
-    mcap_filename += configuration_.mcap_output_settings.output_filename;
-
-    if (!configuration_.mcap_output_settings.prepend_timestamp && configuration_.mcap_output_settings.max_files > 1)
-    {
-        // When the timestamp isn't included in the file's name, the output files all have the same name.
-        // To make their names unique, we include their file id.
-        mcap_filename += "_" + std::to_string(mcap_file_id_);
-    }
-
-    mcap_filename += ".mcap";
-
-    // Append temporal suffix
-    const auto tmp_filename = tmp_filename_(mcap_filename);
-
-    logInfo(DDSRECORDER_MCAP_HANDLER,
-            "Opening file <" << tmp_filename << "> .");
-
-    auto status = mcap_writer_.open(tmp_filename.c_str(), configuration_.mcap_writer_options);
-    if (!status.ok())
-    {
-        monitor_error("MCAP_FILE_CREATION_FAILURE");
-
-        utils::InitializationException e(
-            STR_ENTRY << "Failed to open MCAP file " << tmp_filename << " for writing: " << status.message);
-        logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_OPEN | " << e.what());
-        throw e;
-    }
-
-    // Update the MCAP file id
-    mcap_file_id_++;
-
-    // Calculate the maximum size of the file
-    const auto max_file_size = std::min(
-        configuration_.mcap_output_settings.max_file_size,
-        configuration_.mcap_output_settings.max_size - output_size_);
-
-    mcap_size_tracker_.init(max_file_size, configuration_.mcap_output_settings.safety_margin);
-
-    // Store the filename
-    mcap_filenames_.push_back(mcap_filename);
-
-    // Write version metadata in MCAP file
-    write_version_metadata_();
-
-    // Write in the new file the channels that already exist.
-    if (!channels_.empty())
-    {
-        rewrite_channels_nts_();
-    }
-
-    // Write in new file schemas already received before
-    // NOTE: This is necessary since dynamic types are only sent/received once on discovery
-    if (!schemas_.empty())
-    {
-        rewrite_schemas_nts_();
-        if (nullptr != dynamic_types_payload_)
-        {
-            mcap_size_tracker_.attachment_to_write(dynamic_types_payload_->length);
-        }
-    }
-}
-
-void McapHandler::close_file_nts_()
-{
-    const auto mcap_filename = mcap_filenames_.back();
-    const auto tmp_filename = tmp_filename_(mcap_filename);
-
-    logInfo(DDSRECORDER_MCAP_HANDLER,
-            "Closing file <" << tmp_filename << "> .");
-
-    // Write dynamic types associated to all added schemas as an MCAP attachment
-    if (configuration_.record_types)
-    {
-        write_dynamic_types_();
-    }
-
-    // Close writer and output file
-    mcap_writer_.close();
-
-    // Update output size
-    output_size_ += std::filesystem::file_size(tmp_filename);
-
-    // Reset mcap size tracker
-    mcap_size_tracker_.reset(tmp_filename);
-
-    // Rename temp file to configuration file_name
-    if (std::rename(tmp_filename.c_str(), mcap_filename.c_str()))
-    {
-        logError(
-            DDSRECORDER_MCAP_HANDLER,
-            "Failed to rename " << tmp_filename << " into " << mcap_filename << " on handler destruction.");
-    }
-}
-
 void McapHandler::add_data_nts_(
         const Message& msg,
         bool direct_write /* false */)
@@ -667,12 +543,13 @@ void McapHandler::add_data_nts_(
         try
         {
             // Write to MCAP file
-            write_message_nts_(msg);
+            mcap_writer_.write(msg);
         }
         catch (const utils::InconsistencyException& e)
         {
-            logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Error writting message in channel " << msg.channelId << ". Error message:\n " <<
-                    e.what());
+            logError(DDSRECORDER_MCAP_HANDLER,
+                    "FAIL_MCAP_WRITE | Error writting message in channel " << msg.channelId << ". "
+                    "Error message:\n " << e.what());
         }
     }
     else
@@ -705,31 +582,6 @@ void McapHandler::add_data_nts_(
     }
 
     add_data_nts_(msg, direct_write);
-}
-
-void McapHandler::write_message_nts_(
-        const Message& msg)
-{
-    try
-    {
-        mcap_size_tracker_.message_to_write(msg.dataSize);
-    }
-    catch (const std::overflow_error& e)
-    {
-        on_mcap_full_(e, [&]()
-                {
-                    mcap_size_tracker_.message_to_write(msg.dataSize);
-                });
-    }
-    mcap::Status status;
-    status = mcap_writer_.write(msg);
-    if (!status.ok())
-    {
-        throw utils::InconsistencyException(
-                  STR_ENTRY << "FAIL_MCAP_WRITE | Error writting in MCAP, error message: " << status.message
-                  );
-    }
-    mcap_size_tracker_.message_written(msg.dataSize);
 }
 
 void McapHandler::add_to_pending_nts_(
@@ -900,7 +752,7 @@ void McapHandler::event_thread_routine_()
                     }
                     dump_data_nts_();
                 }
-                catch (const std::overflow_error&)
+                catch (const McapFullException&)
                 {
                     on_disk_full_();
                 }
@@ -967,7 +819,7 @@ void McapHandler::dump_data_nts_()
         try
         {
             // Write to MCAP file
-            write_message_nts_(sample);
+            mcap_writer_.write(sample);
         }
         catch (const utils::InconsistencyException& e)
         {
@@ -999,21 +851,8 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
             std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
             mcap::Schema blank_schema(topic.type_name, encoding, "");
 
-            try
-            {
-                mcap_size_tracker_.schema_to_write(blank_schema);
-            }
-            catch (const std::overflow_error& e)
-            {
-                on_mcap_full_(e, [&]()
-                        {
-                            mcap_size_tracker_.schema_to_write(blank_schema);
-                        });
-            }
+            mcap_writer_.write(blank_schema);
 
-            // Add schema reserved space to write it on MCAP
-            mcap_writer_.addSchema(blank_schema);
-            mcap_size_tracker_.schema_written(blank_schema);
             schemas_.insert({topic.type_name, std::move(blank_schema)});
 
             schema_id = blank_schema.id;
@@ -1034,20 +873,8 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     metadata[ROS2_TYPES] = topic_name.compare(topic.m_topic_name) ? "true" : "false";
     mcap::Channel new_channel(topic_name, "cdr", schema_id, metadata);
 
-    try
-    {
-        mcap_size_tracker_.channel_to_write(new_channel);
-    }
-    catch (const std::overflow_error& e)
-    {
-        on_mcap_full_(e, [&]()
-                {
-                    mcap_size_tracker_.channel_to_write(new_channel);
-                });
-    }
+    mcap_writer_.write(new_channel);
 
-    mcap_writer_.addChannel(new_channel);
-    mcap_size_tracker_.channel_written(new_channel);
     auto channel_id = new_channel.id;
     channels_.insert({topic, std::move(new_channel)});
     logInfo(DDSRECORDER_MCAP_HANDLER, "Channel created: " << topic << ".");
@@ -1080,10 +907,9 @@ void McapHandler::update_channels_nts_(
 
             assert(channel.first.m_topic_name == channel.second.topic);
             mcap::Channel new_channel(channel.second.topic, "cdr", new_schema_id, channel.second.metadata);
-            // Check if there is enough space available to write the channel
-            mcap_size_tracker_.channel_to_write(new_channel);
-            mcap_writer_.addChannel(new_channel);
-            mcap_size_tracker_.channel_written(new_channel);
+
+            mcap_writer_.write(new_channel);
+
             channel.second = std::move(new_channel);
         }
     }
@@ -1101,64 +927,6 @@ mcap::SchemaId McapHandler::get_schema_id_nts_(
     {
         throw utils::InconsistencyException(
                   STR_ENTRY << "Schema " << schema_name << " is not registered.");
-    }
-}
-
-void McapHandler::rewrite_channels_nts_()
-{
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Rewriting received channels.");
-
-    // Sort channels by id
-    std::map<mcap::ChannelId, mcap::Channel> channels;
-
-    for (auto& channel : channels_)
-    {
-        channels[channel.second.id] = channel.second;
-    }
-
-    // Write channels to MCAP file
-    for (const auto& it : channels)
-    {
-        const auto& id = it.first;
-        const auto& channel = it.second;
-
-        // Check if there is enough space available to write the channel
-        mcap_size_tracker_.channel_to_write(channel);
-
-        // WARNING: passing as non-const to MCAP library
-        mcap_writer_.addChannel(const_cast<mcap::Channel&>(channel));
-        mcap_size_tracker_.channel_written(channel);
-
-        logInfo(DDSRECORDER_MCAP_HANDLER, "Channel created: " << channel.topic << ".");
-    }
-}
-
-void McapHandler::rewrite_schemas_nts_()
-{
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Rewriting received schemas.");
-
-    // Sort schemas by id
-    std::map<mcap::SchemaId, mcap::Schema> schemas;
-
-    for (auto& schema : schemas_)
-    {
-        schemas[schema.second.id] = schema.second;
-    }
-
-    // Write schemas to MCAP file
-    for (const auto& it : schemas)
-    {
-        const auto& id = it.first;
-        const auto& schema = it.second;
-
-        // Check if there is enough space available to write the schema
-        mcap_size_tracker_.schema_to_write(schema);
-
-        // WARNING: passing as non-const to MCAP library
-        mcap_writer_.addSchema(const_cast<mcap::Schema&>(schema));
-        mcap_size_tracker_.schema_written(schema);
-
-        logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << schema.name << ".");
     }
 }
 
@@ -1248,96 +1016,6 @@ fastrtps::rtps::SerializedPayload_t* McapHandler::serialize_dynamic_types_(
     return serialized_payload;
 }
 
-void McapHandler::add_dynamic_type_(
-        const std::string& type_name)
-{
-    store_dynamic_type_(type_name, dynamic_types_);
-
-    std::unique_ptr<fastrtps::rtps::SerializedPayload_t> new_dynamic_types_payload(serialize_dynamic_types_(
-                dynamic_types_));
-
-    auto write_attachment = [&]()
-            {
-                if (nullptr == dynamic_types_payload_)
-                {
-                    mcap_size_tracker_.attachment_to_write(new_dynamic_types_payload->length);
-                }
-                else
-                {
-                    mcap_size_tracker_.attachment_to_write(new_dynamic_types_payload->length,
-                            dynamic_types_payload_->length);
-                }
-            };
-
-    // Check if there is enough space available to write the new attachment
-    try
-    {
-        write_attachment();
-    }
-    catch (const std::overflow_error& e)
-    {
-        on_mcap_full_(e, write_attachment);
-    }
-    dynamic_types_payload_ = std::move(new_dynamic_types_payload);
-}
-
-void McapHandler::write_dynamic_types_()
-{
-    // Write serialized dynamic types into attachments section
-    mcap::Attachment dynamic_attachment;
-    dynamic_attachment.name = DYNAMIC_TYPES_ATTACHMENT_NAME;
-    dynamic_attachment.data = reinterpret_cast<std::byte*>(dynamic_types_payload_->data);
-    dynamic_attachment.dataSize = dynamic_types_payload_->length;
-    dynamic_attachment.createTime = now();
-    auto status = mcap_writer_.write(dynamic_attachment); // TODO: check ok status
-    mcap_size_tracker_.attachment_written(dynamic_attachment.dataSize);
-
-    return;
-}
-
-void McapHandler::write_version_metadata_()
-{
-    // Populate map with release version and commit hash
-    mcap::KeyValueMap version;
-    version[VERSION_METADATA_RELEASE] = DDSRECORDER_PARTICIPANTS_VERSION_STRING;
-    version[VERSION_METADATA_COMMIT] = DDSRECORDER_PARTICIPANTS_COMMIT_HASH;
-
-    // Write to MCAP file
-    mcap::Metadata version_metadata;
-    version_metadata.name = VERSION_METADATA_NAME;
-    version_metadata.metadata = version;
-
-    mcap_size_tracker_.metadata_to_write(version_metadata);
-    auto status = mcap_writer_.write(version_metadata); // TODO: check ok status
-    mcap_size_tracker_.metadata_written(version_metadata);
-}
-
-void McapHandler::on_mcap_full_(
-        const std::overflow_error& e)
-{
-    if (mcap_filenames_.size() == configuration_.mcap_output_settings.max_files &&
-            !configuration_.mcap_output_settings.file_rotation)
-    {
-        // The mcap is full and there's no more space to keep writing. Propagate exception.
-        throw e;
-    }
-
-    // The recording must go on. Close the current file and open a new one.
-    logInfo(DDSRECORDER_MCAP_HANDLER, "RESOURCE_LIMITS | Max file size reached, closing file and opening a new one...");
-
-    close_file_nts_();
-    check_and_free_space_();
-    open_file_nts_();
-}
-
-void McapHandler::on_mcap_full_(
-        const std::overflow_error& e,
-        std::function<void()> func)
-{
-    on_mcap_full_(e);
-    func();
-}
-
 void McapHandler::on_disk_full_() const noexcept
 {
     monitor_error("DISK_FULL");
@@ -1345,73 +1023,6 @@ void McapHandler::on_disk_full_() const noexcept
     if (on_disk_full_lambda_set_)
     {
         on_disk_full_lambda_();
-    }
-}
-
-std::string McapHandler::tmp_filename_(
-        const std::string& filename)
-{
-    static const std::string TMP_SUFFIX = ".tmp~";
-    return filename + TMP_SUFFIX;
-}
-
-void McapHandler::check_and_free_space_()
-{
-    if (!configuration_.mcap_output_settings.file_rotation)
-    {
-        // File rotation mode is disabled.
-        return;
-    }
-
-    if (mcap_filenames_.size() < configuration_.mcap_output_settings.max_files)
-    {
-        // There still is enough free space.
-        return;
-    }
-
-    // Find the oldest file that still exists
-    std::string oldest_file;
-
-    while (true)
-    {
-        if (mcap_filenames_.empty())
-        {
-            logWarning(DDSRECORDER_MCAP_HANDLER, "RESOURCE_LIMITS | No files to remove on file rotation.");
-            return;
-        }
-
-        oldest_file = mcap_filenames_.front();
-        mcap_filenames_.erase(mcap_filenames_.begin());
-
-        if (std::filesystem::exists(oldest_file))
-        {
-            break;
-        }
-
-        logWarning(DDSRECORDER_MCAP_HANDLER, "RESOURCE_LIMITS | File " << oldest_file << " doesn't exist and could not "
-                "be deleted on file rotation.");
-        configuration_.mcap_output_settings.max_files--;
-    }
-
-    // Find the oldest file's size
-    const auto oldest_file_size = std::filesystem::file_size(oldest_file);
-
-    // Remove the oldest file
-    logInfo(
-        DDSRECORDER_MCAP_HANDLER,
-        "RESOURCE_LIMITS | Removing file " << oldest_file << " on file rotation.");
-
-    const auto ret = std::filesystem::remove(oldest_file);
-
-    if (!ret)
-    {
-        logWarning(
-            DDSRECORDER_MCAP_HANDLER,
-            "RESOURCE_LIMITS | Failed to remove file " << oldest_file << " on file rotation.");
-    }
-    else
-    {
-        output_size_ -= oldest_file_size;
     }
 }
 
