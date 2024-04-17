@@ -90,11 +90,12 @@ Message::~Message()
 McapHandler::McapHandler(
         const McapHandlerConfiguration& config,
         const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
+        std::shared_ptr<ddsrecorder::participants::McapWriter> mcap_writer,
         const McapHandlerStateCode& init_state /* = McapHandlerStateCode::RUNNING */)
     : configuration_(config)
     , payload_pool_(payload_pool)
     , state_(McapHandlerStateCode::STOPPED)
-    , mcap_writer_(config.mcap_output_settings, config.mcap_writer_options, config.record_types)
+    , mcap_writer_(mcap_writer)
     , on_disk_full_lambda_set_(false)
 {
     logInfo(DDSRECORDER_MCAP_HANDLER,
@@ -149,7 +150,7 @@ void McapHandler::add_schema(
         mcap::Schema new_schema(configuration_.ros2_types ? utils::demangle_if_ros_type(dynamic_type->get_name()) :
                 dynamic_type->get_name(), encoding, schema_text);
 
-        mcap_writer_.write(new_schema);
+        mcap_writer_->write(new_schema);
 
         logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << new_schema.name << ".");
 
@@ -167,7 +168,7 @@ void McapHandler::add_schema(
 
         if (configuration_.record_types)
         {
-            mcap_writer_.update_dynamic_types(*serialize_dynamic_types_(dynamic_types_));
+            mcap_writer_->update_dynamic_types(*serialize_dynamic_types_(dynamic_types_));
         }
 
         // Check if there are any pending samples for this new schema. If so, add them.
@@ -339,7 +340,7 @@ void McapHandler::start()
         {
             if (prev_state == McapHandlerStateCode::STOPPED)
             {
-                mcap_writer_.enable();
+                mcap_writer_->enable();
             }
             else if (prev_state == McapHandlerStateCode::PAUSED)
             {
@@ -414,7 +415,7 @@ void McapHandler::stop(
                              // previous callback execution, or normally on command reception)
         }
 
-        mcap_writer_.disable();
+        mcap_writer_->disable();
 
         // Reset channels
         channels_.clear();
@@ -448,7 +449,7 @@ void McapHandler::pause()
         {
             if (prev_state == McapHandlerStateCode::STOPPED)
             {
-                mcap_writer_.enable();
+                mcap_writer_->enable();
             }
             else if (prev_state == McapHandlerStateCode::RUNNING)
             {
@@ -543,7 +544,7 @@ void McapHandler::add_data_nts_(
         try
         {
             // Write to MCAP file
-            mcap_writer_.write(msg);
+            mcap_writer_->write(msg);
         }
         catch (const utils::InconsistencyException& e)
         {
@@ -819,7 +820,7 @@ void McapHandler::dump_data_nts_()
         try
         {
             // Write to MCAP file
-            mcap_writer_.write(sample);
+            mcap_writer_->write(sample);
         }
         catch (const utils::InconsistencyException& e)
         {
@@ -851,7 +852,7 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
             std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
             mcap::Schema blank_schema(topic.type_name, encoding, "");
 
-            mcap_writer_.write(blank_schema);
+            mcap_writer_->write(blank_schema);
 
             schemas_.insert({topic.type_name, std::move(blank_schema)});
 
@@ -873,7 +874,7 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     metadata[ROS2_TYPES] = topic_name.compare(topic.m_topic_name) ? "true" : "false";
     mcap::Channel new_channel(topic_name, "cdr", schema_id, metadata);
 
-    mcap_writer_.write(new_channel);
+    mcap_writer_->write(new_channel);
 
     auto channel_id = new_channel.id;
     channels_.insert({topic, std::move(new_channel)});
@@ -908,7 +909,7 @@ void McapHandler::update_channels_nts_(
             assert(channel.first.m_topic_name == channel.second.topic);
             mcap::Channel new_channel(channel.second.topic, "cdr", new_schema_id, channel.second.metadata);
 
-            mcap_writer_.write(new_channel);
+            mcap_writer_->write(new_channel);
 
             channel.second = std::move(new_channel);
         }

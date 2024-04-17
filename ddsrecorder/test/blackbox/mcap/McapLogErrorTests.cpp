@@ -68,9 +68,16 @@ TEST(McapLogErrorTests, fail_to_open_file) {
     eprosima::ddsrecorder::participants::McapHandlerStateCode init_state =
             eprosima::ddsrecorder::participants::McapHandlerStateCode::RUNNING;
 
+    // Create the McapWriter
+    std::shared_ptr<eprosima::ddsrecorder::participants::McapWriter> mcap_writer =
+            std::make_shared<eprosima::ddsrecorder::participants::McapWriter>(
+        config.mcap_output_settings,
+        config.mcap_writer_options,
+        config.record_types);
+
     // Check if an InitializationException is thrown
     ASSERT_THROW(
-        eprosima::ddsrecorder::participants::McapHandler mcap_handler(config, payload_pool, init_state),
+        eprosima::ddsrecorder::participants::McapHandler mcap_handler(config, payload_pool, mcap_writer, init_state),
         eprosima::utils::InitializationException);
 
     // Assert that logErrors were captured

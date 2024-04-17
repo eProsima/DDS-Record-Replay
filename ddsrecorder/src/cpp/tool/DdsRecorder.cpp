@@ -38,8 +38,9 @@ using namespace eprosima::utils;
 DdsRecorder::DdsRecorder(
         const yaml::RecorderConfiguration& configuration,
         const DdsRecorderStateCode& init_state,
+        std::shared_ptr<ddsrecorder::participants::McapWriter>& mcap_writer,
         const std::string& file_name /* = "" */)
-    : DdsRecorder(configuration, init_state, nullptr, file_name)
+    : DdsRecorder(configuration, init_state, nullptr, mcap_writer, file_name)
 {
 }
 
@@ -47,6 +48,7 @@ DdsRecorder::DdsRecorder(
         const yaml::RecorderConfiguration& configuration,
         const DdsRecorderStateCode& init_state,
         std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler,
+        std::shared_ptr<ddsrecorder::participants::McapWriter>& mcap_writer,
         const std::string& file_name /* = "" */)
     : configuration_(configuration)
     , event_handler_(event_handler)
@@ -109,10 +111,20 @@ DdsRecorder::DdsRecorder(
         configuration_.record_types,
         configuration_.ros2_types);
 
+    // Create MCAP Writer
+    if (mcap_writer == nullptr)
+    {
+        mcap_writer.reset(new participants::McapWriter(
+                    handler_config.mcap_output_settings,
+                    handler_config.mcap_writer_options,
+                    handler_config.record_types));
+    }
+
     // Create MCAP Handler
     mcap_handler_ = std::make_shared<participants::McapHandler>(
         handler_config,
         payload_pool_,
+        mcap_writer,
         recorder_to_handler_state_(init_state));
 
     mcap_handler_->set_on_disk_full_callback(std::bind(&DdsRecorder::on_disk_full, this));

@@ -17,6 +17,7 @@
 
 #include <cpp_utils/ros2_mangling.hpp>
 
+#include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 #include <ddsrecorder_yaml/recorder/yaml_configuration_tags.hpp>
 
@@ -109,11 +110,13 @@ std::unique_ptr<DdsRecorder> create_recorder(
     configuration.simple_configuration->domain = domainId;
     configuration.ros2_types = ros2_types;
 
+    std::shared_ptr<eprosima::ddsrecorder::participants::McapWriter> mcap_writer;
+
     return std::make_unique<DdsRecorder>(
         configuration,
         recorder_state,
-        file_name
-        );
+        mcap_writer,
+        file_name);
 }
 
 void create_publisher(

@@ -93,6 +93,7 @@ public:
     McapHandler(
             const McapHandlerConfiguration& config,
             const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
+            std::shared_ptr<ddsrecorder::participants::McapWriter> mcap_writer,
             const McapHandlerStateCode& init_state = McapHandlerStateCode::RUNNING);
 
     /**
@@ -468,7 +469,7 @@ protected:
     McapHandlerStateCode state_;
 
     //! MCAP writer
-    McapWriter mcap_writer_;
+    std::shared_ptr<McapWriter> mcap_writer_;
 
     //! Schemas map
     std::map<std::string, mcap::Schema> schemas_;

@@ -33,6 +33,7 @@
 #include <cpp_utils/utils.hpp>
 
 #include <ddsrecorder_participants/recorder/logging/DdsRecorderLogConsumer.hpp>
+#include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
 #include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
@@ -51,6 +52,8 @@ using DdsRecorderState = eprosima::ddsrecorder::recorder::DdsRecorderStateCode;
 using json = nlohmann::json;
 
 const std::string NEXT_STATE_TAG = "next_state";
+const std::string AVOID_OVERWRITING_OUTPUT_TAG = "avoid_overwriting_output";
+
 constexpr auto string_to_command = eprosima::ddsrecorder::recorder::receiver::string_to_enumeration;
 // constexpr auto string_to_state = eprosima::ddsrecorder::recorder::string_to_enumeration;  // TODO: fix compilation error
 
@@ -293,6 +296,9 @@ int main(
 
         logUser(DDSRECORDER_EXECUTION, "DDS Recorder running.");
 
+        // The MCAP writer must be stored outside of the loop since it is shared between instances
+        std::shared_ptr<eprosima::ddsrecorder::participants::McapWriter> mcap_writer;
+
         if (configuration.enable_remote_controller)
         {
             logUser(DDSRECORDER_EXECUTION, "Waiting for instructions...");
@@ -334,8 +340,16 @@ int main(
                         receiver.publish_status(CommandCode::stop, prev_command);
                     }
 
+                    if (args != nullptr && args[AVOID_OVERWRITING_OUTPUT_TAG])
+                    {
+                        // Save the set of output files from being overwritten.
+                        // WARNING: If set, the resource-limits won't be consistent after stopping the DDS Recorder.
+                        mcap_writer.reset();
+                    }
+
                     prev_command = CommandCode::stop;
                     parse_command(receiver.wait_for_command(), command, args);
+
                     switch (command)
                     {
                         case CommandCode::start:
@@ -391,7 +405,7 @@ int main(
                 configuration = eprosima::ddsrecorder::yaml::RecorderConfiguration(commandline_args.file_path);
 
                 // Create DDS Recorder
-                auto recorder = std::make_unique<DdsRecorder>(configuration, initial_state, close_handler);
+                auto recorder = std::make_unique<DdsRecorder>(configuration, initial_state, close_handler, mcap_writer);
 
                 // Create File Watcher Handler
                 std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;
@@ -524,7 +538,8 @@ int main(
         else
         {
             // Start recording right away
-            auto recorder = std::make_unique<DdsRecorder>(configuration, DdsRecorderState::RUNNING, close_handler);
+            auto recorder = std::make_unique<DdsRecorder>(
+                                    configuration, DdsRecorderState::RUNNING, close_handler, mcap_writer);
 
             // Create File Watcher Handler
             std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;
