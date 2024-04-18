@@ -21,12 +21,18 @@
 
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/time/time_utils.hpp>
+#include <cpp_utils/utils.hpp>
 
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
+
+std::string File::to_str() const
+{
+    return "File " + std::to_string(id) + " (" + utils::from_bytes(size) + ")";
+}
 
 FileTracker::FileTracker(
         const OutputSettings& configuration)
@@ -49,17 +55,19 @@ void FileTracker::new_file(
 
     if (min_file_size > configuration_.max_file_size)
     {
-        throw std::invalid_argument("Minimum file size is greater than the maximum file size.");
+        throw std::invalid_argument(
+                  "The minimum file size (" + utils::from_bytes(min_file_size) + ") is greater than the maximum file "
+                  "size (" + utils::from_bytes(configuration_.max_file_size) + ").");
     }
 
-    const auto free_space = configuration_.max_size - size_;
+    const std::uint64_t free_space = configuration_.max_size - size_;
     std::int64_t space_to_free = min_file_size - free_space;
 
     if (space_to_free > 0 && !configuration_.file_rotation)
     {
-        throw std::runtime_error("Not enough free space to create a new file. Free space: " + std::to_string(
-                          free_space) +
-                      ", minimum file size: " + std::to_string(min_file_size));
+        throw std::runtime_error(
+                  "Not enough free space (" + utils::from_bytes(free_space) + ") to create a new file with a minimum "
+                  "size of " + utils::from_bytes(min_file_size));
     }
 
     while (space_to_free > 0)
@@ -67,9 +75,9 @@ void FileTracker::new_file(
         // Free space for the new file
         if (closed_files_.empty())
         {
-            throw std::runtime_error("All the files have been deleted and there is still not enough free space. "
-                          "Free space: " + std::to_string(free_space) + ", space to free: " +
-                          std::to_string(space_to_free));
+            throw std::runtime_error(
+                      "After removing all files, there is not enough free space (" + utils::from_bytes(free_space) + ")"
+                      " to create a new file with a minimum file size of " + utils::from_bytes(min_file_size) + ".");
         }
 
         const auto oldest_file_size = remove_oldest_file_nts_();
@@ -78,7 +86,8 @@ void FileTracker::new_file(
         space_to_free -= oldest_file_size;
     }
 
-    logInfo(DDSRECORDER_FILE_TRACKER, "Creating a new file with a minimum size of " << min_file_size << " bytes.");
+    logInfo(DDSRECORDER_FILE_TRACKER,
+            "Creating a new file with a minimum size of " + utils::from_bytes(min_file_size) + ".");
 
     // Generate the new file's ID
     const auto id = closed_files_.empty() ? 0 : closed_files_.back().id + 1;
@@ -104,8 +113,7 @@ void FileTracker::close_file()
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    logInfo(DDSRECORDER_FILE_TRACKER,
-            "Closing file " << current_file_.name << " of size " << current_file_.size << " bytes.")
+    logInfo(DDSRECORDER_FILE_TRACKER, "Closing file " + current_file_.to_str() + ".");
 
     if (current_file_.name.empty())
     {
@@ -115,13 +123,15 @@ void FileTracker::close_file()
 
     if (current_file_.size == 0)
     {
-        logError(DDSRECORDER_FILE_TRACKER, "File " << current_file_.name << " is empty.");
+        logError(DDSRECORDER_FILE_TRACKER, "File " + current_file_.to_str() + " is empty.");
         return;
     }
 
     if (current_file_.size > configuration_.max_file_size)
     {
-        throw std::runtime_error("File size is greater than the maximum file size.");
+        throw std::runtime_error(
+                  "File " + current_file_.to_str() + ") has a size greater than the maximum file size ("
+                  + utils::from_bytes(configuration_.max_file_size) + ").");
     }
 
     // Save the current file as written
@@ -183,12 +193,11 @@ std::uint64_t FileTracker::remove_oldest_file_nts_()
     if (!ret)
     {
         logError(DDSRECORDER_FILE_TRACKER,
-                "File " << oldest_file.name << " doesn't exist and could not be deleted.");
+                "File " << oldest_file.to_str() << " doesn't exist and could not be deleted.");
         return 0;
     }
 
-    logInfo(DDSRECORDER_FILE_TRACKER,
-            "File " << oldest_file.name << " of size " << oldest_file.size << " removed.");
+    logInfo(DDSRECORDER_FILE_TRACKER, "File " << oldest_file.to_str() << " removed.");
     return oldest_file.size;
 }
 

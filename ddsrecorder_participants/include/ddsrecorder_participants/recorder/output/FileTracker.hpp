@@ -23,6 +23,8 @@
 #include <string>
 #include <vector>
 
+#include <cpp_utils/utils.hpp>
+
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/recorder/output/IFileTracker.hpp>
 #include <ddsrecorder_participants/recorder/output/OutputSettings.hpp>
@@ -37,6 +39,9 @@ namespace participants {
  */
 struct File
 {
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    std::string to_str() const;
+
     std::uint64_t id;
     std::string name;
     std::uint64_t size;

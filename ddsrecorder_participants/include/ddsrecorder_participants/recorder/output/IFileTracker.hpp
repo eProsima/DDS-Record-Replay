@@ -52,7 +52,8 @@ public:
      * @param min_file_size The minimum size of the new file.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    virtual void new_file(const std::uint64_t min_file_size) = 0;
+    virtual void new_file(
+            const std::uint64_t min_file_size) = 0;
 
     /**
      * @brief Closes the current file.
@@ -84,7 +85,8 @@ public:
      * @param size The new size of the current file.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    virtual void set_current_file_size(const std::uint64_t size) = 0;
+    virtual void set_current_file_size(
+            const std::uint64_t size) = 0;
 };
 
 } /* namespace participants */

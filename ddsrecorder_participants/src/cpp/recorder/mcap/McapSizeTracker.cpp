@@ -23,6 +23,7 @@
 
 #include <cpp_utils/Formatter.hpp>
 #include <cpp_utils/Log.hpp>
+#include <cpp_utils/utils.hpp>
 
 #include <ddsrecorder_participants/recorder/mcap/McapFullException.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapSizeTracker.hpp>
@@ -44,7 +45,7 @@ void McapSizeTracker::init(
         const std::uint64_t& safety_margin)
 {
     logInfo(DDSRECORDER_MCAP_SIZE_TRACKER,
-            "Initializing tracker with a size of " << space_available);
+            "Initializing tracker with a size of " << utils::from_bytes(space_available));
 
     if (enabled_)
     {
@@ -160,8 +161,8 @@ void McapSizeTracker::attachment_to_write(
                 get_attachment_size_(payload_size_to_remove)))
     {
         throw McapFullException(
-                  STR_ENTRY << "Attempted attachment write of size: " << payload_size_to_write <<
-                      ", but there is not enough space available on disk: " << space_available_,
+                  STR_ENTRY << "Attempted attachment write of size: " << utils::from_bytes(payload_size_to_write) <<
+                      ", but there is not enough space available on disk: " << utils::from_bytes(space_available_),
                       payload_size_to_write);
     }
 
@@ -251,9 +252,9 @@ void McapSizeTracker::check_and_increase_potential_mcap_size_(
     {
         disk_full_ = true;
         throw McapFullException(
-                  STR_ENTRY << "Attempted to write " << size << " bytes on an MCAP of size: " << potential_mcap_size_
-                            << " bytes but there is not enough space available on disk: " << space_available_
-                            << " bytes."
+                  STR_ENTRY << "Attempted to write " << utils::from_bytes(size) << " on an MCAP of size: "
+                            << utils::from_bytes(potential_mcap_size_) << " but there is not enough space available on "
+                            << "disk: " << utils::from_bytes(space_available_) << "."
                       , size);
     }
 

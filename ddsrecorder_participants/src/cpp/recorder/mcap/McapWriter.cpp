@@ -25,6 +25,7 @@
 #include <cpp_utils/Formatter.hpp>
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/time/time_utils.hpp>
+#include <cpp_utils/utils.hpp>
 
 #include <ddsrecorder_participants/recorder/mcap/McapFullException.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
@@ -170,7 +171,7 @@ void McapWriter::write_nts_(
         const mcap::Attachment& attachment)
 {
     logInfo(DDSRECORDER_MCAP_WRITER,
-            "Writing attachment: " << attachment.name << " (" << attachment.dataSize << " bytes).");
+            "Writing attachment: " << attachment.name << " (" << utils::from_bytes(attachment.dataSize) << ").");
 
     // NOTE: There is no need to check if the MCAP is full, since it is checked when adding a new dynamic_type.
     auto status = writer_.write(const_cast<mcap::Attachment&>(attachment));
@@ -190,7 +191,7 @@ template <>
 void McapWriter::write_nts_(
         const mcap::Channel& channel)
 {
-    logInfo(DDSRECORDER_MCAP_WRITER, "Writing channel: " << channel.topic << " (" << channel.id << ").");
+    logInfo(DDSRECORDER_MCAP_WRITER, "Writing channel " << channel.topic << ".");
 
     try
     {
@@ -214,7 +215,7 @@ template <>
 void McapWriter::write_nts_(
         const Message& msg)
 {
-    logInfo(DDSRECORDER_MCAP_WRITER, "Writing message: " << msg.dataSize << " bytes.");
+    logInfo(DDSRECORDER_MCAP_WRITER, "Writing message: " << utils::from_bytes(msg.dataSize) << ".");
 
     try
     {
@@ -273,7 +274,7 @@ template <>
 void McapWriter::write_nts_(
         const mcap::Schema& schema)
 {
-    logInfo(DDSRECORDER_MCAP_WRITER, "Writing schema: " << schema.name << " (" << schema.id << ").");
+    logInfo(DDSRECORDER_MCAP_WRITER, "Writing schema: " << schema.name << ".");
 
     try
     {
