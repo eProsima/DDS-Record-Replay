@@ -34,13 +34,14 @@ namespace ddsrecorder {
 namespace participants {
 
 McapWriter::McapWriter(
-        const McapOutputSettings& configuration,
+        const OutputSettings& configuration,
         const mcap::McapWriterOptions& mcap_configuration,
+        std::shared_ptr<FileTracker>& file_tracker,
         const bool record_types)
     : configuration_(configuration)
     , mcap_configuration_(mcap_configuration)
+    , file_tracker_(file_tracker)
     , record_types_(record_types)
-    , file_tracker_(configuration)
 {
     enable();
 }
@@ -104,7 +105,7 @@ void McapWriter::update_dynamic_types(
     }
 
     dynamic_types_payload_.reset(const_cast<fastrtps::rtps::SerializedPayload_t*>(&dynamic_types_payload));
-    file_tracker_.set_current_file_size(size_tracker_.get_potential_mcap_size());
+    file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
 }
 
 void McapWriter::open_new_file_nts_(
@@ -112,7 +113,7 @@ void McapWriter::open_new_file_nts_(
 {
     try
     {
-        file_tracker_.new_file(min_file_size);
+        file_tracker_->new_file(min_file_size);
     }
     catch (const std::exception& e)
     {
@@ -122,11 +123,11 @@ void McapWriter::open_new_file_nts_(
     // Calculate the maximum size of the file
     const auto max_file_size = std::min(
         configuration_.max_file_size,
-        configuration_.max_size - file_tracker_.get_total_size());
+        configuration_.max_size - file_tracker_->get_total_size());
 
     size_tracker_.init(max_file_size, configuration_.safety_margin);
 
-    const auto filename = file_tracker_.get_current_filename();
+    const auto filename = file_tracker_->get_current_filename();
     const auto status = writer_.open(filename, mcap_configuration_);
 
     if (!status.ok())
@@ -147,7 +148,7 @@ void McapWriter::open_new_file_nts_(
         size_tracker_.attachment_to_write(dynamic_types_payload_->length);
     }
 
-    file_tracker_.set_current_file_size(size_tracker_.get_potential_mcap_size());
+    file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
 }
 
 void McapWriter::close_current_file_nts_()
@@ -157,10 +158,10 @@ void McapWriter::close_current_file_nts_()
         write_attachment_nts_();
     }
 
-    file_tracker_.set_current_file_size(size_tracker_.get_written_mcap_size());
-    size_tracker_.reset(file_tracker_.get_current_filename());
+    file_tracker_->set_current_file_size(size_tracker_.get_written_mcap_size());
+    size_tracker_.reset(file_tracker_->get_current_filename());
 
-    file_tracker_.close_file();
+    file_tracker_->close_file();
     writer_.close();
 }
 
@@ -182,7 +183,7 @@ void McapWriter::write_nts_(
     }
 
     size_tracker_.attachment_written(attachment.dataSize);
-    file_tracker_.set_current_file_size(size_tracker_.get_potential_mcap_size());
+    file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
 }
 
 template <>
@@ -203,7 +204,7 @@ void McapWriter::write_nts_(
     writer_.addChannel(const_cast<mcap::Channel&>(channel));
 
     size_tracker_.channel_written(channel);
-    file_tracker_.set_current_file_size(size_tracker_.get_potential_mcap_size());
+    file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
 
     // Store the channel to write it down when the MCAP file is closed
     channels_[channel.id] = channel;
@@ -237,7 +238,7 @@ void McapWriter::write_nts_(
     }
 
     size_tracker_.message_written(msg.dataSize);
-    file_tracker_.set_current_file_size(size_tracker_.get_potential_mcap_size());
+    file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
 }
 
 template <>
@@ -265,7 +266,7 @@ void McapWriter::write_nts_(
     }
 
     size_tracker_.metadata_written(metadata);
-    file_tracker_.set_current_file_size(size_tracker_.get_potential_mcap_size());
+    file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
 }
 
 template <>
@@ -286,7 +287,7 @@ void McapWriter::write_nts_(
     writer_.addSchema(const_cast<mcap::Schema&>(schema));
 
     size_tracker_.schema_written(schema);
-    file_tracker_.set_current_file_size(size_tracker_.get_potential_mcap_size());
+    file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
 
     // Store the schema to write it down when the MCAP file is closed
     schemas_[schema.id] = schema;

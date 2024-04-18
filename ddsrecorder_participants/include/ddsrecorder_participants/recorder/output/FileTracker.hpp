@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * @file McapFileTracker.hpp
+ * @file FileTracker.hpp
  */
 
 #pragma once
@@ -24,8 +24,8 @@
 #include <vector>
 
 #include <ddsrecorder_participants/library/library_dll.h>
-#include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
-#include <ddsrecorder_participants/recorder/mcap/Message.hpp>
+#include <ddsrecorder_participants/recorder/output/IFileTracker.hpp>
+#include <ddsrecorder_participants/recorder/output/OutputSettings.hpp>
 
 
 namespace eprosima {
@@ -35,7 +35,7 @@ namespace participants {
 /**
  * Structure encapsulating a tracked MCAP file.
  */
-struct McapFile
+struct File
 {
     std::uint64_t id;
     std::string name;
@@ -44,18 +44,18 @@ struct McapFile
 
 
 /**
- * Class to keep track of MCAP files and their sizes.
+ * Class to keep track of files and their sizes.
  */
-class McapFileTracker
+class FileTracker : IFileTracker
 {
 public:
 
     DDSRECORDER_PARTICIPANTS_DllAPI
-    McapFileTracker(
-            const McapOutputSettings& configuration);
+    FileTracker(
+            const OutputSettings& configuration);
 
     DDSRECORDER_PARTICIPANTS_DllAPI
-    virtual ~McapFileTracker();
+    virtual ~FileTracker();
 
     /**
      * @brief Adds up the size of all the files in the tracker.
@@ -65,7 +65,7 @@ public:
      * @return The total size of the files in the tracker.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    std::uint64_t get_total_size() const;
+    std::uint64_t get_total_size() const override;
 
     /**
      * @brief Updates the size of the current file.
@@ -74,7 +74,7 @@ public:
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void set_current_file_size(
-            const std::uint64_t size);
+            const std::uint64_t size) override;
 
     /**
      * @brief Calculates the temporary filename of the current file.
@@ -82,7 +82,7 @@ public:
      * @return The temporary filename of the current file.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    std::string get_current_filename() const;
+    std::string get_current_filename() const override;
 
     /**
      * @brief Adds a new file to the tracker.
@@ -97,13 +97,13 @@ public:
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void new_file(
-            const std::uint64_t min_file_size);
+            const std::uint64_t min_file_size) override;
 
     /**
      * @brief Closes the current file.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    void close_file();
+    void close_file() override;
 
 protected:
 
@@ -132,16 +132,16 @@ protected:
             const std::string& filename) const;
 
     // Configuration options
-    McapOutputSettings configuration_;
+    const OutputSettings configuration_;
 
     // Mutex to protect the list of files
     std::mutex mutex_;
 
     // The list of files that have been closed
-    std::vector<McapFile> closed_files_;
+    std::vector<File> closed_files_;
 
     // The file that is currently being written
-    McapFile current_file_;
+    File current_file_;
 
     // The total size of all files in the tracker
     std::uint64_t size_{0};

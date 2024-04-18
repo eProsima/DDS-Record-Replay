@@ -30,7 +30,7 @@
 #include <ddspipe_yaml/Yaml.hpp>
 #include <ddspipe_yaml/YamlReader.hpp>
 
-#include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
+#include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
 #include <tool/DdsRecorder.hpp>
@@ -192,7 +192,7 @@ protected:
     std::unique_ptr<ddsrecorder::yaml::RecorderConfiguration> configuration_;
     std::vector<std::filesystem::path> paths_;
 
-    std::shared_ptr<ddsrecorder::participants::McapWriter> mcap_writer_;
+    std::shared_ptr<ddsrecorder::participants::FileTracker> file_tracker_;
 };
 
 /**
@@ -212,7 +212,7 @@ TEST_F(ResourceLimitsTest, max_file_size)
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
     ddsrecorder::recorder::DdsRecorder recorder(*configuration_, ddsrecorder::recorder::DdsRecorderStateCode::RUNNING,
-            mcap_writer_, OUTPUT_FILE_NAME);
+            file_tracker_, OUTPUT_FILE_NAME);
 
     // Send many more messages than can be stored in a file with a size of max-file-size
     const auto WAY_TOO_MANY_MSGS = test::limits::FILE_OVERFLOW_THRESHOLD * 2;
@@ -258,7 +258,7 @@ TEST_F(ResourceLimitsTest, max_size)
     }
 
     ddsrecorder::recorder::DdsRecorder recorder(*configuration_, ddsrecorder::recorder::DdsRecorderStateCode::RUNNING,
-            mcap_writer_, OUTPUT_FILE_NAME);
+            file_tracker_, OUTPUT_FILE_NAME);
 
     for (std::uint32_t i = 0; i < test::limits::MAX_FILES; i++)
     {
@@ -338,7 +338,7 @@ TEST_F(ResourceLimitsTest, file_rotation)
     }
 
     ddsrecorder::recorder::DdsRecorder recorder(*configuration_, ddsrecorder::recorder::DdsRecorderStateCode::RUNNING,
-            mcap_writer_, OUTPUT_FILE_NAME);
+            file_tracker_, OUTPUT_FILE_NAME);
 
     // Verify that the DDS Recorder creates a new file after each batch of messages, before reaching the max-size
     for (std::uint32_t i = 0; i < test::limits::MAX_FILES - 1; i++)

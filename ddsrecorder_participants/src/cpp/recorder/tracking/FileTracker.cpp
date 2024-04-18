@@ -13,31 +13,28 @@
 // limitations under the License.
 
 /**
- * @file McapFileTracker.cpp
+ * @file FileTracker.cpp
  */
 
 #include <filesystem>
 #include <stdexcept>
 
-#include <mcap/internal.hpp>
-
-#include <cpp_utils/Formatter.hpp>
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 
-#include <ddsrecorder_participants/recorder/mcap/McapFileTracker.hpp>
+#include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
 
-McapFileTracker::McapFileTracker(
-        const McapOutputSettings& configuration)
+FileTracker::FileTracker(
+        const OutputSettings& configuration)
     : configuration_(configuration)
 {
 }
 
-McapFileTracker::~McapFileTracker()
+FileTracker::~FileTracker()
 {
     if (!current_file_.name.empty() && current_file_.size > 0)
     {
@@ -45,35 +42,7 @@ McapFileTracker::~McapFileTracker()
     }
 }
 
-std::uint64_t McapFileTracker::get_total_size() const
-{
-    return size_;
-}
-
-std::string McapFileTracker::get_current_filename() const
-{
-    return make_filename_tmp_(current_file_.name);
-}
-
-void McapFileTracker::set_current_file_size(
-        const std::uint64_t file_size)
-{
-    if (file_size > configuration_.max_file_size)
-    {
-        throw std::invalid_argument("Size is greater than the maximum file size.");
-    }
-
-    const auto size_diff = file_size - current_file_.size;
-
-    if (size_ + size_diff > configuration_.max_size)
-    {
-        throw std::runtime_error("Size is greater than the maximum size.");
-    }
-
-    current_file_.size = file_size;
-}
-
-void McapFileTracker::new_file(
+void FileTracker::new_file(
         const std::uint64_t min_file_size)
 {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -109,7 +78,7 @@ void McapFileTracker::new_file(
         space_to_free -= oldest_file_size;
     }
 
-    logInfo(DDSRECORDER_MCAP_FILE_TRACKER, "Creating a new file with a minimum size of " << min_file_size << " bytes.");
+    logInfo(DDSRECORDER_FILE_TRACKER, "Creating a new file with a minimum size of " << min_file_size << " bytes.");
 
     // Generate the new file's ID
     const auto id = closed_files_.empty() ? 0 : closed_files_.back().id + 1;
@@ -131,22 +100,22 @@ void McapFileTracker::new_file(
     current_file_ = {id, name, 0};
 }
 
-void McapFileTracker::close_file()
+void FileTracker::close_file()
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    logInfo(DDSRECORDER_MCAP_FILE_TRACKER,
+    logInfo(DDSRECORDER_FILE_TRACKER,
             "Closing file " << current_file_.name << " of size " << current_file_.size << " bytes.")
 
     if (current_file_.name.empty())
     {
-        logError(DDSRECORDER_MCAP_FILE_TRACKER, "No file to close.");
+        logError(DDSRECORDER_FILE_TRACKER, "No file to close.");
         return;
     }
 
     if (current_file_.size == 0)
     {
-        logError(DDSRECORDER_MCAP_FILE_TRACKER, "File " << current_file_.name << " is empty.");
+        logError(DDSRECORDER_FILE_TRACKER, "File " << current_file_.name << " is empty.");
         return;
     }
 
@@ -161,16 +130,44 @@ void McapFileTracker::close_file()
 
     std::filesystem::rename(get_current_filename(), current_file_.name);
 
-    current_file_ = McapFile();
+    current_file_ = File();
 }
 
-std::uint64_t McapFileTracker::remove_oldest_file_nts_()
+std::uint64_t FileTracker::get_total_size() const
 {
-    logInfo(DDSRECORDER_MCAP_FILE_TRACKER, "Removing the oldest file.")
+    return size_;
+}
+
+std::string FileTracker::get_current_filename() const
+{
+    return make_filename_tmp_(current_file_.name);
+}
+
+void FileTracker::set_current_file_size(
+        const std::uint64_t file_size)
+{
+    if (file_size > configuration_.max_file_size)
+    {
+        throw std::invalid_argument("Size is greater than the maximum file size.");
+    }
+
+    const auto size_diff = file_size - current_file_.size;
+
+    if (size_ + size_diff > configuration_.max_size)
+    {
+        throw std::runtime_error("Size is greater than the maximum size.");
+    }
+
+    current_file_.size = file_size;
+}
+
+std::uint64_t FileTracker::remove_oldest_file_nts_()
+{
+    logInfo(DDSRECORDER_FILE_TRACKER, "Removing the oldest file.")
 
     if (closed_files_.empty())
     {
-        logError(DDSRECORDER_MCAP_FILE_TRACKER, "No files to remove.");
+        logError(DDSRECORDER_FILE_TRACKER, "No files to remove.");
         return 0;
     }
 
@@ -185,34 +182,33 @@ std::uint64_t McapFileTracker::remove_oldest_file_nts_()
 
     if (!ret)
     {
-        logError(DDSRECORDER_MCAP_FILE_TRACKER,
+        logError(DDSRECORDER_FILE_TRACKER,
                 "File " << oldest_file.name << " doesn't exist and could not be deleted.");
         return 0;
     }
 
-    logInfo(DDSRECORDER_MCAP_FILE_TRACKER,
+    logInfo(DDSRECORDER_FILE_TRACKER,
             "File " << oldest_file.name << " of size " << oldest_file.size << " removed.");
     return oldest_file.size;
 }
 
-std::string McapFileTracker::generate_filename_(
+std::string FileTracker::generate_filename_(
         const std::uint64_t id) const
 {
-    static const std::string MCAP_EXTENSION = ".mcap";
     static const std::string SEPARATOR = "_";
 
-    auto filename = configuration_.output_filepath + "/";
+    auto filename = configuration_.filepath + "/";
 
     if (configuration_.prepend_timestamp)
     {
         const auto timestamp = utils::timestamp_to_string(
-            utils::now(), configuration_.output_timestamp_format,
-            configuration_.output_local_timestamp);
+            utils::now(), configuration_.timestamp_format,
+            configuration_.local_timestamp);
 
         filename += timestamp + SEPARATOR;
     }
 
-    filename += configuration_.output_filename;
+    filename += configuration_.filename;
 
     if (configuration_.max_size > configuration_.max_file_size)
     {
@@ -221,12 +217,12 @@ std::string McapFileTracker::generate_filename_(
         filename += SEPARATOR + std::to_string(id);
     }
 
-    filename += MCAP_EXTENSION;
+    filename += configuration_.extension;
 
     return filename;
 }
 
-std::string McapFileTracker::make_filename_tmp_(
+std::string FileTracker::make_filename_tmp_(
         const std::string& filename) const
 {
     static const std::string TMP_SUFFIX = ".tmp~";

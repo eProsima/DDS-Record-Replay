@@ -9,6 +9,7 @@
 #include <cpp_utils/testing/LogChecker.hpp>
 
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
+#include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 
 #include <mcap/errors.hpp>
 #include <mcap/mcap.hpp>
@@ -42,17 +43,17 @@ TEST(McapLogErrorTests, fail_to_open_file) {
     // Check no logs have been captured yet
     ASSERT_FALSE(log_checker.check_valid());
 
-    eprosima::ddsrecorder::participants::McapOutputSettings mcap_output_settings;
-    mcap_output_settings.output_filepath = "./fake_folder"; // This folder does not exist -> error opening file
-    mcap_output_settings.output_filename = "output_dummy.mcap";
-    mcap_output_settings.prepend_timestamp = false;
-    mcap_output_settings.output_timestamp_format = "%Y-%m-%d_%H-%M-%S";
-    mcap_output_settings.output_local_timestamp = true;
+    eprosima::ddsrecorder::participants::OutputSettings output_settings;
+    output_settings.filepath = "./fake_folder"; // This folder does not exist -> error opening file
+    output_settings.filename = "output_dummy.mcap";
+    output_settings.prepend_timestamp = false;
+    output_settings.timestamp_format = "%Y-%m-%d_%H-%M-%S";
+    output_settings.local_timestamp = true;
 
     mcap::McapWriterOptions mcap_writer_options{"ros2"};
 
     eprosima::ddsrecorder::participants::McapHandlerConfiguration config(
-        mcap_output_settings,
+        output_settings,
         BUFFER_SIZE,
         MAX_FILE_SIZE,
         MAX_FILE_AGE,
@@ -69,15 +70,11 @@ TEST(McapLogErrorTests, fail_to_open_file) {
             eprosima::ddsrecorder::participants::McapHandlerStateCode::RUNNING;
 
     // Create the McapWriter
-    std::shared_ptr<eprosima::ddsrecorder::participants::McapWriter> mcap_writer =
-            std::make_shared<eprosima::ddsrecorder::participants::McapWriter>(
-        config.mcap_output_settings,
-        config.mcap_writer_options,
-        config.record_types);
+    auto file_tracker = std::make_shared<eprosima::ddsrecorder::participants::FileTracker>(config.output_settings);
 
     // Check if an InitializationException is thrown
     ASSERT_THROW(
-        eprosima::ddsrecorder::participants::McapHandler mcap_handler(config, payload_pool, mcap_writer, init_state),
+        eprosima::ddsrecorder::participants::McapHandler mcap_handler(config, payload_pool, file_tracker, init_state),
         eprosima::utils::InitializationException);
 
     // Assert that logErrors were captured

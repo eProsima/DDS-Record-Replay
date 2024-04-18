@@ -27,10 +27,11 @@
 
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/library/library_dll.h>
-#include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
-#include <ddsrecorder_participants/recorder/mcap/McapFileTracker.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapFullException.hpp>
+#include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapSizeTracker.hpp>
+#include <ddsrecorder_participants/recorder/mcap/Message.hpp>
+#include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -42,8 +43,9 @@ public:
 
     DDSRECORDER_PARTICIPANTS_DllAPI
     McapWriter(
-            const McapOutputSettings& configuration,
+            const OutputSettings& configuration,
             const mcap::McapWriterOptions& mcap_configuration,
+            std::shared_ptr<FileTracker>& file_tracker,
             const bool record_types = true);
 
     DDSRECORDER_PARTICIPANTS_DllAPI
@@ -117,22 +119,22 @@ protected:
             std::function<void()> retry);
 
     // The configuration for the class
-    McapOutputSettings configuration_;
+    const OutputSettings configuration_;
 
     // The configuration for the MCAP library
-    mcap::McapWriterOptions mcap_configuration_;
+    const mcap::McapWriterOptions mcap_configuration_;
+
+    // Track the files written by the MCAP library
+    std::shared_ptr<FileTracker> file_tracker_;
 
     // Whether to record the types
-    bool record_types_{false};
+    const bool record_types_{false};
 
     // The mutex to protect the calls to write
     std::mutex mutex_;
 
     // Whether the writer can write to the MCAP library
     bool enabled_{false};
-
-    // Track the files written by the MCAP library
-    McapFileTracker file_tracker_;
 
     // Track the size of the current MCAP file
     McapSizeTracker size_tracker_;

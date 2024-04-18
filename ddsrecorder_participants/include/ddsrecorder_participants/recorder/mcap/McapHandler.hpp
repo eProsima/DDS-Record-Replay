@@ -43,6 +43,7 @@
 #include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
 #include <ddsrecorder_participants/recorder/mcap/Message.hpp>
+#include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 
 #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
     #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
@@ -93,7 +94,7 @@ public:
     McapHandler(
             const McapHandlerConfiguration& config,
             const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
-            std::shared_ptr<ddsrecorder::participants::McapWriter> mcap_writer,
+            std::shared_ptr<ddsrecorder::participants::FileTracker> file_tracker,
             const McapHandlerStateCode& init_state = McapHandlerStateCode::RUNNING);
 
     /**
@@ -469,7 +470,7 @@ protected:
     McapHandlerStateCode state_;
 
     //! MCAP writer
-    std::shared_ptr<McapWriter> mcap_writer_;
+    McapWriter mcap_writer_;
 
     //! Schemas map
     std::map<std::string, mcap::Schema> schemas_;

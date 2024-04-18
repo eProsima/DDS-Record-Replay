@@ -33,8 +33,8 @@
 
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
-#include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
 #include <ddsrecorder_participants/recorder/monitoring/DdsRecorderMonitor.hpp>
+#include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
@@ -70,7 +70,7 @@ public:
     DdsRecorder(
             const yaml::RecorderConfiguration& configuration,
             const DdsRecorderStateCode& init_state,
-            std::shared_ptr<ddsrecorder::participants::McapWriter>& mcap_writer,
+            std::shared_ptr<participants::FileTracker>& file_tracker,
             const std::string& file_name = "");
 
     /**
@@ -87,7 +87,7 @@ public:
             const yaml::RecorderConfiguration& configuration,
             const DdsRecorderStateCode& init_state,
             std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler,
-            std::shared_ptr<ddsrecorder::participants::McapWriter>& mcap_writer,
+            std::shared_ptr<participants::FileTracker>& file_tracker,
             const std::string& file_name = "");
 
     /**
