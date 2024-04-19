@@ -54,9 +54,9 @@
 #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
 
 #include <ddsrecorder_participants/constants.hpp>
-#include <ddsrecorder_participants/recorder/mcap/McapFullException.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
 #include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
+#include <ddsrecorder_participants/recorder/output/FullFileException.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -68,7 +68,8 @@ McapHandler::McapHandler(
         const McapHandlerConfiguration& config,
         const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
         std::shared_ptr<ddsrecorder::participants::FileTracker> file_tracker,
-        const McapHandlerStateCode& init_state /* = McapHandlerStateCode::RUNNING */)
+        const McapHandlerStateCode& init_state /* = McapHandlerStateCode::RUNNING */,
+        const std::function<void()>& on_disk_full_lambda /* = nullptr */)
     : configuration_(config)
     , payload_pool_(payload_pool)
     , state_(McapHandlerStateCode::STOPPED)
@@ -77,6 +78,11 @@ McapHandler::McapHandler(
 {
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "Creating MCAP handler instance.");
+
+    if (on_disk_full_lambda != nullptr)
+    {
+        set_on_disk_full_callback(on_disk_full_lambda);
+    }
 
     switch (init_state)
     {
@@ -161,7 +167,7 @@ void McapHandler::add_schema(
             add_pending_samples_nts_(type_name);
         }
     }
-    catch (const McapFullException& e)
+    catch (const FullFileException& e)
     {
         logError(DDSRECORDER_MCAP_HANDLER,
                 "FAIL_MCAP_WRITE | Failed to write on MCAP file while adding schema. " <<
@@ -279,7 +285,7 @@ void McapHandler::add_data(
             }
         }
     }
-    catch (const McapFullException& e)
+    catch (const FullFileException& e)
     {
         logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Failed to write on MCAP file while adding data. " << "Error message:\n " <<
                 e.what());
@@ -330,8 +336,12 @@ void McapHandler::start()
                 stop_event_thread_nts_(event_lock);
             }
         }
-        catch (const McapFullException&)
+        catch (const FullFileException& e)
         {
+            logError(DDSRECORDER_MCAP_HANDLER,
+                "FAIL_MCAP_WRITE | Failed to write on MCAP file on start-up. " <<
+                "Error message:\n " << e.what());
+
             on_disk_full_();
         }
     }
@@ -391,7 +401,7 @@ void McapHandler::stop(
             dump_data_nts_();  // if prev_state == RUNNING -> writes buffer + added pending samples (if !only_with_schema)
                                // if prev_state == PAUSED  -> writes added pending samples (if !only_with_schema)
         }
-        catch (const McapFullException&)
+        catch (const FullFileException&)
         {
             on_disk_full_(); // TODO: check if this is the right approach (could be here from a
                              // previous callback execution, or normally on command reception)
@@ -442,7 +452,7 @@ void McapHandler::pause()
                 samples_buffer_.clear();
             }
         }
-        catch (const McapFullException&)
+        catch (const FullFileException&)
         {
             on_disk_full_();
         }
@@ -735,7 +745,7 @@ void McapHandler::event_thread_routine_()
                     }
                     dump_data_nts_();
                 }
-                catch (const McapFullException&)
+                catch (const FullFileException&)
                 {
                     on_disk_full_();
                 }

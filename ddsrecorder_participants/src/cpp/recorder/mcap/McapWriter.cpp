@@ -27,8 +27,8 @@
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/utils.hpp>
 
-#include <ddsrecorder_participants/recorder/mcap/McapFullException.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
+#include <ddsrecorder_participants/recorder/output/FullFileException.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -44,7 +44,6 @@ McapWriter::McapWriter(
     , file_tracker_(file_tracker)
     , record_types_(record_types)
 {
-    enable();
 }
 
 McapWriter::~McapWriter()
@@ -63,7 +62,7 @@ void McapWriter::enable()
 
     logInfo(DDSRECORDER_MCAP_WRITER, "Enabling MCAP writer.")
 
-    open_new_file_nts_(size_tracker_.get_min_mcap_size());
+    open_new_file_nts_(MIN_MCAP_SIZE);
 
     enabled_ = true;
 }
@@ -108,7 +107,7 @@ void McapWriter::update_dynamic_types(
             size_tracker_.attachment_to_write(dynamic_types_payload.length, dynamic_types_payload_->length);
         }
     }
-    catch (const McapFullException& e)
+    catch (const FullFileException& e)
     {
         on_mcap_full_nts_(e);
     }
@@ -120,14 +119,7 @@ void McapWriter::update_dynamic_types(
 void McapWriter::open_new_file_nts_(
         const std::uint64_t min_file_size)
 {
-    try
-    {
-        file_tracker_->new_file(min_file_size);
-    }
-    catch (const std::exception& e)
-    {
-        throw std::runtime_error("Error creating new MCAP file: " + std::string(e.what()));
-    }
+    file_tracker_->new_file(min_file_size);
 
     // Calculate the maximum size of the file
     const auto max_file_size = std::min(
@@ -205,7 +197,7 @@ void McapWriter::write_nts_(
     {
         size_tracker_.channel_to_write(channel);
     }
-    catch (const McapFullException& e)
+    catch (const FullFileException& e)
     {
         on_mcap_full_nts_(e);
     }
@@ -229,7 +221,7 @@ void McapWriter::write_nts_(
     {
         size_tracker_.message_to_write(msg.dataSize);
     }
-    catch (const McapFullException& e)
+    catch (const FullFileException& e)
     {
         on_mcap_full_nts_(e, [&]()
                 {
@@ -260,7 +252,7 @@ void McapWriter::write_nts_(
     {
         size_tracker_.metadata_to_write(metadata);
     }
-    catch (const McapFullException& e)
+    catch (const FullFileException& e)
     {
         on_mcap_full_nts_(e);
     }
@@ -288,7 +280,7 @@ void McapWriter::write_nts_(
     {
         size_tracker_.schema_to_write(schema);
     }
-    catch (const McapFullException& e)
+    catch (const FullFileException& e)
     {
         on_mcap_full_nts_(e);
     }
@@ -362,7 +354,7 @@ void McapWriter::write_schemas_nts_()
 }
 
 void McapWriter::on_mcap_full_nts_(
-        const McapFullException& e)
+        const FullFileException& e)
 {
     close_current_file_nts_();
 
@@ -388,7 +380,7 @@ void McapWriter::on_mcap_full_nts_(
 }
 
 void McapWriter::on_mcap_full_nts_(
-        const McapFullException& e,
+        const FullFileException& e,
         std::function<void()> func)
 {
     on_mcap_full_nts_(e);

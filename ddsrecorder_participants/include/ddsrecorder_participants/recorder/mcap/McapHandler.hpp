@@ -95,7 +95,8 @@ public:
             const McapHandlerConfiguration& config,
             const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
             std::shared_ptr<ddsrecorder::participants::FileTracker> file_tracker,
-            const McapHandlerStateCode& init_state = McapHandlerStateCode::RUNNING);
+            const McapHandlerStateCode& init_state = McapHandlerStateCode::RUNNING,
+            const std::function<void()>& on_disk_full_lambda = nullptr);
 
     /**
      * @brief Destructor

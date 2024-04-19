@@ -13,16 +13,16 @@
 // limitations under the License.
 
 /**
- * @file McapFullException.cpp
+ * @file FullFileException.cpp
  */
 
-#include <ddsrecorder_participants/recorder/mcap/McapFullException.hpp>
+#include <ddsrecorder_participants/recorder/output/FullFileException.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
 
-McapFullException::McapFullException(
+FullFileException::FullFileException(
         const std::string& message,
         const std::uint64_t data_size_to_write)
     : Exception(message)
@@ -30,7 +30,7 @@ McapFullException::McapFullException(
 {
 }
 
-std::uint64_t McapFullException::data_size_to_write() const
+std::uint64_t FullFileException::data_size_to_write() const
 {
     return data_size_to_write_;
 }

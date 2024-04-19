@@ -23,6 +23,7 @@
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/utils.hpp>
 
+#include <ddsrecorder_participants/recorder/output/FullFileException.hpp>
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 
 namespace eprosima {
@@ -55,9 +56,9 @@ void FileTracker::new_file(
 
     if (min_file_size > configuration_.max_file_size)
     {
-        throw std::invalid_argument(
+        throw FullFileException(
                   "The minimum file size (" + utils::from_bytes(min_file_size) + ") is greater than the maximum file "
-                  "size (" + utils::from_bytes(configuration_.max_file_size) + ").");
+                  "size (" + utils::from_bytes(configuration_.max_file_size) + ").", 0);
     }
 
     const std::uint64_t free_space = configuration_.max_size - size_;

@@ -28,11 +28,11 @@
 
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/library/library_dll.h>
-#include <ddsrecorder_participants/recorder/mcap/McapFullException.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapSizeTracker.hpp>
 #include <ddsrecorder_participants/recorder/mcap/Message.hpp>
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
+#include <ddsrecorder_participants/recorder/output/FullFileException.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -112,11 +112,11 @@ protected:
 
     // Callback when the MCAP library is full
     void on_mcap_full_nts_(
-            const McapFullException& e);
+            const FullFileException& e);
 
     // Callback when the MCAP library is full and a retry is required
     void on_mcap_full_nts_(
-            const McapFullException& e,
+            const FullFileException& e,
             std::function<void()> retry);
 
     // The configuration for the class
@@ -151,6 +151,9 @@ protected:
 
     // The schemas that have been written
     std::map<mcap::SchemaId, mcap::Schema> schemas_;
+
+    // The size of an MCAP file only with metadata and an empty attachment
+    static constexpr std::uint64_t MIN_MCAP_SIZE = 2056;
 };
 
 } /* namespace participants */

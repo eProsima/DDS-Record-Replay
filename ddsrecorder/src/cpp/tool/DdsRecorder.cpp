@@ -123,9 +123,8 @@ DdsRecorder::DdsRecorder(
         handler_config,
         payload_pool_,
         file_tracker,
-        recorder_to_handler_state_(init_state));
-
-    mcap_handler_->set_on_disk_full_callback(std::bind(&DdsRecorder::on_disk_full, this));
+        recorder_to_handler_state_(init_state),
+        std::bind(&DdsRecorder::on_disk_full, this));
 
     // Create DynTypes Participant
     dyn_participant_ = std::make_shared<DynTypesParticipant>(

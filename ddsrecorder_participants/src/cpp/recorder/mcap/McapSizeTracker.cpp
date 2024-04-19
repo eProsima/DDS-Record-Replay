@@ -25,8 +25,8 @@
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/utils.hpp>
 
-#include <ddsrecorder_participants/recorder/mcap/McapFullException.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapSizeTracker.hpp>
+#include <ddsrecorder_participants/recorder/output/FullFileException.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -160,7 +160,7 @@ void McapSizeTracker::attachment_to_write(
                 get_attachment_size_(payload_size_to_write),
                 get_attachment_size_(payload_size_to_remove)))
     {
-        throw McapFullException(
+        throw FullFileException(
                   STR_ENTRY << "Attempted attachment write of size: " << utils::from_bytes(payload_size_to_write) <<
                       ", but there is not enough space available on disk: " << utils::from_bytes(space_available_),
                       payload_size_to_write);
@@ -251,7 +251,7 @@ void McapSizeTracker::check_and_increase_potential_mcap_size_(
     if (disk_full_ || !can_increase_potential_mcap_size_(size))
     {
         disk_full_ = true;
-        throw McapFullException(
+        throw FullFileException(
                   STR_ENTRY << "Attempted to write " << utils::from_bytes(size) << " on an MCAP of "
                             << utils::from_bytes(potential_mcap_size_) << " but there is not enough space available: "
                             << utils::from_bytes(space_available_) << "."

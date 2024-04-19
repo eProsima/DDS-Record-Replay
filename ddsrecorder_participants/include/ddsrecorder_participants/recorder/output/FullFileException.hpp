@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * @file McapFullException.hpp
+ * @file FullFileException.hpp
  */
 
 #pragma once
@@ -28,17 +28,17 @@ namespace ddsrecorder {
 namespace participants {
 
 /**
- * @brief Exception thrown when trying to write to a MCAP file that is full.
+ * @brief Exception thrown when trying to write to a file that is full.
  */
-class McapFullException : public utils::Exception
+class FullFileException : public utils::Exception
 {
 public:
 
-    McapFullException(
+    FullFileException(
             const std::string& message,
             const std::uint64_t data_size_to_write);
 
-    virtual ~McapFullException() noexcept override = default;
+    virtual ~FullFileException() noexcept override = default;
 
     /**
      * @brief Get the size of the data that was attempted to be written.
