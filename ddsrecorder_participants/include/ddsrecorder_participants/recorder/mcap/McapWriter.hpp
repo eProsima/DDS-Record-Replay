@@ -19,11 +19,12 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <mutex>
-#include <string>
-#include <vector>
 
 #include <mcap/mcap.hpp>
+
+#include <fastdds/rtps/common/SerializedPayload.h>
 
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/library/library_dll.h>

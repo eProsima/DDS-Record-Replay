@@ -115,7 +115,7 @@ DdsRecorder::DdsRecorder(
     if (file_tracker == nullptr)
     {
         // Create the File Tracker
-        file_tracker.reset(new participants::FileTracker(handler_config.output_settings));
+        file_tracker.reset(new participants::FileTracker(output_settings));
     }
 
     // Create MCAP Handler

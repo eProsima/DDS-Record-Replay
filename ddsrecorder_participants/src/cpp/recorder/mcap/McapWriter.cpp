@@ -89,14 +89,22 @@ void McapWriter::update_dynamic_types(
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
+
     try
     {
         if (dynamic_types_payload_ == nullptr)
         {
+            logInfo(DDSRECORDER_MCAP_WRITER,
+                    "Setting the dynamic types payload to " << utils::from_bytes(dynamic_types_payload.length) << ".");
+
             size_tracker_.attachment_to_write(dynamic_types_payload.length);
         }
         else
         {
+            logInfo(DDSRECORDER_MCAP_WRITER,
+                    "Updating the dynamic types payload from " << utils::from_bytes(dynamic_types_payload_->length) <<
+                    " to " << utils::from_bytes(dynamic_types_payload.length) << ".");
+
             size_tracker_.attachment_to_write(dynamic_types_payload.length, dynamic_types_payload_->length);
         }
     }
@@ -215,7 +223,7 @@ template <>
 void McapWriter::write_nts_(
         const Message& msg)
 {
-    logInfo(DDSRECORDER_MCAP_WRITER, "Writing message: " << utils::from_bytes(msg.dataSize) << ".");
+    // logInfo(DDSRECORDER_MCAP_WRITER, "Writing message: " << utils::from_bytes(msg.dataSize) << ".");
 
     try
     {

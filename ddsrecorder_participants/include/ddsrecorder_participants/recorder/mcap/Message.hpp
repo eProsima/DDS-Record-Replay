@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <mcap/types.hpp>
+
 #include <ddspipe_core/types/dds/Payload.hpp>
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
 

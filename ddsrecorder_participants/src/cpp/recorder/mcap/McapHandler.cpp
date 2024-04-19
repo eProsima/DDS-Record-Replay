@@ -64,29 +64,6 @@ namespace participants {
 
 using namespace eprosima::ddspipe::core::types;
 
-Message::Message(
-        const Message& msg)
-    : mcap::Message(msg)
-{
-    this->payload_owner = msg.payload_owner;
-    auto payload_owner_ =
-            const_cast<eprosima::fastrtps::rtps::IPayloadPool*>((eprosima::fastrtps::rtps::IPayloadPool*)msg.
-                    payload_owner);
-    this->payload_owner->get_payload(
-        msg.payload,
-        payload_owner_,
-        this->payload);
-}
-
-Message::~Message()
-{
-    // If payload owner exists and payload has size, release it correctly in pool
-    if (payload_owner && payload.length > 0)
-    {
-        payload_owner->release_payload(payload);
-    }
-}
-
 McapHandler::McapHandler(
         const McapHandlerConfiguration& config,
         const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
@@ -101,13 +78,18 @@ McapHandler::McapHandler(
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "Creating MCAP handler instance.");
 
-    if (init_state == McapHandlerStateCode::RUNNING)
+    switch (init_state)
     {
-        start();
-    }
-    else if (init_state == McapHandlerStateCode::PAUSED)
-    {
-        pause();
+        case McapHandlerStateCode::RUNNING:
+            start();
+            break;
+
+        case McapHandlerStateCode::PAUSED:
+            pause();
+            break;
+
+        default:
+            break;
     }
 }
 

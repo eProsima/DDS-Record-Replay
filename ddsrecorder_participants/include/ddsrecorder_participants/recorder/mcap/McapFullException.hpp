@@ -28,7 +28,7 @@ namespace ddsrecorder {
 namespace participants {
 
 /**
- * @brief Exception thrown when there has been an error initializing any Entity or subentity.
+ * @brief Exception thrown when trying to write to a MCAP file that is full.
  */
 class McapFullException : public utils::Exception
 {
@@ -40,10 +40,14 @@ public:
 
     virtual ~McapFullException() noexcept override = default;
 
+    /**
+     * @brief Get the size of the data that was attempted to be written.
+     */
     std::uint64_t data_size_to_write() const;
 
 protected:
 
+    // Size of the data that was attempted to be written.
     std::uint64_t data_size_to_write_;
 };
 

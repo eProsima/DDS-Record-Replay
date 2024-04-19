@@ -13,38 +13,39 @@
 // limitations under the License.
 
 /**
- * @file McapWriter.cpp
+ * @file Message.cpp
  */
 
-#include <cpp_utils/Log.hpp>
+#include <fastdds/rtps/history/IPayloadPool.h>
 
-#include <ddsrecorder_participants/recorder/output/FullDiskException.hpp>
-#include <ddsrecorder_participants/recorder/output/FullFileException.hpp>
+#include <ddsrecorder_participants/recorder/mcap/Message.hpp>
+
 
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
 
-template <typename T>
-void McapWriter::write(
-        const T& data)
+Message::Message(
+        const Message& msg)
+    : mcap::Message(msg)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    auto ipayload_owner = const_cast<fastrtps::rtps::IPayloadPool*>(
+        static_cast<fastrtps::rtps::IPayloadPool*>(msg.payload_owner));
 
-    if (!enabled_)
-    {
-        logWarning(DDSRECORDER_MCAP_WRITER, "Attempting to write in a disabled writer.");
-        return;
-    }
-
-    write_nts_(data);
+    payload_owner = msg.payload_owner;
+    payload_owner->get_payload(
+        msg.payload,
+        ipayload_owner,
+        this->payload);
 }
 
-template <typename T>
-void McapWriter::write_nts_(
-        const T& /* data */)
+Message::~Message()
 {
-    logWarning(DDSRECORDER_MCAP_WRITER, "Attempting to write data of a not-supported type.");
+    // If payload owner exists and payload has size, release it correctly in pool
+    if (payload_owner && payload.length > 0)
+    {
+        payload_owner->release_payload(payload);
+    }
 }
 
 } /* namespace participants */
