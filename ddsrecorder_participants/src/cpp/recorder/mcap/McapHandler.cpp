@@ -481,7 +481,7 @@ void McapHandler::add_data_nts_(
 
         if (state_ == McapHandlerStateCode::RUNNING && samples_buffer_.size() == configuration_.buffer_size)
         {
-            logInfo(DDSRECORDER_MCAP_HANDLER, "Full buffer, writting to disk...");
+            logInfo(DDSRECORDER_MCAP_HANDLER, "Full buffer, writing to disk...");
             dump_data_nts_();
         }
     }

@@ -65,7 +65,7 @@ struct McapHandlerConfiguration
     //! Max number of messages to store in memory when schema not yet available
     int max_pending_samples;
 
-    //! Max number of elements to keep in memory prior to writting in disk (applies to started state)
+    //! Max number of elements to keep in memory prior to writing in disk (applies to started state)
     unsigned int buffer_size;
 
     //! Keep in memory samples received in time frame [s], to be stored when event triggered (applies to paused state)

@@ -239,7 +239,7 @@ protected:
     /**
      * @brief Add message to \c buffer_ structure, or directly write to MCAP file.
      *
-     * If after adding the new sample (when not directly writting to file) the buffer reaches its maximum size, the
+     * If after adding the new sample (when not directly writing to file) the buffer reaches its maximum size, the
      * content is dumped to disk.
      *
      * @param [in] msg Message to be added

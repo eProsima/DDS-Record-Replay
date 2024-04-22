@@ -91,6 +91,10 @@ void McapWriter::disable() noexcept
 
     close_current_file_nts_();
 
+    dynamic_types_payload_.reset();
+    schemas_.clear();
+    channels_.clear();
+
     enabled_ = false;
 }
 
@@ -219,7 +223,7 @@ void McapWriter::write_nts_(
 
     if (!status.ok())
     {
-        logError(DDSRECORDER_MCAP_WRITER, "Error writting in MCAP, error message: " << status.message);
+        logError(DDSRECORDER_MCAP_WRITER, "Error writing in MCAP, error message: " << status.message);
         return;
     }
 
@@ -254,7 +258,7 @@ void McapWriter::write_nts_(
 
     if (!status.ok())
     {
-        logError(DDSRECORDER_MCAP_WRITER, "Error writting in MCAP, error message: " << status.message);
+        logError(DDSRECORDER_MCAP_WRITER, "Error writing in MCAP, error message: " << status.message);
         return;
     }
 
@@ -273,7 +277,7 @@ void McapWriter::write_nts_(
 
     if (!status.ok())
     {
-        logError(DDSRECORDER_MCAP_WRITER, "Error writting in MCAP, error message: " << status.message);
+        logError(DDSRECORDER_MCAP_WRITER, "Error writing in MCAP, error message: " << status.message);
         return;
     }
 

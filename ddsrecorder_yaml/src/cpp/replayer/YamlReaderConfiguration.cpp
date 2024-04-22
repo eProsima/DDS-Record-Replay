@@ -120,7 +120,7 @@ void ReplayerConfiguration::load_ddsreplayer_configuration_(
 
         // Block ROS 2 services (RPC) topics
         // RATIONALE:
-        // At the time of this writting, services in ROS 2 behave in the following manner: a ROS 2 service
+        // At the time of this writing, services in ROS 2 behave in the following manner: a ROS 2 service
         // client awaits to discover a server, and it is then when a request is sent to this (and only this) server,
         // from which a response is expected.
         // Hence, if these topics are not blocked, the client would wrongly believe DDS-Replayer is a server, thus
