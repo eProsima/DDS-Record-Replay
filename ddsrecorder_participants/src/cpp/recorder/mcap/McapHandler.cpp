@@ -113,7 +113,7 @@ void McapHandler::add_schema(
 
     assert(nullptr != dynamic_type);
 
-    std::string type_name = dynamic_type->get_name();
+    const std::string type_name = dynamic_type->get_name();
 
     // Check if it exists already
     if (received_types_.find(type_name) != received_types_.end())
@@ -121,17 +121,28 @@ void McapHandler::add_schema(
         return;
     }
 
-    // Schema not found, generate from dynamic type and store
-    std::string schema_text =
-            configuration_.ros2_types ? msg::generate_ros2_schema(dynamic_type) : idl::generate_idl_schema(
-        dynamic_type);
+    // Create the MCAP schema
+    std::string_view name;
+    std::string encoding;
+    std::string data;
 
-    logInfo(DDSRECORDER_MCAP_HANDLER, "\nAdding schema with name " << type_name << " :\n" << schema_text << "\n");
+    if (configuration_.ros2_types)
+    {
+        name = utils::demangle_if_ros_type(dynamic_type->get_name());
+        encoding = "ros2msg";
+        data = msg::generate_ros2_schema(dynamic_type);
+    }
+    else
+    {
+        name = dynamic_type->get_name();
+        encoding = "omgidl";
+        data = idl::generate_idl_schema(dynamic_type);
+    }
 
-    // Create schema and add it to writer and to schemas map
-    std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
-    mcap::Schema new_schema(configuration_.ros2_types ? utils::demangle_if_ros_type(dynamic_type->get_name()) :
-            dynamic_type->get_name(), encoding, schema_text);
+    mcap::Schema new_schema(name, encoding, data);
+
+    // Add schema to writer and to schemas map
+    logInfo(DDSRECORDER_MCAP_HANDLER, "\nAdding schema with name " << type_name << " :\n" << data << "\n");
 
     mcap_writer_.write(new_schema);
 
