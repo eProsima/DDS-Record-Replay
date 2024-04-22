@@ -54,25 +54,30 @@ public:
 
     /**
      * @brief Enable the writer.
+     *
+     * @throws \c InconsistencyException if \c open_new_file_nts_ or \c close_current_file_nts_ fail.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    void enable() noexcept;
+    void enable();
 
     /**
      * @brief Disable the writer.
+     *
+     * @throws \c InconsistencyException if \c open_new_file_nts_ or \c close_current_file_nts_ fail.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    void disable() noexcept;
+    void disable();
 
     /**
      * @brief Writes data to the MCAP file.
      *
      * @param data Pointer to the data to be written.
+     * @throws \c InconsistencyException if \c open_new_file_nts_ or \c close_current_file_nts_ fail.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     template <typename T>
     void write(
-            const T& data) noexcept;
+            const T& data);
 
     /**
      * @brief Updates the dynamic types payload.
@@ -80,10 +85,11 @@ public:
      * The dynamic types payload is written down as an attachment when the MCAP file is being closed.
      *
      * @param dynamic_types_payload The dynamic types payload to be written.
+     * @throws \c InconsistencyException if \c open_new_file_nts_ or \c close_current_file_nts_ fail.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void update_dynamic_types(
-            const fastrtps::rtps::SerializedPayload_t& dynamic_types_payload) noexcept;
+            const fastrtps::rtps::SerializedPayload_t& dynamic_types_payload);
 
     /**
      * @brief Sets the callback to be called when the disk is full.
@@ -101,14 +107,18 @@ protected:
      *
      * @param min_file_size The minimum size of the file.
      * @throws \c FullDiskException if the disk is full.
+     * @throws \c InconsistencyException if the minimum file size is not enough to write the: metadata, schemas,
+     * channels and attachment.
      */
     void open_new_file_nts_(
             const std::uint64_t min_file_size);
 
     /**
      * @brief Closes the current file.
+     *
+     * @throws \c InconsistencyException if there is not enough space to write the attachment before closing.
      */
-    void close_current_file_nts_() noexcept;
+    void close_current_file_nts_();
 
     /**
      * @brief Writes data to the MCAP file.
@@ -157,6 +167,8 @@ protected:
      * The function closes the current file and opens a new one.
      *
      * @throws \c FullDiskException if the MCAP file is full.
+     * @throws \c InconsistencyException if the minimum file size is not enough to write the: metadata, schemas,
+     * channels and attachment.
      */
     void on_mcap_full_nts_(
             const FullFileException& e);

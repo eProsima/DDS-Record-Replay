@@ -28,7 +28,7 @@ namespace participants {
 
 template <typename T>
 void McapWriter::write(
-        const T& data) noexcept
+        const T& data)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 

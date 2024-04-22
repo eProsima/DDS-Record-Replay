@@ -53,7 +53,7 @@ McapWriter::~McapWriter()
     disable();
 }
 
-void McapWriter::enable() noexcept
+void McapWriter::enable()
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
@@ -78,7 +78,7 @@ void McapWriter::enable() noexcept
     enabled_ = true;
 }
 
-void McapWriter::disable() noexcept
+void McapWriter::disable()
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
@@ -95,7 +95,7 @@ void McapWriter::disable() noexcept
 }
 
 void McapWriter::update_dynamic_types(
-        const fastrtps::rtps::SerializedPayload_t& dynamic_types_payload) noexcept
+        const fastrtps::rtps::SerializedPayload_t& dynamic_types_payload)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
@@ -169,41 +169,25 @@ void McapWriter::open_new_file_nts_(
         return;
     }
 
-    try
-    {
-        // NOTE: These writes should never fail since the minimum size accounts for them.
-        write_metadata_nts_();
-        write_schemas_nts_();
-        write_channels_nts_();
+    // NOTE: These writes should never fail since the minimum size accounts for them.
+    write_metadata_nts_();
+    write_schemas_nts_();
+    write_channels_nts_();
 
-        if (dynamic_types_payload_ != nullptr && record_types_)
-        {
-            size_tracker_.attachment_to_write(dynamic_types_payload_->length);
-        }
-    }
-    catch(const FullFileException& e)
+    if (dynamic_types_payload_ != nullptr && record_types_)
     {
-        utils::tsnh(utils::Formatter() <<
-                    "The minimum MCAP size is not enough to write the minimum MCAP information: " << e.what());
+        size_tracker_.attachment_to_write(dynamic_types_payload_->length);
     }
 
     file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
 }
 
-void McapWriter::close_current_file_nts_() noexcept
+void McapWriter::close_current_file_nts_()
 {
     if (record_types_)
     {
-        try
-        {
-            // NOTE: This write should never fail since the minimum size accounts for it.
-            write_attachment_nts_();
-        }
-        catch(const FullFileException& e)
-        {
-            utils::tsnh(utils::Formatter() <<
-                        "The minimum MCAP size is not enough to write the dynamic types: " << e.what());
-        }
+        // NOTE: This write should never fail since the minimum size accounts for it.
+        write_attachment_nts_();
     }
 
     file_tracker_->set_current_file_size(size_tracker_.get_written_mcap_size());

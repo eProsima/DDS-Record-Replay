@@ -19,6 +19,8 @@
 #include <filesystem>
 #include <stdexcept>
 
+#include <cpp_utils/exception/InconsistencyException.hpp>
+#include <cpp_utils/Formatter.hpp>
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/utils.hpp>
@@ -56,7 +58,7 @@ void FileTracker::new_file(
 
     if (min_file_size > configuration_.max_file_size)
     {
-        throw std::invalid_argument(
+        throw utils::InconsistencyException(utils::Formatter() <<
                   "The minimum file size (" + utils::from_bytes(min_file_size) + ") is greater than the maximum file "
                   "size (" + utils::from_bytes(configuration_.max_file_size) + ").");
     }
