@@ -99,7 +99,7 @@ void McapWriter::update_dynamic_types(
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    try
+    const auto& update_dynamic_types_payload = [&]()
     {
         if (dynamic_types_payload_ == nullptr)
         {
@@ -116,6 +116,11 @@ void McapWriter::update_dynamic_types(
 
             size_tracker_.attachment_to_write(dynamic_types_payload.length, dynamic_types_payload_->length);
         }
+    };
+
+    try
+    {
+        update_dynamic_types_payload();
     }
     catch (const FullFileException& e)
     {
