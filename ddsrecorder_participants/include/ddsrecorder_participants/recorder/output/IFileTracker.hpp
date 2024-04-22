@@ -60,33 +60,6 @@ public:
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     virtual void close_file() = 0;
-
-    /**
-     * @brief Adds up the size of all the files in the tracker.
-     *
-     * It adds up the size of the closed files and of the current file.
-     *
-     * @return The total size of the files in the tracker.
-     */
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    virtual std::uint64_t get_total_size() const = 0;
-
-    /**
-     * @brief Calculates the temporary filename of the current file.
-     *
-     * @return The temporary filename of the current file.
-     */
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    virtual std::string get_current_filename() const = 0;
-
-    /**
-     * @brief Updates the size of the current file.
-     *
-     * @param size The new size of the current file.
-     */
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    virtual void set_current_file_size(
-            const std::uint64_t size) = 0;
 };
 
 } /* namespace participants */

@@ -18,6 +18,7 @@
 
 #include <cpp_utils/Log.hpp>
 
+#include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
 #include <ddsrecorder_participants/recorder/output/FullDiskException.hpp>
 #include <ddsrecorder_participants/recorder/output/FullFileException.hpp>
 
@@ -27,7 +28,7 @@ namespace participants {
 
 template <typename T>
 void McapWriter::write(
-        const T& data)
+        const T& data) noexcept
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
@@ -37,7 +38,22 @@ void McapWriter::write(
         return;
     }
 
-    write_nts_(data);
+    try
+    {
+        write_nts_(data);
+    }
+    catch (const FullFileException& e)
+    {
+        try
+        {
+            on_mcap_full_nts_(e);
+        }
+        catch(const FullDiskException& e)
+        {
+            logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Disk is full. Error message:\n " << e.what());
+            on_disk_full_();
+        }
+    }
 }
 
 template <typename T>

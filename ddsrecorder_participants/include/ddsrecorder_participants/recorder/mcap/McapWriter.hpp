@@ -56,13 +56,13 @@ public:
      * @brief Enable the writer.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    void enable();
+    void enable() noexcept;
 
     /**
      * @brief Disable the writer.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    void disable();
+    void disable() noexcept;
 
     /**
      * @brief Writes data to the MCAP file.
@@ -71,7 +71,7 @@ public:
     DDSRECORDER_PARTICIPANTS_DllAPI
     template <typename T>
     void write(
-            const T& data);
+            const T& data) noexcept;
 
     /**
      * @brief Updates the dynamic types payload.
@@ -82,42 +82,100 @@ public:
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void update_dynamic_types(
-            const fastrtps::rtps::SerializedPayload_t& dynamic_types_payload);
+            const fastrtps::rtps::SerializedPayload_t& dynamic_types_payload) noexcept;
+
+    /**
+     * @brief Sets the callback to be called when the disk is full.
+     *
+     * Sets \c on_disk_full_lambda_ to \c on_disk_full_lambda.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    void set_on_disk_full_callback(
+            std::function<void()> on_disk_full_lambda) noexcept;
 
 protected:
 
-    // Open a new file
+    /**
+     * @brief Opens a new file.
+     *
+     * @param min_file_size The minimum size of the file.
+     * @throws \c FullDiskException if the disk is full.
+     */
     void open_new_file_nts_(
             const std::uint64_t min_file_size);
 
-    // Close the current file
-    void close_current_file_nts_();
+    /**
+     * @brief Closes the current file.
+     */
+    void close_current_file_nts_() noexcept;
 
-    // Writes data to the MCAP file.
+    /**
+     * @brief Writes data to the MCAP file.
+     *
+     * @param data The data to be written.
+     * @throws \c FullFileException if the MCAP file is full.
+     */
     template <typename T>
     void write_nts_(
             const T& data);
 
-    // Write the attachment
+    /**
+     * @brief Writes the attachment to the MCAP file.
+     *
+     * The attachment is written down as a message with the attachment data.
+     * The size of the attachment is allocated by calling \c update_dynamic_types.
+     *
+     * @throws \c FullFileException if the MCAP file is full.
+     */
     void write_attachment_nts_();
 
-    // Write the previous channels
+    /**
+     * @brief Writes the channels to the MCAP file.
+     *
+     * @throws \c FullFileException if the MCAP file is full.
+     */
     void write_channels_nts_();
 
-    // Write the metadata
+    /**
+     * @brief Writes the metadata to the MCAP file.
+     *
+     * @throws \c FullFileException if the MCAP file is full.
+     */
     void write_metadata_nts_();
 
-    // Write the previous schemas
+    /**
+     * @brief Writes the schemas to the MCAP file.
+     *
+     * @throws \c FullFileException if the MCAP file is full.
+     */
     void write_schemas_nts_();
 
-    // Callback when the MCAP library is full
+    /**
+     * @brief Function called when the MCAP file is full.
+     *
+     * The function closes the current file and opens a new one.
+     *
+     * @throws \c FullDiskException if the MCAP file is full.
+     */
     void on_mcap_full_nts_(
             const FullFileException& e);
 
-    // Callback when the MCAP library is full and a retry is required
+    /**
+     * @brief Function called when the MCAP file is full and information should be written.
+     *
+     * The function calls \c on_mcap_full_nts_ with the same exception and tries to execute the same function that
+     * caused the exception.
+     *
+     * @throws \c FullDiskException if the MCAP file is full.
+     */
     void on_mcap_full_nts_(
             const FullFileException& e,
             std::function<void()> retry);
+
+    /**
+     * @brief Function called when the disk is full.
+     */
+    void on_disk_full_() const noexcept;
 
     // The configuration for the class
     const OutputSettings configuration_;
@@ -151,6 +209,9 @@ protected:
 
     // The schemas that have been written
     std::map<mcap::SchemaId, mcap::Schema> schemas_;
+
+    //! Lambda to call when the disk is full
+    std::function<void()> on_disk_full_lambda_;
 
     // The size of an MCAP file only with metadata and an empty attachment
     static constexpr std::uint64_t MIN_MCAP_SIZE = 2056;

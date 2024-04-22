@@ -63,42 +63,16 @@ public:
     virtual ~FileTracker();
 
     /**
-     * @brief Adds up the size of all the files in the tracker.
-     *
-     * It adds up the size of the closed files and of the current file.
-     *
-     * @return The total size of the files in the tracker.
-     */
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    std::uint64_t get_total_size() const override;
-
-    /**
-     * @brief Updates the size of the current file.
-     *
-     * @param size The new size of the current file.
-     */
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    void set_current_file_size(
-            const std::uint64_t size) override;
-
-    /**
-     * @brief Calculates the temporary filename of the current file.
-     *
-     * @return The temporary filename of the current file.
-     */
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    std::string get_current_filename() const override;
-
-    /**
      * @brief Adds a new file to the tracker.
      *
      * If the current file is not empty, it is saved as written.
      *
-     * If file_rotation is set and the new file is too large to fit in the available space, the oldest files are
+     * If \c file_rotation is set and the new file is too large to fit in the available space, the oldest files are
      * are removed until there is enough available space.
      * The new file is stored as the current file.
      *
      * @param min_file_size The minimum size of the new file.
+     * @throws \c FullDiskException if the disk is full.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void new_file(
@@ -108,7 +82,34 @@ public:
      * @brief Closes the current file.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    void close_file() override;
+    void close_file() noexcept override;
+
+    /**
+     * @brief Adds up the size of all the files in the tracker.
+     *
+     * It adds up the size of the closed files and of the current file.
+     *
+     * @return The total size of the files in the tracker.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    std::uint64_t get_total_size() const noexcept;
+
+    /**
+     * @brief Calculates the temporary filename of the current file.
+     *
+     * @return The temporary filename of the current file.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    std::string get_current_filename() const noexcept;
+
+    /**
+     * @brief Updates the size of the current file.
+     *
+     * @param size The new size of the current file.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    void set_current_file_size(
+            const std::uint64_t size) noexcept;
 
 protected:
 
@@ -117,7 +118,7 @@ protected:
      *
      * @return The size of the removed file.
      */
-    std::uint64_t remove_oldest_file_nts_();
+    std::uint64_t remove_oldest_file_nts_() noexcept;
 
     /**
      * @brief Generates a filename for the current file id.
@@ -125,7 +126,7 @@ protected:
      * @return The generated filename.
      */
     std::string generate_filename_(
-            const std::uint64_t id) const;
+            const std::uint64_t id) const noexcept;
 
     /**
      * @brief Generates a temporary filename for the given filename.
@@ -134,7 +135,7 @@ protected:
      * @return The generated temporary filename.
      */
     std::string make_filename_tmp_(
-            const std::string& filename) const;
+            const std::string& filename) const noexcept;
 
     // Configuration options
     const OutputSettings configuration_;

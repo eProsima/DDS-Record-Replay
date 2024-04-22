@@ -226,16 +226,6 @@ public:
     DDSRECORDER_PARTICIPANTS_DllAPI
     static mcap::Timestamp now();
 
-    /**
-     * @brief Set the callback that should be called whenever disk is full
-     *
-     * It sets \c on_disk_full_lambda_set_ to true
-     *
-     */
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    void set_on_disk_full_callback(
-            std::function<void()> on_disk_full_lambda) noexcept;
-
 protected:
 
     //! Flag code controlling the event thread routine
@@ -427,14 +417,6 @@ protected:
             DynamicTypesCollection& dynamic_types) const;
 
     /**
-     * @brief Callback to be executed whenever disk is full
-     *
-     * It calls \c on_disk_full_lambda_ if set
-     *
-     */
-    void on_disk_full_() const noexcept;
-
-    /**
      * @brief Serialize a \c TopicQoS struct into a string.
      *
      * @param [in] qos TopicQoS to be serialized
@@ -511,12 +493,6 @@ protected:
 
     //! Unique sequence number assigned to received messages. It is incremented with every sample added.
     unsigned int unique_sequence_number_{0};
-
-    //! Lambda to call when disk limit is reached
-    std::function<void()> on_disk_full_lambda_;
-
-    //! True if lambda callback is set
-    bool on_disk_full_lambda_set_;
 };
 
 } /* namespace participants */
