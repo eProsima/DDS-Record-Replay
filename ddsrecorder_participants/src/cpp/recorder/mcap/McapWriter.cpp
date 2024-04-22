@@ -91,10 +91,6 @@ void McapWriter::disable() noexcept
 
     close_current_file_nts_();
 
-    dynamic_types_payload_.reset();
-    schemas_.clear();
-    channels_.clear();
-
     enabled_ = false;
 }
 
@@ -124,6 +120,7 @@ void McapWriter::update_dynamic_types(
     catch (const FullFileException& e)
     {
         on_mcap_full_nts_(e);
+        update_dynamic_types_payload();
     }
 
     dynamic_types_payload_.reset(const_cast<fastrtps::rtps::SerializedPayload_t*>(&dynamic_types_payload));
@@ -243,7 +240,7 @@ void McapWriter::write_nts_(
 
     file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
 
-    // Store the channel to write it down when the MCAP file is closed
+    // Store the channel to write it on new MCAP files
     channels_[channel.id] = channel;
 }
 
@@ -297,7 +294,7 @@ void McapWriter::write_nts_(
 
     file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
 
-    // Store the schema to write it down when the MCAP file is closed
+    // Store the schema to write it on new MCAP files
     schemas_[schema.id] = schema;
 }
 
@@ -375,14 +372,6 @@ void McapWriter::on_mcap_full_nts_(
 
     // The file has been opened correctly. Enable the writer.
     enabled_ = true;
-}
-
-void McapWriter::on_mcap_full_nts_(
-        const FullFileException& e,
-        std::function<void()> func)
-{
-    on_mcap_full_nts_(e);
-    func();
 }
 
 void McapWriter::on_disk_full_() const noexcept

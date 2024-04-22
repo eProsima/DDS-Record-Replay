@@ -66,6 +66,7 @@ public:
 
     /**
      * @brief Writes data to the MCAP file.
+     *
      * @param data Pointer to the data to be written.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
@@ -159,18 +160,6 @@ protected:
      */
     void on_mcap_full_nts_(
             const FullFileException& e);
-
-    /**
-     * @brief Function called when the MCAP file is full and information should be written.
-     *
-     * The function calls \c on_mcap_full_nts_ with the same exception and tries to execute the same function that
-     * caused the exception.
-     *
-     * @throws \c FullDiskException if the MCAP file is full.
-     */
-    void on_mcap_full_nts_(
-            const FullFileException& e,
-            std::function<void()> retry);
 
     /**
      * @brief Function called when the disk is full.

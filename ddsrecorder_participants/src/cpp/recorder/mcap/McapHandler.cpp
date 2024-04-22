@@ -377,9 +377,6 @@ void McapHandler::stop(
                             // if prev_state == PAUSED  -> writes added pending samples (if !only_with_schema)
 
         mcap_writer_.disable();
-
-        // Reset channels
-        channels_.clear();
     }
 }
 
@@ -747,7 +744,7 @@ void McapHandler::dump_data_nts_()
         // Write to MCAP file
         mcap_writer_.write(sample);
 
-        // Pop written sample (even if exception thrown)
+        // Pop written sample
         samples_buffer_.pop_front();
     }
 }

@@ -47,6 +47,7 @@ void McapWriter::write(
         try
         {
             on_mcap_full_nts_(e);
+            write_nts_(data);
         }
         catch(const FullDiskException& e)
         {
