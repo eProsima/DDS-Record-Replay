@@ -32,12 +32,6 @@ void McapWriter::write(
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    if (!enabled_)
-    {
-        logWarning(DDSRECORDER_MCAP_WRITER, "Attempting to write in a disabled writer.");
-        return;
-    }
-
     try
     {
         write_nts_(data);
@@ -55,13 +49,6 @@ void McapWriter::write(
             on_disk_full_();
         }
     }
-}
-
-template <typename T>
-void McapWriter::write_nts_(
-        const T& /* data */)
-{
-    logWarning(DDSRECORDER_MCAP_WRITER, "Attempting to write data of a not-supported type.");
 }
 
 } /* namespace participants */

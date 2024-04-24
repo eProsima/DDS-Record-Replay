@@ -45,7 +45,7 @@ FileTracker::FileTracker(
 
 FileTracker::~FileTracker()
 {
-    if (!current_file_.name.empty())
+    if (!current_file_.name.empty() && current_file_.size > 0)
     {
         close_file();
     }
@@ -142,7 +142,7 @@ void FileTracker::close_file() noexcept
     catch(const std::filesystem::filesystem_error& e)
     {
         logError(DDSRECORDER_FILE_TRACKER,
-                "Error renaming " + utils::from_bytes(configuration_.max_file_size) + ": " << e.what());
+                "Error renaming " + get_current_filename() + ": " << e.what());
     }
 
     current_file_ = File();

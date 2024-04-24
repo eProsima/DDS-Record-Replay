@@ -122,19 +122,19 @@ void McapHandler::add_schema(
     }
 
     // Create the MCAP schema
-    std::string_view name;
+    std::string name;
     std::string encoding;
     std::string data;
 
     if (configuration_.ros2_types)
     {
-        name = utils::demangle_if_ros_type(dynamic_type->get_name());
+        name = utils::demangle_if_ros_type(type_name);
         encoding = "ros2msg";
         data = msg::generate_ros2_schema(dynamic_type);
     }
     else
     {
-        name = dynamic_type->get_name();
+        name = type_name;
         encoding = "omgidl";
         data = idl::generate_idl_schema(dynamic_type);
     }

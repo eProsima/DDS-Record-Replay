@@ -22,6 +22,7 @@
 #include <mcap/internal.hpp>
 
 #include <cpp_utils/exception/InconsistencyException.hpp>
+#include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/Formatter.hpp>
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/time/time_utils.hpp>
@@ -71,7 +72,6 @@ void McapWriter::enable()
     catch (const FullDiskException& e)
     {
         logError(DDSRECORDER_MCAP_WRITER, "Error opening a new MCAP file: " << e.what());
-
         on_disk_full_();
     }
 
@@ -124,8 +124,16 @@ void McapWriter::update_dynamic_types(
     }
     catch (const FullFileException& e)
     {
-        on_mcap_full_nts_(e);
-        update_dynamic_types_payload();
+        try
+        {
+            on_mcap_full_nts_(e);
+            update_dynamic_types_payload();
+        }
+        catch(const FullDiskException& e)
+        {
+            logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Disk is full. Error message:\n " << e.what());
+            on_disk_full_();
+        }
     }
 
     dynamic_types_payload_.reset(const_cast<fastrtps::rtps::SerializedPayload_t*>(&dynamic_types_payload));
@@ -164,9 +172,10 @@ void McapWriter::open_new_file_nts_(
 
     if (!status.ok())
     {
-        logError(DDSRECORDER_MCAP_WRITER,
-                "Error opening MCAP file: " << filename << ", error message: " << status.message);
-        return;
+        const auto error_msg = "Failed to open MCAP file " + filename + " for writing: " + status.message;
+
+        logError(DDSRECORDER_MCAP_WRITER, "FAIL_MCAP_OPEN | " << error_msg);
+        throw utils::InitializationException(error_msg);
     }
 
     // NOTE: These writes should never fail since the minimum size accounts for them.
@@ -184,7 +193,7 @@ void McapWriter::open_new_file_nts_(
 
 void McapWriter::close_current_file_nts_()
 {
-    if (record_types_)
+    if (record_types_ && dynamic_types_payload_ != nullptr)
     {
         // NOTE: This write should never fail since the minimum size accounts for it.
         write_attachment_nts_();
@@ -237,6 +246,12 @@ template <>
 void McapWriter::write_nts_(
         const Message& msg)
 {
+    if (!enabled_)
+    {
+        logWarning(DDSRECORDER_MCAP_WRITER, "Attempting to write a message in a disabled writer.");
+        return;
+    }
+
     logInfo(DDSRECORDER_MCAP_WRITER, "Writing message: " << utils::from_bytes(msg.dataSize) << ".");
 
     size_tracker_.message_to_write(msg.dataSize);
@@ -353,6 +368,12 @@ void McapWriter::on_mcap_full_nts_(
 
     // Disable the writer in case opening a new file fails
     enabled_ = false;
+
+    if (configuration_.max_file_size == configuration_.max_size)
+    {
+        // There can only be one file and it's full
+        throw FullDiskException(e.what());
+    }
 
     // Open a new file to write the remaining data.
     // Throw an exception if a file with the minimum size cannot be opened.

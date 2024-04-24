@@ -45,10 +45,12 @@ TEST(McapLogErrorTests, fail_to_open_file) {
 
     eprosima::ddsrecorder::participants::OutputSettings output_settings;
     output_settings.filepath = "./fake_folder"; // This folder does not exist -> error opening file
-    output_settings.filename = "output_dummy.mcap";
+    output_settings.filename = "output_dummy";
     output_settings.prepend_timestamp = false;
     output_settings.timestamp_format = "%Y-%m-%d_%H-%M-%S";
     output_settings.local_timestamp = true;
+    output_settings.max_file_size = 100 * 1000; // 100KB
+    output_settings.max_size = output_settings.max_file_size; // 100KB
 
     mcap::McapWriterOptions mcap_writer_options{"ros2"};
 
