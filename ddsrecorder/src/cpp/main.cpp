@@ -400,9 +400,12 @@ int main(
                             " command.");
                 }
 
-                // Reload YAML configuration file, in case it changed during STOPPED state
-                // NOTE: Changes to all (but controller specific) recorder configuration options are taken into account
-                configuration = eprosima::ddsrecorder::yaml::RecorderConfiguration(commandline_args.file_path);
+                if (prev_command != CommandCode::close)
+                {
+                    // Reload YAML configuration file, in case it changed during STOPPED state
+                    // NOTE: Changes to all (but controller specific) recorder configuration options are taken into account
+                    configuration = eprosima::ddsrecorder::yaml::RecorderConfiguration(commandline_args.file_path);
+                }
 
                 // Create DDS Recorder
                 auto recorder = std::make_unique<DdsRecorder>(
