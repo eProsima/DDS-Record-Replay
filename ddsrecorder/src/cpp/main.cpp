@@ -180,6 +180,14 @@ CommandCode state_to_command(
     }
 }
 
+int exit(ProcessReturnCode code)
+{
+    // Delete the consumers before closing
+    eprosima::utils::Log::ClearConsumers();
+
+    return static_cast<int>(code);
+}
+
 int main(
         int argc,
         char** argv)
@@ -193,15 +201,15 @@ int main(
 
     if (arg_parse_result == ProcessReturnCode::help_argument)
     {
-        return static_cast<int>(ProcessReturnCode::success);
+        return exit(ProcessReturnCode::success);
     }
     else if (arg_parse_result == ProcessReturnCode::version_argument)
     {
-        return static_cast<int>(ProcessReturnCode::success);
+        return exit(ProcessReturnCode::success);
     }
     else if (arg_parse_result != ProcessReturnCode::success)
     {
-        return static_cast<int>(arg_parse_result);
+        return exit(arg_parse_result);
     }
 
     // Check file is in args, else get the default file
@@ -225,7 +233,7 @@ int main(
             EPROSIMA_LOG_ERROR(
                 DDSRECORDER_ARGS,
                 "File '" << commandline_args.file_path << "' does not exist or it is not accessible.");
-            return static_cast<int>(ProcessReturnCode::required_argument_failed);
+            return exit(ProcessReturnCode::required_argument_failed);
         }
     }
 
@@ -574,23 +582,17 @@ int main(
                 "Error Loading DDS Recorder Configuration from file " << commandline_args.file_path <<
                 ". Error message:\n " <<
                 e.what());
-        return static_cast<int>(ProcessReturnCode::execution_failed);
+        return exit(ProcessReturnCode::execution_failed);
     }
     catch (const eprosima::utils::InitializationException& e)
     {
         EPROSIMA_LOG_ERROR(DDSRECORDER_ERROR,
                 "Error Initializing DDS Recorder. Error message:\n " <<
                 e.what());
-        return static_cast<int>(ProcessReturnCode::execution_failed);
+        return exit(ProcessReturnCode::execution_failed);
     }
 
     logUser(DDSRECORDER_EXECUTION, "Finishing DDS Recorder execution correctly.");
 
-    // Force print every log before closing
-    eprosima::utils::Log::Flush();
-
-    // Delete the consumers before closing
-    eprosima::utils::Log::ClearConsumers();
-
-    return static_cast<int>(ProcessReturnCode::success);
+    return exit(ProcessReturnCode::success);
 }
