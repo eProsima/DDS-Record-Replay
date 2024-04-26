@@ -202,8 +202,8 @@ void McapWriter::close_current_file_nts_()
     file_tracker_->set_current_file_size(size_tracker_.get_written_mcap_size());
     size_tracker_.reset(file_tracker_->get_current_filename());
 
-    file_tracker_->close_file();
     writer_.close();
+    file_tracker_->close_file();
 }
 
 template <>
