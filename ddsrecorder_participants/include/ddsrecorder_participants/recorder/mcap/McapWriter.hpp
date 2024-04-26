@@ -38,18 +38,16 @@ namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
 
-class McapWriter
+class DDSRECORDER_PARTICIPANTS_DllAPI McapWriter
 {
 public:
 
-    DDSRECORDER_PARTICIPANTS_DllAPI
     McapWriter(
             const OutputSettings& configuration,
             const mcap::McapWriterOptions& mcap_configuration,
             std::shared_ptr<FileTracker>& file_tracker,
             const bool record_types = true);
 
-    DDSRECORDER_PARTICIPANTS_DllAPI
     ~McapWriter();
 
     /**
@@ -60,7 +58,6 @@ public:
      * new one.
      * - @throws \c InitializationException if the MCAP library fails to open a new file.
      */
-    DDSRECORDER_PARTICIPANTS_DllAPI
     void enable();
 
     /**
@@ -70,7 +67,6 @@ public:
      * - @throws \c InconsistencyException if the allocated space is not enough to close the current file or to open a
      * new one.
      */
-    DDSRECORDER_PARTICIPANTS_DllAPI
     void disable();
 
     /**
@@ -84,7 +80,6 @@ public:
      * - @throws \c InitializationException if the MCAP library fails to open a new file.
      */
     template <typename T>
-    DDSRECORDER_PARTICIPANTS_DllAPI
     void write(
             const T& data);
 
@@ -100,7 +95,6 @@ public:
      * new one.
      * - @throws \c InitializationException if the MCAP library fails to open a new file.
      */
-    DDSRECORDER_PARTICIPANTS_DllAPI
     void update_dynamic_types(
             const fastrtps::rtps::SerializedPayload_t& dynamic_types_payload);
 
@@ -109,7 +103,6 @@ public:
      *
      * Sets \c on_disk_full_lambda_ to \c on_disk_full_lambda.
      */
-    DDSRECORDER_PARTICIPANTS_DllAPI
     void set_on_disk_full_callback(
             std::function<void()> on_disk_full_lambda) noexcept;
 
