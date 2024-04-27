@@ -21,7 +21,6 @@
 
 #include <fastdds/rtps/common/CDRMessage_t.h>
 #include <fastdds/rtps/common/SerializedPayload.h>
-#include <fastrtps/types/TypeObjectFactory.h>
 
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/publisher/DataWriter.hpp>
@@ -29,17 +28,16 @@
 #include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
 #include <fastdds/dds/publisher/qos/PublisherQos.hpp>
 #include <fastdds/dds/topic/TypeSupport.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicTypeBuilder.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicTypeBuilderFactory.hpp>
+#include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
 #include <fastrtps/attributes/ParticipantAttributes.h>
 
 #include <ddspipe_core/types/dynamic_types/types.hpp>
 
-#if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollectionPubSubTypes.hpp>
-#else
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollection.hpp>
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollectionPubSubTypes.hpp>
-#endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
+#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
+#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollectionPubSubTypes.h>
 
 #include <ddsrecorder_participants/constants.hpp>
 
@@ -121,10 +119,6 @@ DdsReplayer::DdsReplayer(
             "fastdds.application.metadata",
             configuration.replayer_configuration->app_metadata,
             "true");
-
-        // Set as server in TypeLookup service
-        pqos.wire_protocol().builtin.typelookup_config.use_client = false;
-        pqos.wire_protocol().builtin.typelookup_config.use_server = true;
 
         // Participant creation via factory
         dyn_participant_ = fastdds::dds::DomainParticipantFactory::get_instance()->create_participant(
@@ -338,24 +332,53 @@ void DdsReplayer::register_dynamic_type_(
     std::string typeobj_str = utils::base64_decode(dynamic_type.type_object());
 
     // Deserialize type identifer and object strings
-    fastrtps::types::TypeIdentifier type_identifier = deserialize_type_identifier_(typeid_str);
-    fastrtps::types::TypeObject type_object = deserialize_type_object_(typeobj_str);
+    fastdds::dds::xtypes::TypeIdentifier type_identifier = deserialize_type_identifier_(typeid_str);
+    fastdds::dds::xtypes::TypeObject type_object = deserialize_type_object_(typeobj_str);
 
     // Register in factory
-    fastrtps::types::TypeObjectFactory::get_instance()->add_type_object(
-        dynamic_type.type_name(), &type_identifier, &type_object);
+    fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().register_type_identifier(
+        dynamic_type.type_name(), type_identifier);
+
+    fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().register_type_object(
+        dynamic_type.type_name(), type_object.complete());
 }
 
 void DdsReplayer::create_dynamic_writer_(
         utils::Heritable<DdsTopic> topic)
 {
-    auto type_identifier = fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(topic->type_name,
-                    true);
-    auto type_object = fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(topic->type_name, true);
-    fastrtps::types::DynamicType_ptr dyn_type = fastrtps::types::TypeObjectFactory::get_instance()->build_dynamic_type(
-        topic->type_name,
-        type_identifier,
-        type_object);
+    // fastdds::dds::xtypes::TypeIdentifierPair type_identifiers;
+    // auto ret_type_ids = fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_identifiers(
+    //                         topic->type_name,
+    //                         type_identifiers);
+
+    // fastdds::dds::xtypes::TypeIdentifier type_identifier;
+    // if (fastdds::dds::xtypes::EK_COMPLETE == type_identifiers.type_identifier1()._d())
+    // {
+    //     type_identifier = type_identifiers.type_identifier1();
+    // }
+    // else
+    // {
+    //     type_identifier = type_identifiers.type_identifier2();
+    // }
+
+    fastdds::dds::xtypes::TypeInformation type_information;
+    if (fastdds::dds::RETCODE_OK != fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_information(
+            topic->type_name,
+            type_information))
+    {
+        return;
+    }
+
+    fastdds::dds::xtypes::TypeIdentifier type_identifier;
+    type_identifier = type_information.complete().typeid_with_size().type_id();
+
+    fastdds::dds::xtypes::TypeObject type_object;
+    auto ret_type_obj = fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_object(
+                type_identifier,
+                type_object);
+
+    fastdds::dds::DynamicType::_ref_type dyn_type = fastdds::dds::DynamicTypeBuilderFactory::get_instance()->create_type_w_type_object(
+                type_object)->build();
 
     if (nullptr == dyn_type)
     {
@@ -364,7 +387,7 @@ void DdsReplayer::create_dynamic_writer_(
         return;
     }
 
-    fastdds::dds::TypeSupport type(new fastrtps::types::DynamicPubSubType(dyn_type));
+    fastdds::dds::TypeSupport type(new fastdds::dds::DynamicPubSubType(dyn_type));
 
     if (nullptr == type)
     {
@@ -374,11 +397,10 @@ void DdsReplayer::create_dynamic_writer_(
     }
 
     // Only enable sharing dynamic types through TypeLookup Service
-    type->auto_fill_type_information(true);
-    type->auto_fill_type_object(false);
+    type.get()->auto_fill_type_information(true);
 
     // Register type
-    if (ReturnCode_t::RETCODE_OK != dyn_participant_->register_type(type))
+    if (fastdds::dds::RETCODE_OK != dyn_participant_->register_type(type))
     {
         logWarning(DDSREPLAYER_REPLAYER,
                 "Failed to register " << topic->type_name << " type, aborting dynamic writer creation...");
@@ -478,7 +500,7 @@ TopicQoS DdsReplayer::deserialize_qos_(
     return qos;
 }
 
-fastrtps::types::TypeIdentifier DdsReplayer::deserialize_type_identifier_(
+fastdds::dds::xtypes::TypeIdentifier DdsReplayer::deserialize_type_identifier_(
         const std::string& typeid_str)
 {
     // Create CDR message from string
@@ -501,16 +523,12 @@ fastrtps::types::TypeIdentifier DdsReplayer::deserialize_type_identifier_(
     fastrtps::rtps::CDRMessage::readData(cdr_message, payload.data, parameter_length);
 
     // Create CDR deserializer
-    #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::Cdr::DDS_CDR);
-    #else
-    fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::CdrVersion::XCDRv1);
-    #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
+    fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::CdrVersion::XCDRv2);
     payload.encapsulation = deser.endianness() == fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
 
     // Deserialize
-    fastrtps::types::TypeIdentifier type_identifier;
-    type_identifier.deserialize(deser);
+    fastdds::dds::xtypes::TypeIdentifier type_identifier;
+    fastcdr::deserialize(deser, type_identifier);
 
     // Delete CDR message
     // NOTE: set wraps attribute to avoid double free (buffer released by string on destruction)
@@ -520,7 +538,7 @@ fastrtps::types::TypeIdentifier DdsReplayer::deserialize_type_identifier_(
     return type_identifier;
 }
 
-fastrtps::types::TypeObject DdsReplayer::deserialize_type_object_(
+fastdds::dds::xtypes::TypeObject DdsReplayer::deserialize_type_object_(
         const std::string& typeobj_str)
 {
     // Create CDR message from string
@@ -543,16 +561,12 @@ fastrtps::types::TypeObject DdsReplayer::deserialize_type_object_(
     fastrtps::rtps::CDRMessage::readData(cdr_message, payload.data, parameter_length);
 
     // Create CDR deserializer
-    #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::Cdr::DDS_CDR);
-    #else
-    fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::CdrVersion::XCDRv1);
-    #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
+    fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::CdrVersion::XCDRv2);
     payload.encapsulation = deser.endianness() == fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
 
     // Deserialize
-    fastrtps::types::TypeObject type_object;
-    type_object.deserialize(deser);
+    fastdds::dds::xtypes::TypeObject type_object;
+    fastcdr::deserialize(deser, type_object);
 
     // Delete CDR message
     // NOTE: set wraps attribute to avoid double free (buffer released by string on destruction)

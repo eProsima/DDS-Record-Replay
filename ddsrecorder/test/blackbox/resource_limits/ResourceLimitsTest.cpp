@@ -34,13 +34,8 @@
 
 #include <tool/DdsRecorder.hpp>
 
-#if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
-    #include "../../resources/types/hello_world/v1/HelloWorld.h"
-    #include "../../resources/types/hello_world/v1/HelloWorldPubSubTypes.h"
-#else
-    #include "../../resources/types/hello_world/v2/HelloWorld.h"
-    #include "../../resources/types/hello_world/v2/HelloWorldPubSubTypes.h"
-#endif // if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
+#include "../../resources/types/hello_world/HelloWorld.hpp"
+#include "../../resources/types/hello_world/HelloWorldPubSubTypes.h"
 
 #include "../constants.hpp"
 

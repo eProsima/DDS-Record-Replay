@@ -36,22 +36,14 @@
 #include <fastdds/dds/topic/TypeSupport.hpp>
 #include <fastdds/rtps/common/CDRMessage_t.h>
 #include <fastdds/rtps/common/SerializedPayload.h>
-#include <fastrtps/types/DynamicType.h>
-#include <fastrtps/types/TypeObjectFactory.h>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
+#include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
 
 #include <ddspipe_core/types/dynamic_types/schema.hpp>
 
-#if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    #include <fastcdr/Cdr.h>
-    #include <fastcdr/FastBuffer.h>
-    #include <fastcdr/FastCdr.h>
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollectionPubSubTypes.hpp>
-#else
-    #include <fastdds/rtps/common/CdrSerialization.hpp>
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollection.hpp>
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollectionPubSubTypes.hpp>
-#endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
+#include <fastdds/rtps/common/CdrSerialization.hpp>
+#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
+#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollectionPubSubTypes.h>
 
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
@@ -61,7 +53,7 @@ namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
 
-using namespace eprosima::ddspipe::core::types;
+using namespace ddspipe::core::types;
 
 Message::Message(
         const Message& msg)
@@ -69,7 +61,7 @@ Message::Message(
 {
     this->payload_owner = msg.payload_owner;
     auto payload_owner_ =
-            const_cast<eprosima::fastrtps::rtps::IPayloadPool*>((eprosima::fastrtps::rtps::IPayloadPool*)msg.
+            const_cast<fastrtps::rtps::IPayloadPool*>((fastrtps::rtps::IPayloadPool*)msg.
                     payload_owner);
     this->payload_owner->get_payload(
         msg.payload,
@@ -117,7 +109,7 @@ McapHandler::~McapHandler()
 }
 
 void McapHandler::add_schema(
-        const fastrtps::types::DynamicType_ptr& dynamic_type)
+        const fastdds::dds::DynamicType::_ref_type& dynamic_type)
 {
     try
     {
@@ -127,7 +119,7 @@ void McapHandler::add_schema(
 
         assert(nullptr != dynamic_type);
 
-        std::string type_name = dynamic_type->get_name();
+        std::string type_name = (dynamic_type->get_name()).to_string();
 
         // Check if it exists already
         if (received_types_.find(type_name) != received_types_.end())
@@ -144,8 +136,8 @@ void McapHandler::add_schema(
 
         // Create schema and add it to writer and to schemas map
         std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
-        mcap::Schema new_schema(configuration_.ros2_types ? utils::demangle_if_ros_type(dynamic_type->get_name()) :
-                dynamic_type->get_name(), encoding, schema_text);
+        mcap::Schema new_schema(configuration_.ros2_types ? utils::demangle_if_ros_type((dynamic_type->get_name()).to_string()) :
+                (dynamic_type->get_name()).to_string(), encoding, schema_text);
 
         try
         {
@@ -237,7 +229,7 @@ void McapHandler::add_data(
         if (data.payload.length > 0)
         {
             auto payload_owner =
-                    const_cast<eprosima::fastrtps::rtps::IPayloadPool*>((eprosima::fastrtps::rtps::IPayloadPool*)data.
+                    const_cast<fastrtps::rtps::IPayloadPool*>((fastrtps::rtps::IPayloadPool*)data.
                             payload_owner);
 
             if (payload_owner)
@@ -1166,22 +1158,28 @@ void McapHandler::store_dynamic_type_(
         const std::string& type_name,
         DynamicTypesCollection& dynamic_types) const
 {
-    const eprosima::fastrtps::types::TypeIdentifier* type_identifier = nullptr;
-    const eprosima::fastrtps::types::TypeObject* type_object = nullptr;
-    const eprosima::fastrtps::types::TypeInformation* type_information = nullptr;
-
-    type_information =
-            eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_information(type_name);
-    if (type_information != nullptr)
+    fastdds::dds::xtypes::TypeInformation type_information;
+    if (fastdds::dds::RETCODE_OK == fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_information(
+            type_name,
+            type_information))
     {
-        auto dependencies = type_information->complete().dependent_typeids();
+        if (type_name == "SuperComplex_TypeIntrospectionExample")
+        {
+            std::cout << "DALE CARAJO" << std::endl;
+        }
+        auto dependencies = type_information.complete().dependent_typeids();
         std::string dependency_name;
         unsigned int dependency_index = 0;
-        for (auto dependency: dependencies)
+        for (auto dependency : dependencies)
         {
-            type_identifier = &dependency.type_id();
-            type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(
-                type_identifier);
+            fastdds::dds::xtypes::TypeIdentifier type_identifier;
+            type_identifier = dependency.type_id();
+
+            fastdds::dds::xtypes::TypeObject type_object;
+            const auto ret = fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_object(
+                    type_identifier,
+                    type_object);
+
             dependency_name = type_name + "_" + std::to_string(dependency_index);
 
             // Store dependency in dynamic_types collection
@@ -1190,57 +1188,58 @@ void McapHandler::store_dynamic_type_(
             // Increment suffix counter
             dependency_index++;
         }
-    }
 
-    type_identifier = nullptr;
-    type_object = nullptr;
+        fastdds::dds::xtypes::TypeIdentifier type_id;
+        type_id = type_information.complete().typeid_with_size().type_id();
 
-    type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(type_name,
-                    true);
-    if (type_identifier)
-    {
-        type_object =
-                eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name, true);
-    }
-
-    // If complete not found, try with minimal
-    if (!type_object)
-    {
-        type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(
-            type_name, false);
-        if (type_identifier)
+        fastdds::dds::xtypes::TypeObject type_obj;
+        if (fastdds::dds::RETCODE_OK == fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_object(
+                type_id,
+                type_obj))
         {
-            type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name,
-                            false);
+            // Store dynamic type in dynamic_types collection
+            store_dynamic_type_(type_id, type_obj, type_name, dynamic_types);
         }
     }
 
-    // Store dynamic type in dynamic_types collection
-    store_dynamic_type_(type_identifier, type_object, type_name, dynamic_types);
+
+    // fastdds::dds::xtypes::TypeIdentifierPair type_ids;
+    // if (fastdds::dds::RETCODE_OK == fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_identifiers(
+    //         type_name,
+    //         type_ids))
+    // {
+    //     fastdds::dds::xtypes::TypeIdentifier type_id;
+    //     if (fastdds::dds::xtypes::EK_COMPLETE == type_ids.type_identifier1()._d())
+    //     {
+    //         type_id = type_ids.type_identifier1();
+    //     }
+    //     else
+    //     {
+    //         type_id = type_ids.type_identifier2();
+    //     }
+
+    // }
 }
 
 void McapHandler::store_dynamic_type_(
-        const eprosima::fastrtps::types::TypeIdentifier* type_identifier,
-        const eprosima::fastrtps::types::TypeObject* type_object,
+        const fastdds::dds::xtypes::TypeIdentifier& type_identifier,
+        const fastdds::dds::xtypes::TypeObject& type_object,
         const std::string& type_name,
         DynamicTypesCollection& dynamic_types) const
 {
-    if (type_identifier != nullptr && type_object != nullptr)
-    {
-        DynamicType dynamic_type;
-        dynamic_type.type_name(type_name);
-        dynamic_type.type_information(utils::base64_encode(serialize_type_identifier_(type_identifier)));
-        dynamic_type.type_object(utils::base64_encode(serialize_type_object_(type_object)));
+    DynamicType dynamic_type;
+    dynamic_type.type_name(type_name);
+    dynamic_type.type_information(utils::base64_encode(serialize_type_identifier_(type_identifier)));
+    dynamic_type.type_object(utils::base64_encode(serialize_type_object_(type_object)));
 
-        dynamic_types.dynamic_types().push_back(dynamic_type);
-    }
+    dynamic_types.dynamic_types().push_back(dynamic_type);
 }
 
 fastrtps::rtps::SerializedPayload_t* McapHandler::serialize_dynamic_types_(
         DynamicTypesCollection& dynamic_types) const
 {
     // Serialize dynamic types collection using CDR
-    eprosima::fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
+    fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
     fastrtps::rtps::SerializedPayload_t* serialized_payload = new fastrtps::rtps::SerializedPayload_t(
         type_support.get_serialized_size_provider(&dynamic_types)());
     type_support.serialize(&dynamic_types, serialized_payload);
@@ -1470,44 +1469,40 @@ std::string McapHandler::serialize_qos_(
 }
 
 std::string McapHandler::serialize_type_identifier_(
-        const eprosima::fastrtps::types::TypeIdentifier* type_identifier)
+        const fastdds::dds::xtypes::TypeIdentifier& type_identifier)
 {
     // Reserve payload and create buffer
-    size_t size = fastrtps::types::TypeIdentifier::getCdrSerializedSize(*type_identifier) +
-            eprosima::fastrtps::rtps::SerializedPayload_t::representation_header_size;
+    fastcdr::CdrSizeCalculator calculator(fastcdr::CdrVersion::XCDRv2);
+    size_t current_alignment {0};
+    size_t size = calculator.calculate_serialized_size(type_identifier, current_alignment) +
+                            fastrtps::rtps::SerializedPayload_t::representation_header_size;
+    // size_t size = fastdds::dds::xtypes::TypeIdentifier::getCdrSerializedSize(type_identifier) +
+    //         fastrtps::rtps::SerializedPayload_t::representation_header_size;
     fastrtps::rtps::SerializedPayload_t payload(static_cast<uint32_t>(size));
-    eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
+    fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
 
     // Create CDR serializer
-    #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN, eprosima::fastcdr::Cdr::DDS_CDR);
-    #else
-    eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN,
-            eprosima::fastcdr::CdrVersion::XCDRv1);
-    #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
+    fastcdr::Cdr ser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN,
+            fastcdr::CdrVersion::XCDRv2);
 
-    payload.encapsulation = ser.endianness() == eprosima::fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
+    payload.encapsulation = ser.endianness() == fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
 
     // Serialize
-    type_identifier->serialize(ser);
-#if FASTCDR_VERSION_MAJOR == 1
-    payload.length = (uint32_t)ser.getSerializedDataLength();
-    size = (ser.getSerializedDataLength() + 3) & ~3;
-#else
+    // type_identifier.serialize(ser);
+    fastcdr::serialize(ser, type_identifier);
     payload.length = (uint32_t)ser.get_serialized_data_length();
     size = (ser.get_serialized_data_length() + 3) & ~3;
-#endif // if FASTCDR_VERSION_MAJOR == 1
 
     // Create CDR message
     // NOTE: Use 0 length to avoid allocation (memory already reserved in payload creation)
-    eprosima::fastrtps::rtps::CDRMessage_t* cdr_message = new eprosima::fastrtps::rtps::CDRMessage_t(0);
+    fastrtps::rtps::CDRMessage_t* cdr_message = new fastrtps::rtps::CDRMessage_t(0);
     cdr_message->buffer = payload.data;
     cdr_message->max_size = payload.max_size;
     cdr_message->length = payload.length;
 #if __BIG_ENDIAN__
-    cdr_message->msg_endian = eprosima::fastrtps::rtps::BIGEND;
+    cdr_message->msg_endian = fastrtps::rtps::BIGEND;
 #else
-    cdr_message->msg_endian = eprosima::fastrtps::rtps::LITTLEEND;
+    cdr_message->msg_endian = fastrtps::rtps::LITTLEEND;
 #endif // if __BIG_ENDIAN__
 
     // Add data
@@ -1528,43 +1523,36 @@ std::string McapHandler::serialize_type_identifier_(
 }
 
 std::string McapHandler::serialize_type_object_(
-        const eprosima::fastrtps::types::TypeObject* type_object)
+        const fastdds::dds::xtypes::TypeObject& type_object)
 {
     // Reserve payload and create buffer
-    size_t size = fastrtps::types::TypeObject::getCdrSerializedSize(*type_object) +
-            eprosima::fastrtps::rtps::SerializedPayload_t::representation_header_size;
+    fastcdr::CdrSizeCalculator calculator(fastcdr::CdrVersion::XCDRv2);
+    size_t current_alignment {0};
+    size_t size = calculator.calculate_serialized_size(type_object, current_alignment) +
+                            fastrtps::rtps::SerializedPayload_t::representation_header_size;
     fastrtps::rtps::SerializedPayload_t payload(static_cast<uint32_t>(size));
-    eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
+    fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
 
     // Create CDR serializer
-    #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN, eprosima::fastcdr::Cdr::DDS_CDR);
-    #else
-    eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN,
-            eprosima::fastcdr::CdrVersion::XCDRv1);
-    #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    payload.encapsulation = ser.endianness() == eprosima::fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
+    fastcdr::Cdr ser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN,
+            fastcdr::CdrVersion::XCDRv2);
+    payload.encapsulation = ser.endianness() == fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
 
     // Serialize
-    type_object->serialize(ser);
-#if FASTCDR_VERSION_MAJOR == 1
-    payload.length = (uint32_t)ser.getSerializedDataLength();
-    size = (ser.getSerializedDataLength() + 3) & ~3;
-#else
+    fastcdr::serialize(ser, type_object);
     payload.length = (uint32_t)ser.get_serialized_data_length();
     size = (ser.get_serialized_data_length() + 3) & ~3;
-#endif // if FASTCDR_VERSION_MAJOR == 1
 
     // Create CDR message
     // NOTE: Use 0 length to avoid allocation (memory already reserved in payload creation)
-    eprosima::fastrtps::rtps::CDRMessage_t* cdr_message = new eprosima::fastrtps::rtps::CDRMessage_t(0);
+    fastrtps::rtps::CDRMessage_t* cdr_message = new fastrtps::rtps::CDRMessage_t(0);
     cdr_message->buffer = payload.data;
     cdr_message->max_size = payload.max_size;
     cdr_message->length = payload.length;
 #if __BIG_ENDIAN__
-    cdr_message->msg_endian = eprosima::fastrtps::rtps::BIGEND;
+    cdr_message->msg_endian = fastrtps::rtps::BIGEND;
 #else
-    cdr_message->msg_endian = eprosima::fastrtps::rtps::LITTLEEND;
+    cdr_message->msg_endian = fastrtps::rtps::LITTLEEND;
 #endif // if __BIG_ENDIAN__
 
     // Add data

@@ -24,6 +24,7 @@
 #include <fastdds/dds/domain/DomainParticipant.hpp>
 #include <fastdds/dds/publisher/DataWriter.hpp>
 #include <fastdds/dds/publisher/Publisher.hpp>
+#include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
 
 #include <ddspipe_core/core/DdsPipe.hpp>
 #include <ddspipe_core/dynamic/AllowedTopicList.hpp>
@@ -33,12 +34,7 @@
 #include <ddspipe_core/types/dds/TopicQoS.hpp>
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
-#if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
-#else
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollection.hpp>
-#endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-
+#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
 
 #include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
 #include <ddsrecorder_participants/replayer/ReplayerParticipant.hpp>
@@ -143,7 +139,7 @@ protected:
      * @param [in] typeid_str Serialized \c TypeIdentifier string
      * @return Deserialized TypeIdentifier
      */
-    static fastrtps::types::TypeIdentifier deserialize_type_identifier_(
+    static fastdds::dds::xtypes::TypeIdentifier deserialize_type_identifier_(
             const std::string& typeid_str);
 
     /**
@@ -152,7 +148,7 @@ protected:
      * @param [in] typeobj_str Serialized \c TypeObject string
      * @return Deserialized TypeObject
      */
-    static fastrtps::types::TypeObject deserialize_type_object_(
+    static fastdds::dds::xtypes::TypeObject deserialize_type_object_(
             const std::string& typeobj_str);
 
     //! Payload Pool

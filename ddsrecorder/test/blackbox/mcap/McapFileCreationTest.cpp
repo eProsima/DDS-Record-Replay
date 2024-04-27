@@ -25,22 +25,16 @@
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/publisher/DataWriter.hpp>
 #include <fastdds/dds/publisher/Publisher.hpp>
-#include <fastrtps/types/DynamicDataPtr.h>
-#include <fastrtps/types/DynamicType.h>
-#include <fastrtps/types/DynamicDataFactory.h>
-#include <fastrtps/types/TypeObjectFactory.h>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicData.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicDataFactory.hpp>
+#include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
 
 #include <mcap/reader.hpp>
 
-#if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
-    #include "../../resources/types/hello_world/v1/HelloWorld.h"
-    #include "../../resources/types/hello_world/v1/HelloWorldPubSubTypes.h"
-    #include "../../resources/types/hello_world/v1/HelloWorldTypeObject.h"
-#else
-    #include "../../resources/types/hello_world/v2/HelloWorld.h"
-    #include "../../resources/types/hello_world/v2/HelloWorldPubSubTypes.h"
-    #include "../../resources/types/hello_world/v2/HelloWorldTypeObject.h"
-#endif // if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
+#include "../../resources/types/hello_world/HelloWorld.hpp"
+#include "../../resources/types/hello_world/HelloWorldPubSubTypes.h"
+#include "../../resources/types/hello_world/HelloWorldTypeObjectSupport.hpp"
 
 #include <iostream>
 #include <thread>
