@@ -14,7 +14,7 @@
 
 /**
  * @file main.cpp
- *
+ 
  */
 
 #include <nlohmann/json.hpp>
@@ -380,6 +380,9 @@ int main(
                 // Reload YAML configuration file, in case it changed during STOPPED state
                 // NOTE: Changes to all (but controller specific) recorder configuration options are taken into account
                 configuration = eprosima::ddsrecorder::yaml::RecorderConfiguration(commandline_args.file_path);
+
+
+                // configuration.recorder_configuration->topic_qos.
 
                 // Create DDS Recorder
                 auto recorder = std::make_unique<DdsRecorder>(configuration, initial_state);
