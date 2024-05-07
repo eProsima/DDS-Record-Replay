@@ -19,25 +19,16 @@
 #define MCAP_IMPLEMENTATION  // Define this in exactly one .cpp file
 
 #include <algorithm>
-#include <cstdio>
-#include <filesystem>
-#include <vector>
 
 #include <mcap/reader.hpp>
-
 #include <yaml-cpp/yaml.h>
 
-#include <cpp_utils/exception/InitializationException.hpp>
+#include <fastrtps/types/TypeObjectFactory.h>
+
 #include <cpp_utils/exception/InconsistencyException.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/utils.hpp>
 #include <cpp_utils/ros2_mangling.hpp>
-
-#include <fastdds/dds/topic/TypeSupport.hpp>
-#include <fastdds/rtps/common/CDRMessage_t.h>
-#include <fastdds/rtps/common/SerializedPayload.h>
-#include <fastrtps/types/DynamicType.h>
-#include <fastrtps/types/TypeObjectFactory.h>
 
 #include <ddspipe_core/types/dynamic_types/schema.hpp>
 
@@ -56,6 +47,7 @@
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapMessage.hpp>
+#include <ddsrecorder_participants/recorder/output/Serializer.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -163,14 +155,7 @@ void McapHandler::add_schema(
 
     if (configuration_.record_types)
     {
-        // Store dynamic type in dynamic_types collection
-        store_dynamic_type_(type_name, dynamic_types_);
-
-        // Serialize dynamic types collection
-        const auto serialized_dynamic_types = serialize_dynamic_types_(dynamic_types_);
-
-        // Recalculate the attachment
-        mcap_writer_.update_dynamic_types(*serialized_dynamic_types);
+        mcap_writer_.update_dynamic_types(*Serializer::serialize(&dynamic_types_));
     }
 
     // Check if there are any pending samples for this new schema. If so, add them.
@@ -801,7 +786,7 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
 
     // Create new channel
     mcap::KeyValueMap metadata = {};
-    metadata[QOS_SERIALIZATION_QOS] = serialize_qos_(topic.topic_qos);
+    metadata[QOS_SERIALIZATION_QOS] = Serializer::serialize(topic.topic_qos);
     std::string topic_name =
             configuration_.ros2_types ? utils::demangle_if_ros_topic(topic.m_topic_name) : topic.m_topic_name;
     // Set ROS2_TYPES to "false" if the given topic_name is equal to topic.m_topic_name, otherwise set it to "true".
@@ -934,192 +919,11 @@ void McapHandler::store_dynamic_type_(
     {
         DynamicType dynamic_type;
         dynamic_type.type_name(type_name);
-        dynamic_type.type_information(utils::base64_encode(serialize_type_identifier_(type_identifier)));
-        dynamic_type.type_object(utils::base64_encode(serialize_type_object_(type_object)));
+        dynamic_type.type_information(utils::base64_encode(Serializer::serialize(*type_identifier)));
+        dynamic_type.type_object(utils::base64_encode(Serializer::serialize(*type_object)));
 
         dynamic_types.dynamic_types().push_back(dynamic_type);
     }
-}
-
-fastrtps::rtps::SerializedPayload_t* McapHandler::serialize_dynamic_types_(
-        DynamicTypesCollection& dynamic_types) const
-{
-    // Serialize dynamic types collection using CDR
-    eprosima::fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
-    fastrtps::rtps::SerializedPayload_t* serialized_payload = new fastrtps::rtps::SerializedPayload_t(
-        type_support.get_serialized_size_provider(&dynamic_types)());
-    type_support.serialize(&dynamic_types, serialized_payload);
-
-    return serialized_payload;
-}
-
-std::string McapHandler::serialize_qos_(
-        const TopicQoS& qos)
-{
-    // TODO: Reuse code from ddspipe_yaml
-
-    YAML::Node qos_yaml;
-
-    // Reliability tag
-    YAML::Node reliability_tag = qos_yaml[QOS_SERIALIZATION_RELIABILITY];
-    if (qos.is_reliable())
-    {
-        reliability_tag = true;
-    }
-    else
-    {
-        reliability_tag = false;
-    }
-
-    // Durability tag
-    YAML::Node durability_tag = qos_yaml[QOS_SERIALIZATION_DURABILITY];
-    if (qos.is_transient_local())
-    {
-        durability_tag = true;
-    }
-    else
-    {
-        durability_tag = false;
-    }
-
-    // Ownership tag
-    YAML::Node ownership_tag = qos_yaml[QOS_SERIALIZATION_OWNERSHIP];
-    if (qos.has_ownership())
-    {
-        ownership_tag = true;
-    }
-    else
-    {
-        ownership_tag = false;
-    }
-
-    // Keyed tag
-    YAML::Node keyed_tag = qos_yaml[QOS_SERIALIZATION_KEYED];
-    if (qos.keyed)
-    {
-        keyed_tag = true;
-    }
-    else
-    {
-        keyed_tag = false;
-    }
-
-    return YAML::Dump(qos_yaml);
-}
-
-std::string McapHandler::serialize_type_identifier_(
-        const eprosima::fastrtps::types::TypeIdentifier* type_identifier)
-{
-    // Reserve payload and create buffer
-    size_t size = fastrtps::types::TypeIdentifier::getCdrSerializedSize(*type_identifier) +
-            eprosima::fastrtps::rtps::SerializedPayload_t::representation_header_size;
-    fastrtps::rtps::SerializedPayload_t payload(static_cast<uint32_t>(size));
-    eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
-
-    // Create CDR serializer
-    #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN, eprosima::fastcdr::Cdr::DDS_CDR);
-    #else
-    eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN,
-            eprosima::fastcdr::CdrVersion::XCDRv1);
-    #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-
-    payload.encapsulation = ser.endianness() == eprosima::fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
-
-    // Serialize
-    type_identifier->serialize(ser);
-#if FASTCDR_VERSION_MAJOR == 1
-    payload.length = (uint32_t)ser.getSerializedDataLength();
-    size = (ser.getSerializedDataLength() + 3) & ~3;
-#else
-    payload.length = (uint32_t)ser.get_serialized_data_length();
-    size = (ser.get_serialized_data_length() + 3) & ~3;
-#endif // if FASTCDR_VERSION_MAJOR == 1
-
-    // Create CDR message
-    // NOTE: Use 0 length to avoid allocation (memory already reserved in payload creation)
-    eprosima::fastrtps::rtps::CDRMessage_t* cdr_message = new eprosima::fastrtps::rtps::CDRMessage_t(0);
-    cdr_message->buffer = payload.data;
-    cdr_message->max_size = payload.max_size;
-    cdr_message->length = payload.length;
-#if __BIG_ENDIAN__
-    cdr_message->msg_endian = eprosima::fastrtps::rtps::BIGEND;
-#else
-    cdr_message->msg_endian = eprosima::fastrtps::rtps::LITTLEEND;
-#endif // if __BIG_ENDIAN__
-
-    // Add data
-    bool valid = fastrtps::rtps::CDRMessage::addData(cdr_message, payload.data, payload.length);
-    for (uint32_t count = payload.length; count < size; ++count)
-    {
-        valid &= fastrtps::rtps::CDRMessage::addOctet(cdr_message, 0);
-    }
-    // Copy buffer to string
-    std::string typeid_str(reinterpret_cast<char const*>(cdr_message->buffer), size);
-
-    // Delete CDR message
-    // NOTE: set wraps attribute to avoid double free (buffer released by payload on destruction)
-    cdr_message->wraps = true;
-    delete cdr_message;
-
-    return typeid_str;
-}
-
-std::string McapHandler::serialize_type_object_(
-        const eprosima::fastrtps::types::TypeObject* type_object)
-{
-    // Reserve payload and create buffer
-    size_t size = fastrtps::types::TypeObject::getCdrSerializedSize(*type_object) +
-            eprosima::fastrtps::rtps::SerializedPayload_t::representation_header_size;
-    fastrtps::rtps::SerializedPayload_t payload(static_cast<uint32_t>(size));
-    eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
-
-    // Create CDR serializer
-    #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN, eprosima::fastcdr::Cdr::DDS_CDR);
-    #else
-    eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN,
-            eprosima::fastcdr::CdrVersion::XCDRv1);
-    #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    payload.encapsulation = ser.endianness() == eprosima::fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
-
-    // Serialize
-    type_object->serialize(ser);
-#if FASTCDR_VERSION_MAJOR == 1
-    payload.length = (uint32_t)ser.getSerializedDataLength();
-    size = (ser.getSerializedDataLength() + 3) & ~3;
-#else
-    payload.length = (uint32_t)ser.get_serialized_data_length();
-    size = (ser.get_serialized_data_length() + 3) & ~3;
-#endif // if FASTCDR_VERSION_MAJOR == 1
-
-    // Create CDR message
-    // NOTE: Use 0 length to avoid allocation (memory already reserved in payload creation)
-    eprosima::fastrtps::rtps::CDRMessage_t* cdr_message = new eprosima::fastrtps::rtps::CDRMessage_t(0);
-    cdr_message->buffer = payload.data;
-    cdr_message->max_size = payload.max_size;
-    cdr_message->length = payload.length;
-#if __BIG_ENDIAN__
-    cdr_message->msg_endian = eprosima::fastrtps::rtps::BIGEND;
-#else
-    cdr_message->msg_endian = eprosima::fastrtps::rtps::LITTLEEND;
-#endif // if __BIG_ENDIAN__
-
-    // Add data
-    bool valid = fastrtps::rtps::CDRMessage::addData(cdr_message, payload.data, payload.length);
-    for (uint32_t count = payload.length; count < size; ++count)
-    {
-        valid &= fastrtps::rtps::CDRMessage::addOctet(cdr_message, 0);
-    }
-    // Copy buffer to string
-    std::string typeobj_str(reinterpret_cast<char const*>(cdr_message->buffer), size);
-
-    // Delete CDR message
-    // NOTE: set wraps attribute to avoid double free (buffer released by payload on destruction)
-    cdr_message->wraps = true;
-    delete cdr_message;
-
-    return typeobj_str;
 }
 
 } /* namespace participants */
