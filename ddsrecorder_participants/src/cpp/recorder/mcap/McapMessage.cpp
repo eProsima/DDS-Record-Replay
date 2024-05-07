@@ -13,20 +13,20 @@
 // limitations under the License.
 
 /**
- * @file Message.cpp
+ * @file McapMessage.cpp
  */
 
 #include <fastdds/rtps/history/IPayloadPool.h>
 
-#include <ddsrecorder_participants/recorder/mcap/Message.hpp>
+#include <ddsrecorder_participants/recorder/mcap/McapMessage.hpp>
 
 
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
 
-Message::Message(
-        const Message& msg)
+McapMessage::McapMessage(
+        const McapMessage& msg)
     : mcap::Message(msg)
 {
     auto ipayload_owner = const_cast<fastrtps::rtps::IPayloadPool*>(
@@ -39,7 +39,7 @@ Message::Message(
         this->payload);
 }
 
-Message::~Message()
+McapMessage::~McapMessage()
 {
     // If payload owner exists and payload has size, release it correctly in pool
     if (payload_owner && payload.length > 0)

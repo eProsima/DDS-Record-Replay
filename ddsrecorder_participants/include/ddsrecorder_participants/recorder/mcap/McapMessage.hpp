@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * @file McapFileTracker.hpp
+ * @file McapMessage.hpp
  */
 
 #pragma once
@@ -30,9 +30,9 @@ namespace participants {
 /**
  * Structure extending \c mcap::Message with Fast DDS payload and its owner (a \c PayloadPool).
  */
-struct Message : public mcap::Message
+struct McapMessage : public mcap::Message
 {
-    Message() = default;
+    McapMessage() = default;
 
     /**
      * Message copy constructor
@@ -43,8 +43,8 @@ struct Message : public mcap::Message
      * free the newly constructed sample (payload's data attribute), thus rendering the latter useless.
      *
      */
-    Message(
-            const Message& msg);
+    McapMessage(
+            const McapMessage& msg);
 
     /**
      * Message destructor
@@ -55,7 +55,7 @@ struct Message : public mcap::Message
      * the situation described in copy constructor's note.
      *
      */
-    ~Message();
+    ~McapMessage();
 
     //! Serialized payload
     ddspipe::core::types::Payload payload{};

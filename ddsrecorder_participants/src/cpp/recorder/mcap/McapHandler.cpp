@@ -55,6 +55,7 @@
 
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
+#include <ddsrecorder_participants/recorder/mcap/McapMessage.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -191,7 +192,7 @@ void McapHandler::add_data(
         "Adding data in topic " << topic);
 
     // Add data to channel
-    Message msg;
+    McapMessage msg;
     msg.sequence = unique_sequence_number_++;
     msg.publishTime = fastdds_timestamp_to_mcap_timestamp(data.source_timestamp);
     if (configuration_.log_publishTime)
@@ -475,7 +476,7 @@ mcap::Timestamp McapHandler::now()
 }
 
 void McapHandler::add_data_nts_(
-        const Message& msg,
+        const McapMessage& msg,
         bool direct_write /* false */)
 {
     if (direct_write)
@@ -496,7 +497,7 @@ void McapHandler::add_data_nts_(
 }
 
 void McapHandler::add_data_nts_(
-        Message& msg,
+        McapMessage& msg,
         const DdsTopic& topic,
         bool direct_write /* false */)
 {
@@ -516,7 +517,7 @@ void McapHandler::add_data_nts_(
 }
 
 void McapHandler::add_to_pending_nts_(
-        Message& msg,
+        McapMessage& msg,
         const DdsTopic& topic)
 {
     assert(configuration_.max_pending_samples != 0);

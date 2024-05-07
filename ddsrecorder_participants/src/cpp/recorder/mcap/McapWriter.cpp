@@ -28,6 +28,7 @@
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/utils.hpp>
 
+#include <ddsrecorder_participants/recorder/mcap/McapMessage.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
 #include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
 #include <ddsrecorder_participants/recorder/output/FullDiskException.hpp>
@@ -244,7 +245,7 @@ void McapWriter::write_nts_(
 
 template <>
 void McapWriter::write_nts_(
-        const Message& msg)
+        const McapMessage& msg)
 {
     if (!enabled_)
     {

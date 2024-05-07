@@ -41,8 +41,8 @@
 
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
+#include <ddsrecorder_participants/recorder/mcap/McapMessage.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
-#include <ddsrecorder_participants/recorder/mcap/Message.hpp>
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 
 #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
@@ -73,7 +73,7 @@ class McapHandler : public ddspipe::participants::ISchemaHandler
 {
 public:
 
-    using pending_list = std::list<std::pair<ddspipe::core::types::DdsTopic, Message>>;
+    using pending_list = std::list<std::pair<ddspipe::core::types::DdsTopic, McapMessage>>;
 
     /**
      * McapHandler constructor by required values.
@@ -133,7 +133,7 @@ public:
      * If instance is STOPPED, received data is not processed.
      *
      * @param [in] topic DDS topic associated to this sample.
-     * @param [in] data Message to be added.
+     * @param [in] data McapMessage to be added.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void add_data(
@@ -242,11 +242,11 @@ protected:
      * If after adding the new sample (when not directly writing to file) the buffer reaches its maximum size, the
      * content is dumped to disk.
      *
-     * @param [in] msg Message to be added
+     * @param [in] msg McapMessage to be added
      * @param [in] direct_write Whether to directly store in MCAP file
      */
     void add_data_nts_(
-            const Message& msg,
+            const McapMessage& msg,
             bool direct_write = false);
 
     /**
@@ -255,12 +255,12 @@ protected:
      * First, it is attempted to get a channel given \c topic to be associated with the message.
      * If this fails, the sample is not added.
      *
-     * @param [in] msg Message to be added
+     * @param [in] msg McapMessage to be added
      * @param [in] topic Topic of message to be added
      * @param [in] direct_write Whether to directly store in MCAP file
      */
     void add_data_nts_(
-            Message& msg,
+            McapMessage& msg,
             const ddspipe::core::types::DdsTopic& topic,
             bool direct_write = false);
 
@@ -269,11 +269,11 @@ protected:
      *
      * If pending samples collection is full, the oldest message is popped and written (if only_with_schema not true).
      *
-     * @param [in] msg Message to be added
+     * @param [in] msg McapMessage to be added
      * @param [in] topic Topic of message to be added
      */
     void add_to_pending_nts_(
-            Message& msg,
+            McapMessage& msg,
             const ddspipe::core::types::DdsTopic& topic);
 
     /**
@@ -465,7 +465,7 @@ protected:
     std::map<ddspipe::core::types::DdsTopic, mcap::Channel> channels_;
 
     //! Samples buffer
-    std::list<Message> samples_buffer_;
+    std::list<McapMessage> samples_buffer_;
 
     //! Dynamic types collection
     DynamicTypesCollection dynamic_types_;
