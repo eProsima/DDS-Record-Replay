@@ -28,10 +28,10 @@
 
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/library/library_dll.h>
+#include <ddsrecorder_participants/recorder/exceptions/FullFileException.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapSizeTracker.hpp>
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
-#include <ddsrecorder_participants/recorder/output/FullFileException.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {

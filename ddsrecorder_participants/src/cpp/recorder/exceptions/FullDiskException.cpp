@@ -16,7 +16,7 @@
  * @file FullDiskException.cpp
  */
 
-#include <ddsrecorder_participants/recorder/output/FullDiskException.hpp>
+#include <ddsrecorder_participants/recorder/exceptions/FullDiskException.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {

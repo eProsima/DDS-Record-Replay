@@ -25,8 +25,8 @@
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/utils.hpp>
 
+#include <ddsrecorder_participants/recorder/exceptions/FullDiskException.hpp>
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
-#include <ddsrecorder_participants/recorder/output/FullDiskException.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
