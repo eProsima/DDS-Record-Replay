@@ -160,13 +160,6 @@ void McapWriter::open_new_file_nts_(
                     "size (" + utils::from_bytes(configuration_.max_file_size) + ").");
     }
 
-    // Calculate the maximum size of the file
-    const auto max_file_size = std::min(
-        configuration_.max_file_size,
-        configuration_.max_size - file_tracker_->get_total_size());
-
-    size_tracker_.init(max_file_size, configuration_.safety_margin);
-
     const auto filename = file_tracker_->get_current_filename();
     const auto status = writer_.open(filename, mcap_configuration_);
 
@@ -177,6 +170,13 @@ void McapWriter::open_new_file_nts_(
         logError(DDSRECORDER_MCAP_WRITER, "FAIL_MCAP_OPEN | " << error_msg);
         throw utils::InitializationException(error_msg);
     }
+
+    // Set the file's maximum size
+    const auto max_file_size = std::min(
+        configuration_.max_file_size,
+        configuration_.max_size - file_tracker_->get_total_size());
+
+    size_tracker_.init(max_file_size, configuration_.safety_margin);
 
     // NOTE: These writes should never fail since the minimum size accounts for them.
     write_metadata_nts_();
@@ -339,7 +339,7 @@ void McapWriter::write_metadata_nts_()
 
     // Write down the metadata with the version
     metadata.name = VERSION_METADATA_NAME;
-    metadata.metadata[VERSION_METADATA_NAME] = DDSRECORDER_PARTICIPANTS_VERSION_STRING;
+    metadata.metadata[VERSION_METADATA_RELEASE] = DDSRECORDER_PARTICIPANTS_VERSION_STRING;
     metadata.metadata[VERSION_METADATA_COMMIT] = DDSRECORDER_PARTICIPANTS_COMMIT_HASH;
 
     write_nts_(metadata);

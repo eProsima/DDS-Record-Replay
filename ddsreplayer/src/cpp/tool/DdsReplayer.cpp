@@ -255,8 +255,8 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
     if (recording_version != DDSRECORDER_PARTICIPANTS_VERSION_STRING)
     {
         logWarning(DDSREPLAYER_REPLAYER,
-                "MCAP file generated with a different DDS Record & Replay version (" << recording_version << ", current is " << DDSRECORDER_PARTICIPANTS_VERSION_STRING <<
-                "), incompatibilities might arise...");
+                "MCAP file generated with a different DDS Record & Replay version (" << recording_version <<
+                ", current is " << DDSRECORDER_PARTICIPANTS_VERSION_STRING << "), incompatibilities might arise...");
     }
 
     // Fetch dynamic types attachment
