@@ -16,7 +16,7 @@
  * @file FullFileException.cpp
  */
 
-#include <ddsrecorder_participants/recorder/output/FullFileException.hpp>
+#include <ddsrecorder_participants/recorder/exceptions/FullFileException.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
