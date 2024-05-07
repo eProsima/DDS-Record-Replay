@@ -19,20 +19,18 @@
 #pragma once
 
 #include <condition_variable>
-#include <cstdint>
 #include <functional>
 #include <list>
 #include <map>
-#include <stdexcept>
 #include <thread>
 
 #include <mcap/mcap.hpp>
 
-#include <cpp_utils/macros/custom_enumeration.hpp>
-#include <cpp_utils/time/time_utils.hpp>
-
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
+
+#include <cpp_utils/macros/custom_enumeration.hpp>
+#include <cpp_utils/time/time_utils.hpp>
 
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
 #include <ddspipe_core/types/data/RtpsPayloadData.hpp>
@@ -409,42 +407,6 @@ protected:
             const fastdds::dds::xtypes::TypeObject& type_object,
             const std::string& type_name,
             DynamicTypesCollection& dynamic_types) const;
-
-    /**
-     * @brief Serialize given \c DynamicTypesCollection into a \c SerializedPayload .
-     *
-     * @param [in] dynamic_types Dynamic types collection to be serialized.
-     * @return Serialized payload for the given dynamic types collection.
-     */
-    fastdds::rtps::SerializedPayload_t* serialize_dynamic_types_(
-            DynamicTypesCollection& dynamic_types) const;
-
-    /**
-     * @brief Serialize a \c TopicQoS struct into a string.
-     *
-     * @param [in] qos TopicQoS to be serialized
-     * @return Serialized TopicQoS string
-     */
-    static std::string serialize_qos_(
-            const ddspipe::core::types::TopicQoS& qos);
-
-    /**
-     * @brief Serialize a \c TypeIdentifier into a string.
-     *
-     * @param [in] type_identifier TypeIdentifier to be serialized
-     * @return Serialized TypeIdentifier string
-     */
-    static std::string serialize_type_identifier_(
-            const fastdds::dds::xtypes::TypeIdentifier& type_identifier);
-
-    /**
-     * @brief Serialize a \c TypeObject into a string.
-     *
-     * @param [in] type_object TypeObject to be serialized
-     * @return Serialized TypeObject string
-     */
-    static std::string serialize_type_object_(
-            const fastdds::dds::xtypes::TypeObject& type_object);
 
     //! Handler configuration
     McapHandlerConfiguration configuration_;
