@@ -28,11 +28,11 @@
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/utils.hpp>
 
+#include <ddsrecorder_participants/recorder/exceptions/FullDiskException.hpp>
+#include <ddsrecorder_participants/recorder/exceptions/FullFileException.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapMessage.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
 #include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
-#include <ddsrecorder_participants/recorder/output/FullDiskException.hpp>
-#include <ddsrecorder_participants/recorder/output/FullFileException.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {

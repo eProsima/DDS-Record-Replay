@@ -18,9 +18,9 @@
 
 #include <cpp_utils/Log.hpp>
 
+#include <ddsrecorder_participants/recorder/exceptions/FullDiskException.hpp>
+#include <ddsrecorder_participants/recorder/exceptions/FullFileException.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
-#include <ddsrecorder_participants/recorder/output/FullDiskException.hpp>
-#include <ddsrecorder_participants/recorder/output/FullFileException.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
