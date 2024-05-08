@@ -39,8 +39,6 @@ DdsRecorder::DdsRecorder(
     : configuration_(configuration)
 {
     load_internal_topics_(configuration_);
-
-    std::cout << "Creating the ddsrecorder!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
     // Create Discovery Database
     discovery_database_ = std::make_shared<DiscoveryDatabase>();
 
