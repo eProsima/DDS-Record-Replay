@@ -32,6 +32,7 @@
 #include <ddsrecorder_participants/recorder/exceptions/FullFileException.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapMessage.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
+#include <ddsrecorder_participants/recorder/mcap/utils.hpp>
 #include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
 
 namespace eprosima {
@@ -333,9 +334,7 @@ void McapWriter::write_attachment_nts_()
     attachment.name = DYNAMIC_TYPES_ATTACHMENT_NAME;
     attachment.data = reinterpret_cast<std::byte*>(dynamic_types_payload_->data);
     attachment.dataSize = dynamic_types_payload_->length;
-    attachment.createTime =
-            mcap::Timestamp(std::chrono::duration_cast<std::chrono::nanoseconds>(
-                        utils::now().time_since_epoch()).count());
+    attachment.createTime = to_mcap_timestamp(utils::now());
 
     write_nts_(attachment);
 }
