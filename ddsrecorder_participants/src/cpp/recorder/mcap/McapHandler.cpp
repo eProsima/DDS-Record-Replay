@@ -35,6 +35,7 @@
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapMessage.hpp>
+#include <ddsrecorder_participants/recorder/mcap/utils.hpp>
 #include <ddsrecorder_participants/recorder/output/Serializer.hpp>
 
 namespace eprosima {
@@ -186,14 +187,14 @@ void McapHandler::add_data(
     // Add data to channel
     McapMessage msg;
     msg.sequence = unique_sequence_number_++;
-    msg.publishTime = fastdds_timestamp_to_mcap_timestamp(data.source_timestamp);
+    msg.publishTime = to_mcap_timestamp(data.source_timestamp);
     if (configuration_.log_publishTime)
     {
         msg.logTime = msg.publishTime;
     }
     else
     {
-        msg.logTime = now();
+        msg.logTime = to_mcap_timestamp(utils::now());
     }
     msg.dataSize = data.payload.length;
 
@@ -443,25 +444,6 @@ void McapHandler::trigger_event()
     }
 }
 
-mcap::Timestamp McapHandler::fastdds_timestamp_to_mcap_timestamp(
-        const DataTime& time)
-{
-    std::uint64_t mcap_time = time.seconds();
-    mcap_time *= 1000000000;
-    return mcap_time + time.nanosec();
-}
-
-mcap::Timestamp McapHandler::std_timepoint_to_mcap_timestamp(
-        const utils::Timestamp& time)
-{
-    return mcap::Timestamp(std::chrono::duration_cast<std::chrono::nanoseconds>(time.time_since_epoch()).count());
-}
-
-mcap::Timestamp McapHandler::now()
-{
-    return std_timepoint_to_mcap_timestamp(utils::now());
-}
-
 void McapHandler::add_data_nts_(
         const McapMessage& msg,
         bool direct_write /* false */)
@@ -691,7 +673,8 @@ void McapHandler::remove_outdated_samples_nts_()
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "MCAP_STATE | Removing outdated samples.");
 
-    auto threshold = std_timepoint_to_mcap_timestamp(utils::now() - std::chrono::seconds(configuration_.event_window));
+    const auto threshold = to_mcap_timestamp(utils::now() - std::chrono::seconds(configuration_.event_window));
+
     samples_buffer_.remove_if([&](auto& sample)
             {
                 return sample.logTime < threshold;
