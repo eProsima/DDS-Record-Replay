@@ -1,0 +1,3 @@
+[submodule "DDS-Pipe"]
+	path = DDS-Pipe
+	url = https://github.com/Ryan-Red/DDS-Pipe.git
