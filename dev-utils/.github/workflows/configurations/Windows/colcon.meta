@@ -1,0 +1,15 @@
+{
+    "names":
+    {
+        "cpp_utils":
+        {
+            "cmake-args":
+            [
+                "-DCMAKE_CXX_FLAGS='/WX /EHsc'",
+                "-DCMAKE_SYSTEM_VERSION=10.0.19041.0",
+                "-Ax64",
+                "-T host=x64"
+            ]
+        }
+    }
+}
