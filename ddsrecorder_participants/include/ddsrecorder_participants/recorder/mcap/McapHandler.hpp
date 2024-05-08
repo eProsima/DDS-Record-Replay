@@ -29,7 +29,6 @@
 #include <fastrtps/types/DynamicType.h>
 
 #include <cpp_utils/macros/custom_enumeration.hpp>
-#include <cpp_utils/time/time_utils.hpp>
 
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
 #include <ddspipe_core/types/data/RtpsPayloadData.hpp>
@@ -198,34 +197,6 @@ public:
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void trigger_event();
-
-    /**
-     * @brief This method converts a timestamp in Fast DDS format to its mcap equivalent.
-     *
-     * @param [in] time Timestamp to be converted
-     * @return Timestamp in mcap format
-     */
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    static mcap::Timestamp fastdds_timestamp_to_mcap_timestamp(
-            const ddspipe::core::types::DataTime& time);
-
-    /**
-     * @brief This method converts a timestamp in standard format to its mcap equivalent.
-     *
-     * @param [in] time Timestamp to be converted
-     * @return Timestamp in mcap format
-     */
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    static mcap::Timestamp std_timepoint_to_mcap_timestamp(
-            const utils::Timestamp& time);
-
-    /**
-     * @brief Get current time point in mcap format.
-     *
-     * @return Current time in mcap format
-     */
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    static mcap::Timestamp now();
 
 protected:
 
