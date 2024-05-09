@@ -30,7 +30,7 @@
 
 #include <ddsrecorder_participants/recorder/exceptions/FullDiskException.hpp>
 #include <ddsrecorder_participants/recorder/exceptions/FullFileException.hpp>
-#include <ddsrecorder_participants/recorder/mcap/McapMessage.hpp>
+#include <ddsrecorder_participants/recorder/message/McapMessage.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
 #include <ddsrecorder_participants/recorder/mcap/utils.hpp>
 #include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>

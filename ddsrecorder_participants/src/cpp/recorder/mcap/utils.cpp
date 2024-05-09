@@ -27,7 +27,7 @@ namespace ddsrecorder {
 namespace participants {
 
 mcap::Timestamp to_mcap_timestamp(
-        const fastrtps::rtps::Time_t& time)
+        const fastdds::rtps::Time_t& time)
 {
     static constexpr std::uint64_t NS_PER_SEC = 1000000000;
     return time.seconds() * NS_PER_SEC + time.nanosec();

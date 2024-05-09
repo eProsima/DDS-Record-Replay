@@ -40,7 +40,7 @@ namespace participants {
  */
 DDSRECORDER_PARTICIPANTS_DllAPI
 mcap::Timestamp to_mcap_timestamp(
-        const fastrtps::rtps::Time_t& time);
+        const fastdds::rtps::Time_t& time);
 
 /**
  * @brief This method converts a timestamp in standard format to its mcap equivalent.

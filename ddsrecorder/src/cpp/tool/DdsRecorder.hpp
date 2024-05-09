@@ -34,6 +34,7 @@
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
 #include <ddsrecorder_participants/recorder/monitoring/DdsRecorderMonitor.hpp>
+#include <ddsrecorder_participants/recorder/output/BaseHandler.hpp>
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
@@ -131,7 +132,7 @@ protected:
     void load_internal_topics_(
             yaml::RecorderConfiguration& configuration);
 
-    static participants::McapHandlerStateCode recorder_to_handler_state_(
+    static participants::BaseHandlerStateCode recorder_to_handler_state_(
             const DdsRecorderStateCode& recorder_state);
 
     //! Configuration of the DDS Recorder
