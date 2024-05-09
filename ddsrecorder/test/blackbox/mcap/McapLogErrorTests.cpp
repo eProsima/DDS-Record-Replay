@@ -68,8 +68,8 @@ TEST(McapLogErrorTests, fail_to_open_file) {
         );
 
     std::shared_ptr<eprosima::ddspipe::core::PayloadPool> payload_pool;
-    eprosima::ddsrecorder::participants::McapHandlerStateCode init_state =
-            eprosima::ddsrecorder::participants::McapHandlerStateCode::RUNNING;
+    eprosima::ddsrecorder::participants::BaseHandlerStateCode init_state =
+            eprosima::ddsrecorder::participants::BaseHandlerStateCode::RUNNING;
 
     // Create the McapWriter
     auto file_tracker = std::make_shared<eprosima::ddsrecorder::participants::FileTracker>(config.output_settings);
