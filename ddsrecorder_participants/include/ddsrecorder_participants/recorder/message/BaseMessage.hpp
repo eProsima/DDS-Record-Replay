@@ -13,55 +13,93 @@
 // limitations under the License.
 
 /**
- * @file McapMessage.hpp
+ * @file BaseMessage.hpp
  */
 
 #pragma once
 
-#include <mcap/types.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
 
+#include <ddspipe_core/types/data/RtpsPayloadData.hpp>
 #include <ddspipe_core/types/dds/Payload.hpp>
+#include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
+
 
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
 
 /**
- * Structure extending \c mcap::Message with Fast DDS payload and its owner (a \c PayloadPool).
+ * Structure implementing a DDS Message with a Fast-DDS payload and its owner (a \c PayloadPool).
  */
-struct McapMessage : public mcap::Message
+struct BaseMessage
 {
-    McapMessage() = default;
+    BaseMessage() = default;
 
     /**
-     * Message copy constructor
+     * @brief TODO
+     */
+    BaseMessage(
+            const ddspipe::core::types::Payload& payload,
+            ddspipe::core::PayloadPool* payload_owner);
+
+    /**
+     * @brief TODO
+     */
+    BaseMessage(
+            const ddspipe::core::types::RtpsPayloadData& data,
+            std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
+            const ddspipe::core::types::DdsTopic& topic,
+            const bool log_publish_time);
+
+    /**
+     * @brief Message copy constructor
      *
      * Copy message without copying payload through PayloadPool API (copy reference and increment counter).
      *
      * @note If using instead the default destructor and copy constructor, the destruction of the copied message would
      * free the newly constructed sample (payload's data attribute), thus rendering the latter useless.
-     *
      */
-    McapMessage(
-            const McapMessage& msg);
+    BaseMessage(
+            const BaseMessage& msg);
 
     /**
-     * Message destructor
+     * @brief Message destructor
      *
      * Releases internal payload, decrementing its reference count and freeing only when no longer referenced.
      *
      * @note Releasing the payload correctly sets payload's internal data attribute to \c nullptr , which eludes
      * the situation described in copy constructor's note.
-     *
      */
-    ~McapMessage();
+    virtual ~BaseMessage();
+
+    /**
+     * @brief Get the message's payload data
+     */
+    std::byte* get_data() const;
+
+    /**
+     * @brief Get the message's payload size
+     */
+    std::uint32_t get_data_size() const;
 
     //! Serialized payload
     ddspipe::core::types::Payload payload{};
 
     //! Payload owner (reference to \c PayloadPool which created/reserved it)
     ddspipe::core::PayloadPool* payload_owner{nullptr};
+
+    //! Topic in which the payload was published
+    ddspipe::core::types::DdsTopic topic;
+
+    //! When the message was recorded or received for recording
+    ddspipe::core::types::DataTime log_time;
+
+    //! When the message was initially published
+    ddspipe::core::types::DataTime publish_time;
 };
 
 } /* namespace participants */

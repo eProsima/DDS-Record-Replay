@@ -16,36 +16,33 @@
  * @file McapMessage.cpp
  */
 
-#include <fastdds/rtps/history/IPayloadPool.h>
-
-#include <ddsrecorder_participants/recorder/mcap/McapMessage.hpp>
+#include <ddsrecorder_participants/recorder/mcap/utils.hpp>
+#include <ddsrecorder_participants/recorder/message/McapMessage.hpp>
 
 
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
 
+std::atomic<std::uint32_t> McapMessage::number_of_msgs = 0;
+
 McapMessage::McapMessage(
-        const McapMessage& msg)
-    : mcap::Message(msg)
+    const ddspipe::core::types::RtpsPayloadData& data,
+    std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
+    const ddspipe::core::types::DdsTopic& topic,
+    const mcap::ChannelId channel_id,
+    const bool log_publish_time)
+    : BaseMessage(data, payload_pool, topic, log_publish_time)
+    , mcap::Message()
 {
-    auto ipayload_owner = const_cast<fastrtps::rtps::IPayloadPool*>(
-        static_cast<fastrtps::rtps::IPayloadPool*>(msg.payload_owner));
+    sequence = number_of_msgs.fetch_add(1);
+    channelId = channel_id;
 
-    payload_owner = msg.payload_owner;
-    payload_owner->get_payload(
-        msg.payload,
-        ipayload_owner,
-        this->payload);
-}
+    this->data = get_data();
+    dataSize = get_data_size();
 
-McapMessage::~McapMessage()
-{
-    // If payload owner exists and payload has size, release it correctly in pool
-    if (payload_owner && payload.length > 0)
-    {
-        payload_owner->release_payload(payload);
-    }
+    publishTime = to_mcap_timestamp(publish_time);
+    logTime = to_mcap_timestamp(log_time);
 }
 
 } /* namespace participants */

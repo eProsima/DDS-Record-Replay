@@ -239,26 +239,26 @@ void DdsRecorder::load_internal_topics_(
     }
 }
 
-participants::McapHandlerStateCode DdsRecorder::recorder_to_handler_state_(
+participants::BaseHandlerStateCode DdsRecorder::recorder_to_handler_state_(
         const DdsRecorderStateCode& recorder_state)
 {
     switch (recorder_state)
     {
         case DdsRecorderStateCode::RUNNING:
-            return participants::McapHandlerStateCode::RUNNING;
+            return participants::BaseHandlerStateCode::RUNNING;
 
         case DdsRecorderStateCode::PAUSED:
-            return participants::McapHandlerStateCode::PAUSED;
+            return participants::BaseHandlerStateCode::PAUSED;
 
         case DdsRecorderStateCode::STOPPED:
         case DdsRecorderStateCode::SUSPENDED:
-            return participants::McapHandlerStateCode::STOPPED;
+            return participants::BaseHandlerStateCode::STOPPED;
 
         default:
             // Unreachable
             utils::tsnh(
                 utils::Formatter() << "Trying to convert to McapHandler state an invalid DdsRecorder state.");
-            return participants::McapHandlerStateCode::STOPPED;
+            return participants::BaseHandlerStateCode::STOPPED;
     }
 }
 
