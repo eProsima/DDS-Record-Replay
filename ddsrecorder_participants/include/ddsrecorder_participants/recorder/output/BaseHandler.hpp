@@ -208,15 +208,15 @@ protected:
             std::unique_lock<std::mutex>& event_lock);
 
     /**
-     * @brief Writes \c samples to disk.
+     * @brief Processes a received sample.
      *
-     * For each sample in \c samples, it writes it to disk and removes it from \c samples.
-     * The method ends when \c samples is empty.
+     * The method is called when a new sample is received.
+     * It either writes the sample directly to disk, adds it to \c samples_buffer or to a pending list, or discards it.
      *
-     * @param [in] samples List of samples to be written.
+     * @param [in] sample Sample to be processed.
      */
-    virtual void write_samples_(
-            std::list<const BaseMessage*>& samples) = 0;
+    void process_new_sample_nts_(
+            std::shared_ptr<const BaseMessage> sample);
 
     /**
      * @brief Adds a sample to \c samples_buffer.
@@ -224,7 +224,7 @@ protected:
      * @param sample Sample to be added.
      */
     void add_sample_to_buffer_nts_(
-            const BaseMessage* sample);
+            std::shared_ptr<const BaseMessage> sample);
 
     /**
      * @brief Adds samples to \c samples_buffer.
@@ -235,7 +235,7 @@ protected:
      * @param [in] samples List of samples to be added.
      */
     void add_samples_to_buffer_nts_(
-            std::list<const BaseMessage*>& samples);
+            std::list<std::shared_ptr<const BaseMessage>>& samples);
 
     /**
      * @brief Adds a sample to \c pending_samples_.
@@ -245,7 +245,7 @@ protected:
      * @param sample Sample to be added.
      */
     void add_sample_to_pending_nts_(
-            const BaseMessage* sample);
+            std::shared_ptr<const BaseMessage> sample);
 
     /**
      * @brief Dumps the pending samples corresponding to \c type_name.
@@ -267,6 +267,17 @@ protected:
             const std::string& type_name);
 
     /**
+     * @brief Writes \c samples to disk.
+     *
+     * For each sample in \c samples, it writes it to disk and removes it from \c samples.
+     * The method ends when \c samples is empty.
+     *
+     * @param [in] samples List of samples to be written.
+     */
+    virtual void write_samples_(
+            std::list<std::shared_ptr<const BaseMessage>>& samples) = 0;
+
+    /**
      * @brief Remove samples older than [now - event_window].
      *
      * This method removes samples older than [now - event_window] from:
@@ -277,7 +288,10 @@ protected:
     void remove_outdated_samples_nts_();
 
     /**
-     * @brief Create a \c DynamicType and insert it into \c dynamic_types_ .
+     * @brief Store a \c DynamicType and its dependencies in \c dynamic_types_.
+     *
+     * It calls \c store_dynamic_type_ with the type identifier and type object of each dependency of \c dynamic_type.
+     * It calls \c store_dynamic_type_ with the type identifier and type object of \c type_name.
      *
      * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
      */
@@ -285,7 +299,7 @@ protected:
             const std::string& type_name);
 
     /**
-     * @brief Create a \c DynamicType and insert it into \c dynamic_types_ .
+     * @brief Create a \c DynamicType and insert it into \c dynamic_types_.
      *
      * @param [in] type_identifier Type identifier to serialize and store.
      * @param [in] type_object Type object to serialize and store.
@@ -329,13 +343,13 @@ protected:
     ///////////////////////
 
     //! Samples buffer
-    std::list<const BaseMessage*> samples_buffer_;
+    std::list<std::shared_ptr<const BaseMessage>> samples_buffer_;
 
     //! Structure where messages (received in RUNNING state) with unknown type are kept
-    std::map<std::string, std::list<const BaseMessage*>> pending_samples_;
+    std::map<std::string, std::list<std::shared_ptr<const BaseMessage>>> pending_samples_;
 
     //! Structure where messages (received in PAUSED state) with unknown type are kept
-    std::map<std::string, std::list<const BaseMessage*>> pending_samples_paused_;
+    std::map<std::string, std::list<std::shared_ptr<const BaseMessage>>> pending_samples_paused_;
 
     //////////////////////////////
     // DYNAMIC TYPES COLLECTION //

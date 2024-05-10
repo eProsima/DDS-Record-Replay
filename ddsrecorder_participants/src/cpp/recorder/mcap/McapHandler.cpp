@@ -90,11 +90,14 @@ void McapHandler::disable()
 void McapHandler::add_schema(
         const fastrtps::types::DynamicType_ptr& dynamic_type)
 {
+    // NOTE: Process schemas even if in STOPPED state to avoid losing them (only sent/received once in discovery)
     std::lock_guard<std::mutex> lock(mtx_);
 
-    // NOTE: Process schemas even if in STOPPED state to avoid losing them (only sent/received once in discovery)
-
-    assert(nullptr != dynamic_type);
+    if (dynamic_type == nullptr)
+    {
+        logWarning(DDSRECORDER_MCAP_HANDLER, "Received nullptr dynamic type. Skipping...");
+        return;
+    }
 
     const std::string type_name = dynamic_type->get_name();
 
@@ -123,8 +126,9 @@ void McapHandler::add_schema(
     }
 
     mcap::Schema new_schema(name, encoding, data);
+    logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << new_schema.name << ".");
 
-    // Add schema to writer and to schemas map
+    // Add schema to writer
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "MCAP_WRITE | Adding schema with name " << type_name << " :\n" << data << "\n");
 
@@ -133,13 +137,17 @@ void McapHandler::add_schema(
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "MCAP_WRITE | Schema created: " << new_schema.name << ".");
 
-    auto it = schemas_.find(type_name);
+    // Update channels previously created with blank schema
+    const auto it = schemas_.find(type_name);
     if (it != schemas_.end())
     {
-        // Update channels previously created with blank schema
         update_channels_nts_(it->second.id, new_schema.id);
     }
+
+    // Store schema
     schemas_[type_name] = std::move(new_schema);
+
+    // Add type to the list of received types
     received_types_.insert(type_name);
 
     if (configuration_.record_types)
@@ -147,10 +155,10 @@ void McapHandler::add_schema(
         mcap_writer_.update_dynamic_types(*Serializer::serialize(&dynamic_types_));
     }
 
-    // Check if there are any pending samples for this new schema. If so, dump them.
-    if ((pending_samples_.find(type_name) != pending_samples_.end()) ||
+    // Check if there are any pending samples for this new type. If so, dump them.
+    if (pending_samples_.find(type_name) != pending_samples_.end() ||
             (state_ == BaseHandlerStateCode::PAUSED &&
-            (pending_samples_paused_.find(type_name) != pending_samples_paused_.end())))
+            pending_samples_paused_.find(type_name) != pending_samples_paused_.end()))
     {
         dump_pending_samples_nts_(type_name);
     }
@@ -161,17 +169,6 @@ void McapHandler::add_data(
         RtpsPayloadData& data)
 {
     std::unique_lock<std::mutex> lock(mtx_);
-
-    if (state_ == BaseHandlerStateCode::STOPPED)
-    {
-        logInfo(DDSRECORDER_MCAP_HANDLER,
-                "FAIL_MCAP_WRITE | Attempting to add sample through a stopped handler, dropping...");
-        return;
-    }
-
-    logInfo(
-        DDSRECORDER_MCAP_HANDLER,
-        "MCAP_WRITE | Adding data in topic " << topic);
 
     // Add channel to data
     mcap::ChannelId channel_id;
@@ -186,60 +183,18 @@ void McapHandler::add_data(
                 "MCAP_WRITE | Error adding message in topic " << topic << ". Error message:\n " << e.what());
     }
 
-    const auto sample = new McapMessage(data, payload_pool_, topic, channel_id, configuration_.log_publishTime);
-
-    if (received_types_.find(topic.type_name) != received_types_.end())
-    {
-        add_sample_to_buffer_nts_(sample);
-        return;
-    }
-
-    switch (state_)
-    {
-        case BaseHandlerStateCode::RUNNING:
-
-            if (configuration_.max_pending_samples != 0)
-            {
-                logInfo(
-                    DDSRECORDER_MCAP_HANDLER,
-                    "MCAP_WRITE | Schema for topic " << topic <<
-                    " not yet available, inserting to pending samples queue.");
-
-                add_sample_to_pending_nts_(sample);
-            }
-            else if (!configuration_.only_with_schema)
-            {
-                // No schema available + no pending samples -> Add to buffer with blank schema
-                add_sample_to_buffer_nts_(sample);
-            }
-            break;
-
-        case BaseHandlerStateCode::PAUSED:
-
-            logInfo(
-                DDSRECORDER_MCAP_HANDLER,
-                "MCAP_WRITE | Schema for topic " << topic <<
-                " not yet available, inserting to (paused) pending samples queue.");
-
-            pending_samples_paused_[topic.type_name].push_back(sample);
-            break;
-
-        default:
-
-            // Should not happen, protected with mutex and state verified at beginning
-            utils::tsnh(utils::Formatter() << "Trying to add sample to a stopped instance.");
-            break;
-    }
+    process_new_sample_nts_(std::make_shared<const McapMessage>(
+            data, payload_pool_, topic, channel_id, configuration_.log_publishTime));
 }
 
 void McapHandler::write_samples_(
-        std::list<const BaseMessage*>& samples)
+        std::list<std::shared_ptr<const BaseMessage>>& samples)
 {
     logInfo(DDSRECORDER_MCAP_HANDLER, "Writing samples to MCAP file.");
 
     while (!samples.empty())
     {
-        const auto mcap_sample = static_cast<const McapMessage*>(samples.front());
+        const auto mcap_sample = static_cast<const McapMessage*>(samples.front().get());
 
         if (mcap_sample == nullptr)
         {

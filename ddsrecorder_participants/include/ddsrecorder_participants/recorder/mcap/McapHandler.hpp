@@ -154,7 +154,7 @@ protected:
      * @param [in] samples List of samples to be written.
      */
     void write_samples_(
-            std::list<const BaseMessage*>& samples) override;
+            std::list<std::shared_ptr<const BaseMessage>>& samples) override;
 
     /**
      * @brief Create and add to \c mcap_writer_ channel associated to given \c topic

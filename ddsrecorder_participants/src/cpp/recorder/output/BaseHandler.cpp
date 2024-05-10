@@ -377,8 +377,62 @@ void BaseHandler::stop_event_thread_nts_(
     pending_samples_paused_.clear();
 }
 
+void BaseHandler::process_new_sample_nts_(
+        std::shared_ptr<const BaseMessage> sample)
+{
+    if (state_ == BaseHandlerStateCode::STOPPED)
+    {
+        logInfo(DDSRECORDER_BASE_HANDLER, "Attempting to add sample through a stopped handler, dropping...");
+        return;
+    }
+
+    logInfo(DDSRECORDER_BASE_HANDLER, "Adding data in topic " << sample->topic);
+
+    if (received_types_.find(sample->topic.type_name) != received_types_.end())
+    {
+        add_sample_to_buffer_nts_(sample);
+        return;
+    }
+
+    switch (state_)
+    {
+        case BaseHandlerStateCode::RUNNING:
+
+            if (configuration_.max_pending_samples != 0)
+            {
+                logInfo(DDSRECORDER_BASE_HANDLER,
+                        "Dynamic type for topic " << sample->topic << " not yet available, inserting to pending "
+                        "samples queue.");
+
+                add_sample_to_pending_nts_(sample);
+            }
+            else if (!configuration_.only_with_schema)
+            {
+                // No schema available + no pending samples -> Add to buffer with blank schema
+                add_sample_to_buffer_nts_(sample);
+            }
+            break;
+
+        case BaseHandlerStateCode::PAUSED:
+
+            logInfo(
+                DDSRECORDER_BASE_HANDLER,
+                "Dynamic type for topic " << sample->topic << " not yet available, inserting to (paused) pending "
+                "samples queue.");
+
+            pending_samples_paused_[sample->topic.type_name].push_back(sample);
+            break;
+
+        default:
+
+            // Should not happen, protected with mutex and state verified at beginning
+            utils::tsnh(utils::Formatter() << "Trying to add sample to a stopped instance.");
+            break;
+    }
+}
+
 void BaseHandler::add_sample_to_buffer_nts_(
-        const BaseMessage* sample)
+        std::shared_ptr<const BaseMessage> sample)
 {
     samples_buffer_.push_back(sample);
 
@@ -404,7 +458,7 @@ void BaseHandler::add_sample_to_buffer_nts_(
 }
 
 void BaseHandler::add_samples_to_buffer_nts_(
-        std::list<const BaseMessage*>& samples)
+        std::list<std::shared_ptr<const BaseMessage>>& samples)
 {
     while (!samples.empty())
     {
@@ -414,7 +468,7 @@ void BaseHandler::add_samples_to_buffer_nts_(
 }
 
 void BaseHandler::add_sample_to_pending_nts_(
-        const BaseMessage* sample)
+        std::shared_ptr<const BaseMessage> sample)
 {
     assert(configuration_.max_pending_samples != 0);
 
@@ -558,13 +612,13 @@ void BaseHandler::store_dynamic_type_(
 {
     if (type_identifier == nullptr)
     {
-        logWarning(DDSRECORDER_MCAP_HANDLER, "Attempting to store a DynamicType without a type identifier. Exiting.");
+        logWarning(DDSRECORDER_BASE_HANDLER, "Attempting to store a DynamicType without a type identifier. Exiting.");
         return;
     }
 
     if (type_object == nullptr)
     {
-        logWarning(DDSRECORDER_MCAP_HANDLER, "Attempting to store a DynamicType without a type object. Exiting.");
+        logWarning(DDSRECORDER_BASE_HANDLER, "Attempting to store a DynamicType without a type object. Exiting.");
         return;
     }
 
