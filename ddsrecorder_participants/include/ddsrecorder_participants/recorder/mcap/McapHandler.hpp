@@ -21,13 +21,13 @@
 #include <functional>
 #include <list>
 #include <map>
+#include <memory>
+#include <string>
 
 #include <mcap/mcap.hpp>
 
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
-
-#include <cpp_utils/macros/custom_enumeration.hpp>
 
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
 #include <ddspipe_core/types/data/RtpsPayloadData.hpp>
@@ -38,11 +38,8 @@
 #include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
 #include <ddsrecorder_participants/recorder/message/BaseMessage.hpp>
-#include <ddsrecorder_participants/recorder/message/McapMessage.hpp>
 #include <ddsrecorder_participants/recorder/output/BaseHandler.hpp>
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
-
-#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {

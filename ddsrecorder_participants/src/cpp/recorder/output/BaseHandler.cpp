@@ -16,7 +16,6 @@
  * @file BaseHandler.cpp
  */
 
-#include <algorithm>
 #include <chrono>
 
 #include <fastdds/dds/core/ReturnCode.hpp>
@@ -24,16 +23,9 @@
 #include <fastdds/dds/xtypes/type_representation/detail/dds_xtypes_typeobject.hpp>
 #include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
 
-#include <cpp_utils/time/time_utils.hpp>
+#include <cpp_utils/Formatter.hpp>
+#include <cpp_utils/utils.hpp>
 
-#include <ddspipe_core/types/dynamic_types/schema.hpp>
-
-#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
-#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollectionPubSubTypes.h>
-
-#include <ddsrecorder_participants/constants.hpp>
-#include <ddsrecorder_participants/recorder/mcap/utils.hpp>
-#include <ddsrecorder_participants/recorder/message/BaseMessage.hpp>
 #include <ddsrecorder_participants/recorder/output/BaseHandler.hpp>
 #include <ddsrecorder_participants/recorder/output/Serializer.hpp>
 
