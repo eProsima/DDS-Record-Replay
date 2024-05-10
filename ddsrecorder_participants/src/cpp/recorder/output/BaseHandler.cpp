@@ -36,7 +36,7 @@ namespace participants {
 using namespace eprosima::ddspipe::core::types;
 
 BaseHandler::BaseHandler(
-        const McapHandlerConfiguration& config,
+        const BaseHandlerConfiguration& config,
         const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool)
     : configuration_(config)
     , payload_pool_(payload_pool)
