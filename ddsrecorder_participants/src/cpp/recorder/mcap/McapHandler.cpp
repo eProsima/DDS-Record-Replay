@@ -32,18 +32,6 @@
 
 #include <ddspipe_core/types/dynamic_types/schema.hpp>
 
-#if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    #include <fastcdr/Cdr.h>
-    #include <fastcdr/FastBuffer.h>
-    #include <fastcdr/FastCdr.h>
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollectionPubSubTypes.hpp>
-#else
-    #include <fastdds/rtps/common/CdrSerialization.hpp>
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollection.hpp>
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollectionPubSubTypes.hpp>
-#endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
 #include <ddsrecorder_participants/recorder/message/McapMessage.hpp>
@@ -362,80 +350,6 @@ mcap::SchemaId McapHandler::get_schema_id_nts_(
     {
         throw utils::InconsistencyException(
                   STR_ENTRY << "Schema " << schema_name << " is not registered.");
-    }
-}
-
-void McapHandler::store_dynamic_type_(
-        const std::string& type_name,
-        DynamicTypesCollection& dynamic_types) const
-{
-    const eprosima::fastrtps::types::TypeIdentifier* type_identifier = nullptr;
-    const eprosima::fastrtps::types::TypeObject* type_object = nullptr;
-    const eprosima::fastrtps::types::TypeInformation* type_information = nullptr;
-
-    type_information =
-            eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_information(type_name);
-    if (type_information != nullptr)
-    {
-        auto dependencies = type_information->complete().dependent_typeids();
-        std::string dependency_name;
-        unsigned int dependency_index = 0;
-        for (auto dependency: dependencies)
-        {
-            type_identifier = &dependency.type_id();
-            type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(
-                type_identifier);
-            dependency_name = type_name + "_" + std::to_string(dependency_index);
-
-            // Store dependency in dynamic_types collection
-            store_dynamic_type_(type_identifier, type_object, dependency_name, dynamic_types);
-
-            // Increment suffix counter
-            dependency_index++;
-        }
-    }
-
-    type_identifier = nullptr;
-    type_object = nullptr;
-
-    type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(type_name,
-                    true);
-    if (type_identifier)
-    {
-        type_object =
-                eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name, true);
-    }
-
-    // If complete not found, try with minimal
-    if (!type_object)
-    {
-        type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(
-            type_name, false);
-        if (type_identifier)
-        {
-            type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name,
-                            false);
-        }
-    }
-
-    // Store dynamic type in dynamic_types collection
-    store_dynamic_type_(type_identifier, type_object, type_name, dynamic_types);
-}
-
-void McapHandler::store_dynamic_type_(
-        const eprosima::fastrtps::types::TypeIdentifier* type_identifier,
-        const eprosima::fastrtps::types::TypeObject* type_object,
-        const std::string& type_name,
-        DynamicTypesCollection& dynamic_types) const
-{
-    if (type_identifier != nullptr && type_object != nullptr)
-    {
-        DynamicType dynamic_type;
-        dynamic_type.type_name(type_name);
-        dynamic_type.type_information(utils::base64_encode(Serializer::serialize(*type_identifier)));
-        dynamic_type.type_object(utils::base64_encode(Serializer::serialize(*type_object)));
-
-        dynamic_types.dynamic_types().push_back(dynamic_type);
     }
 }
 

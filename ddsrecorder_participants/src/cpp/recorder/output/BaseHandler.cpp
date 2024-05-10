@@ -19,6 +19,8 @@
 #include <algorithm>
 #include <chrono>
 
+#include <fastrtps/types/TypeObjectFactory.h>
+
 #include <cpp_utils/time/time_utils.hpp>
 
 #include <ddspipe_core/types/dynamic_types/schema.hpp>
@@ -36,6 +38,7 @@
 #include <ddsrecorder_participants/recorder/mcap/utils.hpp>
 #include <ddsrecorder_participants/recorder/message/BaseMessage.hpp>
 #include <ddsrecorder_participants/recorder/output/BaseHandler.hpp>
+#include <ddsrecorder_participants/recorder/output/Serializer.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -497,6 +500,79 @@ void BaseHandler::remove_outdated_samples_nts_()
                     return sample->log_time < threshold;
                 });
     }
+}
+
+void BaseHandler::store_dynamic_type_(
+        const std::string& type_name)
+{
+    auto type_object_factory = fastrtps::types::TypeObjectFactory::get_instance();
+    const auto type_information = type_object_factory->get_type_information(type_name);
+
+    if (type_information != nullptr)
+    {
+        // Store dependencies as dynamic types
+        auto dependencies = type_information->complete().dependent_typeids();
+        unsigned int dependency_index = 0;
+
+        for (auto dependency : dependencies)
+        {
+            const auto type_identifier = &dependency.type_id();
+            const auto type_object = type_object_factory->get_type_object(type_identifier);
+            const auto dependency_name = type_name + "_" + std::to_string(dependency_index);
+
+            // Store dependency in dynamic_types collection
+            store_dynamic_type_(type_identifier, type_object, dependency_name);
+
+            // Increment suffix counter
+            dependency_index++;
+        }
+    }
+
+    const fastrtps::types::TypeObject* type_object = nullptr;
+    const fastrtps::types::TypeIdentifier* type_identifier = type_object_factory->get_type_identifier(type_name, true);
+
+    if (type_identifier)
+    {
+        type_object = type_object_factory->get_type_object(type_name, true);
+
+        // If complete not found, try with minimal
+        if (!type_object)
+        {
+            type_identifier = type_object_factory->get_type_identifier(type_name, false);
+
+            if (type_identifier)
+            {
+                type_object = type_object_factory->get_type_object(type_name, false);
+            }
+        }
+    }
+
+    // Store dynamic type in dynamic_types collection
+    store_dynamic_type_(type_identifier, type_object, type_name);
+}
+
+void BaseHandler::store_dynamic_type_(
+        const fastrtps::types::TypeIdentifier* type_identifier,
+        const fastrtps::types::TypeObject* type_object,
+        const std::string& type_name)
+{
+    if (type_identifier == nullptr)
+    {
+        logWarning(DDSRECORDER_MCAP_HANDLER, "Attempting to store a DynamicType without a type identifier. Exiting.");
+        return;
+    }
+
+    if (type_object == nullptr)
+    {
+        logWarning(DDSRECORDER_MCAP_HANDLER, "Attempting to store a DynamicType without a type object. Exiting.");
+        return;
+    }
+
+    DynamicType dynamic_type;
+    dynamic_type.type_name(type_name);
+    dynamic_type.type_information(utils::base64_encode(Serializer::serialize(*type_identifier)));
+    dynamic_type.type_object(utils::base64_encode(Serializer::serialize(*type_object)));
+    dynamic_types_.dynamic_types().push_back(dynamic_type);
 }
 
 } /* namespace participants */

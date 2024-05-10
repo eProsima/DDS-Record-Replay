@@ -22,6 +22,8 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <set>
+#include <string>
 #include <thread>
 #include <utility>
 
@@ -274,6 +276,26 @@ protected:
      */
     void remove_outdated_samples_nts_();
 
+    /**
+     * @brief Create a \c DynamicType and insert it into \c dynamic_types_ .
+     *
+     * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
+     */
+    void store_dynamic_type_(
+            const std::string& type_name);
+
+    /**
+     * @brief Create a \c DynamicType and insert it into \c dynamic_types_ .
+     *
+     * @param [in] type_identifier Type identifier to serialize and store.
+     * @param [in] type_object Type object to serialize and store.
+     * @param [in] type_name Name of the type to store, used as key in \c dynamic_types map.
+     */
+    void store_dynamic_type_(
+            const fastrtps::types::TypeIdentifier* type_identifier,
+            const fastrtps::types::TypeObject* type_object,
+            const std::string& type_name);
+
     //! Handler configuration
     McapHandlerConfiguration configuration_;
 
@@ -314,6 +336,16 @@ protected:
 
     //! Structure where messages (received in PAUSED state) with unknown type are kept
     std::map<std::string, std::list<const BaseMessage*>> pending_samples_paused_;
+
+    //////////////////////////////
+    // DYNAMIC TYPES COLLECTION //
+    //////////////////////////////
+
+    //! Received types set
+    std::set<std::string> received_types_;
+
+    //! Dynamic types collection
+    DynamicTypesCollection dynamic_types_;
 };
 
 } /* namespace participants */
