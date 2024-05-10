@@ -16,27 +16,13 @@
  * @file BaseHandler.cpp
  */
 
-#include <algorithm>
 #include <chrono>
 
 #include <fastrtps/types/TypeObjectFactory.h>
 
-#include <cpp_utils/time/time_utils.hpp>
+#include <cpp_utils/Formatter.hpp>
+#include <cpp_utils/utils.hpp>
 
-#include <ddspipe_core/types/dynamic_types/schema.hpp>
-
-#if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollectionPubSubTypes.hpp>
-#else
-    #include <fastdds/rtps/common/CdrSerialization.hpp>
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollection.hpp>
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollectionPubSubTypes.hpp>
-#endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-
-#include <ddsrecorder_participants/constants.hpp>
-#include <ddsrecorder_participants/recorder/mcap/utils.hpp>
-#include <ddsrecorder_participants/recorder/message/BaseMessage.hpp>
 #include <ddsrecorder_participants/recorder/output/BaseHandler.hpp>
 #include <ddsrecorder_participants/recorder/output/Serializer.hpp>
 

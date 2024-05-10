@@ -30,14 +30,12 @@
 #include <cpp_utils/macros/custom_enumeration.hpp>
 
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
-#include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
 #include <ddspipe_participants/participant/dynamic_types/ISchemaHandler.hpp>
 
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
 #include <ddsrecorder_participants/recorder/message/BaseMessage.hpp>
-#include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 
 #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
     #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
