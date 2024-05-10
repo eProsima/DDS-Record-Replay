@@ -34,8 +34,8 @@
 #include <ddspipe_participants/participant/dynamic_types/ISchemaHandler.hpp>
 
 #include <ddsrecorder_participants/library/library_dll.h>
-#include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
 #include <ddsrecorder_participants/recorder/message/BaseMessage.hpp>
+#include <ddsrecorder_participants/recorder/output/BaseHandlerConfiguration.hpp>
 
 #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
     #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
@@ -56,8 +56,15 @@ ENUMERATION_BUILDER(
     );
 
 /**
- * Class that manages the interaction between DDS Pipe (\c SchemaParticipant) and MCAP files through mcap library.
- * Payloads are efficiently passed from DDS Pipe to mcap without copying data (only references).
+ * @brief Base class with generic methods to interact with the \c DdsPipe ( \c SchemaParticipant ).
+ *
+ * More concretely, the \c BaseHandler manages:
+ * - state transitions (start, stop, pause, trigger_event),
+ * - buffer management (storing, discarding and dumping samples),
+ * - pending samples management (samples received before the type is known),
+ * - dynamic types collection (storing and serializing types).
+ *
+ * Payloads are efficiently passed from DDS Pipe to the output file without copying data (only references).
  *
  * @implements ISchemaHandler
  */
@@ -66,36 +73,30 @@ class BaseHandler : public ddspipe::participants::ISchemaHandler
 public:
 
     /**
-     * BaseHandler constructor by required values.
-     *
-     * Creates BaseHandler instance with given configuration, payload pool and initial state.
-     * Opens temporal MCAP file where data is to be written.
-     *
-     * @throw InitializationException if creation fails (fail to open MCAP file).
-     *
-     * @warning Command methods ( \c start , \c pause , \c stop , and \c trigger_event ) are not thread safe
-     * among themselves. This is, they are expected to be executed sequentially and all in the same thread.
+     * @brief Creates the \c BaseHandler instance with the given configuration.
      *
      * @param config:       Structure encapsulating all configuration options.
      * @param payload_pool: Pool of payloads to be used by the handler.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     BaseHandler(
-            const McapHandlerConfiguration& config,
+            const BaseHandlerConfiguration& config,
             const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool);
 
     /**
-     * @brief Destructor
-     *
-     * Closes temporal MCAP file, and renames it with filename given in configuration.
-     * Before closing file, received dynamic types are serialized and stored as an attachment.
-     *
+     * @brief Destructor the \c BaseHandler instance.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     virtual ~BaseHandler();
 
     /**
      * @brief Initialize handler instance
+     *
+     * @warning Command methods ( \c start , \c pause , \c stop , and \c trigger_event ) are not thread safe
+     * among themselves. This is, they are expected to be executed sequentially and all in the same thread.
+     *
+     * @note This method should be called by a derived class constructor to ensure the purely virtual methods have been
+     * implemented.
      *
      * @param [in] init_state Initial state of the handler instance.
      */
@@ -309,7 +310,7 @@ protected:
             const std::string& type_name);
 
     //! Handler configuration
-    McapHandlerConfiguration configuration_;
+    const BaseHandlerConfiguration configuration_;
 
     //! Payload pool
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;
