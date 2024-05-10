@@ -200,35 +200,8 @@ protected:
     mcap::SchemaId get_schema_id_nts_(
             const std::string& schema_name);
 
-    /**
-     * @brief Serialize type identifier and object, and insert the result into a \c DynamicTypesCollection .
-     *
-     * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
-     */
-    void store_dynamic_type_(
-            const std::string& type_name,
-            const fastdds::dds::xtypes::TypeIdentifier& type_id,
-            DynamicTypesCollection& dynamic_types) const;
-
-    /**
-     * @brief Serialize type identifier and object, and insert the result into a \c DynamicTypesCollection .
-     *
-     * @param [in] type_identifier Type identifier to be serialized and stored.
-     * @param [in] type_object Type object to be serialized and stored.
-     * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
-     * @param [in,out] dynamic_types Collection where to store serialized dynamic type.
-     */
-    void store_dynamic_type_(
-            const fastdds::dds::xtypes::TypeIdentifier& type_identifier,
-            const fastdds::dds::xtypes::TypeObject& type_object,
-            const std::string& type_name,
-            DynamicTypesCollection& dynamic_types) const;
-
     //! MCAP writer
     McapWriter mcap_writer_;
-
-    //! Received types set
-    std::set<std::string> received_types_;
 
     //! Schemas map
     std::map<std::string, mcap::Schema> schemas_;

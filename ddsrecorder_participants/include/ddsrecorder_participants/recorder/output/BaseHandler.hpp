@@ -22,8 +22,13 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <set>
+#include <string>
 #include <thread>
 #include <utility>
+
+#include <fastdds/dds/xtypes/type_representation/detail/dds_xtypes_typeobject.hpp>
+#include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
 
 #include <cpp_utils/macros/custom_enumeration.hpp>
 
@@ -32,12 +37,11 @@
 
 #include <ddspipe_participants/participant/dynamic_types/ISchemaHandler.hpp>
 
+#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
 #include <ddsrecorder_participants/recorder/message/BaseMessage.hpp>
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
-
-#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -270,6 +274,28 @@ protected:
      */
     void remove_outdated_samples_nts_();
 
+    /**
+     * @brief Create a \c DynamicType and insert it into \c dynamic_types_ .
+     *
+     * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
+     * @param [in] type_identifier Type identifier to be serialized and stored.
+     */
+    void store_dynamic_type_(
+            const std::string& type_name,
+            const fastdds::dds::xtypes::TypeIdentifier& type_identifier);
+
+    /**
+     * @brief Serialize type identifier and object, and insert the result into a \c DynamicTypesCollection .
+     *
+     * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
+     * @param [in] type_identifier Type identifier to be serialized and stored.
+     * @param [in] type_object Type object to be serialized and stored.
+     */
+    void store_dynamic_type_(
+            const std::string& type_name,
+            const fastdds::dds::xtypes::TypeIdentifier& type_identifier,
+            const fastdds::dds::xtypes::TypeObject& type_object);
+
     //! Handler configuration
     McapHandlerConfiguration configuration_;
 
@@ -310,6 +336,16 @@ protected:
 
     //! Structure where messages (received in PAUSED state) with unknown type are kept
     std::map<std::string, std::list<const BaseMessage*>> pending_samples_paused_;
+
+    //////////////////////////////
+    // DYNAMIC TYPES COLLECTION //
+    //////////////////////////////
+
+    //! Received types set
+    std::set<std::string> received_types_;
+
+    //! Dynamic types collection
+    DynamicTypesCollection dynamic_types_;
 };
 
 } /* namespace participants */

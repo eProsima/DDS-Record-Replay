@@ -19,6 +19,11 @@
 #include <algorithm>
 #include <chrono>
 
+#include <fastdds/dds/core/ReturnCode.hpp>
+#include <fastdds/dds/domain/DomainParticipantFactory.hpp>
+#include <fastdds/dds/xtypes/type_representation/detail/dds_xtypes_typeobject.hpp>
+#include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
+
 #include <cpp_utils/time/time_utils.hpp>
 
 #include <ddspipe_core/types/dynamic_types/schema.hpp>
@@ -30,6 +35,7 @@
 #include <ddsrecorder_participants/recorder/mcap/utils.hpp>
 #include <ddsrecorder_participants/recorder/message/BaseMessage.hpp>
 #include <ddsrecorder_participants/recorder/output/BaseHandler.hpp>
+#include <ddsrecorder_participants/recorder/output/Serializer.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -491,6 +497,71 @@ void BaseHandler::remove_outdated_samples_nts_()
                     return sample->log_time < threshold;
                 });
     }
+}
+
+void BaseHandler::store_dynamic_type_(
+        const std::string& type_name,
+        const fastdds::dds::xtypes::TypeIdentifier& type_identifier)
+{
+    fastdds::dds::xtypes::TypeIdentifierPair type_identifiers;
+    type_identifiers.type_identifier1(type_identifier);
+
+    auto factory = fastdds::dds::DomainParticipantFactory::get_instance();
+
+    fastdds::dds::xtypes::TypeInformation type_information;
+    if (fastdds::dds::RETCODE_OK != factory->type_object_registry().get_type_information(
+            type_identifiers, type_information, true))
+    {
+        return;
+    }
+
+    // Store dependencies as dynamic types
+    auto dependencies = type_information.complete().dependent_typeids();
+    unsigned int dependency_index = 0;
+
+    for (auto dependency : dependencies)
+    {
+        const auto dep_type_identifier = dependency.type_id();
+
+        fastdds::dds::xtypes::TypeObject dep_type_object;
+
+        if (fastdds::dds::RETCODE_OK != factory->type_object_registry().get_type_object(
+                dep_type_identifier, dep_type_object))
+        {
+            continue;
+        }
+
+        const auto dep_type_name = type_name + "_" + std::to_string(dependency_index);
+
+        // Store dependency in dynamic_types collection
+        store_dynamic_type_(dep_type_name, dep_type_identifier, dep_type_object);
+
+        // Increment suffix counter
+        dependency_index++;
+    }
+
+    fastdds::dds::xtypes::TypeObject type_object;
+
+    if (fastdds::dds::RETCODE_OK != factory->type_object_registry().get_type_object(
+            type_identifier, type_object))
+    {
+        return;
+    }
+
+    // Store dynamic type in dynamic_types collection
+    store_dynamic_type_(type_name, type_identifier, type_object);
+}
+
+void BaseHandler::store_dynamic_type_(
+        const std::string& type_name,
+        const fastdds::dds::xtypes::TypeIdentifier& type_identifier,
+        const fastdds::dds::xtypes::TypeObject& type_object)
+{
+    DynamicType dynamic_type;
+    dynamic_type.type_name(type_name);
+    dynamic_type.type_information(utils::base64_encode(Serializer::serialize(type_identifier)));
+    dynamic_type.type_object(utils::base64_encode(Serializer::serialize(type_object)));
+    dynamic_types_.dynamic_types().push_back(dynamic_type);
 }
 
 } /* namespace participants */
