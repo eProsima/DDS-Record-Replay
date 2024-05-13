@@ -13,8 +13,9 @@ jobs:
     with:
       custom_version_build: 'v2'
       dependencies_artifact_postfix: '_nightly'
+    secrets: inherit
 
-  # Uncomment this block to run the tests for Fast DDS v3 when DDS Pipe is updated
+  # Uncomment this block to run the tests for Fast DDS v3 when DDS Record & Replay is updated
   # Also specify here (and above) the workflow version/branch to use (@v0, @main, etc.)
   # reusable_tests_v3:
   #   name: reusable_tests_v3
@@ -22,3 +23,4 @@ jobs:
   #   with:
   #     custom_version_build: 'v3'
   #     dependencies_artifact_postfix: '_nightly'
+  # secrets: inherit

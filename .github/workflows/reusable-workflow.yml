@@ -38,7 +38,7 @@
 #     - test python linter
 #
 
-name: test
+name: reusable-workflow
 
 on:
 
