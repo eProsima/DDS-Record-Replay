@@ -91,17 +91,9 @@ public:
     virtual ~McapHandler();
 
     /**
-     * @brief Enable handler instance
-     *
-     * Enables the \c mcap_writer_ instance.
+     * @brief Disable MCAP handler instance
      */
-    void enable() override;
-
-    /**
-     * @brief Disable handler instance
-     *
-     * Disables the \c mcap_writer_ instance.
-     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     void disable() override;
 
     /**

@@ -50,12 +50,11 @@ McapHandler::McapHandler(
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "MCAP_STATE | Creating MCAP handler instance.");
 
-    if (on_disk_full_lambda != nullptr)
-    {
-        mcap_writer_.set_on_disk_full_callback(on_disk_full_lambda);
-    }
+    // Set the BaseHandler's writer
+    writer_ = &mcap_writer_;
 
-    init(init_state);
+    // Initialize the BaseHandler
+    init(init_state, on_disk_full_lambda);
 }
 
 McapHandler::~McapHandler()
@@ -67,23 +66,14 @@ McapHandler::~McapHandler()
     stop(true);
 }
 
-void McapHandler::enable()
-{
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Enabling MCAP handler.");
-
-    mcap_writer_.enable();
-}
-
 void McapHandler::disable()
 {
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Disabling MCAP handler.");
-
     // Ideally, the channels and schemas should be shared between the McapHandler and McapWriter.
     // Right now, the data is duplicated in both classes, which uses more memory and can lead to inconsistencies.
     // TODO: Share the channels and schemas between the McapHandler and McapWriter.
 
-    // NOTE: disabling the McapWriter clears its channels
-    mcap_writer_.disable();
+    // NOTE: disabling the BaseHandler disables the McapWriter which clears its channels
+    BaseHandler::disable();
 
     // Clear the channels after a disable so the old channels are not rewritten in every new file
     channels_.clear();
