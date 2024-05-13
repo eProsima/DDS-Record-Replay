@@ -35,3 +35,4 @@ jobs:
     with:
       custom_version_build: ${{ inputs.custom_version_build || 'v2' }}
       dependencies_artifact_postfix: ${{ inputs.dependencies_artifact_postfix || '_nightly' }}
+    secrets: inherit
