@@ -31,8 +31,6 @@
 #include <ddspipe_participants/participant/dynamic_types/DynTypesParticipant.hpp>
 #include <ddspipe_participants/participant/dynamic_types/SchemaParticipant.hpp>
 
-#include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
-#include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
 #include <ddsrecorder_participants/recorder/monitoring/DdsRecorderMonitor.hpp>
 #include <ddsrecorder_participants/recorder/output/BaseHandler.hpp>
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
@@ -89,7 +87,7 @@ public:
     DdsRecorder(
             const yaml::RecorderConfiguration& configuration,
             const DdsRecorderStateCode& init_state,
-            std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler,
+            std::shared_ptr<utils::event::MultipleEventHandler> event_handler,
             std::shared_ptr<participants::FileTracker>& file_tracker,
             const std::string& file_name = "");
 
@@ -151,13 +149,13 @@ protected:
     std::shared_ptr<ddspipe::core::ParticipantsDatabase> participants_database_;
 
     //! MCAP Handler
-    std::shared_ptr<eprosima::ddsrecorder::participants::McapHandler> mcap_handler_;
+    std::shared_ptr<ddsrecorder::participants::BaseHandler> handler_;
 
     //! Dynamic Types Participant
-    std::shared_ptr<eprosima::ddspipe::participants::DynTypesParticipant> dyn_participant_;
+    std::shared_ptr<ddspipe::participants::DynTypesParticipant> dyn_participant_;
 
     //! Schema Participant
-    std::shared_ptr<eprosima::ddspipe::participants::SchemaParticipant> recorder_participant_;
+    std::shared_ptr<ddspipe::participants::SchemaParticipant> recorder_participant_;
 
     //! DDS Pipe
     std::unique_ptr<ddspipe::core::DdsPipe> pipe_;
@@ -166,7 +164,7 @@ protected:
     std::unique_ptr<ddspipe::core::Monitor> monitor_;
 
     //! Reference to event handler used for thread synchronization in main application
-    std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler_;
+    std::shared_ptr<utils::event::MultipleEventHandler> event_handler_;
 };
 
 } /* namespace recorder */

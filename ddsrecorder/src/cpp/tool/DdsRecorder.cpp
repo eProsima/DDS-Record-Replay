@@ -22,6 +22,10 @@
 #include <ddspipe_core/monitoring/producers/TopicsMonitorProducer.hpp>
 #include <ddspipe_core/types/dynamic_types/types.hpp>
 
+#include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
+#include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
+#include <ddsrecorder_participants/recorder/output/BaseHandler.hpp>
+
 #include "DdsRecorder.hpp"
 
 namespace eprosima {
@@ -119,7 +123,7 @@ DdsRecorder::DdsRecorder(
     }
 
     // Create MCAP Handler
-    mcap_handler_ = std::make_shared<participants::McapHandler>(
+    handler_ = std::make_shared<participants::McapHandler>(
         handler_config,
         payload_pool_,
         file_tracker,
@@ -138,7 +142,7 @@ DdsRecorder::DdsRecorder(
         configuration_.recorder_configuration,
         payload_pool_,
         discovery_database_,
-        mcap_handler_);
+        handler_);
 
     // Create Participant Database
     participants_database_ = std::make_shared<ParticipantsDatabase>();
@@ -189,27 +193,27 @@ utils::ReturnCode DdsRecorder::reload_configuration(
 
 void DdsRecorder::start()
 {
-    mcap_handler_->start();
+    handler_->start();
 }
 
 void DdsRecorder::pause()
 {
-    mcap_handler_->pause();
+    handler_->pause();
 }
 
 void DdsRecorder::suspend()
 {
-    mcap_handler_->stop();
+    handler_->stop();
 }
 
 void DdsRecorder::stop()
 {
-    mcap_handler_->stop();
+    handler_->stop();
 }
 
 void DdsRecorder::trigger_event()
 {
-    mcap_handler_->trigger_event();
+    handler_->trigger_event();
 }
 
 void DdsRecorder::on_disk_full()
