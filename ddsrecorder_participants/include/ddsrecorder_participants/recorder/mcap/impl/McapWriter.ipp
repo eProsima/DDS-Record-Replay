@@ -40,7 +40,7 @@ void McapWriter::write(
     {
         try
         {
-            on_mcap_full_nts_(e);
+            on_file_full_nts_(e, size_tracker_.get_min_mcap_size());
             write_nts_(data);
         }
         catch (const FullDiskException& e)
