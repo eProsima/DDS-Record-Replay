@@ -48,8 +48,14 @@ BaseHandler::~BaseHandler()
 }
 
 void BaseHandler::init(
-        const BaseHandlerStateCode& init_state /* = BaseHandlerStateCode::RUNNING */)
+        const BaseHandlerStateCode& init_state /* = BaseHandlerStateCode::RUNNING */,
+        const std::function<void()>& on_disk_full_lambda /* = nullptr */)
 {
+    if (on_disk_full_lambda != nullptr)
+    {
+        writer_->set_on_disk_full_callback(on_disk_full_lambda);
+    }
+
     switch (init_state)
     {
         case BaseHandlerStateCode::RUNNING:
@@ -63,6 +69,20 @@ void BaseHandler::init(
         default:
             break;
     }
+}
+
+void BaseHandler::enable()
+{
+    logInfo(DDSRECORDER_BASE_HANDLER, "Enabling handler.");
+
+    writer_->enable();
+}
+
+void BaseHandler::disable()
+{
+    logInfo(DDSRECORDER_BASE_HANDLER, "Disabling handler.");
+
+    writer_->disable();
 }
 
 void BaseHandler::start()

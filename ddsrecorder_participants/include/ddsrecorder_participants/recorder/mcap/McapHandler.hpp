@@ -90,20 +90,6 @@ public:
     virtual ~McapHandler();
 
     /**
-     * @brief Enable handler instance
-     *
-     * Enables the \c mcap_writer_ instance.
-     */
-    void enable() override;
-
-    /**
-     * @brief Disable handler instance
-     *
-     * Disables the \c mcap_writer_ instance.
-     */
-    void disable() override;
-
-    /**
      * @brief Create and store in \c schemas_ an OMG IDL (.idl format) or ROS 2 (.msg format) schema.
      * Any samples following this schema that were received before the schema itself are moved to the memory buffer
      * to be written with the next batch.

@@ -50,12 +50,11 @@ McapHandler::McapHandler(
     logInfo(DDSRECORDER_MCAP_HANDLER,
             "MCAP_STATE | Creating MCAP handler instance.");
 
-    if (on_disk_full_lambda != nullptr)
-    {
-        mcap_writer_.set_on_disk_full_callback(on_disk_full_lambda);
-    }
+    // Set the BaseHandler's writer
+    writer_ = &mcap_writer_;
 
-    init(init_state);
+    // Initialize the BaseHandler
+    init(init_state, on_disk_full_lambda);
 }
 
 McapHandler::~McapHandler()
@@ -65,20 +64,6 @@ McapHandler::~McapHandler()
 
     // Stop handler prior to destruction
     stop(true);
-}
-
-void McapHandler::enable()
-{
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Enabling MCAP handler.");
-
-    mcap_writer_.enable();
-}
-
-void McapHandler::disable()
-{
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Disabling MCAP handler.");
-
-    mcap_writer_.disable();
 }
 
 void McapHandler::add_schema(

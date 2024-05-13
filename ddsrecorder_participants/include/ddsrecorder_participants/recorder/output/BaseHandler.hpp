@@ -19,6 +19,7 @@
 #pragma once
 
 #include <condition_variable>
+#include <functional>
 #include <list>
 #include <map>
 #include <memory>
@@ -36,6 +37,7 @@
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/recorder/message/BaseMessage.hpp>
 #include <ddsrecorder_participants/recorder/output/BaseHandlerConfiguration.hpp>
+#include <ddsrecorder_participants/recorder/output/BaseWriter.hpp>
 
 #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
     #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
@@ -99,22 +101,28 @@ public:
      * implemented.
      *
      * @param [in] init_state Initial state of the handler instance.
+     * @param [in] on_disk_full_lambda Lambda to be executed when disk is full.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void init(
-        const BaseHandlerStateCode& init_state = BaseHandlerStateCode::RUNNING);
+        const BaseHandlerStateCode& init_state = BaseHandlerStateCode::RUNNING,
+        const std::function<void()>& on_disk_full_lambda = nullptr);
 
     /**
      * @brief Enable handler instance
+     *
+     * Enables the writer.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    virtual void enable() = 0;
+    void enable();
 
     /**
      * @brief Disable handler instance
+     *
+     * Disables the writer.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    virtual void disable() = 0;
+    void disable();
 
     /**
      * @brief Start handler instance
@@ -340,6 +348,9 @@ protected:
     ///////////////////////
     // BUFFER MANAGEMENT //
     ///////////////////////
+
+    //! MCAP writer
+    BaseWriter* writer_;
 
     //! Samples buffer
     std::list<std::shared_ptr<const BaseMessage>> samples_buffer_;
