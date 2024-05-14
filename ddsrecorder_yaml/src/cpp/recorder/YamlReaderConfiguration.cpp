@@ -30,6 +30,8 @@
 #include <ddspipe_yaml/Yaml.hpp>
 #include <ddspipe_yaml/YamlManager.hpp>
 
+#include <ddsrecorder_participants/recorder/output/OutputSettings.hpp>
+
 #include <ddsrecorder_yaml/recorder/yaml_configuration_tags.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
@@ -213,6 +215,18 @@ void RecorderConfiguration::load_recorder_configuration_(
     if (YamlReader::is_tag_present(yml, RECORDER_OUTPUT_TAG))
     {
         auto output_yml = YamlReader::get_value_in_tag(yml, RECORDER_OUTPUT_TAG);
+
+        /////
+        // Get optional library
+        if (YamlReader::is_tag_present(output_yml, RECORDER_OUTPUT_LIBRARY_TAG))
+        {
+            output_library = YamlReader::get_enumeration<participants::OutputLibrary>(
+                    YamlReader::get_value_in_tag(output_yml, RECORDER_OUTPUT_LIBRARY_TAG),
+                    {
+                        {RECORDER_OUTPUT_LIBRARY_MCAP_TAG, participants::OutputLibrary::mcap},
+                        {RECORDER_OUTPUT_LIBRARY_SQL_TAG, participants::OutputLibrary::sql}
+                    });
+        }
 
         /////
         // Get optional file path

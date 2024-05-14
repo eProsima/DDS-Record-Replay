@@ -51,7 +51,8 @@ set(MODULE_DEPENDENCIES
     ddspipe_core
     ddspipe_participants
     $<IF:$<BOOL:${WIN32}>,lz4::lz4,lz4>
-    $<IF:$<BOOL:${WIN32}>,$<IF:$<TARGET_EXISTS:zstd::libzstd_shared>,zstd::libzstd_shared,zstd::libzstd_static>,zstd>)
+    $<IF:$<BOOL:${WIN32}>,$<IF:$<TARGET_EXISTS:zstd::libzstd_shared>,zstd::libzstd_shared,zstd::libzstd_static>,zstd>
+    sqlite3)
 
 set(MODULE_CPP_VERSION
     C++17)
