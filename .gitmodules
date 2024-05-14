@@ -1,0 +1,9 @@
+[submodule "DDS-Pipe"]
+	path = DDS-Pipe
+	url = https://github.com/Ryan-Red/DDS-Pipe.git
+[submodule "Fast-DDS-python"]
+	path = Fast-DDS-python
+	url = https://github.com/eProsima/Fast-DDS-python.git
+[submodule "dev-utils"]
+	path = dev-utils
+	url = https://github.com/eProsima/dev-utils.git

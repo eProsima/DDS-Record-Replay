@@ -52,7 +52,6 @@ DdsRecorder::DdsRecorder(
     , event_handler_(event_handler)
 {
     load_internal_topics_(configuration_);
-
     // Create Discovery Database
     discovery_database_ = std::make_shared<DiscoveryDatabase>();
 

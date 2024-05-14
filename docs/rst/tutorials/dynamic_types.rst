@@ -22,7 +22,7 @@ This tutorial focuses on how to send the data type information using Fast DDS Dy
 More specifically, this tutorial implements a DDS Publisher configured to send its data type, a DDS Subscriber that collects the data type and is able to read the incoming data, and a DDS Recorder is launched to save all the data published on the network.
 For more information about how to create the workspace with a basic DDS Publisher and a basic DDS Subscriber, please refer to `Writing a simple C++ publisher and subscriber application <https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html>`_ .
 
-The source code of this tutorial can be found in the public |eddsrecord| `GitHub repository <https://github.com/eProsima/DDS-Record-Replay/tree/main/resources/dds/TypeLookupService>`_ with an explanation of how to build and run it.
+The source code of this tutorial can be found in the public |eddsrecord| `GitHub repository <https://github.com/eProsima/DDS-Record-Replay/tree/v0.4.0/resources/dds/TypeLookupService>`_ with an explanation of how to build and run it.
 
 .. warning::
 
@@ -68,18 +68,18 @@ Data types
 
 At the moment, there are two data types that can be used:
 
-* `HelloWorld.idl <https://github.com/eProsima/DDS-Record-Replay/blob/main/resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl>`_
+* `HelloWorld.idl <https://github.com/eProsima/DDS-Record-Replay/blob/v0.4.0/resources/dds/TypeLookupService/types/hello_world/HelloWorld.idl>`_
 
 .. literalinclude:: ../../../resources/dds/TypeLookupService/types/v2/hello_world/HelloWorld.idl
 
-* `Complete.idl <https://github.com/eProsima/DDS-Record-Replay/blob/main/resources/dds/TypeLookupService/types/complete/Complete.idl>`_
+* `Complete.idl <https://github.com/eProsima/DDS-Record-Replay/blob/v0.4.0/resources/dds/TypeLookupService/types/complete/Complete.idl>`_
 
 .. literalinclude:: ../../../resources/dds/TypeLookupService/types/v2/complete/Complete.idl
 
 Examining the code
 ==================
 
-This section explains the C++ source code of the DDS Publisher, which can also be found `here <https://github.com/eProsima/DDS-Record-Replay/blob/main/resources/dds/TypeLookupService>`_.
+This section explains the C++ source code of the DDS Publisher, which can also be found `here <https://github.com/eProsima/DDS-Record-Replay/blob/v0.4.0/resources/dds/TypeLookupService>`_.
 
 The private data members of the class defines the DDS Topic, ``DataTypeKind``, DDS Topic type and DynamicType.
 The ``DataTypeKind`` defines the type to be used by the application (``HelloWorld`` or ``Complete``).
@@ -151,7 +151,7 @@ The DDS Subscriber is acting as a client of types, i.e. the subscriber will not 
 Examining the code
 ==================
 
-This section explains the C++ source code of the DDS Subscriber, which can also be found `here <https://github.com/eProsima/DDS-Record-Replay/blob/main/resources/dds/TypeLookupService>`_.
+This section explains the C++ source code of the DDS Subscriber, which can also be found `here <https://github.com/eProsima/DDS-Record-Replay/blob/v0.4.0/resources/dds/TypeLookupService>`_.
 
 The private data members of the class defines the DDS Topic, DDS Topic type and DynamicType.
 
