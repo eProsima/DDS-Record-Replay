@@ -35,6 +35,8 @@
 #include <ddspipe_yaml/Yaml.hpp>
 #include <ddspipe_yaml/YamlReader.hpp>
 
+#include <ddsrecorder_participants/recorder/output/OutputSettings.hpp>
+
 #include <ddsrecorder_yaml/library/library_dll.h>
 #include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
 
@@ -70,6 +72,7 @@ public:
     std::shared_ptr<ddspipe::participants::ParticipantConfiguration> recorder_configuration;
 
     // Output file params
+    participants::OutputLibrary output_library = participants::OutputLibrary::mcap;
     std::string output_filepath = ".";
     std::string output_filename = "output";
     std::string output_timestamp_format = "%Y-%m-%d_%H-%M-%S_%Z";
