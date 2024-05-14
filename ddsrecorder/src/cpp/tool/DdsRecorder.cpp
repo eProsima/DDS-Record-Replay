@@ -25,6 +25,9 @@
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
 #include <ddsrecorder_participants/recorder/output/BaseHandler.hpp>
+#include <ddsrecorder_participants/recorder/output/OutputSettings.hpp>
+#include <ddsrecorder_participants/recorder/sql/SqlHandler.hpp>
+#include <ddsrecorder_participants/recorder/sql/SqlHandlerConfiguration.hpp>
 
 #include "DdsRecorder.hpp"
 
@@ -86,7 +89,19 @@ DdsRecorder::DdsRecorder(
         output_settings.prepend_timestamp = false;
     }
 
-    output_settings.extension = ".mcap";
+    switch (configuration_.output_library)
+    {
+        case participants::OutputLibrary::mcap:
+            output_settings.extension = ".mcap";
+            break;
+        case participants::OutputLibrary::sql:
+            output_settings.extension = ".db";
+            break;
+        default:
+            utils::tsnh(utils::Formatter() << "The library " << configuration_.output_library << " is not valid.");
+            break;
+    }
+
     output_settings.safety_margin = configuration_.safety_margin;
     output_settings.file_rotation = configuration_.output_resource_limits_file_rotation;
     output_settings.max_file_size = configuration_.output_resource_limits_max_file_size;
@@ -103,32 +118,73 @@ DdsRecorder::DdsRecorder(
         output_settings.max_size = output_settings.max_file_size;
     }
 
-    // Create MCAP Handler configuration
-    participants::McapHandlerConfiguration handler_config(
-        output_settings,
-        configuration_.max_pending_samples,
-        configuration_.buffer_size,
-        configuration_.event_window,
-        configuration_.cleanup_period,
-        configuration_.log_publish_time,
-        configuration_.only_with_type,
-        configuration_.mcap_writer_options,
-        configuration_.record_types,
-        configuration_.ros2_types);
-
     if (file_tracker == nullptr)
     {
         // Create the File Tracker
         file_tracker.reset(new participants::FileTracker(output_settings));
     }
 
-    // Create MCAP Handler
-    handler_ = std::make_shared<participants::McapHandler>(
-        handler_config,
-        payload_pool_,
-        file_tracker,
-        recorder_to_handler_state_(init_state),
-        std::bind(&DdsRecorder::on_disk_full, this));
+    const auto handler_state = recorder_to_handler_state_(init_state);
+    const auto on_disk_full_lambda = std::bind(&DdsRecorder::on_disk_full, this);
+
+    switch (configuration_.output_library)
+    {
+        case participants::OutputLibrary::mcap:
+        {
+            // Create MCAP Handler configuration
+            participants::McapHandlerConfiguration handler_config(
+                output_settings,
+                configuration_.max_pending_samples,
+                configuration_.buffer_size,
+                configuration_.event_window,
+                configuration_.cleanup_period,
+                configuration_.log_publish_time,
+                configuration_.only_with_type,
+                configuration_.mcap_writer_options,
+                configuration_.record_types,
+                configuration_.ros2_types);
+
+            // Create MCAP Handler
+            handler_ = std::make_shared<participants::McapHandler>(
+                handler_config,
+                payload_pool_,
+                file_tracker,
+                handler_state,
+                on_disk_full_lambda);
+
+            break;
+        }
+        case participants::OutputLibrary::sql:
+        {
+            // Create SQL Handler configuration
+            participants::SqlHandlerConfiguration handler_config(
+                output_settings,
+                configuration_.max_pending_samples,
+                configuration_.buffer_size,
+                configuration_.event_window,
+                configuration_.cleanup_period,
+                configuration_.log_publish_time,
+                configuration_.only_with_type,
+                configuration_.record_types,
+                configuration_.ros2_types);
+
+            // Create MCAP Handler
+            handler_ = std::make_shared<participants::SqlHandler>(
+                handler_config,
+                payload_pool_,
+                file_tracker,
+                handler_state,
+                on_disk_full_lambda);
+
+            break;
+        }
+        default:
+        {
+            utils::tsnh(utils::Formatter() << "The library " << configuration_.output_library << " is not valid.");
+            break;
+        }
+    }
+
 
     // Create DynTypes Participant
     dyn_participant_ = std::make_shared<DynTypesParticipant>(

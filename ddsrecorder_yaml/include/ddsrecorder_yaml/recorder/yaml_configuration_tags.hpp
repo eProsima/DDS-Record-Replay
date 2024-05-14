@@ -37,6 +37,9 @@ constexpr const char* RECORDER_RECORDER_TAG("recorder");
 
 // Output related tags
 constexpr const char* RECORDER_OUTPUT_TAG("output");
+constexpr const char* RECORDER_OUTPUT_LIBRARY_TAG("library");
+constexpr const char* RECORDER_OUTPUT_LIBRARY_MCAP_TAG("mcap");
+constexpr const char* RECORDER_OUTPUT_LIBRARY_SQL_TAG("sql");
 constexpr const char* RECORDER_OUTPUT_PATH_FILE_TAG("path");
 constexpr const char* RECORDER_OUTPUT_FILE_NAME_TAG("filename");
 constexpr const char* RECORDER_OUTPUT_TIMESTAMP_FORMAT_TAG("timestamp-format");
