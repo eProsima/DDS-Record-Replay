@@ -137,8 +137,8 @@ void create_publisher(
 
     TypeSupport type(new eprosima::fastrtps::types::DynamicPubSubType(test::dynamic_type_));
     // Set type so introspection info is sent
-    type->auto_fill_type_information(true);
-    type->auto_fill_type_object(false);
+    type->auto_fill_type_information(false);
+    type->auto_fill_type_object(true);
     // Register the type in the Participant
     participant_->register_type(type);
 

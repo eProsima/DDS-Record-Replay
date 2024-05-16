@@ -374,8 +374,8 @@ void DdsReplayer::create_dynamic_writer_(
     }
 
     // Only enable sharing dynamic types through TypeLookup Service
-    type->auto_fill_type_information(true);
-    type->auto_fill_type_object(false);
+    type->auto_fill_type_information(false);
+    type->auto_fill_type_object(true);
 
     // Register type
     if (ReturnCode_t::RETCODE_OK != dyn_participant_->register_type(type))

@@ -88,8 +88,8 @@ TypeLookupServicePublisher::TypeLookupServicePublisher(
     TypeSupport type(new eprosima::fastrtps::types::DynamicPubSubType(dynamic_type_));
 
     // Send type information so the type can be discovered
-    type->auto_fill_type_information(true);
-    type->auto_fill_type_object(false);
+    type->auto_fill_type_information(false);
+    type->auto_fill_type_object(true);
 
     // Register the type in the Participant
     participant_->register_type(type);
