@@ -17,6 +17,8 @@
  *
  */
 
+#include <set>
+
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/utils.hpp>
 
@@ -29,6 +31,7 @@
 #include <ddspipe_yaml/yaml_configuration_tags.hpp>
 #include <ddspipe_yaml/Yaml.hpp>
 #include <ddspipe_yaml/YamlManager.hpp>
+#include <ddspipe_yaml/YamlValidator.hpp>
 
 #include <ddsrecorder_yaml/recorder/yaml_configuration_tags.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
@@ -122,6 +125,14 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
         recorder_configuration->app_metadata = "";
         recorder_configuration->is_repeater = false;
 
+        static const std::set<TagType> tags{
+            RECORDER_RECORDER_TAG,
+            SPECS_TAG,
+            RECORDER_DDS_TAG,
+            RECORDER_REMOTE_CONTROLLER_TAG};
+
+        YamlValidator::validate_tags(yml, tags);
+
         /////
         // Get optional Recorder configuration options
         if (YamlReader::is_tag_present(yml, RECORDER_RECORDER_TAG))
@@ -136,7 +147,6 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
 
         /////
         // Get optional specs configuration
-        // WARNING: Parse builtin topics (dds tag) AFTER specs, as some topic-specific default values are set there
         if (YamlReader::is_tag_present(yml, SPECS_TAG))
         {
             auto specs_yml = YamlReader::get_value_in_tag(yml, SPECS_TAG);
@@ -153,7 +163,7 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
 
         // Block ROS 2 services (RPC) topics
         // RATIONALE:
-        // At the time of this writting, services in ROS 2 behave in the following manner: a ROS 2 service
+        // At the time of this writing, services in ROS 2 behave in the following manner: a ROS 2 service
         // client awaits to discover a server, and it is then when a request is sent to this (and only this) server,
         // from which a response is expected.
         // Hence, if these topics are not blocked, the client would wrongly believe DDS-Recorder is a server, thus
@@ -210,9 +220,31 @@ void RecorderConfiguration::load_recorder_configuration_(
         const Yaml& yml,
         const YamlReaderVersion& version)
 {
+    static const std::set<TagType> tags{
+        RECORDER_OUTPUT_TAG,
+        RECORDER_BUFFER_SIZE_TAG,
+        RECORDER_EVENT_WINDOW_TAG,
+        RECORDER_LOG_PUBLISH_TIME_TAG,
+        RECORDER_ONLY_WITH_TYPE_TAG,
+        RECORDER_COMPRESSION_SETTINGS_TAG,
+        RECORDER_RECORD_TYPES_TAG,
+        RECORDER_ROS2_TYPES_TAG};
+
+    YamlValidator::validate_tags(yml, tags);
+
     if (YamlReader::is_tag_present(yml, RECORDER_OUTPUT_TAG))
     {
         auto output_yml = YamlReader::get_value_in_tag(yml, RECORDER_OUTPUT_TAG);
+
+        static const std::set<TagType> output_tags{
+            RECORDER_OUTPUT_PATH_FILE_TAG,
+            RECORDER_OUTPUT_FILE_NAME_TAG,
+            RECORDER_OUTPUT_TIMESTAMP_FORMAT_TAG,
+            RECORDER_OUTPUT_LOCAL_TIMESTAMP_TAG,
+            RECORDER_OUTPUT_SAFETY_MARGIN_TAG,
+            RECORDER_OUTPUT_RESOURCE_LIMITS_TAG};
+
+        YamlValidator::validate_tags(output_yml, output_tags);
 
         /////
         // Get optional file path
@@ -256,6 +288,13 @@ void RecorderConfiguration::load_recorder_configuration_(
         if (YamlReader::is_tag_present(output_yml, RECORDER_OUTPUT_RESOURCE_LIMITS_TAG))
         {
             auto resource_limits_yml = YamlReader::get_value_in_tag(output_yml, RECORDER_OUTPUT_RESOURCE_LIMITS_TAG);
+
+            static const std::set<TagType> resource_limits_tags{
+                RECORDER_OUTPUT_RESOURCE_LIMITS_FILE_ROTATION_TAG,
+                RECORDER_OUTPUT_RESOURCE_LIMITS_MAX_FILE_SIZE_TAG,
+                RECORDER_OUTPUT_RESOURCE_LIMITS_MAX_SIZE_TAG};
+
+            YamlValidator::validate_tags(resource_limits_yml, resource_limits_tags);
 
             /////
             // Get optional file rotation
@@ -337,10 +376,60 @@ void RecorderConfiguration::load_recorder_configuration_(
     }
 }
 
+void RecorderConfiguration::load_output_configuration_(
+        const Yaml& yml,
+        const YamlReaderVersion& version)
+{
+    static const std::set<TagType> tags{
+        RECORDER_OUTPUT_PATH_FILE_TAG,
+        RECORDER_OUTPUT_FILE_NAME_TAG,
+        RECORDER_OUTPUT_TIMESTAMP_FORMAT_TAG,
+        RECORDER_OUTPUT_LOCAL_TIMESTAMP_TAG};
+
+    YamlValidator::validate_tags(yml, tags);
+
+    /////
+    // Get optional file path
+    if (YamlReader::is_tag_present(yml, RECORDER_OUTPUT_PATH_FILE_TAG))
+    {
+        output_filepath = YamlReader::get<std::string>(yml, RECORDER_OUTPUT_PATH_FILE_TAG, version);
+    }
+
+    /////
+    // Get optional file name
+    if (YamlReader::is_tag_present(yml, RECORDER_OUTPUT_FILE_NAME_TAG))
+    {
+        output_filename = YamlReader::get<std::string>(yml, RECORDER_OUTPUT_FILE_NAME_TAG, version);
+    }
+
+    /////
+    // Get optional timestamp format
+    if (YamlReader::is_tag_present(yml, RECORDER_OUTPUT_TIMESTAMP_FORMAT_TAG))
+    {
+        output_timestamp_format = YamlReader::get<std::string>(yml, RECORDER_OUTPUT_TIMESTAMP_FORMAT_TAG, version);
+    }
+
+    /////
+    // Get optional timestamp format
+    if (YamlReader::is_tag_present(yml, RECORDER_OUTPUT_LOCAL_TIMESTAMP_TAG))
+    {
+        output_local_timestamp = YamlReader::get<bool>(yml, RECORDER_OUTPUT_LOCAL_TIMESTAMP_TAG, version);
+    }
+}
+
 void RecorderConfiguration::load_controller_configuration_(
         const Yaml& yml,
         const YamlReaderVersion& version)
 {
+    static const std::set<TagType> tags{
+        RECORDER_REMOTE_CONTROLLER_ENABLE_TAG,
+        DOMAIN_ID_TAG,
+        RECORDER_REMOTE_CONTROLLER_INITIAL_STATE_TAG,
+        RECORDER_REMOTE_CONTROLLER_COMMAND_TOPIC_NAME_TAG,
+        RECORDER_REMOTE_CONTROLLER_STATUS_TOPIC_NAME_TAG};
+
+    YamlValidator::validate_tags(yml, tags);
+
     // Get optional enable remote controller
     if (YamlReader::is_tag_present(yml, RECORDER_REMOTE_CONTROLLER_ENABLE_TAG))
     {
@@ -358,8 +447,7 @@ void RecorderConfiguration::load_controller_configuration_(
     if (YamlReader::is_tag_present(yml, RECORDER_REMOTE_CONTROLLER_INITIAL_STATE_TAG))
     {
         // Convert to enum and check valid wherever used to avoid mcap library dependency in YAML module
-        initial_state = YamlReader::get<std::string>(yml,
-                        RECORDER_REMOTE_CONTROLLER_INITIAL_STATE_TAG, version);
+        initial_state = YamlReader::get<std::string>(yml, RECORDER_REMOTE_CONTROLLER_INITIAL_STATE_TAG, version);
         // Case insensitive
         eprosima::utils::to_uppercase(initial_state);
     }
@@ -383,6 +471,16 @@ void RecorderConfiguration::load_specs_configuration_(
         const Yaml& yml,
         const YamlReaderVersion& version)
 {
+    static const std::set<TagType> tags{
+        NUMBER_THREADS_TAG,
+        SPECS_QOS_TAG,
+        RECORDER_SPECS_MAX_PENDING_SAMPLES_TAG,
+        RECORDER_SPECS_CLEANUP_PERIOD_TAG,
+        LOG_CONFIGURATION_TAG,
+        MONITOR_TAG};
+
+    YamlValidator::validate_tags(yml, tags);
+
     // Get number of threads
     if (YamlReader::is_tag_present(yml, NUMBER_THREADS_TAG))
     {
@@ -393,7 +491,7 @@ void RecorderConfiguration::load_specs_configuration_(
     // Get optional Topic QoS
     if (YamlReader::is_tag_present(yml, SPECS_QOS_TAG))
     {
-        YamlReader::fill<TopicQoS>(topic_qos, YamlReader::get_value_in_tag(yml, SPECS_QOS_TAG), version);
+        topic_qos = YamlReader::get<TopicQoS>(yml, SPECS_QOS_TAG, version);
         TopicQoS::default_topic_qos.set_value(topic_qos);
     }
 
@@ -401,6 +499,7 @@ void RecorderConfiguration::load_specs_configuration_(
     if (YamlReader::is_tag_present(yml, RECORDER_SPECS_MAX_PENDING_SAMPLES_TAG))
     {
         max_pending_samples = YamlReader::get<int>(yml, RECORDER_SPECS_MAX_PENDING_SAMPLES_TAG, version);
+
         if (max_pending_samples < -1)
         {
             throw eprosima::utils::ConfigurationException(
@@ -434,6 +533,18 @@ void RecorderConfiguration::load_dds_configuration_(
         const Yaml& yml,
         const YamlReaderVersion& version)
 {
+    static const std::set<TagType> tags{
+        DOMAIN_ID_TAG,
+        WHITELIST_INTERFACES_TAG,
+        TRANSPORT_DESCRIPTORS_TRANSPORT_TAG,
+        IGNORE_PARTICIPANT_FLAGS_TAG,
+        ALLOWLIST_TAG,
+        BLOCKLIST_TAG,
+        TOPICS_TAG,
+        BUILTIN_TAG};
+
+    YamlValidator::validate_tags(yml, tags);
+
     // Get optional DDS domain
     if (YamlReader::is_tag_present(yml, DOMAIN_ID_TAG))
     {

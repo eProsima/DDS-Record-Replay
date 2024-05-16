@@ -635,7 +635,7 @@ void McapHandler::close_file_nts_()
             "Closing file <" << tmp_filename << "> .");
 
     // Write dynamic types associated to all added schemas as an MCAP attachment
-    if (configuration_.record_types)
+    if (configuration_.record_types && dynamic_types_payload_ != nullptr)
     {
         write_dynamic_types_();
     }

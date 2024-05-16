@@ -114,6 +114,10 @@ protected:
             const Yaml& yml,
             const ddspipe::yaml::YamlReaderVersion& version);
 
+    void load_output_configuration_(
+            const Yaml& yml,
+            const ddspipe::yaml::YamlReaderVersion& version);
+
     void load_controller_configuration_(
             const Yaml& yml,
             const ddspipe::yaml::YamlReaderVersion& version);
