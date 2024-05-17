@@ -19,6 +19,7 @@
 #pragma once
 
 #include <sqlite3.h>
+#include <string>
 
 #include <cstdint>
 #include <ddsrecorder_participants/library/library_dll.h>
@@ -80,6 +81,18 @@ protected:
     template <typename T>
     void write_nts_(
             const T& data);
+
+    /**
+     * @brief Creates a new SQL table.
+     *
+     * @param table_name The name of the table.
+     * @param table_definition The definition of the table.
+     *
+     * @throws \c InitializationException if the table creation fails.
+     */
+    void create_sql_table_(
+            const std::string& table_name,
+            const std::string& table_definition);
 
     // The SQLite database
     sqlite3* database_;
