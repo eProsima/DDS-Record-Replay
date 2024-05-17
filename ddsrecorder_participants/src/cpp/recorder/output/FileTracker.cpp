@@ -59,8 +59,9 @@ void FileTracker::new_file(
     if (min_file_size > configuration_.max_file_size)
     {
         throw utils::InconsistencyException(utils::Formatter() <<
-                  "The minimum file size (" + utils::from_bytes(min_file_size) + ") is greater than the maximum file "
-                  "size (" + utils::from_bytes(configuration_.max_file_size) + ").");
+                      "The minimum file size (" <<
+                      utils::from_bytes(min_file_size) << ") is greater than the maximum file size (" <<
+                      utils::from_bytes(configuration_.max_file_size) << ").");
     }
 
     const std::uint64_t free_space = configuration_.max_size - size_;
@@ -139,7 +140,7 @@ void FileTracker::close_file() noexcept
     {
         std::filesystem::rename(get_current_filename(), current_file_.name);
     }
-    catch(const std::filesystem::filesystem_error& e)
+    catch (const std::filesystem::filesystem_error& e)
     {
         logError(DDSRECORDER_FILE_TRACKER,
                 "Error renaming " + get_current_filename() + ": " << e.what());
@@ -164,8 +165,8 @@ void FileTracker::set_current_file_size(
     if (file_size > configuration_.max_file_size)
     {
         logWarning(DDSRECORDER_FILE_TRACKER,
-                   "The file's size (" << utils::from_bytes(file_size) << ") is greater than the maximum file size (" <<
-                   utils::from_bytes(configuration_.max_file_size) << ").");
+                "The file's size (" << utils::from_bytes(file_size) << ") is greater than the maximum file size (" <<
+                utils::from_bytes(configuration_.max_file_size) << ").");
     }
 
     const auto size_diff = file_size - current_file_.size;
@@ -173,8 +174,9 @@ void FileTracker::set_current_file_size(
     if (size_ + size_diff > configuration_.max_size)
     {
         logWarning(DDSRECORDER_FILE_TRACKER,
-            "The aggregate output size (" << utils::from_bytes(file_size) << ") is greater than the maximum size (" <<
-            utils::from_bytes(configuration_.max_file_size) << ").");
+                "The aggregate output size (" <<
+                utils::from_bytes(file_size) << ") is greater than the maximum size (" <<
+                utils::from_bytes(configuration_.max_file_size) << ").");
     }
 
     current_file_.size = file_size;

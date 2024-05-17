@@ -50,7 +50,7 @@ void McapSizeTracker::init(
     if (enabled_)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                   "MCAP_WRITE | Attempting to initialize already enabled tracker.");
+                "MCAP_WRITE | Attempting to initialize already enabled tracker.");
         return;
     }
 
@@ -76,7 +76,7 @@ void McapSizeTracker::reset(
     if (!enabled_)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                   "MCAP_WRITE | Attempting to reset disabled tracker.");
+                "MCAP_WRITE | Attempting to reset disabled tracker.");
         return;
     }
 
@@ -85,13 +85,13 @@ void McapSizeTracker::reset(
     if (written_mcap_size_ > space_available_)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                   "MCAP_WRITE | Written size exceeds available space in disk.");
+                "MCAP_WRITE | Written size exceeds available space in disk.");
         // assert(false); // TODO: uncomment when estimation is exact
     }
     else if (potential_mcap_size_ != written_mcap_size_)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                   "MCAP_WRITE | Written size exceeds potential one.");
+                "MCAP_WRITE | Written size exceeds potential one.");
         // assert(false); // TODO: uncomment when estimation is exact
     }
 
@@ -231,7 +231,7 @@ bool McapSizeTracker::can_increase_potential_mcap_size_(
     if (potential_mcap_size_ < size_to_remove)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                   "MCAP_WRITE | Attempting to decrease potential size more than possible.");
+                "MCAP_WRITE | Attempting to decrease potential size more than possible.");
         // assert(false); // TODO: uncomment when estimation is exact
         return false;
     }
@@ -246,7 +246,7 @@ void McapSizeTracker::check_and_increase_potential_mcap_size_(
     if (!enabled_)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                   "MCAP_WRITE | Attempting to increase potential size in disabled tracker.");
+                "MCAP_WRITE | Attempting to increase potential size in disabled tracker.");
         return;
     }
 
@@ -276,14 +276,14 @@ void McapSizeTracker::decrease_potential_mcap_size_(
     if (!enabled_)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                   "MCAP_WRITE | Attempting to decrease potential size in disabled tracker.");
+                "MCAP_WRITE | Attempting to decrease potential size in disabled tracker.");
         return;
     }
 
     if (potential_mcap_size_ < size)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                   "MCAP_WRITE | Attempting to decrease potential size more than possible.");
+                "MCAP_WRITE | Attempting to decrease potential size more than possible.");
         // assert(false); // TODO: uncomment when estimation is exact
         return;
     }
@@ -302,14 +302,14 @@ void McapSizeTracker::check_and_increase_written_mcap_size_(
     if (!enabled_)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                   "MCAP_WRITE | Attempting to increase written size in disabled tracker.");
+                "MCAP_WRITE | Attempting to increase written size in disabled tracker.");
         return;
     }
 
     if ((written_mcap_size_ + size) > space_available_)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                   "MCAP_WRITE | Written size exceeds available space in disk.");
+                "MCAP_WRITE | Written size exceeds available space in disk.");
         // assert(false); // TODO: uncomment when estimation is exact
         return;
     }
@@ -317,7 +317,7 @@ void McapSizeTracker::check_and_increase_written_mcap_size_(
     if ((written_mcap_size_ + size) > potential_mcap_size_)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                   "MCAP_WRITE | Written size exceeds potential one.");
+                "MCAP_WRITE | Written size exceeds potential one.");
         // assert(false); // TODO: uncomment when estimation is exact
         return;
     }

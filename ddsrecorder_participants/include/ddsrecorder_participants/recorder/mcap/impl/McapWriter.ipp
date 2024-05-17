@@ -43,7 +43,7 @@ void McapWriter::write(
             on_mcap_full_nts_(e);
             write_nts_(data);
         }
-        catch(const FullDiskException& e)
+        catch (const FullDiskException& e)
         {
             logError(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Disk is full. Error message:\n " << e.what());
             on_disk_full_();

@@ -74,7 +74,7 @@ void McapWriter::enable()
     catch (const FullDiskException& e)
     {
         logError(DDSRECORDER_MCAP_WRITER,
-                 "MCAP_WRITE | Error opening a new MCAP file: " << e.what());
+                "MCAP_WRITE | Error opening a new MCAP file: " << e.what());
         on_disk_full_();
     }
 
@@ -104,25 +104,25 @@ void McapWriter::update_dynamic_types(
     std::lock_guard<std::mutex> lock(mutex_);
 
     const auto& update_dynamic_types_payload = [&]()
-    {
-        if (dynamic_types_payload_ == nullptr)
-        {
-            logInfo(DDSRECORDER_MCAP_WRITER,
-                    "MCAP_WRITE | Setting the dynamic types payload to " <<
-                    utils::from_bytes(dynamic_types_payload.length) << ".");
+            {
+                if (dynamic_types_payload_ == nullptr)
+                {
+                    logInfo(DDSRECORDER_MCAP_WRITER,
+                            "MCAP_WRITE | Setting the dynamic types payload to " <<
+                            utils::from_bytes(dynamic_types_payload.length) << ".");
 
-            size_tracker_.attachment_to_write(dynamic_types_payload.length);
-        }
-        else
-        {
-            logInfo(DDSRECORDER_MCAP_WRITER,
-                    "MCAP_WRITE | Updating the dynamic types payload from " <<
-                    utils::from_bytes(dynamic_types_payload_->length) << " to " <<
-                    utils::from_bytes(dynamic_types_payload.length) << ".");
+                    size_tracker_.attachment_to_write(dynamic_types_payload.length);
+                }
+                else
+                {
+                    logInfo(DDSRECORDER_MCAP_WRITER,
+                            "MCAP_WRITE | Updating the dynamic types payload from " <<
+                            utils::from_bytes(dynamic_types_payload_->length) << " to " <<
+                            utils::from_bytes(dynamic_types_payload.length) << ".");
 
-            size_tracker_.attachment_to_write(dynamic_types_payload.length, dynamic_types_payload_->length);
-        }
-    };
+                    size_tracker_.attachment_to_write(dynamic_types_payload.length, dynamic_types_payload_->length);
+                }
+            };
 
     try
     {
@@ -135,10 +135,10 @@ void McapWriter::update_dynamic_types(
             on_mcap_full_nts_(e);
             update_dynamic_types_payload();
         }
-        catch(const FullDiskException& e)
+        catch (const FullDiskException& e)
         {
             logError(DDSRECORDER_MCAP_HANDLER,
-                     "FAIL_MCAP_WRITE | Disk is full. Error message:\n " << e.what());
+                    "FAIL_MCAP_WRITE | Disk is full. Error message:\n " << e.what());
             on_disk_full_();
         }
     }
@@ -163,8 +163,8 @@ void McapWriter::open_new_file_nts_(
     catch (const std::invalid_argument& e)
     {
         throw FullDiskException(
-                    "The minimum MCAP size (" + utils::from_bytes(min_file_size) + ") is greater than the maximum MCAP "
-                    "size (" + utils::from_bytes(configuration_.max_file_size) + ").");
+                  "The minimum MCAP size (" + utils::from_bytes(min_file_size) + ") is greater than the maximum MCAP "
+                  "size (" + utils::from_bytes(configuration_.max_file_size) + ").");
     }
 
     const auto filename = file_tracker_->get_current_filename();
@@ -175,7 +175,7 @@ void McapWriter::open_new_file_nts_(
         const auto error_msg = "Failed to open MCAP file " + filename + " for writing: " + status.message;
 
         logError(DDSRECORDER_MCAP_WRITER,
-                 "FAIL_MCAP_OPEN | " << error_msg);
+                "FAIL_MCAP_OPEN | " << error_msg);
         throw utils::InitializationException(error_msg);
     }
 
@@ -228,7 +228,7 @@ void McapWriter::write_nts_(
     if (!status.ok())
     {
         logError(DDSRECORDER_MCAP_WRITER,
-                 "MCAP_WRITE | Error writing in MCAP. Error message: " << status.message);
+                "MCAP_WRITE | Error writing in MCAP. Error message: " << status.message);
         return;
     }
 
@@ -260,7 +260,7 @@ void McapWriter::write_nts_(
     if (!enabled_)
     {
         logWarning(DDSRECORDER_MCAP_WRITER,
-                   "MCAP_WRITE | Attempting to write a message in a disabled writer.");
+                "MCAP_WRITE | Attempting to write a message in a disabled writer.");
         return;
     }
 
@@ -272,7 +272,7 @@ void McapWriter::write_nts_(
     if (!status.ok())
     {
         logError(DDSRECORDER_MCAP_WRITER,
-                 "MCAP_WRITE | Error writing in MCAP. Error message: " << status.message);
+                "MCAP_WRITE | Error writing in MCAP. Error message: " << status.message);
         return;
     }
 
@@ -293,7 +293,7 @@ void McapWriter::write_nts_(
     if (!status.ok())
     {
         logError(DDSRECORDER_MCAP_WRITER,
-                 "MCAP_WRITE | Error writing in MCAP. Error message: " << status.message);
+                "MCAP_WRITE | Error writing in MCAP. Error message: " << status.message);
         return;
     }
 

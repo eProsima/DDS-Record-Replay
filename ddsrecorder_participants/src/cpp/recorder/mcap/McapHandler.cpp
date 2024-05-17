@@ -232,15 +232,15 @@ void McapHandler::add_data(
         else
         {
             throw utils::InconsistencyException(
-                        STR_ENTRY << "Payload owner not found in data received."
-                        );
+                      STR_ENTRY << "Payload owner not found in data received."
+                      );
         }
     }
     else
     {
         throw utils::InconsistencyException(
-                    STR_ENTRY << "Received sample with no payload."
-                    );
+                  STR_ENTRY << "Received sample with no payload."
+                  );
     }
 
     if (received_types_.count(topic.type_name) != 0)
@@ -267,20 +267,18 @@ void McapHandler::add_data(
             }
             else
             {
-                logInfo(
-                    DDSRECORDER_MCAP_HANDLER,
-                    "MCAP_WRITE | Schema for topic " << topic << " not yet available. "
-                    "Inserting to pending samples queue.");
+                logInfo(DDSRECORDER_MCAP_HANDLER,
+                        "MCAP_WRITE | Schema for topic " << topic << " not yet available. "
+                        "Inserting to pending samples queue.");
 
                 add_to_pending_nts_(msg, topic);
             }
         }
         else if (state_ == McapHandlerStateCode::PAUSED)
         {
-            logInfo(
-                DDSRECORDER_MCAP_HANDLER,
-                "MCAP_WRITE | Schema for topic " << topic << " not yet available. "
-                "Inserting to (paused) pending samples queue.");
+            logInfo(DDSRECORDER_MCAP_HANDLER,
+                    "MCAP_WRITE | Schema for topic " << topic << " not yet available. "
+                    "Inserting to (paused) pending samples queue.");
 
             pending_samples_paused_[topic.type_name].push_back({topic, msg});
         }
@@ -314,7 +312,7 @@ void McapHandler::start()
     if (prev_state == McapHandlerStateCode::RUNNING)
     {
         logWarning(DDSRECORDER_MCAP_HANDLER,
-                   "MCAP_STATE | Ignoring start command, instance already started.");
+                "MCAP_STATE | Ignoring start command, instance already started.");
     }
     else
     {
@@ -356,7 +354,7 @@ void McapHandler::stop(
         if (!on_destruction)
         {
             logWarning(DDSRECORDER_MCAP_HANDLER,
-                       "MCAP_STATE | Ignoring stop command, instance already stopped.");
+                    "MCAP_STATE | Ignoring stop command, instance already stopped.");
         }
     }
     else
@@ -381,7 +379,7 @@ void McapHandler::stop(
             pending_samples_.clear();
         }
         dump_data_nts_();  // if prev_state == RUNNING -> writes buffer + added pending samples (if !only_with_schema)
-                            // if prev_state == PAUSED  -> writes added pending samples (if !only_with_schema)
+                           // if prev_state == PAUSED  -> writes added pending samples (if !only_with_schema)
 
         mcap_writer_.disable();
     }
@@ -401,7 +399,7 @@ void McapHandler::pause()
     if (prev_state == McapHandlerStateCode::PAUSED)
     {
         logWarning(DDSRECORDER_MCAP_HANDLER,
-                   "MCAP_STATE | Ignoring pause command, instance already paused.");
+                "MCAP_STATE | Ignoring pause command, instance already paused.");
     }
     else
     {
@@ -444,7 +442,7 @@ void McapHandler::trigger_event()
     if (state_ != McapHandlerStateCode::PAUSED)
     {
         logWarning(DDSRECORDER_MCAP_HANDLER,
-                   "MCAP_STATE | Ignoring trigger event command, instance is not paused.");
+                "MCAP_STATE | Ignoring trigger event command, instance is not paused.");
     }
     else
     {
@@ -512,7 +510,7 @@ void McapHandler::add_data_nts_(
     catch (const utils::InconsistencyException& e)
     {
         logWarning(DDSRECORDER_MCAP_HANDLER,
-                   "MCAP_WRITE | Error adding message in topic " << topic << ". Error message:\n " << e.what());
+                "MCAP_WRITE | Error adding message in topic " << topic << ". Error message:\n " << e.what());
         return;
     }
 
@@ -532,8 +530,8 @@ void McapHandler::add_to_pending_nts_(
         {
             // Discard oldest message in pending samples
             logWarning(DDSRECORDER_MCAP_HANDLER,
-                       "MCAP_WRITE | Dropping pending sample in type " << topic.type_name << ": buffer limit (" <<
-                       configuration_.max_pending_samples << ") reached.");
+                    "MCAP_WRITE | Dropping pending sample in type " << topic.type_name << ": buffer limit (" <<
+                    configuration_.max_pending_samples << ") reached.");
         }
         else
         {
