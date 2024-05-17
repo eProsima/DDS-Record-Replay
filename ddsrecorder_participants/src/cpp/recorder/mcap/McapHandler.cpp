@@ -75,7 +75,7 @@ McapHandler::McapHandler(
     , mcap_writer_(config.output_settings, config.mcap_writer_options, file_tracker, config.record_types)
 {
     logInfo(DDSRECORDER_MCAP_HANDLER,
-            "Creating MCAP handler instance.");
+            "MCAP_STATE | Creating MCAP handler instance.");
 
     if (on_disk_full_lambda != nullptr)
     {
@@ -99,7 +99,8 @@ McapHandler::McapHandler(
 
 McapHandler::~McapHandler()
 {
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Destroying handler.");
+    logInfo(DDSRECORDER_MCAP_HANDLER,
+            "MCAP_STATE | Destroying handler.");
 
     // Stop handler prior to destruction
     stop(true);
@@ -143,11 +144,13 @@ void McapHandler::add_schema(
     mcap::Schema new_schema(name, encoding, data);
 
     // Add schema to writer and to schemas map
-    logInfo(DDSRECORDER_MCAP_HANDLER, "\nAdding schema with name " << type_name << " :\n" << data << "\n");
+    logInfo(DDSRECORDER_MCAP_HANDLER,
+            "MCAP_WRITE | Adding schema with name " << type_name << " :\n" << data << "\n");
 
     mcap_writer_.write(new_schema);
 
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << new_schema.name << ".");
+    logInfo(DDSRECORDER_MCAP_HANDLER,
+            "MCAP_WRITE | Schema created: " << new_schema.name << ".");
 
     auto it = schemas_.find(type_name);
     if (it != schemas_.end())
@@ -158,12 +161,16 @@ void McapHandler::add_schema(
     schemas_[type_name] = std::move(new_schema);
     received_types_.insert(type_name);
 
-    // Every time a dynamic type is added the attachment is newly calculated
-    store_dynamic_type_(type_name, dynamic_types_);
-
     if (configuration_.record_types)
     {
-        mcap_writer_.update_dynamic_types(*serialize_dynamic_types_(dynamic_types_));
+        // Store dynamic type in dynamic_types collection
+        store_dynamic_type_(type_name, dynamic_types_);
+
+        // Serialize dynamic types collection
+        const auto serialized_dynamic_types = serialize_dynamic_types_(dynamic_types_);
+
+        // Recalculate the attachment
+        mcap_writer_.update_dynamic_types(*serialized_dynamic_types);
     }
 
     // Check if there are any pending samples for this new schema. If so, add them.
@@ -183,13 +190,14 @@ void McapHandler::add_data(
 
     if (state_ == McapHandlerStateCode::STOPPED)
     {
-        logInfo(DDSRECORDER_MCAP_HANDLER, "Attempting to add sample through a stopped handler, dropping...");
+        logInfo(DDSRECORDER_MCAP_HANDLER,
+                "FAIL_MCAP_WRITE | Attempting to add sample through a stopped handler, dropping...");
         return;
     }
 
     logInfo(
         DDSRECORDER_MCAP_HANDLER,
-        "Adding data in topic " << topic);
+        "MCAP_WRITE | Adding data in topic " << topic);
 
     // Add data to channel
     McapMessage msg;
@@ -261,7 +269,8 @@ void McapHandler::add_data(
             {
                 logInfo(
                     DDSRECORDER_MCAP_HANDLER,
-                    "Schema for topic " << topic << " not yet available, inserting to pending samples queue.");
+                    "MCAP_WRITE | Schema for topic " << topic << " not yet available. "
+                    "Inserting to pending samples queue.");
 
                 add_to_pending_nts_(msg, topic);
             }
@@ -270,7 +279,8 @@ void McapHandler::add_data(
         {
             logInfo(
                 DDSRECORDER_MCAP_HANDLER,
-                "Schema for topic " << topic << " not yet available, inserting to (paused) pending samples queue.");
+                "MCAP_WRITE | Schema for topic " << topic << " not yet available. "
+                "Inserting to (paused) pending samples queue.");
 
             pending_samples_paused_[topic.type_name].push_back({topic, msg});
         }
@@ -303,15 +313,13 @@ void McapHandler::start()
 
     if (prev_state == McapHandlerStateCode::RUNNING)
     {
-        logWarning(
-            DDSRECORDER_MCAP_HANDLER,
-            "Ignoring start command, instance already started.");
+        logWarning(DDSRECORDER_MCAP_HANDLER,
+                   "MCAP_STATE | Ignoring start command, instance already started.");
     }
     else
     {
-        logInfo(
-            DDSRECORDER_MCAP_HANDLER,
-            "Starting handler.");
+        logInfo(DDSRECORDER_MCAP_HANDLER,
+                "MCAP_STATE | Starting handler.");
 
         if (prev_state == McapHandlerStateCode::STOPPED)
         {
@@ -347,16 +355,14 @@ void McapHandler::stop(
     {
         if (!on_destruction)
         {
-            logWarning(
-                DDSRECORDER_MCAP_HANDLER,
-                "Ignoring stop command, instance already stopped.");
+            logWarning(DDSRECORDER_MCAP_HANDLER,
+                       "MCAP_STATE | Ignoring stop command, instance already stopped.");
         }
     }
     else
     {
-        logInfo(
-            DDSRECORDER_MCAP_HANDLER,
-            "Stopping handler.");
+        logInfo(DDSRECORDER_MCAP_HANDLER,
+                "MCAP_STATE | Stopping handler.");
 
         if (prev_state == McapHandlerStateCode::PAUSED)
         {
@@ -394,15 +400,13 @@ void McapHandler::pause()
 
     if (prev_state == McapHandlerStateCode::PAUSED)
     {
-        logWarning(
-            DDSRECORDER_MCAP_HANDLER,
-            "Ignoring pause command, instance already paused.");
+        logWarning(DDSRECORDER_MCAP_HANDLER,
+                   "MCAP_STATE | Ignoring pause command, instance already paused.");
     }
     else
     {
-        logInfo(
-            DDSRECORDER_MCAP_HANDLER,
-            "Pausing handler.");
+        logInfo(DDSRECORDER_MCAP_HANDLER,
+                "MCAP_STATE | Pausing handler.");
 
         if (prev_state == McapHandlerStateCode::STOPPED)
         {
@@ -439,15 +443,13 @@ void McapHandler::trigger_event()
 
     if (state_ != McapHandlerStateCode::PAUSED)
     {
-        logWarning(
-            DDSRECORDER_MCAP_HANDLER,
-            "Ignoring trigger event command, instance is not paused.");
+        logWarning(DDSRECORDER_MCAP_HANDLER,
+                   "MCAP_STATE | Ignoring trigger event command, instance is not paused.");
     }
     else
     {
-        logInfo(
-            DDSRECORDER_MCAP_HANDLER,
-            "Triggering event.");
+        logInfo(DDSRECORDER_MCAP_HANDLER,
+                "MCAP_STATE | Triggering event.");
 
         // Notify event routine thread an event has been triggered
         event_flag_ = EventCode::triggered;
@@ -490,7 +492,8 @@ void McapHandler::add_data_nts_(
 
         if (state_ == McapHandlerStateCode::RUNNING && samples_buffer_.size() == configuration_.buffer_size)
         {
-            logInfo(DDSRECORDER_MCAP_HANDLER, "Full buffer, writing to disk...");
+            logInfo(DDSRECORDER_MCAP_HANDLER,
+                    "MCAP_WRITE | Full buffer, writing to disk...");
             dump_data_nts_();
         }
     }
@@ -508,8 +511,8 @@ void McapHandler::add_data_nts_(
     }
     catch (const utils::InconsistencyException& e)
     {
-        logWarning(DDSRECORDER_MCAP_HANDLER, "Error adding message in topic " << topic << ". Error message:\n " <<
-                e.what());
+        logWarning(DDSRECORDER_MCAP_HANDLER,
+                   "MCAP_WRITE | Error adding message in topic " << topic << ". Error message:\n " << e.what());
         return;
     }
 
@@ -529,14 +532,14 @@ void McapHandler::add_to_pending_nts_(
         {
             // Discard oldest message in pending samples
             logWarning(DDSRECORDER_MCAP_HANDLER,
-                    "Dropping pending sample in type " << topic.type_name << ": buffer limit (" << configuration_.max_pending_samples <<
-                    ") reached.");
+                       "MCAP_WRITE | Dropping pending sample in type " << topic.type_name << ": buffer limit (" <<
+                       configuration_.max_pending_samples << ") reached.");
         }
         else
         {
             logInfo(DDSRECORDER_MCAP_HANDLER,
-                    "Buffer limit (" << configuration_.max_pending_samples <<  ") reached for type " << topic.type_name <<
-                    ": writing oldest sample without schema.");
+                    "MCAP_WRITE | Buffer limit (" << configuration_.max_pending_samples <<  ") reached for type " <<
+                    topic.type_name << ": writing oldest sample without schema.");
 
             // Write oldest message without schema
             auto& oldest_sample = pending_samples_[topic.type_name].front();
@@ -552,7 +555,8 @@ void McapHandler::add_to_pending_nts_(
 void McapHandler::add_pending_samples_nts_(
         const std::string& schema_name)
 {
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Adding pending samples for type: " << schema_name << ".");
+    logInfo(DDSRECORDER_MCAP_HANDLER,
+            "MCAP_WRITE | Adding pending samples for type: " << schema_name << ".");
     if (pending_samples_.find(schema_name) != pending_samples_.end())
     {
         // Move samples from pending_samples to buffer
@@ -586,7 +590,8 @@ void McapHandler::add_pending_samples_nts_(
 
 void McapHandler::add_pending_samples_nts_()
 {
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Adding pending samples for all types.");
+    logInfo(DDSRECORDER_MCAP_HANDLER,
+            "MCAP_WRITE | Adding pending samples for all types.");
 
     auto pending_types = utils::get_keys(pending_samples_);
     for (auto& pending_type: pending_types)
@@ -629,7 +634,8 @@ void McapHandler::event_thread_routine_()
 
         if (event_flag_ == EventCode::stopped)
         {
-            logInfo(DDSRECORDER_MCAP_HANDLER, "Finishing event thread routine.");
+            logInfo(DDSRECORDER_MCAP_HANDLER,
+                    "MCAP_STATE | Finishing event thread routine.");
             keep_going = false;
         }
         else
@@ -644,11 +650,13 @@ void McapHandler::event_thread_routine_()
 
             if (timeout)
             {
-                logInfo(DDSRECORDER_MCAP_HANDLER, "Event thread timeout.");
+                logInfo(DDSRECORDER_MCAP_HANDLER,
+                        "MCAP_STATE | Event thread timeout.");
             }
             else
             {
-                logInfo(DDSRECORDER_MCAP_HANDLER, "Event triggered: dumping buffered data.");
+                logInfo(DDSRECORDER_MCAP_HANDLER,
+                        "MCAP_STATE | Event triggered: dumping buffered data.");
 
                 if (!(configuration_.max_pending_samples == 0 && configuration_.only_with_schema))
                 {
@@ -695,7 +703,8 @@ void McapHandler::event_thread_routine_()
 
 void McapHandler::remove_outdated_samples_nts_()
 {
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Removing outdated samples.");
+    logInfo(DDSRECORDER_MCAP_HANDLER,
+            "MCAP_STATE | Removing outdated samples.");
 
     auto threshold = std_timepoint_to_mcap_timestamp(utils::now() - std::chrono::seconds(configuration_.event_window));
     samples_buffer_.remove_if([&](auto& sample)
@@ -720,7 +729,8 @@ void McapHandler::stop_event_thread_nts_(
     // WARNING: state must have been set different to PAUSED before calling this method
     assert(state_ != McapHandlerStateCode::PAUSED);
 
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Stopping event thread.");
+    logInfo(DDSRECORDER_MCAP_HANDLER,
+            "MCAP_STATE | Stopping event thread.");
 
     if (event_thread_.joinable())
     {
@@ -736,7 +746,8 @@ void McapHandler::stop_event_thread_nts_(
 
 void McapHandler::dump_data_nts_()
 {
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Writing data stored in buffer.");
+    logInfo(DDSRECORDER_MCAP_HANDLER,
+            "MCAP_WRITE | Writing data stored in buffer.");
 
     while (!samples_buffer_.empty())
     {
@@ -764,7 +775,7 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
         if (!configuration_.only_with_schema)
         {
             logInfo(DDSRECORDER_MCAP_HANDLER,
-                    "Schema not found for type: " << topic.type_name << ". Creating blank schema...");
+                    "MCAP_WRITE | Schema not found for type: " << topic.type_name << ". Creating blank schema...");
 
             std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
             mcap::Schema blank_schema(topic.type_name, encoding, "");
@@ -795,7 +806,8 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
 
     auto channel_id = new_channel.id;
     channels_.insert({topic, std::move(new_channel)});
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Channel created: " << topic << ".");
+    logInfo(DDSRECORDER_MCAP_HANDLER,
+            "MCAP_WRITE | Channel created: " << topic << ".");
 
     return channel_id;
 }
@@ -821,7 +833,8 @@ void McapHandler::update_channels_nts_(
     {
         if (channel.second.schemaId == old_schema_id)
         {
-            logInfo(DDSRECORDER_MCAP_HANDLER, "Updating channel in topic " << channel.first.m_topic_name << ".");
+            logInfo(DDSRECORDER_MCAP_HANDLER,
+                    "MCAP_WRITE | Updating channel in topic " << channel.first.m_topic_name << ".");
 
             assert(channel.first.m_topic_name == channel.second.topic);
             mcap::Channel new_channel(channel.second.topic, "cdr", new_schema_id, channel.second.metadata);
