@@ -21,6 +21,7 @@
 #include <functional>
 #include <list>
 #include <memory>
+#include <set>
 
 #include <fastrtps/types/DynamicType.h>
 
@@ -130,6 +131,9 @@ protected:
 
     //! SQL writer
     SqlWriter sql_writer_;
+
+    //! Topics that the SQL writer has written
+    std::set<ddspipe::core::types::DdsTopic> written_topics_;
 };
 
 } /* namespace participants */

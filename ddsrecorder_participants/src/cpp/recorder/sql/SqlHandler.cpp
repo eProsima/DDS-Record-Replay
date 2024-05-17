@@ -120,6 +120,16 @@ void SqlHandler::write_samples_(
             continue;
         }
 
+        // Write the topic if it hasn't been written before
+        const auto topic = sql_sample->topic;
+
+        if (written_topics_.find(topic) == written_topics_.end())
+        {
+            sql_writer_.write(topic);
+            written_topics_.insert(topic);
+        }
+
+        // Write the sample
         sql_writer_.write(*sql_sample);
 
         samples.pop_front();
