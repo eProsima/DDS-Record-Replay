@@ -18,18 +18,17 @@
 
 #include <mcap/reader.hpp>
 
+#include <fastdds/rtps/common/SerializedPayload.h>
+#include <fastdds/rtps/history/IPayloadPool.h>
+
 #include <cpp_utils/exception/InconsistencyException.hpp>
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/ros2_mangling.hpp>
 #include <cpp_utils/time/time_utils.hpp>
-#include <cpp_utils/types/cast.hpp>
 #include <cpp_utils/utils.hpp>
 
 #include <ddspipe_core/types/data/RtpsPayloadData.hpp>
 #include <ddspipe_core/types/dds/Payload.hpp>
-
-#include <ddspipe_participants/reader/auxiliar/BlankReader.hpp>
-#include <ddspipe_participants/writer/auxiliar/BlankWriter.hpp>
 
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
@@ -47,59 +46,12 @@ McapReaderParticipant::McapReaderParticipant(
         std::shared_ptr<McapReaderParticipantConfiguration> configuration,
         std::shared_ptr<PayloadPool> payload_pool,
         std::string& file_path)
-    : configuration_(configuration)
-    , payload_pool_(payload_pool)
-    , file_path_(file_path)
-    , stop_(false)
+    : BaseReaderParticipant(configuration, payload_pool, file_path)
 {
     // Do nothing
 }
 
-ParticipantId McapReaderParticipant::id() const noexcept
-{
-    return configuration_->id;
-}
-
-bool McapReaderParticipant::is_repeater() const noexcept
-{
-    return false;
-}
-
-bool McapReaderParticipant::is_rtps_kind() const noexcept
-{
-    return false;
-}
-
-TopicQoS McapReaderParticipant::topic_qos() const noexcept
-{
-    return configuration_->topic_qos;
-}
-
-std::shared_ptr<IWriter> McapReaderParticipant::create_writer(
-        const ITopic& /* topic */)
-{
-    return std::make_shared<BlankWriter>();
-}
-
-std::shared_ptr<IReader> McapReaderParticipant::create_reader(
-        const ITopic& topic)
-{
-    if (!utils::can_cast<DdsTopic>(topic))
-    {
-        logWarning(DDSREPLAYER_MCAP_READER_PARTICIPANT, "Not creating Writer for topic " << topic.topic_name());
-        return std::make_shared<BlankReader>();
-    }
-
-    auto reader = std::make_shared<InternalReader>(id());
-
-    auto dds_topic = dynamic_cast<const DdsTopic&>(topic);
-
-    readers_[dds_topic] = reader;
-
-    return reader;
-}
-
-void McapReaderParticipant::process_mcap()
+void McapReaderParticipant::process_file()
 {
     // Read MCAP file
     mcap::McapReader mcap_reader;
@@ -243,15 +195,6 @@ void McapReaderParticipant::process_mcap()
     }
 
     mcap_reader.close();
-}
-
-void McapReaderParticipant::stop() noexcept
-{
-    {
-        std::lock_guard<std::mutex> lock(scheduling_cv_mtx_);
-        stop_ = true;
-    }
-    scheduling_cv_.notify_one();
 }
 
 utils::Timestamp McapReaderParticipant::mcap_timestamp_to_std_timepoint(

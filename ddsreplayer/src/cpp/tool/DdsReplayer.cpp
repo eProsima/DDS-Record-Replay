@@ -190,9 +190,9 @@ utils::ReturnCode DdsReplayer::reload_configuration(
     return pipe_->reload_configuration(new_configuration.ddspipe_configuration);
 }
 
-void DdsReplayer::process_mcap()
+void DdsReplayer::process_file()
 {
-    mcap_reader_participant_->process_mcap();
+    mcap_reader_participant_->process_file();
 
     // Wait until all tasks have been consumed
     thread_pool_->wait_all_consumed();

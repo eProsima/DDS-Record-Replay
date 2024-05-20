@@ -14,21 +14,13 @@
 
 #pragma once
 
-#include <condition_variable>
-#include <map>
-
 #include <mcap/mcap.hpp>
 
-#include <cpp_utils/time/time_utils.hpp>
-
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
-#include <ddspipe_core/interface/IParticipant.hpp>
-#include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
-
-#include <ddspipe_participants/reader/auxiliar/InternalReader.hpp>
 
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/replayer/McapReaderParticipantConfiguration.hpp>
+#include <ddsrecorder_participants/replayer/BaseReaderParticipant.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -37,9 +29,9 @@ namespace participants {
 /**
  * Participant that reads MCAP files and passes its messages to other DDS Pipe participants.
  *
- * @implements IParticipant
+ * @implements BaseReaderParticipant
  */
-class McapReaderParticipant : public ddspipe::core::IParticipant
+class McapReaderParticipant : public BaseReaderParticipant
 {
 public:
 
@@ -58,43 +50,13 @@ public:
             std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
             std::string& file_path);
 
-    //! Override id() IParticipant method
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    ddspipe::core::types::ParticipantId id() const noexcept override;
-
-    //! Override is_repeater() IParticipant method
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    bool is_repeater() const noexcept override;
-
-    //! Override is_rtps_kind() IParticipant method
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    bool is_rtps_kind() const noexcept override;
-
-    //! Override topic_qos() IParticipant method
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    ddspipe::core::types::TopicQoS topic_qos() const noexcept override;
-
-    //! Override create_writer_() IParticipant method
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    std::shared_ptr<ddspipe::core::IWriter> create_writer(
-            const ddspipe::core::ITopic& topic) override;
-
-    //! Override create_reader_() IParticipant method
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    std::shared_ptr<ddspipe::core::IReader> create_reader(
-            const ddspipe::core::ITopic& topic) override;
-
     /**
      * @brief Read and send messages sequentially (according to timestamp).
      *
      * @throw utils::InconsistencyException if failed to read mcap file.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    void process_mcap();
-
-    //! Stop participant (abort processing mcap)
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    void stop() noexcept;
+    void process_file() override;
 
     /**
      * @brief This method converts a mcap timestamp to standard format.
@@ -115,29 +77,6 @@ public:
     DDSRECORDER_PARTICIPANTS_DllAPI
     static mcap::Timestamp std_timepoint_to_mcap_timestamp(
             const utils::Timestamp& time);
-
-protected:
-
-    //! Participant Configuration
-    std::shared_ptr<McapReaderParticipantConfiguration> configuration_;
-
-    //! DDS Pipe shared Payload Pool
-    std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;
-
-    //! Input file path
-    std::string file_path_;
-
-    //! Internal readers map
-    std::map<ddspipe::core::types::DdsTopic, std::shared_ptr<ddspipe::participants::InternalReader>> readers_;
-
-    //! Stop flag
-    bool stop_;
-
-    //! Scheduling condition variable
-    std::condition_variable scheduling_cv_;
-
-    //! Scheduling condition variable mutex
-    std::mutex scheduling_cv_mtx_;
 };
 
 } /* namespace participants */

@@ -89,7 +89,7 @@ public:
             const yaml::ReplayerConfiguration& new_configuration);
 
     //! Process input MCAP file
-    void process_mcap();
+    void process_file();
 
     //! Stop replayer instance
     void stop();

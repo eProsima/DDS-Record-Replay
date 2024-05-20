@@ -78,9 +78,9 @@ void create_subscriber_replayer(
             std::this_thread::sleep_for(std::chrono::seconds(1));
 
             // Start replaying data
-            replayer->process_mcap();
+            replayer->process_file();
 
-            std::cout << "finish process_mcap!!!!" << std::endl;
+            std::cout << "finish process_file!!!!" << std::endl;
 
             replayer->stop();
 
