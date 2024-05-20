@@ -34,10 +34,11 @@
 #include <cpp_utils/ros2_mangling.hpp>
 
 #include <fastdds/dds/topic/TypeSupport.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
+#include <fastdds/dds/xtypes/type_representation/TypeIdentifierWithSizeHashSpecialization.h>
+#include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
 #include <fastdds/rtps/common/CDRMessage_t.h>
 #include <fastdds/rtps/common/SerializedPayload.h>
-#include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
-#include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
 
 #include <ddspipe_core/types/dynamic_types/schema.hpp>
 
@@ -109,7 +110,8 @@ McapHandler::~McapHandler()
 }
 
 void McapHandler::add_schema(
-        const fastdds::dds::DynamicType::_ref_type& dynamic_type)
+        const fastdds::dds::DynamicType::_ref_type& dynamic_type,
+        const std::tuple<fastcdr::string_255, fastdds::dds::xtypes::TypeIdentifier>& type_ids_tuple)
 {
     try
     {
@@ -119,7 +121,7 @@ void McapHandler::add_schema(
 
         assert(nullptr != dynamic_type);
 
-        std::string type_name = (dynamic_type->get_name()).to_string();
+        std::string type_name = std::get<0>(type_ids_tuple).to_string();
 
         // Check if it exists already
         if (received_types_.find(type_name) != received_types_.end())
@@ -132,7 +134,7 @@ void McapHandler::add_schema(
                 configuration_.ros2_types ? msg::generate_ros2_schema(dynamic_type) : idl::generate_idl_schema(
             dynamic_type);
 
-        logInfo(DDSRECORDER_MCAP_HANDLER, "\nAdding schema with name " << type_name << " :\n" << schema_text << "\n");
+        logInfo(DDSRECORDER_MCAP_HANDLER, "\nAdding schema with name " << (dynamic_type->get_name()).to_string() << " :\n" << schema_text << "\n");
 
         // Create schema and add it to writer and to schemas map
         std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
@@ -176,7 +178,7 @@ void McapHandler::add_schema(
         received_types_.insert(type_name);
 
         // Every time a dynamic type is added the attachment is newly calculated
-        add_dynamic_type_(type_name);
+        add_dynamic_type_(type_name, type_ids_tuple);
 
         // Check if there are any pending samples for this new schema. If so, add them.
         if ((pending_samples_.find(type_name) != pending_samples_.end()) ||
@@ -1156,21 +1158,20 @@ void McapHandler::rewrite_schemas_nts_()
 
 void McapHandler::store_dynamic_type_(
         const std::string& type_name,
+        const std::tuple<fastcdr::string_255, fastdds::dds::xtypes::TypeIdentifier>& type_ids_tuple,
         DynamicTypesCollection& dynamic_types) const
 {
-    fastdds::dds::xtypes::TypeInformation type_information;
-    if (fastdds::dds::RETCODE_OK == fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_information(
-            type_name,
-            type_information))
+    auto type_id = std::get<1>(type_ids_tuple);
+    fastdds::dds::xtypes::TypeIdentifierSeq type_id_seq;
+    type_id_seq.push_back(type_id);
+    std::unordered_set<fastdds::dds::xtypes::TypeIdentfierWithSize> type_dependencies;
+    if (fastdds::dds::RETCODE_OK == fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_dependencies(
+            type_id_seq,
+            type_dependencies))
     {
-        if (type_name == "SuperComplex_TypeIntrospectionExample")
-        {
-            std::cout << "DALE CARAJO" << std::endl;
-        }
-        auto dependencies = type_information.complete().dependent_typeids();
         std::string dependency_name;
         unsigned int dependency_index = 0;
-        for (auto dependency : dependencies)
+        for (auto dependency : type_dependencies)
         {
             fastdds::dds::xtypes::TypeIdentifier type_identifier;
             type_identifier = dependency.type_id();
@@ -1189,9 +1190,6 @@ void McapHandler::store_dynamic_type_(
             dependency_index++;
         }
 
-        fastdds::dds::xtypes::TypeIdentifier type_id;
-        type_id = type_information.complete().typeid_with_size().type_id();
-
         fastdds::dds::xtypes::TypeObject type_obj;
         if (fastdds::dds::RETCODE_OK == fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_object(
                 type_id,
@@ -1201,24 +1199,6 @@ void McapHandler::store_dynamic_type_(
             store_dynamic_type_(type_id, type_obj, type_name, dynamic_types);
         }
     }
-
-
-    // fastdds::dds::xtypes::TypeIdentifierPair type_ids;
-    // if (fastdds::dds::RETCODE_OK == fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_identifiers(
-    //         type_name,
-    //         type_ids))
-    // {
-    //     fastdds::dds::xtypes::TypeIdentifier type_id;
-    //     if (fastdds::dds::xtypes::EK_COMPLETE == type_ids.type_identifier1()._d())
-    //     {
-    //         type_id = type_ids.type_identifier1();
-    //     }
-    //     else
-    //     {
-    //         type_id = type_ids.type_identifier2();
-    //     }
-
-    // }
 }
 
 void McapHandler::store_dynamic_type_(
@@ -1248,9 +1228,10 @@ fastrtps::rtps::SerializedPayload_t* McapHandler::serialize_dynamic_types_(
 }
 
 void McapHandler::add_dynamic_type_(
-        const std::string& type_name)
+        const std::string& type_name,
+        const std::tuple<fastcdr::string_255, fastdds::dds::xtypes::TypeIdentifier>& type_ids_tuple)
 {
-    store_dynamic_type_(type_name, dynamic_types_);
+    store_dynamic_type_(type_name, type_ids_tuple, dynamic_types_);
 
     std::unique_ptr<fastrtps::rtps::SerializedPayload_t> new_dynamic_types_payload(serialize_dynamic_types_(
                 dynamic_types_));

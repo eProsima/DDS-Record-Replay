@@ -25,11 +25,14 @@
 #include <map>
 #include <stdexcept>
 #include <thread>
+#include <tuple>
 
 #include <mcap/mcap.hpp>
 
 #include <cpp_utils/macros/custom_enumeration.hpp>
 #include <cpp_utils/time/time_utils.hpp>
+
+#include <fastcdr/cdr/fixed_size_string.hpp>
 
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
@@ -148,7 +151,8 @@ public:
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void add_schema(
-            const fastdds::dds::DynamicType::_ref_type& dynamic_type) override;
+            const fastdds::dds::DynamicType::_ref_type& dynamic_type,
+            const std::tuple<fastcdr::string_255, fastdds::dds::xtypes::TypeIdentifier>& type_ids_tuple) override;
 
     /**
      * @brief Add a data sample, to be written through a mcap \c Channel associated to the given \c topic.
@@ -472,6 +476,7 @@ protected:
      */
     void store_dynamic_type_(
             const std::string& type_name,
+            const std::tuple<fastcdr::string_255, fastdds::dds::xtypes::TypeIdentifier>& type_ids_tuple,
             DynamicTypesCollection& dynamic_types) const;
 
     /**
@@ -503,7 +508,8 @@ protected:
      * @param [in] type_name Name of the type to be added.
      */
     void add_dynamic_type_(
-            const std::string& type_name);
+            const std::string& type_name,
+            const std::tuple<fastcdr::string_255, fastdds::dds::xtypes::TypeIdentifier>& type_ids_tuple);
 
     /**
      * @brief Write serialized \c dynamic_types_ collection (\c dynamic_types_payload_) into MCAP file's attachments section.

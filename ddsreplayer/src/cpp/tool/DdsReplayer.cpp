@@ -32,7 +32,6 @@
 #include <fastdds/dds/xtypes/dynamic_types/DynamicTypeBuilder.hpp>
 #include <fastdds/dds/xtypes/dynamic_types/DynamicTypeBuilderFactory.hpp>
 #include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
-#include <fastrtps/attributes/ParticipantAttributes.h>
 
 #include <ddspipe_core/types/dynamic_types/types.hpp>
 
@@ -41,13 +40,7 @@
 
 #include <ddsrecorder_participants/constants.hpp>
 
-#if FASTRTPS_VERSION_MINOR < 13
-    #include <fastcdr/Cdr.h>
-    #include <fastcdr/FastBuffer.h>
-    #include <fastcdr/FastCdr.h>
-#else
-    #include <fastdds/rtps/common/CdrSerialization.hpp>
-#endif // if FASTRTPS_VERSION_MINOR < 13
+#include <fastdds/rtps/common/CdrSerialization.hpp>
 
 #include "DdsReplayer.hpp"
 
@@ -269,14 +262,13 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
         dynamic_attachment.dataSize);
     type_support.deserialize(&serialized_payload, &dynamic_types);
 
-    std::set<std::string> registered_types{};
+    // std::set<std::string> registered_types{};
     if (configuration.replay_types)
     {
         // Register in factory dynamic types from attachment
-        for (auto& dynamic_type: dynamic_types.dynamic_types())
+        for (auto& dynamic_type : dynamic_types.dynamic_types())
         {
             register_dynamic_type_(dynamic_type);
-            registered_types.insert(dynamic_type.type_name());
         }
     }
 
@@ -302,7 +294,7 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
         // Insert channel topic in builtin topics list
         builtin_topics.insert(channel_topic);
 
-        if (configuration.replay_types && registered_types.count(type_name) != 0)
+        if (configuration.replay_types && registered_types_.count(type_name) != 0)
         {
             // Make a copy of the Topic to customize it according to the Participant's configured QoS.
             utils::Heritable<DistributedTopic> topic = channel_topic->copy();
@@ -335,42 +327,33 @@ void DdsReplayer::register_dynamic_type_(
     fastdds::dds::xtypes::TypeIdentifier type_identifier = deserialize_type_identifier_(typeid_str);
     fastdds::dds::xtypes::TypeObject type_object = deserialize_type_object_(typeobj_str);
 
-    // Register in factory
-    fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().register_type_identifier(
-        dynamic_type.type_name(), type_identifier);
-
-    fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().register_type_object(
-        dynamic_type.type_name(), type_object.complete());
+    // // Register in factory
+    // fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().register_type_identifier(
+    //     dynamic_type.type_name(), type_identifier);
+    if (fastdds::dds::RETCODE_OK != fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().register_type_object(
+                type_identifier, type_object))
+    {
+        logWarning(DDSREPLAYER_REPLAYER,
+                "Failed to register " << dynamic_type.type_name() << " DynamicType.");
+    }
+    else
+    {
+        registered_types_.insert({dynamic_type.type_name(), type_identifier});
+    }
 }
 
 void DdsReplayer::create_dynamic_writer_(
         utils::Heritable<DdsTopic> topic)
 {
-    // fastdds::dds::xtypes::TypeIdentifierPair type_identifiers;
-    // auto ret_type_ids = fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_identifiers(
-    //                         topic->type_name,
-    //                         type_identifiers);
-
-    // fastdds::dds::xtypes::TypeIdentifier type_identifier;
-    // if (fastdds::dds::xtypes::EK_COMPLETE == type_identifiers.type_identifier1()._d())
+    // fastdds::dds::xtypes::TypeInformation type_information;
+    // if (fastdds::dds::RETCODE_OK != fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_information(
+    //         topic->type_name,
+    //         type_information))
     // {
-    //     type_identifier = type_identifiers.type_identifier1();
-    // }
-    // else
-    // {
-    //     type_identifier = type_identifiers.type_identifier2();
+    //     return;
     // }
 
-    fastdds::dds::xtypes::TypeInformation type_information;
-    if (fastdds::dds::RETCODE_OK != fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_information(
-            topic->type_name,
-            type_information))
-    {
-        return;
-    }
-
-    fastdds::dds::xtypes::TypeIdentifier type_identifier;
-    type_identifier = type_information.complete().typeid_with_size().type_id();
+    fastdds::dds::xtypes::TypeIdentifier type_identifier = registered_types_[topic->type_name];
 
     fastdds::dds::xtypes::TypeObject type_object;
     auto ret_type_obj = fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_object(
