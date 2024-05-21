@@ -75,7 +75,7 @@ void SqlHandler::add_schema(
     }
 
     // Add type to the list of received types
-    received_types_.insert(type_name);
+    received_types_[type_name] = dynamic_type;
 
     // Add type to the collection of dynamic types
     store_dynamic_type_(type_name);
@@ -130,10 +130,38 @@ void SqlHandler::write_samples_(
         }
 
         // Write the sample
+        if (sql_sample->key.empty())
+        {
+            set_key_(*const_cast<SqlMessage*>(sql_sample));
+        }
+
         sql_writer_.write(*sql_sample);
 
         samples.pop_front();
     }
+}
+
+void SqlHandler::set_key_(
+        SqlMessage& sql_sample)
+{
+    if (keys_.find(sql_sample.instance_handle) != keys_.end())
+    {
+        // The key has already been calculated
+        sql_sample.key = keys_[sql_sample.instance_handle];
+        return;
+    }
+
+    if (received_types_.find(sql_sample.topic.type_name) == received_types_.end())
+    {
+        // The type is not known. The key can't be calculated
+        return;
+    }
+
+    // Calculate the key
+    sql_sample.set_key(received_types_[sql_sample.topic.type_name]);
+
+    // Store the key
+    keys_[sql_sample.instance_handle] = sql_sample.key;
 }
 
 } /* namespace participants */

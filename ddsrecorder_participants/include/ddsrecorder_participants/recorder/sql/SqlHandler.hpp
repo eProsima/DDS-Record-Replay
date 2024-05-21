@@ -22,15 +22,18 @@
 #include <list>
 #include <memory>
 #include <set>
+#include <string>
 
 #include <fastrtps/types/DynamicType.h>
 
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
 #include <ddspipe_core/types/data/RtpsPayloadData.hpp>
+#include <ddspipe_core/types/dds/Payload.hpp>
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/recorder/message/BaseMessage.hpp>
+#include <ddsrecorder_participants/recorder/message/SqlMessage.hpp>
 #include <ddsrecorder_participants/recorder/output/BaseHandler.hpp>
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 #include <ddsrecorder_participants/recorder/sql/SqlHandlerConfiguration.hpp>
@@ -129,11 +132,26 @@ protected:
     void write_samples_(
             std::list<std::shared_ptr<const BaseMessage>>& samples) override;
 
+    /**
+     * @brief Sets the key of a sample.
+     *
+     * If the key was previously stored in \c keys_, it sets it.
+     * If not, it is set from the payload of the \c sql_sample.
+     * The key is stored in \c keys.
+     *
+     * @param [in] sql_sample SqlMessage to set the key.
+     */
+    void set_key_(
+            SqlMessage& sql_sample);
+
     //! SQL writer
     SqlWriter sql_writer_;
 
     //! Topics that the SQL writer has written
     std::set<ddspipe::core::types::DdsTopic> written_topics_;
+
+    //! Map instance handles (hashed/serialized keys) to JSON-serialized keys
+    std::map<ddspipe::core::types::InstanceHandle, std::string> keys_;
 };
 
 } /* namespace participants */
