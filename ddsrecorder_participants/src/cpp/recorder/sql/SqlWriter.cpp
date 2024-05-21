@@ -80,17 +80,17 @@ void SqlWriter::open_new_file_nts_(
         throw utils::InitializationException(error_msg);
     }
 
-    // Create DynamicTypes table
-    const std::string create_dynamic_types_table{
+    // Create Types table
+    const std::string create_types_table{
     R"(
-        CREATE TABLE IF NOT EXISTS DynamicTypes (
-            type_name TEXT PRIMARY KEY NOT NULL,
-            type_information TEXT NOT NULL,
-            type_object TEXT NOT NULL
+        CREATE TABLE IF NOT EXISTS Types (
+            name TEXT PRIMARY KEY NOT NULL,
+            information TEXT NOT NULL,
+            object TEXT NOT NULL
         );
     )"};
 
-    create_sql_table_("DynamicTypes", create_dynamic_types_table);
+    create_sql_table_("Types", create_types_table);
 
     // Create Topics table
     const std::string create_topics_table{
@@ -99,7 +99,7 @@ void SqlWriter::open_new_file_nts_(
             name TEXT PRIMARY KEY NOT NULL,
             type TEXT NOT NULL,
             qos TEXT NOT NULL,
-            FOREIGN KEY(type) REFERENCES DynamicTypes(type_name)
+            FOREIGN KEY(type) REFERENCES Types(name)
         );
     )"};
 
@@ -136,7 +136,7 @@ void SqlWriter::write_nts_(
 
     // Define the SQL statement
     const char* insert_statement = R"(
-        INSERT INTO DynamicTypes (type_name, type_information, type_object)
+        INSERT INTO Types (name, information, object)
         VALUES (?, ?, ?);
     )";
 
