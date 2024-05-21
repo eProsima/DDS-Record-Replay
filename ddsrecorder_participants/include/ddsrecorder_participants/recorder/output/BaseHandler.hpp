@@ -23,7 +23,6 @@
 #include <list>
 #include <map>
 #include <memory>
-#include <set>
 #include <string>
 #include <thread>
 #include <utility>
@@ -33,8 +32,9 @@
 
 #include <cpp_utils/macros/custom_enumeration.hpp>
 
-#include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
+#include <fastrtps/types/DynamicType.h>
 
+#include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
 #include <ddspipe_participants/participant/dynamic_types/ISchemaHandler.hpp>
 
 #include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
@@ -366,7 +366,7 @@ protected:
     //////////////////////////////
 
     //! Received types set
-    std::set<std::string> received_types_;
+    std::map<std::string, fastrtps::types::DynamicType_ptr> received_types_;
 
     //! Dynamic types collection
     DynamicTypesCollection dynamic_types_;

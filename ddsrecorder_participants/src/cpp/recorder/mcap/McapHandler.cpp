@@ -151,7 +151,7 @@ void McapHandler::add_schema(
     schemas_[type_name] = std::move(new_schema);
 
     // Add type to the list of received types
-    received_types_.insert(type_name);
+    received_types_[type_name] = dynamic_type;
 
     if (configuration_.record_types)
     {
