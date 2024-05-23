@@ -128,33 +128,6 @@ protected:
     void create_dynamic_writer_(
             utils::Heritable<ddspipe::core::types::DdsTopic> topic);
 
-    /**
-     * @brief Deserialize a serialized \c TopicQoS string.
-     *
-     * @param [in] qos_str Serialized \c TopicQoS string
-     * @return Deserialized TopicQoS
-     */
-    static ddspipe::core::types::TopicQoS deserialize_qos_(
-            const std::string& qos_str);
-
-    /**
-     * @brief Deserialize a serialized \c TypeIdentifier string.
-     *
-     * @param [in] typeid_str Serialized \c TypeIdentifier string
-     * @return Deserialized TypeIdentifier
-     */
-    static fastrtps::types::TypeIdentifier deserialize_type_identifier_(
-            const std::string& typeid_str);
-
-    /**
-     * @brief Deserialize a serialized \c TypeObject string.
-     *
-     * @param [in] typeobj_str Serialized \c TypeObject string
-     * @return Deserialized TypeObject
-     */
-    static fastrtps::types::TypeObject deserialize_type_object_(
-            const std::string& typeobj_str);
-
     //! Payload Pool
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;
 

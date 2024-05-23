@@ -42,6 +42,7 @@
 #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
 
 #include <ddsrecorder_participants/constants.hpp>
+#include <ddsrecorder_participants/replayer/Deserializer.hpp>
 
 #if FASTRTPS_VERSION_MINOR < 13
     #include <fastcdr/Cdr.h>
@@ -264,16 +265,8 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
     mcap::Attachment dynamic_attachment = attachments[DYNAMIC_TYPES_ATTACHMENT_NAME];
 
     // Deserialize dynamic types collection using CDR
-    DynamicTypesCollection dynamic_types;
-    eprosima::fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
-    eprosima::fastrtps::rtps::SerializedPayload_t serialized_payload =
-            eprosima::fastrtps::rtps::SerializedPayload_t(dynamic_attachment.dataSize);
-    serialized_payload.length = dynamic_attachment.dataSize;
-    std::memcpy(
-        serialized_payload.data,
-        reinterpret_cast<const unsigned char*>(dynamic_attachment.data),
-        dynamic_attachment.dataSize);
-    type_support.deserialize(&serialized_payload, &dynamic_types);
+    const std::string dynamic_types_str(reinterpret_cast<const char*>(dynamic_attachment.data), dynamic_attachment.dataSize);
+    const auto dynamic_types = Deserializer::deserialize<DynamicTypesCollection>(dynamic_types_str);
 
     std::set<std::string> registered_types{};
     if (configuration.replay_types)
@@ -302,7 +295,7 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
 
         // Apply the QoS stored in the MCAP file as if they were the discovered QoS.
         channel_topic->topic_qos.set_qos(
-            deserialize_qos_(it->second->metadata[QOS_SERIALIZATION_QOS]),
+            Deserializer::deserialize<ddspipe::core::types::TopicQoS>(it->second->metadata[QOS_SERIALIZATION_QOS]),
             utils::FuzzyLevelValues::fuzzy_level_fuzzy);
 
         // Insert channel topic in builtin topics list
@@ -338,8 +331,8 @@ void DdsReplayer::register_dynamic_type_(
     std::string typeobj_str = utils::base64_decode(dynamic_type.type_object());
 
     // Deserialize type identifer and object strings
-    fastrtps::types::TypeIdentifier type_identifier = deserialize_type_identifier_(typeid_str);
-    fastrtps::types::TypeObject type_object = deserialize_type_object_(typeobj_str);
+    fastrtps::types::TypeIdentifier type_identifier = Deserializer::deserialize<fastrtps::types::TypeIdentifier>(typeid_str);
+    fastrtps::types::TypeObject type_object = Deserializer::deserialize<fastrtps::types::TypeObject>(typeobj_str);
 
     // Register in factory
     fastrtps::types::TypeObjectFactory::get_instance()->add_type_object(
@@ -427,139 +420,6 @@ void DdsReplayer::create_dynamic_writer_(
     }
     // Store pointer to be freed on destruction
     dyn_writers_[topic] = dyn_writer;
-}
-
-TopicQoS DdsReplayer::deserialize_qos_(
-        const std::string& qos_str)
-{
-    // TODO: Reuse code from ddspipe_yaml
-
-    TopicQoS qos{};
-
-    YAML::Node qos_yaml = YAML::Load(qos_str);
-    bool reliable = qos_yaml[QOS_SERIALIZATION_RELIABILITY].as<bool>();
-    bool transient_local = qos_yaml[QOS_SERIALIZATION_DURABILITY].as<bool>();
-    bool exclusive_ownership = qos_yaml[QOS_SERIALIZATION_OWNERSHIP].as<bool>();
-    bool keyed = qos_yaml[QOS_SERIALIZATION_KEYED].as<bool>();
-
-    // Parse reliability
-    if (reliable)
-    {
-        qos.reliability_qos = ddspipe::core::types::ReliabilityKind::RELIABLE;
-    }
-    else
-    {
-        qos.reliability_qos = ddspipe::core::types::ReliabilityKind::BEST_EFFORT;
-    }
-
-    // Parse durability
-    if (transient_local)
-    {
-        qos.durability_qos = ddspipe::core::types::DurabilityKind::TRANSIENT_LOCAL;
-    }
-    else
-    {
-        qos.durability_qos = ddspipe::core::types::DurabilityKind::VOLATILE;
-    }
-
-    // Parse ownership
-    if (exclusive_ownership)
-    {
-        qos.ownership_qos = ddspipe::core::types::OwnershipQosPolicyKind::EXCLUSIVE_OWNERSHIP_QOS;
-    }
-    else
-    {
-        qos.ownership_qos = ddspipe::core::types::OwnershipQosPolicyKind::SHARED_OWNERSHIP_QOS;
-    }
-
-    // Parse keyed
-    qos.keyed = keyed;
-
-    return qos;
-}
-
-fastrtps::types::TypeIdentifier DdsReplayer::deserialize_type_identifier_(
-        const std::string& typeid_str)
-{
-    // Create CDR message from string
-    // NOTE: Use 0 length to avoid allocation
-    fastrtps::rtps::CDRMessage_t* cdr_message = new fastrtps::rtps::CDRMessage_t(0);
-    cdr_message->buffer = (unsigned char*)reinterpret_cast<const unsigned char*>(typeid_str.c_str());
-    cdr_message->length = typeid_str.length();
-#if __BIG_ENDIAN__
-    cdr_message->msg_endian = fastrtps::rtps::BIGEND;
-#else
-    cdr_message->msg_endian = fastrtps::rtps::LITTLEEND;
-#endif // if __BIG_ENDIAN__
-
-    // Reserve payload and create buffer
-    const auto parameter_length = cdr_message->length;
-    fastrtps::rtps::SerializedPayload_t payload(parameter_length);
-    fastcdr::FastBuffer fastbuffer((char*)payload.data, parameter_length);
-
-    // Read data
-    fastrtps::rtps::CDRMessage::readData(cdr_message, payload.data, parameter_length);
-
-    // Create CDR deserializer
-    #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::Cdr::DDS_CDR);
-    #else
-    fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::CdrVersion::XCDRv1);
-    #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    payload.encapsulation = deser.endianness() == fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
-
-    // Deserialize
-    fastrtps::types::TypeIdentifier type_identifier;
-    type_identifier.deserialize(deser);
-
-    // Delete CDR message
-    // NOTE: set wraps attribute to avoid double free (buffer released by string on destruction)
-    cdr_message->wraps = true;
-    delete cdr_message;
-
-    return type_identifier;
-}
-
-fastrtps::types::TypeObject DdsReplayer::deserialize_type_object_(
-        const std::string& typeobj_str)
-{
-    // Create CDR message from string
-    // NOTE: Use 0 length to avoid allocation
-    fastrtps::rtps::CDRMessage_t* cdr_message = new fastrtps::rtps::CDRMessage_t(0);
-    cdr_message->buffer = (unsigned char*)reinterpret_cast<const unsigned char*>(typeobj_str.c_str());
-    cdr_message->length = typeobj_str.length();
-#if __BIG_ENDIAN__
-    cdr_message->msg_endian = fastrtps::rtps::BIGEND;
-#else
-    cdr_message->msg_endian = fastrtps::rtps::LITTLEEND;
-#endif // if __BIG_ENDIAN__
-
-    // Reserve payload and create buffer
-    const auto parameter_length = cdr_message->length;
-    fastrtps::rtps::SerializedPayload_t payload(parameter_length);
-    fastcdr::FastBuffer fastbuffer((char*)payload.data, parameter_length);
-
-    // Read data
-    fastrtps::rtps::CDRMessage::readData(cdr_message, payload.data, parameter_length);
-
-    // Create CDR deserializer
-    #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::Cdr::DDS_CDR);
-    #else
-    fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::CdrVersion::XCDRv1);
-    #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    payload.encapsulation = deser.endianness() == fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
-
-    // Deserialize
-    fastrtps::types::TypeObject type_object;
-    type_object.deserialize(deser);
-
-    // Delete CDR message
-    // NOTE: set wraps attribute to avoid double free (buffer released by string on destruction)
-    cdr_message->wraps = true;
-    delete cdr_message;
-
-    return type_object;
 }
 
 } /* namespace replayer */
