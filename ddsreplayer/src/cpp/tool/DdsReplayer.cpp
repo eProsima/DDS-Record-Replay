@@ -39,6 +39,7 @@
 #include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollectionPubSubTypes.hpp>
 
 #include <ddsrecorder_participants/constants.hpp>
+#include <ddsrecorder_participants/replayer/Deserializer.hpp>
 
 #include <fastdds/rtps/common/CdrSerialization.hpp>
 
@@ -208,16 +209,8 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
     mcap::Attachment dynamic_attachment = attachments[DYNAMIC_TYPES_ATTACHMENT_NAME];
 
     // Deserialize dynamic types collection using CDR
-    DynamicTypesCollection dynamic_types;
-    eprosima::fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
-    eprosima::fastdds::rtps::SerializedPayload_t serialized_payload =
-            eprosima::fastdds::rtps::SerializedPayload_t(dynamic_attachment.dataSize);
-    serialized_payload.length = dynamic_attachment.dataSize;
-    std::memcpy(
-        serialized_payload.data,
-        reinterpret_cast<const unsigned char*>(dynamic_attachment.data),
-        dynamic_attachment.dataSize);
-    type_support.deserialize(&serialized_payload, &dynamic_types);
+    const std::string dynamic_types_str(reinterpret_cast<const char*>(dynamic_attachment.data), dynamic_attachment.dataSize);
+    const auto dynamic_types = Deserializer::deserialize<DynamicTypesCollection>(dynamic_types_str);
 
     if (configuration.replay_types)
     {
@@ -245,7 +238,7 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
 
         // Apply the QoS stored in the MCAP file as if they were the discovered QoS.
         channel_topic->topic_qos.set_qos(
-            deserialize_qos_(it->second->metadata[QOS_SERIALIZATION_QOS]),
+            Deserializer::deserialize<ddspipe::core::types::TopicQoS>(it->second->metadata[QOS_SERIALIZATION_QOS]),
             utils::FuzzyLevelValues::fuzzy_level_fuzzy);
 
         // Insert channel topic in builtin topics list
@@ -277,8 +270,10 @@ void DdsReplayer::register_dynamic_type_(
     std::string typeobj_str = utils::base64_decode(dynamic_type.type_object());
 
     // Deserialize type identifer and object strings
-    fastdds::dds::xtypes::TypeIdentifier type_identifier = deserialize_type_identifier_(typeid_str);
-    fastdds::dds::xtypes::TypeObject type_object = deserialize_type_object_(typeobj_str);
+    fastdds::dds::xtypes::TypeIdentifier type_identifier =
+            Deserializer::deserialize<fastdds::dds::xtypes::TypeIdentifier>(typeid_str);
+    fastdds::dds::xtypes::TypeObject type_object =
+            Deserializer::deserialize<fastdds::dds::xtypes::TypeObject>(typeobj_str);
 
     // Create a TypeIdentifierPair to use in register_type_identifier
     fastdds::dds::xtypes::TypeIdentifierPair type_identifiers;
@@ -295,157 +290,6 @@ void DdsReplayer::register_dynamic_type_(
     {
         registered_types_.insert({dynamic_type.type_name(), type_identifiers});
     }
-}
-
-TopicQoS DdsReplayer::deserialize_qos_(
-        const std::string& qos_str)
-{
-    // TODO: Reuse code from ddspipe_yaml
-
-    TopicQoS qos{};
-
-    YAML::Node qos_yaml = YAML::Load(qos_str);
-    bool reliable = qos_yaml[QOS_SERIALIZATION_RELIABILITY].as<bool>();
-    bool transient_local = qos_yaml[QOS_SERIALIZATION_DURABILITY].as<bool>();
-    bool exclusive_ownership = qos_yaml[QOS_SERIALIZATION_OWNERSHIP].as<bool>();
-    bool keyed = qos_yaml[QOS_SERIALIZATION_KEYED].as<bool>();
-
-    // Parse reliability
-    if (reliable)
-    {
-        qos.reliability_qos = ddspipe::core::types::ReliabilityKind::RELIABLE;
-    }
-    else
-    {
-        qos.reliability_qos = ddspipe::core::types::ReliabilityKind::BEST_EFFORT;
-    }
-
-    // Parse durability
-    if (transient_local)
-    {
-        qos.durability_qos = ddspipe::core::types::DurabilityKind::TRANSIENT_LOCAL;
-    }
-    else
-    {
-        qos.durability_qos = ddspipe::core::types::DurabilityKind::VOLATILE;
-    }
-
-    // Parse ownership
-    if (exclusive_ownership)
-    {
-        qos.ownership_qos = ddspipe::core::types::OwnershipQosPolicyKind::EXCLUSIVE_OWNERSHIP_QOS;
-    }
-    else
-    {
-        qos.ownership_qos = ddspipe::core::types::OwnershipQosPolicyKind::SHARED_OWNERSHIP_QOS;
-    }
-
-    // Parse keyed
-    qos.keyed = keyed;
-
-    return qos;
-}
-
-fastdds::dds::xtypes::TypeIdentifier DdsReplayer::deserialize_type_identifier_(
-        const std::string& typeid_str)
-{
-    // Create CDR message from string
-    // NOTE: Use 0 length to avoid allocation
-    fastdds::rtps::CDRMessage_t* cdr_message = new fastdds::rtps::CDRMessage_t(0);
-    cdr_message->buffer = (unsigned char*)reinterpret_cast<const unsigned char*>(typeid_str.c_str());
-    cdr_message->length = typeid_str.length();
-#if __BIG_ENDIAN__
-    cdr_message->msg_endian = fastdds::rtps::BIGEND;
-#else
-    cdr_message->msg_endian = fastdds::rtps::LITTLEEND;
-#endif // if __BIG_ENDIAN__
-
-    // Reserve payload and create buffer
-    const auto parameter_length = cdr_message->length;
-    fastdds::rtps::SerializedPayload_t payload(parameter_length);
-    fastcdr::FastBuffer fastbuffer((char*)payload.data, parameter_length);
-
-    // Read data
-    if (cdr_message != nullptr)
-    {
-        if (cdr_message->length >= cdr_message->pos + parameter_length)
-        {
-            if (parameter_length > 0)
-            {
-                if (payload.data != nullptr)
-                {
-                    memcpy(payload.data, &cdr_message->buffer[cdr_message->pos], parameter_length);
-                    cdr_message->pos += parameter_length;
-                }
-            }
-        }
-    }
-
-    // Create CDR deserializer
-    fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::CdrVersion::XCDRv2);
-    payload.encapsulation = deser.endianness() == fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
-
-    // Deserialize
-    fastdds::dds::xtypes::TypeIdentifier type_identifier;
-    fastcdr::deserialize(deser, type_identifier);
-
-    // Delete CDR message
-    // NOTE: set wraps attribute to avoid double free (buffer released by string on destruction)
-    cdr_message->wraps = true;
-    delete cdr_message;
-
-    return type_identifier;
-}
-
-fastdds::dds::xtypes::TypeObject DdsReplayer::deserialize_type_object_(
-        const std::string& typeobj_str)
-{
-    // Create CDR message from string
-    // NOTE: Use 0 length to avoid allocation
-    fastdds::rtps::CDRMessage_t* cdr_message = new fastdds::rtps::CDRMessage_t(0);
-    cdr_message->buffer = (unsigned char*)reinterpret_cast<const unsigned char*>(typeobj_str.c_str());
-    cdr_message->length = typeobj_str.length();
-#if __BIG_ENDIAN__
-    cdr_message->msg_endian = fastdds::rtps::BIGEND;
-#else
-    cdr_message->msg_endian = fastdds::rtps::LITTLEEND;
-#endif // if __BIG_ENDIAN__
-
-    // Reserve payload and create buffer
-    const auto parameter_length = cdr_message->length;
-    fastdds::rtps::SerializedPayload_t payload(parameter_length);
-    fastcdr::FastBuffer fastbuffer((char*)payload.data, parameter_length);
-
-    // Read data
-    if (cdr_message != nullptr)
-    {
-        if (cdr_message->length >= cdr_message->pos + parameter_length)
-        {
-            if (parameter_length > 0)
-            {
-                if (payload.data != nullptr)
-                {
-                    memcpy(payload.data, &cdr_message->buffer[cdr_message->pos], parameter_length);
-                    cdr_message->pos += parameter_length;
-                }
-            }
-        }
-    }
-
-    // Create CDR deserializer
-    fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::CdrVersion::XCDRv2);
-    payload.encapsulation = deser.endianness() == fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
-
-    // Deserialize
-    fastdds::dds::xtypes::TypeObject type_object;
-    fastcdr::deserialize(deser, type_object);
-
-    // Delete CDR message
-    // NOTE: set wraps attribute to avoid double free (buffer released by string on destruction)
-    cdr_message->wraps = true;
-    delete cdr_message;
-
-    return type_object;
 }
 
 } /* namespace replayer */
