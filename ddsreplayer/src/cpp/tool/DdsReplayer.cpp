@@ -12,36 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <mcap/reader.hpp>
-#include <yaml-cpp/yaml.h>
+#include <memory>
+#include <set>
+#include <string>
 
-#include <cpp_utils/exception/InitializationException.hpp>
-#include <cpp_utils/utils.hpp>
-#include <cpp_utils/ros2_mangling.hpp>
-
-#include <fastdds/rtps/common/CDRMessage_t.hpp>
-#include <fastdds/rtps/common/SerializedPayload.hpp>
-
+#include <fastdds/dds/core/policy/QosPolicies.hpp>
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
+#include <fastdds/dds/domain/qos/DomainParticipantQos.hpp>
 #include <fastdds/dds/publisher/DataWriter.hpp>
-#include <fastdds/dds/publisher/Publisher.hpp>
 #include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
 #include <fastdds/dds/publisher/qos/PublisherQos.hpp>
+#include <fastdds/dds/topic/qos/TopicQos.hpp>
 #include <fastdds/dds/topic/TypeSupport.hpp>
-#include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
-#include <fastdds/dds/xtypes/dynamic_types/DynamicTypeBuilder.hpp>
-#include <fastdds/dds/xtypes/dynamic_types/DynamicTypeBuilderFactory.hpp>
-#include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
 
-#include <ddspipe_core/types/dynamic_types/types.hpp>
+#include <cpp_utils/exception/InitializationException.hpp>
+#include <cpp_utils/Log.hpp>
+#include <cpp_utils/memory/Heritable.hpp>
+#include <cpp_utils/ReturnCode.hpp>
+#include <cpp_utils/thread_pool/pool/SlotThreadPool.hpp>
+#include <cpp_utils/types/Fuzzy.hpp>
+
+#include <ddspipe_core/core/DdsPipe.hpp>
+#include <ddspipe_core/dynamic/DiscoveryDatabase.hpp>
+#include <ddspipe_core/dynamic/ParticipantsDatabase.hpp>
+#include <ddspipe_core/efficiency/payload/FastPayloadPool.hpp>
 
 #include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
-#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollectionPubSubTypes.hpp>
-
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/replayer/Deserializer.hpp>
-
-#include <fastdds/rtps/common/CdrSerialization.hpp>
+#include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
+#include <ddsrecorder_participants/replayer/ReplayerParticipant.hpp>
 
 #include "DdsReplayer.hpp"
 
@@ -49,52 +49,47 @@ namespace eprosima {
 namespace ddsrecorder {
 namespace replayer {
 
-using namespace eprosima::ddspipe::core;
-using namespace eprosima::ddspipe::core::types;
-using namespace eprosima::ddspipe::participants;
-using namespace eprosima::ddspipe::participants::rtps;
-using namespace eprosima::ddsrecorder::participants;
-using namespace eprosima::utils;
-
 DdsReplayer::DdsReplayer(
         yaml::ReplayerConfiguration& configuration,
         std::string& input_file)
+    : configuration_(configuration)
 {
-    // Create Discovery Database
-    discovery_database_ = std::make_shared<DiscoveryDatabase>();
-
     // Create Payload Pool
-    payload_pool_ = std::make_shared<FastPayloadPool>();
+    auto payload_pool = std::make_shared<ddspipe::core::FastPayloadPool>();
 
-    // Create Thread Pool
-    thread_pool_ = std::make_shared<SlotThreadPool>(configuration.n_threads);
-
-    // Create MCAP Reader Participant
-    mcap_reader_participant_ = std::make_shared<McapReaderParticipant>(
+    // Create Reader Participant
+    reader_participant_ = std::make_shared<participants::McapReaderParticipant>(
         configuration.mcap_reader_configuration,
-        payload_pool_,
+        payload_pool,
         input_file);
 
+    // Create Discovery Database
+    auto discovery_database = std::make_shared<ddspipe::core::DiscoveryDatabase>();
+
     // Create Replayer Participant
-    replayer_participant_ = std::make_shared<ReplayerParticipant>(
+    auto replayer_participant = std::make_shared<participants::ReplayerParticipant>(
         configuration.replayer_configuration,
-        payload_pool_,
-        discovery_database_);
-    replayer_participant_->init();
+        payload_pool,
+        discovery_database);
+
+    replayer_participant->init();
 
     // Create and populate Participants Database
-    participants_database_ =
-            std::make_shared<ParticipantsDatabase>();
+    auto participants_database = std::make_shared<ddspipe::core::ParticipantsDatabase>();
 
     // Populate Participants Database
-    participants_database_->add_participant(
-        mcap_reader_participant_->id(),
-        mcap_reader_participant_
+    participants_database->add_participant(
+        reader_participant_->id(),
+        reader_participant_
         );
-    participants_database_->add_participant(
-        replayer_participant_->id(),
-        replayer_participant_
+
+    participants_database->add_participant(
+        replayer_participant->id(),
+        replayer_participant
         );
+
+    // Create Thread Pool
+    thread_pool_ = std::make_shared<utils::SlotThreadPool>(configuration.n_threads);
 
     if (configuration.replay_types)
     {
@@ -113,15 +108,30 @@ DdsReplayer::DdsReplayer(
             "true");
     }
 
-    // Generate builtin-topics from the topics in the MCAP file
-    configuration.ddspipe_configuration.builtin_topics = generate_builtin_topics_(configuration, input_file);
+    // Process the input file's summary
+    std::set<utils::Heritable<ddspipe::core::types::DdsTopic>> topics;
+    participants::DynamicTypesCollection types;
+
+    reader_participant_->process_summary(topics, types);
+
+    // Store the topics as built-in topics
+    for (const auto& topic : topics)
+    {
+        configuration.ddspipe_configuration.builtin_topics.insert(topic);
+    }
+
+    // Register the dynamic types
+    const auto& registered_types = register_dynamic_types_(types);
+
+    // Create writers to publish the dynamic types
+    create_dynamic_types_writers_(topics, registered_types);
 
     // Create DDS Pipe
-    pipe_ = std::make_unique<DdsPipe>(
+    pipe_ = std::make_unique<ddspipe::core::DdsPipe>(
         configuration.ddspipe_configuration,
-        discovery_database_,
-        payload_pool_,
-        participants_database_,
+        discovery_database,
+        payload_pool,
+        participants_database,
         thread_pool_);
 }
 
@@ -137,7 +147,7 @@ utils::ReturnCode DdsReplayer::reload_configuration(
 
 void DdsReplayer::process_file()
 {
-    mcap_reader_participant_->process_file();
+    reader_participant_->process_messages();
 
     // Wait until all tasks have been consumed
     thread_pool_->wait_all_consumed();
@@ -149,139 +159,82 @@ void DdsReplayer::process_file()
 
 void DdsReplayer::stop()
 {
-    mcap_reader_participant_->stop();
+    reader_participant_->stop();
     pipe_->disable();
 }
 
-std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topics_(
-        const yaml::ReplayerConfiguration& configuration,
-        std::string& input_file)
+std::set<std::string> DdsReplayer::register_dynamic_types_(
+        const participants::DynamicTypesCollection& dynamic_types)
 {
-    std::set<utils::Heritable<DistributedTopic>> builtin_topics;
+    std::set<std::string> registered_types{};
 
-    mcap::McapReader mcap_reader;
-
-    auto status = mcap_reader.open(input_file);
-    if (status.code != mcap::StatusCode::Success)
+    for (const auto& dynamic_type : dynamic_types.dynamic_types())
     {
-        throw utils::InitializationException(
-                  STR_ENTRY << "Failed MCAP read."
-                  );
+        // Deserialize type identifier
+        const auto type_identifier_str = utils::base64_decode(dynamic_type.type_information());
+        const auto type_identifier = participants::Deserializer::deserialize<fastrtps::types::TypeIdentifier>(type_identifier_str);
+
+        // Deserialize type object
+        const auto type_object_str = utils::base64_decode(dynamic_type.type_object());
+        const auto type_object = participants::Deserializer::deserialize<fastrtps::types::TypeObject>(type_object_str);
+
+        // Register in factory
+        fastrtps::types::TypeObjectFactory::get_instance()->add_type_object(
+                dynamic_type.type_name(), &type_identifier, &type_object);
+
+        registered_types.insert(dynamic_type.type_name());
     }
 
-    // Scan and parse channels and schemas
-    const auto onProblem = [](const mcap::Status& status)
-            {
-                logWarning(DDSREPLAYER_REPLAYER,
-                        "An error occurred while reading summary: " << status.message << ".");
-            };
-    // Read mcap summary: ForceScan method required for parsing metadata and attachments
-    status = mcap_reader.readSummary(mcap::ReadSummaryMethod::ForceScan, onProblem);
-    if (status.code != mcap::StatusCode::Success)
-    {
-        throw utils::InitializationException(
-                  STR_ENTRY << "Failed to read summary."
-                  );
-    }
-
-    // Fetch version metadata
-    auto metadatas = mcap_reader.metadata();
-    std::string recording_version;
-    if (metadatas.count(VERSION_METADATA_NAME) != 0)
-    {
-        mcap::KeyValueMap version_metadata = metadatas[VERSION_METADATA_NAME].metadata;
-        recording_version = version_metadata[VERSION_METADATA_RELEASE];
-    }
-    else
-    {
-        recording_version = "UNKNOWN";
-    }
-
-    if (recording_version != DDSRECORDER_PARTICIPANTS_VERSION_STRING)
-    {
-        logWarning(DDSREPLAYER_REPLAYER,
-                "MCAP file generated with a different DDS Record & Replay version (" << recording_version <<
-                ", current is " << DDSRECORDER_PARTICIPANTS_VERSION_STRING << "), incompatibilities might arise...");
-    }
-
-    // Fetch dynamic types attachment
-    auto attachments = mcap_reader.attachments();
-    mcap::Attachment dynamic_attachment = attachments[DYNAMIC_TYPES_ATTACHMENT_NAME];
-
-    // Deserialize dynamic types collection using CDR
-    const std::string dynamic_types_str(reinterpret_cast<const char*>(dynamic_attachment.data), dynamic_attachment.dataSize);
-    const auto dynamic_types = Deserializer::deserialize<DynamicTypesCollection>(dynamic_types_str);
-
-    if (configuration.replay_types)
-    {
-        // Register in factory dynamic types from attachment
-        for (auto& dynamic_type : dynamic_types.dynamic_types())
-        {
-            register_dynamic_type_(dynamic_type);
-        }
-    }
-
-    auto channels = mcap_reader.channels();
-    auto schemas = mcap_reader.schemas();
-
-    for (auto it = channels.begin(); it != channels.end(); it++)
-    {
-        std::string topic_name = it->second->metadata[ROS2_TYPES] == "true" ? utils::mangle_if_ros_topic(
-            it->second->topic) : it->second->topic;
-        std::string type_name = it->second->metadata[ROS2_TYPES] == "true" ? utils::mangle_if_ros_type(
-            schemas[it->second->schemaId]->name) : schemas[it->second->schemaId]->name;                                                                                                             // TODO: assert exists beforehand
-
-        auto channel_topic = utils::Heritable<DdsTopic>::make_heritable();
-        channel_topic->m_topic_name = topic_name;
-        channel_topic->type_name = type_name;
-        channel_topic->type_ids = registered_types_[type_name];
-
-        // Apply the QoS stored in the MCAP file as if they were the discovered QoS.
-        channel_topic->topic_qos.set_qos(
-            Deserializer::deserialize<ddspipe::core::types::TopicQoS>(it->second->metadata[QOS_SERIALIZATION_QOS]),
-            utils::FuzzyLevelValues::fuzzy_level_fuzzy);
-
-        // Insert channel topic in builtin topics list
-        builtin_topics.insert(channel_topic);
-
-        if (configuration.replay_types && registered_types_.count(type_name) != 0)
-        {
-            // Make a copy of the Topic to customize it according to the Participant's configured QoS.
-            utils::Heritable<DistributedTopic> topic = channel_topic->copy();
-
-            // Apply the Manual Topics for this participant.
-            for (const auto& manual_topic : configuration.ddspipe_configuration.get_manual_topics(*channel_topic))
-            {
-                topic->topic_qos.set_qos(manual_topic.first->topic_qos, utils::FuzzyLevelValues::fuzzy_level_hard);
-            }
-        }
-    }
-
-    mcap_reader.close();
-
-    return builtin_topics;
+    return registered_types;
 }
 
-void DdsReplayer::register_dynamic_type_(
-        const ddsrecorder::participants::DynamicType& dynamic_type)
+void DdsReplayer::create_dynamic_types_writers_(
+        const std::set<utils::Heritable<ddspipe::core::types::DdsTopic>>& topics,
+        const std::set<std::string>& registered_types)
+{
+    for (const auto& topic : topics)
+    {
+        if (registered_types.find(topic->type_name) == registered_types.end())
+        {
+            continue;
+        }
+
+        // Make a copy of the Topic to customize it according to the Participant's configured QoS.
+        utils::Heritable<ddspipe::core::types::DdsTopic> topic_copy = topic->copy();
+
+        // Apply the Manual Topics for this participant.
+        for (const auto& [manual_topic, _] : configuration_.ddspipe_configuration.get_manual_topics(*topic))
+        {
+            topic_copy->topic_qos.set_qos(manual_topic->topic_qos, utils::FuzzyLevelValues::fuzzy_level_hard);
+        }
+
+        // Create Datawriter in this topic so dynamic type can be shared in EDP
+        // TODO: Avoid creating the dynamic writer when the topic is not allowed.
+        create_dynamic_type_writer_(topic_copy);
+    }
+}
+
+void DdsReplayer::create_dynamic_type_writer_(
+        utils::Heritable<ddspipe::core::types::DdsTopic> topic)
 {
     // Decode type identifer and object strings
-    std::string typeid_str = utils::base64_decode(dynamic_type.type_information());
-    std::string typeobj_str = utils::base64_decode(dynamic_type.type_object());
+    const auto type_identifier_str = utils::base64_decode(dynamic_type.type_information());
+    const auto type_object_str = utils::base64_decode(dynamic_type.type_object());
 
     // Deserialize type identifer and object strings
     fastdds::dds::xtypes::TypeIdentifier type_identifier =
-            Deserializer::deserialize<fastdds::dds::xtypes::TypeIdentifier>(typeid_str);
+            Deserializer::deserialize<fastdds::dds::xtypes::TypeIdentifier>(type_identifier_str);
     fastdds::dds::xtypes::TypeObject type_object =
-            Deserializer::deserialize<fastdds::dds::xtypes::TypeObject>(typeobj_str);
+            Deserializer::deserialize<fastdds::dds::xtypes::TypeObject>(type_object_str);
 
     // Create a TypeIdentifierPair to use in register_type_identifier
     fastdds::dds::xtypes::TypeIdentifierPair type_identifiers;
     type_identifiers.type_identifier1(type_identifier);
 
-    // // Register in factory
-    if (fastdds::dds::RETCODE_OK != fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().register_type_object(
-                type_object, type_identifiers))
+    // Register in factory
+    auto& factory = fastdds::dds::DomainParticipantFactory::get_instance();
+
+    if (fastdds::dds::RETCODE_OK != factory->type_object_registry().register_type_object(type_object, type_identifiers))
     {
         logWarning(DDSREPLAYER_REPLAYER,
                 "Failed to register " << dynamic_type.type_name() << " DynamicType.");

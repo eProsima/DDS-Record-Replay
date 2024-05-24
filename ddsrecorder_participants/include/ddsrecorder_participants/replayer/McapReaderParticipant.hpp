@@ -14,13 +14,24 @@
 
 #pragma once
 
-#include <mcap/mcap.hpp>
+#include <set>
+#include <string>
+
+#include <mcap/reader.hpp>
+
+#include <cpp_utils/memory/Heritable.hpp>
 
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
 
 #include <ddsrecorder_participants/library/library_dll.h>
-#include <ddsrecorder_participants/replayer/McapReaderParticipantConfiguration.hpp>
 #include <ddsrecorder_participants/replayer/BaseReaderParticipant.hpp>
+#include <ddsrecorder_participants/replayer/McapReaderParticipantConfiguration.hpp>
+
+#if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
+    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
+#else
+    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollection.hpp>
+#endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -46,17 +57,63 @@ public:
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     McapReaderParticipant(
-            std::shared_ptr<McapReaderParticipantConfiguration> configuration,
-            std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
-            std::string& file_path);
+            const std::shared_ptr<McapReaderParticipantConfiguration>& configuration,
+            const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
+            const std::string& file_path);
+
+    /**
+     * @brief Process the MCAP file summary.
+     *
+     * Fills the topics with the MCAP file's channels and schemas.
+     * Fills the types with the MCAP file's attachment.
+     *
+     * @param topics: Set of topics to be filled with the information from the MCAP file.
+     * @param types:  DynamicTypesCollection instance to be filled with the types' information from the MCAP file.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    void process_summary(
+        std::set<utils::Heritable<ddspipe::core::types::DdsTopic>>& topics,
+        DynamicTypesCollection& types) override;
 
     /**
      * @brief Read and send messages sequentially (according to timestamp).
      *
-     * @throw utils::InconsistencyException if failed to read mcap file.
+     * Reads the MCAP file messages and sends them to the participants.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    void process_file() override;
+    void process_messages() override;
+
+protected:
+
+    /**
+     * @brief Open the MCAP file.
+     *
+     * @throws \c InitializationException if failed to open MCAP file.
+     */
+    void open_file_();
+
+    /**
+     * @brief Close the MCAP file.
+     */
+    void close_file_();
+
+    /**
+     * @brief Read the MCAP file summary.
+     *
+     * Reads the MCAP file summary.
+     * Checks if the version of the MCAP file is supported.
+     */
+    void read_mcap_summary_();
+
+    /**
+     * @brief Read the MCAP file messages.
+     *
+     * @return A \c LinearMessageView instance with the messages read.
+     */
+    mcap::LinearMessageView read_mcap_messages_();
+
+    //! MCAP reader instance.
+    mcap::McapReader mcap_reader_;
 };
 
 } /* namespace participants */
