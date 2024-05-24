@@ -57,26 +57,6 @@ public:
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void process_file() override;
-
-    /**
-     * @brief This method converts a mcap timestamp to standard format.
-     *
-     * @param [in] time Timestamp to be converted
-     * @return Timestamp in standard format
-     */
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    static utils::Timestamp mcap_timestamp_to_std_timepoint(
-            const mcap::Timestamp& time);
-
-    /**
-     * @brief This method converts a timestamp in standard format to its mcap equivalent.
-     *
-     * @param [in] time Timestamp to be converted
-     * @return Timestamp in mcap format
-     */
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    static mcap::Timestamp std_timepoint_to_mcap_timestamp(
-            const utils::Timestamp& time);
 };
 
 } /* namespace participants */

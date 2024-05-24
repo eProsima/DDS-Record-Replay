@@ -16,7 +16,7 @@
  * @file McapMessage.cpp
  */
 
-#include <ddsrecorder_participants/recorder/mcap/utils.hpp>
+#include <ddsrecorder_participants/common/time_utils.hpp>
 #include <ddsrecorder_participants/recorder/message/McapMessage.hpp>
 
 
