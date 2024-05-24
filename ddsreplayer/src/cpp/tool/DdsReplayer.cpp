@@ -42,6 +42,7 @@
 #include <ddsrecorder_participants/replayer/Deserializer.hpp>
 #include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
 #include <ddsrecorder_participants/replayer/ReplayerParticipant.hpp>
+#include <ddsrecorder_participants/replayer/SqlReaderParticipant.hpp>
 
 #include "DdsReplayer.hpp"
 
@@ -58,10 +59,20 @@ DdsReplayer::DdsReplayer(
     auto payload_pool = std::make_shared<ddspipe::core::FastPayloadPool>();
 
     // Create Reader Participant
-    reader_participant_ = std::make_shared<participants::McapReaderParticipant>(
-        configuration.mcap_reader_configuration,
-        payload_pool,
-        input_file);
+    if (input_file.size() >= 3 && input_file.substr(input_file.size() - 3) == ".db")
+    {
+        reader_participant_ = std::make_shared<participants::SqlReaderParticipant>(
+            configuration.mcap_reader_configuration,
+            payload_pool,
+            input_file);
+    }
+    else
+    {
+        reader_participant_ = std::make_shared<participants::McapReaderParticipant>(
+            configuration.mcap_reader_configuration,
+            payload_pool,
+            input_file);
+    }
 
     // Create Discovery Database
     auto discovery_database = std::make_shared<ddspipe::core::DiscoveryDatabase>();
