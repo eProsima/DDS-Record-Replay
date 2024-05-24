@@ -15,20 +15,36 @@
 #pragma once
 
 #include <condition_variable>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <string>
+
+#include <ddspipe_core/interface/IReader.hpp>
+#include <ddspipe_core/interface/IWriter.hpp>
+
+#include <cpp_utils/memory/Heritable.hpp>
 
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
 #include <ddspipe_core/interface/IParticipant.hpp>
 #include <ddspipe_core/interface/ITopic.hpp>
+#include <ddspipe_core/types/data/RtpsPayloadData.hpp>
+#include <ddspipe_core/types/dds/TopicQoS.hpp>
+#include <ddspipe_core/types/participant/ParticipantId.hpp>
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
 #include <ddspipe_participants/reader/auxiliar/InternalReader.hpp>
 
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/replayer/McapReaderParticipantConfiguration.hpp>
+
+#if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
+    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
+#else
+    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollection.hpp>
+#endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -54,9 +70,9 @@ public:
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     BaseReaderParticipant(
-            std::shared_ptr<McapReaderParticipantConfiguration> configuration,
-            std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
-            std::string& file_path);
+            const std::shared_ptr<McapReaderParticipantConfiguration>& configuration,
+            const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
+            const std::string& file_path);
 
     //! Override id() IParticipant method
     DDSRECORDER_PARTICIPANTS_DllAPI
@@ -85,12 +101,25 @@ public:
             const ddspipe::core::ITopic& topic) override;
 
     /**
-     * @brief Read and send messages sequentially (according to timestamp).
+     * @brief Process the input file's summary.
      *
-     * @throw utils::InconsistencyException if failed to read file.
+     * @param topics: Set of topics to be filled with the information from the input file.
+     * @param types:  DynamicTypesCollection instance to be filled with the types information from the input file.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    virtual void process_file() = 0;
+    virtual void process_summary(
+        std::set<utils::Heritable<ddspipe::core::types::DdsTopic>>& topics,
+        DynamicTypesCollection& types) = 0;
+
+    /**
+     * @brief Process the input file's messages
+     *
+     * Reads and sends messages sequentially (according to timestamp).
+     *
+     * @throw \c InconsistencyException if failed to read the input file.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    virtual void process_messages() = 0;
 
     //! Stop participant (abort processing file)
     DDSRECORDER_PARTICIPANTS_DllAPI
@@ -98,14 +127,45 @@ public:
 
 protected:
 
+    /**
+     * @brief Create a payload from raw data.
+     *
+     * @param raw_data: Raw data to be encapsulated in the payload.
+     * @param raw_data_size: Size of the raw data.
+     */
+    std::unique_ptr<ddspipe::core::types::RtpsPayloadData> create_payload_(
+            const void* raw_data,
+            const std::uint32_t raw_data_size);
+
+    /**
+     * @brief Create a new \c DdsTopic instance.
+     *
+     * @param topic_name: Name of the topic.
+     * @param type_name:  Name of the type.
+     * @param is_ros2_type: Whether the type is a ROS2 type.
+     * @return A new \c DdsTopic instance.
+     */
+    ddspipe::core::types::DdsTopic create_topic_(
+        const std::string& topic_name,
+        const std::string& type_name,
+        const bool is_ros2_type);
+
+    /**
+     * @brief Wait until timestamp is reached.
+     *
+     * @param timestamp: Timestamp to wait until.
+     */
+    void wait_until_timestamp_(
+            const utils::Timestamp& timestamp);
+
     //! Participant Configuration
-    std::shared_ptr<McapReaderParticipantConfiguration> configuration_;
+    const std::shared_ptr<McapReaderParticipantConfiguration> configuration_;
 
     //! DDS Pipe shared Payload Pool
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;
 
     //! Input file path
-    std::string file_path_;
+    const std::string file_path_;
 
     //! Internal readers map
     std::map<ddspipe::core::types::DdsTopic, std::shared_ptr<ddspipe::participants::InternalReader>> readers_;
