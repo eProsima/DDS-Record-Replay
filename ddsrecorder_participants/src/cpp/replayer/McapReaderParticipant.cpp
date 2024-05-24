@@ -32,6 +32,7 @@
 
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
+#include <ddsrecorder_participants/common/time_utils.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -68,11 +69,11 @@ void McapReaderParticipant::process_file()
     mcap::Timestamp end_time = mcap::MaxTime;
     if (configuration_->begin_time.is_set())
     {
-        begin_time = std_timepoint_to_mcap_timestamp(configuration_->begin_time.get_reference());
+        begin_time = to_mcap_timestamp(configuration_->begin_time.get_reference());
     }
     if (configuration_->end_time.is_set())
     {
-        end_time = std_timepoint_to_mcap_timestamp(configuration_->end_time.get_reference());
+        end_time = to_mcap_timestamp(configuration_->end_time.get_reference());
     }
     mcap::ReadMessageOptions read_options(begin_time, end_time);
 
@@ -94,7 +95,7 @@ void McapReaderParticipant::process_file()
     auto messages_end = messages.end();
     if (messages_it != messages_end)
     {
-        initial_ts_origin = mcap_timestamp_to_std_timepoint(messages_it->message.logTime);
+        initial_ts_origin = to_std_timestamp(messages_it->message.logTime);
     }
     else
     {
@@ -141,7 +142,7 @@ void McapReaderParticipant::process_file()
         mcap_payload.data = nullptr; // Set to nullptr after copy to avoid free on destruction
 
         // Set publication delay from original log time and configured playback rate
-        auto delay = mcap_timestamp_to_std_timepoint(it->message.logTime) - initial_ts_origin;
+        auto delay = to_std_timestamp(it->message.logTime) - initial_ts_origin;
         scheduled_write_ts = std::chrono::time_point_cast<utils::Timestamp::duration>(initial_ts + std::chrono::duration_cast<std::chrono::nanoseconds>(
                             delay / configuration_->rate));
 
@@ -195,19 +196,6 @@ void McapReaderParticipant::process_file()
     }
 
     mcap_reader.close();
-}
-
-utils::Timestamp McapReaderParticipant::mcap_timestamp_to_std_timepoint(
-        const mcap::Timestamp& time)
-{
-    return std::chrono::time_point_cast<utils::Timestamp::duration>(utils::Timestamp() +
-                   std::chrono::nanoseconds(time));
-}
-
-mcap::Timestamp McapReaderParticipant::std_timepoint_to_mcap_timestamp(
-        const utils::Timestamp& time)
-{
-    return mcap::Timestamp(std::chrono::duration_cast<std::chrono::nanoseconds>(time.time_since_epoch()).count());
 }
 
 } /* namespace participants */
