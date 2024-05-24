@@ -14,8 +14,10 @@
 
 #pragma once
 
+#include <map>
 #include <memory>
 #include <set>
+#include <string>
 
 #include <cpp_utils/memory/Heritable.hpp>
 #include <cpp_utils/ReturnCode.hpp>
@@ -26,24 +28,18 @@
 #include <fastdds/dds/publisher/Publisher.hpp>
 
 #include <ddspipe_core/core/DdsPipe.hpp>
-#include <ddspipe_core/dynamic/AllowedTopicList.hpp>
-#include <ddspipe_core/dynamic/DiscoveryDatabase.hpp>
-#include <ddspipe_core/dynamic/ParticipantsDatabase.hpp>
-#include <ddspipe_core/efficiency/payload/FastPayloadPool.hpp>
-#include <ddspipe_core/types/dds/TopicQoS.hpp>
+#include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
+#include <ddspipe_core/types/topic/Topic.hpp>
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
+
+#include <ddsrecorder_participants/replayer/BaseReaderParticipant.hpp>
+#include <ddsrecorder_yaml/replayer/YamlReaderConfiguration.hpp>
 
 #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
     #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
 #else
     #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollection.hpp>
 #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-
-
-#include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
-#include <ddsrecorder_participants/replayer/ReplayerParticipant.hpp>
-
-#include <ddsrecorder_yaml/replayer/YamlReaderConfiguration.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -57,12 +53,12 @@ class DdsReplayer
 public:
 
     /**
-     * DdsRecorder constructor by required values.
+     * @brief DdsRecorder constructor by required values.
      *
-     * Creates DdsRecorder instance with given configuration, initial state and mcap file name.
+     * Creates a DdsRecorder instance with a configuration, an initial state, and input file name.
      *
      * @param configuration: Structure encapsulating all replayer configuration options.
-     * @param input_file:    MCAP file containing the messages to be played back.
+     * @param input_file:    File containing the DDS data to be played back.
      *
      * @throw utils::InitializationException if failed to create dynamic participant/publisher.
      */
@@ -71,14 +67,22 @@ public:
             std::string& input_file);
 
     /**
-     * @brief Destructor
-     *
-     * Removes all DDS resources created via the \c fastdds::DomainParticipantFactory
+     * @brief DdsReplayer destructor.
      */
     ~DdsReplayer();
 
     /**
-     * Reconfigure the Replayer with the new configuration.
+     * @brief Process the input file.
+     */
+    void process_file();
+
+    /**
+     * @brief Stop the Replayer.
+     */
+    void stop();
+
+    /**
+     * @brief Reconfigure the Replayer with the new configuration.
      *
      * @param new_configuration: The configuration to replace the previous configuration with.
      *
@@ -88,45 +92,37 @@ public:
     utils::ReturnCode reload_configuration(
             const yaml::ReplayerConfiguration& new_configuration);
 
-    //! Process input MCAP file
-    void process_file();
-
-    //! Stop replayer instance
-    void stop();
-
 protected:
 
     /**
-     * @brief Generate a builtin-topics list by combining the channels information within the MCAP file and the
-     * optional builtin-topics list provided via YAML configuration file.
+     * @brief Register the dynamic types in the \c dyn_participant_.
      *
-     * @param configuration: replayer config containing, among other specs, the YAML-provided builtin-topics list.
-     * @param input_file: path to the input MCAP file.
-     *
-     * @return generated builtin-topics list (set).
-     * @throw utils::InitializationException if failed to read mcap file.
+     * @param dynamic_types: The dynamic types to be registered.
+     * @return The set of registered types.
      */
-    std::set<utils::Heritable<ddspipe::core::types::DistributedTopic>> generate_builtin_topics_(
-            const yaml::ReplayerConfiguration& configuration,
-            std::string& input_file);
+    std::set<std::string> register_dynamic_types_(
+            const participants::DynamicTypesCollection& dynamic_types);
 
     /**
-     * @brief Deserialize and register \c dynamic_type into \c TypeObjectFactory .
+     * @brief Create the dynamic types' writers for \c topics.
      *
-     * @param dynamic_type: serialized dynamic type to be registered.
+     * @param topics: The topics to create the writers for.
+     * @param registered_types: The types to create the writers for.
      */
-    void register_dynamic_type_(
-            const ddsrecorder::participants::DynamicType& dynamic_type);
+    void create_dynamic_types_writers_(
+            const std::set<utils::Heritable<ddspipe::core::types::DdsTopic>>& topics,
+            const std::set<std::string>& registered_types);
 
     /**
-     * @brief Create DDS DataWriter in given topic to send associated dynamic type information to applications relying
-     * on dynamic types (e.g. applications which dynamically create DataReaders every time a participant receives a
-     * dynamic type via on_type_discovery/on_type_information_received callbacks).
+     * @brief Create the dynamic types' writer for \c topic.
      *
-     * @param topic: topic on which DataWriter is created.
+     * @param topic: The topic to create the writer for.
      */
-    void create_dynamic_writer_(
+    void create_dynamic_type_writer_(
             utils::Heritable<ddspipe::core::types::DdsTopic> topic);
+
+    //! Replayer Configuration
+    const yaml::ReplayerConfiguration configuration_;
 
     //! Payload Pool
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;
@@ -134,17 +130,8 @@ protected:
     //! Thread Pool
     std::shared_ptr<utils::SlotThreadPool> thread_pool_;
 
-    //! Discovery Database
-    std::shared_ptr<ddspipe::core::DiscoveryDatabase> discovery_database_;
-
-    //! Participants Database
-    std::shared_ptr<ddspipe::core::ParticipantsDatabase> participants_database_;
-
-    //! Replayer Participant
-    std::shared_ptr<participants::ReplayerParticipant> replayer_participant_;
-
-    //! MCAP Reader Participant
-    std::shared_ptr<participants::McapReaderParticipant> mcap_reader_participant_;
+    //! Reader Participant
+    std::shared_ptr<participants::BaseReaderParticipant> reader_participant_;
 
     //! DDS Pipe
     std::unique_ptr<ddspipe::core::DdsPipe> pipe_;
