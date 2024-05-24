@@ -31,7 +31,7 @@
 #include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
 #include <ddsrecorder_participants/recorder/output/Serializer.hpp>
 #include <ddsrecorder_participants/recorder/sql/SqlWriter.hpp>
-#include <ddsrecorder_participants/recorder/sql/utils.hpp>
+#include <ddsrecorder_participants/common/time_utils.hpp>
 
 #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
     #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
