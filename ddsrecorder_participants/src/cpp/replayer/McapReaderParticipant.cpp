@@ -142,19 +142,6 @@ void McapReaderParticipant::process_messages()
     // Replay messages
     for (const auto& it : messages)
     {
-        // Create RTPS data
-        auto data = create_payload_(it.message.data, it.message.dataSize);
-
-        // Set publication delay from original log time and configured playback rate
-        auto delay = to_std_timestamp(it.message.logTime) - first_message_timestamp;
-        auto scheduled_write_ts =
-                std::chrono::time_point_cast<utils::Timestamp::duration>(initial_timestamp +
-                std::chrono::duration_cast<std::chrono::nanoseconds>(delay / configuration_->rate));
-
-        // Set source timestamp
-        // NOTE: this is important for QoS such as LifespanQosPolicy
-        data->source_timestamp = fastrtps::rtps::Time_t(to_ticks(scheduled_write_ts) / 1e9);
-
         // Create topic on which this message should be published
         const bool is_topic_ros2_type = it.channel->metadata[ROS2_TYPES] == "true";
         const auto topic = create_topic_(it.channel->topic, it.schema->name, is_topic_ros2_type);
@@ -170,6 +157,19 @@ void McapReaderParticipant::process_messages()
 
         logInfo(DDSREPLAYER_MCAP_READER_PARTICIPANT,
                 "Scheduling message to be replayed in topic " << topic << ".");
+
+        // Set publication delay from original log time and configured playback rate
+        auto delay = to_std_timestamp(it.message.logTime) - first_message_timestamp;
+        auto scheduled_write_ts =
+                std::chrono::time_point_cast<utils::Timestamp::duration>(initial_timestamp +
+                std::chrono::duration_cast<std::chrono::nanoseconds>(delay / configuration_->rate));
+
+        // Create RTPS data
+        auto data = create_payload_(it.message.data, it.message.dataSize);
+
+        // Set source timestamp
+        // NOTE: this is important for QoS such as LifespanQosPolicy
+        data->source_timestamp = fastrtps::rtps::Time_t(to_ticks(scheduled_write_ts) / 1e9);
 
         // Wait until it's time to write the message
         wait_until_timestamp_(scheduled_write_ts);
