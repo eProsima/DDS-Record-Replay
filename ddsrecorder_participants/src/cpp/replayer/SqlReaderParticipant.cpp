@@ -28,8 +28,10 @@
 
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
+#include <ddsrecorder_participants/common/time_utils.hpp>
+#include <ddsrecorder_participants/constants.hpp>
+#include <ddsrecorder_participants/replayer/Deserializer.hpp>
 #include <ddsrecorder_participants/replayer/SqlReaderParticipant.hpp>
-
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
@@ -52,7 +54,7 @@ void SqlReaderParticipant::process_summary(
 {
     open_file_();
 
-    exec_sql_statement_("SELECT * FROM Topics;", [&](sqlite3_stmt* stmt)
+    exec_sql_statement_("SELECT name, type, qos FROM Topics;", {}, [&](sqlite3_stmt* stmt)
     {
         // Create a DdsTopic to publish the message
         const std::string topic_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
@@ -70,10 +72,10 @@ void SqlReaderParticipant::process_summary(
         topics_[topic_name] = *topic;
 
         // Store the topic in the set
-        topics.insert(utils::Heritable<ddspipe::core::types::DdsTopic>::make_heritable(topic));
+        topics.insert(topic);
     });
 
-    exec_sql_statement_("SELECT * FROM Types;", [&](sqlite3_stmt* stmt)
+    exec_sql_statement_("SELECT name, information, object FROM Types;", {}, [&](sqlite3_stmt* stmt)
     {
         // Read the type data from the database
         const std::string type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
@@ -98,10 +100,33 @@ void SqlReaderParticipant::process_messages()
 {
     open_file_();
 
-    exec_sql_statement_("SELECT * FROM Messages ORDER BY publish_time;", [&](sqlite3_stmt* stmt)
+    // Define the time to start replaying messages
+    const auto initial_timestamp = when_to_start_replay_(configuration_->start_replay_time);
+
+    const auto begin_time = to_sql_timestamp(
+            configuration_->begin_time.is_set() ?
+            configuration_->begin_time.get_reference() :
+            utils::the_beginning_of_time());
+
+    const auto end_time = to_sql_timestamp(
+            configuration_->end_time.is_set() ?
+            configuration_->end_time.get_reference() :
+            utils::the_end_of_time());
+
+    exec_sql_statement_(
+        "SELECT log_time, topic, data, data_size FROM Messages "
+        "WHERE log_time >= ? AND log_time <= ? "
+        "ORDER BY log_time;",
+        {begin_time, end_time},
+        [&](sqlite3_stmt* stmt)
     {
+        const auto log_time = to_std_timestamp(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
+
+        // Store the timestamp of the first recorded message
+        static utils::Timestamp first_message_timestamp = log_time;
+
         // Create a DdsTopic to publish the message
-        const std::string topic_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        const std::string topic_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
         const auto topic = find_topic_(topic_name);
 
         // Find the reader for the topic
@@ -112,23 +137,32 @@ void SqlReaderParticipant::process_messages()
             return;
         }
 
-        const auto reader = readers_[topic];
-
-        // Create a RtpsPayloadData from the raw data
-        const auto raw_data = sqlite3_column_blob(stmt, 1);
-        const auto raw_data_size = sqlite3_column_int(stmt, 2);
-        auto data = create_payload_(raw_data, raw_data_size);
-
         logInfo(DDSREPLAYER_MCAP_READER_PARTICIPANT,
                 "Scheduling message to be replayed in topic " << topic << ".");
 
-        // Wait until it's time to write the message
-        wait_until_timestamp_(utils::now());
+        // Set publication delay from original log time and configured playback rate
+        const auto delay = (log_time - first_message_timestamp) / configuration_->rate;
+        const auto delay_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(delay);
+        const auto time_to_write =
+                std::chrono::time_point_cast<utils::Timestamp::duration>(initial_timestamp + delay_ns);
 
-        logInfo(DDSREPLAYER_MCAP_READER_PARTICIPANT, "Replaying message in topic " << topic << ".");
+        // Create a RtpsPayloadData from the raw data
+        const auto raw_data = sqlite3_column_blob(stmt, 2);
+        const auto raw_data_size = sqlite3_column_int(stmt, 3);
+        auto data = create_payload_(raw_data, raw_data_size);
+
+        // Set source timestamp
+        // NOTE: this is important for QoS such as LifespanQosPolicy
+        data->source_timestamp = fastrtps::rtps::Time_t(to_ticks(time_to_write) / 1e9);
+
+        // Wait until it's time to write the message
+        wait_until_timestamp_(time_to_write);
+
+        logInfo(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                "Replaying message in topic " << topic << ".");
 
         // Insert new data in internal reader queue
-        reader->simulate_data_reception(std::move(data));
+        readers_[topic]->simulate_data_reception(std::move(data));
     });
 
     close_file_();
@@ -177,75 +211,32 @@ ddspipe::core::types::DdsTopic SqlReaderParticipant::find_topic_(
 std::string SqlReaderParticipant::find_type_of_topic_(
         const std::string& topic_name)
 {
-    // Find the type of the Topic with name topic_name
-    const char* select_statement = R"(
-        SELECT type FROM Topics
-        WHERE name = ?;
-    )";
-
-    sqlite3_stmt* statement;
-    const auto prep_ret = sqlite3_prepare_v2(database_, select_statement, -1, &statement, nullptr);
-
-    if (prep_ret != SQLITE_OK)
-    {
-        const std::string error_msg = utils::Formatter() << "Failed to prepare SQL statement to read messages: "
-                                                        << sqlite3_errmsg(database_);
-        sqlite3_finalize(statement);
-
-        logError(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
-        throw utils::InconsistencyException(error_msg);
-    }
-
-    const auto bind_ret = sqlite3_bind_text(statement, 1, topic_name.c_str(), -1, SQLITE_STATIC);
-
-    if (bind_ret != SQLITE_OK)
-    {
-        const std::string error_msg = utils::Formatter() << "Failed to bind SQL statement to read messages: "
-                                                        << sqlite3_errmsg(database_);
-        sqlite3_finalize(statement);
-
-        logError(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
-        throw utils::InconsistencyException(error_msg);
-    }
-
     std::string type_name;
 
-    switch (sqlite3_step(statement))
+    exec_sql_statement_("SELECT type FROM Topics WHERE name = ?;", {topic_name}, [&](sqlite3_stmt* stmt)
     {
-        case SQLITE_ROW:
+        if (!type_name.empty())
         {
-            // Store the type in the topic
-            type_name = reinterpret_cast<const char*>(sqlite3_column_text(statement, 0));
-            break;
-        }
-        case SQLITE_DONE:
-        {
-            logError(DDSREPLAYER_SQL_READER_PARTICIPANT,
-                     "FAIL_SQL_READ | No type found for topic '" << topic_name << "'.");
-            break;
-        }
-        default:
-        {
-            const std::string error_msg = utils::Formatter() << "Failed to execute query: "
-                                                            << sqlite3_errmsg(database_);
-            sqlite3_finalize(statement);
-
-            // Maybe we should finalize statements on top?
+            const std::string error_msg = utils::Formatter() << "Multiple types found for topic " << topic_name;
 
             logError(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
-            throw utils::InconsistencyException(error_msg);
+            throw std::runtime_error(error_msg);
         }
-    }
+
+        type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+    });
 
     return type_name;
 }
 
 void SqlReaderParticipant::exec_sql_statement_(
     const std::string& statement,
+    const std::vector<std::string>& bind_values,
     const std::function<void(sqlite3_stmt*)>& process_row)
 {
     sqlite3_stmt* stmt;
 
+    // Prepare the SQL statement
     const auto ret = sqlite3_prepare_v2(database_, statement.c_str(), -1, &stmt, nullptr);
 
     if (ret != SQLITE_OK)
@@ -258,8 +249,25 @@ void SqlReaderParticipant::exec_sql_statement_(
         throw std::runtime_error(error_msg);
     }
 
+    // Guard the statement to ensure it's always finalized
     std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)> stmt_guard(stmt, sqlite3_finalize);
 
+    // Bind the values to the statement
+    for (int i = 0; i < (int) bind_values.size(); i++)
+    {
+        const auto bind_ret = sqlite3_bind_text(stmt, i+1, bind_values[i].c_str(), -1, SQLITE_STATIC);
+
+        if (bind_ret != SQLITE_OK)
+        {
+            const std::string error_msg = utils::Formatter() << "Failed to bind SQL statement to read messages: "
+                                                            << sqlite3_errmsg(database_);
+
+            logError(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
+            throw utils::InconsistencyException(error_msg);
+        }
+    }
+
+    // Step through the statement and process the rows
     int step_ret;
 
     while ((step_ret = sqlite3_step(stmt)) == SQLITE_ROW)
