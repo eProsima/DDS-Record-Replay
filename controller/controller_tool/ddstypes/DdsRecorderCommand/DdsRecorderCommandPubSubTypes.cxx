@@ -219,9 +219,10 @@ bool DdsRecorderCommandPubSubType::getKey(
     return true;
 }
 
-void DdsRecorderCommandPubSubType::register_type_object_representation() const
+void DdsRecorderCommandPubSubType::register_type_object_representation()
 {
-    register_DdsRecorderCommand_type_objects();
+    eprosima::fastdds::dds::xtypes::TypeIdentifierPair type_ids;
+    register_DdsRecorderCommand_type_identifier(type_ids);
 }
 
 

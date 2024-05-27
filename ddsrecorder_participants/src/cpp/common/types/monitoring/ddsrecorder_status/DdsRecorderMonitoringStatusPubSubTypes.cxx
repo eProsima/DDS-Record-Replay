@@ -219,9 +219,10 @@ bool DdsRecorderMonitoringErrorStatusPubSubType::getKey(
     return true;
 }
 
-void DdsRecorderMonitoringErrorStatusPubSubType::register_type_object_representation() const
+void DdsRecorderMonitoringErrorStatusPubSubType::register_type_object_representation()
 {
-    register_DdsRecorderMonitoringStatus_type_objects();
+    eprosima::fastdds::dds::xtypes::TypeIdentifierPair type_ids;
+    register_DdsRecorderMonitoringErrorStatus_type_identifier(type_ids);
 }
 
 DdsRecorderMonitoringStatusPubSubType::DdsRecorderMonitoringStatusPubSubType()
@@ -412,9 +413,10 @@ bool DdsRecorderMonitoringStatusPubSubType::getKey(
     return true;
 }
 
-void DdsRecorderMonitoringStatusPubSubType::register_type_object_representation() const
+void DdsRecorderMonitoringStatusPubSubType::register_type_object_representation()
 {
-    register_DdsRecorderMonitoringStatus_type_objects();
+    eprosima::fastdds::dds::xtypes::TypeIdentifierPair type_ids;
+    register_DdsRecorderMonitoringStatus_type_identifier(type_ids);
 }
 
 

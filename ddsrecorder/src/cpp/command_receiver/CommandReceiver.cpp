@@ -60,8 +60,8 @@ CommandReceiver::CommandReceiver(
     , event_handler_(event_handler)
     , participant_configuration_(participant_configuration)
 {
-    register_DdsRecorderCommand_type_objects();
-    register_DdsRecorderStatus_type_objects();
+    command_type_->register_type_object_representation();
+    status_type_->register_type_object_representation();
 }
 
 bool CommandReceiver::init()

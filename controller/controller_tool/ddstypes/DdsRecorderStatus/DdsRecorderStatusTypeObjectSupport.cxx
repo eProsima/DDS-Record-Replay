@@ -38,23 +38,20 @@
 
 using namespace eprosima::fastdds::dds::xtypes;
 
-void register_DdsRecorderStatus_type_objects()
+// TypeIdentifier is returned by reference: dependent structures/unions are registered in this same method
+void register_DdsRecorderStatus_type_identifier(
+        TypeIdentifierPair& type_ids_DdsRecorderStatus)
 {
-    static std::once_flag once_flag;
-    std::call_once(once_flag, []()
-            {
-                register_DdsRecorderStatus_type_identifier();
 
-            });
-}
-
-void register_DdsRecorderStatus_type_identifier()
-{
+    ReturnCode_t return_code_DdsRecorderStatus {eprosima::fastdds::dds::RETCODE_OK};
+    return_code_DdsRecorderStatus =
+        eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_identifiers(
+        "DdsRecorderStatus", type_ids_DdsRecorderStatus);
+    if (eprosima::fastdds::dds::RETCODE_OK != return_code_DdsRecorderStatus)
     {
         StructTypeFlag struct_flags_DdsRecorderStatus = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::NOT_APPLIED,
                 false, false);
-        ReturnCode_t return_code_DdsRecorderStatus;
-        TypeIdentifierPair type_ids_DdsRecorderStatus;
+        static_cast<void>(return_code_DdsRecorderStatus);
         QualifiedTypeName type_name_DdsRecorderStatus = "DdsRecorderStatus";
         eprosima::fastcdr::optional<AppliedBuiltinTypeAnnotations> type_ann_builtin_DdsRecorderStatus;
         eprosima::fastcdr::optional<AppliedAnnotationSeq> ann_custom_DdsRecorderStatus;
@@ -63,92 +60,67 @@ void register_DdsRecorderStatus_type_identifier()
         header_DdsRecorderStatus = TypeObjectUtils::build_complete_struct_header(TypeIdentifier(), detail_DdsRecorderStatus);
         CompleteStructMemberSeq member_seq_DdsRecorderStatus;
         {
-            return_code_DdsRecorderStatus =
+            TypeIdentifierPair type_ids_previous;
+            ReturnCode_t return_code_previous {eprosima::fastdds::dds::RETCODE_OK};
+            return_code_previous =
                 eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_identifiers(
-                "anonymous_string_unbounded", type_ids_DdsRecorderStatus);
+                "anonymous_string_unbounded", type_ids_previous);
 
-            if (return_code_DdsRecorderStatus != eprosima::fastdds::dds::RETCODE_OK)
+            if (eprosima::fastdds::dds::RETCODE_OK != return_code_previous)
             {
-                std::string type_id_kind_anonymous_string_unbounded("TI_STRING8_SMALL");
-                if (type_id_kind_anonymous_string_unbounded == "TI_STRING8_SMALL")
                 {
                     SBound bound = 0;
                     StringSTypeDefn string_sdefn = TypeObjectUtils::build_string_s_type_defn(bound);
                     if (eprosima::fastdds::dds::RETCODE_BAD_PARAMETER ==
                             TypeObjectUtils::build_and_register_s_string_type_identifier(string_sdefn,
-                            "anonymous_string_unbounded"))
+                            "anonymous_string_unbounded", type_ids_previous))
                     {
                         EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION,
                             "anonymous_string_unbounded already registered in TypeObjectRegistry for a different type.");
                     }
-                }
-                else if (type_id_kind_anonymous_string_unbounded == "TI_STRING8_LARGE")
-                {
-                    LBound bound = 255;
-                    StringLTypeDefn string_ldefn = TypeObjectUtils::build_string_l_type_defn(bound);
-                    if (eprosima::fastdds::dds::RETCODE_BAD_PARAMETER ==
-                            TypeObjectUtils::build_and_register_l_string_type_identifier(string_ldefn,
-                            "anonymous_string_unbounded"))
-                    {
-                        EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION,
-                            "anonymous_string_unbounded already registered in TypeObjectRegistry for a different type.");
-                    }
-                }
-                else
-                {
-                    EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION,
-                                "anonymous_string_unbounded: Unknown String kind.");
-                    return;
-                }
-                return_code_DdsRecorderStatus =
-                    eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_identifiers(
-                    "anonymous_string_unbounded", type_ids_DdsRecorderStatus);
-                if (return_code_DdsRecorderStatus != eprosima::fastdds::dds::RETCODE_OK)
-                {
-                    EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION,
-                                "anonymous_string_unbounded: Given String TypeIdentifier unknown to TypeObjectRegistry.");
-                    return;
                 }
             }
             StructMemberFlag member_flags_previous = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
                     false, false, false, false);
             CommonStructMember common_previous;
             MemberId member_id_previous = 0x00000000;
-            if (EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1()._d() || TK_NONE == type_ids_DdsRecorderStatus.type_identifier2()._d() ||
-                    (TI_PLAIN_SEQUENCE_SMALL == type_ids_DdsRecorderStatus.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().seq_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_SEQUENCE_LARGE == type_ids_DdsRecorderStatus.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().seq_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_SMALL == type_ids_DdsRecorderStatus.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().array_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_LARGE == type_ids_DdsRecorderStatus.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().array_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_MAP_SMALL == type_ids_DdsRecorderStatus.type_identifier1()._d() &&
-                    (EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().map_sdefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().map_sdefn().key_identifier()->_d())) ||
-                    (TI_PLAIN_MAP_LARGE == type_ids_DdsRecorderStatus.type_identifier1()._d() &&
-                    (EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().map_ldefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().map_ldefn().key_identifier()->_d())))
+            if (EK_COMPLETE == type_ids_previous.type_identifier1()._d() || TK_NONE == type_ids_previous.type_identifier2()._d() ||
+                    (TI_PLAIN_SEQUENCE_SMALL == type_ids_previous.type_identifier1()._d() &&
+                    EK_COMPLETE == type_ids_previous.type_identifier1().seq_sdefn().header().equiv_kind()) ||
+                    (TI_PLAIN_SEQUENCE_LARGE == type_ids_previous.type_identifier1()._d() &&
+                    EK_COMPLETE == type_ids_previous.type_identifier1().seq_ldefn().header().equiv_kind()) ||
+                    (TI_PLAIN_ARRAY_SMALL == type_ids_previous.type_identifier1()._d() &&
+                    EK_COMPLETE == type_ids_previous.type_identifier1().array_sdefn().header().equiv_kind()) ||
+                    (TI_PLAIN_ARRAY_LARGE == type_ids_previous.type_identifier1()._d() &&
+                    EK_COMPLETE == type_ids_previous.type_identifier1().array_ldefn().header().equiv_kind()) ||
+                    (TI_PLAIN_MAP_SMALL == type_ids_previous.type_identifier1()._d() &&
+                    (EK_COMPLETE == type_ids_previous.type_identifier1().map_sdefn().header().equiv_kind() ||
+                    EK_COMPLETE == type_ids_previous.type_identifier1().map_sdefn().key_identifier()->_d())) ||
+                    (TI_PLAIN_MAP_LARGE == type_ids_previous.type_identifier1()._d() &&
+                    (EK_COMPLETE == type_ids_previous.type_identifier1().map_ldefn().header().equiv_kind() ||
+                    EK_COMPLETE == type_ids_previous.type_identifier1().map_ldefn().key_identifier()->_d())))
             {
-                common_previous = TypeObjectUtils::build_common_struct_member(member_id_previous, member_flags_previous, type_ids_DdsRecorderStatus.type_identifier1());
+                common_previous = TypeObjectUtils::build_common_struct_member(member_id_previous,
+                        member_flags_previous, type_ids_previous.type_identifier1());
             }
-            else if (EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2()._d() ||
-                    (TI_PLAIN_SEQUENCE_SMALL == type_ids_DdsRecorderStatus.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().seq_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_SEQUENCE_LARGE == type_ids_DdsRecorderStatus.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().seq_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_SMALL == type_ids_DdsRecorderStatus.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().array_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_LARGE == type_ids_DdsRecorderStatus.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().array_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_MAP_SMALL == type_ids_DdsRecorderStatus.type_identifier2()._d() &&
-                    (EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().map_sdefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().map_sdefn().key_identifier()->_d())) ||
-                    (TI_PLAIN_MAP_LARGE == type_ids_DdsRecorderStatus.type_identifier2()._d() &&
-                    (EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().map_ldefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().map_ldefn().key_identifier()->_d())))
+            else if (EK_COMPLETE == type_ids_previous.type_identifier2()._d() ||
+                    (TI_PLAIN_SEQUENCE_SMALL == type_ids_previous.type_identifier2()._d() &&
+                    EK_COMPLETE == type_ids_previous.type_identifier2().seq_sdefn().header().equiv_kind()) ||
+                    (TI_PLAIN_SEQUENCE_LARGE == type_ids_previous.type_identifier2()._d() &&
+                    EK_COMPLETE == type_ids_previous.type_identifier2().seq_ldefn().header().equiv_kind()) ||
+                    (TI_PLAIN_ARRAY_SMALL == type_ids_previous.type_identifier2()._d() &&
+                    EK_COMPLETE == type_ids_previous.type_identifier2().array_sdefn().header().equiv_kind()) ||
+                    (TI_PLAIN_ARRAY_LARGE == type_ids_previous.type_identifier2()._d() &&
+                    EK_COMPLETE == type_ids_previous.type_identifier2().array_ldefn().header().equiv_kind()) ||
+                    (TI_PLAIN_MAP_SMALL == type_ids_previous.type_identifier2()._d() &&
+                    (EK_COMPLETE == type_ids_previous.type_identifier2().map_sdefn().header().equiv_kind() ||
+                    EK_COMPLETE == type_ids_previous.type_identifier2().map_sdefn().key_identifier()->_d())) ||
+                    (TI_PLAIN_MAP_LARGE == type_ids_previous.type_identifier2()._d() &&
+                    (EK_COMPLETE == type_ids_previous.type_identifier2().map_ldefn().header().equiv_kind() ||
+                    EK_COMPLETE == type_ids_previous.type_identifier2().map_ldefn().key_identifier()->_d())))
             {
-                common_previous = TypeObjectUtils::build_common_struct_member(member_id_previous, member_flags_previous, type_ids_DdsRecorderStatus.type_identifier2());
+                common_previous = TypeObjectUtils::build_common_struct_member(member_id_previous,
+                        member_flags_previous, type_ids_previous.type_identifier2());
             }
             else
             {
@@ -164,92 +136,67 @@ void register_DdsRecorderStatus_type_identifier()
             TypeObjectUtils::add_complete_struct_member(member_seq_DdsRecorderStatus, member_previous);
         }
         {
-            return_code_DdsRecorderStatus =
+            TypeIdentifierPair type_ids_current;
+            ReturnCode_t return_code_current {eprosima::fastdds::dds::RETCODE_OK};
+            return_code_current =
                 eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_identifiers(
-                "anonymous_string_unbounded", type_ids_DdsRecorderStatus);
+                "anonymous_string_unbounded", type_ids_current);
 
-            if (return_code_DdsRecorderStatus != eprosima::fastdds::dds::RETCODE_OK)
+            if (eprosima::fastdds::dds::RETCODE_OK != return_code_current)
             {
-                std::string type_id_kind_anonymous_string_unbounded("TI_STRING8_SMALL");
-                if (type_id_kind_anonymous_string_unbounded == "TI_STRING8_SMALL")
                 {
                     SBound bound = 0;
                     StringSTypeDefn string_sdefn = TypeObjectUtils::build_string_s_type_defn(bound);
                     if (eprosima::fastdds::dds::RETCODE_BAD_PARAMETER ==
                             TypeObjectUtils::build_and_register_s_string_type_identifier(string_sdefn,
-                            "anonymous_string_unbounded"))
+                            "anonymous_string_unbounded", type_ids_current))
                     {
                         EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION,
                             "anonymous_string_unbounded already registered in TypeObjectRegistry for a different type.");
                     }
-                }
-                else if (type_id_kind_anonymous_string_unbounded == "TI_STRING8_LARGE")
-                {
-                    LBound bound = 255;
-                    StringLTypeDefn string_ldefn = TypeObjectUtils::build_string_l_type_defn(bound);
-                    if (eprosima::fastdds::dds::RETCODE_BAD_PARAMETER ==
-                            TypeObjectUtils::build_and_register_l_string_type_identifier(string_ldefn,
-                            "anonymous_string_unbounded"))
-                    {
-                        EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION,
-                            "anonymous_string_unbounded already registered in TypeObjectRegistry for a different type.");
-                    }
-                }
-                else
-                {
-                    EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION,
-                                "anonymous_string_unbounded: Unknown String kind.");
-                    return;
-                }
-                return_code_DdsRecorderStatus =
-                    eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_identifiers(
-                    "anonymous_string_unbounded", type_ids_DdsRecorderStatus);
-                if (return_code_DdsRecorderStatus != eprosima::fastdds::dds::RETCODE_OK)
-                {
-                    EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION,
-                                "anonymous_string_unbounded: Given String TypeIdentifier unknown to TypeObjectRegistry.");
-                    return;
                 }
             }
             StructMemberFlag member_flags_current = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
                     false, false, false, false);
             CommonStructMember common_current;
             MemberId member_id_current = 0x00000001;
-            if (EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1()._d() || TK_NONE == type_ids_DdsRecorderStatus.type_identifier2()._d() ||
-                    (TI_PLAIN_SEQUENCE_SMALL == type_ids_DdsRecorderStatus.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().seq_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_SEQUENCE_LARGE == type_ids_DdsRecorderStatus.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().seq_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_SMALL == type_ids_DdsRecorderStatus.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().array_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_LARGE == type_ids_DdsRecorderStatus.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().array_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_MAP_SMALL == type_ids_DdsRecorderStatus.type_identifier1()._d() &&
-                    (EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().map_sdefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().map_sdefn().key_identifier()->_d())) ||
-                    (TI_PLAIN_MAP_LARGE == type_ids_DdsRecorderStatus.type_identifier1()._d() &&
-                    (EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().map_ldefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().map_ldefn().key_identifier()->_d())))
+            if (EK_COMPLETE == type_ids_current.type_identifier1()._d() || TK_NONE == type_ids_current.type_identifier2()._d() ||
+                    (TI_PLAIN_SEQUENCE_SMALL == type_ids_current.type_identifier1()._d() &&
+                    EK_COMPLETE == type_ids_current.type_identifier1().seq_sdefn().header().equiv_kind()) ||
+                    (TI_PLAIN_SEQUENCE_LARGE == type_ids_current.type_identifier1()._d() &&
+                    EK_COMPLETE == type_ids_current.type_identifier1().seq_ldefn().header().equiv_kind()) ||
+                    (TI_PLAIN_ARRAY_SMALL == type_ids_current.type_identifier1()._d() &&
+                    EK_COMPLETE == type_ids_current.type_identifier1().array_sdefn().header().equiv_kind()) ||
+                    (TI_PLAIN_ARRAY_LARGE == type_ids_current.type_identifier1()._d() &&
+                    EK_COMPLETE == type_ids_current.type_identifier1().array_ldefn().header().equiv_kind()) ||
+                    (TI_PLAIN_MAP_SMALL == type_ids_current.type_identifier1()._d() &&
+                    (EK_COMPLETE == type_ids_current.type_identifier1().map_sdefn().header().equiv_kind() ||
+                    EK_COMPLETE == type_ids_current.type_identifier1().map_sdefn().key_identifier()->_d())) ||
+                    (TI_PLAIN_MAP_LARGE == type_ids_current.type_identifier1()._d() &&
+                    (EK_COMPLETE == type_ids_current.type_identifier1().map_ldefn().header().equiv_kind() ||
+                    EK_COMPLETE == type_ids_current.type_identifier1().map_ldefn().key_identifier()->_d())))
             {
-                common_current = TypeObjectUtils::build_common_struct_member(member_id_current, member_flags_current, type_ids_DdsRecorderStatus.type_identifier1());
+                common_current = TypeObjectUtils::build_common_struct_member(member_id_current,
+                        member_flags_current, type_ids_current.type_identifier1());
             }
-            else if (EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2()._d() ||
-                    (TI_PLAIN_SEQUENCE_SMALL == type_ids_DdsRecorderStatus.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().seq_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_SEQUENCE_LARGE == type_ids_DdsRecorderStatus.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().seq_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_SMALL == type_ids_DdsRecorderStatus.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().array_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_LARGE == type_ids_DdsRecorderStatus.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().array_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_MAP_SMALL == type_ids_DdsRecorderStatus.type_identifier2()._d() &&
-                    (EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().map_sdefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().map_sdefn().key_identifier()->_d())) ||
-                    (TI_PLAIN_MAP_LARGE == type_ids_DdsRecorderStatus.type_identifier2()._d() &&
-                    (EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().map_ldefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().map_ldefn().key_identifier()->_d())))
+            else if (EK_COMPLETE == type_ids_current.type_identifier2()._d() ||
+                    (TI_PLAIN_SEQUENCE_SMALL == type_ids_current.type_identifier2()._d() &&
+                    EK_COMPLETE == type_ids_current.type_identifier2().seq_sdefn().header().equiv_kind()) ||
+                    (TI_PLAIN_SEQUENCE_LARGE == type_ids_current.type_identifier2()._d() &&
+                    EK_COMPLETE == type_ids_current.type_identifier2().seq_ldefn().header().equiv_kind()) ||
+                    (TI_PLAIN_ARRAY_SMALL == type_ids_current.type_identifier2()._d() &&
+                    EK_COMPLETE == type_ids_current.type_identifier2().array_sdefn().header().equiv_kind()) ||
+                    (TI_PLAIN_ARRAY_LARGE == type_ids_current.type_identifier2()._d() &&
+                    EK_COMPLETE == type_ids_current.type_identifier2().array_ldefn().header().equiv_kind()) ||
+                    (TI_PLAIN_MAP_SMALL == type_ids_current.type_identifier2()._d() &&
+                    (EK_COMPLETE == type_ids_current.type_identifier2().map_sdefn().header().equiv_kind() ||
+                    EK_COMPLETE == type_ids_current.type_identifier2().map_sdefn().key_identifier()->_d())) ||
+                    (TI_PLAIN_MAP_LARGE == type_ids_current.type_identifier2()._d() &&
+                    (EK_COMPLETE == type_ids_current.type_identifier2().map_ldefn().header().equiv_kind() ||
+                    EK_COMPLETE == type_ids_current.type_identifier2().map_ldefn().key_identifier()->_d())))
             {
-                common_current = TypeObjectUtils::build_common_struct_member(member_id_current, member_flags_current, type_ids_DdsRecorderStatus.type_identifier2());
+                common_current = TypeObjectUtils::build_common_struct_member(member_id_current,
+                        member_flags_current, type_ids_current.type_identifier2());
             }
             else
             {
@@ -265,92 +212,67 @@ void register_DdsRecorderStatus_type_identifier()
             TypeObjectUtils::add_complete_struct_member(member_seq_DdsRecorderStatus, member_current);
         }
         {
-            return_code_DdsRecorderStatus =
+            TypeIdentifierPair type_ids_info;
+            ReturnCode_t return_code_info {eprosima::fastdds::dds::RETCODE_OK};
+            return_code_info =
                 eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_identifiers(
-                "anonymous_string_unbounded", type_ids_DdsRecorderStatus);
+                "anonymous_string_unbounded", type_ids_info);
 
-            if (return_code_DdsRecorderStatus != eprosima::fastdds::dds::RETCODE_OK)
+            if (eprosima::fastdds::dds::RETCODE_OK != return_code_info)
             {
-                std::string type_id_kind_anonymous_string_unbounded("TI_STRING8_SMALL");
-                if (type_id_kind_anonymous_string_unbounded == "TI_STRING8_SMALL")
                 {
                     SBound bound = 0;
                     StringSTypeDefn string_sdefn = TypeObjectUtils::build_string_s_type_defn(bound);
                     if (eprosima::fastdds::dds::RETCODE_BAD_PARAMETER ==
                             TypeObjectUtils::build_and_register_s_string_type_identifier(string_sdefn,
-                            "anonymous_string_unbounded"))
+                            "anonymous_string_unbounded", type_ids_info))
                     {
                         EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION,
                             "anonymous_string_unbounded already registered in TypeObjectRegistry for a different type.");
                     }
-                }
-                else if (type_id_kind_anonymous_string_unbounded == "TI_STRING8_LARGE")
-                {
-                    LBound bound = 255;
-                    StringLTypeDefn string_ldefn = TypeObjectUtils::build_string_l_type_defn(bound);
-                    if (eprosima::fastdds::dds::RETCODE_BAD_PARAMETER ==
-                            TypeObjectUtils::build_and_register_l_string_type_identifier(string_ldefn,
-                            "anonymous_string_unbounded"))
-                    {
-                        EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION,
-                            "anonymous_string_unbounded already registered in TypeObjectRegistry for a different type.");
-                    }
-                }
-                else
-                {
-                    EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION,
-                                "anonymous_string_unbounded: Unknown String kind.");
-                    return;
-                }
-                return_code_DdsRecorderStatus =
-                    eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_identifiers(
-                    "anonymous_string_unbounded", type_ids_DdsRecorderStatus);
-                if (return_code_DdsRecorderStatus != eprosima::fastdds::dds::RETCODE_OK)
-                {
-                    EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION,
-                                "anonymous_string_unbounded: Given String TypeIdentifier unknown to TypeObjectRegistry.");
-                    return;
                 }
             }
             StructMemberFlag member_flags_info = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
                     false, false, false, false);
             CommonStructMember common_info;
             MemberId member_id_info = 0x00000002;
-            if (EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1()._d() || TK_NONE == type_ids_DdsRecorderStatus.type_identifier2()._d() ||
-                    (TI_PLAIN_SEQUENCE_SMALL == type_ids_DdsRecorderStatus.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().seq_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_SEQUENCE_LARGE == type_ids_DdsRecorderStatus.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().seq_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_SMALL == type_ids_DdsRecorderStatus.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().array_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_LARGE == type_ids_DdsRecorderStatus.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().array_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_MAP_SMALL == type_ids_DdsRecorderStatus.type_identifier1()._d() &&
-                    (EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().map_sdefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().map_sdefn().key_identifier()->_d())) ||
-                    (TI_PLAIN_MAP_LARGE == type_ids_DdsRecorderStatus.type_identifier1()._d() &&
-                    (EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().map_ldefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier1().map_ldefn().key_identifier()->_d())))
+            if (EK_COMPLETE == type_ids_info.type_identifier1()._d() || TK_NONE == type_ids_info.type_identifier2()._d() ||
+                    (TI_PLAIN_SEQUENCE_SMALL == type_ids_info.type_identifier1()._d() &&
+                    EK_COMPLETE == type_ids_info.type_identifier1().seq_sdefn().header().equiv_kind()) ||
+                    (TI_PLAIN_SEQUENCE_LARGE == type_ids_info.type_identifier1()._d() &&
+                    EK_COMPLETE == type_ids_info.type_identifier1().seq_ldefn().header().equiv_kind()) ||
+                    (TI_PLAIN_ARRAY_SMALL == type_ids_info.type_identifier1()._d() &&
+                    EK_COMPLETE == type_ids_info.type_identifier1().array_sdefn().header().equiv_kind()) ||
+                    (TI_PLAIN_ARRAY_LARGE == type_ids_info.type_identifier1()._d() &&
+                    EK_COMPLETE == type_ids_info.type_identifier1().array_ldefn().header().equiv_kind()) ||
+                    (TI_PLAIN_MAP_SMALL == type_ids_info.type_identifier1()._d() &&
+                    (EK_COMPLETE == type_ids_info.type_identifier1().map_sdefn().header().equiv_kind() ||
+                    EK_COMPLETE == type_ids_info.type_identifier1().map_sdefn().key_identifier()->_d())) ||
+                    (TI_PLAIN_MAP_LARGE == type_ids_info.type_identifier1()._d() &&
+                    (EK_COMPLETE == type_ids_info.type_identifier1().map_ldefn().header().equiv_kind() ||
+                    EK_COMPLETE == type_ids_info.type_identifier1().map_ldefn().key_identifier()->_d())))
             {
-                common_info = TypeObjectUtils::build_common_struct_member(member_id_info, member_flags_info, type_ids_DdsRecorderStatus.type_identifier1());
+                common_info = TypeObjectUtils::build_common_struct_member(member_id_info,
+                        member_flags_info, type_ids_info.type_identifier1());
             }
-            else if (EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2()._d() ||
-                    (TI_PLAIN_SEQUENCE_SMALL == type_ids_DdsRecorderStatus.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().seq_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_SEQUENCE_LARGE == type_ids_DdsRecorderStatus.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().seq_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_SMALL == type_ids_DdsRecorderStatus.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().array_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_LARGE == type_ids_DdsRecorderStatus.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().array_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_MAP_SMALL == type_ids_DdsRecorderStatus.type_identifier2()._d() &&
-                    (EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().map_sdefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().map_sdefn().key_identifier()->_d())) ||
-                    (TI_PLAIN_MAP_LARGE == type_ids_DdsRecorderStatus.type_identifier2()._d() &&
-                    (EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().map_ldefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_DdsRecorderStatus.type_identifier2().map_ldefn().key_identifier()->_d())))
+            else if (EK_COMPLETE == type_ids_info.type_identifier2()._d() ||
+                    (TI_PLAIN_SEQUENCE_SMALL == type_ids_info.type_identifier2()._d() &&
+                    EK_COMPLETE == type_ids_info.type_identifier2().seq_sdefn().header().equiv_kind()) ||
+                    (TI_PLAIN_SEQUENCE_LARGE == type_ids_info.type_identifier2()._d() &&
+                    EK_COMPLETE == type_ids_info.type_identifier2().seq_ldefn().header().equiv_kind()) ||
+                    (TI_PLAIN_ARRAY_SMALL == type_ids_info.type_identifier2()._d() &&
+                    EK_COMPLETE == type_ids_info.type_identifier2().array_sdefn().header().equiv_kind()) ||
+                    (TI_PLAIN_ARRAY_LARGE == type_ids_info.type_identifier2()._d() &&
+                    EK_COMPLETE == type_ids_info.type_identifier2().array_ldefn().header().equiv_kind()) ||
+                    (TI_PLAIN_MAP_SMALL == type_ids_info.type_identifier2()._d() &&
+                    (EK_COMPLETE == type_ids_info.type_identifier2().map_sdefn().header().equiv_kind() ||
+                    EK_COMPLETE == type_ids_info.type_identifier2().map_sdefn().key_identifier()->_d())) ||
+                    (TI_PLAIN_MAP_LARGE == type_ids_info.type_identifier2()._d() &&
+                    (EK_COMPLETE == type_ids_info.type_identifier2().map_ldefn().header().equiv_kind() ||
+                    EK_COMPLETE == type_ids_info.type_identifier2().map_ldefn().key_identifier()->_d())))
             {
-                common_info = TypeObjectUtils::build_common_struct_member(member_id_info, member_flags_info, type_ids_DdsRecorderStatus.type_identifier2());
+                common_info = TypeObjectUtils::build_common_struct_member(member_id_info,
+                        member_flags_info, type_ids_info.type_identifier2());
             }
             else
             {
@@ -367,19 +289,10 @@ void register_DdsRecorderStatus_type_identifier()
         }
         CompleteStructType struct_type_DdsRecorderStatus = TypeObjectUtils::build_complete_struct_type(struct_flags_DdsRecorderStatus, header_DdsRecorderStatus, member_seq_DdsRecorderStatus);
         if (eprosima::fastdds::dds::RETCODE_BAD_PARAMETER ==
-                TypeObjectUtils::build_and_register_struct_type_object(struct_type_DdsRecorderStatus, type_name_DdsRecorderStatus.to_string()))
+                TypeObjectUtils::build_and_register_struct_type_object(struct_type_DdsRecorderStatus, type_name_DdsRecorderStatus.to_string(), type_ids_DdsRecorderStatus))
         {
             EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION,
                     "DdsRecorderStatus already registered in TypeObjectRegistry for a different type.");
-        }
-        return_code_DdsRecorderStatus =
-            eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_identifiers(
-            "DdsRecorderStatus", type_ids_DdsRecorderStatus);
-        if (return_code_DdsRecorderStatus != eprosima::fastdds::dds::RETCODE_OK)
-        {
-            EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION,
-                        "DdsRecorderStatus: Given Struct TypeIdentifier unknown to TypeObjectRegistry.");
-            return;
         }
     }
 }

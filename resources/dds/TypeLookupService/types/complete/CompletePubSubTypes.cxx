@@ -219,9 +219,10 @@ bool TimestampPubSubType::getKey(
     return true;
 }
 
-void TimestampPubSubType::register_type_object_representation() const
+void TimestampPubSubType::register_type_object_representation()
 {
-    register_Complete_type_objects();
+    eprosima::fastdds::dds::xtypes::TypeIdentifierPair type_ids;
+    register_Timestamp_type_identifier(type_ids);
 }
 
 PointPubSubType::PointPubSubType()
@@ -412,9 +413,10 @@ bool PointPubSubType::getKey(
     return true;
 }
 
-void PointPubSubType::register_type_object_representation() const
+void PointPubSubType::register_type_object_representation()
 {
-    register_Complete_type_objects();
+    eprosima::fastdds::dds::xtypes::TypeIdentifierPair type_ids;
+    register_Point_type_identifier(type_ids);
 }
 
 MessageDescriptorPubSubType::MessageDescriptorPubSubType()
@@ -605,9 +607,10 @@ bool MessageDescriptorPubSubType::getKey(
     return true;
 }
 
-void MessageDescriptorPubSubType::register_type_object_representation() const
+void MessageDescriptorPubSubType::register_type_object_representation()
 {
-    register_Complete_type_objects();
+    eprosima::fastdds::dds::xtypes::TypeIdentifierPair type_ids;
+    register_MessageDescriptor_type_identifier(type_ids);
 }
 
 MessagePubSubType::MessagePubSubType()
@@ -798,9 +801,10 @@ bool MessagePubSubType::getKey(
     return true;
 }
 
-void MessagePubSubType::register_type_object_representation() const
+void MessagePubSubType::register_type_object_representation()
 {
-    register_Complete_type_objects();
+    eprosima::fastdds::dds::xtypes::TypeIdentifierPair type_ids;
+    register_Message_type_identifier(type_ids);
 }
 
 CompleteDataPubSubType::CompleteDataPubSubType()
@@ -991,9 +995,10 @@ bool CompleteDataPubSubType::getKey(
     return true;
 }
 
-void CompleteDataPubSubType::register_type_object_representation() const
+void CompleteDataPubSubType::register_type_object_representation()
 {
-    register_Complete_type_objects();
+    eprosima::fastdds::dds::xtypes::TypeIdentifierPair type_ids;
+    register_CompleteData_type_identifier(type_ids);
 }
 
 

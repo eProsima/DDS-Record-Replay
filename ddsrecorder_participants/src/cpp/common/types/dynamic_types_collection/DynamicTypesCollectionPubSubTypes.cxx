@@ -222,9 +222,10 @@ namespace eprosima {
                 return true;
             }
 
-            void DynamicTypePubSubType::register_type_object_representation() const
+            void DynamicTypePubSubType::register_type_object_representation()
             {
-                register_DynamicTypesCollection_type_objects();
+                eprosima::fastdds::dds::xtypes::TypeIdentifierPair type_ids;
+                register_DynamicType_type_identifier(type_ids);
             }
 
             DynamicTypesCollectionPubSubType::DynamicTypesCollectionPubSubType()
@@ -415,9 +416,10 @@ namespace eprosima {
                 return true;
             }
 
-            void DynamicTypesCollectionPubSubType::register_type_object_representation() const
+            void DynamicTypesCollectionPubSubType::register_type_object_representation()
             {
-                register_DynamicTypesCollection_type_objects();
+                eprosima::fastdds::dds::xtypes::TypeIdentifierPair type_ids;
+                register_DynamicTypesCollection_type_identifier(type_ids);
             }
 
         } // namespace participants

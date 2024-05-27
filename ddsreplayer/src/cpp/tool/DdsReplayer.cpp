@@ -327,11 +327,15 @@ void DdsReplayer::register_dynamic_type_(
     fastdds::dds::xtypes::TypeIdentifier type_identifier = deserialize_type_identifier_(typeid_str);
     fastdds::dds::xtypes::TypeObject type_object = deserialize_type_object_(typeobj_str);
 
+    // Create a TypeIdentifierPair to use in register_type_identifier
+    fastdds::dds::xtypes::TypeIdentifierPair type_identifiers;
+    type_identifiers.type_identifier2(type_identifier);
+
     // // Register in factory
     // fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().register_type_identifier(
     //     dynamic_type.type_name(), type_identifier);
     if (fastdds::dds::RETCODE_OK != fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().register_type_object(
-                type_identifier, type_object))
+                type_object, type_identifiers))
     {
         logWarning(DDSREPLAYER_REPLAYER,
                 "Failed to register " << dynamic_type.type_name() << " DynamicType.");

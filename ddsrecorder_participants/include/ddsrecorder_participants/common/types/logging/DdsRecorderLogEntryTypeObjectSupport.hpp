@@ -22,6 +22,8 @@
 #ifndef _FAST_DDS_GENERATED_DDSRECORDERLOGENTRY_TYPE_OBJECT_SUPPORT_HPP_
 #define _FAST_DDS_GENERATED_DDSRECORDERLOGENTRY_TYPE_OBJECT_SUPPORT_HPP_
 
+#include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
+
 
 #if defined(_WIN32)
 #if defined(EPROSIMA_USER_DLL_EXPORT)
@@ -32,11 +34,6 @@
 #else
 #define eProsima_user_DllExport
 #endif  // _WIN32
-
-/**
- * @brief Register every TypeObject representation defined in the IDL file in Fast DDS TypeObjectRegistry.
- */
-eProsima_user_DllExport void register_DdsRecorderLogEntry_type_objects();
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS_PUBLIC
 

@@ -219,9 +219,10 @@ bool DdsRecorderStatusPubSubType::getKey(
     return true;
 }
 
-void DdsRecorderStatusPubSubType::register_type_object_representation() const
+void DdsRecorderStatusPubSubType::register_type_object_representation()
 {
-    register_DdsRecorderStatus_type_objects();
+    eprosima::fastdds::dds::xtypes::TypeIdentifierPair type_ids;
+    register_DdsRecorderStatus_type_identifier(type_ids);
 }
 
 

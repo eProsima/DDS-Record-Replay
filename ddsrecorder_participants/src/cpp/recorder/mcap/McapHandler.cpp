@@ -35,7 +35,7 @@
 
 #include <fastdds/dds/topic/TypeSupport.hpp>
 #include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
-#include <fastdds/dds/xtypes/type_representation/TypeIdentifierWithSizeHashSpecialization.h>
+// #include <fastdds/dds/xtypes/type_representation/TypeIdentifierWithSizeHashSpecialization.h>
 #include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
 #include <fastdds/rtps/common/CDRMessage_t.h>
 #include <fastdds/rtps/common/SerializedPayload.h>
@@ -1162,15 +1162,20 @@ void McapHandler::store_dynamic_type_(
         DynamicTypesCollection& dynamic_types) const
 {
     auto type_id = std::get<1>(type_ids_tuple);
-    fastdds::dds::xtypes::TypeIdentifierSeq type_id_seq;
-    type_id_seq.push_back(type_id);
-    std::unordered_set<fastdds::dds::xtypes::TypeIdentfierWithSize> type_dependencies;
-    if (fastdds::dds::RETCODE_OK == fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_dependencies(
-            type_id_seq,
-            type_dependencies))
+    // fastdds::dds::xtypes::TypeIdentifierSeq type_id_seq;
+    fastdds::dds::xtypes::TypeIdentifierPair type_ids_pair;
+    // type_id_seq.push_back(type_id);
+    type_ids_pair.type_identifier2(type_id);
+    // std::unordered_set<fastdds::dds::xtypes::TypeIdentfierWithSize> type_dependencies;
+    fastdds::dds::xtypes::TypeInformation type_info;
+    if (fastdds::dds::RETCODE_OK == fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_information(
+            type_ids_pair,
+            type_info,
+            true))
     {
         std::string dependency_name;
         unsigned int dependency_index = 0;
+        auto type_dependencies = type_info.complete().dependent_typeids();
         for (auto dependency : type_dependencies)
         {
             fastdds::dds::xtypes::TypeIdentifier type_identifier;
