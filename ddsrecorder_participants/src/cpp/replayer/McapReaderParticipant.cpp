@@ -120,24 +120,7 @@ void McapReaderParticipant::process_messages()
     const auto first_message_timestamp = to_std_timestamp(messages.begin()->message.logTime);
 
     // Define the time to start replaying messages
-    const auto now = utils::now();
-    utils::Timestamp initial_timestamp;
-
-    if (configuration_->start_replay_time.is_set())
-    {
-        initial_timestamp = configuration_->start_replay_time.get_reference();
-
-        if (initial_timestamp < now)
-        {
-            logWarning(DDSREPLAYER_MCAP_READER_PARTICIPANT,
-                    "Provided start-replay-time already expired, starting immediately...");
-            initial_timestamp = now;
-        }
-    }
-    else
-    {
-        initial_timestamp = now;
-    }
+    const auto initial_timestamp = when_to_start_replay_(configuration_->start_replay_time);
 
     // Replay messages
     for (const auto& it : messages)
