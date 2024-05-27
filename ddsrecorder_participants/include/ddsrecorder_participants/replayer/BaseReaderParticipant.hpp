@@ -26,6 +26,7 @@
 #include <ddspipe_core/interface/IWriter.hpp>
 
 #include <cpp_utils/memory/Heritable.hpp>
+#include <cpp_utils/time/time_utils.hpp>
 
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
 #include <ddspipe_core/interface/IParticipant.hpp>
@@ -149,6 +150,18 @@ protected:
         const std::string& topic_name,
         const std::string& type_name,
         const bool is_ros2_type);
+
+    /**
+     * @brief Given a fuzzy timestamp, return the timestamp to start replaying.
+     *
+     * It returns the current timestamp if \c start_replay_time is not set or if it is in the past.
+     * Otherwise, it returns \c start_replay_time.
+     *]
+     * @param start_replay_time: Fuzzy timestamp to start replaying.
+     * @return The timestamp to start replaying.
+     */
+    static utils::Timestamp when_to_start_replay_(
+            const utils::Fuzzy<utils::Timestamp>& start_replay_time);
 
     /**
      * @brief Wait until timestamp is reached.

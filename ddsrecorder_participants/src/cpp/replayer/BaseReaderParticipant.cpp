@@ -22,6 +22,7 @@
 
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/ros2_mangling.hpp>
+#include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/types/cast.hpp>
 
 #include <ddspipe_core/types/dds/Payload.hpp>
@@ -145,6 +146,28 @@ ddspipe::core::types::DdsTopic BaseReaderParticipant::create_topic_(
     }
 
     return topic;
+}
+
+utils::Timestamp BaseReaderParticipant::when_to_start_replay_(
+        const utils::Fuzzy<utils::Timestamp>& start_replay_time)
+{
+    const auto now = utils::now();
+
+    if (!start_replay_time.is_set())
+    {
+        return now;
+    }
+
+    const auto time = start_replay_time.get_reference();
+
+    if (time < now)
+    {
+        logWarning(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                "Provided start-replay-time already expired, starting immediately...");
+        return now;
+    }
+
+    return time;
 }
 
 void BaseReaderParticipant::wait_until_timestamp_(
