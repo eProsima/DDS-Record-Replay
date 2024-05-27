@@ -105,10 +105,12 @@ protected:
      * @brief Execute a SQL statement.
      *
      * @param statement:     SQL statement to be executed.
+     * @param bind_values:   Values to be bound to the statement.
      * @param process_row:   Function to be called for each row of the result.
      */
     void exec_sql_statement_(
         const std::string& statement,
+        const std::vector<std::string>& bind_values,
         const std::function<void(sqlite3_stmt*)>& process_row);
 
     /**
