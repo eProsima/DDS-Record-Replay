@@ -1,4 +1,4 @@
-// Copyright 2023 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+// Copyright 2024 Proyectos y Sistemas de Mantenimiento SL (eProsima).
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ namespace ddsrecorder {
 namespace participants {
 
 /**
- * Class that encapsulates all configuration parameters of a \c McapReaderParticipant .
+ * Class that encapsulates all configuration parameters of a \c BaseReaderParticipant .
  */
-struct McapReaderParticipantConfiguration : ddspipe::participants::ParticipantConfiguration
+struct BaseReaderParticipantConfiguration : ddspipe::participants::ParticipantConfiguration
 {
     utils::Fuzzy<utils::Timestamp> begin_time{};
     utils::Fuzzy<utils::Timestamp> end_time{};

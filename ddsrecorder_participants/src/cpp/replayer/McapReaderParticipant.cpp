@@ -50,7 +50,7 @@ namespace ddsrecorder {
 namespace participants {
 
 McapReaderParticipant::McapReaderParticipant(
-        const std::shared_ptr<McapReaderParticipantConfiguration>& configuration,
+        const std::shared_ptr<BaseReaderParticipantConfiguration>& configuration,
         const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
         const std::string& file_path)
     : BaseReaderParticipant(configuration, payload_pool, file_path)
