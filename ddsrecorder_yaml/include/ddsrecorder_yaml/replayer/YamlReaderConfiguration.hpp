@@ -32,7 +32,7 @@
 #include <ddspipe_yaml/Yaml.hpp>
 #include <ddspipe_yaml/YamlReader.hpp>
 
-#include <ddsrecorder_participants/replayer/McapReaderParticipantConfiguration.hpp>
+#include <ddsrecorder_participants/replayer/BaseReaderParticipantConfiguration.hpp>
 #include <ddsrecorder_yaml/library/library_dll.h>
 #include <ddsrecorder_yaml/replayer/CommandlineArgsReplayer.hpp>
 
@@ -61,7 +61,7 @@ public:
     ddspipe::core::DdsPipeConfiguration ddspipe_configuration;
 
     // Participants configurations
-    std::shared_ptr<ddsrecorder::participants::McapReaderParticipantConfiguration> mcap_reader_configuration;
+    std::shared_ptr<ddsrecorder::participants::BaseReaderParticipantConfiguration> mcap_reader_configuration;
     std::shared_ptr<ddspipe::participants::SimpleParticipantConfiguration> replayer_configuration;
 
     // Replay params
