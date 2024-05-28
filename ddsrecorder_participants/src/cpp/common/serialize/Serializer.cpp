@@ -13,24 +13,20 @@
 // limitations under the License.
 
 /**
- * @file Deserializer.cpp
+ * @file Serializer.cpp
  */
-
-#include <cstdint>
 
 #include <yaml-cpp/yaml.h>
 
 #include <fastdds/dds/topic/TypeSupport.hpp>
-#include <fastdds/rtps/common/CDRMessage_t.h>
 #include <fastdds/rtps/common/SerializedPayload.h>
-
 #include <fastrtps/types/TypeIdentifier.h>
 #include <fastrtps/types/TypeObject.h>
 
 #include <ddspipe_core/types/dds/TopicQoS.hpp>
 
+#include <ddsrecorder_participants/common/serialize/Serializer.hpp>
 #include <ddsrecorder_participants/constants.hpp>
-#include <ddsrecorder_participants/replayer/Deserializer.hpp>
 
 #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
     #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
@@ -45,7 +41,60 @@ namespace ddsrecorder {
 namespace participants {
 
 template <>
-ddspipe::core::types::TopicQoS Deserializer::deserialize(
+std::string Serializer::serialize(
+        const ddspipe::core::types::TopicQoS& qos)
+{
+    // TODO: Reuse code from ddspipe_yaml
+
+    YAML::Node qos_yaml;
+
+    qos_yaml[QOS_SERIALIZATION_RELIABILITY] = qos.is_reliable();
+    qos_yaml[QOS_SERIALIZATION_DURABILITY] = qos.is_transient_local();
+    qos_yaml[QOS_SERIALIZATION_OWNERSHIP] = qos.has_ownership();
+    qos_yaml[QOS_SERIALIZATION_KEYED] = qos.keyed.get_value();
+
+    return YAML::Dump(qos_yaml);
+}
+
+template <>
+std::string Serializer::serialize(
+        const fastrtps::types::TypeIdentifier& type_identifier)
+{
+    const auto size =
+            fastrtps::rtps::SerializedPayload_t::representation_header_size +
+            fastrtps::types::TypeIdentifier::getCdrSerializedSize(type_identifier);
+
+    return type_data_to_type_str_(type_identifier, size);
+}
+
+template <>
+std::string Serializer::serialize(
+        const fastrtps::types::TypeObject& type_object)
+{
+    const auto size =
+            fastrtps::rtps::SerializedPayload_t::representation_header_size +
+            fastrtps::types::TypeObject::getCdrSerializedSize(type_object);
+
+    return type_data_to_type_str_(type_object, size);
+}
+
+template <>
+std::string Serializer::serialize(
+        const DynamicTypesCollection& dynamic_types)
+{
+    // Remove the const qualifier to serialize the dynamic types collection
+    auto dynamic_types_ptr = const_cast<DynamicTypesCollection*>(&dynamic_types);
+
+    // Serialize dynamic types collection using CDR
+    fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
+    fastrtps::rtps::SerializedPayload_t payload(type_support.get_serialized_size_provider(dynamic_types_ptr)());
+    type_support.serialize(dynamic_types_ptr, &payload);
+
+    return std::string(reinterpret_cast<char*>(payload.data));;
+}
+
+template <>
+ddspipe::core::types::TopicQoS Serializer::deserialize(
         const std::string& topic_qos_str)
 {
     // TODO: Reuse code from ddspipe_yaml
@@ -95,21 +144,21 @@ ddspipe::core::types::TopicQoS Deserializer::deserialize(
 }
 
 template <>
-fastrtps::types::TypeIdentifier Deserializer::deserialize(
+fastrtps::types::TypeIdentifier Serializer::deserialize(
         const std::string& type_identifier_str)
 {
     return type_str_to_type_data_<fastrtps::types::TypeIdentifier>(type_identifier_str);
 }
 
 template <>
-fastrtps::types::TypeObject Deserializer::deserialize(
+fastrtps::types::TypeObject Serializer::deserialize(
         const std::string& type_object_str)
 {
     return type_str_to_type_data_<fastrtps::types::TypeObject>(type_object_str);
 }
 
 template <>
-DynamicTypesCollection Deserializer::deserialize(
+DynamicTypesCollection Serializer::deserialize(
         const std::string& raw_data_str)
 {
     // Copy raw data into a payload

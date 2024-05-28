@@ -39,8 +39,8 @@
 #include <ddspipe_core/dynamic/ParticipantsDatabase.hpp>
 #include <ddspipe_core/efficiency/payload/FastPayloadPool.hpp>
 
+#include <ddsrecorder_participants/common/serialize/Serializer.hpp>
 #include <ddsrecorder_participants/constants.hpp>
-#include <ddsrecorder_participants/replayer/Deserializer.hpp>
 #include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
 #include <ddsrecorder_participants/replayer/ReplayerParticipant.hpp>
 #include <ddsrecorder_participants/replayer/SqlReaderParticipant.hpp>
@@ -243,11 +243,11 @@ std::set<std::string> DdsReplayer::register_dynamic_types_(
     {
         // Deserialize type identifier
         const auto type_identifier_str = utils::base64_decode(dynamic_type.type_information());
-        const auto type_identifier = participants::Deserializer::deserialize<fastrtps::types::TypeIdentifier>(type_identifier_str);
+        const auto type_identifier = participants::Serializer::deserialize<fastrtps::types::TypeIdentifier>(type_identifier_str);
 
         // Deserialize type object
         const auto type_object_str = utils::base64_decode(dynamic_type.type_object());
-        const auto type_object = participants::Deserializer::deserialize<fastrtps::types::TypeObject>(type_object_str);
+        const auto type_object = participants::Serializer::deserialize<fastrtps::types::TypeObject>(type_object_str);
 
         // Register in factory
         fastrtps::types::TypeObjectFactory::get_instance()->add_type_object(

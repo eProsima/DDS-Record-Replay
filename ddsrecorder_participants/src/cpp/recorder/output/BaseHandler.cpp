@@ -23,8 +23,8 @@
 #include <cpp_utils/Formatter.hpp>
 #include <cpp_utils/utils.hpp>
 
+#include <ddsrecorder_participants/common/serialize/Serializer.hpp>
 #include <ddsrecorder_participants/recorder/output/BaseHandler.hpp>
-#include <ddsrecorder_participants/recorder/output/Serializer.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
