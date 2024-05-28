@@ -27,9 +27,9 @@
 
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
+#include <ddsrecorder_participants/common/serialize/Serializer.hpp>
 #include <ddsrecorder_participants/recorder/message/SqlMessage.hpp>
 #include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
-#include <ddsrecorder_participants/recorder/output/Serializer.hpp>
 #include <ddsrecorder_participants/recorder/sql/SqlWriter.hpp>
 #include <ddsrecorder_participants/common/time_utils.hpp>
 

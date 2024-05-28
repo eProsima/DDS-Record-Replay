@@ -28,9 +28,9 @@
 
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
+#include <ddsrecorder_participants/common/serialize/Serializer.hpp>
 #include <ddsrecorder_participants/common/time_utils.hpp>
 #include <ddsrecorder_participants/constants.hpp>
-#include <ddsrecorder_participants/replayer/Deserializer.hpp>
 #include <ddsrecorder_participants/replayer/SqlReaderParticipant.hpp>
 namespace eprosima {
 namespace ddsrecorder {

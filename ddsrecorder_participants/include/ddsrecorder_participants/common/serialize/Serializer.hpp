@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * @file Deserializer.hpp
+ * @file Serializer.hpp
  */
 
 #pragma once
@@ -27,11 +27,21 @@ namespace ddsrecorder {
 namespace participants {
 
 /**
- * Class to deserialize different types of data.
+ * Class to serialize and deserialize different types of data.
  */
-class DDSRECORDER_PARTICIPANTS_DllAPI Deserializer
+class DDSRECORDER_PARTICIPANTS_DllAPI Serializer
 {
 public:
+
+    /**
+     * @brief Serialize \c object into a string.
+     *
+     * @param [in] object Object to serialize
+     * @return Serialized object string
+     */
+    template <typename T>
+    static std::string serialize(
+            const T& object);
 
     /**
      * @brief Deserialize \c serialized_str into \c T.
@@ -44,6 +54,17 @@ public:
             const std::string& serialized_str);
 
 protected:
+
+    /**
+     * @brief Serialize a \c TypeObject or a \c TypeIdentifier into a \c SerializedPayload_t.
+     *
+     * @param [in] object \c TypeObject or \c TypeIdentifier to serialize
+     * @return \c SerializedPayload_t with the serialization
+     */
+    template <typename T>
+    static std::string type_data_to_type_str_(
+            const T& data,
+            const size_t size);
 
     /**
      * @brief Deserialize \c type_str into a \c TypeObject or a \c TypeIdentifier.
@@ -60,4 +81,4 @@ protected:
 } /* namespace ddsrecorder */
 } /* namespace eprosima */
 
-#include <ddsrecorder_participants/replayer/impl/Deserializer.ipp>
+#include <ddsrecorder_participants/common/serialize/impl/Serializer.ipp>
