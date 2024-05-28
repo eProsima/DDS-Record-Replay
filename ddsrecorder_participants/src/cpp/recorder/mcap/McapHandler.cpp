@@ -27,10 +27,10 @@
 
 #include <ddspipe_core/types/dynamic_types/schema.hpp>
 
+#include <ddsrecorder_participants/common/serialize/Serializer.hpp>
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
 #include <ddsrecorder_participants/recorder/message/McapMessage.hpp>
-#include <ddsrecorder_participants/recorder/output/Serializer.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -155,7 +155,7 @@ void McapHandler::add_schema(
 
     if (configuration_.record_types)
     {
-        mcap_writer_.update_dynamic_types(*Serializer::serialize(&dynamic_types_));
+        mcap_writer_.update_dynamic_types(Serializer::serialize(dynamic_types_));
     }
 
     // Check if there are any pending samples for this new type. If so, dump them.

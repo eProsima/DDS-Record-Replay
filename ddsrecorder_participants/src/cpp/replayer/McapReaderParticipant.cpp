@@ -34,9 +34,9 @@
 #include <ddspipe_core/types/dds/TopicQoS.hpp>
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
+#include <ddsrecorder_participants/common/serialize/Serializer.hpp>
 #include <ddsrecorder_participants/common/time_utils.hpp>
 #include <ddsrecorder_participants/constants.hpp>
-#include <ddsrecorder_participants/replayer/Deserializer.hpp>
 #include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
 
 #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
@@ -80,7 +80,7 @@ void McapReaderParticipant::process_summary(
 
         // Apply the QoS stored in the MCAP file as if they were the discovered QoS.
         const auto topic_qos_str = channel->metadata[QOS_SERIALIZATION_QOS];
-        const auto topic_qos = Deserializer::deserialize<ddspipe::core::types::TopicQoS>(topic_qos_str);
+        const auto topic_qos = Serializer::deserialize<ddspipe::core::types::TopicQoS>(topic_qos_str);
 
         topic->topic_qos.set_qos(topic_qos, utils::FuzzyLevelValues::fuzzy_level_fuzzy);
 
@@ -97,7 +97,7 @@ void McapReaderParticipant::process_summary(
         const std::string dynamic_types_str(
                 reinterpret_cast<const char*>(dynamic_types_attachment.data), dynamic_types_attachment.dataSize);
 
-        types = Deserializer::deserialize<DynamicTypesCollection>(dynamic_types_str);
+        types = Serializer::deserialize<DynamicTypesCollection>(dynamic_types_str);
     }
 
     close_file_();

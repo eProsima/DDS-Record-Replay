@@ -18,8 +18,8 @@
 
 #define SQL_IMPLEMENTATION  // Define this in exactly one .cpp file
 
+#include <ddsrecorder_participants/common/serialize/Serializer.hpp>
 #include <ddsrecorder_participants/recorder/message/SqlMessage.hpp>
-#include <ddsrecorder_participants/recorder/output/Serializer.hpp>
 #include <ddsrecorder_participants/recorder/sql/SqlHandler.hpp>
 
 namespace eprosima {
