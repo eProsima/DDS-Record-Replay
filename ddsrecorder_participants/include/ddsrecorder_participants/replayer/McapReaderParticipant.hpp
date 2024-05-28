@@ -25,7 +25,7 @@
 
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/replayer/BaseReaderParticipant.hpp>
-#include <ddsrecorder_participants/replayer/McapReaderParticipantConfiguration.hpp>
+#include <ddsrecorder_participants/replayer/BaseReaderParticipantConfiguration.hpp>
 
 #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
     #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
@@ -57,7 +57,7 @@ public:
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     McapReaderParticipant(
-            const std::shared_ptr<McapReaderParticipantConfiguration>& configuration,
+            const std::shared_ptr<BaseReaderParticipantConfiguration>& configuration,
             const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
             const std::string& file_path);
 
