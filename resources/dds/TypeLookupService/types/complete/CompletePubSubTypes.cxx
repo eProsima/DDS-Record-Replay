@@ -221,8 +221,7 @@ bool TimestampPubSubType::getKey(
 
 void TimestampPubSubType::register_type_object_representation()
 {
-    eprosima::fastdds::dds::xtypes::TypeIdentifierPair type_ids;
-    register_Timestamp_type_identifier(type_ids);
+    register_Timestamp_type_identifier(type_identifiers_);
 }
 
 PointPubSubType::PointPubSubType()
@@ -415,8 +414,7 @@ bool PointPubSubType::getKey(
 
 void PointPubSubType::register_type_object_representation()
 {
-    eprosima::fastdds::dds::xtypes::TypeIdentifierPair type_ids;
-    register_Point_type_identifier(type_ids);
+    register_Point_type_identifier(type_identifiers_);
 }
 
 MessageDescriptorPubSubType::MessageDescriptorPubSubType()
@@ -609,8 +607,7 @@ bool MessageDescriptorPubSubType::getKey(
 
 void MessageDescriptorPubSubType::register_type_object_representation()
 {
-    eprosima::fastdds::dds::xtypes::TypeIdentifierPair type_ids;
-    register_MessageDescriptor_type_identifier(type_ids);
+    register_MessageDescriptor_type_identifier(type_identifiers_);
 }
 
 MessagePubSubType::MessagePubSubType()
@@ -803,8 +800,7 @@ bool MessagePubSubType::getKey(
 
 void MessagePubSubType::register_type_object_representation()
 {
-    eprosima::fastdds::dds::xtypes::TypeIdentifierPair type_ids;
-    register_Message_type_identifier(type_ids);
+    register_Message_type_identifier(type_identifiers_);
 }
 
 CompleteDataPubSubType::CompleteDataPubSubType()
@@ -997,8 +993,7 @@ bool CompleteDataPubSubType::getKey(
 
 void CompleteDataPubSubType::register_type_object_representation()
 {
-    eprosima::fastdds::dds::xtypes::TypeIdentifierPair type_ids;
-    register_CompleteData_type_identifier(type_ids);
+    register_CompleteData_type_identifier(type_identifiers_);
 }
 
 

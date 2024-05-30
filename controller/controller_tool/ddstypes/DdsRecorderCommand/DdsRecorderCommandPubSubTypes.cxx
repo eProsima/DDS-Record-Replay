@@ -221,8 +221,7 @@ bool DdsRecorderCommandPubSubType::getKey(
 
 void DdsRecorderCommandPubSubType::register_type_object_representation()
 {
-    eprosima::fastdds::dds::xtypes::TypeIdentifierPair type_ids;
-    register_DdsRecorderCommand_type_identifier(type_ids);
+    register_DdsRecorderCommand_type_identifier(type_identifiers_);
 }
 
 

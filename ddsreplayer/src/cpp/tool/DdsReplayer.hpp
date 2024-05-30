@@ -185,7 +185,7 @@ protected:
     std::map<utils::Heritable<ddspipe::core::types::DdsTopic>, fastdds::dds::DataWriter*> dyn_writers_;
 
     //! TODO
-    std::map<std::string, fastdds::dds::xtypes::TypeIdentifier> registered_types_{};
+    std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair> registered_types_{};
 };
 
 } /* namespace replayer */

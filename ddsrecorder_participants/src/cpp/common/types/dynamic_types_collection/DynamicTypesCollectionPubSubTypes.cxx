@@ -224,8 +224,7 @@ namespace eprosima {
 
             void DynamicTypePubSubType::register_type_object_representation()
             {
-                eprosima::fastdds::dds::xtypes::TypeIdentifierPair type_ids;
-                register_DynamicType_type_identifier(type_ids);
+                register_DynamicType_type_identifier(type_identifiers_);
             }
 
             DynamicTypesCollectionPubSubType::DynamicTypesCollectionPubSubType()
@@ -418,8 +417,7 @@ namespace eprosima {
 
             void DynamicTypesCollectionPubSubType::register_type_object_representation()
             {
-                eprosima::fastdds::dds::xtypes::TypeIdentifierPair type_ids;
-                register_DynamicTypesCollection_type_identifier(type_ids);
+                register_DynamicTypesCollection_type_identifier(type_identifiers_);
             }
 
         } // namespace participants

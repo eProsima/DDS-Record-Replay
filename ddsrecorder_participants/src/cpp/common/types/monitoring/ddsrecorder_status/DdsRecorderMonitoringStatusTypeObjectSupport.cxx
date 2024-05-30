@@ -75,50 +75,12 @@ void register_DdsRecorderMonitoringErrorStatus_type_identifier(
             }
             StructMemberFlag member_flags_mcap_file_creation_failure = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
                     false, false, false, false);
-            CommonStructMember common_mcap_file_creation_failure;
             MemberId member_id_mcap_file_creation_failure = 0x00000000;
-            if (EK_COMPLETE == type_ids_mcap_file_creation_failure.type_identifier1()._d() || TK_NONE == type_ids_mcap_file_creation_failure.type_identifier2()._d() ||
-                    (TI_PLAIN_SEQUENCE_SMALL == type_ids_mcap_file_creation_failure.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_mcap_file_creation_failure.type_identifier1().seq_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_SEQUENCE_LARGE == type_ids_mcap_file_creation_failure.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_mcap_file_creation_failure.type_identifier1().seq_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_SMALL == type_ids_mcap_file_creation_failure.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_mcap_file_creation_failure.type_identifier1().array_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_LARGE == type_ids_mcap_file_creation_failure.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_mcap_file_creation_failure.type_identifier1().array_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_MAP_SMALL == type_ids_mcap_file_creation_failure.type_identifier1()._d() &&
-                    (EK_COMPLETE == type_ids_mcap_file_creation_failure.type_identifier1().map_sdefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_mcap_file_creation_failure.type_identifier1().map_sdefn().key_identifier()->_d())) ||
-                    (TI_PLAIN_MAP_LARGE == type_ids_mcap_file_creation_failure.type_identifier1()._d() &&
-                    (EK_COMPLETE == type_ids_mcap_file_creation_failure.type_identifier1().map_ldefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_mcap_file_creation_failure.type_identifier1().map_ldefn().key_identifier()->_d())))
+            bool common_mcap_file_creation_failure_ec {false};
+            CommonStructMember common_mcap_file_creation_failure {TypeObjectUtils::build_common_struct_member(member_id_mcap_file_creation_failure, member_flags_mcap_file_creation_failure, TypeObjectUtils::retrieve_complete_type_identifier(type_ids_mcap_file_creation_failure, common_mcap_file_creation_failure_ec))};
+            if (!common_mcap_file_creation_failure_ec)
             {
-                common_mcap_file_creation_failure = TypeObjectUtils::build_common_struct_member(member_id_mcap_file_creation_failure,
-                        member_flags_mcap_file_creation_failure, type_ids_mcap_file_creation_failure.type_identifier1());
-            }
-            else if (EK_COMPLETE == type_ids_mcap_file_creation_failure.type_identifier2()._d() ||
-                    (TI_PLAIN_SEQUENCE_SMALL == type_ids_mcap_file_creation_failure.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_mcap_file_creation_failure.type_identifier2().seq_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_SEQUENCE_LARGE == type_ids_mcap_file_creation_failure.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_mcap_file_creation_failure.type_identifier2().seq_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_SMALL == type_ids_mcap_file_creation_failure.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_mcap_file_creation_failure.type_identifier2().array_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_LARGE == type_ids_mcap_file_creation_failure.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_mcap_file_creation_failure.type_identifier2().array_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_MAP_SMALL == type_ids_mcap_file_creation_failure.type_identifier2()._d() &&
-                    (EK_COMPLETE == type_ids_mcap_file_creation_failure.type_identifier2().map_sdefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_mcap_file_creation_failure.type_identifier2().map_sdefn().key_identifier()->_d())) ||
-                    (TI_PLAIN_MAP_LARGE == type_ids_mcap_file_creation_failure.type_identifier2()._d() &&
-                    (EK_COMPLETE == type_ids_mcap_file_creation_failure.type_identifier2().map_ldefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_mcap_file_creation_failure.type_identifier2().map_ldefn().key_identifier()->_d())))
-            {
-                common_mcap_file_creation_failure = TypeObjectUtils::build_common_struct_member(member_id_mcap_file_creation_failure,
-                        member_flags_mcap_file_creation_failure, type_ids_mcap_file_creation_failure.type_identifier2());
-            }
-            else
-            {
-                EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION,
-                        "Structure mcap_file_creation_failure member TypeIdentifier inconsistent.");
+                EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION, "Structure mcap_file_creation_failure member TypeIdentifier inconsistent.");
                 return;
             }
             MemberName name_mcap_file_creation_failure = "mcap_file_creation_failure";
@@ -143,50 +105,12 @@ void register_DdsRecorderMonitoringErrorStatus_type_identifier(
             }
             StructMemberFlag member_flags_disk_full = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
                     false, false, false, false);
-            CommonStructMember common_disk_full;
             MemberId member_id_disk_full = 0x00000001;
-            if (EK_COMPLETE == type_ids_disk_full.type_identifier1()._d() || TK_NONE == type_ids_disk_full.type_identifier2()._d() ||
-                    (TI_PLAIN_SEQUENCE_SMALL == type_ids_disk_full.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_disk_full.type_identifier1().seq_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_SEQUENCE_LARGE == type_ids_disk_full.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_disk_full.type_identifier1().seq_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_SMALL == type_ids_disk_full.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_disk_full.type_identifier1().array_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_LARGE == type_ids_disk_full.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_disk_full.type_identifier1().array_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_MAP_SMALL == type_ids_disk_full.type_identifier1()._d() &&
-                    (EK_COMPLETE == type_ids_disk_full.type_identifier1().map_sdefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_disk_full.type_identifier1().map_sdefn().key_identifier()->_d())) ||
-                    (TI_PLAIN_MAP_LARGE == type_ids_disk_full.type_identifier1()._d() &&
-                    (EK_COMPLETE == type_ids_disk_full.type_identifier1().map_ldefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_disk_full.type_identifier1().map_ldefn().key_identifier()->_d())))
+            bool common_disk_full_ec {false};
+            CommonStructMember common_disk_full {TypeObjectUtils::build_common_struct_member(member_id_disk_full, member_flags_disk_full, TypeObjectUtils::retrieve_complete_type_identifier(type_ids_disk_full, common_disk_full_ec))};
+            if (!common_disk_full_ec)
             {
-                common_disk_full = TypeObjectUtils::build_common_struct_member(member_id_disk_full,
-                        member_flags_disk_full, type_ids_disk_full.type_identifier1());
-            }
-            else if (EK_COMPLETE == type_ids_disk_full.type_identifier2()._d() ||
-                    (TI_PLAIN_SEQUENCE_SMALL == type_ids_disk_full.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_disk_full.type_identifier2().seq_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_SEQUENCE_LARGE == type_ids_disk_full.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_disk_full.type_identifier2().seq_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_SMALL == type_ids_disk_full.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_disk_full.type_identifier2().array_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_LARGE == type_ids_disk_full.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_disk_full.type_identifier2().array_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_MAP_SMALL == type_ids_disk_full.type_identifier2()._d() &&
-                    (EK_COMPLETE == type_ids_disk_full.type_identifier2().map_sdefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_disk_full.type_identifier2().map_sdefn().key_identifier()->_d())) ||
-                    (TI_PLAIN_MAP_LARGE == type_ids_disk_full.type_identifier2()._d() &&
-                    (EK_COMPLETE == type_ids_disk_full.type_identifier2().map_ldefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_disk_full.type_identifier2().map_ldefn().key_identifier()->_d())))
-            {
-                common_disk_full = TypeObjectUtils::build_common_struct_member(member_id_disk_full,
-                        member_flags_disk_full, type_ids_disk_full.type_identifier2());
-            }
-            else
-            {
-                EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION,
-                        "Structure disk_full member TypeIdentifier inconsistent.");
+                EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION, "Structure disk_full member TypeIdentifier inconsistent.");
                 return;
             }
             MemberName name_disk_full = "disk_full";
@@ -260,50 +184,12 @@ void register_DdsRecorderMonitoringStatus_type_identifier(
             }
             StructMemberFlag member_flags_ddsrecorder_error_status = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
                     false, false, false, false);
-            CommonStructMember common_ddsrecorder_error_status;
             MemberId member_id_ddsrecorder_error_status = 0x00000002;
-            if (EK_COMPLETE == type_ids_ddsrecorder_error_status.type_identifier1()._d() || TK_NONE == type_ids_ddsrecorder_error_status.type_identifier2()._d() ||
-                    (TI_PLAIN_SEQUENCE_SMALL == type_ids_ddsrecorder_error_status.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_ddsrecorder_error_status.type_identifier1().seq_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_SEQUENCE_LARGE == type_ids_ddsrecorder_error_status.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_ddsrecorder_error_status.type_identifier1().seq_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_SMALL == type_ids_ddsrecorder_error_status.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_ddsrecorder_error_status.type_identifier1().array_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_LARGE == type_ids_ddsrecorder_error_status.type_identifier1()._d() &&
-                    EK_COMPLETE == type_ids_ddsrecorder_error_status.type_identifier1().array_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_MAP_SMALL == type_ids_ddsrecorder_error_status.type_identifier1()._d() &&
-                    (EK_COMPLETE == type_ids_ddsrecorder_error_status.type_identifier1().map_sdefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_ddsrecorder_error_status.type_identifier1().map_sdefn().key_identifier()->_d())) ||
-                    (TI_PLAIN_MAP_LARGE == type_ids_ddsrecorder_error_status.type_identifier1()._d() &&
-                    (EK_COMPLETE == type_ids_ddsrecorder_error_status.type_identifier1().map_ldefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_ddsrecorder_error_status.type_identifier1().map_ldefn().key_identifier()->_d())))
+            bool common_ddsrecorder_error_status_ec {false};
+            CommonStructMember common_ddsrecorder_error_status {TypeObjectUtils::build_common_struct_member(member_id_ddsrecorder_error_status, member_flags_ddsrecorder_error_status, TypeObjectUtils::retrieve_complete_type_identifier(type_ids_ddsrecorder_error_status, common_ddsrecorder_error_status_ec))};
+            if (!common_ddsrecorder_error_status_ec)
             {
-                common_ddsrecorder_error_status = TypeObjectUtils::build_common_struct_member(member_id_ddsrecorder_error_status,
-                        member_flags_ddsrecorder_error_status, type_ids_ddsrecorder_error_status.type_identifier1());
-            }
-            else if (EK_COMPLETE == type_ids_ddsrecorder_error_status.type_identifier2()._d() ||
-                    (TI_PLAIN_SEQUENCE_SMALL == type_ids_ddsrecorder_error_status.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_ddsrecorder_error_status.type_identifier2().seq_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_SEQUENCE_LARGE == type_ids_ddsrecorder_error_status.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_ddsrecorder_error_status.type_identifier2().seq_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_SMALL == type_ids_ddsrecorder_error_status.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_ddsrecorder_error_status.type_identifier2().array_sdefn().header().equiv_kind()) ||
-                    (TI_PLAIN_ARRAY_LARGE == type_ids_ddsrecorder_error_status.type_identifier2()._d() &&
-                    EK_COMPLETE == type_ids_ddsrecorder_error_status.type_identifier2().array_ldefn().header().equiv_kind()) ||
-                    (TI_PLAIN_MAP_SMALL == type_ids_ddsrecorder_error_status.type_identifier2()._d() &&
-                    (EK_COMPLETE == type_ids_ddsrecorder_error_status.type_identifier2().map_sdefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_ddsrecorder_error_status.type_identifier2().map_sdefn().key_identifier()->_d())) ||
-                    (TI_PLAIN_MAP_LARGE == type_ids_ddsrecorder_error_status.type_identifier2()._d() &&
-                    (EK_COMPLETE == type_ids_ddsrecorder_error_status.type_identifier2().map_ldefn().header().equiv_kind() ||
-                    EK_COMPLETE == type_ids_ddsrecorder_error_status.type_identifier2().map_ldefn().key_identifier()->_d())))
-            {
-                common_ddsrecorder_error_status = TypeObjectUtils::build_common_struct_member(member_id_ddsrecorder_error_status,
-                        member_flags_ddsrecorder_error_status, type_ids_ddsrecorder_error_status.type_identifier2());
-            }
-            else
-            {
-                EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION,
-                        "Structure ddsrecorder_error_status member TypeIdentifier inconsistent.");
+                EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION, "Structure ddsrecorder_error_status member TypeIdentifier inconsistent.");
                 return;
             }
             MemberName name_ddsrecorder_error_status = "ddsrecorder_error_status";

@@ -35,10 +35,10 @@
 
 #include <fastdds/dds/topic/TypeSupport.hpp>
 #include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
-// #include <fastdds/dds/xtypes/type_representation/TypeIdentifierWithSizeHashSpecialization.h>
 #include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
 #include <fastdds/rtps/common/CDRMessage_t.h>
 #include <fastdds/rtps/common/SerializedPayload.h>
+#include <fastdds/rtps/common/Types.h>
 
 #include <ddspipe_core/types/dynamic_types/schema.hpp>
 
@@ -1165,7 +1165,7 @@ void McapHandler::store_dynamic_type_(
     // fastdds::dds::xtypes::TypeIdentifierSeq type_id_seq;
     fastdds::dds::xtypes::TypeIdentifierPair type_ids_pair;
     // type_id_seq.push_back(type_id);
-    type_ids_pair.type_identifier2(type_id);
+    type_ids_pair.type_identifier1(type_id);
     // std::unordered_set<fastdds::dds::xtypes::TypeIdentfierWithSize> type_dependencies;
     fastdds::dds::xtypes::TypeInformation type_info;
     if (fastdds::dds::RETCODE_OK == fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_information(
@@ -1370,7 +1370,7 @@ void McapHandler::check_and_free_space_()
 
         if (std::filesystem::exists(oldest_file))
         {
-            break;
+            // TODO Warning
         }
 
         logWarning(DDSRECORDER_MCAP_HANDLER, "RESOURCE_LIMITS | File " << oldest_file << " doesn't exist and could not "
@@ -1481,22 +1481,58 @@ std::string McapHandler::serialize_type_identifier_(
 
     // Create CDR message
     // NOTE: Use 0 length to avoid allocation (memory already reserved in payload creation)
-    fastrtps::rtps::CDRMessage_t* cdr_message = new fastrtps::rtps::CDRMessage_t(0);
-    cdr_message->buffer = payload.data;
-    cdr_message->max_size = payload.max_size;
-    cdr_message->length = payload.length;
-#if __BIG_ENDIAN__
-    cdr_message->msg_endian = fastrtps::rtps::BIGEND;
-#else
-    cdr_message->msg_endian = fastrtps::rtps::LITTLEEND;
-#endif // if __BIG_ENDIAN__
+//     fastrtps::rtps::CDRMessage_t* cdr_message = new fastrtps::rtps::CDRMessage_t(0);
+//     cdr_message->buffer = payload.data;
+//     cdr_message->max_size = payload.max_size;
+//     cdr_message->length = payload.length;
+// #if __BIG_ENDIAN__
+//     cdr_message->msg_endian = fastrtps::rtps::BIGEND;
+// #else
+//     cdr_message->msg_endian = fastrtps::rtps::LITTLEEND;
+// #endif // if __BIG_ENDIAN__
+
+    // Create CDR message with payload
+    fastrtps::rtps::CDRMessage_t* cdr_message = new fastrtps::rtps::CDRMessage_t(payload);
 
     // Add data
-    bool valid = fastrtps::rtps::CDRMessage::addData(cdr_message, payload.data, payload.length);
+    // bool valid = fastrtps::rtps::CDRMessage::addData(cdr_message, payload.data, payload.length);
+
+    // Add data
+    if (!(cdr_message && (cdr_message->pos + payload.length <= cdr_message->max_size))|| (payload.length > 0 && !payload.data))
+    {
+        // TODO Warning
+    }
+    else
+    {
+        memcpy(&cdr_message->buffer[cdr_message->pos], payload.data, payload.length);
+        cdr_message->pos += payload.length;
+        cdr_message->length += payload.length;
+    }
+
+    // for (uint32_t count = payload.length; count < size; ++count)
+    // {
+    //     valid &= fastrtps::rtps::CDRMessage::addOctet(cdr_message, 0);
+    // }
+
+    fastrtps::rtps::octet value = 0;
     for (uint32_t count = payload.length; count < size; ++count)
     {
-        valid &= fastrtps::rtps::CDRMessage::addOctet(cdr_message, 0);
+        const uint32_t size_octet = sizeof(value);
+        if (!(cdr_message && (cdr_message->pos + size_octet <= cdr_message->max_size)))
+        {
+            // TODO Warning
+        }
+        else
+        {
+            for (uint32_t i = 0; i < size_octet; i++)
+            {
+                cdr_message->buffer[cdr_message->pos + i] = *((fastrtps::rtps::octet*)&value + size_octet - 1 - i);
+            }
+            cdr_message->pos += size_octet;
+            cdr_message->length += size_octet;
+        }
     }
+
     // Copy buffer to string
     std::string typeid_str(reinterpret_cast<char const*>(cdr_message->buffer), size);
 
@@ -1531,22 +1567,58 @@ std::string McapHandler::serialize_type_object_(
 
     // Create CDR message
     // NOTE: Use 0 length to avoid allocation (memory already reserved in payload creation)
-    fastrtps::rtps::CDRMessage_t* cdr_message = new fastrtps::rtps::CDRMessage_t(0);
-    cdr_message->buffer = payload.data;
-    cdr_message->max_size = payload.max_size;
-    cdr_message->length = payload.length;
-#if __BIG_ENDIAN__
-    cdr_message->msg_endian = fastrtps::rtps::BIGEND;
-#else
-    cdr_message->msg_endian = fastrtps::rtps::LITTLEEND;
-#endif // if __BIG_ENDIAN__
+//     fastrtps::rtps::CDRMessage_t* cdr_message = new fastrtps::rtps::CDRMessage_t(0);
+//     cdr_message->buffer = payload.data;
+//     cdr_message->max_size = payload.max_size;
+//     cdr_message->length = payload.length;
+// #if __BIG_ENDIAN__
+//     cdr_message->msg_endian = fastrtps::rtps::BIGEND;
+// #else
+//     cdr_message->msg_endian = fastrtps::rtps::LITTLEEND;
+// #endif // if __BIG_ENDIAN__
+
+    // Create CDR message with payload
+    fastrtps::rtps::CDRMessage_t* cdr_message = new fastrtps::rtps::CDRMessage_t(payload);
 
     // Add data
-    bool valid = fastrtps::rtps::CDRMessage::addData(cdr_message, payload.data, payload.length);
+    // bool valid = fastrtps::rtps::CDRMessage::addData(cdr_message, payload.data, payload.length);
+
+    // Add data
+    if (!(cdr_message && (cdr_message->pos + payload.length <= cdr_message->max_size))|| (payload.length > 0 && !payload.data))
+    {
+        // TODO Warning
+    }
+    else
+    {
+        memcpy(&cdr_message->buffer[cdr_message->pos], payload.data, payload.length);
+        cdr_message->pos += payload.length;
+        cdr_message->length += payload.length;
+    }
+
+    // for (uint32_t count = payload.length; count < size; ++count)
+    // {
+    //     valid &= fastrtps::rtps::CDRMessage::addOctet(cdr_message, 0);
+    // }
+
+    fastrtps::rtps::octet value = 0;
     for (uint32_t count = payload.length; count < size; ++count)
     {
-        valid &= fastrtps::rtps::CDRMessage::addOctet(cdr_message, 0);
+        const uint32_t size_octet = sizeof(value);
+        if (!(cdr_message && (cdr_message->pos + size_octet <= cdr_message->max_size)))
+        {
+            // TODO Warning
+        }
+        else
+        {
+            for (uint32_t i = 0; i < size_octet; i++)
+            {
+                cdr_message->buffer[cdr_message->pos + i] = *((fastrtps::rtps::octet*)&value + size_octet - 1 - i);
+            }
+            cdr_message->pos += size_octet;
+            cdr_message->length += size_octet;
+        }
     }
+
     // Copy buffer to string
     std::string typeobj_str(reinterpret_cast<char const*>(cdr_message->buffer), size);
 

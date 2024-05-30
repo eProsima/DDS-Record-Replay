@@ -221,8 +221,7 @@ bool DdsRecorderMonitoringErrorStatusPubSubType::getKey(
 
 void DdsRecorderMonitoringErrorStatusPubSubType::register_type_object_representation()
 {
-    eprosima::fastdds::dds::xtypes::TypeIdentifierPair type_ids;
-    register_DdsRecorderMonitoringErrorStatus_type_identifier(type_ids);
+    register_DdsRecorderMonitoringErrorStatus_type_identifier(type_identifiers_);
 }
 
 DdsRecorderMonitoringStatusPubSubType::DdsRecorderMonitoringStatusPubSubType()
@@ -415,8 +414,7 @@ bool DdsRecorderMonitoringStatusPubSubType::getKey(
 
 void DdsRecorderMonitoringStatusPubSubType::register_type_object_representation()
 {
-    eprosima::fastdds::dds::xtypes::TypeIdentifierPair type_ids;
-    register_DdsRecorderMonitoringStatus_type_identifier(type_ids);
+    register_DdsRecorderMonitoringStatus_type_identifier(type_identifiers_);
 }
 
 
