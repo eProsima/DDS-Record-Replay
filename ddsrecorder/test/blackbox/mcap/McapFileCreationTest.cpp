@@ -12,864 +12,984 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <cpp_utils/testing/gtest_aux.hpp>
+#include <cstdint>
+#include <filesystem>
+#include <string>
+
+#include <mcap/reader.hpp>
 #include <gtest/gtest.h>
 
 #include <cpp_utils/ros2_mangling.hpp>
+#include <cpp_utils/testing/gtest_aux.hpp>
 
-#include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
-#include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
+#include <ddspipe_core/types/dds/TopicQoS.hpp>
+
+#include <ddsrecorder_participants/common/time_utils.hpp>
+#include <ddsrecorder_participants/recorder/output/OutputSettings.hpp>
 #include <ddsrecorder_yaml/recorder/yaml_configuration_tags.hpp>
 
 #include <tool/DdsRecorder.hpp>
 
-#include <fastdds/dds/domain/DomainParticipantFactory.hpp>
-#include <fastdds/dds/publisher/DataWriter.hpp>
-#include <fastdds/dds/publisher/Publisher.hpp>
-#include <fastrtps/types/DynamicDataPtr.h>
-#include <fastrtps/types/DynamicType.h>
-#include <fastrtps/types/DynamicDataFactory.h>
-#include <fastrtps/types/TypeObjectFactory.h>
-
-#include <mcap/reader.hpp>
-
-#if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
-    #include "../../resources/types/hello_world/v1/HelloWorld.h"
-    #include "../../resources/types/hello_world/v1/HelloWorldPubSubTypes.h"
-    #include "../../resources/types/hello_world/v1/HelloWorldTypeObject.h"
-#else
-    #include "../../resources/types/hello_world/v2/HelloWorld.h"
-    #include "../../resources/types/hello_world/v2/HelloWorldPubSubTypes.h"
-    #include "../../resources/types/hello_world/v2/HelloWorldTypeObject.h"
-#endif // if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
-
-#include <iostream>
-#include <thread>
-#include <chrono>
+#include "../constants.hpp"
+#include "../FileCreationTest.hpp"
 
 using namespace eprosima::ddspipe;
 using namespace eprosima::ddsrecorder;
 using namespace eprosima::ddsrecorder::recorder;
 using namespace eprosima::fastdds::dds;
 
-using DdsRecorderState = eprosima::ddsrecorder::recorder::DdsRecorderStateCode;
-
-enum class DataTypeKind
+class McapFileCreationTest : public FileCreationTest
 {
-    HELLO_WORLD,
+public:
+
+    void SetUp() override
+    {
+        FileCreationTest::SetUp();
+
+        // Set the output library to MCAP
+        configuration_->output_library = ddsrecorder::participants::OutputLibrary::mcap;
+    }
+
+    void TearDown() override
+    {
+        mcap_reader_.close();
+
+        FileCreationTest::TearDown();
+    }
+
+protected:
+
+    mcap::LinearMessageView read_messages_(
+            const std::string& file_path)
+    {
+        const auto status = mcap_reader_.open(file_path);
+
+        // NOTE: This can't be made const since a copy const constructor doesn't exist.
+        auto messages = mcap_reader_.readMessages();
+
+        return messages;
+    }
+
+    unsigned int count_messages_(
+            mcap::LinearMessageView& messages)
+    {
+        unsigned int received_messages = 0;
+
+        // TODO: Replace this method with messages.size() or with std::distance when MCAP's API allows it.
+        for (const auto& message : messages)
+        {
+            received_messages++;
+
+            // Avoid unused variable warning
+            (void) message;
+        }
+
+        return received_messages;
+    }
+
+    double find_max_time_past_(
+            mcap::LinearMessageView& messages)
+    {
+        const auto now = ddsrecorder::participants::to_mcap_timestamp(utils::now());
+
+        std::uint64_t max_time_past = 0;
+
+        for (const auto& it : messages)
+        {
+            const auto time_past = now - it.message.logTime;
+
+            if (time_past > max_time_past)
+            {
+                max_time_past = time_past;
+            }
+        }
+
+        const auto NS_TO_SEC = pow(10, -9);
+        const auto max_time_past_sec = max_time_past * NS_TO_SEC;
+
+        return max_time_past_sec;
+    }
+
+    mcap::McapReader mcap_reader_;
 };
 
-enum class EventKind
+/**
+ * Verify that the DDS Recorder records properly in an MCAP file.
+ *
+ * CASES:
+ *  - Verify that the messages' data matches the recorded data.
+ *  - Verify that the messages' sizes match the recorded data sizes.
+ */
+TEST_F(McapFileCreationTest, mcap_data_msgs)
 {
-    NO_EVENT,
-    EVENT,
-    EVENT_START,
-    EVENT_STOP,
-    EVENT_SUSPEND,
-};
+    const std::string OUTPUT_FILE_NAME = "mcap_data_msgs";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-namespace test {
+    constexpr auto NUMBER_OF_MESSAGES = 10;
 
-// Publisher
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-const unsigned int DOMAIN = 222;
+    // Record messages
+    const auto sent_messages = record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES);
+    auto sent_message = sent_messages.begin();
 
-const std::string dds_topic_name = "TypeIntrospectionTopic";
-const std::string dds_type_name = "HelloWorld";
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-const std::string ros2_topic_name = "rt/hello";
-const std::string ros2_type_name = "std_msgs::msg::dds_::String_";
+    auto read_message_count = 0;
 
-const unsigned int n_msgs = 3;
-const std::string send_message = "Hello World";
-const unsigned int index = 6;
-const unsigned int downsampling = 3;
+    for (const auto& it : read_messages)
+    {
+        read_message_count++;
 
-eprosima::fastdds::dds::DataWriter* writer_;
-eprosima::fastrtps::types::DynamicType_ptr dynamic_type_;
+        // Verify the data size
+        const auto read_data_size = it.message.dataSize;
+        ASSERT_EQ((*sent_message)->length, read_data_size);
 
-} // test
+        // Verify the data
+        const auto read_data = (unsigned char*) reinterpret_cast<unsigned char const*>(it.message.data);
+        ASSERT_EQ(strcmp((char*) (*sent_message)->data, (char*) read_data), 0);
 
-std::unique_ptr<DdsRecorder> create_recorder(
-        const std::string file_name,
-        const int downsampling,
-        DdsRecorderState recorder_state = DdsRecorderState::RUNNING,
-        const unsigned int event_window = 20,
-        const bool ros2_types = false)
+        sent_message++;
+    }
+
+    // Verify that it read messages
+    ASSERT_GT(read_message_count, 0);
+}
+
+/**
+ * Verify that the DDS Recorder records topics properly in an MCAP file.
+ *
+ * CASES:
+ *  - Verify that the topic's name matches the recorded topic's name.
+ *  - Verify that the topic's type matches the recorded topic's type.
+ */
+TEST_F(McapFileCreationTest, mcap_dds_topic)
 {
-    YAML::Node yml;
+    const std::string OUTPUT_FILE_NAME = "mcap_dds_topic";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-    eprosima::ddsrecorder::yaml::RecorderConfiguration configuration(yml);
-    configuration.topic_qos.downsampling = downsampling;
-    // Set default value for downsampling
+    constexpr auto NUMBER_OF_MESSAGES = 10;
+
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES);
+
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
+
+    auto read_message_count = 0;
+
+    for (const auto& read_message : read_messages)
+    {
+        read_message_count++;
+
+        // Verify the topic's name
+        const auto read_topic_name = read_message.channel->topic;
+        ASSERT_EQ(topic_->get_name(), read_topic_name);
+
+        // Verify the topic's type
+        const auto read_topic_type = read_message.schema->name;
+        ASSERT_EQ(topic_->get_type_name(), read_topic_type);
+    }
+
+    // Verify that it read messages
+    ASSERT_GT(read_message_count, 0);
+}
+
+/**
+ * Verify that the DDS Recorder records ROS 2 topics properly in an MCAP file.
+ *
+ * CASES:
+ *  - Verify that the topic's name matches the recorded topic's name.
+ *  - Verify that the topic's type matches the recorded topic's type.
+ */
+TEST_F(McapFileCreationTest, mcap_ros2_topic)
+{
+    const std::string OUTPUT_FILE_NAME = "mcap_ros2_topic";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+
+    constexpr auto NUMBER_OF_MESSAGES = 10;
+
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    configuration_->ros2_types = true;
+
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES);
+
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
+
+    auto read_message_count = 0;
+
+    for (const auto& read_message : read_messages)
+    {
+        read_message_count++;
+
+        // Verify the topic's name
+        const auto read_topic_name = read_message.channel->topic;
+        ASSERT_EQ(utils::demangle_if_ros_topic(topic_->get_name()), read_topic_name);
+
+        // Verify the topic's type
+        const auto read_topic_type = read_message.schema->name;
+        ASSERT_EQ(utils::demangle_if_ros_topic(topic_->get_type_name()), read_topic_type);
+    }
+
+    // Verify that it read messages
+    ASSERT_GT(read_message_count, 0);
+}
+
+TEST_F(McapFileCreationTest, mcap_data_num_msgs)
+{
+    const std::string OUTPUT_FILE_NAME = "mcap_data_num_msgs";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+
+    constexpr auto NUMBER_OF_MESSAGES = 10;
+
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES);
+
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
+
+    // Verify the recorded messages count
+    const auto read_messages_count = count_messages_(read_messages);
+    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES);
+}
+
+TEST_F(McapFileCreationTest, mcap_data_num_msgs_downsampling)
+{
+    const std::string OUTPUT_FILE_NAME = "mcap_data_num_msgs_downsampling";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+
+    constexpr auto NUMBER_OF_MESSAGES = 10;
+    constexpr int DOWNSAMPLING = 2;
+
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
     // TODO: Change mechanism setting topic qos' default values from specs
-    eprosima::ddspipe::core::types::TopicQoS::default_topic_qos.set_value(configuration.topic_qos);
-    configuration.event_window = event_window;
-    eprosima::ddspipe::core::types::DomainId domainId;
-    domainId.domain_id = test::DOMAIN;
-    configuration.simple_configuration->domain = domainId;
-    configuration.ros2_types = ros2_types;
+    configuration_->topic_qos.downsampling = DOWNSAMPLING;
+    ddspipe::core::types::TopicQoS::default_topic_qos.set_value(configuration_->topic_qos);
 
-    std::shared_ptr<eprosima::ddsrecorder::participants::FileTracker> file_tracker;
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES);
 
-    return std::make_unique<DdsRecorder>(
-        configuration,
-        recorder_state,
-        file_tracker,
-        file_name);
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
+
+    // Verify the recorded messages count
+    const auto read_messages_count = count_messages_(read_messages);
+    const auto expected_messages = (NUMBER_OF_MESSAGES / DOWNSAMPLING) + (NUMBER_OF_MESSAGES % DOWNSAMPLING);
+    ASSERT_EQ(read_messages_count, expected_messages);
 }
 
-void create_publisher(
-        const std::string topic_name,
-        const std::string type_name,
-        const unsigned int domain)
+// //////////////////////
+// // With transitions //
+// //////////////////////
+
+/**
+ * @brief Verify that the DDS Recorder records properly in an MCAP file in RUNNING state.
+ *
+ * Since the recorder is in RUNNING state, it should record all messages.
+ * NOTE: The recorder won't change states since both \c STATE_1 and \c STATE_2 are RUNNING.
+ *
+ * CASES:
+ *  - Verify that the message count matches the recorded message count.
+ */
+TEST_F(McapFileCreationTest, transition_running)
 {
-    eprosima::fastdds::dds::DomainParticipantQos pqos;
-    pqos.name("TypeIntrospectionExample_Participant_Publisher");
-    pqos.wire_protocol().builtin.typelookup_config.use_client = false;
-    pqos.wire_protocol().builtin.typelookup_config.use_server = true;
+    const std::string OUTPUT_FILE_NAME = "transition_running";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-    // Create the Participant
-    eprosima::fastdds::dds::DomainParticipant* participant_ =
-            DomainParticipantFactory::get_instance()->create_participant(domain, pqos);
+    constexpr auto NUMBER_OF_MESSAGES_1 = 11;
+    constexpr auto STATE_1 = DdsRecorderState::RUNNING;
+    constexpr auto NUMBER_OF_MESSAGES_2 = 9;
+    constexpr auto STATE_2 = DdsRecorderState::RUNNING;
 
-    // Register the type
-    registerHelloWorldTypes();
-    test::dynamic_type_ = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->build_dynamic_type(
-        type_name,
-        GetHelloWorldIdentifier(true),
-        GetHelloWorldObject(true));
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-    TypeSupport type(new eprosima::fastrtps::types::DynamicPubSubType(test::dynamic_type_));
-    // Set type so introspection info is sent
-    type->auto_fill_type_information(true);
-    type->auto_fill_type_object(false);
-    // Register the type in the Participant
-    participant_->register_type(type);
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
-    // Create the Publisher
-    eprosima::fastdds::dds::Publisher* publisher_ = participant_->create_publisher(PUBLISHER_QOS_DEFAULT, nullptr);
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Create the DDS Topic
-    eprosima::fastdds::dds::Topic* topic_ = participant_->create_topic(topic_name, type_name,
-                    TOPIC_QOS_DEFAULT);
-
-    // Create the DDS DataWriter
-    test::writer_ = publisher_->create_datawriter(topic_, DATAWRITER_QOS_DEFAULT, nullptr);
+    // Verify the recorded messages count
+    const auto read_messages_count = count_messages_(read_messages);
+    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_1 + NUMBER_OF_MESSAGES_2);
 }
 
-eprosima::fastrtps::types::DynamicData_ptr send_sample(
-        const unsigned int index = 1,
-        const unsigned int time_sleep = 100)
+/**
+ * @brief Verify that the DDS Recorder records properly in an MCAP file in PAUSED state.
+ *
+ * Since the recorder is in PAUSED state, it should not record any messages.
+ * NOTE: The recorder won't change states since both \c STATE_1 and \c STATE_2 are PAUSED.
+ *
+ * CASES:
+ *  - Verify that the message count matches the recorded message count.
+ */
+TEST_F(McapFileCreationTest, transition_paused)
 {
-    // Create and initialize new dynamic data
-    eprosima::fastrtps::types::DynamicData_ptr dynamic_data_;
-    dynamic_data_ = eprosima::fastrtps::types::DynamicDataFactory::get_instance()->create_data(test::dynamic_type_);
+    const std::string OUTPUT_FILE_NAME = "transition_paused";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-    // Set index
-    dynamic_data_->set_uint32_value(index, 0);
-    // Set message
-    dynamic_data_->set_string_value(test::send_message, 1);
-    test::writer_->write(dynamic_data_.get());
+    constexpr auto NUMBER_OF_MESSAGES_1 = 11;
+    constexpr auto STATE_1 = DdsRecorderState::PAUSED;
+    constexpr auto NUMBER_OF_MESSAGES_2 = 9;
+    constexpr auto STATE_2 = DdsRecorderState::PAUSED;
 
-    logInfo(DDSRECORDER_EXECUTION, "Message published.");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(time_sleep));
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
-    return dynamic_data_;
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
+
+    // Verify the recorded messages count
+    const auto read_messages_count = count_messages_(read_messages);
+    ASSERT_EQ(read_messages_count, 0);
 }
 
-eprosima::fastrtps::types::DynamicData_ptr record(
-        const std::string file_name,
-        const unsigned int num_msgs = 1,
-        const unsigned int downsampling = 1,
-        const bool ros2_types = false)
+/**
+ * @brief Verify that the DDS Recorder records properly in an MCAP file in SUSPENDED state.
+ *
+ * Since the recorder is in SUSPENDED state, it should not record any messages.
+ * NOTE: The recorder won't change states since both \c STATE_1 and \c STATE_2 are SUSPENDED.
+ *
+ * CASES:
+ *  - Verify that the message count matches the recorded message count.
+ */
+TEST_F(McapFileCreationTest, transition_suspended)
 {
-    eprosima::fastrtps::types::DynamicData_ptr send_data;
-    {
-        // Create Recorder
-        auto recorder = create_recorder(file_name, downsampling, DdsRecorderState::RUNNING, 20, ros2_types);
+    const std::string OUTPUT_FILE_NAME = "transition_suspended";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-        // Create Publisher
-        ros2_types ? create_publisher(test::ros2_topic_name, test::ros2_type_name, test::DOMAIN) : create_publisher(
-            test::dds_topic_name, test::dds_type_name, test::DOMAIN);
+    constexpr auto NUMBER_OF_MESSAGES_1 = 11;
+    constexpr auto STATE_1 = DdsRecorderState::SUSPENDED;
+    constexpr auto NUMBER_OF_MESSAGES_2 = 9;
+    constexpr auto STATE_2 = DdsRecorderState::SUSPENDED;
 
-        // Send data
-        for (unsigned int i = 0; i < num_msgs; i++)
-        {
-            send_data = send_sample(test::index);
-        }
-    }
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-    return send_data;
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
+
+    // Verify that the MCAP file wasn't created
+    ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATH));
 }
 
-mcap::LinearMessageView get_msgs_mcap(
-        const std::string file_name,
-        mcap::McapReader& mcap_reader_)
+/**
+ * @brief Verify that the DDS Recorder records properly in an MCAP file in STOPPED state.
+ *
+ * Since the recorder is in STOPPED state, it should not record any messages.
+ * NOTE: The recorder won't change states since both \c STATE_1 and \c STATE_2 are STOPPED.
+ *
+ * CASES:
+ * - Verify that the message count matches the recorded message count.
+ */
+TEST_F(McapFileCreationTest, transition_stopped)
 {
-    auto status = mcap_reader_.open(file_name + ".mcap");
+    const std::string OUTPUT_FILE_NAME = "transition_stopped";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-    auto messages = mcap_reader_.readMessages();
+    constexpr auto NUMBER_OF_MESSAGES_1 = 11;
+    constexpr auto STATE_1 = DdsRecorderState::STOPPED;
+    constexpr auto NUMBER_OF_MESSAGES_2 = 9;
+    constexpr auto STATE_2 = DdsRecorderState::STOPPED;
 
-    return messages;
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
+
+    // Verify that the MCAP file wasn't created
+    ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATH));
 }
 
-std::tuple<unsigned int, double> record_with_transitions(
-        const std::string file_name,
-        DdsRecorderState init_state,
-        const unsigned int first_round,
-        const unsigned int secound_round,
-        DdsRecorderState current_state,
-        EventKind event = EventKind::NO_EVENT,
-        const unsigned int event_window = 20,
-        unsigned int time_sleep = 0,
-        const unsigned int downsampling = 1,
-        const bool ros2_types = false)
+/**
+ * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from RUNNING to PAUSED.
+ *
+ * The recorder should record all messages while in RUNNING state and none while in PAUSED state.
+ *
+ * CASES:
+ *  - Verify that the message count matches the recorded message count.
+ */
+TEST_F(McapFileCreationTest, transition_running_paused)
 {
-    uint64_t current_time;
-    {
-        // Create Publisher
-        ros2_types ? create_publisher(test::ros2_topic_name, test::ros2_type_name, test::DOMAIN) : create_publisher(
-            test::dds_topic_name, test::dds_type_name, test::DOMAIN);
+    const std::string OUTPUT_FILE_NAME = "transition_running_paused";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-        // Create Recorder
-        std::unique_ptr<DdsRecorder> recorder =
-                create_recorder(file_name, downsampling, init_state, event_window, ros2_types);
+    constexpr auto NUMBER_OF_MESSAGES_1 = 11;
+    constexpr auto STATE_1 = DdsRecorderState::RUNNING;
+    constexpr auto NUMBER_OF_MESSAGES_2 = 9;
+    constexpr auto STATE_2 = DdsRecorderState::PAUSED;
 
-        // Send data
-        for (unsigned int i = 0; i < first_round; i++)
-        {
-            send_sample();
-        }
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-        if (init_state != current_state)
-        {
-            switch (current_state)
-            {
-                case DdsRecorderState::RUNNING:
-                    recorder->start();
-                    break;
-                case DdsRecorderState::SUSPENDED:
-                    recorder->suspend();
-                    break;
-                case DdsRecorderState::STOPPED:
-                    recorder->stop();
-                    break;
-                case DdsRecorderState::PAUSED:
-                    recorder->pause();
-                    break;
-                default:
-                    break;
-            }
-        }
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
-        if (!time_sleep)
-        {
-            time_sleep = rand() % 2;
-        }
-        std::this_thread::sleep_for(std::chrono::seconds(time_sleep));
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-        for (unsigned int i = 0; i < secound_round; i++)
-        {
-            send_sample();
-        }
-
-        current_time = std::chrono::duration_cast<std::chrono::nanoseconds>
-                    (std::chrono::system_clock::now().time_since_epoch()).count();
-
-        if (event != EventKind::NO_EVENT && current_state == DdsRecorderState::PAUSED)
-        {
-            recorder->trigger_event();
-            if (event == EventKind::EVENT_START)
-            {
-                recorder->start();
-            }
-            else if (event == EventKind::EVENT_STOP)
-            {
-                recorder->stop();
-            }
-            else if (event == EventKind::EVENT_SUSPEND)
-            {
-                recorder->suspend();
-            }
-        }
-    }
-
-    mcap::McapReader mcap_reader;
-    auto messages = get_msgs_mcap(file_name, mcap_reader);
-
-    unsigned int n_received_msgs = 0;
-    double max_timestamp = 0;
-    for (auto it = messages.begin(); it != messages.end(); it++)
-    {
-        n_received_msgs++;
-        double time_seconds = ((current_time) - (it->message.logTime)) * pow(10.0, -9.0);
-        if (time_seconds > max_timestamp)
-        {
-            max_timestamp = time_seconds;
-        }
-    }
-    mcap_reader.close();
-
-    return std::tuple<unsigned int, double>{n_received_msgs, max_timestamp};
+    // Verify the recorded messages count
+    const auto read_messages_count = count_messages_(read_messages);
+    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_1);
 }
 
-TEST(McapFileCreationTest, mcap_data_msgs)
+/**
+ * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from RUNNING to SUSPENDED.
+ *
+ * The recorder should record all messages while in RUNNING state and none while in SUSPENDED state.
+ *
+ * CASES:
+ *  - Verify that the message count matches the recorded message count.
+ */
+TEST_F(McapFileCreationTest, transition_running_suspended)
 {
+    const std::string OUTPUT_FILE_NAME = "transition_running_suspended";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-    const std::string file_name = "output_mcap_data_msgs";
-    eprosima::fastrtps::types::DynamicData_ptr send_data;
-    send_data = record(file_name);
+    constexpr auto NUMBER_OF_MESSAGES_1 = 11;
+    constexpr auto STATE_1 = DdsRecorderState::RUNNING;
+    constexpr auto NUMBER_OF_MESSAGES_2 = 9;
+    constexpr auto STATE_2 = DdsRecorderState::SUSPENDED;
 
-    eprosima::fastrtps::types::DynamicPubSubType pubsubType;
-    eprosima::fastrtps::rtps::SerializedPayload_t payload;
-    payload.reserve(
-        pubsubType.getSerializedSizeProvider(
-            send_data.get()
-            )()
-        );
-    pubsubType.serialize(send_data.get(), &payload);
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-    mcap::McapReader mcap_reader;
-    auto messages = get_msgs_mcap(file_name, mcap_reader);
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
-    for (auto it = messages.begin(); it != messages.end(); it++)
-    {
-        auto received_msg = reinterpret_cast<unsigned char const*>(it->message.data);
-        for (unsigned int i = 0; i < payload.length; i++)
-        {
-            ASSERT_EQ(payload.data[i], received_msg[i]) << "wrong data !!";
-        }
-        ASSERT_EQ(payload.length, it->message.dataSize) << "length fails !!";
-    }
-    mcap_reader.close();
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
+    // Verify the recorded messages count
+    const auto read_messages_count = count_messages_(read_messages);
+    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_1);
 }
 
-TEST(McapFileCreationTest, mcap_dds_topic)
+/**
+ * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from RUNNING to STOPPED.
+ *
+ * The recorder should record all messages while in RUNNING state and none while in STOPPED state.
+ *
+ * CASES:
+ *  - Verify that the message count matches the recorded message count.
+ */
+TEST_F(McapFileCreationTest, transition_running_stopped)
 {
+    const std::string OUTPUT_FILE_NAME = "transition_running_stopped";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-    const std::string file_name = "output_mcap_dds_topic";
+    constexpr auto NUMBER_OF_MESSAGES_1 = 11;
+    constexpr auto STATE_1 = DdsRecorderState::RUNNING;
+    constexpr auto NUMBER_OF_MESSAGES_2 = 9;
+    constexpr auto STATE_2 = DdsRecorderState::STOPPED;
 
-    record(file_name);
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-    mcap::McapReader mcap_reader;
-    auto messages = get_msgs_mcap(file_name, mcap_reader);
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
-    std::string received_topic = "";
-    std::string received_data_type_name =  "";
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    for (auto it = messages.begin(); it != messages.end(); it++)
-    {
-        received_topic = it->channel->topic;
-        received_data_type_name = it->schema->name;
-    }
-    mcap_reader.close();
-
-    // Test data
-    ASSERT_EQ(received_topic, test::dds_topic_name);
-    ASSERT_EQ(received_data_type_name, test::dds_type_name);
-
+    // Verify the recorded messages count
+    const auto read_messages_count = count_messages_(read_messages);
+    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_1);
 }
 
-TEST(McapFileCreationTest, mcap_ros2_topic)
+/**
+ * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from PAUSED to RUNNING.
+ *
+ * The recorder should not record any messages while in PAUSED state and all messages while in RUNNING state.
+ *
+ * CASES:
+ *  - Verify that the message count matches the recorded message count.
+ */
+TEST_F(McapFileCreationTest, transition_paused_running)
 {
+    const std::string OUTPUT_FILE_NAME = "transition_paused_running";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-    const std::string file_name = "output_mcap_ros2_topic";
+    constexpr auto NUMBER_OF_MESSAGES_1 = 11;
+    constexpr auto STATE_1 = DdsRecorderState::PAUSED;
+    constexpr auto NUMBER_OF_MESSAGES_2 = 9;
+    constexpr auto STATE_2 = DdsRecorderState::RUNNING;
 
-    record(file_name, 1, 1, true);
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-    mcap::McapReader mcap_reader;
-    auto messages = get_msgs_mcap(file_name, mcap_reader);
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
-    std::string received_topic = "";
-    std::string received_data_type_name =  "";
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    for (auto it = messages.begin(); it != messages.end(); it++)
-    {
-        received_topic = it->channel->topic;
-        received_data_type_name = it->schema->name;
-    }
-    mcap_reader.close();
-
-    // Test data
-    ASSERT_EQ(received_topic, eprosima::utils::demangle_if_ros_topic(test::ros2_topic_name));
-    ASSERT_EQ(received_data_type_name, eprosima::utils::demangle_if_ros_type(test::ros2_type_name));
-
+    // Verify the recorded messages count
+    const auto read_messages_count = count_messages_(read_messages);
+    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_2);
 }
 
-TEST(McapFileCreationTest, mcap_data_num_msgs)
+/**
+ * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from PAUSED to SUSPENDED.
+ *
+ * The recorder should not record any messages while in PAUSED state or while in SUSPENDED state.
+ *
+ * CASES:
+ *  - Verify that the message count matches the recorded message count.
+ */
+TEST_F(McapFileCreationTest, transition_paused_suspended)
 {
+    const std::string OUTPUT_FILE_NAME = "transition_paused_suspended";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-    const std::string file_name = "output_mcap_data_num_msgs";
+    constexpr auto NUMBER_OF_MESSAGES_1 = 11;
+    constexpr auto STATE_1 = DdsRecorderState::PAUSED;
+    constexpr auto NUMBER_OF_MESSAGES_2 = 9;
+    constexpr auto STATE_2 = DdsRecorderState::SUSPENDED;
 
-    record(file_name, test::n_msgs);
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-    mcap::McapReader mcap_reader;
-    auto messages = get_msgs_mcap(file_name, mcap_reader);
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
-    unsigned int n_received_msgs = 0;
-    for (auto it = messages.begin(); it != messages.end(); it++)
-    {
-        n_received_msgs++;
-    }
-    mcap_reader.close();
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Test data
-    ASSERT_EQ(test::n_msgs, n_received_msgs);
-
+    // Verify the recorded messages count
+    const auto read_messages_count = count_messages_(read_messages);
+    ASSERT_EQ(read_messages_count, 0);
 }
 
-TEST(McapFileCreationTest, mcap_data_num_msgs_downsampling)
+/**
+ * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from PAUSED to STOPPED.
+ *
+ * The recorder should not record any messages while in PAUSED state or while in STOPPED state.
+ *
+ * CASES:
+ *  - Verify that the message count matches the recorded message count.
+ */
+TEST_F(McapFileCreationTest, transition_paused_stopped)
 {
+    const std::string OUTPUT_FILE_NAME = "transition_paused_stopped";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-    const std::string file_name = "output_mcap_data_num_msgs_downsampling";
+    constexpr auto NUMBER_OF_MESSAGES_1 = 11;
+    constexpr auto STATE_1 = DdsRecorderState::PAUSED;
+    constexpr auto NUMBER_OF_MESSAGES_2 = 9;
+    constexpr auto STATE_2 = DdsRecorderState::STOPPED;
 
-    record(file_name, test::n_msgs, test::downsampling);
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-    mcap::McapReader mcap_reader;
-    auto messages = get_msgs_mcap(file_name, mcap_reader);
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
-    unsigned int n_received_msgs = 0;
-    for (auto it = messages.begin(); it != messages.end(); it++)
-    {
-        n_received_msgs++;
-    }
-    mcap_reader.close();
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Test data
-    unsigned int expected_msgs = test::n_msgs / test::downsampling;
-    if (test::n_msgs % test::downsampling)
-    {
-        expected_msgs++;
-    }
-    ASSERT_EQ(expected_msgs, n_received_msgs);
-
+    // Verify the recorded messages count
+    const auto read_messages_count = count_messages_(read_messages);
+    ASSERT_EQ(read_messages_count, 0);
 }
 
-//////////////////////
-// With transitions //
-//////////////////////
-
-TEST(McapFileCreationTest, transition_running)
+/**
+ * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from SUSPENDED to RUNNING.
+ *
+ * The recorder should not record any messages while in SUSPENDED state and all messages while in RUNNING state.
+ *
+ * CASES:
+ *  - Verify that the message count matches the recorded message count.
+ */
+TEST_F(McapFileCreationTest, transition_suspended_running)
 {
-    const std::string file_name = "output_transition_running";
+    const std::string OUTPUT_FILE_NAME = "transition_suspended_running";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
+    constexpr auto NUMBER_OF_MESSAGES_1 = 11;
+    constexpr auto STATE_1 = DdsRecorderState::SUSPENDED;
+    constexpr auto NUMBER_OF_MESSAGES_2 = 9;
+    constexpr auto STATE_2 = DdsRecorderState::RUNNING;
 
-    auto recording = record_with_transitions(
-        file_name,
-        DdsRecorderState::RUNNING,
-        n_data_1, n_data_2,
-        DdsRecorderState::RUNNING);
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-    unsigned int n_received_msgs = std::get<0>(recording);
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
-    ASSERT_EQ(n_received_msgs, (n_data_1 + n_data_2));
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
+    // Verify the recorded messages count
+    const auto read_messages_count = count_messages_(read_messages);
+    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_2);
 }
 
-TEST(McapFileCreationTest, transition_paused)
+/**
+ * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from SUSPENDED to PAUSED.
+ *
+ * The recorder should not record any messages while in SUSPENDED state or while in PAUSED state.
+ *
+ * CASES:
+ *  - Verify that the message count matches the recorded message count.
+ */
+TEST_F(McapFileCreationTest, transition_suspended_paused)
 {
-    const std::string file_name = "output_transition_paused";
+    const std::string OUTPUT_FILE_NAME = "transition_suspended_paused";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
+    constexpr auto NUMBER_OF_MESSAGES_1 = 11;
+    constexpr auto STATE_1 = DdsRecorderState::SUSPENDED;
+    constexpr auto NUMBER_OF_MESSAGES_2 = 9;
+    constexpr auto STATE_2 = DdsRecorderState::PAUSED;
 
-    auto recording = record_with_transitions(
-        file_name,
-        DdsRecorderState::PAUSED,
-        n_data_1, n_data_2,
-        DdsRecorderState::PAUSED);
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-    unsigned int n_received_msgs = std::get<0>(recording);
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
-    ASSERT_EQ(n_received_msgs, 0);
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
+    // Verify the recorded messages count
+    const auto read_messages_count = count_messages_(read_messages);
+    ASSERT_EQ(read_messages_count, 0);
 }
 
-TEST(McapFileCreationTest, transition_stopped)
+/**
+ * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from SUSPENDED to STOPPED.
+ *
+ * The recorder should not record any messages while in SUSPENDED state or while in STOPPED state.
+ *
+ * CASES:
+ *  - Verify that the message count matches the recorded message count.
+ */
+TEST_F(McapFileCreationTest, transition_suspended_stopped)
 {
-    const std::string file_name = "output_transition_stopped";
+    const std::string OUTPUT_FILE_NAME = "transition_suspended_stopped";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
+    constexpr auto NUMBER_OF_MESSAGES_1 = 11;
+    constexpr auto STATE_1 = DdsRecorderState::SUSPENDED;
+    constexpr auto NUMBER_OF_MESSAGES_2 = 9;
+    constexpr auto STATE_2 = DdsRecorderState::STOPPED;
 
-    auto recording = record_with_transitions(
-        file_name,
-        DdsRecorderState::STOPPED,
-        n_data_1, n_data_2,
-        DdsRecorderState::STOPPED);
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-    unsigned int n_received_msgs = std::get<0>(recording);
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
-    ASSERT_EQ(n_received_msgs, 0);
-
+    // Verify that the MCAP file wasn't created
+    ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATH));
 }
 
-TEST(McapFileCreationTest, transition_suspended)
+/**
+ * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from STOPPED to RUNNING.
+ *
+ * The recorder should not record any messages while in STOPPED state and all messages while in RUNNING state.
+ *
+ * CASES:
+ *  - Verify that the message count matches the recorded message count.
+ */
+TEST_F(McapFileCreationTest, transition_stopped_running)
 {
-    const std::string file_name = "output_transition_suspended";
+    const std::string OUTPUT_FILE_NAME = "transition_stopped_running";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
+    constexpr auto NUMBER_OF_MESSAGES_1 = 11;
+    constexpr auto STATE_1 = DdsRecorderState::STOPPED;
+    constexpr auto NUMBER_OF_MESSAGES_2 = 9;
+    constexpr auto STATE_2 = DdsRecorderState::RUNNING;
 
-    auto recording = record_with_transitions(
-        file_name,
-        DdsRecorderState::SUSPENDED,
-        n_data_1, n_data_2,
-        DdsRecorderState::SUSPENDED);
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-    unsigned int n_received_msgs = std::get<0>(recording);
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
-    ASSERT_EQ(n_received_msgs, 0);
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
+    // Verify the recorded messages count
+    const auto read_messages_count = count_messages_(read_messages);
+    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_2);
 }
 
-TEST(McapFileCreationTest, transition_running_paused)
+/**
+ * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from STOPPED to PAUSED.
+ *
+ * The recorder should not record any messages while in STOPPED state or while in PAUSED state.
+ *
+ * CASES:
+ *  - Verify that the message count matches the recorded message count.
+ */
+TEST_F(McapFileCreationTest, transition_stopped_paused)
 {
-    const std::string file_name = "output_transition_running_paused";
+    const std::string OUTPUT_FILE_NAME = "transition_stopped_paused";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
+    constexpr auto NUMBER_OF_MESSAGES_1 = 11;
+    constexpr auto STATE_1 = DdsRecorderState::STOPPED;
+    constexpr auto NUMBER_OF_MESSAGES_2 = 9;
+    constexpr auto STATE_2 = DdsRecorderState::PAUSED;
 
-    auto recording = record_with_transitions(
-        file_name,
-        DdsRecorderState::RUNNING,
-        n_data_1, n_data_2,
-        DdsRecorderState::PAUSED);
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-    unsigned int n_received_msgs = std::get<0>(recording);
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
-    ASSERT_EQ(n_received_msgs, (n_data_1));
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
+    // Verify the recorded messages count
+    const auto read_messages_count = count_messages_(read_messages);
+    ASSERT_EQ(read_messages_count, 0);
 }
 
-TEST(McapFileCreationTest, transition_running_stopped)
+/**
+ * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from STOPPED to SUSPENDED.
+ *
+ * The recorder should not record any messages while in STOPPED state or while in SUSPENDED state.
+ *
+ * CASES:
+ *  - Verify that the message count matches the recorded message count.
+ */
+TEST_F(McapFileCreationTest, transition_stopped_suspended)
 {
-    const std::string file_name = "output_transition_running_stopped";
+    const std::string OUTPUT_FILE_NAME = "transition_stopped_suspended";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
+    constexpr auto NUMBER_OF_MESSAGES_1 = 11;
+    constexpr auto STATE_1 = DdsRecorderState::STOPPED;
+    constexpr auto NUMBER_OF_MESSAGES_2 = 9;
+    constexpr auto STATE_2 = DdsRecorderState::SUSPENDED;
 
-    auto recording = record_with_transitions(
-        file_name,
-        DdsRecorderState::RUNNING,
-        n_data_1, n_data_2,
-        DdsRecorderState::STOPPED);
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-    unsigned int n_received_msgs = std::get<0>(recording);
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
-    ASSERT_EQ(n_received_msgs, (n_data_1));
-
+    // Verify that the MCAP file wasn't created
+    ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATH));
 }
 
-TEST(McapFileCreationTest, transition_running_suspended)
+
+// //////////////////
+// // Event window //
+// //////////////////
+
+/**
+ * @brief Verify that the DDS Recorder in PAUSED state records properly in an MCAP file with an \c EVENT_WINDOW and a
+ * small \c WAIT between the two batches of messages being sent.
+ *
+ * The recorder should record all messages.
+ * WARNING: This test could fail due to two race conditions.
+ *
+ * CASES:
+ *  - Verify that the message count matches the recorded message count.
+ *  - Verify that the oldest recorded message was recorded in the event window.
+ */
+TEST_F(McapFileCreationTest, transition_paused_event_less_window)
 {
-    const std::string file_name = "output_transition_running_suspended";
+    const std::string OUTPUT_FILE_NAME = "transition_paused_event_less_window";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
+    constexpr auto NUMBER_OF_MESSAGES_1 = 11;
+    constexpr auto STATE_1 = DdsRecorderState::PAUSED;
+    constexpr auto NUMBER_OF_MESSAGES_2 = 9;
+    constexpr auto STATE_2 = DdsRecorderState::PAUSED;
+    constexpr auto EVENT_WINDOW = 3;
+    constexpr auto WAIT = 1;
+    constexpr auto EVENT = EventKind::EVENT;
 
-    auto recording = record_with_transitions(
-        file_name,
-        DdsRecorderState::RUNNING,
-        n_data_1, n_data_2,
-        DdsRecorderState::SUSPENDED);
+    configuration_->event_window = EVENT_WINDOW;
 
-    unsigned int n_received_msgs = std::get<0>(recording);
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-    ASSERT_EQ(n_received_msgs, (n_data_1));
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, WAIT, EVENT);
 
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
+
+    // Verify the recorded messages count
+    const auto read_messages_count = count_messages_(read_messages);
+    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_1 + NUMBER_OF_MESSAGES_2);
+
+    // Verify the oldest recorded message was recorded in the event window
+    const auto max_time_past = find_max_time_past_(read_messages);
+    ASSERT_LE(max_time_past, EVENT_WINDOW);
 }
 
-TEST(McapFileCreationTest, transition_paused_running)
+/**
+ * @brief Verify that the DDS Recorder in PAUSED state records properly in an MCAP file with an \c EVENT_WINDOW and a
+ * \c WAIT as long as the \c EVENT_WINDOW between the two batches of messages being sent.
+ *
+ * The recorder should record the second batch of messages.
+ *
+ * CASES:
+ *  - Verify that the message count matches the recorded message count.
+ *  - Verify that the oldest recorded message was recorded in the event window.
+ */
+TEST_F(McapFileCreationTest, transition_paused_event_max_window)
 {
-    const std::string file_name = "output_transition_paused_running";
+    const std::string OUTPUT_FILE_NAME = "transition_paused_event_max_window";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
+    constexpr auto NUMBER_OF_MESSAGES_1 = 11;
+    constexpr auto STATE_1 = DdsRecorderState::PAUSED;
+    constexpr auto NUMBER_OF_MESSAGES_2 = 9;
+    constexpr auto STATE_2 = DdsRecorderState::PAUSED;
+    constexpr auto EVENT_WINDOW = 3;
+    constexpr auto WAIT = EVENT_WINDOW;
+    constexpr auto EVENT = EventKind::EVENT;
 
-    auto recording = record_with_transitions(
-        file_name,
-        DdsRecorderState::PAUSED,
-        n_data_1, n_data_2,
-        DdsRecorderState::RUNNING);
+    configuration_->event_window = EVENT_WINDOW;
 
-    unsigned int n_received_msgs = std::get<0>(recording);
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-    ASSERT_EQ(n_received_msgs, (n_data_2));
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, WAIT, EVENT);
 
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
+
+    // Verify the recorded messages count
+    const auto read_messages_count = count_messages_(read_messages);
+    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_2);
+
+    // Verify the oldest recorded message was recorded in the event window
+    const auto max_time_past = find_max_time_past_(read_messages);
+    ASSERT_LE(max_time_past, EVENT_WINDOW);
 }
 
-TEST(McapFileCreationTest, transition_paused_stopped)
+// ////////////
+// // Events //
+// ////////////
+
+/**
+ * @brief Verify that the DDS Recorder in PAUSED state records properly in an MCAP file with an \c EVENT_START.
+ *
+ * The recorder should record all messages.
+ *
+ * CASES:
+ *  - Verify that the message count matches the recorded message count.
+ *  - Verify that the oldest recorded message was recorded in the event window.
+ */
+TEST_F(McapFileCreationTest, transition_paused_event_start)
 {
-    const std::string file_name = "output_transition_paused_stopped";
+    const std::string OUTPUT_FILE_NAME = "transition_paused_event_start";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
+    constexpr auto NUMBER_OF_MESSAGES_1 = 11;
+    constexpr auto STATE_1 = DdsRecorderState::PAUSED;
+    constexpr auto NUMBER_OF_MESSAGES_2 = 9;
+    constexpr auto STATE_2 = DdsRecorderState::PAUSED;
+    constexpr auto EVENT_WINDOW = 3;
+    constexpr auto WAIT = 3;
+    constexpr auto EVENT = EventKind::EVENT_START;
 
-    auto recording = record_with_transitions(
-        file_name,
-        DdsRecorderState::PAUSED,
-        n_data_1, n_data_2,
-        DdsRecorderState::STOPPED);
+    configuration_->event_window = EVENT_WINDOW;
 
-    unsigned int n_received_msgs = std::get<0>(recording);
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-    ASSERT_EQ(n_received_msgs, 0);
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, WAIT, EVENT);
 
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
+
+    // Verify the recorded messages count
+    const auto read_messages_count = count_messages_(read_messages);
+    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_2);
+
+    // Verify the oldest recorded message was recorded in the event window
+    const auto max_time_past = find_max_time_past_(read_messages);
+    ASSERT_LE(max_time_past, EVENT_WINDOW);
 }
 
-TEST(McapFileCreationTest, transition_paused_suspended)
+/**
+ * @brief Verify that the DDS Recorder in PAUSED state records properly in an MCAP file with an \c EVENT_SUSPEND.
+ *
+ * The recorder should record all messages.
+ *
+ * CASES:
+ *  - Verify that the message count matches the recorded message count.
+ *  - Verify that the oldest recorded message was recorded in the event window.
+ */
+TEST_F(McapFileCreationTest, transition_paused_event_suspend)
 {
-    const std::string file_name = "output_transition_paused_suspended";
+    const std::string OUTPUT_FILE_NAME = "transition_paused_event_suspend";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
+    constexpr auto NUMBER_OF_MESSAGES_1 = 11;
+    constexpr auto STATE_1 = DdsRecorderState::PAUSED;
+    constexpr auto NUMBER_OF_MESSAGES_2 = 9;
+    constexpr auto STATE_2 = DdsRecorderState::PAUSED;
+    constexpr auto EVENT_WINDOW = 3;
+    constexpr auto WAIT = 3;
+    constexpr auto EVENT = EventKind::EVENT_SUSPEND;
 
-    auto recording = record_with_transitions(
-        file_name,
-        DdsRecorderState::PAUSED,
-        n_data_1, n_data_2,
-        DdsRecorderState::SUSPENDED);
+    configuration_->event_window = EVENT_WINDOW;
 
-    unsigned int n_received_msgs = std::get<0>(recording);
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-    ASSERT_EQ(n_received_msgs, 0);
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, WAIT, EVENT);
 
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
+
+    // Verify the recorded messages count
+    const auto read_messages_count = count_messages_(read_messages);
+    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_2);
+
+    // Verify the oldest recorded message was recorded in the event window
+    const auto max_time_past = find_max_time_past_(read_messages);
+    ASSERT_LE(max_time_past, EVENT_WINDOW);
 }
 
-TEST(McapFileCreationTest, transition_stopped_running)
+/**
+ * @brief Verify that the DDS Recorder in PAUSED state records properly in an MCAP file with an \c EVENT_STOP.
+ *
+ * The recorder should record all messages.
+ *
+ * CASES:
+ *  - Verify that the message count matches the recorded message count.
+ *  - Verify that the oldest recorded message was recorded in the event window.
+ */
+TEST_F(McapFileCreationTest, transition_paused_event_stop)
 {
-    const std::string file_name = "output_transition_stopped_running";
+    const std::string OUTPUT_FILE_NAME = "transition_paused_event_stop";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
+    constexpr auto NUMBER_OF_MESSAGES_1 = 11;
+    constexpr auto STATE_1 = DdsRecorderState::PAUSED;
+    constexpr auto NUMBER_OF_MESSAGES_2 = 9;
+    constexpr auto STATE_2 = DdsRecorderState::PAUSED;
+    constexpr auto EVENT_WINDOW = 3;
+    constexpr auto WAIT = 3;
+    constexpr auto EVENT = EventKind::EVENT_STOP;
 
-    auto recording = record_with_transitions(
-        file_name,
-        DdsRecorderState::STOPPED,
-        n_data_1, n_data_2,
-        DdsRecorderState::RUNNING);
+    configuration_->event_window = EVENT_WINDOW;
 
-    unsigned int n_received_msgs = std::get<0>(recording);
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-    ASSERT_EQ(n_received_msgs, (n_data_2));
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, WAIT, EVENT);
 
-}
+    // Read the recorded messages
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-TEST(McapFileCreationTest, transition_stopped_paused)
-{
-    const std::string file_name = "output_transition_stopped_paused";
+    // Verify the recorded messages count
+    const auto read_messages_count = count_messages_(read_messages);
+    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_2);
 
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
-
-    auto recording = record_with_transitions(
-        file_name,
-        DdsRecorderState::STOPPED,
-        n_data_1, n_data_2,
-        DdsRecorderState::PAUSED);
-
-    unsigned int n_received_msgs = std::get<0>(recording);
-
-    ASSERT_EQ(n_received_msgs, 0);
-
-}
-
-TEST(McapFileCreationTest, transition_stopped_suspended)
-{
-    const std::string file_name = "output_transition_stopped_suspended";
-
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
-
-    auto recording = record_with_transitions(
-        file_name,
-        DdsRecorderState::SUSPENDED,
-        n_data_1, n_data_2,
-        DdsRecorderState::SUSPENDED);
-
-    unsigned int n_received_msgs = std::get<0>(recording);
-
-    ASSERT_EQ(n_received_msgs, 0);
-
-}
-
-TEST(McapFileCreationTest, transition_suspended_running)
-{
-    const std::string file_name = "output_transition_suspended_running";
-
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
-
-    auto recording = record_with_transitions(
-        file_name,
-        DdsRecorderState::SUSPENDED,
-        n_data_1, n_data_2,
-        DdsRecorderState::RUNNING);
-
-    unsigned int n_received_msgs = std::get<0>(recording);
-
-    ASSERT_EQ(n_received_msgs, (n_data_2));
-
-}
-
-TEST(McapFileCreationTest, transition_suspended_paused)
-{
-    const std::string file_name = "output_transition_suspended_paused";
-
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
-
-    auto recording = record_with_transitions(
-        file_name,
-        DdsRecorderState::SUSPENDED,
-        n_data_1, n_data_2,
-        DdsRecorderState::PAUSED);
-
-    unsigned int n_received_msgs = std::get<0>(recording);
-
-    ASSERT_EQ(n_received_msgs, 0);
-
-}
-
-TEST(McapFileCreationTest, transition_suspended_stopped)
-{
-    const std::string file_name = "output_transition_suspended_stopped";
-
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
-
-    auto recording = record_with_transitions(
-        file_name,
-        DdsRecorderState::STOPPED,
-        n_data_1, n_data_2,
-        DdsRecorderState::SUSPENDED);
-
-    unsigned int n_received_msgs = std::get<0>(recording);
-
-    ASSERT_EQ(n_received_msgs, 0);
-
-}
-
-// can fail due to two race conditions but is very unlikely
-TEST(McapFileCreationTest, transition_paused_event_less_window)
-{
-    const std::string file_name = "output_transition_paused_event_less_window";
-
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
-    unsigned int event_window = 3;
-
-    auto recording = record_with_transitions(
-        file_name,
-        DdsRecorderState::PAUSED,
-        n_data_1, n_data_2,
-        DdsRecorderState::PAUSED,
-        EventKind::EVENT, event_window, 1);
-
-    unsigned int n_received_msgs = std::get<0>(recording);
-    double max_timestamp = std::get<1>(recording);
-
-    ASSERT_EQ(n_received_msgs, (n_data_1 + n_data_2));
-    ASSERT_LE(max_timestamp, event_window);
-
-}
-
-TEST(McapFileCreationTest, transition_paused_event_max_window)
-{
-    const std::string file_name = "output_transition_paused_event_max_window";
-
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
-    unsigned int event_window = 3;
-
-    auto recording = record_with_transitions(
-        file_name,
-        DdsRecorderState::PAUSED,
-        n_data_1, n_data_2,
-        DdsRecorderState::PAUSED,
-        EventKind::EVENT, event_window, 3);
-
-    unsigned int n_received_msgs = std::get<0>(recording);
-    double max_timestamp = std::get<1>(recording);
-
-    ASSERT_EQ(n_received_msgs, n_data_2);
-    ASSERT_LE(max_timestamp, event_window);
-
-}
-
-TEST(McapFileCreationTest, transition_paused_event_start)
-{
-    const std::string file_name = "output_transition_paused_event_start";
-
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
-    unsigned int event_window = 3;
-
-    auto recording = record_with_transitions(
-        file_name,
-        DdsRecorderState::PAUSED,
-        n_data_1, n_data_2,
-        DdsRecorderState::PAUSED,
-        EventKind::EVENT_START, event_window, 3);
-
-    unsigned int n_received_msgs = std::get<0>(recording);
-    double max_timestamp = std::get<1>(recording);
-
-    ASSERT_EQ(n_received_msgs, n_data_2);
-    ASSERT_LE(max_timestamp, event_window);
-
-}
-
-TEST(McapFileCreationTest, transition_paused_event_stop)
-{
-    const std::string file_name = "output_transition_paused_event_stop";
-
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
-    unsigned int event_window = 3;
-
-    auto recording = record_with_transitions(
-        file_name,
-        DdsRecorderState::PAUSED,
-        n_data_1, n_data_2,
-        DdsRecorderState::PAUSED,
-        EventKind::EVENT_STOP, event_window, 3);
-
-    unsigned int n_received_msgs = std::get<0>(recording);
-    double max_timestamp = std::get<1>(recording);
-
-    ASSERT_EQ(n_received_msgs, n_data_2);
-    ASSERT_LE(max_timestamp, event_window);
-
-}
-
-TEST(McapFileCreationTest, transition_paused_event_suspend)
-{
-    const std::string file_name = "output_transition_paused_event_suspend";
-
-    unsigned int n_data_1 = rand() % 10 + 1;
-    unsigned int n_data_2 = rand() % 10 + 1;
-    unsigned int event_window = 3;
-
-    auto recording = record_with_transitions(
-        file_name,
-        DdsRecorderState::PAUSED,
-        n_data_1, n_data_2,
-        DdsRecorderState::PAUSED,
-        EventKind::EVENT_SUSPEND, event_window, 3);
-
-    unsigned int n_received_msgs = std::get<0>(recording);
-    double max_timestamp = std::get<1>(recording);
-
-    ASSERT_EQ(n_received_msgs, n_data_2);
-    ASSERT_LE(max_timestamp, event_window);
-
+    // Verify the oldest recorded message was recorded in the event window
+    const auto max_time_past = find_max_time_past_(read_messages);
+    ASSERT_LE(max_time_past, EVENT_WINDOW);
 }
 
 int main(

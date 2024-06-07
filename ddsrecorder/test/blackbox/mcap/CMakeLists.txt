@@ -46,24 +46,32 @@ set(TEST_LIST
         mcap_ros2_topic
         mcap_data_num_msgs
         mcap_data_num_msgs_downsampling
+
+        # State
         transition_running
         transition_paused
         transition_stopped
         transition_suspended
+
+        # Transitions
         transition_running_paused
-        transition_running_stopped
         transition_running_suspended
+        transition_running_stopped
         transition_paused_running
-        transition_paused_stopped
         transition_paused_suspended
-        transition_stopped_running
-        transition_stopped_paused
-        transition_stopped_suspended
+        transition_paused_stopped
         transition_suspended_running
         transition_suspended_paused
         transition_suspended_stopped
+        transition_stopped_running
+        transition_stopped_paused
+        transition_stopped_suspended
+
+        # Event window
         transition_paused_event_less_window
         transition_paused_event_max_window
+
+        # Events
         transition_paused_event_start
         transition_paused_event_stop
         transition_paused_event_suspend
