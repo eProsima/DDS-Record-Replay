@@ -51,6 +51,14 @@ SqlWriter::SqlWriter(
 {
 }
 
+void SqlWriter::update_dynamic_types(
+        const DynamicType& dynamic_type)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    dynamic_types_.push_back(dynamic_type);
+}
+
 void SqlWriter::open_new_file_nts_(
         const std::uint64_t min_file_size)
 {
@@ -123,16 +131,16 @@ void SqlWriter::open_new_file_nts_(
     create_sql_table_("Messages", create_messages_table);
 }
 
-void SqlWriter::close_current_file_nts_()
-{
-    sqlite3_close(database_);
-    file_tracker_->close_file();
-}
-
 template <>
 void SqlWriter::write_nts_(
         const DynamicType& dynamic_type)
 {
+    if (!enabled_)
+    {
+        logWarning(DDSRECORDER_SQL_WRITER, "Attempting to write a dynamic type in a disabled writer.");
+        return;
+    }
+
     logInfo(DDSRECORDER_SQL_WRITER, "Writing dynamic type " << dynamic_type.type_name() << ".");
 
     // Define the SQL statement
@@ -286,6 +294,22 @@ void SqlWriter::write_nts_(
 
     // Finalize the SQL statement
     sqlite3_finalize(statement);
+}
+
+// NOTE: The method has to be defined after the definition of write_nts_ for DynamicType
+void SqlWriter::close_current_file_nts_()
+{
+    if (record_types_ && dynamic_types_.size() > 0)
+    {
+        // Write the dynamic types
+        for (const auto& dynamic_type : dynamic_types_)
+        {
+            write_nts_(dynamic_type);
+        }
+    }
+
+    sqlite3_close(database_);
+    file_tracker_->close_file();
 }
 
 void SqlWriter::create_sql_table_(
