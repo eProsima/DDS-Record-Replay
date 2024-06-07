@@ -83,7 +83,7 @@ void SqlHandler::add_schema(
     if (configuration_.record_types)
     {
         const auto dynamic_type = dynamic_types_.dynamic_types().back();
-        sql_writer_.write(dynamic_type);
+        sql_writer_.update_dynamic_types(dynamic_type);
     }
 
     // Check if there are any pending samples for this new type. If so, dump them.

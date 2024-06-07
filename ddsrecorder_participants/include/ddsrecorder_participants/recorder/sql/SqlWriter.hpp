@@ -20,10 +20,17 @@
 
 #include <sqlite3.h>
 #include <string>
+#include <vector>
 
 #include <cstdint>
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/recorder/output/BaseWriter.hpp>
+
+#if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
+    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
+#else
+    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollection.hpp>
+#endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -52,6 +59,17 @@ public:
     void write(
             const T& data);
 
+    /**
+     * @brief Updates the dynamic types.
+     *
+     * The dynamic types are written down when the MCAP file is being closed.
+     * This is done so that dynamic types can be updated even when the writer is disabled.
+     *
+     * @param dynamic_type The dynamic type to add to \c dynamic_types_.
+     */
+    void update_dynamic_types(
+            const DynamicType& dynamic_type);
+
 protected:
 
     /**
@@ -67,6 +85,8 @@ protected:
 
     /**
      * @brief Closes the current file.
+     *
+     * Writes the dynamic types to the SQL file.
      *
      * @throws \c InconsistencyException if closing the current file fails.
      */
@@ -96,6 +116,9 @@ protected:
 
     // The SQLite database
     sqlite3* database_;
+
+    // The received dynamic types
+    std::vector<DynamicType> dynamic_types_;
 
     // The size of an empty SQL file
     static constexpr std::uint64_t MIN_SQL_SIZE{20480};
