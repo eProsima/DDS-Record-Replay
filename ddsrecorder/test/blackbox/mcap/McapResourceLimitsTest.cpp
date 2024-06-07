@@ -49,7 +49,7 @@ using namespace eprosima;
 using namespace eprosima::fastdds::dds;
 
 
-class ResourceLimitsTest : public testing::Test
+class McapResourceLimitsTest : public testing::Test
 {
 public:
 
@@ -201,7 +201,7 @@ protected:
  * CASES:
  * - check that the DDS Recorder records data until it reaches the max-file-size.
  */
-TEST_F(ResourceLimitsTest, max_file_size)
+TEST_F(McapResourceLimitsTest, max_file_size)
 {
     const std::string OUTPUT_FILE_NAME = "max_file_size_test";
     const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME);
@@ -242,7 +242,7 @@ TEST_F(ResourceLimitsTest, max_file_size)
  * - check that the size of each of the DDS Recorder's output files is in bounds.
  * - check that the aggregate size of the DDS Recorder's output files is in bounds.
  */
-TEST_F(ResourceLimitsTest, max_size)
+TEST_F(McapResourceLimitsTest, max_size)
 {
     constexpr std::uint32_t NUMBER_OF_FILES = test::limits::MAX_FILES + 1;
     const std::string OUTPUT_FILE_NAME = "max_size_test";
@@ -321,7 +321,7 @@ TEST_F(ResourceLimitsTest, max_size)
  * - check that the aggregate size of the DDS Recorder's output files doesn't exceed the max-size.
  * - check that the DDS Recorder applies file rotation after reaching the max-size.
  */
-TEST_F(ResourceLimitsTest, file_rotation)
+TEST_F(McapResourceLimitsTest, file_rotation)
 {
     constexpr std::uint32_t NUMBER_OF_FILES = 9;
     const std::string OUTPUT_FILE_NAME = "file_rotation_test";
