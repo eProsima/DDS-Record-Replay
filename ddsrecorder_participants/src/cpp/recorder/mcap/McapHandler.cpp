@@ -286,7 +286,7 @@ void McapHandler::update_channels_nts_(
             logInfo(DDSRECORDER_MCAP_HANDLER,
                     "MCAP_WRITE | Updating channel in topic " << channel.first.m_topic_name << ".");
 
-            assert(channel.first.m_topic_name == channel.second.topic);
+            assert(utils::demangle_if_ros_topic(channel.first.m_topic_name) == channel.second.topic);
             mcap::Channel new_channel(channel.second.topic, "cdr", new_schema_id, channel.second.metadata);
 
             mcap_writer_.write(new_channel);
