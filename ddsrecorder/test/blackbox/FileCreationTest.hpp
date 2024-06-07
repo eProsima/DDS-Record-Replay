@@ -83,7 +83,7 @@ public:
 
         // Register the type
         fastdds::dds::TypeSupport type(new HelloWorldPubSubType());
-        type.register_type(participant_);
+        participant_->register_type(type);
 
         // Create the publisher
         publisher_ = participant_->create_publisher(fastdds::dds::PUBLISHER_QOS_DEFAULT, nullptr);
