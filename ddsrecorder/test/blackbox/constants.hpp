@@ -35,6 +35,7 @@ using namespace eprosima::ddspipe::core::types;
 // The domain and topic to publish in.
 constexpr DomainIdType DOMAIN = 84;
 const std::string TOPIC_NAME = "DdsRecorderBlackboxTestTopic";
+const std::string ROS2_TOPIC_NAME = "rt/blackbox_test_topic";
 
 // The id of the publishing participant.
 const ParticipantId PARTICIPANT_ID = "DdsRecorderBlackboxTestParticipant";
