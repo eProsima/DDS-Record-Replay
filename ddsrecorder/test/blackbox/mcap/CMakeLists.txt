@@ -84,15 +84,14 @@ add_blackbox_executable(
     "${TEST_LIBRARY_SOURCES}"
 )
 
+####################
+# McapLogErrorTest #
+####################
 
-########################
-# Mcap Log Error Tests #
-########################
-
-set(TEST_NAME McapLogErrorTests)
+set(TEST_NAME McapLogErrorTest)
 
 set(TEST_SOURCES
-        McapLogErrorTests.cpp
+        McapLogErrorTest.cpp
     )
 
 set(TEST_LIST
@@ -102,7 +101,6 @@ set(TEST_LIST
 set(EXTRA_LIBRARIES
         ${MODULE_FIND_PACKAGES}
     )
-
 
 add_blackbox_executable(
     "${TEST_NAME}"
