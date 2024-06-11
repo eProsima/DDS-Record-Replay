@@ -126,13 +126,17 @@ protected:
             const std::string& topic_name);
 
     /**
-     * @brief Find the type of the topic with name \c topic_name.
+     * @brief Find the information related to \c topic_name.
      *
-     * @param topic_name: Name of the topic to find its type.
-     * @return Type of the topic with name \c topic_name.
+     * @param topic_name: Name of the topic.
+     * @param type_name:  Type of the topic.
+     * @param is_ros2_type: Whether the topic is a ROS 2 type.
      */
-    std::string find_type_of_topic_(
-            const std::string& topic_name);
+    void find_topic_info_(
+            const std::string& topic_name,
+            std::string& type_name,
+            std::string& topic_qos,
+            bool& is_ros2_type);
 
     // Database
     sqlite3* database_;
