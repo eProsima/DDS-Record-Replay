@@ -35,7 +35,7 @@ SqlHandler::SqlHandler(
         const BaseHandlerStateCode& init_state /* = BaseHandlerStateCode::RUNNING */,
         const std::function<void()>& on_disk_full_lambda /* = nullptr */)
     : BaseHandler(config, payload_pool)
-    , sql_writer_(config.output_settings, file_tracker, config.record_types)
+    , sql_writer_(config.output_settings, file_tracker, config.record_types, config.ros2_types)
 {
     logInfo(DDSRECORDER_SQL_HANDLER, "Creating SQL handler instance.");
 

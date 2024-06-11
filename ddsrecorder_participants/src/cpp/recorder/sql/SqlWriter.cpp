@@ -24,6 +24,7 @@
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/Formatter.hpp>
 #include <cpp_utils/Log.hpp>
+#include <cpp_utils/ros2_mangling.hpp>
 
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
@@ -46,8 +47,10 @@ namespace participants {
 SqlWriter::SqlWriter(
         const OutputSettings& configuration,
         std::shared_ptr<FileTracker>& file_tracker,
-        const bool record_types)
+        const bool record_types,
+        const bool ros2_types)
     : BaseWriter(configuration, file_tracker, record_types, MIN_SQL_SIZE)
+    , ros2_types_(ros2_types)
 {
 }
 
@@ -94,7 +97,8 @@ void SqlWriter::open_new_file_nts_(
         CREATE TABLE IF NOT EXISTS Types (
             name TEXT PRIMARY KEY NOT NULL,
             information TEXT NOT NULL,
-            object TEXT NOT NULL
+            object TEXT NOT NULL,
+            is_ros2_type TEXT NOT NULL
         );
     )"};
 
@@ -107,6 +111,7 @@ void SqlWriter::open_new_file_nts_(
             name TEXT PRIMARY KEY NOT NULL,
             type TEXT NOT NULL,
             qos TEXT NOT NULL,
+            is_ros2_topic TEXT NOT NULL,
             FOREIGN KEY(type) REFERENCES Types(name)
         );
     )"};
@@ -145,8 +150,8 @@ void SqlWriter::write_nts_(
 
     // Define the SQL statement
     const char* insert_statement = R"(
-        INSERT INTO Types (name, information, object)
-        VALUES (?, ?, ?);
+        INSERT INTO Types (name, information, object, is_ros2_type)
+        VALUES (?, ?, ?, ?);
     )";
 
     // Prepare the SQL statement
@@ -164,9 +169,13 @@ void SqlWriter::write_nts_(
     }
 
     // Bind the DynamicType to the SQL statement
-    sqlite3_bind_text(statement, 1, dynamic_type.type_name().c_str(), -1, SQLITE_TRANSIENT);
+    const auto type_name = ros2_types_ ? utils::demangle_if_ros_type(dynamic_type.type_name()) : dynamic_type.type_name();
+    const auto is_type_ros2_type = ros2_types_ && type_name != dynamic_type.type_name();
+
+    sqlite3_bind_text(statement, 1, type_name.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(statement, 2, dynamic_type.type_information().c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(statement, 3, dynamic_type.type_object().c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 4, is_type_ros2_type ? "true" : "false", -1, SQLITE_TRANSIENT);
 
     // Execute the SQL statement
     const auto step_ret = sqlite3_step(statement);
@@ -256,8 +265,8 @@ void SqlWriter::write_nts_(
 
     // Define the SQL statement
     const char* insert_statement = R"(
-        INSERT INTO Topics (name, type, qos)
-        VALUES (?, ?, ?);
+        INSERT INTO Topics (name, type, qos, is_ros2_topic)
+        VALUES (?, ?, ?, ?);
     )";
 
     // Prepare the SQL statement
@@ -275,9 +284,13 @@ void SqlWriter::write_nts_(
     }
 
     // Bind the Topic to the SQL statement
-    sqlite3_bind_text(statement, 1, topic.topic_name().c_str(), -1, SQLITE_TRANSIENT);
+    const auto topic_name = ros2_types_ ? utils::demangle_if_ros_topic(topic.topic_name()) : topic.topic_name();
+    const auto is_topic_ros2_type = ros2_types_ && topic_name != topic.topic_name();
+
+    sqlite3_bind_text(statement, 1, topic_name.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(statement, 2, topic.type_name.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(statement, 3, Serializer::serialize(topic.topic_qos).c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 4, is_topic_ros2_type ? "true" : "false", -1, SQLITE_TRANSIENT);
 
     // Execute the SQL statement
     const auto step_ret = sqlite3_step(statement);

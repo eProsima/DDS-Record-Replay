@@ -222,10 +222,11 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     // Create new channel
     mcap::KeyValueMap metadata = {};
     metadata[QOS_SERIALIZATION_QOS] = Serializer::serialize(topic.topic_qos);
-    std::string topic_name =
-            configuration_.ros2_types ? utils::demangle_if_ros_topic(topic.m_topic_name) : topic.m_topic_name;
-    // Set ROS2_TYPES to "false" if the given topic_name is equal to topic.m_topic_name, otherwise set it to "true".
-    metadata[ROS2_TYPES] = topic_name.compare(topic.m_topic_name) ? "true" : "false";
+
+    const auto topic_name = configuration_.ros2_types ? utils::demangle_if_ros_topic(topic.m_topic_name) : topic.m_topic_name;
+    const auto is_topic_ros2_type = configuration_.ros2_types && topic_name != topic.m_topic_name;
+
+    metadata[ROS2_TYPES] = is_topic_ros2_type ? "true" : "false";
     mcap::Channel new_channel(topic_name, "cdr", schema_id, metadata);
 
     mcap_writer_.write(new_channel);
