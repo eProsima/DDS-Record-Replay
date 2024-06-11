@@ -43,6 +43,19 @@ const ParticipantId PARTICIPANT_ID = "DdsRecorderBlackboxTestParticipant";
 // The maximum amount of time (in seconds) to wait for the subscriber to acknowledge messages.
 const fastrtps::Duration_t MAX_WAITING_TIME(10);
 
+namespace handler {
+
+constexpr auto MAX_PENDING_SAMPLES = 5000;
+constexpr auto BUFFER_SIZE = 100;
+constexpr auto EVENT_WINDOW = 20;
+constexpr auto CLEANUP_PERIOD = 0;
+constexpr auto LOG_PUBLISH_TIME = false;
+constexpr auto ONLY_WITH_SCHEMA = false;
+constexpr auto RECORD_TYPES = false;
+constexpr auto ROS2_TYPES = false;
+
+}
+
 namespace limits {
 
 constexpr std::uint32_t MAX_SIZE = 30000;
