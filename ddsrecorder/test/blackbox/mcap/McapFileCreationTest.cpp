@@ -12,15 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <cpp_utils/testing/gtest_aux.hpp>
-#include <gtest/gtest.h>
-
-#include <cpp_utils/ros2_mangling.hpp>
-
-#include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
-#include <ddsrecorder_yaml/recorder/yaml_configuration_tags.hpp>
-
-#include <tool/DdsRecorder.hpp>
+#include <iostream>
+#include <thread>
+#include <chrono>
 
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/publisher/DataWriter.hpp>
@@ -30,15 +24,21 @@
 #include <fastdds/dds/xtypes/dynamic_types/DynamicDataFactory.hpp>
 #include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
 
+#include <cpp_utils/ros2_mangling.hpp>
+#include <cpp_utils/testing/gtest_aux.hpp>
+
+#include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
+#include <ddsrecorder_yaml/recorder/yaml_configuration_tags.hpp>
+
+#include <tool/DdsRecorder.hpp>
+
 #include <mcap/reader.hpp>
 
 #include "../../resources/types/hello_world/HelloWorld.hpp"
 #include "../../resources/types/hello_world/HelloWorldPubSubTypes.h"
 #include "../../resources/types/hello_world/HelloWorldTypeObjectSupport.hpp"
 
-#include <iostream>
-#include <thread>
-#include <chrono>
+#include <gtest/gtest.h>
 
 using namespace eprosima::ddspipe;
 using namespace eprosima::ddsrecorder;

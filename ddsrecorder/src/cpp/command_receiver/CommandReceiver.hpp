@@ -21,11 +21,7 @@
 
 #include <mutex>
 #include <queue>
-
-#include <cpp_utils/event/MultipleEventHandler.hpp>
-#include <cpp_utils/macros/custom_enumeration.hpp>
-
-#include <ddspipe_participants/configuration/SimpleParticipantConfiguration.hpp>
+#include <string>
 
 #include <fastdds/dds/core/status/SubscriptionMatchedStatus.hpp>
 #include <fastdds/dds/domain/DomainParticipant.hpp>
@@ -34,6 +30,11 @@
 #include <fastdds/dds/subscriber/DataReader.hpp>
 #include <fastdds/dds/subscriber/DataReaderListener.hpp>
 #include <fastdds/dds/subscriber/Subscriber.hpp>
+
+#include <cpp_utils/event/MultipleEventHandler.hpp>
+#include <cpp_utils/macros/custom_enumeration.hpp>
+
+#include <ddspipe_participants/configuration/SimpleParticipantConfiguration.hpp>
 
 #include "types/DdsRecorderCommand/DdsRecorderCommandPubSubTypes.h"
 #include "types/DdsRecorderCommand/DdsRecorderCommandTypeObjectSupport.hpp"
@@ -64,8 +65,8 @@ public:
             uint32_t domain,
             const std::string& command_topic_name,
             const std::string& status_topic_name,
-            std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler,
-            std::shared_ptr<eprosima::ddspipe::participants::SimpleParticipantConfiguration> participant_configuration);
+            std::shared_ptr<utils::event::MultipleEventHandler> event_handler,
+            std::shared_ptr<ddspipe::participants::SimpleParticipantConfiguration> participant_configuration);
 
     virtual ~CommandReceiver();
 
@@ -79,11 +80,11 @@ public:
             std::string info = "");
 
     void on_data_available(
-            eprosima::fastdds::dds::DataReader* reader) override;
+            fastdds::dds::DataReader* reader) override;
 
     void on_subscription_matched(
-            eprosima::fastdds::dds::DataReader* reader,
-            const eprosima::fastdds::dds::SubscriptionMatchedStatus& info) override;
+            fastdds::dds::DataReader* reader,
+            const fastdds::dds::SubscriptionMatchedStatus& info) override;
 
 private:
 
@@ -95,25 +96,25 @@ private:
 
     // DDS related attributes
     uint32_t domain_;
-    eprosima::fastdds::dds::DomainParticipant* participant_;
+    fastdds::dds::DomainParticipant* participant_;
 
     // Command attributes
     std::string command_topic_name_;
-    eprosima::fastdds::dds::Subscriber* command_subscriber_;
-    eprosima::fastdds::dds::Topic* command_topic_;
-    eprosima::fastdds::dds::DataReader* command_reader_;
-    eprosima::fastdds::dds::TypeSupport command_type_;
+    fastdds::dds::Subscriber* command_subscriber_;
+    fastdds::dds::Topic* command_topic_;
+    fastdds::dds::DataReader* command_reader_;
+    fastdds::dds::TypeSupport command_type_;
 
     // Status attributes
     std::string status_topic_name_;
-    eprosima::fastdds::dds::Publisher* status_publisher_;
-    eprosima::fastdds::dds::Topic* status_topic_;
-    eprosima::fastdds::dds::DataWriter* status_writer_;
-    eprosima::fastdds::dds::TypeSupport status_type_;
+    fastdds::dds::Publisher* status_publisher_;
+    fastdds::dds::Topic* status_topic_;
+    fastdds::dds::DataWriter* status_writer_;
+    fastdds::dds::TypeSupport status_type_;
 
-    std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler_;
+    std::shared_ptr<utils::event::MultipleEventHandler> event_handler_;
 
-    std::shared_ptr<eprosima::ddspipe::participants::SimpleParticipantConfiguration> participant_configuration_;
+    std::shared_ptr<ddspipe::participants::SimpleParticipantConfiguration> participant_configuration_;
 };
 
 } /* namespace receiver */

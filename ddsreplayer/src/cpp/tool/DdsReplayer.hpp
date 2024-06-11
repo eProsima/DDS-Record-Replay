@@ -35,7 +35,6 @@
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
 #include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
-
 #include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
 #include <ddsrecorder_participants/replayer/ReplayerParticipant.hpp>
 
@@ -172,19 +171,13 @@ protected:
     //! DDS Pipe
     std::unique_ptr<ddspipe::core::DdsPipe> pipe_;
 
-    //! Dynamic DDS DomainParticipant
-    fastdds::dds::DomainParticipant* dyn_participant_;
-
-    //! Dynamic DDS Publisher
-    fastdds::dds::Publisher* dyn_publisher_;
-
     //! Dynamic DDS Topics map
     std::map<utils::Heritable<ddspipe::core::types::DdsTopic>, fastdds::dds::Topic*> dyn_topics_;
 
     //! Dynamic DDS DataWriters map
     std::map<utils::Heritable<ddspipe::core::types::DdsTopic>, fastdds::dds::DataWriter*> dyn_writers_;
 
-    //! TODO
+    //! Map of TypeName-TypeIdentifierPair for the registered types
     std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair> registered_types_{};
 };
 

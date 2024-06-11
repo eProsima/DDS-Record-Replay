@@ -27,25 +27,24 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <fastdds/dds/topic/TypeSupport.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
+#include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
+#include <fastdds/rtps/common/CDRMessage_t.h>
+#include <fastdds/rtps/common/CdrSerialization.hpp>
+#include <fastdds/rtps/common/SerializedPayload.h>
+#include <fastdds/rtps/common/Types.h>
+
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/exception/InconsistencyException.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/utils.hpp>
 #include <cpp_utils/ros2_mangling.hpp>
 
-#include <fastdds/dds/topic/TypeSupport.hpp>
-#include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
-#include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
-#include <fastdds/rtps/common/CDRMessage_t.h>
-#include <fastdds/rtps/common/SerializedPayload.h>
-#include <fastdds/rtps/common/Types.h>
-
 #include <ddspipe_core/types/dynamic_types/schema.hpp>
 
-#include <fastdds/rtps/common/CdrSerialization.hpp>
 #include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
 #include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollectionPubSubTypes.h>
-
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
 #include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
@@ -111,7 +110,8 @@ McapHandler::~McapHandler()
 
 void McapHandler::add_schema(
         const fastdds::dds::DynamicType::_ref_type& dynamic_type,
-        const std::tuple<fastcdr::string_255, fastdds::dds::xtypes::TypeIdentifier>& type_ids_tuple)
+        const std::string& type_name,
+        const fastdds::dds::xtypes::TypeIdentifier& type_id)
 {
     try
     {
@@ -120,8 +120,6 @@ void McapHandler::add_schema(
         // NOTE: Process schemas even if in STOPPED state to avoid losing them (only sent/received once in discovery)
 
         assert(nullptr != dynamic_type);
-
-        std::string type_name = std::get<0>(type_ids_tuple).to_string();
 
         // Check if it exists already
         if (received_types_.find(type_name) != received_types_.end())
@@ -178,7 +176,7 @@ void McapHandler::add_schema(
         received_types_.insert(type_name);
 
         // Every time a dynamic type is added the attachment is newly calculated
-        add_dynamic_type_(type_name, type_ids_tuple);
+        add_dynamic_type_(type_name, type_id);
 
         // Check if there are any pending samples for this new schema. If so, add them.
         if ((pending_samples_.find(type_name) != pending_samples_.end()) ||
@@ -1158,15 +1156,12 @@ void McapHandler::rewrite_schemas_nts_()
 
 void McapHandler::store_dynamic_type_(
         const std::string& type_name,
-        const std::tuple<fastcdr::string_255, fastdds::dds::xtypes::TypeIdentifier>& type_ids_tuple,
+        const fastdds::dds::xtypes::TypeIdentifier& type_id,
         DynamicTypesCollection& dynamic_types) const
 {
-    auto type_id = std::get<1>(type_ids_tuple);
-    // fastdds::dds::xtypes::TypeIdentifierSeq type_id_seq;
     fastdds::dds::xtypes::TypeIdentifierPair type_ids_pair;
-    // type_id_seq.push_back(type_id);
     type_ids_pair.type_identifier1(type_id);
-    // std::unordered_set<fastdds::dds::xtypes::TypeIdentfierWithSize> type_dependencies;
+
     fastdds::dds::xtypes::TypeInformation type_info;
     if (fastdds::dds::RETCODE_OK == fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_information(
             type_ids_pair,
@@ -1234,9 +1229,9 @@ fastrtps::rtps::SerializedPayload_t* McapHandler::serialize_dynamic_types_(
 
 void McapHandler::add_dynamic_type_(
         const std::string& type_name,
-        const std::tuple<fastcdr::string_255, fastdds::dds::xtypes::TypeIdentifier>& type_ids_tuple)
+        const fastdds::dds::xtypes::TypeIdentifier& type_id)
 {
-    store_dynamic_type_(type_name, type_ids_tuple, dynamic_types_);
+    store_dynamic_type_(type_name, type_id, dynamic_types_);
 
     std::unique_ptr<fastrtps::rtps::SerializedPayload_t> new_dynamic_types_payload(serialize_dynamic_types_(
                 dynamic_types_));
@@ -1462,8 +1457,7 @@ std::string McapHandler::serialize_type_identifier_(
     size_t current_alignment {0};
     size_t size = calculator.calculate_serialized_size(type_identifier, current_alignment) +
                             fastrtps::rtps::SerializedPayload_t::representation_header_size;
-    // size_t size = fastdds::dds::xtypes::TypeIdentifier::getCdrSerializedSize(type_identifier) +
-    //         fastrtps::rtps::SerializedPayload_t::representation_header_size;
+
     fastrtps::rtps::SerializedPayload_t payload(static_cast<uint32_t>(size));
     fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
 
@@ -1474,28 +1468,12 @@ std::string McapHandler::serialize_type_identifier_(
     payload.encapsulation = ser.endianness() == fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
 
     // Serialize
-    // type_identifier.serialize(ser);
     fastcdr::serialize(ser, type_identifier);
     payload.length = (uint32_t)ser.get_serialized_data_length();
     size = (ser.get_serialized_data_length() + 3) & ~3;
 
-    // Create CDR message
-    // NOTE: Use 0 length to avoid allocation (memory already reserved in payload creation)
-//     fastrtps::rtps::CDRMessage_t* cdr_message = new fastrtps::rtps::CDRMessage_t(0);
-//     cdr_message->buffer = payload.data;
-//     cdr_message->max_size = payload.max_size;
-//     cdr_message->length = payload.length;
-// #if __BIG_ENDIAN__
-//     cdr_message->msg_endian = fastrtps::rtps::BIGEND;
-// #else
-//     cdr_message->msg_endian = fastrtps::rtps::LITTLEEND;
-// #endif // if __BIG_ENDIAN__
-
     // Create CDR message with payload
     fastrtps::rtps::CDRMessage_t* cdr_message = new fastrtps::rtps::CDRMessage_t(payload);
-
-    // Add data
-    // bool valid = fastrtps::rtps::CDRMessage::addData(cdr_message, payload.data, payload.length);
 
     // Add data
     if (!(cdr_message && (cdr_message->pos + payload.length <= cdr_message->max_size))|| (payload.length > 0 && !payload.data))
@@ -1508,11 +1486,6 @@ std::string McapHandler::serialize_type_identifier_(
         cdr_message->pos += payload.length;
         cdr_message->length += payload.length;
     }
-
-    // for (uint32_t count = payload.length; count < size; ++count)
-    // {
-    //     valid &= fastrtps::rtps::CDRMessage::addOctet(cdr_message, 0);
-    // }
 
     fastrtps::rtps::octet value = 0;
     for (uint32_t count = payload.length; count < size; ++count)
@@ -1565,23 +1538,8 @@ std::string McapHandler::serialize_type_object_(
     payload.length = (uint32_t)ser.get_serialized_data_length();
     size = (ser.get_serialized_data_length() + 3) & ~3;
 
-    // Create CDR message
-    // NOTE: Use 0 length to avoid allocation (memory already reserved in payload creation)
-//     fastrtps::rtps::CDRMessage_t* cdr_message = new fastrtps::rtps::CDRMessage_t(0);
-//     cdr_message->buffer = payload.data;
-//     cdr_message->max_size = payload.max_size;
-//     cdr_message->length = payload.length;
-// #if __BIG_ENDIAN__
-//     cdr_message->msg_endian = fastrtps::rtps::BIGEND;
-// #else
-//     cdr_message->msg_endian = fastrtps::rtps::LITTLEEND;
-// #endif // if __BIG_ENDIAN__
-
     // Create CDR message with payload
     fastrtps::rtps::CDRMessage_t* cdr_message = new fastrtps::rtps::CDRMessage_t(payload);
-
-    // Add data
-    // bool valid = fastrtps::rtps::CDRMessage::addData(cdr_message, payload.data, payload.length);
 
     // Add data
     if (!(cdr_message && (cdr_message->pos + payload.length <= cdr_message->max_size))|| (payload.length > 0 && !payload.data))
@@ -1594,11 +1552,6 @@ std::string McapHandler::serialize_type_object_(
         cdr_message->pos += payload.length;
         cdr_message->length += payload.length;
     }
-
-    // for (uint32_t count = payload.length; count < size; ++count)
-    // {
-    //     valid &= fastrtps::rtps::CDRMessage::addOctet(cdr_message, 0);
-    // }
 
     fastrtps::rtps::octet value = 0;
     for (uint32_t count = payload.length; count < size; ++count)
