@@ -43,7 +43,8 @@ public:
     SqlWriter(
             const OutputSettings& configuration,
             std::shared_ptr<FileTracker>& file_tracker,
-            const bool record_types = true);
+            const bool record_types = true,
+            const bool ros2_types = false);
 
     /**
      * @brief Writes data to the output file.
@@ -119,6 +120,9 @@ protected:
 
     // The received dynamic types
     std::vector<DynamicType> dynamic_types_;
+
+    // Whether to format types for ROS 2
+    const bool ros2_types_;
 
     // The size of an empty SQL file
     static constexpr std::uint64_t MIN_SQL_SIZE{20480};

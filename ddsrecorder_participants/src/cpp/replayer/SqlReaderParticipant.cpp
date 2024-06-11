@@ -16,6 +16,7 @@
  * @file SqlReaderParticipant.cpp
  */
 
+#include <cstring>
 #include <map>
 #include <string>
 
@@ -24,6 +25,7 @@
 #include <cpp_utils/exception/InconsistencyException.hpp>
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/memory/Heritable.hpp>
+#include <cpp_utils/ros2_mangling.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
@@ -54,13 +56,15 @@ void SqlReaderParticipant::process_summary(
 {
     open_file_();
 
-    exec_sql_statement_("SELECT name, type, qos FROM Topics;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_("SELECT name, type, qos, is_ros2_topic FROM Topics;", {}, [&](sqlite3_stmt* stmt)
     {
         // Create a DdsTopic to publish the message
         const std::string topic_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
         const std::string type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const bool is_topic_ros2_type = strcmp(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)), "True") == 0;
+
         const auto topic = utils::Heritable<ddspipe::core::types::DdsTopic>::make_heritable(
-                create_topic_(topic_name, type_name, true));
+                create_topic_(topic_name, type_name, is_topic_ros2_type));
 
         // Apply the QoS stored in the MCAP file as if they were the discovered QoS.
         const auto topic_qos_str = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
@@ -75,17 +79,18 @@ void SqlReaderParticipant::process_summary(
         topics.insert(topic);
     });
 
-    exec_sql_statement_("SELECT name, information, object FROM Types;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_("SELECT name, information, object, is_ros2_type FROM Types;", {}, [&](sqlite3_stmt* stmt)
     {
         // Read the type data from the database
         const std::string type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
         const std::string type_information = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
         const std::string type_object = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        const bool is_type_ros2_type = strcmp(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)), "True") == 0;
 
         // Create a DynamicType to store the type data
         DynamicType type;
 
-        type.type_name(type_name);
+        type.type_name(is_type_ros2_type ? utils::mangle_if_ros_type(type_name) : type_name);
         type.type_information(type_information);
         type.type_object(type_object);
 
@@ -197,10 +202,14 @@ ddspipe::core::types::DdsTopic SqlReaderParticipant::find_topic_(
         return topics_[topic_name];
     }
 
-    const auto type_name = find_type_of_topic_(topic_name);
+    std::string type_name;
+    std::string topic_qos;
+    bool is_ros2_topic;
+
+    find_topic_info_(topic_name, type_name, topic_qos, is_ros2_topic);
 
     // Create the DdsTopic
-    const auto topic = create_topic_(topic_name, type_name, false);
+    const auto topic = create_topic_(topic_name, type_name, is_ros2_topic);
 
     // Store the topic in the cache
     topics_[topic_name] = topic;
@@ -208,12 +217,13 @@ ddspipe::core::types::DdsTopic SqlReaderParticipant::find_topic_(
     return topic;
 }
 
-std::string SqlReaderParticipant::find_type_of_topic_(
-        const std::string& topic_name)
+void SqlReaderParticipant::find_topic_info_(
+        const std::string& topic_name,
+        std::string& type_name,
+        std::string& topic_qos,
+        bool& is_ros2_topic)
 {
-    std::string type_name;
-
-    exec_sql_statement_("SELECT type FROM Topics WHERE name = ?;", {topic_name}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_("SELECT type, topic_qos, is_ros2_topic FROM Topics WHERE name = ?;", {topic_name}, [&](sqlite3_stmt* stmt)
     {
         if (!type_name.empty())
         {
@@ -224,9 +234,9 @@ std::string SqlReaderParticipant::find_type_of_topic_(
         }
 
         type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        topic_qos = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        is_ros2_topic = sqlite3_column_int(stmt, 2) == 0;
     });
-
-    return type_name;
 }
 
 void SqlReaderParticipant::exec_sql_statement_(

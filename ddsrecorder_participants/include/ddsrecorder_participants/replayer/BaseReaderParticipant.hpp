@@ -143,13 +143,13 @@ protected:
      *
      * @param topic_name: Name of the topic.
      * @param type_name:  Name of the type.
-     * @param is_ros2_type: Whether the type is a ROS2 type.
+     * @param is_ros2_topic: Whether the topic is a ROS2 topic.
      * @return A new \c DdsTopic instance.
      */
     ddspipe::core::types::DdsTopic create_topic_(
         const std::string& topic_name,
         const std::string& type_name,
-        const bool is_ros2_type);
+        const bool is_ros2_topic);
 
     /**
      * @brief Given a fuzzy timestamp, return the timestamp to start replaying.

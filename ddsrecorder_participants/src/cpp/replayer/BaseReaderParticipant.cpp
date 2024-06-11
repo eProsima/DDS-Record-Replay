@@ -130,11 +130,11 @@ std::unique_ptr<ddspipe::core::types::RtpsPayloadData> BaseReaderParticipant::cr
 ddspipe::core::types::DdsTopic BaseReaderParticipant::create_topic_(
         const std::string& topic_name,
         const std::string& type_name,
-        const bool is_ros2_type)
+        const bool is_ros2_topic)
 {
     ddspipe::core::types::DdsTopic topic;
 
-    if (is_ros2_type)
+    if (is_ros2_topic)
     {
         topic.m_topic_name = utils::mangle_if_ros_topic(topic_name);
         topic.type_name = utils::mangle_if_ros_type(type_name);
