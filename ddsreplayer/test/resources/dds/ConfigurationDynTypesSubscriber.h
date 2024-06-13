@@ -34,6 +34,7 @@
 
 #include "types/configuration/ConfigurationPubSubTypes.hpp"
 
+<<<<<<<< HEAD:ddsreplayer/test/resources/ConfigurationDynTypesSubscriber.h
 struct DataToCheck
 {
     unsigned int n_received_msgs;
@@ -43,6 +44,9 @@ struct DataToCheck
     double mean_ms_between_msgs;
     double cummulated_ms_between_msgs;
 };
+========
+#include "DataToCheck.hpp"
+>>>>>>>> 384b8b8 (Strip replaying methods from McapFileReadTest & McapFileReadWithTypeTest):ddsreplayer/test/resources/dds/HelloWorldDynTypesSubscriber.h
 
 /**
  * @brief Class used to group into a single working unit a Subscriber with a DataReader and its listener.

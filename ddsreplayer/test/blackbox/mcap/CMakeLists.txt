@@ -28,7 +28,7 @@ set(TEST_SOURCES
 
 set(TEST_LIST
         trivial
-        dds_data_to_check
+        data_to_check
         less_playback_rate
         more_playback_rate
         begin_time
@@ -37,13 +37,13 @@ set(TEST_LIST
     )
 
 set(TEST_NEEDED_SOURCES
-        resources/configuration_withtypes.mcap
-        resources/config_file_notype.yaml
-        resources/config_file_less_hz_notype.yaml
-        resources/config_file_more_hz_notype.yaml
-        resources/config_file_begin_time_notype.yaml
-        resources/config_file_end_time_notype.yaml
-        resources/config_file_start_replay_time_earlier_notype.yaml
+        ../../resources/config/config_file.yaml
+        ../../resources/config/config_file_less_hz.yaml
+        ../../resources/config/config_file_more_hz.yaml
+        ../../resources/config/config_file_begin_time.yaml
+        ../../resources/config/config_file_end_time.yaml
+        ../../resources/config/config_file_start_replay_time_earlier.yaml
+        ../../resources/recordings/basic/configuration.mcap
     )
 
 set(TEST_EXTRA_HEADERS
@@ -83,13 +83,13 @@ set(TEST_LIST
     )
 
 set(TEST_NEEDED_SOURCES
-        resources/configuration_withtypes.mcap
-        resources/config_file_withtypes.yaml
-        resources/config_file_less_hz_withtypes.yaml
-        resources/config_file_more_hz_withtypes.yaml
-        resources/config_file_begin_time_with_types.yaml
-        resources/config_file_end_time_with_types.yaml
-        resources/config_file_start_replay_time_earlier_with_types.yaml
+        ../../resources/config/config_file.yaml
+        ../../resources/config/config_file_less_hz.yaml
+        ../../resources/config/config_file_more_hz.yaml
+        ../../resources/config/config_file_begin_time_with_types.yaml
+        ../../resources/config/config_file_end_time_with_types.yaml
+        ../../resources/config/config_file_start_replay_time_earlier_with_types.yaml
+        ../../resources/recordings/basic/configuration.mcap
     )
 
 set(TEST_EXTRA_HEADERS

@@ -24,7 +24,12 @@
 #include <fastdds/dds/domain/DomainParticipantListener.hpp>
 #include <fastdds/dds/subscriber/DataReaderListener.hpp>
 
+<<<<<<< HEAD:ddsreplayer/test/blackbox/mcap/dds/ConfigurationSubscriber.h
 #include "types/configuration/ConfigurationPubSubTypes.hpp"
+=======
+<<<<<<<< HEAD:ddsreplayer/test/resources/ConfigurationSubscriber.h
+#include "types/configuration/ConfigurationPubSubTypes.h"
+>>>>>>> b00497a (Strip replaying methods from McapFileReadTest & McapFileReadWithTypeTest):ddsreplayer/test/resources/dds/ConfigurationSubscriber.h
 
 struct DataToCheck
 {
@@ -35,6 +40,15 @@ struct DataToCheck
     double mean_ms_between_msgs;
     double cummulated_ms_between_msgs;
 };
+========
+#include "DataToCheck.hpp"
+
+#if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
+    #include "../types/v1/hello_world/HelloWorldPubSubTypes.h"
+#else
+    #include "../types/v2/hello_world/HelloWorldPubSubTypes.h"
+#endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
+>>>>>>>> 384b8b8 (Strip replaying methods from McapFileReadTest & McapFileReadWithTypeTest):ddsreplayer/test/resources/dds/HelloWorldSubscriber.h
 
 /**
  * @brief Class used to group into a single working unit a Subscriber with a DataReader and its listener.
