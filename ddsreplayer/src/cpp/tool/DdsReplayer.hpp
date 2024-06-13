@@ -64,7 +64,7 @@ public:
      */
     DdsReplayer(
             yaml::ReplayerConfiguration& configuration,
-            std::string& input_file);
+            const std::string& input_file);
 
     /**
      * @brief DdsReplayer destructor.

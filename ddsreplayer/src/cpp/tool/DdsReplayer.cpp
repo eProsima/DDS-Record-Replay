@@ -61,7 +61,7 @@ namespace replayer {
 
 DdsReplayer::DdsReplayer(
         yaml::ReplayerConfiguration& configuration,
-        std::string& input_file)
+        const std::string& input_file)
     : configuration_(configuration)
 {
     // Create Payload Pool

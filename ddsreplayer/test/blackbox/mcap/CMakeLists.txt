@@ -25,17 +25,25 @@ else()
     set(DDS_TYPES_VERSION "v2")
 endif()
 
-set(TEST_SOURCES
+file(
+    GLOB_RECURSE TEST_SOURCES
     McapFileReadTest.cpp
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/${DDS_TYPES_VERSION}/hello_world/HelloWorld.cxx
-    $<$<STREQUAL:${DDS_TYPES_VERSION},v2>:${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/v2/hello_world/HelloWorldv1.cxx>
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/${DDS_TYPES_VERSION}/hello_world/HelloWorldPubSubTypes.cxx
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/HelloWorldSubscriber.cpp
-)
+    "${PROJECT_SOURCE_DIR}/test/resources/dds/*.c*"
+    "${PROJECT_SOURCE_DIR}/test/resources/types/*.c*"
+    )
+
+list(FILTER TEST_LIBRARY_SOURCES EXCLUDE REGEX "/main.cpp")
+
+# Exclude types' files depending on the Fast DDS version
+if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
+    list(FILTER TEST_SOURCES EXCLUDE REGEX "v2/")
+else()
+    list(FILTER TEST_SOURCES EXCLUDE REGEX "v1/")
+endif()
 
 set(TEST_LIST
         trivial
-        dds_data_to_check
+        data_to_check
         less_playback_rate
         more_playback_rate
         begin_time
@@ -44,13 +52,13 @@ set(TEST_LIST
     )
 
 set(TEST_NEEDED_SOURCES
-        resources/helloworld_file.mcap
-        resources/config_file.yaml
-        resources/config_file_less_hz.yaml
-        resources/config_file_more_hz.yaml
-        resources/config_file_begin_time.yaml
-        resources/config_file_end_time.yaml
-        resources/config_file_start_replay_time_earlier.yaml
+        ../../resources/config/config_file.yaml
+        ../../resources/config/config_file_less_hz.yaml
+        ../../resources/config/config_file_more_hz.yaml
+        ../../resources/config/config_file_begin_time.yaml
+        ../../resources/config/config_file_end_time.yaml
+        ../../resources/config/config_file_start_replay_time_earlier.yaml
+        ../../resources/recordings/basic/helloworld.mcap
     )
 
 set(TEST_EXTRA_HEADERS
@@ -70,10 +78,28 @@ add_blackbox_executable(
 
 set(TEST_NAME McapFileReadWithTypeTest)
 
-set(TEST_SOURCES
-        McapFileReadWithTypeTest.cpp
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/HelloWorldDynTypesSubscriber.cpp
+# Determine Fast DDS version
+if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
+    set(DDS_TYPES_VERSION "v1")
+else()
+    set(DDS_TYPES_VERSION "v2")
+endif()
+
+file(
+    GLOB_RECURSE TEST_SOURCES
+    McapFileReadWithTypeTest.cpp
+    "${PROJECT_SOURCE_DIR}/test/resources/dds/*.c*"
+    "${PROJECT_SOURCE_DIR}/test/resources/types/*.c*"
     )
+
+list(FILTER TEST_LIBRARY_SOURCES EXCLUDE REGEX "/main.cpp")
+
+# Exclude types' files depending on the Fast DDS version
+if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
+    list(FILTER TEST_SOURCES EXCLUDE REGEX "v2/")
+else()
+    list(FILTER TEST_SOURCES EXCLUDE REGEX "v1/")
+endif()
 
 set(TEST_LIST
         trivial
@@ -89,14 +115,14 @@ set(TEST_LIST
     )
 
 set(TEST_NEEDED_SOURCES
-        resources/helloworld_withtype_file.mcap
-        resources/ros2_file.mcap
-        resources/config_file.yaml
-        resources/config_file_less_hz.yaml
-        resources/config_file_more_hz.yaml
-        resources/config_file_begin_time_with_types.yaml
-        resources/config_file_end_time_with_types.yaml
-        resources/config_file_start_replay_time_earlier_with_types.yaml
+        ../../resources/config/config_file.yaml
+        ../../resources/config/config_file_less_hz.yaml
+        ../../resources/config/config_file_more_hz.yaml
+        ../../resources/config/config_file_begin_time_with_types.yaml
+        ../../resources/config/config_file_end_time_with_types.yaml
+        ../../resources/config/config_file_start_replay_time_earlier_with_types.yaml
+        ../../resources/recordings/ros2/ros2.mcap
+        ../../resources/recordings/type/helloworld_with_type.mcap
     )
 
 set(TEST_EXTRA_HEADERS
