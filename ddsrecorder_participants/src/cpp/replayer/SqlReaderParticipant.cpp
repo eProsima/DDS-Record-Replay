@@ -19,6 +19,7 @@
 #include <cstring>
 #include <map>
 #include <string>
+#include <utility>
 
 #include <sqlite3.h>
 
@@ -73,7 +74,16 @@ void SqlReaderParticipant::process_summary(
         topic->topic_qos.set_qos(topic_qos, utils::FuzzyLevelValues::fuzzy_level_fuzzy);
 
         // Store the topic in the cache
-        topics_[topic_name] = *topic;
+        const auto topic_id = std::make_pair(topic_name, type_name);
+
+        if (topics_.find(topic_id) != topics_.end())
+        {
+            logWarning(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                       "Topic " << topic_name << " with type " << type_name << " already exists. Skipping...");
+            return;
+        }
+
+        topics_[topic_id] = *topic;
 
         // Store the topic in the set
         topics.insert(topic);
@@ -119,7 +129,7 @@ void SqlReaderParticipant::process_messages()
             utils::the_end_of_time());
 
     exec_sql_statement_(
-        "SELECT log_time, topic, data, data_size FROM Messages "
+        "SELECT log_time, topic, type, data, data_size FROM Messages "
         "WHERE log_time >= ? AND log_time <= ? "
         "ORDER BY log_time;",
         {begin_time, end_time},
@@ -132,7 +142,20 @@ void SqlReaderParticipant::process_messages()
 
         // Create a DdsTopic to publish the message
         const std::string topic_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-        const auto topic = find_topic_(topic_name);
+        const std::string type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+
+        const auto topic_id = std::make_pair(topic_name, type_name);
+
+        // Find the topic
+        if (topics_.find(topic_id) == topics_.end())
+        {
+            logError(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                    "Failed to find topic " << topic_name << " with type " << type_name << ". "
+                    "Did you process the summary before the messages? Skipping...");
+            return;
+        }
+
+        const auto topic = topics_[topic_id];
 
         // Find the reader for the topic
         if (readers_.find(topic) == readers_.end())
@@ -152,8 +175,8 @@ void SqlReaderParticipant::process_messages()
                 std::chrono::time_point_cast<utils::Timestamp::duration>(initial_timestamp + delay_ns);
 
         // Create a RtpsPayloadData from the raw data
-        const auto raw_data = sqlite3_column_blob(stmt, 2);
-        const auto raw_data_size = sqlite3_column_int(stmt, 3);
+        const auto raw_data = sqlite3_column_blob(stmt, 3);
+        const auto raw_data_size = sqlite3_column_int(stmt, 4);
         auto data = create_payload_(raw_data, raw_data_size);
 
         // Set source timestamp
@@ -191,52 +214,6 @@ void SqlReaderParticipant::open_file_()
 void SqlReaderParticipant::close_file_()
 {
     sqlite3_close(database_);
-}
-
-ddspipe::core::types::DdsTopic SqlReaderParticipant::find_topic_(
-        const std::string& topic_name)
-{
-    // Check if the topic is in the cache
-    if (topics_.find(topic_name) != topics_.end())
-    {
-        return topics_[topic_name];
-    }
-
-    std::string type_name;
-    std::string topic_qos;
-    bool is_ros2_topic;
-
-    find_topic_info_(topic_name, type_name, topic_qos, is_ros2_topic);
-
-    // Create the DdsTopic
-    const auto topic = create_topic_(topic_name, type_name, is_ros2_topic);
-
-    // Store the topic in the cache
-    topics_[topic_name] = topic;
-
-    return topic;
-}
-
-void SqlReaderParticipant::find_topic_info_(
-        const std::string& topic_name,
-        std::string& type_name,
-        std::string& topic_qos,
-        bool& is_ros2_topic)
-{
-    exec_sql_statement_("SELECT type, topic_qos, is_ros2_topic FROM Topics WHERE name = ?;", {topic_name}, [&](sqlite3_stmt* stmt)
-    {
-        if (!type_name.empty())
-        {
-            const std::string error_msg = utils::Formatter() << "Multiple types found for topic " << topic_name;
-
-            logError(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
-            throw std::runtime_error(error_msg);
-        }
-
-        type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-        topic_qos = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-        is_ros2_topic = sqlite3_column_int(stmt, 2) == 0;
-    });
 }
 
 void SqlReaderParticipant::exec_sql_statement_(

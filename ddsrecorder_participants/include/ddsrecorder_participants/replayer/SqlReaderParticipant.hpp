@@ -17,6 +17,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <utility>
 
 #include <sqlite3.h>
 
@@ -113,36 +114,11 @@ protected:
         const std::vector<std::string>& bind_values,
         const std::function<void(sqlite3_stmt*)>& process_row);
 
-    /**
-     * @brief Get the \c DdsTopic for \c topic_name.
-     *
-     * If the topic is in the cache, return it.
-     * If not, find the topic's type in the database, create a topic, and store it in the cache.
-     *
-     * @param topic_name: Name of the topic to be found.
-     * @return \c DdsTopic instance for \c topic_name.
-     */
-    ddspipe::core::types::DdsTopic find_topic_(
-            const std::string& topic_name);
-
-    /**
-     * @brief Find the information related to \c topic_name.
-     *
-     * @param topic_name: Name of the topic.
-     * @param type_name:  Type of the topic.
-     * @param is_ros2_type: Whether the topic is a ROS 2 type.
-     */
-    void find_topic_info_(
-            const std::string& topic_name,
-            std::string& type_name,
-            std::string& topic_qos,
-            bool& is_ros2_type);
-
     // Database
     sqlite3* database_;
 
-    // Topics cache
-    std::map<std::string, ddspipe::core::types::DdsTopic> topics_;
+    // Link a topic name and a type name to a DdsTopic instance
+    std::map<std::pair<std::string, std::string>, ddspipe::core::types::DdsTopic> topics_;
 };
 
 } /* namespace participants */
