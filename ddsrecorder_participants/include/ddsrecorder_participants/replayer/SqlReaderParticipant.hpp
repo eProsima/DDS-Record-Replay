@@ -42,7 +42,7 @@ namespace ddsrecorder {
 namespace participants {
 
 /**
- * Participant that reads MCAP files and passes its messages to other DDS Pipe participants.
+ * Participant that reads SQL files and passes its messages to other DDS Pipe participants.
  *
  * @implements BaseReaderParticipant
  */
@@ -57,7 +57,7 @@ public:
      *
      * @param config:       Structure encapsulating all configuration options.
      * @param payload_pool: Owner of every payload contained in sent messages.
-     * @param file_path:    Path to the MCAP file with the messages to be read and sent.
+     * @param file_path:    Path to the SQL file with the messages to be read and sent.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     SqlReaderParticipant(
