@@ -108,10 +108,11 @@ void SqlWriter::open_new_file_nts_(
     const std::string create_topics_table{
     R"(
         CREATE TABLE IF NOT EXISTS Topics (
-            name TEXT PRIMARY KEY NOT NULL,
+            name TEXT NOT NULL,
             type TEXT NOT NULL,
             qos TEXT NOT NULL,
             is_ros2_topic TEXT NOT NULL,
+            PRIMARY KEY(name, type),
             FOREIGN KEY(type) REFERENCES Types(name)
         );
     )"};
@@ -126,10 +127,11 @@ void SqlWriter::open_new_file_nts_(
             data BLOB NOT NULL,
             data_size INTEGER NOT NULL,
             topic TEXT NOT NULL,
+            type TEXT NOT NULL,
             key TEXT NOT NULL,
             log_time DATETIME NOT NULL,
             publish_time DATETIME NOT NULL,
-            FOREIGN KEY(topic) REFERENCES Topics(name)
+            FOREIGN KEY(topic, type) REFERENCES Topics(name, type)
         );
     )"};
 
@@ -208,8 +210,8 @@ void SqlWriter::write_nts_(
 
     // Define the SQL statement
     const char* insert_statement = R"(
-        INSERT INTO Messages (data, data_size, topic, key, log_time, publish_time)
-        VALUES (?, ?, ?, ?, ?, ?);
+        INSERT INTO Messages (data, data_size, topic, type, key, log_time, publish_time)
+        VALUES (?, ?, ?, ?, ?, ?, ?);
     )";
 
     // Prepare the SQL statement
@@ -230,9 +232,10 @@ void SqlWriter::write_nts_(
     sqlite3_bind_blob(statement, 1, msg.get_data(), msg.get_data_size(), SQLITE_TRANSIENT);
     sqlite3_bind_int64(statement, 2, msg.get_data_size());
     sqlite3_bind_text(statement, 3, msg.topic.topic_name().c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(statement, 4, msg.key.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(statement, 5, to_sql_timestamp(msg.log_time).c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(statement, 6, to_sql_timestamp(msg.publish_time).c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 4, msg.topic.type_name.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 5, msg.key.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 6, to_sql_timestamp(msg.log_time).c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 7, to_sql_timestamp(msg.publish_time).c_str(), -1, SQLITE_TRANSIENT);
 
     // Execute the SQL statement
     const auto step_ret = sqlite3_step(statement);
