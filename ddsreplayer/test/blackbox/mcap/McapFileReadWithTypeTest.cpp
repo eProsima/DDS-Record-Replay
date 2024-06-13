@@ -54,8 +54,8 @@ const std::string ros2_type_name = "std_msgs::msg::dds_::String_";
  */
 void create_subscriber_replayer(
         DataToCheck& data,
-        const std::string& configuration_path = "resources/config_file.yaml",
-        std::string input_file = "resources/helloworld_withtype_file.mcap",
+        const std::string& configuration_path = "/home/eprosima/Bump_3.0.x_Fix/src/DDS-Record-Replay/ddsreplayer/test/blackbox/mcap/resources/config_file.yaml",
+        std::string input_file = "/home/eprosima/Bump_3.0.x_Fix/src/DDS-Record-Replay/ddsreplayer/test/blackbox/mcap/resources/helloworld_withtype_file.mcap",
         bool ros2 = false)
 {
     {

@@ -211,7 +211,7 @@ TEST_F(ResourceLimitsTest, max_file_size)
     publish_msgs_(WAY_TOO_MANY_MSGS);
 
     // Make sure the DDS Recorder has received all the messages
-    ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), ReturnCode_t::RETCODE_OK);
+    ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), RETCODE_OK);
 
     // All the messages have been sent. Stop the DDS Recorder.
     recorder.stop();
@@ -258,7 +258,7 @@ TEST_F(ResourceLimitsTest, max_size)
         publish_msgs_(test::limits::FILE_OVERFLOW_THRESHOLD);
 
         // Make sure the DDS Recorder has received all the messages
-        ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), ReturnCode_t::RETCODE_OK);
+        ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), RETCODE_OK);
 
         // All the messages have been sent. Stop the DDS Recorder.
         if (i == test::limits::MAX_FILES - 1)
@@ -284,7 +284,7 @@ TEST_F(ResourceLimitsTest, max_size)
     publish_msgs_(test::limits::FILE_OVERFLOW_THRESHOLD);
 
     // Make sure the DDS Recorder has received all the messages
-    ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), ReturnCode_t::RETCODE_OK);
+    ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), RETCODE_OK);
 
     // Verify that the DDS Recorder hasn't created an extra file, since it would exceed the max-size
     ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATHS[4]));
@@ -339,7 +339,7 @@ TEST_F(ResourceLimitsTest, file_rotation)
         publish_msgs_(test::limits::FILE_OVERFLOW_THRESHOLD);
 
         // Make sure the DDS Recorder has received all the messages
-        ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), ReturnCode_t::RETCODE_OK);
+        ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), RETCODE_OK);
 
         // Verify that the DDS Recorder has created the expected number of output files
         for (int j = 0; j <= i; j++)
@@ -361,7 +361,7 @@ TEST_F(ResourceLimitsTest, file_rotation)
         publish_msgs_(test::limits::FILE_OVERFLOW_THRESHOLD);
 
         // Make sure the DDS Recorder has received all the messages
-        ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), ReturnCode_t::RETCODE_OK);
+        ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), RETCODE_OK);
 
         // Verify that the DDS Recorder has removed the oldest files
         for (int j = 0; j <= i; j++)

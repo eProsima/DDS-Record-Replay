@@ -20,16 +20,17 @@
 #include <csignal>
 #include <chrono>
 
+#include <fastdds/dds/core/detail/DDSReturnCode.hpp>
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/subscriber/DataReader.hpp>
 #include <fastdds/dds/subscriber/qos/DataReaderQos.hpp>
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
 #include <fastdds/dds/subscriber/Subscriber.hpp>
+#include <fastdds/rtps/attributes/RTPSParticipantAttributes.h>
 #include <fastdds/rtps/transport/shared_mem/SharedMemTransportDescriptor.h>
 #include <fastdds/rtps/transport/UDPv4TransportDescriptor.h>
 #include <fastdds/rtps/transport/UDPv6TransportDescriptor.h>
-#include <fastrtps/attributes/ParticipantAttributes.h>
-#include <fastrtps/attributes/SubscriberAttributes.h>
+// #include <fastrtps/attributes/SubscriberAttributes.h>
 
 #include "HelloWorldSubscriber.h"
 
@@ -152,7 +153,7 @@ void HelloWorldSubscriber::on_data_available(
     SampleInfo info;
 
     while ((reader->take_next_sample(&hello_,
-            &info) == ReturnCode_t::RETCODE_OK))
+            &info) == RETCODE_OK))
     {
         if (info.instance_state == ALIVE_INSTANCE_STATE)
         {
