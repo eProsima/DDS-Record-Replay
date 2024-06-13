@@ -368,7 +368,7 @@ Enabling ``file-rotation`` allows the |ddsrecorder| to overwrite old files to fr
 
 .. note::
 
-    To keep the |ddsrecorder| from overwriting previous output files, users can set ``{avoid_overwriting_output: true}`` as the argument of the ``stop`` signal.
+    To keep the |ddsrecorder| from overwriting previous output files, users can set ``{"avoid_overwriting_output": true}`` as the argument (``"args"``) of the ``stop`` command (see :ref:`Control Commands <recorder_remote_controller_data_types>`).
     If set, the |ddsrecorder| will not overwrite its output files, at the cost of possibly exceeding the ``max-size``.
 
 .. note::

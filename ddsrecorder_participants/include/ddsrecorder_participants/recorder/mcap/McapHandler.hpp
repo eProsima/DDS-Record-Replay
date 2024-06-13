@@ -88,7 +88,9 @@ public:
      *
      * @param config:       Structure encapsulating all configuration options.
      * @param payload_pool: Owner of every payload contained in received messages.
+     * @param file_tracker: File tracker to be used to create and manage MCAP files.
      * @param init_state:   Initial instance state (RUNNING/PAUSED/STOPPED).
+     * @param on_disk_full_lambda: Lambda to be executed when the disk is full.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     McapHandler(
