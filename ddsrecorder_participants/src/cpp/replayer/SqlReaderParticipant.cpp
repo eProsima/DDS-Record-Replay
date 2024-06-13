@@ -67,7 +67,7 @@ void SqlReaderParticipant::process_summary(
         const auto topic = utils::Heritable<ddspipe::core::types::DdsTopic>::make_heritable(
                 create_topic_(topic_name, type_name, is_topic_ros2_type));
 
-        // Apply the QoS stored in the MCAP file as if they were the discovered QoS.
+        // Apply the QoS stored in the SQL file as if they were the discovered QoS.
         const auto topic_qos_str = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
         const auto topic_qos = Serializer::deserialize<ddspipe::core::types::TopicQoS>(topic_qos_str);
 
@@ -78,7 +78,7 @@ void SqlReaderParticipant::process_summary(
 
         if (topics_.find(topic_id) != topics_.end())
         {
-            logWarning(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+            logWarning(DDSREPLAYER_SQL_READER_PARTICIPANT,
                        "Topic " << topic_name << " with type " << type_name << " already exists. Skipping...");
             return;
         }
@@ -149,7 +149,7 @@ void SqlReaderParticipant::process_messages()
         // Find the topic
         if (topics_.find(topic_id) == topics_.end())
         {
-            logError(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+            logError(DDSREPLAYER_SQL_READER_PARTICIPANT,
                     "Failed to find topic " << topic_name << " with type " << type_name << ". "
                     "Did you process the summary before the messages? Skipping...");
             return;
@@ -160,12 +160,12 @@ void SqlReaderParticipant::process_messages()
         // Find the reader for the topic
         if (readers_.find(topic) == readers_.end())
         {
-            logError(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+            logError(DDSREPLAYER_SQL_READER_PARTICIPANT,
                     "Failed to replay message in topic " << topic << ": topic not found, skipping...");
             return;
         }
 
-        logInfo(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+        logInfo(DDSREPLAYER_SQL_READER_PARTICIPANT,
                 "Scheduling message to be replayed in topic " << topic << ".");
 
         // Set publication delay from original log time and configured playback rate
@@ -186,7 +186,7 @@ void SqlReaderParticipant::process_messages()
         // Wait until it's time to write the message
         wait_until_timestamp_(time_to_write);
 
-        logInfo(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+        logInfo(DDSREPLAYER_SQL_READER_PARTICIPANT,
                 "Replaying message in topic " << topic << ".");
 
         // Insert new data in internal reader queue
