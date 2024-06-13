@@ -25,7 +25,7 @@ set(MODULE_SUMMARY
 set(MODULE_FIND_PACKAGES
     yaml-cpp
     fastcdr
-    fastrtps
+    fastdds
     cpp_utils
     ddspipe_core
     ddspipe_participants
@@ -46,7 +46,7 @@ set(MODULE_DEPENDENCIES
     $<$<BOOL:${WIN32}>:iphlpapi$<SEMICOLON>Shlwapi>
     yaml-cpp
     fastcdr
-    fastrtps
+    fastdds
     cpp_utils
     ddspipe_core
     ddspipe_participants
