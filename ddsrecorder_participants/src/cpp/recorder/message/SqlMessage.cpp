@@ -42,6 +42,8 @@ SqlMessage::SqlMessage(
     const bool log_publish_time,
     const std::string& key /* = "" */)
     : BaseMessage(data, payload_pool, topic, log_publish_time)
+    , writer_guid(data.sample_identity.writer_guid())
+    , sequence_number(data.sample_identity.sequence_number())
     , instance_handle(data.instanceHandle)
     , key(key)
 {
