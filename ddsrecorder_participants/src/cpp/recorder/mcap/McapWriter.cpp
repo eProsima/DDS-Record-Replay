@@ -252,8 +252,10 @@ void McapWriter::write_nts_(
 
     file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
 
-    // TODO: Share the channels and schemas between the McapHandler and McapWriter
-    // to avoid inconsistencies and redundancies storing them twice and to avoid inconsistencies.
+    // Ideally, the channels and schemas should be shared between the McapHandler and McapWriter.
+    // Right now, the data is duplicated in both classes, which uses more memory and can lead to inconsistencies.
+    // TODO: Share the channels and schemas between the McapHandler and McapWriter.
+
     // Store the channel to write it on new MCAP files
     channels_[channel.id] = channel;
 }

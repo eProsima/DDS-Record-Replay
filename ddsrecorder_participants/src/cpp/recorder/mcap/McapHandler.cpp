@@ -382,6 +382,11 @@ void McapHandler::stop(
     dump_data_nts_();  // if prev_state == RUNNING -> writes buffer + added pending samples (if !only_with_schema)
                        // if prev_state == PAUSED  -> writes added pending samples (if !only_with_schema)
 
+    // Ideally, the channels and schemas should be shared between the McapHandler and McapWriter.
+    // Right now, the data is duplicated in both classes, which uses more memory and can lead to inconsistencies.
+    // TODO: Share the channels and schemas between the McapHandler and McapWriter.
+
+    // NOTE: disabling the McapWriter clears its channels
     mcap_writer_.disable();
 
     // Clear the channels after a stop so the old channels are not rewritten in every new file
