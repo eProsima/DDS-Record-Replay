@@ -95,6 +95,9 @@ void McapWriter::disable()
 
     close_current_file_nts_();
 
+    // Clear the channels when disabling the writer so the old channels are not rewritten in every new file
+    channels_.clear();
+
     enabled_ = false;
 }
 
@@ -249,6 +252,8 @@ void McapWriter::write_nts_(
 
     file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
 
+    // TODO: Share the channels and schemas between the McapHandler and McapWriter
+    // to avoid inconsistencies and redundancies storing them twice and to avoid inconsistencies.
     // Store the channel to write it on new MCAP files
     channels_[channel.id] = channel;
 }

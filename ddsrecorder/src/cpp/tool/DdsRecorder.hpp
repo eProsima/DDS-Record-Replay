@@ -65,6 +65,7 @@ public:
      *
      * @param configuration: Structure encapsulating all recorder configuration options.
      * @param init_state:    Initial instance state (RUNNING/PAUSED/SUSPENDED/STOPPED).
+     * @param file_tracker:  Reference to file tracker used to manage mcap files.
      * @param file_name:     Name of the mcap file where data is recorded. If not provided, the one from configuration is used instead.
      */
     DdsRecorder(
@@ -81,6 +82,7 @@ public:
      * @param configuration: Structure encapsulating all recorder configuration options.
      * @param init_state:    Initial instance state (RUNNING/PAUSED/SUSPENDED/STOPPED).
      * @param event_handler: Reference to event handler used for thread synchronization in main application.
+     * @param file_tracker:  Reference to file tracker used to manage mcap files.
      * @param file_name:     Name of the mcap file where data is recorded. If not provided, the one from configuration is used instead.
      */
     DdsRecorder(

@@ -356,33 +356,36 @@ void McapHandler::stop(
             logWarning(DDSRECORDER_MCAP_HANDLER,
                     "MCAP_STATE | Ignoring stop command, instance already stopped.");
         }
+
+        return;
+    }
+
+    logInfo(DDSRECORDER_MCAP_HANDLER,
+            "MCAP_STATE | Stopping handler.");
+
+    if (prev_state == McapHandlerStateCode::PAUSED)
+    {
+        // Stop event routine (cleans buffers)
+        stop_event_thread_nts_(event_lock);
+    }
+
+    if (!configuration_.only_with_schema)
+    {
+        // Adds to buffer samples whose schema was not received while running
+        add_pending_samples_nts_();
     }
     else
     {
-        logInfo(DDSRECORDER_MCAP_HANDLER,
-                "MCAP_STATE | Stopping handler.");
-
-        if (prev_state == McapHandlerStateCode::PAUSED)
-        {
-            // Stop event routine (cleans buffers)
-            stop_event_thread_nts_(event_lock);
-        }
-
-        if (!configuration_.only_with_schema)
-        {
-            // Adds to buffer samples whose schema was not received while running
-            add_pending_samples_nts_();
-        }
-        else
-        {
-            // Free memory resources
-            pending_samples_.clear();
-        }
-        dump_data_nts_();  // if prev_state == RUNNING -> writes buffer + added pending samples (if !only_with_schema)
-                           // if prev_state == PAUSED  -> writes added pending samples (if !only_with_schema)
-
-        mcap_writer_.disable();
+        // Free memory resources
+        pending_samples_.clear();
     }
+    dump_data_nts_();  // if prev_state == RUNNING -> writes buffer + added pending samples (if !only_with_schema)
+                       // if prev_state == PAUSED  -> writes added pending samples (if !only_with_schema)
+
+    mcap_writer_.disable();
+
+    // Clear the channels after a stop so the old channels are not rewritten in every new file
+    channels_.clear();
 }
 
 void McapHandler::pause()
