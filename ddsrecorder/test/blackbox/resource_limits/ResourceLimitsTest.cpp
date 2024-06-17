@@ -30,6 +30,7 @@
 #include <ddspipe_yaml/Yaml.hpp>
 #include <ddspipe_yaml/YamlReader.hpp>
 
+#include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
 #include <tool/DdsRecorder.hpp>
@@ -122,12 +123,12 @@ protected:
     }
 
     void publish_msgs_(
-            const int num_msgs)
+            const std::uint32_t num_msgs)
     {
         // Reset the DataWriter to clear its history
         reset_datawriter_();
 
-        for (int i = 0; i < num_msgs; i++)
+        for (std::uint32_t i = 0; i < num_msgs; i++)
         {
             HelloWorld hello;
             hello.index(i);
@@ -190,6 +191,8 @@ protected:
 
     std::unique_ptr<ddsrecorder::yaml::RecorderConfiguration> configuration_;
     std::vector<std::filesystem::path> paths_;
+
+    std::shared_ptr<ddsrecorder::participants::FileTracker> file_tracker_;
 };
 
 /**
@@ -209,7 +212,7 @@ TEST_F(ResourceLimitsTest, max_file_size)
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
     ddsrecorder::recorder::DdsRecorder recorder(*configuration_, ddsrecorder::recorder::DdsRecorderStateCode::RUNNING,
-            OUTPUT_FILE_NAME);
+            file_tracker_, OUTPUT_FILE_NAME);
 
     // Send many more messages than can be stored in a file with a size of max-file-size
     const auto WAY_TOO_MANY_MSGS = test::limits::FILE_OVERFLOW_THRESHOLD * 2;
@@ -249,15 +252,15 @@ TEST_F(ResourceLimitsTest, max_size)
     configuration_->output_resource_limits_max_size = test::limits::MAX_SIZE;
 
     // Delete the output files if they exist
-    for (int i = 0; i < NUMBER_OF_FILES; i++)
+    for (const auto& path : OUTPUT_FILE_PATHS)
     {
-        ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATHS[i]));
+        ASSERT_TRUE(delete_file_(path));
     }
 
-    ddsrecorder::recorder::DdsRecorder recorder(*configuration_,
-            ddsrecorder::recorder::DdsRecorderStateCode::RUNNING, OUTPUT_FILE_NAME);
+    ddsrecorder::recorder::DdsRecorder recorder(*configuration_, ddsrecorder::recorder::DdsRecorderStateCode::RUNNING,
+            file_tracker_, OUTPUT_FILE_NAME);
 
-    for (int i = 0; i < test::limits::MAX_FILES; i++)
+    for (std::uint32_t i = 0; i < test::limits::MAX_FILES; i++)
     {
         // Send more messages than can be stored in a file with a size of max-file-size
         publish_msgs_(test::limits::FILE_OVERFLOW_THRESHOLD);
@@ -273,13 +276,13 @@ TEST_F(ResourceLimitsTest, max_size)
 
         // Verify that the DDS Recorder has created the expected number of output files and that their size is close
         // but doesn't exceed the max-file-size
-        for (int j = 0; j <= i; j++)
+        for (std::uint32_t j = 0; j <= i; j++)
         {
             ASSERT_TRUE(is_file_size_acceptable_(OUTPUT_FILE_PATHS[j]));
         }
 
         // Verify that the DDS Recorder hasn't created any extra files
-        for (int j = i + 1; j < NUMBER_OF_FILES; j++)
+        for (std::uint32_t j = i + 1; j < NUMBER_OF_FILES; j++)
         {
             ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATHS[j]));
         }
@@ -295,7 +298,7 @@ TEST_F(ResourceLimitsTest, max_size)
     ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATHS[4]));
 
     // Verify that the size of the rest of the files hasn't changed
-    for (int i = 0; i < test::limits::MAX_FILES; i++)
+    for (std::uint32_t i = 0; i < test::limits::MAX_FILES; i++)
     {
         ASSERT_TRUE(is_file_size_acceptable_(OUTPUT_FILE_PATHS[i]));
     }
@@ -322,23 +325,23 @@ TEST_F(ResourceLimitsTest, file_rotation)
 {
     constexpr std::uint32_t NUMBER_OF_FILES = 9;
     const std::string OUTPUT_FILE_NAME = "file_rotation_test";
-    const auto OUTPUT_FILE_PATHS = get_output_file_paths_(NUMBER_OF_FILES, OUTPUT_FILE_NAME);
+    const auto OUTPUT_FILE_PATHS = get_output_file_paths_(NUMBER_OF_FILES + 1, OUTPUT_FILE_NAME);
 
     configuration_->output_resource_limits_max_file_size = test::limits::MAX_FILE_SIZE;
     configuration_->output_resource_limits_max_size = test::limits::MAX_SIZE;
     configuration_->output_resource_limits_file_rotation = true;
 
-    // Verify that the output files don't exist yet
-    for (int i = 0; i < NUMBER_OF_FILES; i++)
+    // Delete the output files if they exist
+    for (const auto& path : OUTPUT_FILE_PATHS)
     {
-        ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATHS[i]));
+        ASSERT_TRUE(delete_file_(path));
     }
 
-    ddsrecorder::recorder::DdsRecorder recorder(*configuration_,
-            ddsrecorder::recorder::DdsRecorderStateCode::RUNNING, OUTPUT_FILE_NAME);
+    ddsrecorder::recorder::DdsRecorder recorder(*configuration_, ddsrecorder::recorder::DdsRecorderStateCode::RUNNING,
+            file_tracker_, OUTPUT_FILE_NAME);
 
     // Verify that the DDS Recorder creates a new file after each batch of messages, before reaching the max-size
-    for (int i = 0; i < test::limits::MAX_FILES - 1; i++)
+    for (std::uint32_t i = 0; i < test::limits::MAX_FILES - 1; i++)
     {
         // Send more messages than can be stored in a file with a size of max-file-size
         publish_msgs_(test::limits::FILE_OVERFLOW_THRESHOLD);
@@ -347,20 +350,20 @@ TEST_F(ResourceLimitsTest, file_rotation)
         ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), ReturnCode_t::RETCODE_OK);
 
         // Verify that the DDS Recorder has created the expected number of output files
-        for (int j = 0; j <= i; j++)
+        for (std::uint32_t j = 0; j <= i; j++)
         {
             ASSERT_TRUE(is_file_size_acceptable_(OUTPUT_FILE_PATHS[j]));
         }
 
         // Verify that the DDS Recorder hasn't created any extra files
-        for (int j = i + 1; j < NUMBER_OF_FILES; j++)
+        for (std::uint32_t j = i + 1; j < NUMBER_OF_FILES; j++)
         {
             ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATHS[j]));
         }
     }
 
     // Verify that the DDS Recorder applies file rotation after reaching the max-size
-    for (int i = 0; i < NUMBER_OF_FILES - (test::limits::MAX_FILES - 1); i++)
+    for (std::uint32_t i = 0; i < NUMBER_OF_FILES - (test::limits::MAX_FILES - 1); i++)
     {
         // Send more messages than can be stored in a file with a size of max-file-size
         publish_msgs_(test::limits::FILE_OVERFLOW_THRESHOLD);
@@ -369,20 +372,20 @@ TEST_F(ResourceLimitsTest, file_rotation)
         ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), ReturnCode_t::RETCODE_OK);
 
         // Verify that the DDS Recorder has removed the oldest files
-        for (int j = 0; j <= i; j++)
+        for (std::uint32_t j = 0; j <= i; j++)
         {
             ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATHS[j]));
         }
 
         // Verify that the DDS Recorder has created the expected number of output files and that their size is close
         // but doesn't exceed the max-file-size
-        for (int j = i + 1; j < i + test::limits::MAX_FILES; j++)
+        for (std::uint32_t j = i + 1; j < i + test::limits::MAX_FILES; j++)
         {
             ASSERT_TRUE(is_file_size_acceptable_(OUTPUT_FILE_PATHS[j]));
         }
 
         // Verify that the DDS Recorder hasn't created any extra files
-        for (int j = i + (NUMBER_OF_FILES - test::limits::MAX_FILES); j < NUMBER_OF_FILES; j++)
+        for (std::uint32_t j = i + (NUMBER_OF_FILES - test::limits::MAX_FILES); j < NUMBER_OF_FILES; j++)
         {
             ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATHS[j]));
         }

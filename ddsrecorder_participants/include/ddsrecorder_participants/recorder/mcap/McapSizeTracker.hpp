@@ -110,6 +110,15 @@ public:
     void metadata_written(
             const mcap::Metadata& metadata);
 
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    std::uint64_t get_potential_mcap_size() const;
+
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    std::uint64_t get_written_mcap_size() const;
+
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    std::uint64_t get_min_mcap_size() const;
+
 protected:
 
     bool can_increase_potential_mcap_size_(
@@ -120,10 +129,12 @@ protected:
             const std::uint64_t& size_to_remove);
 
     void check_and_increase_potential_mcap_size_(
-            const std::uint64_t& size);
+            const std::uint64_t& size,
+            const bool increase_min_mcap_size = false);
 
     void decrease_potential_mcap_size_(
-            const std::uint64_t& size);
+            const std::uint64_t& size,
+            const bool decrease_min_mcap_size = false);
 
     void check_and_increase_written_mcap_size_(
             const std::uint64_t& size);
@@ -168,6 +179,9 @@ protected:
 
     //! Written (estimated) file size, that takes into account written objects
     std::uint64_t written_mcap_size_{MCAP_FILE_OVERHEAD};
+
+    //! The minimum size of an MCAP file without data
+    std::uint64_t min_mcap_size_{MCAP_FILE_OVERHEAD};
 
     //! Space available in disk
     std::uintmax_t space_available_;

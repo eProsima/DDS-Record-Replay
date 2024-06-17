@@ -49,6 +49,7 @@ The following is the state diagram of the |ddsrecorder| application with all the
 .. figure:: /rst/figures/recorder_state_diagram.png
     :align: center
 
+.. _recorder_remote_controller_data_types:
 
 DDS Controller Data Types
 =========================

@@ -30,8 +30,6 @@ char dummy;
 
 #if FASTCDR_VERSION_MAJOR == 1
 
-#include <ddsrecorder_participants/common/types/logging/v2/DdsRecorderLogEntryTypeObject.h>
-
 #include <fastcdr/Cdr.h>
 
 

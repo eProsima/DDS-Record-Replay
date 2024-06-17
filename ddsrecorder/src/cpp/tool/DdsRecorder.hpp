@@ -34,6 +34,7 @@
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
 #include <ddsrecorder_participants/recorder/monitoring/DdsRecorderMonitor.hpp>
+#include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
@@ -64,11 +65,13 @@ public:
      *
      * @param configuration: Structure encapsulating all recorder configuration options.
      * @param init_state:    Initial instance state (RUNNING/PAUSED/SUSPENDED/STOPPED).
+     * @param file_tracker:  Reference to file tracker used to manage mcap files.
      * @param file_name:     Name of the mcap file where data is recorded. If not provided, the one from configuration is used instead.
      */
     DdsRecorder(
             const yaml::RecorderConfiguration& configuration,
             const DdsRecorderStateCode& init_state,
+            std::shared_ptr<participants::FileTracker>& file_tracker,
             const std::string& file_name = "");
 
     /**
@@ -79,12 +82,14 @@ public:
      * @param configuration: Structure encapsulating all recorder configuration options.
      * @param init_state:    Initial instance state (RUNNING/PAUSED/SUSPENDED/STOPPED).
      * @param event_handler: Reference to event handler used for thread synchronization in main application.
+     * @param file_tracker:  Reference to file tracker used to manage mcap files.
      * @param file_name:     Name of the mcap file where data is recorded. If not provided, the one from configuration is used instead.
      */
     DdsRecorder(
             const yaml::RecorderConfiguration& configuration,
             const DdsRecorderStateCode& init_state,
             std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler,
+            std::shared_ptr<participants::FileTracker>& file_tracker,
             const std::string& file_name = "");
 
     /**

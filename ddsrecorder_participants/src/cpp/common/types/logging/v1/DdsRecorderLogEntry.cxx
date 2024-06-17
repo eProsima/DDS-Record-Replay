@@ -28,8 +28,6 @@ char dummy;
 
 #include <ddsrecorder_participants/common/types/logging/v1/DdsRecorderLogEntry.h>
 
-#include <ddsrecorder_participants/common/types/logging/v1/DdsRecorderLogEntryTypeObject.h>
-
 #include <fastcdr/Cdr.h>
 
 

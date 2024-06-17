@@ -38,8 +38,9 @@ using namespace eprosima::utils;
 DdsRecorder::DdsRecorder(
         const yaml::RecorderConfiguration& configuration,
         const DdsRecorderStateCode& init_state,
-        const std::string& file_name)
-    : DdsRecorder(configuration, init_state, nullptr, file_name)
+        std::shared_ptr<participants::FileTracker>& file_tracker,
+        const std::string& file_name /* = "" */)
+    : DdsRecorder(configuration, init_state, nullptr, file_tracker, file_name)
 {
 }
 
@@ -47,7 +48,8 @@ DdsRecorder::DdsRecorder(
         const yaml::RecorderConfiguration& configuration,
         const DdsRecorderStateCode& init_state,
         std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler,
-        const std::string& file_name)
+        std::shared_ptr<participants::FileTracker>& file_tracker,
+        const std::string& file_name /* = "" */)
     : configuration_(configuration)
     , event_handler_(event_handler)
 {
@@ -63,45 +65,43 @@ DdsRecorder::DdsRecorder(
     thread_pool_ = std::make_shared<SlotThreadPool>(configuration_.n_threads);
 
     // Fill MCAP output file settings
-    participants::McapOutputSettings mcap_output_settings;
+    participants::OutputSettings output_settings;
 
     if (file_name == "")
     {
-        mcap_output_settings.output_filename = configuration_.output_filename;
-        mcap_output_settings.output_filepath = configuration_.output_filepath;
-        mcap_output_settings.prepend_timestamp = true;
-        mcap_output_settings.output_timestamp_format = configuration_.output_timestamp_format;
-        mcap_output_settings.output_local_timestamp = configuration_.output_local_timestamp;
+        output_settings.filename = configuration_.output_filename;
+        output_settings.filepath = configuration_.output_filepath;
+        output_settings.prepend_timestamp = true;
+        output_settings.timestamp_format = configuration_.output_timestamp_format;
+        output_settings.local_timestamp = configuration_.output_local_timestamp;
     }
     else
     {
-        mcap_output_settings.output_filename = file_name;
-        mcap_output_settings.output_filepath = ".";
-        mcap_output_settings.prepend_timestamp = false;
+        output_settings.filename = file_name;
+        output_settings.filepath = ".";
+        output_settings.prepend_timestamp = false;
     }
 
-    mcap_output_settings.safety_margin = configuration_.safety_margin;
-    mcap_output_settings.file_rotation = configuration_.output_resource_limits_file_rotation;
-    mcap_output_settings.max_file_size = configuration_.output_resource_limits_max_file_size;
+    output_settings.extension = ".mcap";
+    output_settings.safety_margin = configuration_.safety_margin;
+    output_settings.file_rotation = configuration_.output_resource_limits_file_rotation;
+    output_settings.max_file_size = configuration_.output_resource_limits_max_file_size;
 
-    if (mcap_output_settings.max_file_size == 0)
+    if (output_settings.max_file_size == 0)
     {
-        mcap_output_settings.max_file_size = std::filesystem::space(mcap_output_settings.output_filepath).available;
+        output_settings.max_file_size = std::filesystem::space(output_settings.filepath).available;
     }
 
-    mcap_output_settings.max_size = configuration_.output_resource_limits_max_size;
+    output_settings.max_size = configuration_.output_resource_limits_max_size;
 
-    if (mcap_output_settings.max_size == 0)
+    if (output_settings.max_size == 0)
     {
-        mcap_output_settings.max_size = mcap_output_settings.max_file_size;
+        output_settings.max_size = output_settings.max_file_size;
     }
-
-    mcap_output_settings.max_files = ceil(
-        static_cast<double>(mcap_output_settings.max_size) / mcap_output_settings.max_file_size);
 
     // Create MCAP Handler configuration
     participants::McapHandlerConfiguration handler_config(
-        mcap_output_settings,
+        output_settings,
         configuration_.max_pending_samples,
         configuration_.buffer_size,
         configuration_.event_window,
@@ -112,13 +112,19 @@ DdsRecorder::DdsRecorder(
         configuration_.record_types,
         configuration_.ros2_types);
 
+    if (file_tracker == nullptr)
+    {
+        // Create the File Tracker
+        file_tracker.reset(new participants::FileTracker(output_settings));
+    }
+
     // Create MCAP Handler
     mcap_handler_ = std::make_shared<participants::McapHandler>(
         handler_config,
         payload_pool_,
-        recorder_to_handler_state_(init_state));
-
-    mcap_handler_->set_on_disk_full_callback(std::bind(&DdsRecorder::on_disk_full, this));
+        file_tracker,
+        recorder_to_handler_state_(init_state),
+        std::bind(&DdsRecorder::on_disk_full, this));
 
     // Create DynTypes Participant
     dyn_participant_ = std::make_shared<DynTypesParticipant>(

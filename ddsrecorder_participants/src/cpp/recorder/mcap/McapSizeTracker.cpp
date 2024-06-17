@@ -23,8 +23,10 @@
 
 #include <cpp_utils/Formatter.hpp>
 #include <cpp_utils/Log.hpp>
+#include <cpp_utils/utils.hpp>
 
 #include <ddsrecorder_participants/recorder/mcap/McapSizeTracker.hpp>
+#include <ddsrecorder_participants/recorder/output/FullFileException.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -43,12 +45,12 @@ void McapSizeTracker::init(
         const std::uint64_t& safety_margin)
 {
     logInfo(DDSRECORDER_MCAP_SIZE_TRACKER,
-            "Initializing tracker with a size of " << space_available);
+            "MCAP_WRITE | Initializing tracker with a size of " << utils::from_bytes(space_available));
 
     if (enabled_)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                "Attempting to initialize already enabled tracker.");
+                "MCAP_WRITE | Attempting to initialize already enabled tracker.");
         return;
     }
 
@@ -58,6 +60,7 @@ void McapSizeTracker::init(
 
     potential_mcap_size_ = MCAP_FILE_OVERHEAD + safety_margin;
     written_mcap_size_ = MCAP_FILE_OVERHEAD + safety_margin;
+    min_mcap_size_ = MCAP_FILE_OVERHEAD + safety_margin;
 
     space_available_ = space_available;
 
@@ -68,12 +71,12 @@ void McapSizeTracker::reset(
         const std::string& filepath)
 {
     logInfo(DDSRECORDER_MCAP_SIZE_TRACKER,
-            "Resetting tracker for: " << filepath);
+            "MCAP_WRITE | Resetting tracker for: " << filepath);
 
     if (!enabled_)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                "Attempting to reset disabled tracker.");
+                "MCAP_WRITE | Attempting to reset disabled tracker.");
         return;
     }
 
@@ -82,24 +85,26 @@ void McapSizeTracker::reset(
     if (written_mcap_size_ > space_available_)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                "Written size exceeds available space in disk.");
+                "MCAP_WRITE | Written size exceeds available space in disk.");
         // assert(false); // TODO: uncomment when estimation is exact
     }
     else if (potential_mcap_size_ != written_mcap_size_)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                "Written size exceeds potential one.");
+                "MCAP_WRITE | Written size exceeds potential one.");
         // assert(false); // TODO: uncomment when estimation is exact
     }
 
+    // TODO: uncomment when estimation is exact
     // TODO: perform this check only for the case without compression
     // // Check actual size of file is the same as the expected one
     // std::filesystem::path p{filepath};
-    // auto actual_written_size = std::filesystem::file_size(p);
+    // const auto actual_written_size = std::filesystem::file_size(p);
     // if (written_mcap_size_ != actual_written_size)
     // {
     //     logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-    //             "Actual written size is different from expected size: " << actual_written_size << " vs " << written_mcap_size_);
+    //                "MCAP_WRITE | Actual written size is different from expected size: " << actual_written_size <<
+    //                " vs " << written_mcap_size_);
     //     // assert(false); // TODO: uncomment when estimation is exact
     // }
 }
@@ -119,7 +124,8 @@ void McapSizeTracker::message_written(
 void McapSizeTracker::schema_to_write(
         const mcap::Schema& schema)
 {
-    check_and_increase_potential_mcap_size_(get_schema_size_(schema));
+    static constexpr bool INCREASE_MIN_MCAP_SIZE = true;
+    check_and_increase_potential_mcap_size_(get_schema_size_(schema), INCREASE_MIN_MCAP_SIZE);
 }
 
 void McapSizeTracker::schema_written(
@@ -131,7 +137,8 @@ void McapSizeTracker::schema_written(
 void McapSizeTracker::channel_to_write(
         const mcap::Channel& channel)
 {
-    check_and_increase_potential_mcap_size_(get_channel_size_(channel));
+    static constexpr bool INCREASE_MIN_MCAP_SIZE = true;
+    check_and_increase_potential_mcap_size_(get_channel_size_(channel), INCREASE_MIN_MCAP_SIZE);
 }
 
 void McapSizeTracker::channel_written(
@@ -143,25 +150,28 @@ void McapSizeTracker::channel_written(
 void McapSizeTracker::attachment_to_write(
         const uint64_t& payload_size)
 {
-    check_and_increase_potential_mcap_size_(get_attachment_size_(payload_size));
+    static constexpr bool INCREASE_MIN_MCAP_SIZE = true;
+    check_and_increase_potential_mcap_size_(get_attachment_size_(payload_size), INCREASE_MIN_MCAP_SIZE);
 }
 
 void McapSizeTracker::attachment_to_write(
         const uint64_t& payload_size_to_write,
         const uint64_t& payload_size_to_remove)
 {
-    if (can_increase_potential_mcap_size_(get_attachment_size_(payload_size_to_write),
-            get_attachment_size_(payload_size_to_remove)))
+    if (!can_increase_potential_mcap_size_(
+                get_attachment_size_(payload_size_to_write),
+                get_attachment_size_(payload_size_to_remove)))
     {
-        decrease_potential_mcap_size_(get_attachment_size_(payload_size_to_remove));
-        attachment_to_write(payload_size_to_write);
+        throw FullFileException(
+                  STR_ENTRY << "Attempted attachment write of size: " << utils::from_bytes(payload_size_to_write) <<
+                      ", but there is not enough space available on disk: " << utils::from_bytes(space_available_),
+                      payload_size_to_write);
     }
-    else
-    {
-        throw std::overflow_error(
-                  STR_ENTRY << "Attempted attachment write of size: " << potential_mcap_size_ <<
-                      ", but there is not enough space available on disk: " << space_available_);
-    }
+
+    static constexpr bool DECREASE_MIN_MCAP_SIZE = true;
+    decrease_potential_mcap_size_(get_attachment_size_(payload_size_to_remove), DECREASE_MIN_MCAP_SIZE);
+
+    attachment_to_write(payload_size_to_write);
 }
 
 void McapSizeTracker::attachment_written(
@@ -173,13 +183,29 @@ void McapSizeTracker::attachment_written(
 void McapSizeTracker::metadata_to_write(
         const mcap::Metadata& metadata)
 {
-    check_and_increase_potential_mcap_size_(get_metadata_size_(metadata));
+    static constexpr bool INCREASE_MIN_MCAP_SIZE = true;
+    check_and_increase_potential_mcap_size_(get_metadata_size_(metadata), INCREASE_MIN_MCAP_SIZE);
 }
 
 void McapSizeTracker::metadata_written(
         const mcap::Metadata& metadata)
 {
     check_and_increase_written_mcap_size_(get_metadata_size_(metadata));
+}
+
+std::uint64_t McapSizeTracker::get_potential_mcap_size() const
+{
+    return potential_mcap_size_;
+}
+
+std::uint64_t McapSizeTracker::get_written_mcap_size() const
+{
+    return written_mcap_size_;
+}
+
+std::uint64_t McapSizeTracker::get_min_mcap_size() const
+{
+    return min_mcap_size_;
 }
 
 bool McapSizeTracker::can_increase_potential_mcap_size_(
@@ -205,67 +231,68 @@ bool McapSizeTracker::can_increase_potential_mcap_size_(
     if (potential_mcap_size_ < size_to_remove)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                "Attempting to decrease potential size more than possible.");
+                "MCAP_WRITE | Attempting to decrease potential size more than possible.");
         // assert(false); // TODO: uncomment when estimation is exact
         return false;
     }
-    else
-    {
-        return (potential_mcap_size_ - size_to_remove + size_to_write) <= space_available_;
-    }
+
+    return (potential_mcap_size_ - size_to_remove + size_to_write) <= space_available_;
 }
 
 void McapSizeTracker::check_and_increase_potential_mcap_size_(
-        const std::uint64_t& size)
+        const std::uint64_t& size,
+        const bool increase_min_mcap_size /* = false */)
 {
     if (!enabled_)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                "Attempting to increase potential size in disabled tracker.");
+                "MCAP_WRITE | Attempting to increase potential size in disabled tracker.");
         return;
     }
 
-    if (!disk_full_)
+    if (disk_full_ || !can_increase_potential_mcap_size_(size))
     {
-        if (can_increase_potential_mcap_size_(size))
-        {
-            potential_mcap_size_ += size;
-        }
-        else
-        {
-            disk_full_ = true;
-            throw std::overflow_error(
-                      STR_ENTRY << "Attempted write of size: " << potential_mcap_size_ <<
-                          ", but there is not enough space available on disk: " << space_available_);
-        }
+        disk_full_ = true;
+        throw FullFileException(
+                  STR_ENTRY << "Attempted to write " << utils::from_bytes(size) << " on an MCAP of "
+                            << utils::from_bytes(potential_mcap_size_) << " but there is not enough space available: "
+                            << utils::from_bytes(space_available_ - potential_mcap_size_) << "."
+                      , size);
     }
-    else
+
+    potential_mcap_size_ += size;
+
+    if (increase_min_mcap_size)
     {
-        throw std::overflow_error(
-                  STR_ENTRY << "Attempted write of size: " << potential_mcap_size_ <<
-                      ", but there is not enough space available on disk: " << space_available_);
+        // NOTE: The minimum size must increase even if the potential size can't.
+        min_mcap_size_ += size;
     }
 }
 
 void McapSizeTracker::decrease_potential_mcap_size_(
-        const std::uint64_t& size)
+        const std::uint64_t& size,
+        const bool decrease_min_mcap_size /* = false */)
 {
     if (!enabled_)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                "Attempting to decrease potential size in disabled tracker.");
+                "MCAP_WRITE | Attempting to decrease potential size in disabled tracker.");
         return;
     }
 
     if (potential_mcap_size_ < size)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                "Attempting to decrease potential size more than possible.");
+                "MCAP_WRITE | Attempting to decrease potential size more than possible.");
         // assert(false); // TODO: uncomment when estimation is exact
+        return;
     }
-    else
+
+    potential_mcap_size_ -= size;
+
+    if (decrease_min_mcap_size)
     {
-        potential_mcap_size_ -= size;
+        min_mcap_size_ -= size;
     }
 }
 
@@ -275,26 +302,27 @@ void McapSizeTracker::check_and_increase_written_mcap_size_(
     if (!enabled_)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                "Attempting to increase written size in disabled tracker.");
+                "MCAP_WRITE | Attempting to increase written size in disabled tracker.");
         return;
     }
 
     if ((written_mcap_size_ + size) > space_available_)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                "Written size exceeds available space in disk.");
+                "MCAP_WRITE | Written size exceeds available space in disk.");
         // assert(false); // TODO: uncomment when estimation is exact
+        return;
     }
-    else if ((written_mcap_size_ + size) > potential_mcap_size_)
+
+    if ((written_mcap_size_ + size) > potential_mcap_size_)
     {
         logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
-                "Written size exceeds potential one.");
+                "MCAP_WRITE | Written size exceeds potential one.");
         // assert(false); // TODO: uncomment when estimation is exact
+        return;
     }
-    else
-    {
-        written_mcap_size_ += size;
-    }
+
+    written_mcap_size_ += size;
 }
 
 std::uint64_t McapSizeTracker::get_message_size_(
