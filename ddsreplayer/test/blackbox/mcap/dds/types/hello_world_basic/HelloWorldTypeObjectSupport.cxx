@@ -93,19 +93,45 @@ void register_HelloWorld_type_identifier(
             ReturnCode_t return_code_message {eprosima::fastdds::dds::RETCODE_OK};
             return_code_message =
                 eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_identifiers(
-                "anonymous_string_unbounded", type_ids_message);
+                "anonymous_array_char_20", type_ids_message);
 
             if (eprosima::fastdds::dds::RETCODE_OK != return_code_message)
             {
+                return_code_message =
+                    eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_identifiers(
+                    "_char", type_ids_message);
+
+                if (eprosima::fastdds::dds::RETCODE_OK != return_code_message)
                 {
-                    SBound bound = 0;
-                    StringSTypeDefn string_sdefn = TypeObjectUtils::build_string_s_type_defn(bound);
+                    EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION,
+                            "Array element TypeIdentifier unknown to TypeObjectRegistry.");
+                    return;
+                }
+                bool element_identifier_anonymous_array_char_20_ec {false};
+                TypeIdentifier* element_identifier_anonymous_array_char_20 {new TypeIdentifier(TypeObjectUtils::retrieve_complete_type_identifier(type_ids_message, element_identifier_anonymous_array_char_20_ec))};
+                if (!element_identifier_anonymous_array_char_20_ec)
+                {
+                    EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION, "Array element TypeIdentifier inconsistent.");
+                    return;
+                }
+                EquivalenceKind equiv_kind_anonymous_array_char_20 = EK_COMPLETE;
+                if (TK_NONE == type_ids_message.type_identifier2()._d())
+                {
+                    equiv_kind_anonymous_array_char_20 = EK_BOTH;
+                }
+                CollectionElementFlag element_flags_anonymous_array_char_20 = 0;
+                PlainCollectionHeader header_anonymous_array_char_20 = TypeObjectUtils::build_plain_collection_header(equiv_kind_anonymous_array_char_20, element_flags_anonymous_array_char_20);
+                {
+                    SBoundSeq array_bound_seq;
+                        TypeObjectUtils::add_array_dimension(array_bound_seq, static_cast<SBound>(20));
+
+                    PlainArraySElemDefn array_sdefn = TypeObjectUtils::build_plain_array_s_elem_defn(header_anonymous_array_char_20, array_bound_seq,
+                                eprosima::fastcdr::external<TypeIdentifier>(element_identifier_anonymous_array_char_20));
                     if (eprosima::fastdds::dds::RETCODE_BAD_PARAMETER ==
-                            TypeObjectUtils::build_and_register_s_string_type_identifier(string_sdefn,
-                            "anonymous_string_unbounded", type_ids_message))
+                            TypeObjectUtils::build_and_register_s_array_type_identifier(array_sdefn, "anonymous_array_char_20", type_ids_message))
                     {
                         EPROSIMA_LOG_ERROR(XTYPES_TYPE_REPRESENTATION,
-                            "anonymous_string_unbounded already registered in TypeObjectRegistry for a different type.");
+                            "anonymous_array_char_20 already registered in TypeObjectRegistry for a different type.");
                     }
                 }
             }

@@ -52,9 +52,8 @@ void register_DynamicType_type_identifier(
         "eprosima::ddsrecorder::participants::DynamicType", type_ids_DynamicType);
     if (eprosima::fastdds::dds::RETCODE_OK != return_code_DynamicType)
     {
-        StructTypeFlag struct_flags_DynamicType = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::NOT_APPLIED,
+        StructTypeFlag struct_flags_DynamicType = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::APPENDABLE,
                 false, false);
-        static_cast<void>(return_code_DynamicType);
         QualifiedTypeName type_name_DynamicType = "eprosima::ddsrecorder::participants::DynamicType";
         eprosima::fastcdr::optional<AppliedBuiltinTypeAnnotations> type_ann_builtin_DynamicType;
         eprosima::fastcdr::optional<AppliedAnnotationSeq> ann_custom_DynamicType;
@@ -83,7 +82,7 @@ void register_DynamicType_type_identifier(
                     }
                 }
             }
-            StructMemberFlag member_flags_type_name = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_type_name = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_type_name = 0x00000000;
             bool common_type_name_ec {false};
@@ -121,7 +120,7 @@ void register_DynamicType_type_identifier(
                     }
                 }
             }
-            StructMemberFlag member_flags_type_information = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_type_information = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_type_information = 0x00000001;
             bool common_type_information_ec {false};
@@ -159,7 +158,7 @@ void register_DynamicType_type_identifier(
                     }
                 }
             }
-            StructMemberFlag member_flags_type_object = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_type_object = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_type_object = 0x00000002;
             bool common_type_object_ec {false};
@@ -196,9 +195,8 @@ void register_DynamicTypesCollection_type_identifier(
         "eprosima::ddsrecorder::participants::DynamicTypesCollection", type_ids_DynamicTypesCollection);
     if (eprosima::fastdds::dds::RETCODE_OK != return_code_DynamicTypesCollection)
     {
-        StructTypeFlag struct_flags_DynamicTypesCollection = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::NOT_APPLIED,
+        StructTypeFlag struct_flags_DynamicTypesCollection = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::APPENDABLE,
                 false, false);
-        static_cast<void>(return_code_DynamicTypesCollection);
         QualifiedTypeName type_name_DynamicTypesCollection = "eprosima::ddsrecorder::participants::DynamicTypesCollection";
         eprosima::fastcdr::optional<AppliedBuiltinTypeAnnotations> type_ann_builtin_DynamicTypesCollection;
         eprosima::fastcdr::optional<AppliedAnnotationSeq> ann_custom_DynamicTypesCollection;
@@ -249,7 +247,7 @@ void register_DynamicTypesCollection_type_identifier(
                     }
                 }
             }
-            StructMemberFlag member_flags_dynamic_types = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_dynamic_types = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_dynamic_types = 0x00000000;
             bool common_dynamic_types_ec {false};

@@ -65,9 +65,9 @@ set(TEST_NAME McapFileReadWithTypeTest)
 
 set(TEST_SOURCES
         McapFileReadWithTypeTest.cpp
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/hello_world/HelloWorld.hpp
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/hello_world/HelloWorldPubSubTypes.cxx
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/hello_world/HelloWorldTypeObjectSupport.cxx
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/hello_world_basic/HelloWorld.hpp
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/hello_world_basic/HelloWorldPubSubTypes.cxx
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/hello_world_basic/HelloWorldTypeObjectSupport.cxx
         ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/HelloWorldSubscriber.cpp
         ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/HelloWorldDynTypesSubscriber.cpp
     )

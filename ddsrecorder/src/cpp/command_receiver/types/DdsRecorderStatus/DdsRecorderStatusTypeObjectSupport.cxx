@@ -49,9 +49,8 @@ void register_DdsRecorderStatus_type_identifier(
         "DdsRecorderStatus", type_ids_DdsRecorderStatus);
     if (eprosima::fastdds::dds::RETCODE_OK != return_code_DdsRecorderStatus)
     {
-        StructTypeFlag struct_flags_DdsRecorderStatus = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::NOT_APPLIED,
+        StructTypeFlag struct_flags_DdsRecorderStatus = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::APPENDABLE,
                 false, false);
-        static_cast<void>(return_code_DdsRecorderStatus);
         QualifiedTypeName type_name_DdsRecorderStatus = "DdsRecorderStatus";
         eprosima::fastcdr::optional<AppliedBuiltinTypeAnnotations> type_ann_builtin_DdsRecorderStatus;
         eprosima::fastcdr::optional<AppliedAnnotationSeq> ann_custom_DdsRecorderStatus;
@@ -80,7 +79,7 @@ void register_DdsRecorderStatus_type_identifier(
                     }
                 }
             }
-            StructMemberFlag member_flags_previous = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_previous = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_previous = 0x00000000;
             bool common_previous_ec {false};
@@ -118,7 +117,7 @@ void register_DdsRecorderStatus_type_identifier(
                     }
                 }
             }
-            StructMemberFlag member_flags_current = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_current = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_current = 0x00000001;
             bool common_current_ec {false};
@@ -156,7 +155,7 @@ void register_DdsRecorderStatus_type_identifier(
                     }
                 }
             }
-            StructMemberFlag member_flags_info = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_info = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_info = 0x00000002;
             bool common_info_ec {false};

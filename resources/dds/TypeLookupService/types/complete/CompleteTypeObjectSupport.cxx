@@ -49,9 +49,8 @@ void register_Timestamp_type_identifier(
         "Timestamp", type_ids_Timestamp);
     if (eprosima::fastdds::dds::RETCODE_OK != return_code_Timestamp)
     {
-        StructTypeFlag struct_flags_Timestamp = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::NOT_APPLIED,
+        StructTypeFlag struct_flags_Timestamp = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::APPENDABLE,
                 false, false);
-        static_cast<void>(return_code_Timestamp);
         QualifiedTypeName type_name_Timestamp = "Timestamp";
         eprosima::fastcdr::optional<AppliedBuiltinTypeAnnotations> type_ann_builtin_Timestamp;
         eprosima::fastcdr::optional<AppliedAnnotationSeq> ann_custom_Timestamp;
@@ -72,7 +71,7 @@ void register_Timestamp_type_identifier(
                         "seconds Structure member TypeIdentifier unknown to TypeObjectRegistry.");
                 return;
             }
-            StructMemberFlag member_flags_seconds = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_seconds = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_seconds = 0x00000000;
             bool common_seconds_ec {false};
@@ -102,7 +101,7 @@ void register_Timestamp_type_identifier(
                         "milliseconds Structure member TypeIdentifier unknown to TypeObjectRegistry.");
                 return;
             }
-            StructMemberFlag member_flags_milliseconds = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_milliseconds = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_milliseconds = 0x00000001;
             bool common_milliseconds_ec {false};
@@ -139,9 +138,8 @@ void register_Point_type_identifier(
         "Point", type_ids_Point);
     if (eprosima::fastdds::dds::RETCODE_OK != return_code_Point)
     {
-        StructTypeFlag struct_flags_Point = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::NOT_APPLIED,
+        StructTypeFlag struct_flags_Point = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::APPENDABLE,
                 false, false);
-        static_cast<void>(return_code_Point);
         QualifiedTypeName type_name_Point = "Point";
         eprosima::fastcdr::optional<AppliedBuiltinTypeAnnotations> type_ann_builtin_Point;
         eprosima::fastcdr::optional<AppliedAnnotationSeq> ann_custom_Point;
@@ -162,7 +160,7 @@ void register_Point_type_identifier(
                         "x Structure member TypeIdentifier unknown to TypeObjectRegistry.");
                 return;
             }
-            StructMemberFlag member_flags_x = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_x = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_x = 0x00000000;
             bool common_x_ec {false};
@@ -192,7 +190,7 @@ void register_Point_type_identifier(
                         "y Structure member TypeIdentifier unknown to TypeObjectRegistry.");
                 return;
             }
-            StructMemberFlag member_flags_y = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_y = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_y = 0x00000001;
             bool common_y_ec {false};
@@ -222,7 +220,7 @@ void register_Point_type_identifier(
                         "z Structure member TypeIdentifier unknown to TypeObjectRegistry.");
                 return;
             }
-            StructMemberFlag member_flags_z = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_z = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_z = 0x00000002;
             bool common_z_ec {false};
@@ -259,9 +257,8 @@ void register_MessageDescriptor_type_identifier(
         "MessageDescriptor", type_ids_MessageDescriptor);
     if (eprosima::fastdds::dds::RETCODE_OK != return_code_MessageDescriptor)
     {
-        StructTypeFlag struct_flags_MessageDescriptor = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::NOT_APPLIED,
+        StructTypeFlag struct_flags_MessageDescriptor = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::APPENDABLE,
                 false, false);
-        static_cast<void>(return_code_MessageDescriptor);
         QualifiedTypeName type_name_MessageDescriptor = "MessageDescriptor";
         eprosima::fastcdr::optional<AppliedBuiltinTypeAnnotations> type_ann_builtin_MessageDescriptor;
         eprosima::fastcdr::optional<AppliedAnnotationSeq> ann_custom_MessageDescriptor;
@@ -282,7 +279,7 @@ void register_MessageDescriptor_type_identifier(
                         "id Structure member TypeIdentifier unknown to TypeObjectRegistry.");
                 return;
             }
-            StructMemberFlag member_flags_id = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_id = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_id = 0x00000000;
             bool common_id_ec {false};
@@ -320,7 +317,7 @@ void register_MessageDescriptor_type_identifier(
                     }
                 }
             }
-            StructMemberFlag member_flags_topic = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_topic = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_topic = 0x00000001;
             bool common_topic_ec {false};
@@ -348,7 +345,7 @@ void register_MessageDescriptor_type_identifier(
             {
             ::register_Timestamp_type_identifier(type_ids_time);
             }
-            StructMemberFlag member_flags_time = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_time = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_time = 0x00000002;
             bool common_time_ec {false};
@@ -385,9 +382,8 @@ void register_Message_type_identifier(
         "Message", type_ids_Message);
     if (eprosima::fastdds::dds::RETCODE_OK != return_code_Message)
     {
-        StructTypeFlag struct_flags_Message = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::NOT_APPLIED,
+        StructTypeFlag struct_flags_Message = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::APPENDABLE,
                 false, false);
-        static_cast<void>(return_code_Message);
         QualifiedTypeName type_name_Message = "Message";
         eprosima::fastcdr::optional<AppliedBuiltinTypeAnnotations> type_ann_builtin_Message;
         eprosima::fastcdr::optional<AppliedAnnotationSeq> ann_custom_Message;
@@ -406,7 +402,7 @@ void register_Message_type_identifier(
             {
             ::register_MessageDescriptor_type_identifier(type_ids_descriptor);
             }
-            StructMemberFlag member_flags_descriptor = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_descriptor = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_descriptor = 0x00000000;
             bool common_descriptor_ec {false};
@@ -444,7 +440,7 @@ void register_Message_type_identifier(
                     }
                 }
             }
-            StructMemberFlag member_flags_message = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_message = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_message = 0x00000001;
             bool common_message_ec {false};
@@ -481,9 +477,8 @@ void register_CompleteData_type_identifier(
         "CompleteData", type_ids_CompleteData);
     if (eprosima::fastdds::dds::RETCODE_OK != return_code_CompleteData)
     {
-        StructTypeFlag struct_flags_CompleteData = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::NOT_APPLIED,
+        StructTypeFlag struct_flags_CompleteData = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::APPENDABLE,
                 false, false);
-        static_cast<void>(return_code_CompleteData);
         QualifiedTypeName type_name_CompleteData = "CompleteData";
         eprosima::fastcdr::optional<AppliedBuiltinTypeAnnotations> type_ann_builtin_CompleteData;
         eprosima::fastcdr::optional<AppliedAnnotationSeq> ann_custom_CompleteData;
@@ -504,7 +499,7 @@ void register_CompleteData_type_identifier(
                         "index Structure member TypeIdentifier unknown to TypeObjectRegistry.");
                 return;
             }
-            StructMemberFlag member_flags_index = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_index = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_index = 0x00000000;
             bool common_index_ec {false};
@@ -532,7 +527,7 @@ void register_CompleteData_type_identifier(
             {
             ::register_Point_type_identifier(type_ids_main_point);
             }
-            StructMemberFlag member_flags_main_point = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_main_point = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_main_point = 0x00000001;
             bool common_main_point_ec {false};
@@ -592,7 +587,7 @@ void register_CompleteData_type_identifier(
                     }
                 }
             }
-            StructMemberFlag member_flags_internal_data = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_internal_data = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_internal_data = 0x00000002;
             bool common_internal_data_ec {false};
@@ -654,7 +649,7 @@ void register_CompleteData_type_identifier(
                     }
                 }
             }
-            StructMemberFlag member_flags_messages = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_messages = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_messages = 0x00000003;
             bool common_messages_ec {false};

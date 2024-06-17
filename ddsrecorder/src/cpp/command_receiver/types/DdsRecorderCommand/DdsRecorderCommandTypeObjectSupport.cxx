@@ -49,9 +49,8 @@ void register_DdsRecorderCommand_type_identifier(
         "DdsRecorderCommand", type_ids_DdsRecorderCommand);
     if (eprosima::fastdds::dds::RETCODE_OK != return_code_DdsRecorderCommand)
     {
-        StructTypeFlag struct_flags_DdsRecorderCommand = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::NOT_APPLIED,
+        StructTypeFlag struct_flags_DdsRecorderCommand = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::APPENDABLE,
                 false, false);
-        static_cast<void>(return_code_DdsRecorderCommand);
         QualifiedTypeName type_name_DdsRecorderCommand = "DdsRecorderCommand";
         eprosima::fastcdr::optional<AppliedBuiltinTypeAnnotations> type_ann_builtin_DdsRecorderCommand;
         eprosima::fastcdr::optional<AppliedAnnotationSeq> ann_custom_DdsRecorderCommand;
@@ -80,7 +79,7 @@ void register_DdsRecorderCommand_type_identifier(
                     }
                 }
             }
-            StructMemberFlag member_flags_command = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_command = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_command = 0x00000000;
             bool common_command_ec {false};
@@ -118,7 +117,7 @@ void register_DdsRecorderCommand_type_identifier(
                     }
                 }
             }
-            StructMemberFlag member_flags_args = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_args = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_args = 0x00000001;
             bool common_args_ec {false};

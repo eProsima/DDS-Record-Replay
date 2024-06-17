@@ -32,6 +32,8 @@
 #include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
 #include <fastdds/rtps/writer/WriterDiscoveryInfo.h>
 
+#include "types/hello_world_basic/HelloWorldPubSubTypes.h"
+
 struct DataToCheck
 {
     unsigned int n_received_msgs;
@@ -133,6 +135,8 @@ protected:
     uint32_t samples_;
     //! The time in milliseconds when the previous message arrived
     double prev_time_;
+
+    HelloWorld hello_world_;
 
     //! Atomic variables to check whether the type has been discovered and registered
     static std::atomic<bool> type_discovered_;

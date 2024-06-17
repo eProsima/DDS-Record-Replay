@@ -50,9 +50,8 @@ void register_DdsRecorderMonitoringErrorStatus_type_identifier(
         "DdsRecorderMonitoringErrorStatus", type_ids_DdsRecorderMonitoringErrorStatus);
     if (eprosima::fastdds::dds::RETCODE_OK != return_code_DdsRecorderMonitoringErrorStatus)
     {
-        StructTypeFlag struct_flags_DdsRecorderMonitoringErrorStatus = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::NOT_APPLIED,
+        StructTypeFlag struct_flags_DdsRecorderMonitoringErrorStatus = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::APPENDABLE,
                 false, false);
-        static_cast<void>(return_code_DdsRecorderMonitoringErrorStatus);
         QualifiedTypeName type_name_DdsRecorderMonitoringErrorStatus = "DdsRecorderMonitoringErrorStatus";
         eprosima::fastcdr::optional<AppliedBuiltinTypeAnnotations> type_ann_builtin_DdsRecorderMonitoringErrorStatus;
         eprosima::fastcdr::optional<AppliedAnnotationSeq> ann_custom_DdsRecorderMonitoringErrorStatus;
@@ -73,7 +72,7 @@ void register_DdsRecorderMonitoringErrorStatus_type_identifier(
                         "mcap_file_creation_failure Structure member TypeIdentifier unknown to TypeObjectRegistry.");
                 return;
             }
-            StructMemberFlag member_flags_mcap_file_creation_failure = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_mcap_file_creation_failure = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_mcap_file_creation_failure = 0x00000000;
             bool common_mcap_file_creation_failure_ec {false};
@@ -103,7 +102,7 @@ void register_DdsRecorderMonitoringErrorStatus_type_identifier(
                         "disk_full Structure member TypeIdentifier unknown to TypeObjectRegistry.");
                 return;
             }
-            StructMemberFlag member_flags_disk_full = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_disk_full = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_disk_full = 0x00000001;
             bool common_disk_full_ec {false};
@@ -140,9 +139,8 @@ void register_DdsRecorderMonitoringStatus_type_identifier(
         "DdsRecorderMonitoringStatus", type_ids_DdsRecorderMonitoringStatus);
     if (eprosima::fastdds::dds::RETCODE_OK != return_code_DdsRecorderMonitoringStatus)
     {
-        StructTypeFlag struct_flags_DdsRecorderMonitoringStatus = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::NOT_APPLIED,
+        StructTypeFlag struct_flags_DdsRecorderMonitoringStatus = TypeObjectUtils::build_struct_type_flag(eprosima::fastdds::dds::xtypes::ExtensibilityKind::APPENDABLE,
                 false, false);
-        static_cast<void>(return_code_DdsRecorderMonitoringStatus);
         return_code_DdsRecorderMonitoringStatus =
             eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_identifiers(
             "MonitoringStatus", type_ids_DdsRecorderMonitoringStatus);
@@ -182,7 +180,7 @@ void register_DdsRecorderMonitoringStatus_type_identifier(
             {
             ::register_DdsRecorderMonitoringErrorStatus_type_identifier(type_ids_ddsrecorder_error_status);
             }
-            StructMemberFlag member_flags_ddsrecorder_error_status = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructKind::NOT_APPLIED,
+            StructMemberFlag member_flags_ddsrecorder_error_status = TypeObjectUtils::build_struct_member_flag(eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
                     false, false, false, false);
             MemberId member_id_ddsrecorder_error_status = 0x00000002;
             bool common_ddsrecorder_error_status_ec {false};
