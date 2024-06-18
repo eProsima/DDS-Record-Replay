@@ -20,19 +20,24 @@
 #include <csignal>
 #include <functional>
 
+#include <fastdds/dds/core/detail/DDSReturnCode.hpp>
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/subscriber/DataReader.hpp>
 #include <fastdds/dds/subscriber/qos/DataReaderQos.hpp>
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
 #include <fastdds/dds/subscriber/Subscriber.hpp>
-#include <fastrtps/types/DynamicDataFactory.h>
-#include <fastrtps/types/DynamicDataHelper.hpp>
-#include <fastrtps/types/TypeObjectFactory.h>
-#include <fastrtps/types/TypesBase.h>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicData.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicDataFactory.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicTypeBuilder.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicTypeBuilderFactory.hpp>
+#include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
+#include <fastdds/dds/xtypes/utils.hpp>
+#include <fastdds/rtps/builtin/data/WriterProxyData.h>
 
 #include "HelloWorldDynTypesSubscriber.h"
 
-using namespace eprosima::fastdds::dds;
+using namespace eprosima;
+using namespace fastdds::dds;
 
 std::atomic<bool> HelloWorldDynTypesSubscriber::type_discovered_(false);
 std::atomic<bool> HelloWorldDynTypesSubscriber::type_registered_(false);
@@ -57,8 +62,8 @@ HelloWorldDynTypesSubscriber::HelloWorldDynTypesSubscriber(
     DomainParticipantQos pqos;
     pqos.name("HelloWorldDynTypes_Subscriber");
 
-    pqos.wire_protocol().builtin.typelookup_config.use_client = true;
-    pqos.wire_protocol().builtin.typelookup_config.use_server = false;
+    // pqos.wire_protocol().builtin.typelookup_config.use_client = true;
+    // pqos.wire_protocol().builtin.typelookup_config.use_server = false;
 
     // Create listener mask so the data do not go to on_data_on_readers from subscriber
     StatusMask mask;
@@ -125,15 +130,14 @@ void HelloWorldDynTypesSubscriber::on_subscription_matched(
 void HelloWorldDynTypesSubscriber::on_data_available(
         DataReader* reader)
 {
-    // Create a new DynamicData to read the sample
-    eprosima::fastrtps::types::DynamicData_ptr new_dynamic_data;
-    new_dynamic_data = eprosima::fastrtps::types::DynamicDataFactory::get_instance()->create_data(dynamic_type_);
+    // Dynamic DataType
+    eprosima::fastdds::dds::DynamicData::_ref_type new_data =
+                        eprosima::fastdds::dds::DynamicDataFactory::get_instance()->create_data(dynamic_type_);
 
     SampleInfo info;
 
     // Take next sample
-    while ((reader->take_next_sample(new_dynamic_data.get(),
-            &info) == ReturnCode_t::RETCODE_OK))
+    while ((reader->take_next_sample(&new_data, &info) == fastdds::dds::RETCODE_OK))
     {
         if (info.instance_state == ALIVE_INSTANCE_STATE)
         {
@@ -142,32 +146,52 @@ void HelloWorldDynTypesSubscriber::on_data_available(
 
             samples_++;
 
-            if (new_dynamic_data->get_name() == "std_msgs::msg::dds_::String_")
+            if (dynamic_type_->get_name() == "std_msgs::msg::dds_::String_")
             {
-                std::string message = new_dynamic_data->get_string_value(0);
+                std::string message = "HelloWorld";
+                // new_data->get_string_value(message, new_data->get_member_id_by_name("index"));
 
                 fill_info(static_cast<int>(0), message, current_time);
             }
-            else if (new_dynamic_data->get_name() == "HelloWorld")
+            else if (dynamic_type_->get_name() == "HelloWorld")
             {
-                int32_t index = new_dynamic_data->get_uint32_value(0);
-                std::string message = new_dynamic_data->get_string_value(1);
+                uint32_t index;
+                new_data->get_uint32_value(index, new_data->get_member_id_by_name("index"));
+                std::string message = "HelloWorld";
+                // new_data->get_string_value(message, new_data->get_member_id_by_name("message"));
 
                 fill_info(static_cast<int>(index), message, current_time);
             }
 
             std::cout << "Message " << samples_ << " received:\n" << std::endl;
-            eprosima::fastrtps::types::DynamicDataHelper::print(new_dynamic_data);
+            std::stringstream ss;
+            ss << std::setw(4);
+            auto ret = fastdds::dds::json_serialize(new_data, ss, fastdds::dds::DynamicDataJsonFormat::EPROSIMA);
+            std::cout << ss.str() << std::endl;
             std::cout << "-----------------------------------------------------" << std::endl;
         }
     }
 }
 
-void HelloWorldDynTypesSubscriber::on_type_information_received(
-        eprosima::fastdds::dds::DomainParticipant*,
-        const eprosima::fastrtps::string_255 topic_name,
-        const eprosima::fastrtps::string_255 type_name,
-        const eprosima::fastrtps::types::TypeInformation& type_information)
+void HelloWorldDynTypesSubscriber::on_data_writer_discovery(
+        fastdds::dds::DomainParticipant*,
+        fastrtps::rtps::WriterDiscoveryInfo&& info,
+        bool&)
+{
+    fastrtps::rtps::WriterProxyData proxy_copy(info.info);
+
+    // Get type information
+    const auto type_info = proxy_copy.type_information().type_information;
+    const auto type_name = proxy_copy.typeName();
+    const auto topic_name = proxy_copy.topicName();
+
+    notify_type_discovered_(type_info, type_name, topic_name);
+}
+
+void HelloWorldDynTypesSubscriber::notify_type_discovered_(
+            const fastdds::dds::xtypes::TypeInformation& type_info,
+            const fastcdr::string_255& type_name,
+            const fastcdr::string_255& topic_name)
 {
     // First check if the topic received is the one we are expecting
     if (topic_name.to_string() != topic_name_)
@@ -185,74 +209,46 @@ void HelloWorldDynTypesSubscriber::on_type_information_received(
     }
 
     std::string type_name_ = type_name.to_string();
-    const eprosima::fastrtps::types::TypeIdentifier* type_identifier = nullptr;
-    const eprosima::fastrtps::types::TypeObject* type_object = nullptr;
-    eprosima::fastrtps::types::DynamicType_ptr dynamic_type(nullptr);
 
-    // Check if complete identifier already present in factory
-    type_identifier =
-            eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(type_name_, true);
-    if (type_identifier)
+    const auto type_identifier = type_info.complete().typeid_with_size().type_id();
+    fastdds::dds::xtypes::TypeObject dyn_type_object;
+    if (fastdds::dds::RETCODE_OK != fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_object(
+            type_identifier,
+            dyn_type_object))
     {
-        type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name_, true);
+        return;
     }
 
-    // If complete not found, try with minimal
-    if (!type_object)
+    // Create Dynamic Type
+    fastdds::dds::DynamicType::_ref_type dyn_type = fastdds::dds::DynamicTypeBuilderFactory::get_instance()->create_type_w_type_object(
+                dyn_type_object)->build();
+    if (!dyn_type)
     {
-        type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(type_name_,
-                        false);
-        if (type_identifier)
-        {
-            type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name_,
-                            false);
-        }
+        return;
     }
 
-    // Build dynamic type if type identifier and object found in factory
-    if (type_identifier && type_object)
-    {
-        dynamic_type = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->build_dynamic_type(type_name_,
-                        type_identifier,
-                        type_object);
-    }
+    // Notify type_identifier and its associated tyme_name.
+    // NOTE: We assume each type_name corresponds to only one type_identifier
+    // logInfo("Participant " << this->id() << " discovered type object " << dyn_type->get_name());
 
-    if (!dynamic_type)
-    {
-        // Create the callback to register the remote dynamic type
-        std::function<void(const std::string&, const eprosima::fastrtps::types::DynamicType_ptr)> callback(
-            [this]
-                (const std::string& name, const eprosima::fastrtps::types::DynamicType_ptr type)
-            {
-                this->register_remote_type_callback_(name, type);
-            });
-
-        // Register the discovered type and create a DataReader on this topic
-        participant_->register_remote_type(
-            type_information,
-            type_name.to_string(),
-            callback);
-    }
-    else
-    {
-        register_remote_type_callback_(type_name_, dynamic_type);
-    }
+    // Register DynamicType
+    register_remote_type_callback_(type_name_, dyn_type);
 }
 
 void HelloWorldDynTypesSubscriber::register_remote_type_callback_(
         const std::string&,
-        const eprosima::fastrtps::types::DynamicType_ptr dynamic_type)
+        const fastdds::dds::traits<fastdds::dds::DynamicType>::ref_type dynamic_type)
 {
     ////////////////////
     // Register the type
-    TypeSupport type(new eprosima::fastrtps::types::DynamicPubSubType(dynamic_type));
+    TypeSupport type(new fastdds::dds::DynamicPubSubType(dynamic_type));
     type.register_type(participant_);
 
     ///////////////////////
     // Create the DDS Topic
     topic_ = participant_->create_topic(
         topic_name_,
-        dynamic_type->get_name(),
+        dynamic_type->get_name().to_string(),
         TOPIC_QOS_DEFAULT);
 
     if (topic_ == nullptr)
@@ -260,7 +256,7 @@ void HelloWorldDynTypesSubscriber::register_remote_type_callback_(
         return;
     }
 
-    init_info(dynamic_type->get_name());
+    init_info(dynamic_type->get_name().to_string());
 
     ////////////////////////
     // Create the DataReader

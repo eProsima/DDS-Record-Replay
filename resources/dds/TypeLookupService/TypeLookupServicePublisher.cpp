@@ -25,14 +25,14 @@
 #include <fastdds/dds/publisher/Publisher.hpp>
 #include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
 #include <fastdds/dds/publisher/qos/PublisherQos.hpp>
-#include <fastrtps/types/DynamicDataFactory.h>
-#include <fastrtps/types/DynamicDataHelper.hpp>
-#include <fastrtps/types/DynamicDataPtr.h>
-#include <fastrtps/types/DynamicPubSubType.h>
-#include <fastrtps/types/DynamicTypeBuilderFactory.h>
-#include <fastrtps/types/DynamicTypeBuilderPtr.h>
-#include <fastrtps/types/TypeObjectFactory.h>
-#include <fastrtps/types/TypesBase.h>
+
+#include <fastdds/dds/xtypes/dynamic_types/DynamicData.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicDataFactory.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicPubSubType.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicTypeBuilder.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicTypeBuilderFactory.hpp>
+#include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
+#include <fastdds/dds/xtypes/utils.hpp>
 
 #include "TypeLookupServicePublisher.h"
 #include "types/complete/CompleteTypeObject.h"
@@ -85,7 +85,7 @@ TypeLookupServicePublisher::TypeLookupServicePublisher(
             break;
     }
 
-    TypeSupport type(new eprosima::fastrtps::types::DynamicPubSubType(dynamic_type_));
+    TypeSupport type(new eprosima::fastdds::dds::DynamicPubSubType(dynamic_type_));
 
     // Send type information so the type can be discovered
     type->auto_fill_type_information(true);
@@ -229,7 +229,7 @@ void TypeLookupServicePublisher::run(
 void TypeLookupServicePublisher::publish(unsigned int msg_index)
 {
     // Get the dynamic data depending on the data type
-    eprosima::fastrtps::types::DynamicData_ptr dynamic_data_;
+    eprosima::fastdds::dds::DynamicData::_ref_type dynamic_data_;
     switch (data_type_kind_)
     {
     case DataTypeKind::HELLO_WORLD:
@@ -290,12 +290,12 @@ eprosima::fastrtps::types::DynamicType_ptr
             type_object);
 }
 
-eprosima::fastrtps::types::DynamicData_ptr
+eprosima::fastdds::dds::DynamicData::_ref_type
     TypeLookupServicePublisher::fill_helloworld_data_(
         const unsigned int& index)
 {
     // Create and initialize new dynamic data
-    eprosima::fastrtps::types::DynamicData_ptr new_data;
+    eprosima::fastdds::dds::DynamicData::_ref_type new_data;
     new_data = eprosima::fastrtps::types::DynamicDataFactory::get_instance()->create_data(dynamic_type_);
 
     // Set index
@@ -306,12 +306,12 @@ eprosima::fastrtps::types::DynamicData_ptr
     return new_data;
 }
 
-eprosima::fastrtps::types::DynamicData_ptr
+eprosima::fastdds::dds::DynamicData::_ref_type
     TypeLookupServicePublisher::fill_complete_data_(
         const unsigned int& index)
 {
     // Create and initialize new dynamic data
-    eprosima::fastrtps::types::DynamicData_ptr new_data;
+    eprosima::fastdds::dds::DynamicData::_ref_type new_data;
     new_data = eprosima::fastrtps::types::DynamicDataFactory::get_instance()->create_data(dynamic_type_);
 
     // Set index
@@ -328,7 +328,7 @@ eprosima::fastrtps::types::DynamicData_ptr
     eprosima::fastrtps::types::DynamicData* points_sequence = new_data->loan_value(2);
     eprosima::fastrtps::types::DynamicType_ptr seq_elem_type =
             points_sequence->get_type()->get_descriptor()->get_element_type();
-    eprosima::fastrtps::types::DynamicData_ptr seq_elem;
+    eprosima::fastdds::dds::DynamicData::_ref_type seq_elem;
     eprosima::fastrtps::types::MemberId id;
 
     // internal_data sequence element 1

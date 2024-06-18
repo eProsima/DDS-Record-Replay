@@ -25,7 +25,7 @@ set(MODULE_SUMMARY
 set(MODULE_FIND_PACKAGES
     yaml-cpp
     fastcdr
-    fastrtps
+    fastdds
     cpp_utils
     ddspipe_core
     ddspipe_participants)
@@ -40,13 +40,13 @@ endif()
 set(MODULE_THIRDPARTY_HEADERONLY
     mcap)
 
-set(fastrtps_MINIMUM_VERSION "2.8")
+set(fastdds_MINIMUM_VERSION "3.0.0")
 
 set(MODULE_DEPENDENCIES
     yaml-cpp
     $<$<BOOL:${WIN32}>:iphlpapi$<SEMICOLON>Shlwapi>
     fastcdr
-    fastrtps
+    fastdds
     cpp_utils
     ddspipe_core
     ddspipe_participants

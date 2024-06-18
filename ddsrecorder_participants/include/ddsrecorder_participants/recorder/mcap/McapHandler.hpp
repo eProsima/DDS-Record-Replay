@@ -31,7 +31,8 @@
 #include <cpp_utils/macros/custom_enumeration.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 
-#include <fastrtps/types/DynamicTypePtr.h>
+#include <fastdds/dds/domain/DomainParticipantFactory.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
 
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
 #include <ddspipe_core/types/data/RtpsPayloadData.hpp>
@@ -46,11 +47,7 @@
 #include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 
-#if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
-#else
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollection.hpp>
-#endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
+#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -121,7 +118,9 @@ public:
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void add_schema(
-            const fastrtps::types::DynamicType_ptr& dynamic_type) override;
+            const fastdds::dds::DynamicType::_ref_type& dynamic_type,
+            const std::string& type_name,
+            const fastdds::dds::xtypes::TypeIdentifier& type_id) override;
 
     /**
      * @brief Add a data sample, to be written through a mcap \c Channel associated to the given \c topic.
@@ -394,6 +393,7 @@ protected:
      */
     void store_dynamic_type_(
             const std::string& type_name,
+            const fastdds::dds::xtypes::TypeIdentifier& type_id,
             DynamicTypesCollection& dynamic_types) const;
 
     /**
@@ -405,8 +405,8 @@ protected:
      * @param [in,out] dynamic_types Collection where to store serialized dynamic type.
      */
     void store_dynamic_type_(
-            const eprosima::fastrtps::types::TypeIdentifier* type_identifier,
-            const eprosima::fastrtps::types::TypeObject* type_object,
+            const fastdds::dds::xtypes::TypeIdentifier& type_identifier,
+            const fastdds::dds::xtypes::TypeObject& type_object,
             const std::string& type_name,
             DynamicTypesCollection& dynamic_types) const;
 
@@ -435,7 +435,7 @@ protected:
      * @return Serialized TypeIdentifier string
      */
     static std::string serialize_type_identifier_(
-            const eprosima::fastrtps::types::TypeIdentifier* type_identifier);
+            const fastdds::dds::xtypes::TypeIdentifier& type_identifier);
 
     /**
      * @brief Serialize a \c TypeObject into a string.
@@ -444,7 +444,7 @@ protected:
      * @return Serialized TypeObject string
      */
     static std::string serialize_type_object_(
-            const eprosima::fastrtps::types::TypeObject* type_object);
+            const fastdds::dds::xtypes::TypeObject& type_object);
 
     //! Handler configuration
     McapHandlerConfiguration configuration_;

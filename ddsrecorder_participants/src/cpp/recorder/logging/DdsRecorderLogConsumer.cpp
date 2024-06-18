@@ -16,12 +16,7 @@
  * @file DdsRecorderLogConsumer.cpp
  */
 
-#if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
-    #include <ddsrecorder_participants/common/types/logging/v1/DdsRecorderLogEntry.h>
-#else
-    #include <ddsrecorder_participants/common/types/logging/v2/DdsRecorderLogEntry.h>
-#endif // if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
-
+#include <ddsrecorder_participants/common/types/logging/DdsRecorderLogEntry.hpp>
 #include <ddsrecorder_participants/recorder/logging/DdsRecorderLogConsumer.hpp>
 
 namespace eprosima {

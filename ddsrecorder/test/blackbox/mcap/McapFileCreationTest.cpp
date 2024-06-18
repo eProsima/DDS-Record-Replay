@@ -140,7 +140,7 @@ void create_publisher(
         GetHelloWorldIdentifier(true),
         GetHelloWorldObject(true));
 
-    TypeSupport type(new eprosima::fastrtps::types::DynamicPubSubType(test::dynamic_type_));
+    TypeSupport type(new eprosima::fastdds::dds::DynamicPubSubType(test::dynamic_type_));
     // Set type so introspection info is sent
     type->auto_fill_type_information(true);
     type->auto_fill_type_object(false);
@@ -322,7 +322,7 @@ TEST(McapFileCreationTest, mcap_data_msgs)
     eprosima::fastrtps::types::DynamicData_ptr send_data;
     send_data = record(file_name);
 
-    eprosima::fastrtps::types::DynamicPubSubType pubsubType;
+    eprosima::fastdds::dds::DynamicPubSubType pubsubType;
     eprosima::fastrtps::rtps::SerializedPayload_t payload;
     payload.reserve(
         pubsubType.getSerializedSizeProvider(
