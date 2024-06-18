@@ -115,9 +115,9 @@ protected:
      *
      * @param index Index of the sample to be published. This parameter is used to modify the content of the message
      *              depending on the number of the sample to be sent.
-     * @return eprosima::fastrtps::types::DynamicData_ptr The generated data to be published
+     * @return eprosima::fastdds::dds::DynamicData::_ref_type The generated data to be published
      */
-    eprosima::fastrtps::types::DynamicData_ptr fill_helloworld_data_(
+    eprosima::fastdds::dds::DynamicData::_ref_type fill_helloworld_data_(
         const unsigned int& index);
 
     /**
@@ -125,9 +125,9 @@ protected:
      *
      * @param index Index of the sample to be published. This parameter is used to modify the content of the message
      *              depending on the number of the sample to be sent.
-     * @return eprosima::fastrtps::types::DynamicData_ptr The generated data to be published
+     * @return eprosima::fastdds::dds::DynamicData::_ref_type The generated data to be published
      */
-    eprosima::fastrtps::types::DynamicData_ptr fill_complete_data_(
+    eprosima::fastdds::dds::DynamicData::_ref_type fill_complete_data_(
         const unsigned int& index);
 
     // Fast DDS entities

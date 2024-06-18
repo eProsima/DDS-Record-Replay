@@ -25,7 +25,7 @@ set(MODULE_SUMMARY
 )
 
 set(MODULE_FIND_PACKAGES
-    fastrtps
+    fastdds
     fastcdr
     fastdds_python
 )

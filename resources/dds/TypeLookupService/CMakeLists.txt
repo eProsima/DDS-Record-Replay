@@ -26,8 +26,8 @@ if(NOT fastcdr_FOUND)
     find_package(fastcdr REQUIRED)
 endif()
 
-if(NOT fastrtps_FOUND)
-    find_package(fastrtps REQUIRED)
+if(NOT fastdds_FOUND)
+    find_package(fastdds REQUIRED)
 endif()
 
 #Check C++11
@@ -58,4 +58,4 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
     $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
 )
-target_link_libraries(${PROJECT_NAME} fastrtps fastcdr fastdds::optionparser)
+target_link_libraries(${PROJECT_NAME} fastdds fastcdr fastdds::optionparser)

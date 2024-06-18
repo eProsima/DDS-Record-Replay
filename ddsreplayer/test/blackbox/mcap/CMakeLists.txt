@@ -18,20 +18,13 @@
 
 set(TEST_NAME McapFileReadTest)
 
-# Determine Fast DDS version
-if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
-    set(DDS_TYPES_VERSION "v1")
-else()
-    set(DDS_TYPES_VERSION "v2")
-endif()
-
 set(TEST_SOURCES
     McapFileReadTest.cpp
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/${DDS_TYPES_VERSION}/hello_world/HelloWorld.cxx
-    $<$<STREQUAL:${DDS_TYPES_VERSION},v2>:${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/v2/hello_world/HelloWorldv1.cxx>
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/${DDS_TYPES_VERSION}/hello_world/HelloWorldPubSubTypes.cxx
+    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/hello_world/HelloWorld.hpp
+    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/hello_world/HelloWorldPubSubTypes.cxx
+    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/hello_world/HelloWorldTypeObjectSupport.cxx
     ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/HelloWorldSubscriber.cpp
-)
+    )
 
 set(TEST_LIST
         trivial
@@ -72,6 +65,10 @@ set(TEST_NAME McapFileReadWithTypeTest)
 
 set(TEST_SOURCES
         McapFileReadWithTypeTest.cpp
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/hello_world_basic/HelloWorld.hpp
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/hello_world_basic/HelloWorldPubSubTypes.cxx
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/hello_world_basic/HelloWorldTypeObjectSupport.cxx
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/HelloWorldSubscriber.cpp
         ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/HelloWorldDynTypesSubscriber.cpp
     )
 
