@@ -85,6 +85,8 @@ DdsRecorder::DdsRecorder(
         recorder_to_handler_state_(init_state));
 
     // Create DynTypes Participant
+
+    configuration_.simple_configuration->domain = 3;
     dyn_participant_ = std::make_shared<DynTypesParticipant>(
         configuration_.simple_configuration,
         payload_pool_,

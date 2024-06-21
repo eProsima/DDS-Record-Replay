@@ -22,13 +22,13 @@ namespace participants {
 
 using namespace eprosima::ddspipe::core;
 using namespace eprosima::ddspipe::participants;
-using namespace eprosima::ddspipe::participants::rtps;
+using namespace eprosima::ddspipe::participants::dds;
 
 ReplayerParticipant::ReplayerParticipant(
         const std::shared_ptr<SimpleParticipantConfiguration>& participant_configuration,
         const std::shared_ptr<PayloadPool>& payload_pool,
         const std::shared_ptr<DiscoveryDatabase>& discovery_database)
-    : SimpleParticipant(
+    : CommonParticipant(
         participant_configuration,
         payload_pool,
         discovery_database)

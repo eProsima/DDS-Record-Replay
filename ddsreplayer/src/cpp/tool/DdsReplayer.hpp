@@ -45,6 +45,8 @@
 
 #include <ddsrecorder_yaml/replayer/YamlReaderConfiguration.hpp>
 
+#include <fastdds/rtps/transport/UDPv4TransportDescriptor.h>
+
 namespace eprosima {
 namespace ddsrecorder {
 namespace replayer {

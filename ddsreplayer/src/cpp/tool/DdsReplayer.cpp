@@ -60,7 +60,7 @@ namespace replayer {
 using namespace eprosima::ddspipe::core;
 using namespace eprosima::ddspipe::core::types;
 using namespace eprosima::ddspipe::participants;
-using namespace eprosima::ddspipe::participants::rtps;
+using namespace eprosima::ddspipe::participants::dds;
 using namespace eprosima::ddsrecorder::participants;
 using namespace eprosima::utils;
 
@@ -86,6 +86,7 @@ DdsReplayer::DdsReplayer(
         input_file);
 
     // Create Replayer Participant
+    // configuration.replayer_configuration->domain = 3;
     replayer_participant_ = std::make_shared<ReplayerParticipant>(
         configuration.replayer_configuration,
         payload_pool_,
@@ -112,18 +113,43 @@ DdsReplayer::DdsReplayer(
         fastdds::dds::DomainParticipantQos pqos;
         pqos.name("DdsReplayer_dynTypesPublisher");
 
+        // Get server info from the yaml file
+        std::string server_ip = "0.0.0.0";
+        double server_port =  56543;
+        std::string server_guid_prefix = "44.53.00.5f.45.50.52.4f.53.49.4d.43";
+
+        // Define server locator
+        eprosima::fastrtps::rtps::Locator_t server_locator;
+        eprosima::fastrtps::rtps::IPLocator::setIPv4(server_locator, server_ip);
+        eprosima::fastrtps::rtps::IPLocator::setPhysicalPort(server_locator, server_port);
+        server_locator.kind = LOCATOR_KIND_UDPv4;
+
+        // participantQos.wire_protocol().builtin.discovery_config.discoveryProtocol = eprosima::fastrtps::rtps::DiscoveryProtocol_t::SIMPLE;
+        // Set participant QoS depending on if it is a CLIENT, a SERVER or a SUPER CLIENT
+        pqos.wire_protocol().builtin.discovery_config.discoveryProtocol = eprosima::fastrtps::rtps::DiscoveryProtocol_t::SUPER_CLIENT;
+    
+        // -- Add the server locator in the metatraffic unicast locator list of the remote server attributes
+        eprosima::fastrtps::rtps::RemoteServerAttributes remote_server_attr;
+        remote_server_attr.metatrafficUnicastLocatorList.push_back(server_locator);
+        // -- Set the GUID prefix to identify the server
+        remote_server_attr.ReadguidPrefix(server_guid_prefix.c_str());
+        // -- Connect to the remote server
+        pqos.wire_protocol().builtin.discovery_config.m_DiscoveryServers.push_back(remote_server_attr);
+        
+
+
         // Set app properties
-        pqos.properties().properties().emplace_back(
-            "fastdds.application.id",
-            configuration.replayer_configuration->app_id,
-            "true");
-        pqos.properties().properties().emplace_back(
-            "fastdds.application.metadata",
-            configuration.replayer_configuration->app_metadata,
-            "true");
+        // pqos.properties().properties().emplace_back(
+        //     "fastdds.application.id",
+        //     configuration.replayer_configuration->app_id,
+        //     "true");
+        // pqos.properties().properties().emplace_back(
+        //     "fastdds.application.metadata",
+        //     configuration.replayer_configuration->app_metadata,
+        //     "true");
 
         // Set as server in TypeLookup service
-        pqos.wire_protocol().builtin.typelookup_config.use_client = false;
+        pqos.wire_protocol().builtin.typelookup_config.use_client = true;
         pqos.wire_protocol().builtin.typelookup_config.use_server = true;
 
         // Participant creation via factory
@@ -344,6 +370,8 @@ void DdsReplayer::register_dynamic_type_(
     // Register in factory
     fastrtps::types::TypeObjectFactory::get_instance()->add_type_object(
         dynamic_type.type_name(), &type_identifier, &type_object);
+
+    std::cout << "dynamic type " << dynamic_type.type_name() << " registerd" << std::endl;
 }
 
 void DdsReplayer::create_dynamic_writer_(
@@ -357,10 +385,15 @@ void DdsReplayer::create_dynamic_writer_(
         type_identifier,
         type_object);
 
+    std::cout << "Creating dynamic writer for " << topic->type_name << std::endl;
+
     if (nullptr == dyn_type)
     {
         logWarning(DDSREPLAYER_REPLAYER,
                 "Failed to create " << topic->type_name << " DynamicType, aborting dynamic writer creation...");
+        std::cout << "Failed to create " << topic->type_name << " DynamicType, aborting dynamic writer creation..." << std::endl;
+
+
         return;
     }
 
@@ -370,11 +403,14 @@ void DdsReplayer::create_dynamic_writer_(
     {
         logWarning(DDSREPLAYER_REPLAYER,
                 "Failed to create " << topic->type_name << " TypeSupport, aborting dynamic writer creation...");
+        std::cout << "Failed to create " << topic->type_name << " TypeSupport, aborting dynamic writer creation..." << std::endl;
+
+
         return;
     }
 
     // Only enable sharing dynamic types through TypeLookup Service
-    type->auto_fill_type_information(false);
+    type->auto_fill_type_information(true);
     type->auto_fill_type_object(true);
 
     // Register type
@@ -382,6 +418,7 @@ void DdsReplayer::create_dynamic_writer_(
     {
         logWarning(DDSREPLAYER_REPLAYER,
                 "Failed to register " << topic->type_name << " type, aborting dynamic writer creation...");
+        std::cout << "Failed to register " << topic->type_name << " type, aborting dynamic writer creation..." << std::endl;
         return;
     }
 
@@ -393,6 +430,9 @@ void DdsReplayer::create_dynamic_writer_(
         logWarning(DDSREPLAYER_REPLAYER,
                 "Failed to create {" << topic->m_topic_name << ";" << topic->type_name <<
                 "} DDS topic, aborting dynamic writer creation...");
+        
+        std::cout <<  "Failed to create {" << topic->m_topic_name << ";" << topic->type_name <<
+                "} DDS topic, aborting dynamic writer creation..." << std::endl;
         return;
     }
     // Store pointer to be freed on destruction
@@ -400,21 +440,21 @@ void DdsReplayer::create_dynamic_writer_(
 
     // Create DDS writer QoS
     fastdds::dds::DataWriterQos wqos = fastdds::dds::DATAWRITER_QOS_DEFAULT;
-    wqos.durability().kind =
-            ( topic->topic_qos.is_transient_local() ?
-            fastdds::dds::DurabilityQosPolicyKind::TRANSIENT_LOCAL_DURABILITY_QOS :
-            fastdds::dds::DurabilityQosPolicyKind::VOLATILE_DURABILITY_QOS
-            );
-    wqos.reliability().kind =
-            ( topic->topic_qos.is_reliable() ?
-            fastdds::dds::ReliabilityQosPolicyKind::RELIABLE_RELIABILITY_QOS :
-            fastdds::dds::ReliabilityQosPolicyKind::BEST_EFFORT_RELIABILITY_QOS
-            );
-    wqos.ownership().kind =
-            ( topic->topic_qos.has_ownership() ?
-            fastdds::dds::OwnershipQosPolicyKind::EXCLUSIVE_OWNERSHIP_QOS :
-            fastdds::dds::OwnershipQosPolicyKind::SHARED_OWNERSHIP_QOS
-            );
+    // wqos.durability().kind =
+    //         ( topic->topic_qos.is_transient_local() ?
+    //         fastdds::dds::DurabilityQosPolicyKind::TRANSIENT_LOCAL_DURABILITY_QOS :
+    //         fastdds::dds::DurabilityQosPolicyKind::VOLATILE_DURABILITY_QOS
+    //         );
+    // wqos.reliability().kind =
+    //         ( topic->topic_qos.is_reliable() ?
+    //         fastdds::dds::ReliabilityQosPolicyKind::RELIABLE_RELIABILITY_QOS :
+    //         fastdds::dds::ReliabilityQosPolicyKind::BEST_EFFORT_RELIABILITY_QOS
+    //         );
+    // wqos.ownership().kind =
+    //         ( topic->topic_qos.has_ownership() ?
+    //         fastdds::dds::OwnershipQosPolicyKind::EXCLUSIVE_OWNERSHIP_QOS :
+    //         fastdds::dds::OwnershipQosPolicyKind::SHARED_OWNERSHIP_QOS
+    //         );
 
     // Create DDS writer
     fastdds::dds::DataWriter* dyn_writer = dyn_publisher_->create_datawriter(dyn_topic, wqos);
@@ -423,6 +463,8 @@ void DdsReplayer::create_dynamic_writer_(
         logWarning(DDSREPLAYER_REPLAYER,
                 "Failed to create {" << topic->m_topic_name << ";" << topic->type_name <<
                 "} DDS writer, aborting dynamic writer creation...");
+        std::cout << "Failed to create {" << topic->m_topic_name << ";" << topic->type_name <<
+                "} DDS writer, aborting dynamic writer creation..." << std::endl;
         return;
     }
     // Store pointer to be freed on destruction

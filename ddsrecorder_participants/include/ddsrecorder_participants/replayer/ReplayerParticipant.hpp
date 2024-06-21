@@ -15,7 +15,7 @@
 #pragma once
 
 #include <ddspipe_participants/configuration/SimpleParticipantConfiguration.hpp>
-#include <ddspipe_participants/participant/rtps/SimpleParticipant.hpp>
+#include <ddspipe_participants/participant/dds/CommonParticipant.hpp>
 
 #include <ddsrecorder_participants/library/library_dll.h>
 
@@ -27,7 +27,7 @@ namespace participants {
  * Participant kind in charge of replaying messages read by a \c McapReaderParticipant.
  * It is mostly equivalent to a \c rtps::SimpleParticipant without reader, only writer.
  */
-class ReplayerParticipant : public ddspipe::participants::rtps::SimpleParticipant
+class ReplayerParticipant : public ddspipe::participants::dds::CommonParticipant
 {
 public:
 

@@ -134,6 +134,7 @@ void McapHandler::add_schema(
         dynamic_type);
 
     logInfo(DDSRECORDER_MCAP_HANDLER, "\nAdding schema with name " << type_name << " :\n" << schema_text << "\n");
+    std::cout << "\nAdding schema with name " << type_name << " :\n" << schema_text << "\n";
 
     // Create schema and add it to writer and to schemas map
     std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
@@ -954,17 +955,20 @@ void McapHandler::store_dynamic_types_()
 {
     auto type_names = utils::get_keys(schemas_);
     DynamicTypesCollection dynamic_types;
-
+    std::cout << "storing dynamic types ~_~" << std::endl;
     for (auto& type_name: type_names)
     {
         const eprosima::fastrtps::types::TypeIdentifier* type_identifier = nullptr;
         const eprosima::fastrtps::types::TypeObject* type_object = nullptr;
         const eprosima::fastrtps::types::TypeInformation* type_information = nullptr;
 
+        std::cout << "Working on " << type_name << std::endl;
+
         type_information =
                 eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_information(type_name);
         if (type_information != nullptr)
         {
+            std::cout << "We have type info!!" << std::endl;
             auto dependencies = type_information->complete().dependent_typeids();
             std::string dependency_name;
             unsigned int dependency_index = 0;
@@ -989,13 +993,16 @@ void McapHandler::store_dynamic_types_()
                         true);
         if (type_identifier)
         {
+            std::cout << "we have a type identifier B)" << std::endl;
             type_object =
                     eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name, true);
+                    
         }
 
         // If complete not found, try with minimal
         if (!type_object)
         {
+            std::cout << "we dont have a type object!" << std::endl;
             type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(
                 type_name, false);
             if (type_identifier)

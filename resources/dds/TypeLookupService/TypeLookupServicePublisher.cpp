@@ -58,7 +58,7 @@ TypeLookupServicePublisher::TypeLookupServicePublisher(
     DomainParticipantQos pqos;
     pqos.name("TypeLookupService_Participant_Publisher");
 
-    pqos.wire_protocol().builtin.typelookup_config.use_client = false;
+    pqos.wire_protocol().builtin.typelookup_config.use_client = true;
     pqos.wire_protocol().builtin.typelookup_config.use_server = true;
 
     participant_ = DomainParticipantFactory::get_instance()->create_participant(domain, pqos);
