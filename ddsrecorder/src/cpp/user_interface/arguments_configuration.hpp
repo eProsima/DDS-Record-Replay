@@ -95,6 +95,7 @@ enum optionIndex
     HELP,
     CONFIGURATION_FILE,
     RELOAD_TIME,
+    DOMAIN,
     ACTIVATE_DEBUG,
     VERSION,
     TIMEOUT,

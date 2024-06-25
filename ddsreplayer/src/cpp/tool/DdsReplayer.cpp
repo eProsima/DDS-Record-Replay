@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include <mcap/reader.hpp>
-#include <yaml-cpp/yaml.h>
 
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/utils.hpp>
@@ -66,10 +65,22 @@ using namespace eprosima::utils;
 
 DdsReplayer::DdsReplayer(
         yaml::ReplayerConfiguration& configuration,
-        std::string& input_file)
+        std::string& input_file,
+        int domain)
     : dyn_participant_(nullptr)
     , dyn_publisher_(nullptr)
 {
+
+        
+        // Get server info from the yaml file
+
+    YAML::Node config = YAML::LoadFile("/usr/include/dls2/util/messaging/servers.yaml");
+
+    std::string server_ip = config[domain]["ip"].as<std::string>();
+    double server_port = config[domain]["port"].as<double>();
+    std::string server_guid_prefix = config[domain]["guid_prefix"].as<std::string>();
+
+    
     // Create Discovery Database
     discovery_database_ = std::make_shared<DiscoveryDatabase>();
 
@@ -86,7 +97,7 @@ DdsReplayer::DdsReplayer(
         input_file);
 
     // Create Replayer Participant
-    // configuration.replayer_configuration->domain = 3;
+    configuration.replayer_configuration->domain = domain;
     replayer_participant_ = std::make_shared<ReplayerParticipant>(
         configuration.replayer_configuration,
         payload_pool_,
@@ -113,10 +124,17 @@ DdsReplayer::DdsReplayer(
         fastdds::dds::DomainParticipantQos pqos;
         pqos.name("DdsReplayer_dynTypesPublisher");
 
+        YAML::Node config = YAML::LoadFile("/usr/include/dls2/util/messaging/servers.yaml");
+
+        std::string server_ip = config[domain]["ip"].as<std::string>();
+        double server_port = config[domain]["port"].as<double>();
+        std::string server_guid_prefix = config[domain]["guid_prefix"].as<std::string>();
+
+
         // Get server info from the yaml file
-        std::string server_ip = "0.0.0.0";
-        double server_port =  56543;
-        std::string server_guid_prefix = "44.53.00.5f.45.50.52.4f.53.49.4d.43";
+        // std::string server_ip = "0.0.0.0";
+        // double server_port =  56543;
+        // std::string server_guid_prefix = "44.53.00.5f.45.50.52.4f.53.49.4d.43";
 
         // Define server locator
         eprosima::fastrtps::rtps::Locator_t server_locator;
@@ -371,7 +389,6 @@ void DdsReplayer::register_dynamic_type_(
     fastrtps::types::TypeObjectFactory::get_instance()->add_type_object(
         dynamic_type.type_name(), &type_identifier, &type_object);
 
-    std::cout << "dynamic type " << dynamic_type.type_name() << " registerd" << std::endl;
 }
 
 void DdsReplayer::create_dynamic_writer_(
@@ -385,15 +402,10 @@ void DdsReplayer::create_dynamic_writer_(
         type_identifier,
         type_object);
 
-    std::cout << "Creating dynamic writer for " << topic->type_name << std::endl;
-
     if (nullptr == dyn_type)
     {
         logWarning(DDSREPLAYER_REPLAYER,
                 "Failed to create " << topic->type_name << " DynamicType, aborting dynamic writer creation...");
-        std::cout << "Failed to create " << topic->type_name << " DynamicType, aborting dynamic writer creation..." << std::endl;
-
-
         return;
     }
 
@@ -403,14 +415,11 @@ void DdsReplayer::create_dynamic_writer_(
     {
         logWarning(DDSREPLAYER_REPLAYER,
                 "Failed to create " << topic->type_name << " TypeSupport, aborting dynamic writer creation...");
-        std::cout << "Failed to create " << topic->type_name << " TypeSupport, aborting dynamic writer creation..." << std::endl;
-
-
         return;
     }
 
     // Only enable sharing dynamic types through TypeLookup Service
-    type->auto_fill_type_information(true);
+    type->auto_fill_type_information(false);
     type->auto_fill_type_object(true);
 
     // Register type
@@ -418,7 +427,6 @@ void DdsReplayer::create_dynamic_writer_(
     {
         logWarning(DDSREPLAYER_REPLAYER,
                 "Failed to register " << topic->type_name << " type, aborting dynamic writer creation...");
-        std::cout << "Failed to register " << topic->type_name << " type, aborting dynamic writer creation..." << std::endl;
         return;
     }
 
@@ -431,8 +439,6 @@ void DdsReplayer::create_dynamic_writer_(
                 "Failed to create {" << topic->m_topic_name << ";" << topic->type_name <<
                 "} DDS topic, aborting dynamic writer creation...");
         
-        std::cout <<  "Failed to create {" << topic->m_topic_name << ";" << topic->type_name <<
-                "} DDS topic, aborting dynamic writer creation..." << std::endl;
         return;
     }
     // Store pointer to be freed on destruction
@@ -463,8 +469,6 @@ void DdsReplayer::create_dynamic_writer_(
         logWarning(DDSREPLAYER_REPLAYER,
                 "Failed to create {" << topic->m_topic_name << ";" << topic->type_name <<
                 "} DDS writer, aborting dynamic writer creation...");
-        std::cout << "Failed to create {" << topic->m_topic_name << ";" << topic->type_name <<
-                "} DDS writer, aborting dynamic writer creation..." << std::endl;
         return;
     }
     // Store pointer to be freed on destruction

@@ -236,7 +236,7 @@ int main(
 
 
         // Create replayer instance
-        auto replayer = std::make_unique<DdsReplayer>(configuration, commandline_args.input_file);
+        auto replayer = std::make_unique<DdsReplayer>(configuration, commandline_args.input_file, commandline_args.domain);
 
         // Create File Watcher Handler
         std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;

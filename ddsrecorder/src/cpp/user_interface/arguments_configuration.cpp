@@ -103,6 +103,18 @@ const option::Descriptor usage[] = {
         "Value 0 does not reload file. [Default: 0]."
 
     },
+
+    {
+        optionIndex::DOMAIN,
+        0,
+        "d",
+        "reload-time",
+        Arg::Numeric,
+        "  -d \t--domain\t  \t" \
+        "Domain to target when recording or replaying "
+
+    },
+
     {
         optionIndex::TIMEOUT,
         0,
@@ -248,6 +260,12 @@ ProcessReturnCode parse_arguments(
                 case optionIndex::RELOAD_TIME:
                     commandline_args.reload_time = std::stol(opt.arg) * 1000; // pass to milliseconds
                     break;
+
+                case optionIndex::DOMAIN:
+                    commandline_args.domain = std::stoi(opt.arg);
+                    std::cout << "recording on domain: " << commandline_args.domain << std::endl;
+                    break;
+
 
                 case optionIndex::ACTIVATE_DEBUG:
                     commandline_args.log_filter[utils::VerbosityKind::Error].set_value("");

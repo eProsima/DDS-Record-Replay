@@ -35,7 +35,8 @@ using namespace eprosima::utils;
 DdsRecorder::DdsRecorder(
         const yaml::RecorderConfiguration& configuration,
         const DdsRecorderStateCode& init_state,
-        const std::string& file_name)
+        const std::string& file_name,
+        int domain)
     : configuration_(configuration)
 {
     load_internal_topics_(configuration_);
@@ -86,7 +87,7 @@ DdsRecorder::DdsRecorder(
 
     // Create DynTypes Participant
 
-    configuration_.simple_configuration->domain = 3;
+    configuration_.simple_configuration->domain = domain;
     dyn_participant_ = std::make_shared<DynTypesParticipant>(
         configuration_.simple_configuration,
         payload_pool_,

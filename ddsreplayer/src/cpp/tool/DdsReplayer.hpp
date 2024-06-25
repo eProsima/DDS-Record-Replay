@@ -33,6 +33,8 @@
 #include <ddspipe_core/types/dds/TopicQoS.hpp>
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
+#include <yaml-cpp/yaml.h>
+
 #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
     #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
 #else
@@ -46,6 +48,8 @@
 #include <ddsrecorder_yaml/replayer/YamlReaderConfiguration.hpp>
 
 #include <fastdds/rtps/transport/UDPv4TransportDescriptor.h>
+
+#include <yaml-cpp/yaml.h>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -70,7 +74,8 @@ public:
      */
     DdsReplayer(
             yaml::ReplayerConfiguration& configuration,
-            std::string& input_file);
+            std::string& input_file,
+            int domain = 0);
 
     /**
      * @brief Destructor

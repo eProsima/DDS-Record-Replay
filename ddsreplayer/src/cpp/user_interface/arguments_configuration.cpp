@@ -112,6 +112,18 @@ const option::Descriptor usage[] = {
 
     },
 
+    {
+        optionIndex::DOMAIN,
+        0,
+        "d",
+        "reload-time",
+        Arg::Numeric,
+        "  -d \t--domain\t  \t" \
+        "Domain to target when recording or replaying "
+
+    },
+
+
     ////////////////////
     // Debug options
     {
@@ -249,6 +261,11 @@ ProcessReturnCode parse_arguments(
 
                 case optionIndex::RELOAD_TIME:
                     commandline_args.reload_time = std::stol(opt.arg) * 1000; // pass to milliseconds
+                    break;
+
+                case optionIndex::DOMAIN:
+                    commandline_args.domain = std::stoi(opt.arg);
+                    std::cout << "running using domain " << commandline_args.domain << std::endl;
                     break;
 
                 case optionIndex::ACTIVATE_DEBUG:
