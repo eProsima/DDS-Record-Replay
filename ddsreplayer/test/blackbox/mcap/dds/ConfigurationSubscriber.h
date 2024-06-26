@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * @file HelloWorldSubscriber.h
+ * @file ConfigurationSubscriber.h
  *
  */
 
@@ -24,13 +24,12 @@
 #include <fastdds/dds/domain/DomainParticipantListener.hpp>
 #include <fastdds/dds/subscriber/DataReaderListener.hpp>
 
-#include "types/hello_world/HelloWorldPubSubTypes.h"
+#include "types/configuration/ConfigurationPubSubTypes.h"
 
 struct DataToCheck
 {
     unsigned int n_received_msgs;
     std::string type_msg;
-    std::string message_msg;
     int min_index_msg;
     int max_index_msg;
     double mean_ms_between_msgs;
@@ -41,7 +40,7 @@ struct DataToCheck
  * @brief Class used to group into a single working unit a Subscriber with a DataReader and its listener.
  *
  */
-class HelloWorldSubscriber : public eprosima::fastdds::dds::DomainParticipantListener
+class ConfigurationSubscriber : public eprosima::fastdds::dds::DomainParticipantListener
 {
 public:
 
@@ -51,7 +50,7 @@ public:
      * @param topic_name Name of the DDS Topic
      * @param domain DDS Domain of the DomainParticipant
      */
-    HelloWorldSubscriber(
+    ConfigurationSubscriber(
             const std::string& topic_name,
             uint32_t domain,
             DataToCheck& data);
@@ -60,7 +59,7 @@ public:
      * @brief Destroy the Type Lookup Service Publisher object
      *
      */
-    virtual ~HelloWorldSubscriber();
+    virtual ~ConfigurationSubscriber();
 
     //! DataReader callback executed when a new sample is received
     void on_data_available(
@@ -75,7 +74,7 @@ public:
             const std::string& type_name);
 
     void fill_info(
-            HelloWorld hello_,
+            Configuration configuration_,
             uint64_t time_arrive_msg);
 
 protected:
@@ -89,7 +88,7 @@ protected:
 
     DataToCheck* data_;
 
-    HelloWorld hello_;
+    Configuration configuration_;
 
     //! Number of samples received
     uint32_t samples_;

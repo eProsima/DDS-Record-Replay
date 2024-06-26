@@ -29,13 +29,9 @@ McapMessage::McapMessage(
         const McapMessage& msg)
     : mcap::Message(msg)
 {
-    auto ipayload_owner = const_cast<fastrtps::rtps::IPayloadPool*>(
-        static_cast<fastrtps::rtps::IPayloadPool*>(msg.payload_owner));
-
     payload_owner = msg.payload_owner;
     payload_owner->get_payload(
         msg.payload,
-        ipayload_owner,
         this->payload);
 }
 

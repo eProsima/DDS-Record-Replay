@@ -58,7 +58,7 @@ struct McapMessage : public mcap::Message
     ~McapMessage();
 
     //! Serialized payload
-    ddspipe::core::types::Payload payload{};
+    fastdds::rtps::SerializedPayload_t payload{};
 
     //! Payload owner (reference to \c PayloadPool which created/reserved it)
     ddspipe::core::PayloadPool* payload_owner{nullptr};

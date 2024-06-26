@@ -27,8 +27,8 @@
 #include "DynamicTypesCollectionCdrAux.hpp"
 #include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollectionTypeObjectSupport.hpp>
 
-using SerializedPayload_t = eprosima::fastrtps::rtps::SerializedPayload_t;
-using InstanceHandle_t = eprosima::fastrtps::rtps::InstanceHandle_t;
+using SerializedPayload_t = eprosima::fastdds::rtps::SerializedPayload_t;
+using InstanceHandle_t = eprosima::fastdds::rtps::InstanceHandle_t;
 using DataRepresentationId_t = eprosima::fastdds::dds::DataRepresentationId_t;
 
 namespace eprosima {
@@ -60,11 +60,11 @@ namespace eprosima {
             }
 
             bool DynamicTypePubSubType::serialize(
-                    void* data,
+                    const void* const data,
                     SerializedPayload_t* payload,
                     DataRepresentationId_t data_representation)
             {
-                DynamicType* p_type = static_cast<DynamicType*>(data);
+                const DynamicType* p_type = static_cast<const DynamicType*>(data);
 
                 // Object that manages the raw buffer.
                 eprosima::fastcdr::FastBuffer fastbuffer(reinterpret_cast<char*>(payload->data), payload->max_size);
@@ -136,7 +136,7 @@ namespace eprosima {
             }
 
             std::function<uint32_t()> DynamicTypePubSubType::getSerializedSizeProvider(
-                    void* data,
+                    const void* const data,
                     DataRepresentationId_t data_representation)
             {
                 return [data, data_representation]() -> uint32_t
@@ -153,7 +153,7 @@ namespace eprosima {
                                    eprosima::fastcdr::CdrVersion::XCDRv1 :eprosima::fastcdr::CdrVersion::XCDRv2);
                                size_t current_alignment {0};
                                return static_cast<uint32_t>(calculator.calculate_serialized_size(
-                                           *static_cast<DynamicType*>(data), current_alignment)) +
+                                           *static_cast<const DynamicType*>(data), current_alignment)) +
                                        4u /*encapsulation*/;
                            }
                            catch (eprosima::fastcdr::exception::Exception& /*exception*/)
@@ -176,7 +176,7 @@ namespace eprosima {
             }
 
             bool DynamicTypePubSubType::getKey(
-                    void* data,
+                    const void* const data,
                     InstanceHandle_t* handle,
                     bool force_md5)
             {
@@ -185,7 +185,7 @@ namespace eprosima {
                     return false;
                 }
 
-                DynamicType* p_type = static_cast<DynamicType*>(data);
+                const DynamicType* p_type = static_cast<const DynamicType*>(data);
 
                 // Object that manages the raw buffer.
                 eprosima::fastcdr::FastBuffer fastbuffer(reinterpret_cast<char*>(m_keyBuffer),
@@ -253,11 +253,11 @@ namespace eprosima {
             }
 
             bool DynamicTypesCollectionPubSubType::serialize(
-                    void* data,
+                    const void* const data,
                     SerializedPayload_t* payload,
                     DataRepresentationId_t data_representation)
             {
-                DynamicTypesCollection* p_type = static_cast<DynamicTypesCollection*>(data);
+                const DynamicTypesCollection* p_type = static_cast<const DynamicTypesCollection*>(data);
 
                 // Object that manages the raw buffer.
                 eprosima::fastcdr::FastBuffer fastbuffer(reinterpret_cast<char*>(payload->data), payload->max_size);
@@ -329,7 +329,7 @@ namespace eprosima {
             }
 
             std::function<uint32_t()> DynamicTypesCollectionPubSubType::getSerializedSizeProvider(
-                    void* data,
+                    const void* const data,
                     DataRepresentationId_t data_representation)
             {
                 return [data, data_representation]() -> uint32_t
@@ -346,7 +346,7 @@ namespace eprosima {
                                    eprosima::fastcdr::CdrVersion::XCDRv1 :eprosima::fastcdr::CdrVersion::XCDRv2);
                                size_t current_alignment {0};
                                return static_cast<uint32_t>(calculator.calculate_serialized_size(
-                                           *static_cast<DynamicTypesCollection*>(data), current_alignment)) +
+                                           *static_cast<const DynamicTypesCollection*>(data), current_alignment)) +
                                        4u /*encapsulation*/;
                            }
                            catch (eprosima::fastcdr::exception::Exception& /*exception*/)
@@ -369,7 +369,7 @@ namespace eprosima {
             }
 
             bool DynamicTypesCollectionPubSubType::getKey(
-                    void* data,
+                    const void* const data,
                     InstanceHandle_t* handle,
                     bool force_md5)
             {
@@ -378,7 +378,7 @@ namespace eprosima {
                     return false;
                 }
 
-                DynamicTypesCollection* p_type = static_cast<DynamicTypesCollection*>(data);
+                const DynamicTypesCollection* p_type = static_cast<const DynamicTypesCollection*>(data);
 
                 // Object that manages the raw buffer.
                 eprosima::fastcdr::FastBuffer fastbuffer(reinterpret_cast<char*>(m_keyBuffer),

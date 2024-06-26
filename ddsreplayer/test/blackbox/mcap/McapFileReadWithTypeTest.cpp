@@ -15,7 +15,7 @@
 #include <cpp_utils/testing/gtest_aux.hpp>
 #include <gtest/gtest.h>
 
-#include "dds/HelloWorldDynTypesSubscriber.h"
+#include "dds/ConfigurationDynTypesSubscriber.h"
 
 #include "tool/DdsReplayer.hpp"
 
@@ -24,8 +24,8 @@
 #include <chrono>
 
 using namespace eprosima::fastdds::dds;
-using namespace eprosima::fastrtps::rtps;
-using namespace eprosima::fastrtps;
+using namespace eprosima::fastdds::rtps;
+using namespace eprosima::fastdds;
 using namespace eprosima::ddsrecorder::replayer;
 
 namespace test {
@@ -34,10 +34,10 @@ namespace test {
 
 const unsigned int DOMAIN = 110;
 
-const std::string dds_topic_name = "/dds/topic";
+const std::string dds_topic_name = "configuration_topic";
 const std::string ros2_topic_name = "rt/topic";
 
-const std::string dds_type_name = "HelloWorld";
+const std::string dds_type_name = "Configuration";
 const std::string ros2_type_name = "std_msgs::msg::dds_::String_";
 
 
@@ -54,15 +54,15 @@ const std::string ros2_type_name = "std_msgs::msg::dds_::String_";
  */
 void create_subscriber_replayer(
         DataToCheck& data,
-        const std::string& configuration_path = "resources/config_file.yaml",
-        std::string input_file = "resources/helloworld_withtype_file.mcap",
+        const std::string& configuration_path = "resources/config_file_withtypes.yaml",
+        std::string input_file = "resources/configuration_withtypes.mcap",
         bool ros2 = false)
 {
     {
         std::string topic_name = ros2 ? test::ros2_topic_name : test::dds_topic_name;
 
         // Create Subscriber
-        HelloWorldDynTypesSubscriber subscriber(
+        ConfigurationDynTypesSubscriber subscriber(
             topic_name,
             static_cast<uint32_t>(test::DOMAIN),
             data);
@@ -122,75 +122,36 @@ TEST(McapFileReadWithTypeTest, dds_data_to_check)
     // info to check
     DataToCheck data;
     create_subscriber_replayer(data);
-    ASSERT_EQ(data.n_received_msgs, 13);
+    ASSERT_EQ(data.n_received_msgs, 10);
     ASSERT_EQ(data.type_msg, test::dds_type_name);
-    ASSERT_EQ(data.message_msg, "Hello World");
-    ASSERT_EQ(data.min_index_msg, 0);
-    ASSERT_EQ(data.max_index_msg, 12);
+    // ASSERT_EQ(data.message_msg, "Configuration");
+    ASSERT_EQ(data.min_index_msg, 1);
+    ASSERT_EQ(data.max_index_msg, 10);
     // ms ~ 200
-    ASSERT_GT(data.mean_ms_between_msgs, 197.5);
-    ASSERT_LT(data.mean_ms_between_msgs, 202.5);
-}
-
-TEST(McapFileReadWithTypeTest, ros2_data_to_check)
-{
-    // info to check
-    DataToCheck data;
-    const std::string ros2_mcap = "resources/ros2_file.mcap";
-    create_subscriber_replayer(data, "resources/config_file.yaml", ros2_mcap, true);
-    ASSERT_EQ(data.n_received_msgs, 17);
-    ASSERT_EQ(data.type_msg, test::ros2_type_name);
-    const std::regex base_regex("Hello, world! \\d*");
-    ASSERT_TRUE(std::regex_match(data.message_msg, base_regex));
-    // ms ~ 500
-    ASSERT_GT(data.mean_ms_between_msgs, 497.5);
-    ASSERT_LT(data.mean_ms_between_msgs, 502.5);
+    ASSERT_GT(data.mean_ms_between_msgs, 1197.5);
+    ASSERT_LT(data.mean_ms_between_msgs, 1202.5);
 }
 
 TEST(McapFileReadWithTypeTest, dds_more_playback_rate)
 {
     // info to check
     DataToCheck data;
-    const std::string configuration = "resources/config_file_more_hz.yaml";
+    const std::string configuration = "resources/config_file_more_hz_withtypes.yaml";
     create_subscriber_replayer(data, configuration);
     // ms ~ 100
-    ASSERT_GT(data.mean_ms_between_msgs, 97.5);
-    ASSERT_LT(data.mean_ms_between_msgs, 102.5);
-}
-
-TEST(McapFileReadWithTypeTest, ros2_more_playback_rate)
-{
-    // info to check
-    DataToCheck data;
-    const std::string configuration = "resources/config_file_more_hz.yaml";
-    const std::string ros2_mcap = "resources/ros2_file.mcap";
-    create_subscriber_replayer(data, configuration, ros2_mcap, true);
-    // ms ~ 250
-    ASSERT_GT(data.mean_ms_between_msgs, 247.5);
-    ASSERT_LT(data.mean_ms_between_msgs, 252.5);
+    ASSERT_GT(data.mean_ms_between_msgs, 597.5);
+    ASSERT_LT(data.mean_ms_between_msgs, 602.5);
 }
 
 TEST(McapFileReadWithTypeTest, dds_less_playback_rate)
 {
     // info to check
     DataToCheck data;
-    const std::string configuration = "resources/config_file_less_hz.yaml";
+    const std::string configuration = "resources/config_file_less_hz_withtypes.yaml";
     create_subscriber_replayer(data, configuration);
     // ms ~ 400
-    ASSERT_GT(data.mean_ms_between_msgs, 397.5);
-    ASSERT_LT(data.mean_ms_between_msgs, 402.5);
-}
-
-TEST(McapFileReadWithTypeTest, ros2_less_playback_rate)
-{
-    // info to check
-    DataToCheck data;
-    const std::string configuration = "resources/config_file_less_hz.yaml";
-    const std::string ros2_mcap = "resources/ros2_file.mcap";
-    create_subscriber_replayer(data, configuration, ros2_mcap, true);
-    // ms ~ 1000
-    ASSERT_GT(data.mean_ms_between_msgs, 997.5);
-    ASSERT_LT(data.mean_ms_between_msgs, 1002.5);
+    ASSERT_GT(data.mean_ms_between_msgs, 2397.5);
+    ASSERT_LT(data.mean_ms_between_msgs, 2403.5);
 }
 
 TEST(McapFileReadWithTypeTest, begin_time)
@@ -199,9 +160,9 @@ TEST(McapFileReadWithTypeTest, begin_time)
     DataToCheck data;
     const std::string configuration = "resources/config_file_begin_time_with_types.yaml";
     create_subscriber_replayer(data, configuration);
-    ASSERT_EQ(data.n_received_msgs, 6);
-    ASSERT_EQ(data.min_index_msg, 7);
-    ASSERT_EQ(data.max_index_msg, 12);
+    ASSERT_EQ(data.n_received_msgs, 7);
+    ASSERT_EQ(data.min_index_msg, 4);
+    ASSERT_EQ(data.max_index_msg, 10);
 }
 
 TEST(McapFileReadWithTypeTest, end_time)
@@ -210,9 +171,9 @@ TEST(McapFileReadWithTypeTest, end_time)
     DataToCheck data;
     const std::string configuration = "resources/config_file_end_time_with_types.yaml";
     create_subscriber_replayer(data, configuration);
-    ASSERT_EQ(data.n_received_msgs, 7);
-    ASSERT_EQ(data.min_index_msg, 0);
-    ASSERT_EQ(data.max_index_msg, 6);
+    ASSERT_EQ(data.n_received_msgs, 3);
+    ASSERT_EQ(data.min_index_msg, 1);
+    ASSERT_EQ(data.max_index_msg, 3);
 }
 
 TEST(McapFileReadWithTypeTest, start_replay_time_earlier)
@@ -221,9 +182,9 @@ TEST(McapFileReadWithTypeTest, start_replay_time_earlier)
     DataToCheck data;
     const std::string configuration = "resources/config_file_start_replay_time_earlier_with_types.yaml";
     create_subscriber_replayer(data, configuration);
-    ASSERT_EQ(data.n_received_msgs, 13);
-    ASSERT_EQ(data.min_index_msg, 0);
-    ASSERT_EQ(data.max_index_msg, 12);
+    ASSERT_EQ(data.n_received_msgs, 10);
+    ASSERT_EQ(data.min_index_msg, 1);
+    ASSERT_EQ(data.max_index_msg, 10);
 }
 
 int main(

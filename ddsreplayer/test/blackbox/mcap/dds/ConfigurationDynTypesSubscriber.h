@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * @file HelloWorldDynTypesSubscriber.h
+ * @file ConfigurationDynTypesSubscriber.h
  *
  */
 
@@ -32,13 +32,12 @@
 #include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
 #include <fastdds/rtps/writer/WriterDiscoveryInfo.h>
 
-#include "types/hello_world_basic/HelloWorldPubSubTypes.h"
+#include "types/configuration/ConfigurationPubSubTypes.h"
 
 struct DataToCheck
 {
     unsigned int n_received_msgs;
     std::string type_msg;
-    std::string message_msg;
     int min_index_msg;
     int max_index_msg;
     double mean_ms_between_msgs;
@@ -49,7 +48,7 @@ struct DataToCheck
  * @brief Class used to group into a single working unit a Subscriber with a DataReader and its listener.
  *
  */
-class HelloWorldDynTypesSubscriber : public eprosima::fastdds::dds::DomainParticipantListener
+class ConfigurationDynTypesSubscriber : public eprosima::fastdds::dds::DomainParticipantListener
 {
 public:
 
@@ -59,7 +58,7 @@ public:
      * @param topic_name Name of the DDS Topic
      * @param domain DDS Domain of the DomainParticipant
      */
-    HelloWorldDynTypesSubscriber(
+    ConfigurationDynTypesSubscriber(
             const std::string& topic_name,
             uint32_t domain,
             DataToCheck& data);
@@ -68,7 +67,7 @@ public:
      * @brief Destroy the Type Lookup Service Publisher object
      *
      */
-    virtual ~HelloWorldDynTypesSubscriber();
+    virtual ~ConfigurationDynTypesSubscriber();
 
     //! DataReader callback executed when a new sample is received
     void on_data_available(
@@ -82,22 +81,14 @@ public:
     //! DomainParticipant callback to inform new data readers discovered
     void on_data_writer_discovery(
             eprosima::fastdds::dds::DomainParticipant* participant,
-            eprosima::fastrtps::rtps::WriterDiscoveryInfo&& info,
+            eprosima::fastdds::rtps::WriterDiscoveryInfo&& info,
             bool& /*should_be_ignored*/) override;
-
-    // //! Callback to receive the remote data type information
-    // virtual void on_type_information_received(
-    //         eprosima::fastdds::dds::DomainParticipant* participant,
-    //         const eprosima::fastcdr::string_255 topic_name,
-    //         const eprosima::fastcdr::string_255 type_name,
-    //         const eprosima::fastcdr::types::TypeInformation& type_information) override;
 
     void init_info(
             const std::string& type_name);
 
     void fill_info(
             int index,
-            const std::string& message,
             uint64_t time_arrive_msg);
 
 protected:
@@ -136,7 +127,7 @@ protected:
     //! The time in milliseconds when the previous message arrived
     double prev_time_;
 
-    HelloWorld hello_world_;
+    Configuration configuration_;
 
     //! Atomic variables to check whether the type has been discovered and registered
     static std::atomic<bool> type_discovered_;

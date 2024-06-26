@@ -30,13 +30,13 @@
 #include <fastdds/rtps/transport/shared_mem/SharedMemTransportDescriptor.h>
 #include <fastdds/rtps/transport/UDPv4TransportDescriptor.h>
 #include <fastdds/rtps/transport/UDPv6TransportDescriptor.h>
-// #include <fastrtps/attributes/SubscriberAttributes.h>
 
-#include "HelloWorldSubscriber.h"
+#include "types/configuration/ConfigurationPubSubTypes.h"
+#include "ConfigurationSubscriber.h"
 
 using namespace eprosima::fastdds::dds;
 
-HelloWorldSubscriber::HelloWorldSubscriber(
+ConfigurationSubscriber::ConfigurationSubscriber(
         const std::string& topic_name,
         uint32_t domain,
         DataToCheck& data)
@@ -44,7 +44,7 @@ HelloWorldSubscriber::HelloWorldSubscriber(
     , subscriber_(nullptr)
     , topic_(nullptr)
     , datareader_(nullptr)
-    , type_(new HelloWorldPubSubType())
+    , type_(new ConfigurationPubSubType())
     , data_(&data)
     , samples_(0)
     , prev_time_(0)
@@ -52,7 +52,7 @@ HelloWorldSubscriber::HelloWorldSubscriber(
     ///////////////////////////////
     // Create the DomainParticipant
     DomainParticipantQos pqos;
-    pqos.name("HelloWorld_Subscriber");
+    pqos.name("Configuration_Subscriber");
 
     participant_ = DomainParticipantFactory::get_instance()->create_participant(domain, pqos);
 
@@ -108,7 +108,7 @@ HelloWorldSubscriber::HelloWorldSubscriber(
         std::endl;
 }
 
-HelloWorldSubscriber::~HelloWorldSubscriber()
+ConfigurationSubscriber::~ConfigurationSubscriber()
 {
     if (participant_ != nullptr)
     {
@@ -128,7 +128,7 @@ HelloWorldSubscriber::~HelloWorldSubscriber()
     }
 }
 
-void HelloWorldSubscriber::on_subscription_matched(
+void ConfigurationSubscriber::on_subscription_matched(
         DataReader*,
         const SubscriptionMatchedStatus& info)
 {
@@ -147,12 +147,12 @@ void HelloWorldSubscriber::on_subscription_matched(
     }
 }
 
-void HelloWorldSubscriber::on_data_available(
+void ConfigurationSubscriber::on_data_available(
         DataReader* reader)
 {
     SampleInfo info;
 
-    while ((reader->take_next_sample(&hello_,
+    while ((reader->take_next_sample(&configuration_,
             &info) == RETCODE_OK))
     {
         if (info.instance_state == ALIVE_INSTANCE_STATE)
@@ -162,41 +162,40 @@ void HelloWorldSubscriber::on_data_available(
 
             samples_++;
 
-            fill_info(hello_, current_time);
+            fill_info(configuration_, current_time);
 
             // Print your structure data here.
-            std::cout << "Message " << " " << hello_.index() << " RECEIVED" << std::endl;
+            std::cout << "Message " << " " << configuration_.index() << " RECEIVED" << std::endl;
             std::cout << "-----------------------------------------------------" << std::endl;
         }
     }
 
 }
 
-void HelloWorldSubscriber::init_info(
+void ConfigurationSubscriber::init_info(
         const std::string& type_name)
 {
     data_->n_received_msgs = 0;
     data_->type_msg = type_name;
-    data_->message_msg = "";
     data_->min_index_msg = -1;
     data_->max_index_msg = -1;
     data_->cummulated_ms_between_msgs = -1;
     data_->mean_ms_between_msgs = -1;
 }
 
-void HelloWorldSubscriber::fill_info(
-        HelloWorld hello_,
+void ConfigurationSubscriber::fill_info(
+        Configuration configuration_,
         uint64_t time_arrive_msg)
 {
     data_->n_received_msgs++;
-    data_->message_msg = hello_.message();
-    if (data_->min_index_msg == -1 || data_->min_index_msg > static_cast<int>(hello_.index()))
+
+    if (data_->min_index_msg == -1 || data_->min_index_msg > static_cast<int>(configuration_.index()))
     {
-        data_->min_index_msg = hello_.index();
+        data_->min_index_msg = configuration_.index();
     }
-    if (data_->max_index_msg == -1 || data_->max_index_msg < static_cast<int>(hello_.index()))
+    if (data_->max_index_msg == -1 || data_->max_index_msg < static_cast<int>(configuration_.index()))
     {
-        data_->max_index_msg = hello_.index();
+        data_->max_index_msg = configuration_.index();
     }
 
     if (prev_time_ == 0)

@@ -105,7 +105,7 @@ protected:
             uint32_t sleep);
 
     //! Generate the HelloWorld DynamicType
-    eprosima::fastrtps::types::DynamicType_ptr generate_helloworld_type_() const;
+    eprosima::fastdds::dds::traits<eprosima::fastdds::dds::DynamicType>::ref_type generate_helloworld_type_() const;
 
     //! Generate the Complete DynamicType
     eprosima::fastrtps::types::DynamicType_ptr generate_complete_type_() const;
@@ -143,7 +143,7 @@ protected:
     //! Name of the DDS Topic type according to the DataTypeKind
     std::string data_type_name_;
     //! Actual DynamicType generated according to the DataTypeKind
-    eprosima::fastrtps::types::DynamicType_ptr dynamic_type_;
+    eprosima::fastdds::dds::traits<eprosima::fastdds::dds::DynamicType>::ref_type dynamic_type_;
 
 
     //! Indicates if the application is still running

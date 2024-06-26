@@ -416,7 +416,7 @@ protected:
      * @param [in] dynamic_types Dynamic types collection to be serialized.
      * @return Serialized payload for the given dynamic types collection.
      */
-    fastrtps::rtps::SerializedPayload_t* serialize_dynamic_types_(
+    fastdds::rtps::SerializedPayload_t* serialize_dynamic_types_(
             DynamicTypesCollection& dynamic_types) const;
 
     /**

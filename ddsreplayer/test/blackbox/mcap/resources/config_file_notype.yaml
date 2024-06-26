@@ -5,11 +5,7 @@ topics:
       reliability: true       # Use QoS RELIABLE
 
 replayer:
-  replay-types: true
-  begin-time:
-    local: false
-    format: "%H-%M-%S_%Y-%m-%d"
-    datetime: 13-04-45_2024-06-25
+  replay-types: false
 
 specs:
   wait-all-acked-timeout: 2000

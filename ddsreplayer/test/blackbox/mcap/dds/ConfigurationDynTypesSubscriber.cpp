@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * @file HelloWorldDynTypesSubscriber.cpp
+ * @file ConfigurationDynTypesSubscriber.cpp
  *
  */
 
@@ -31,20 +31,20 @@
 #include <fastdds/dds/xtypes/dynamic_types/DynamicTypeBuilder.hpp>
 #include <fastdds/dds/xtypes/dynamic_types/DynamicTypeBuilderFactory.hpp>
 #include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
-#include <fastdds/dds/xtypes/utils.hpp>
+// #include <fastdds/dds/xtypes/utils.hpp>
 #include <fastdds/rtps/builtin/data/WriterProxyData.h>
 
-#include "HelloWorldDynTypesSubscriber.h"
+#include "ConfigurationDynTypesSubscriber.h"
 
 using namespace eprosima;
 using namespace fastdds::dds;
 
-std::atomic<bool> HelloWorldDynTypesSubscriber::type_discovered_(false);
-std::atomic<bool> HelloWorldDynTypesSubscriber::type_registered_(false);
-std::mutex HelloWorldDynTypesSubscriber::type_discovered_cv_mtx_;
-std::condition_variable HelloWorldDynTypesSubscriber::type_discovered_cv_;
+std::atomic<bool> ConfigurationDynTypesSubscriber::type_discovered_(false);
+std::atomic<bool> ConfigurationDynTypesSubscriber::type_registered_(false);
+std::mutex ConfigurationDynTypesSubscriber::type_discovered_cv_mtx_;
+std::condition_variable ConfigurationDynTypesSubscriber::type_discovered_cv_;
 
-HelloWorldDynTypesSubscriber::HelloWorldDynTypesSubscriber(
+ConfigurationDynTypesSubscriber::ConfigurationDynTypesSubscriber(
         const std::string& topic_name,
         uint32_t domain,
         DataToCheck& data)
@@ -60,10 +60,7 @@ HelloWorldDynTypesSubscriber::HelloWorldDynTypesSubscriber(
     ///////////////////////////////
     // Create the DomainParticipant
     DomainParticipantQos pqos;
-    pqos.name("HelloWorldDynTypes_Subscriber");
-
-    // pqos.wire_protocol().builtin.typelookup_config.use_client = true;
-    // pqos.wire_protocol().builtin.typelookup_config.use_server = false;
+    pqos.name("ConfigurationDynTypes_Subscriber");
 
     // Create listener mask so the data do not go to on_data_on_readers from subscriber
     StatusMask mask;
@@ -88,7 +85,7 @@ HelloWorldDynTypesSubscriber::HelloWorldDynTypesSubscriber(
     }
 }
 
-HelloWorldDynTypesSubscriber::~HelloWorldDynTypesSubscriber()
+ConfigurationDynTypesSubscriber::~ConfigurationDynTypesSubscriber()
 {
     if (participant_ != nullptr)
     {
@@ -108,7 +105,7 @@ HelloWorldDynTypesSubscriber::~HelloWorldDynTypesSubscriber()
     }
 }
 
-void HelloWorldDynTypesSubscriber::on_subscription_matched(
+void ConfigurationDynTypesSubscriber::on_subscription_matched(
         DataReader*,
         const SubscriptionMatchedStatus& info)
 {
@@ -127,7 +124,7 @@ void HelloWorldDynTypesSubscriber::on_subscription_matched(
     }
 }
 
-void HelloWorldDynTypesSubscriber::on_data_available(
+void ConfigurationDynTypesSubscriber::on_data_available(
         DataReader* reader)
 {
     // Dynamic DataType
@@ -146,39 +143,31 @@ void HelloWorldDynTypesSubscriber::on_data_available(
 
             samples_++;
 
-            if (dynamic_type_->get_name() == "std_msgs::msg::dds_::String_")
-            {
-                std::string message = "HelloWorld";
-                // new_data->get_string_value(message, new_data->get_member_id_by_name("index"));
-
-                fill_info(static_cast<int>(0), message, current_time);
-            }
-            else if (dynamic_type_->get_name() == "HelloWorld")
+            if (dynamic_type_->get_name() == "Configuration")
             {
                 uint32_t index;
+                char message;
                 new_data->get_uint32_value(index, new_data->get_member_id_by_name("index"));
-                std::string message = "HelloWorld";
-                // new_data->get_string_value(message, new_data->get_member_id_by_name("message"));
 
-                fill_info(static_cast<int>(index), message, current_time);
+                fill_info(static_cast<int>(index), current_time);
+
+                std::cout << "Message " << samples_ << " received:\n" << std::endl;
+                std::stringstream ss;
+                ss << std::setw(4);
+                // auto ret = fastdds::dds::json_serialize(new_data, ss, fastdds::dds::DynamicDataJsonFormat::EPROSIMA);
+                std::cout << ss.str() << std::endl;
+                std::cout << "-----------------------------------------------------" << std::endl;
             }
-
-            std::cout << "Message " << samples_ << " received:\n" << std::endl;
-            std::stringstream ss;
-            ss << std::setw(4);
-            auto ret = fastdds::dds::json_serialize(new_data, ss, fastdds::dds::DynamicDataJsonFormat::EPROSIMA);
-            std::cout << ss.str() << std::endl;
-            std::cout << "-----------------------------------------------------" << std::endl;
         }
     }
 }
 
-void HelloWorldDynTypesSubscriber::on_data_writer_discovery(
+void ConfigurationDynTypesSubscriber::on_data_writer_discovery(
         fastdds::dds::DomainParticipant*,
-        fastrtps::rtps::WriterDiscoveryInfo&& info,
+        fastdds::rtps::WriterDiscoveryInfo&& info,
         bool&)
 {
-    fastrtps::rtps::WriterProxyData proxy_copy(info.info);
+    fastdds::rtps::WriterProxyData proxy_copy(info.info);
 
     // Get type information
     const auto type_info = proxy_copy.type_information().type_information;
@@ -188,7 +177,7 @@ void HelloWorldDynTypesSubscriber::on_data_writer_discovery(
     notify_type_discovered_(type_info, type_name, topic_name);
 }
 
-void HelloWorldDynTypesSubscriber::notify_type_discovered_(
+void ConfigurationDynTypesSubscriber::notify_type_discovered_(
             const fastdds::dds::xtypes::TypeInformation& type_info,
             const fastcdr::string_255& type_name,
             const fastcdr::string_255& topic_name)
@@ -235,7 +224,7 @@ void HelloWorldDynTypesSubscriber::notify_type_discovered_(
     register_remote_type_callback_(type_name_, dyn_type);
 }
 
-void HelloWorldDynTypesSubscriber::register_remote_type_callback_(
+void ConfigurationDynTypesSubscriber::register_remote_type_callback_(
         const std::string&,
         const fastdds::dds::traits<fastdds::dds::DynamicType>::ref_type dynamic_type)
 {
@@ -278,7 +267,7 @@ void HelloWorldDynTypesSubscriber::register_remote_type_callback_(
         " > with data type < " << dynamic_type->get_name() << " > " <<
         std::endl;
 
-    // Update HelloWorldDynTypesSubscriber members
+    // Update ConfigurationDynTypesSubscriber members
     dynamic_type_ = dynamic_type;
     type_discovered_.store(true);
     type_registered_.store(true);
@@ -286,26 +275,25 @@ void HelloWorldDynTypesSubscriber::register_remote_type_callback_(
     type_discovered_cv_.notify_all();
 }
 
-void HelloWorldDynTypesSubscriber::init_info(
+void ConfigurationDynTypesSubscriber::init_info(
         const std::string& type_name)
 {
 
     data_->n_received_msgs = 0;
     data_->type_msg = type_name;
-    data_->message_msg = "";
+    // data_->message_msg = "";
     data_->min_index_msg = -1;
     data_->max_index_msg = -1;
     data_->cummulated_ms_between_msgs = -1;
     data_->mean_ms_between_msgs = -1;
 }
 
-void HelloWorldDynTypesSubscriber::fill_info(
+void ConfigurationDynTypesSubscriber::fill_info(
         int index,
-        const std::string& message,
         uint64_t time_arrive_msg)
 {
     data_->n_received_msgs++;
-    data_->message_msg = message;
+
     if (data_->min_index_msg == -1 || data_->min_index_msg > index)
     {
         data_->min_index_msg = index;

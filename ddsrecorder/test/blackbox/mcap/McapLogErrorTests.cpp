@@ -14,14 +14,14 @@
 #include <mcap/errors.hpp>
 #include <mcap/mcap.hpp>
 
+const int MAX_PENDING_SAMPLES = 1024;
 const int BUFFER_SIZE = 100;
-const int MAX_FILE_SIZE = 1024;
-const int MAX_FILE_AGE = 60;
-const int MAX_FILE_COUNT = 3600;
-const bool AUTO_START = true;
-const bool AUTO_STOP = false;
-const bool COMPRESS = true;
-const bool ENCRYPT = false;
+const int EVENT_WINDOW = 60;
+const int CLEANUP_PERIOD = 3600;
+const bool LOG_PUBLISH_TIME = true;
+const bool ONLY_WITH_SCHEMA = false;
+const bool RECORD_TYPES = true;
+const bool ROS2_TYPES = false;
 
 /**
  * Test case to verify a logError is displayed when the opening mcap file fails
@@ -56,15 +56,15 @@ TEST(McapLogErrorTests, fail_to_open_file) {
 
     eprosima::ddsrecorder::participants::McapHandlerConfiguration config(
         output_settings,
+        MAX_PENDING_SAMPLES,
         BUFFER_SIZE,
-        MAX_FILE_SIZE,
-        MAX_FILE_AGE,
-        MAX_FILE_COUNT,
-        AUTO_START,
-        AUTO_STOP,
+        EVENT_WINDOW,
+        CLEANUP_PERIOD,
+        LOG_PUBLISH_TIME,
+        ONLY_WITH_SCHEMA,
         mcap_writer_options,
-        COMPRESS,
-        ENCRYPT
+        RECORD_TYPES,
+        ROS2_TYPES
         );
 
     std::shared_ptr<eprosima::ddspipe::core::PayloadPool> payload_pool;
