@@ -210,8 +210,8 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
     // Deserialize dynamic types collection using CDR
     DynamicTypesCollection dynamic_types;
     eprosima::fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
-    eprosima::fastrtps::rtps::SerializedPayload_t serialized_payload =
-            eprosima::fastrtps::rtps::SerializedPayload_t(dynamic_attachment.dataSize);
+    eprosima::fastdds::rtps::SerializedPayload_t serialized_payload =
+            eprosima::fastdds::rtps::SerializedPayload_t(dynamic_attachment.dataSize);
     serialized_payload.length = dynamic_attachment.dataSize;
     std::memcpy(
         serialized_payload.data,
@@ -351,18 +351,18 @@ fastdds::dds::xtypes::TypeIdentifier DdsReplayer::deserialize_type_identifier_(
 {
     // Create CDR message from string
     // NOTE: Use 0 length to avoid allocation
-    fastrtps::rtps::CDRMessage_t* cdr_message = new fastrtps::rtps::CDRMessage_t(0);
+    fastdds::rtps::CDRMessage_t* cdr_message = new fastdds::rtps::CDRMessage_t(0);
     cdr_message->buffer = (unsigned char*)reinterpret_cast<const unsigned char*>(typeid_str.c_str());
     cdr_message->length = typeid_str.length();
 #if __BIG_ENDIAN__
-    cdr_message->msg_endian = fastrtps::rtps::BIGEND;
+    cdr_message->msg_endian = fastdds::rtps::BIGEND;
 #else
-    cdr_message->msg_endian = fastrtps::rtps::LITTLEEND;
+    cdr_message->msg_endian = fastdds::rtps::LITTLEEND;
 #endif // if __BIG_ENDIAN__
 
     // Reserve payload and create buffer
     const auto parameter_length = cdr_message->length;
-    fastrtps::rtps::SerializedPayload_t payload(parameter_length);
+    fastdds::rtps::SerializedPayload_t payload(parameter_length);
     fastcdr::FastBuffer fastbuffer((char*)payload.data, parameter_length);
 
     // Read data
@@ -402,18 +402,18 @@ fastdds::dds::xtypes::TypeObject DdsReplayer::deserialize_type_object_(
 {
     // Create CDR message from string
     // NOTE: Use 0 length to avoid allocation
-    fastrtps::rtps::CDRMessage_t* cdr_message = new fastrtps::rtps::CDRMessage_t(0);
+    fastdds::rtps::CDRMessage_t* cdr_message = new fastdds::rtps::CDRMessage_t(0);
     cdr_message->buffer = (unsigned char*)reinterpret_cast<const unsigned char*>(typeobj_str.c_str());
     cdr_message->length = typeobj_str.length();
 #if __BIG_ENDIAN__
-    cdr_message->msg_endian = fastrtps::rtps::BIGEND;
+    cdr_message->msg_endian = fastdds::rtps::BIGEND;
 #else
-    cdr_message->msg_endian = fastrtps::rtps::LITTLEEND;
+    cdr_message->msg_endian = fastdds::rtps::LITTLEEND;
 #endif // if __BIG_ENDIAN__
 
     // Reserve payload and create buffer
     const auto parameter_length = cdr_message->length;
-    fastrtps::rtps::SerializedPayload_t payload(parameter_length);
+    fastdds::rtps::SerializedPayload_t payload(parameter_length);
     fastcdr::FastBuffer fastbuffer((char*)payload.data, parameter_length);
 
     // Read data

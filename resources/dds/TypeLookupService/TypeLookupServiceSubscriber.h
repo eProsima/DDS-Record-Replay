@@ -93,7 +93,7 @@ protected:
      */
     void register_remote_type_callback_(
             const std::string& name,
-            const eprosima::fastrtps::types::DynamicType_ptr dynamic_type);
+            const eprosima::fastdds::dds::traits<eprosima::fastdds::dds::DynamicType>::ref_type dynamic_type);
 
     // Fast DDS entities
     eprosima::fastdds::dds::DomainParticipant* participant_;
@@ -107,7 +107,7 @@ protected:
     //! Name of the received DDS Topic type
     std::string type_name_;
     //! DynamicType generated with the received type information
-    eprosima::fastrtps::types::DynamicType_ptr dynamic_type_;
+    eprosima::fastdds::dds::traits<eprosima::fastdds::dds::DynamicType>::ref_type dynamic_type_;
 
     //! Atomic variables to check whether the type has been discovered and registered
     static std::atomic<bool> type_discovered_;

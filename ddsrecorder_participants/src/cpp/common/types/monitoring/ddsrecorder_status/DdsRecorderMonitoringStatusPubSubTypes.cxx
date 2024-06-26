@@ -27,8 +27,8 @@
 #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/DdsRecorderMonitoringStatusCdrAux.hpp>
 #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/DdsRecorderMonitoringStatusTypeObjectSupport.hpp>
 
-using SerializedPayload_t = eprosima::fastrtps::rtps::SerializedPayload_t;
-using InstanceHandle_t = eprosima::fastrtps::rtps::InstanceHandle_t;
+using SerializedPayload_t = eprosima::fastdds::rtps::SerializedPayload_t;
+using InstanceHandle_t = eprosima::fastdds::rtps::InstanceHandle_t;
 using DataRepresentationId_t = eprosima::fastdds::dds::DataRepresentationId_t;
 
 DdsRecorderMonitoringErrorStatusPubSubType::DdsRecorderMonitoringErrorStatusPubSubType()
@@ -57,11 +57,11 @@ DdsRecorderMonitoringErrorStatusPubSubType::~DdsRecorderMonitoringErrorStatusPub
 }
 
 bool DdsRecorderMonitoringErrorStatusPubSubType::serialize(
-        void* data,
+        const void* const data,
         SerializedPayload_t* payload,
         DataRepresentationId_t data_representation)
 {
-    DdsRecorderMonitoringErrorStatus* p_type = static_cast<DdsRecorderMonitoringErrorStatus*>(data);
+    const DdsRecorderMonitoringErrorStatus* p_type = static_cast<const DdsRecorderMonitoringErrorStatus*>(data);
 
     // Object that manages the raw buffer.
     eprosima::fastcdr::FastBuffer fastbuffer(reinterpret_cast<char*>(payload->data), payload->max_size);
@@ -133,7 +133,7 @@ bool DdsRecorderMonitoringErrorStatusPubSubType::deserialize(
 }
 
 std::function<uint32_t()> DdsRecorderMonitoringErrorStatusPubSubType::getSerializedSizeProvider(
-        void* data,
+        const void* const data,
         DataRepresentationId_t data_representation)
 {
     return [data, data_representation]() -> uint32_t
@@ -150,7 +150,7 @@ std::function<uint32_t()> DdsRecorderMonitoringErrorStatusPubSubType::getSeriali
                        eprosima::fastcdr::CdrVersion::XCDRv1 :eprosima::fastcdr::CdrVersion::XCDRv2);
                    size_t current_alignment {0};
                    return static_cast<uint32_t>(calculator.calculate_serialized_size(
-                               *static_cast<DdsRecorderMonitoringErrorStatus*>(data), current_alignment)) +
+                               *static_cast<const DdsRecorderMonitoringErrorStatus*>(data), current_alignment)) +
                            4u /*encapsulation*/;
                }
                catch (eprosima::fastcdr::exception::Exception& /*exception*/)
@@ -173,7 +173,7 @@ void DdsRecorderMonitoringErrorStatusPubSubType::deleteData(
 }
 
 bool DdsRecorderMonitoringErrorStatusPubSubType::getKey(
-        void* data,
+        const void* const data,
         InstanceHandle_t* handle,
         bool force_md5)
 {
@@ -182,7 +182,7 @@ bool DdsRecorderMonitoringErrorStatusPubSubType::getKey(
         return false;
     }
 
-    DdsRecorderMonitoringErrorStatus* p_type = static_cast<DdsRecorderMonitoringErrorStatus*>(data);
+    const DdsRecorderMonitoringErrorStatus* p_type = static_cast<const DdsRecorderMonitoringErrorStatus*>(data);
 
     // Object that manages the raw buffer.
     eprosima::fastcdr::FastBuffer fastbuffer(reinterpret_cast<char*>(m_keyBuffer),
@@ -250,11 +250,11 @@ DdsRecorderMonitoringStatusPubSubType::~DdsRecorderMonitoringStatusPubSubType()
 }
 
 bool DdsRecorderMonitoringStatusPubSubType::serialize(
-        void* data,
+        const void* const data,
         SerializedPayload_t* payload,
         DataRepresentationId_t data_representation)
 {
-    DdsRecorderMonitoringStatus* p_type = static_cast<DdsRecorderMonitoringStatus*>(data);
+    const DdsRecorderMonitoringStatus* p_type = static_cast<const DdsRecorderMonitoringStatus*>(data);
 
     // Object that manages the raw buffer.
     eprosima::fastcdr::FastBuffer fastbuffer(reinterpret_cast<char*>(payload->data), payload->max_size);
@@ -326,7 +326,7 @@ bool DdsRecorderMonitoringStatusPubSubType::deserialize(
 }
 
 std::function<uint32_t()> DdsRecorderMonitoringStatusPubSubType::getSerializedSizeProvider(
-        void* data,
+        const void* const data,
         DataRepresentationId_t data_representation)
 {
     return [data, data_representation]() -> uint32_t
@@ -343,7 +343,7 @@ std::function<uint32_t()> DdsRecorderMonitoringStatusPubSubType::getSerializedSi
                        eprosima::fastcdr::CdrVersion::XCDRv1 :eprosima::fastcdr::CdrVersion::XCDRv2);
                    size_t current_alignment {0};
                    return static_cast<uint32_t>(calculator.calculate_serialized_size(
-                               *static_cast<DdsRecorderMonitoringStatus*>(data), current_alignment)) +
+                               *static_cast<const DdsRecorderMonitoringStatus*>(data), current_alignment)) +
                            4u /*encapsulation*/;
                }
                catch (eprosima::fastcdr::exception::Exception& /*exception*/)
@@ -366,7 +366,7 @@ void DdsRecorderMonitoringStatusPubSubType::deleteData(
 }
 
 bool DdsRecorderMonitoringStatusPubSubType::getKey(
-        void* data,
+        const void* const data,
         InstanceHandle_t* handle,
         bool force_md5)
 {
@@ -375,7 +375,7 @@ bool DdsRecorderMonitoringStatusPubSubType::getKey(
         return false;
     }
 
-    DdsRecorderMonitoringStatus* p_type = static_cast<DdsRecorderMonitoringStatus*>(data);
+    const DdsRecorderMonitoringStatus* p_type = static_cast<const DdsRecorderMonitoringStatus*>(data);
 
     // Object that manages the raw buffer.
     eprosima::fastcdr::FastBuffer fastbuffer(reinterpret_cast<char*>(m_keyBuffer),

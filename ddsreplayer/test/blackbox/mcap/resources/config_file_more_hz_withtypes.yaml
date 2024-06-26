@@ -6,10 +6,7 @@ topics:
 
 replayer:
   replay-types: true
-  begin-time:
-    local: false
-    format: "%H-%M-%S_%Y-%m-%d"
-    datetime: 13-04-45_2024-06-25
+  rate: 2.0
 
 specs:
   wait-all-acked-timeout: 2000

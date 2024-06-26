@@ -18,6 +18,8 @@
 
 #include <mcap/reader.hpp>
 
+#include <fastdds/rtps/common/Time_t.h>
+
 #include <cpp_utils/exception/InconsistencyException.hpp>
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/ros2_mangling.hpp>
@@ -183,9 +185,7 @@ void McapReaderParticipant::process_mcap()
         mcap_payload.data = (unsigned char*)reinterpret_cast<const unsigned char*>(it->message.data);
 
         // Copy payload from MCAP file to RTPS data through payload pool
-        eprosima::fastrtps::rtps::IPayloadPool* null_payload_pool = nullptr;
-        payload_pool_->get_payload(mcap_payload, null_payload_pool, data->payload); // this reserves and copies payload
-        data->payload_owner = payload_pool_.get();
+        payload_pool_->get_payload(mcap_payload, data->payload); // this reserves and copies payload
         mcap_payload.data = nullptr; // Set to nullptr after copy to avoid free on destruction
 
         // Set publication delay from original log time and configured playback rate
@@ -196,7 +196,7 @@ void McapReaderParticipant::process_mcap()
         // Set source timestamp
         // NOTE: this is important for QoS such as LifespanQosPolicy
         data->source_timestamp =
-                fastrtps::rtps::Time_t(std::chrono::duration_cast<std::chrono::nanoseconds>(scheduled_write_ts
+                fastdds::rtps::Time_t(std::chrono::duration_cast<std::chrono::nanoseconds>(scheduled_write_ts
                                 .time_since_epoch()).count() / 1e9);
 
         // Create topic on which this message should be published

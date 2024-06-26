@@ -1,11 +1,12 @@
 topics:
-  - name: /dds/topic
-    type: HelloWorld
+  - name: configuration_topic
+    type: Configuration
     qos:
       reliability: true       # Use QoS RELIABLE
 
 replayer:
-  rate: 0.5
+  replay-types: false
+  rate: 2.0
 
 specs:
   wait-all-acked-timeout: 2000

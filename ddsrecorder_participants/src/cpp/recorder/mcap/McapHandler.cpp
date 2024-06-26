@@ -209,15 +209,10 @@ void McapHandler::add_data(
 
     if (data.payload.length > 0)
     {
-        auto payload_owner =
-                const_cast<eprosima::fastrtps::rtps::IPayloadPool*>((eprosima::fastrtps::rtps::IPayloadPool*)data.
-                        payload_owner);
-
-        if (payload_owner)
+        if (data.payload_owner != nullptr)
         {
             payload_pool_->get_payload(
                 data.payload,
-                payload_owner,
                 msg.payload);
 
             msg.payload_owner = payload_pool_.get();
@@ -922,12 +917,12 @@ void McapHandler::store_dynamic_type_(
     dynamic_types.dynamic_types().push_back(dynamic_type);
 }
 
-fastrtps::rtps::SerializedPayload_t* McapHandler::serialize_dynamic_types_(
+fastdds::rtps::SerializedPayload_t* McapHandler::serialize_dynamic_types_(
         DynamicTypesCollection& dynamic_types) const
 {
     // Serialize dynamic types collection using CDR
     fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
-    fastrtps::rtps::SerializedPayload_t* serialized_payload = new fastrtps::rtps::SerializedPayload_t(
+    fastdds::rtps::SerializedPayload_t* serialized_payload = new fastdds::rtps::SerializedPayload_t(
         type_support.get_serialized_size_provider(&dynamic_types)());
     type_support.serialize(&dynamic_types, serialized_payload);
 
@@ -995,9 +990,9 @@ std::string McapHandler::serialize_type_identifier_(
     fastcdr::CdrSizeCalculator calculator(fastcdr::CdrVersion::XCDRv2);
     size_t current_alignment {0};
     size_t size = calculator.calculate_serialized_size(type_identifier, current_alignment) +
-                            fastrtps::rtps::SerializedPayload_t::representation_header_size;
+                            fastdds::rtps::SerializedPayload_t::representation_header_size;
 
-    fastrtps::rtps::SerializedPayload_t payload(static_cast<uint32_t>(size));
+    fastdds::rtps::SerializedPayload_t payload(static_cast<uint32_t>(size));
     fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
 
     // Create CDR serializer
@@ -1012,7 +1007,7 @@ std::string McapHandler::serialize_type_identifier_(
     size = (ser.get_serialized_data_length() + 3) & ~3;
 
     // Create CDR message with payload
-    fastrtps::rtps::CDRMessage_t* cdr_message = new fastrtps::rtps::CDRMessage_t(payload);
+    fastdds::rtps::CDRMessage_t* cdr_message = new fastdds::rtps::CDRMessage_t(payload);
 
     // Add data
     if (!(cdr_message && (cdr_message->pos + payload.length <= cdr_message->max_size))|| (payload.length > 0 && !payload.data))
@@ -1026,7 +1021,7 @@ std::string McapHandler::serialize_type_identifier_(
         cdr_message->length += payload.length;
     }
 
-    fastrtps::rtps::octet value = 0;
+    fastdds::rtps::octet value = 0;
     for (uint32_t count = payload.length; count < size; ++count)
     {
         const uint32_t size_octet = sizeof(value);
@@ -1038,7 +1033,7 @@ std::string McapHandler::serialize_type_identifier_(
         {
             for (uint32_t i = 0; i < size_octet; i++)
             {
-                cdr_message->buffer[cdr_message->pos + i] = *((fastrtps::rtps::octet*)&value + size_octet - 1 - i);
+                cdr_message->buffer[cdr_message->pos + i] = *((fastdds::rtps::octet*)&value + size_octet - 1 - i);
             }
             cdr_message->pos += size_octet;
             cdr_message->length += size_octet;
@@ -1063,8 +1058,8 @@ std::string McapHandler::serialize_type_object_(
     fastcdr::CdrSizeCalculator calculator(fastcdr::CdrVersion::XCDRv2);
     size_t current_alignment {0};
     size_t size = calculator.calculate_serialized_size(type_object, current_alignment) +
-                            fastrtps::rtps::SerializedPayload_t::representation_header_size;
-    fastrtps::rtps::SerializedPayload_t payload(static_cast<uint32_t>(size));
+                            fastdds::rtps::SerializedPayload_t::representation_header_size;
+    fastdds::rtps::SerializedPayload_t payload(static_cast<uint32_t>(size));
     fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
 
     // Create CDR serializer
@@ -1078,7 +1073,7 @@ std::string McapHandler::serialize_type_object_(
     size = (ser.get_serialized_data_length() + 3) & ~3;
 
     // Create CDR message with payload
-    fastrtps::rtps::CDRMessage_t* cdr_message = new fastrtps::rtps::CDRMessage_t(payload);
+    fastdds::rtps::CDRMessage_t* cdr_message = new fastdds::rtps::CDRMessage_t(payload);
 
     // Add data
     if (!(cdr_message && (cdr_message->pos + payload.length <= cdr_message->max_size))|| (payload.length > 0 && !payload.data))
@@ -1092,7 +1087,7 @@ std::string McapHandler::serialize_type_object_(
         cdr_message->length += payload.length;
     }
 
-    fastrtps::rtps::octet value = 0;
+    fastdds::rtps::octet value = 0;
     for (uint32_t count = payload.length; count < size; ++count)
     {
         const uint32_t size_octet = sizeof(value);
@@ -1104,7 +1099,7 @@ std::string McapHandler::serialize_type_object_(
         {
             for (uint32_t i = 0; i < size_octet; i++)
             {
-                cdr_message->buffer[cdr_message->pos + i] = *((fastrtps::rtps::octet*)&value + size_octet - 1 - i);
+                cdr_message->buffer[cdr_message->pos + i] = *((fastdds::rtps::octet*)&value + size_octet - 1 - i);
             }
             cdr_message->pos += size_octet;
             cdr_message->length += size_octet;

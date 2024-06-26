@@ -115,25 +115,25 @@ bool CommandReceiver::init()
     {
         case ddspipe::core::types::IgnoreParticipantFlags::no_filter:
             pqos.wire_protocol().builtin.discovery_config.ignoreParticipantFlags =
-                    eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::NO_FILTER;
+                    eprosima::fastdds::rtps::ParticipantFilteringFlags::NO_FILTER;
             break;
         case ddspipe::core::types::IgnoreParticipantFlags::filter_different_host:
             pqos.wire_protocol().builtin.discovery_config.ignoreParticipantFlags =
-                    eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::FILTER_DIFFERENT_HOST;
+                    eprosima::fastdds::rtps::ParticipantFilteringFlags::FILTER_DIFFERENT_HOST;
             break;
         case ddspipe::core::types::IgnoreParticipantFlags::filter_different_process:
             pqos.wire_protocol().builtin.discovery_config.ignoreParticipantFlags =
-                    eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::FILTER_DIFFERENT_PROCESS;
+                    eprosima::fastdds::rtps::ParticipantFilteringFlags::FILTER_DIFFERENT_PROCESS;
             break;
         case ddspipe::core::types::IgnoreParticipantFlags::filter_same_process:
             pqos.wire_protocol().builtin.discovery_config.ignoreParticipantFlags =
-                    eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::FILTER_SAME_PROCESS;
+                    eprosima::fastdds::rtps::ParticipantFilteringFlags::FILTER_SAME_PROCESS;
             break;
         case ddspipe::core::types::IgnoreParticipantFlags::filter_different_and_same_process:
             pqos.wire_protocol().builtin.discovery_config.ignoreParticipantFlags =
-                    static_cast<eprosima::fastrtps::rtps::ParticipantFilteringFlags_t>(
-                eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::FILTER_DIFFERENT_PROCESS |
-                eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::FILTER_SAME_PROCESS);
+                    static_cast<eprosima::fastdds::rtps::ParticipantFilteringFlags>(
+                eprosima::fastdds::rtps::ParticipantFilteringFlags::FILTER_DIFFERENT_PROCESS |
+                eprosima::fastdds::rtps::ParticipantFilteringFlags::FILTER_SAME_PROCESS);
             break;
         default:
             break;

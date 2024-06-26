@@ -196,9 +196,9 @@ void TypeLookupServiceSubscriber::on_type_information_received(
         " > by lookup service. Registering..." << std::endl;
 
     // Create the callback to register the remote dynamic type
-    std::function<void(const std::string&, const eprosima::fastrtps::types::DynamicType_ptr)> callback(
+    std::function<void(const std::string&, const eprosima::fastdds::dds::traits<eprosima::fastdds::dds::DynamicType>::ref_type)> callback(
             [this]
-            (const std::string& name, const eprosima::fastrtps::types::DynamicType_ptr type)
+            (const std::string& name, const eprosima::fastdds::dds::traits<eprosima::fastdds::dds::DynamicType>::ref_type type)
             {
                 this->register_remote_type_callback_(name, type);
             });
@@ -276,7 +276,7 @@ void TypeLookupServiceSubscriber::run(
 
 void TypeLookupServiceSubscriber::register_remote_type_callback_(
         const std::string&,
-        const eprosima::fastrtps::types::DynamicType_ptr dynamic_type)
+        const eprosima::fastdds::dds::traits<eprosima::fastdds::dds::DynamicType>::ref_type dynamic_type)
 {
     ////////////////////
     // Register the type

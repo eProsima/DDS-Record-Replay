@@ -40,7 +40,7 @@ const std::string TOPIC_NAME = "DdsRecorderBlackboxTestTopic";
 const ParticipantId PARTICIPANT_ID = "DdsRecorderBlackboxTestParticipant";
 
 // The maximum amount of time (in seconds) to wait for the subscriber to acknowledge messages.
-const fastrtps::Duration_t MAX_WAITING_TIME(10);
+const fastdds::Duration_t MAX_WAITING_TIME(10);
 
 namespace limits {
 
