@@ -70,15 +70,6 @@ file(
         "${PROJECT_SOURCE_DIR}/include/*.h*"
     )
 
-# Exclude types' files depending on the Fast DDS version
-if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
-    list(FILTER SOURCES_FILES EXCLUDE REGEX "v2/")
-    list(FILTER HEADERS_FILES EXCLUDE REGEX "v2/")
-else()
-    list(FILTER SOURCES_FILES EXCLUDE REGEX "v1/")
-    list(FILTER HEADERS_FILES EXCLUDE REGEX "v1/")
-endif()
-
 # Compile C++ library
 compile_library(
     "${PROJECT_SOURCE_DIR}/src/cpp" # Source directory

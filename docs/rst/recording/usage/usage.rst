@@ -37,8 +37,8 @@ To run the |ddsrecorder| from a Docker container execute the following command:
 Installation from sources
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-|eddsrecord| depends on ``fastrtps``, ``fastcdr`` and ``ddspipe`` libraries.
-In order to correctly execute the recorder, make sure that ``fastrtps``, ``fastcdr`` and ``ddspipe`` are properly sourced.
+|eddsrecord| depends on ``fastdds``, ``fastcdr`` and ``ddspipe`` libraries.
+In order to correctly execute the recorder, make sure that ``fastdds``, ``fastcdr`` and ``ddspipe`` are properly sourced.
 
 .. code-block:: bash
 
