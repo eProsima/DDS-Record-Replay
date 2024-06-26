@@ -263,7 +263,6 @@ ProcessReturnCode parse_arguments(
 
                 case optionIndex::DOMAIN:
                     commandline_args.domain = std::stoi(opt.arg);
-                    std::cout << "recording on domain: " << commandline_args.domain << std::endl;
                     break;
 
 

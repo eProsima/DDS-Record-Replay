@@ -265,7 +265,6 @@ ProcessReturnCode parse_arguments(
 
                 case optionIndex::DOMAIN:
                     commandline_args.domain = std::stoi(opt.arg);
-                    std::cout << "running using domain " << commandline_args.domain << std::endl;
                     break;
 
                 case optionIndex::ACTIVATE_DEBUG:

@@ -67,8 +67,6 @@ void create_subscriber_replayer(
             static_cast<uint32_t>(test::DOMAIN),
             data);
 
-        std::cout << "subscriber created !!!!" << std::endl;
-
         {
             // Configuration
             eprosima::ddsrecorder::yaml::ReplayerConfiguration configuration(configuration_path);
@@ -76,8 +74,6 @@ void create_subscriber_replayer(
 
             // Create replayer instance
             auto replayer = std::make_unique<DdsReplayer>(configuration, input_file);
-
-            std::cout << "replayer created !!!!" << std::endl;
 
             // Give time for replayer and subscriber to match.
             // Waiting for the subscriber to match the replayer
@@ -97,14 +93,10 @@ void create_subscriber_replayer(
 
             replayer->stop();
 
-            std::cout << "replayer stop!!!!" << std::endl;
-
         }
         // Replayer waits on destruction a maximum of wait-all-acked-timeout
         // ms until all sent msgs are acknowledged
-        std::cout << "replayer destroyed!!!!" << std::endl;
     }
-    std::cout << "subscriber destroyed!!!!" << std::endl;
 
     std::cout << "process info..." << std::endl;
 }
