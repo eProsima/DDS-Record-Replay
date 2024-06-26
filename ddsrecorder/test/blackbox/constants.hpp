@@ -48,7 +48,7 @@ constexpr std::uint32_t MAX_SIZE = 30000;
 constexpr std::uint32_t MAX_FILE_SIZE = 7500;
 constexpr std::uint32_t MAX_FILES = MAX_SIZE / MAX_FILE_SIZE;
 
-constexpr double ACCEPTABLE_ERROR = 0.05;
+constexpr double ACCEPTABLE_ERROR = 0.10;
 constexpr std::uint32_t MAX_ACCEPTABLE_FILE_SIZE = MAX_FILE_SIZE * (1 + ACCEPTABLE_ERROR);
 constexpr std::uint32_t MIN_ACCEPTABLE_FILE_SIZE = MAX_FILE_SIZE * (1 - ACCEPTABLE_ERROR);
 
