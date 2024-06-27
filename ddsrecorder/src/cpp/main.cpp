@@ -282,6 +282,15 @@ int main(
             }
         }
 
+        // Verify that the configuration is correct
+        eprosima::utils::Formatter error_msg;
+        if (!configuration.is_valid(error_msg))
+        {
+            throw eprosima::utils::ConfigurationException(
+                      eprosima::utils::Formatter() <<
+                          "Invalid configuration: " << error_msg);
+        }
+
         logUser(DDSRECORDER_EXECUTION, "DDS Recorder running.");
 
         if (configuration.enable_remote_controller)
@@ -386,6 +395,7 @@ int main(
 
                 // Create DDS Recorder
                 auto recorder = std::make_unique<DdsRecorder>(configuration, initial_state, "", commandline_args.domain);
+
 
                 // Create File Watcher Handler
                 std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;

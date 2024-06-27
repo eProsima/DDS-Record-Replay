@@ -17,8 +17,9 @@
 #include <memory>
 #include <set>
 
-#include <cpp_utils/thread_pool/pool/SlotThreadPool.hpp>
+#include <cpp_utils/event/MultipleEventHandler.hpp>
 #include <cpp_utils/ReturnCode.hpp>
+#include <cpp_utils/thread_pool/pool/SlotThreadPool.hpp>
 
 #include <ddspipe_core/core/DdsPipe.hpp>
 #include <ddspipe_core/dynamic/AllowedTopicList.hpp>
@@ -74,6 +75,22 @@ public:
             int domain = 0);
 
     /**
+     * DdsRecorder constructor by required values and event handler reference.
+     *
+     * Creates DdsRecorder instance with given configuration, initial state and mcap file name.
+     *
+     * @param configuration: Structure encapsulating all recorder configuration options.
+     * @param init_state:    Initial instance state (RUNNING/PAUSED/SUSPENDED/STOPPED).
+     * @param event_handler: Reference to event handler used for thread synchronization in main application.
+     * @param file_name:     Name of the mcap file where data is recorded. If not provided, the one from configuration is used instead.
+     */
+    DdsRecorder(
+            const yaml::RecorderConfiguration& configuration,
+            const DdsRecorderStateCode& init_state,
+            std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler,
+            const std::string& file_name = "");
+
+    /**
      * Reconfigure the Recorder with the new configuration.
      *
      * @param new_configuration: The configuration to replace the previous configuration with.
@@ -98,6 +115,9 @@ public:
 
     //! Trigger event (in \c mcap_handler_)
     void trigger_event();
+
+    //! Callback to execute when disk is full
+    void on_disk_full();
 
 protected:
 
@@ -141,6 +161,9 @@ protected:
 
     //! Monitor
     std::unique_ptr<ddspipe::core::Monitor> monitor_;
+
+    //! Reference to event handler used for thread synchronization in main application
+    std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler_;
 };
 
 } /* namespace recorder */

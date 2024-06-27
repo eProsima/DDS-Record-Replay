@@ -40,7 +40,7 @@ HelloWorld::HelloWorld()
     // m_index com.eprosima.idl.parser.typecode.PrimitiveTypeCode@74a10858
     m_index = 0;
     // m_message com.eprosima.idl.parser.typecode.StringTypeCode@23fe1d71
-    m_message ="";
+    m_message = "";
 
     // Just to register all known types
     registerHelloWorldTypes();
