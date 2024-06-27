@@ -69,7 +69,7 @@ utils::Timestamp to_std_timestamp(
 }
 
 mcap::Timestamp to_mcap_timestamp(
-        const fastrtps::rtps::Time_t& time)
+        const fastdds::rtps::Time_t& time)
 {
     return time.seconds() * NS_PER_SEC + time.nanosec();
 }
@@ -81,7 +81,7 @@ mcap::Timestamp to_mcap_timestamp(
 }
 
 std::string to_sql_timestamp(
-        const fastrtps::rtps::Time_t& time,
+        const fastdds::rtps::Time_t& time,
         const bool local_time /* = false */)
 {
     char datetime_str[30];

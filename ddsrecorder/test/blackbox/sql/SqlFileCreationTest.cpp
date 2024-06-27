@@ -294,7 +294,7 @@ TEST_F(SqlFileCreationTest, sql_data_num_msgs_downsampling)
     const std::string OUTPUT_FILE_NAME = "sql_data_num_msgs_downsampling";
     const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".db");
 
-    constexpr auto NUMBER_OF_MESSAGES = 10;
+    constexpr auto NUMBER_OF_MESSAGES = 128;
     constexpr int DOWNSAMPLING = 2;
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));

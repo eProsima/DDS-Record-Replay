@@ -93,8 +93,6 @@ void McapHandler::add_schema(
         return;
     }
 
-    // const std::string type_name = dynamic_type->get_name();
-
     // Check if it exists already
     if (received_types_.find(type_name) != received_types_.end())
     {

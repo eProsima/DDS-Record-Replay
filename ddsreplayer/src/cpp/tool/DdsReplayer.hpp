@@ -101,24 +101,6 @@ protected:
     std::set<std::string> register_dynamic_types_(
             const participants::DynamicTypesCollection& dynamic_types);
 
-    /**
-     * @brief Create the dynamic types' writers for \c topics.
-     *
-     * @param topics: The topics to create the writers for.
-     * @param registered_types: The types to create the writers for.
-     */
-    void create_dynamic_types_writers_(
-            const std::set<utils::Heritable<ddspipe::core::types::DdsTopic>>& topics,
-            const std::set<std::string>& registered_types);
-
-    /**
-     * @brief Create the dynamic types' writer for \c topic.
-     *
-     * @param topic: The topic to create the writer for.
-     */
-    void create_dynamic_type_writer_(
-            utils::Heritable<ddspipe::core::types::DdsTopic> topic);
-
     //! Replayer Configuration
     const yaml::ReplayerConfiguration configuration_;
 

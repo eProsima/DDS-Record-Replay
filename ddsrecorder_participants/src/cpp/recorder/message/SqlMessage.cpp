@@ -21,13 +21,6 @@
 
 #include <nlohmann/json.hpp>
 
-#include <fastrtps/types/DynamicData.h>
-#include <fastrtps/types/DynamicDataFactory.h>
-#include <fastrtps/types/DynamicDataHelper.hpp>
-#include <fastrtps/types/DynamicPubSubType.h>
-#include <fastrtps/types/DynamicTypeMember.h>
-#include <fastrtps/types/TypesBase.h>
-
 #include <ddsrecorder_participants/recorder/message/SqlMessage.hpp>
 
 
@@ -50,167 +43,167 @@ SqlMessage::SqlMessage(
 }
 
 void SqlMessage::set_key(
-        fastrtps::types::DynamicType_ptr dynamic_type)
+        fastdds::dds::DynamicType::_ref_type dynamic_type)
 {
-    // Deserialize the payload
-    fastrtps::types::DynamicPubSubType pub_sub_type(dynamic_type);
-    fastrtps::types::DynamicData_ptr dynamic_data;
-    dynamic_data = fastrtps::types::DynamicDataFactory::get_instance()->create_data(dynamic_type);
+    // // Deserialize the payload
+    // fastdds::dds::xtypes::DynamicPubSubType pub_sub_type(dynamic_type);
+    // fastdds::dds::xtypes::DynamicData_ptr dynamic_data;
+    // dynamic_data = fastdds::dds::xtypes::DynamicDataFactory::get_instance()->create_data(dynamic_type);
 
-    pub_sub_type.deserialize(&payload, dynamic_data.get());
+    // pub_sub_type.deserialize(&payload, dynamic_data.get());
 
-    // Clear non-key values to free-up unnecessary space
-    // dynamic_data->clear_nonkey_values();
+    // // Clear non-key values to free-up unnecessary space
+    // // dynamic_data->clear_nonkey_values();
 
-    // Serialize the key members into a JSON
-    nlohmann::json key_json;
+    // // Serialize the key members into a JSON
+    // nlohmann::json key_json;
 
-    std::map<fastrtps::types::MemberId, fastrtps::types::DynamicTypeMember*> members_map;
-    dynamic_type->get_all_members(members_map);
+    // std::map<fastdds::dds::xtypes::MemberId, fastdds::dds::xtypes::DynamicTypeMember*> members_map;
+    // dynamic_type->get_all_members(members_map);
 
-    for (const auto& member : members_map)
-    {
-        if (!member.second->key_annotation())
-        {
-            // The member is not a key
-            continue;
-        }
+    // for (const auto& member : members_map)
+    // {
+    //     if (!member.second->key_annotation())
+    //     {
+    //         // The member is not a key
+    //         continue;
+    //     }
 
-        const auto descriptor = member.second->get_descriptor();
+    //     const auto descriptor = member.second->get_descriptor();
 
-        if (descriptor == nullptr)
-        {
-            // The member has no descriptor
-            continue;
-        }
+    //     if (descriptor == nullptr)
+    //     {
+    //         // The member has no descriptor
+    //         continue;
+    //     }
 
-        switch (descriptor->get_kind())
-        {
-            case fastrtps::types::TK_BOOLEAN:
-            {
-                key_json[descriptor->get_name()] = dynamic_data->get_bool_value(descriptor->get_id());
-                break;
-            }
-            case fastrtps::types::TK_BYTE:
-            {
-                key_json[descriptor->get_name()] = dynamic_data->get_byte_value(descriptor->get_id());
-                break;
-            }
-            case fastrtps::types::TK_INT16:
-            {
-                key_json[descriptor->get_name()] = dynamic_data->get_int16_value(descriptor->get_id());
-                break;
-            }
-            case fastrtps::types::TK_INT32:
-            {
-                key_json[descriptor->get_name()] = dynamic_data->get_int32_value(descriptor->get_id());
-                break;
-            }
-            case fastrtps::types::TK_INT64:
-            {
-                key_json[descriptor->get_name()] = dynamic_data->get_int64_value(descriptor->get_id());
-                break;
-            }
-            case fastrtps::types::TK_UINT16:
-            {
-                key_json[descriptor->get_name()] = dynamic_data->get_uint16_value(descriptor->get_id());
-                break;
-            }
-            case fastrtps::types::TK_UINT32:
-            {
-                key_json[descriptor->get_name()] = dynamic_data->get_uint32_value(descriptor->get_id());
-                break;
-            }
-            case fastrtps::types::TK_UINT64:
-            {
-                key_json[descriptor->get_name()] = dynamic_data->get_uint64_value(descriptor->get_id());
-                break;
-            }
-            case fastrtps::types::TK_FLOAT32:
-            {
-                key_json[descriptor->get_name()] = dynamic_data->get_float32_value(descriptor->get_id());
-                break;
-            }
-            case fastrtps::types::TK_FLOAT64:
-            {
-                key_json[descriptor->get_name()] = dynamic_data->get_float64_value(descriptor->get_id());
-                break;
-            }
-            case fastrtps::types::TK_FLOAT128:
-            {
-                key_json[descriptor->get_name()] = dynamic_data->get_float128_value(descriptor->get_id());
-                break;
-            }
-            case fastrtps::types::TK_CHAR8:
-            {
-                key_json[descriptor->get_name()] = dynamic_data->get_char8_value(descriptor->get_id());
-                break;
-            }
-            case fastrtps::types::TK_CHAR16:
-            {
-                key_json[descriptor->get_name()] = dynamic_data->get_char16_value(descriptor->get_id());
-                break;
-            }
-            case fastrtps::types::TK_STRING8:
-            {
-                key_json[descriptor->get_name()] = dynamic_data->get_string_value(descriptor->get_id());
-                break;
-            }
-            case fastrtps::types::TK_STRING16:
-            {
-                key_json[descriptor->get_name()] = dynamic_data->get_wstring_value(descriptor->get_id());
-                break;
-            }
-            case fastrtps::types::TK_ALIAS:
-            {
-                // TODO
-                break;
-            }
-            case fastrtps::types::TK_ENUM:
-            {
-                key_json[descriptor->get_name()] = dynamic_data->get_enum_value(descriptor->get_id());
-                break;
-            }
-            case fastrtps::types::TK_BITMASK:
-            {
-                // TODO
-                break;
-            }
-            case fastrtps::types::TK_ANNOTATION:
-            {
-                // TODO
-                break;
-            }
-            case fastrtps::types::TK_STRUCTURE:
-            {
-                // TODO
-                break;
-            }
-            case fastrtps::types::TK_UNION:
-            {
-                // TODO
-                break;
-            }
-            case fastrtps::types::TK_BITSET:
-            {
-                // TODO
-                break;
-            }
-            case fastrtps::types::TK_SEQUENCE:
-            {
-                // TODO
-                break;
-            }
-            case fastrtps::types::TK_ARRAY:
-            {
-                // TODO
-                break;
-            }
-        }
-    }
+    //     switch (descriptor->get_kind())
+    //     {
+    //         case fastdds::dds::xtypes::TK_BOOLEAN:
+    //         {
+    //             key_json[descriptor->get_name()] = dynamic_data->get_bool_value(descriptor->get_id());
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_BYTE:
+    //         {
+    //             key_json[descriptor->get_name()] = dynamic_data->get_byte_value(descriptor->get_id());
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_INT16:
+    //         {
+    //             key_json[descriptor->get_name()] = dynamic_data->get_int16_value(descriptor->get_id());
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_INT32:
+    //         {
+    //             key_json[descriptor->get_name()] = dynamic_data->get_int32_value(descriptor->get_id());
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_INT64:
+    //         {
+    //             key_json[descriptor->get_name()] = dynamic_data->get_int64_value(descriptor->get_id());
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_UINT16:
+    //         {
+    //             key_json[descriptor->get_name()] = dynamic_data->get_uint16_value(descriptor->get_id());
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_UINT32:
+    //         {
+    //             key_json[descriptor->get_name()] = dynamic_data->get_uint32_value(descriptor->get_id());
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_UINT64:
+    //         {
+    //             key_json[descriptor->get_name()] = dynamic_data->get_uint64_value(descriptor->get_id());
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_FLOAT32:
+    //         {
+    //             key_json[descriptor->get_name()] = dynamic_data->get_float32_value(descriptor->get_id());
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_FLOAT64:
+    //         {
+    //             key_json[descriptor->get_name()] = dynamic_data->get_float64_value(descriptor->get_id());
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_FLOAT128:
+    //         {
+    //             key_json[descriptor->get_name()] = dynamic_data->get_float128_value(descriptor->get_id());
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_CHAR8:
+    //         {
+    //             key_json[descriptor->get_name()] = dynamic_data->get_char8_value(descriptor->get_id());
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_CHAR16:
+    //         {
+    //             key_json[descriptor->get_name()] = dynamic_data->get_char16_value(descriptor->get_id());
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_STRING8:
+    //         {
+    //             key_json[descriptor->get_name()] = dynamic_data->get_string_value(descriptor->get_id());
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_STRING16:
+    //         {
+    //             key_json[descriptor->get_name()] = dynamic_data->get_wstring_value(descriptor->get_id());
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_ALIAS:
+    //         {
+    //             // TODO
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_ENUM:
+    //         {
+    //             key_json[descriptor->get_name()] = dynamic_data->get_enum_value(descriptor->get_id());
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_BITMASK:
+    //         {
+    //             // TODO
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_ANNOTATION:
+    //         {
+    //             // TODO
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_STRUCTURE:
+    //         {
+    //             // TODO
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_UNION:
+    //         {
+    //             // TODO
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_BITSET:
+    //         {
+    //             // TODO
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_SEQUENCE:
+    //         {
+    //             // TODO
+    //             break;
+    //         }
+    //         case fastdds::dds::xtypes::TK_ARRAY:
+    //         {
+    //             // TODO
+    //             break;
+    //         }
+    //     }
+    // }
 
-    // Dump the JSON into a string
-    key = key_json.dump();
+    // // Dump the JSON into a string
+    // key = key_json.dump();
 }
 
 } /* namespace participants */

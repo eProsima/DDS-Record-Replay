@@ -245,7 +245,7 @@ void TypeLookupServicePublisher::publish(unsigned int msg_index)
 
     // Print the message published
     std::cout << "Message published: " << std::endl;
-    // eprosima::fastrtps::types::DynamicDataHelper::print(dynamic_data_);
+    // eprosima::fastdds::dds::xtypes::DynamicDataHelper::print(dynamic_data_);
     std::cout << "-----------------------------------------------------" << std::endl;
 }
 
