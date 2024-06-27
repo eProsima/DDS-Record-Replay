@@ -144,7 +144,7 @@ void TypeLookupServiceSubscriber::on_data_available(
 {
     // Create a new DynamicData to read the sample
     eprosima::fastdds::dds::DynamicData::_ref_type new_dynamic_data;
-    new_dynamic_data = eprosima::fastrtps::types::DynamicDataFactory::get_instance()->create_data(dynamic_type_);
+    new_dynamic_data = eprosima::fastdds::dds::xtypes::DynamicDataFactory::get_instance()->create_data(dynamic_type_);
 
     SampleInfo info;
 
@@ -156,7 +156,7 @@ void TypeLookupServiceSubscriber::on_data_available(
             samples_++;
 
             std::cout << "Message " << samples_ << " received:\n" << std::endl;
-            eprosima::fastrtps::types::DynamicDataHelper::print(new_dynamic_data);
+            eprosima::fastdds::dds::xtypes::DynamicDataHelper::print(new_dynamic_data);
             std::cout << "-----------------------------------------------------" << std::endl;
 
             // Stop if all expecting messages has been received (max_messages number reached)

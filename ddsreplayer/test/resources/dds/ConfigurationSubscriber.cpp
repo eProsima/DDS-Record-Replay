@@ -31,7 +31,7 @@
 #include <fastdds/rtps/transport/UDPv4TransportDescriptor.hpp>
 #include <fastdds/rtps/transport/UDPv6TransportDescriptor.hpp>
 
-#include "types/configuration/ConfigurationPubSubTypes.hpp"
+#include "../types/configuration/ConfigurationPubSubTypes.hpp"
 #include "ConfigurationSubscriber.h"
 
 using namespace eprosima::fastdds::dds;

@@ -29,8 +29,8 @@
 
 #include "../resources/constants.hpp"
 #include "../resources/dds/DataToCheck.hpp"
-#include "../resources/dds/HelloWorldDynTypesSubscriber.h"
-#include "../resources/dds/HelloWorldSubscriber.h"
+#include "../resources/dds/ConfigurationSubscriber.h"
+#include "../resources/dds/ConfigurationDynTypesSubscriber.h"
 
 using namespace eprosima;
 
@@ -77,7 +77,7 @@ public:
 
         // Verify that the received data is correct
         ASSERT_EQ(data.n_received_msgs, 11);
-        ASSERT_EQ(data.type_msg, "HelloWorld");
+        ASSERT_EQ(data.type_msg, "Configuration");
         ASSERT_EQ(data.message_msg, "Hello World");
         ASSERT_EQ(data.min_index_msg, 0);
         ASSERT_EQ(data.max_index_msg, 10);
@@ -231,11 +231,11 @@ protected:
 
         if (publish_types)
         {
-            subscriber = std::make_unique<HelloWorldDynTypesSubscriber>(topic_name, test::DOMAIN, data);
+            subscriber = std::make_unique<ConfigurationDynTypesSubscriber>(topic_name, test::DOMAIN, data);
         }
         else
         {
-            subscriber = std::make_unique<HelloWorldSubscriber>(topic_name, test::DOMAIN, data);
+            subscriber = std::make_unique<ConfigurationDynTypesSubscriber>(topic_name, test::DOMAIN, data);
         }
 
         // Configuration

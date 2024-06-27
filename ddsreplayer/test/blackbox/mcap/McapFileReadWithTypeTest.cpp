@@ -67,7 +67,7 @@ TEST_F(McapFileReadWithTypeTest, end_time)
     end_time_test(input_file_type_, publish_type_);
 }
 
-TEST(McapFileReadWithTypeTest, start_replay_time_earlier)
+TEST_F(McapFileReadWithTypeTest, start_replay_time_earlier)
 {
     start_replay_time_earlier_test(input_file_type_, publish_type_);
 }

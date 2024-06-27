@@ -24,7 +24,8 @@
 #include <set>
 #include <string>
 
-#include <fastrtps/types/DynamicType.h>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
+#include <fastdds/dds/xtypes/type_representation/detail/dds_xtypes_typeobject.hpp>
 
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
 #include <ddspipe_core/types/data/RtpsPayloadData.hpp>
@@ -96,7 +97,9 @@ public:
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void add_schema(
-            const fastrtps::types::DynamicType_ptr& dynamic_type) override;
+            const fastdds::dds::DynamicType::_ref_type& dynamic_type,
+            const std::string& type_name,
+            const fastdds::dds::xtypes::TypeIdentifier& type_id) override;
 
     /**
      * @brief Add a data sample to the given \c topic.

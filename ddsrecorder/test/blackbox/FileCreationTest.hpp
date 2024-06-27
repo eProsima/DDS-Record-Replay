@@ -43,17 +43,12 @@
 
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
-#if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
-    #include "../resources/types/hello_world/v1/HelloWorld.h"
-    #include "../resources/types/hello_world/v1/HelloWorldPubSubTypes.h"
-#else
-    #include "../resources/types/hello_world/v2/HelloWorld.h"
-    #include "../resources/types/hello_world/v2/HelloWorldPubSubTypes.h"
-#endif // if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
-
 #include <tool/DdsRecorder.hpp>
 
 #include "constants.hpp"
+
+#include "../resources/types/hello_world/HelloWorld.hpp"
+#include "../resources/types/hello_world/HelloWorldPubSubTypes.h"
 
 using namespace eprosima;
 using DdsRecorderState = ddsrecorder::recorder::DdsRecorderStateCode;
@@ -114,7 +109,7 @@ public:
 
 protected:
 
-    std::vector<std::shared_ptr<fastrtps::rtps::SerializedPayload_t>> record_messages_(
+    std::vector<std::shared_ptr<fastdds::rtps::SerializedPayload_t>> record_messages_(
             const std::string& file_name,
             const unsigned int messages1,
             const DdsRecorderState state1 = DdsRecorderState::RUNNING,
@@ -189,7 +184,7 @@ protected:
         return sent_messages;
     }
 
-    std::vector<std::shared_ptr<fastrtps::rtps::SerializedPayload_t>> send_messages_(
+    std::vector<std::shared_ptr<fastdds::rtps::SerializedPayload_t>> send_messages_(
             const unsigned int number_of_messages)
     {
         // Create the DataWriter
@@ -199,7 +194,7 @@ protected:
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
         // Send the messages
-        std::vector<std::shared_ptr<fastrtps::rtps::SerializedPayload_t>> sent_messages;
+        std::vector<std::shared_ptr<fastdds::rtps::SerializedPayload_t>> sent_messages;
 
         for (std::uint32_t i = 0; i < number_of_messages; i++)
         {
@@ -213,7 +208,7 @@ protected:
             // Serialize the message
             HelloWorldPubSubType pubsubType;
             const auto payload_size = pubsubType.getSerializedSizeProvider(&hello)();
-            auto payload = std::make_shared<fastrtps::rtps::SerializedPayload_t>(payload_size);
+            auto payload = std::make_shared<fastdds::rtps::SerializedPayload_t>(payload_size);
             pubsubType.serialize(&hello, payload.get());
 
             // Store the serialized message

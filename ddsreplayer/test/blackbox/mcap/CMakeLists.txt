@@ -20,10 +20,10 @@ set(TEST_NAME McapFileReadTest)
 
 set(TEST_SOURCES
     McapFileReadTest.cpp
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/configuration/Configuration.hpp
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/configuration/ConfigurationPubSubTypes.cxx
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/configuration/ConfigurationTypeObjectSupport.cxx
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/ConfigurationSubscriber.cpp
+    ${PROJECT_SOURCE_DIR}/test/resources/types/configuration/ConfigurationPubSubTypes.cxx
+    ${PROJECT_SOURCE_DIR}/test/resources/types/configuration/ConfigurationTypeObjectSupport.cxx
+    ${PROJECT_SOURCE_DIR}/test/resources/dds/ConfigurationSubscriber.cpp
+    ${PROJECT_SOURCE_DIR}/test/resources/dds/ConfigurationDynTypesSubscriber.cpp
 )
 
 set(TEST_LIST
@@ -64,13 +64,12 @@ add_blackbox_executable(
 set(TEST_NAME McapFileReadWithTypeTest)
 
 set(TEST_SOURCES
-        McapFileReadWithTypeTest.cpp
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/configuration/Configuration.hpp
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/configuration/ConfigurationPubSubTypes.cxx
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/configuration/ConfigurationTypeObjectSupport.cxx
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/ConfigurationSubscriber.cpp
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/ConfigurationDynTypesSubscriber.cpp
-    )
+    McapFileReadWithTypeTest.cpp
+    ${PROJECT_SOURCE_DIR}/test/resources/types/configuration/ConfigurationPubSubTypes.cxx
+    ${PROJECT_SOURCE_DIR}/test/resources/types/configuration/ConfigurationTypeObjectSupport.cxx
+    ${PROJECT_SOURCE_DIR}/test/resources/dds/ConfigurationSubscriber.cpp
+    ${PROJECT_SOURCE_DIR}/test/resources/dds/ConfigurationDynTypesSubscriber.cpp
+)
 
 set(TEST_LIST
         trivial

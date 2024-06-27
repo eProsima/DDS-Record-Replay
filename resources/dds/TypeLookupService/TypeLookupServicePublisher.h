@@ -108,7 +108,7 @@ protected:
     eprosima::fastdds::dds::traits<eprosima::fastdds::dds::DynamicType>::ref_type generate_helloworld_type_() const;
 
     //! Generate the Complete DynamicType
-    eprosima::fastrtps::types::DynamicType_ptr generate_complete_type_() const;
+    eprosima::fastdds::dds::xtypes::DynamicType_ptr generate_complete_type_() const;
 
     /**
      * @brief Fill HelloWold message with actual data

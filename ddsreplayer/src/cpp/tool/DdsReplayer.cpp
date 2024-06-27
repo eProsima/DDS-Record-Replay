@@ -134,9 +134,6 @@ DdsReplayer::DdsReplayer(
     // Register the dynamic types
     const auto& registered_types = register_dynamic_types_(types);
 
-    // Create writers to publish the dynamic types
-    create_dynamic_types_writers_(topics, registered_types);
-
     // Create DDS Pipe
     pipe_ = std::make_unique<ddspipe::core::DdsPipe>(
         configuration.ddspipe_configuration,
@@ -183,77 +180,21 @@ std::set<std::string> DdsReplayer::register_dynamic_types_(
     {
         // Deserialize type identifier
         const auto type_identifier_str = utils::base64_decode(dynamic_type.type_information());
-        const auto type_identifier = participants::Serializer::deserialize<fastrtps::types::TypeIdentifier>(type_identifier_str);
+        const auto type_identifier = participants::Serializer::deserialize<fastdds::dds::xtypes::TypeIdentifier>(type_identifier_str);
 
         // Deserialize type object
         const auto type_object_str = utils::base64_decode(dynamic_type.type_object());
-        const auto type_object = participants::Serializer::deserialize<fastrtps::types::TypeObject>(type_object_str);
+        const auto type_object = participants::Serializer::deserialize<fastdds::dds::xtypes::TypeObject>(type_object_str);
 
         // Register in factory
-        fastrtps::types::TypeObjectFactory::get_instance()->add_type_object(
-                dynamic_type.type_name(), &type_identifier, &type_object);
+        fastdds::dds::xtypes::TypeIdentifierPair type_identifiers;
+        fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().register_type_object(
+                type_object, type_identifiers);
 
         registered_types.insert(dynamic_type.type_name());
     }
 
     return registered_types;
-}
-
-void DdsReplayer::create_dynamic_types_writers_(
-        const std::set<utils::Heritable<ddspipe::core::types::DdsTopic>>& topics,
-        const std::set<std::string>& registered_types)
-{
-    for (const auto& topic : topics)
-    {
-        if (registered_types.find(topic->type_name) == registered_types.end())
-        {
-            continue;
-        }
-
-        // Make a copy of the Topic to customize it according to the Participant's configured QoS.
-        utils::Heritable<ddspipe::core::types::DdsTopic> topic_copy = topic->copy();
-
-        // Apply the Manual Topics for this participant.
-        for (const auto& [manual_topic, _] : configuration_.ddspipe_configuration.get_manual_topics(*topic))
-        {
-            topic_copy->topic_qos.set_qos(manual_topic->topic_qos, utils::FuzzyLevelValues::fuzzy_level_hard);
-        }
-
-        // Create Datawriter in this topic so dynamic type can be shared in EDP
-        // TODO: Avoid creating the dynamic writer when the topic is not allowed.
-        create_dynamic_type_writer_(topic_copy);
-    }
-}
-
-void DdsReplayer::create_dynamic_type_writer_(
-        utils::Heritable<ddspipe::core::types::DdsTopic> topic)
-{
-    // Decode type identifer and object strings
-    const auto type_identifier_str = utils::base64_decode(dynamic_type.type_information());
-    const auto type_object_str = utils::base64_decode(dynamic_type.type_object());
-
-    // Deserialize type identifer and object strings
-    fastdds::dds::xtypes::TypeIdentifier type_identifier =
-            Deserializer::deserialize<fastdds::dds::xtypes::TypeIdentifier>(type_identifier_str);
-    fastdds::dds::xtypes::TypeObject type_object =
-            Deserializer::deserialize<fastdds::dds::xtypes::TypeObject>(type_object_str);
-
-    // Create a TypeIdentifierPair to use in register_type_identifier
-    fastdds::dds::xtypes::TypeIdentifierPair type_identifiers;
-    type_identifiers.type_identifier1(type_identifier);
-
-    // Register in factory
-    auto& factory = fastdds::dds::DomainParticipantFactory::get_instance();
-
-    if (fastdds::dds::RETCODE_OK != factory->type_object_registry().register_type_object(type_object, type_identifiers))
-    {
-        logWarning(DDSREPLAYER_REPLAYER,
-                "Failed to register " << dynamic_type.type_name() << " DynamicType.");
-    }
-    else
-    {
-        registered_types_.insert({dynamic_type.type_name(), type_identifiers});
-    }
 }
 
 } /* namespace replayer */

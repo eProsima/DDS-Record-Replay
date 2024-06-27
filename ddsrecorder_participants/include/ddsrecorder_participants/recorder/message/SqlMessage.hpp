@@ -22,7 +22,7 @@
 #include <string>
 
 #include <fastdds/rtps/common/SequenceNumber.h>
-#include <fastrtps/types/DynamicType.h>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
 
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
 #include <ddspipe_core/types/data/RtpsPayloadData.hpp>
@@ -66,13 +66,13 @@ struct SqlMessage : public BaseMessage
      * @param dynamic_type DynamicType of the message.
      */
     void set_key(
-            fastrtps::types::DynamicType_ptr dynamic_type);
+            fastdds::dds::DynamicType::_ref_type dynamic_type);
 
     // Writer GUID
     ddspipe::core::types::Guid writer_guid;
 
     // Sequence number
-    fastrtps::rtps::SequenceNumber_t sequence_number;
+    fastdds::rtps::SequenceNumber_t sequence_number;
 
     // Hashed value identifying the instance
     ddspipe::core::types::InstanceHandle instance_handle;

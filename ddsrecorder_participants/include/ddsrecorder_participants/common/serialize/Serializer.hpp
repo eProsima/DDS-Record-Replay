@@ -56,15 +56,13 @@ public:
 protected:
 
     /**
-     * @brief Serialize a \c TypeObject or a \c TypeIdentifier into a \c SerializedPayload_t.
+     * @brief Serialize a \c TypeObject or a \c TypeIdentifier into a string.
      *
      * @param [in] object \c TypeObject or \c TypeIdentifier to serialize
-     * @return \c SerializedPayload_t with the serialization
      */
     template <typename T>
     static std::string type_data_to_type_str_(
-            const T& data,
-            const size_t size);
+            const T& data);
 
     /**
      * @brief Deserialize \c type_str into a \c TypeObject or a \c TypeIdentifier.

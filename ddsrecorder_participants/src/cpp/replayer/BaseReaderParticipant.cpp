@@ -116,9 +116,7 @@ std::unique_ptr<ddspipe::core::types::RtpsPayloadData> BaseReaderParticipant::cr
     payload.data = (unsigned char*) reinterpret_cast<const unsigned char*>(raw_data);
 
     // Reserve and copy the payload into the payload pool
-    fastrtps::rtps::IPayloadPool* null_payload_pool = nullptr;
-
-    payload_pool_->get_payload(payload, null_payload_pool, data->payload);
+    payload_pool_->get_payload(payload, data->payload);
     data->payload_owner = payload_pool_.get();
 
     // Remove the raw data pointer to avoid freeing it on destruction

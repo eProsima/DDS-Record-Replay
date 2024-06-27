@@ -181,7 +181,7 @@ void SqlReaderParticipant::process_messages()
 
         // Set source timestamp
         // NOTE: this is important for QoS such as LifespanQosPolicy
-        data->source_timestamp = fastrtps::rtps::Time_t(to_ticks(time_to_write) / 1e9);
+        data->source_timestamp = fastdds::Time_t(to_ticks(time_to_write) / 1e9);
 
         // Wait until it's time to write the message
         wait_until_timestamp_(time_to_write);

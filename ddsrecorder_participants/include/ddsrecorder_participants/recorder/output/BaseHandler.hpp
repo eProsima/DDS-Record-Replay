@@ -32,7 +32,7 @@
 
 #include <cpp_utils/macros/custom_enumeration.hpp>
 
-#include <fastrtps/types/DynamicType.h>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
 
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
 #include <ddspipe_participants/participant/dynamic_types/ISchemaHandler.hpp>
@@ -366,7 +366,7 @@ protected:
     //////////////////////////////
 
     //! Received types set
-    std::map<std::string, fastrtps::types::DynamicType_ptr> received_types_;
+    std::map<std::string, fastdds::dds::DynamicType::_ref_type> received_types_;
 
     //! Dynamic types collection
     DynamicTypesCollection dynamic_types_;

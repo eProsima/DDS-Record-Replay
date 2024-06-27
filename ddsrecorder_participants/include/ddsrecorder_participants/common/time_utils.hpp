@@ -81,7 +81,7 @@ mcap::Timestamp to_mcap_timestamp(
  */
 DDSRECORDER_PARTICIPANTS_DllAPI
 std::string to_sql_timestamp(
-        const fastrtps::rtps::Time_t& time,
+        const fastdds::rtps::Time_t& time,
         const bool local_time = false);
 
 /**

@@ -36,14 +36,9 @@
 
 #include <ddsrecorder_participants/common/serialize/Serializer.hpp>
 #include <ddsrecorder_participants/common/time_utils.hpp>
+#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
-
-#if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
-#else
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollection.hpp>
-#endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -152,7 +147,7 @@ void McapReaderParticipant::process_messages()
 
         // Set source timestamp
         // NOTE: this is important for QoS such as LifespanQosPolicy
-        data->source_timestamp = fastrtps::rtps::Time_t(to_ticks(scheduled_write_ts) / 1e9);
+        data->source_timestamp = fastdds::Time_t(to_ticks(scheduled_write_ts) / 1e9);
 
         // Wait until it's time to write the message
         wait_until_timestamp_(scheduled_write_ts);
