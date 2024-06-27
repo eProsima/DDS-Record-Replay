@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-# git submodule update --recursive
 
 ######################### Install cmake utils and cpp utils
 mkdir build/cmake_utils

@@ -1,38 +1,78 @@
-# eProsima DDS Record & Replay
+# eProsima DDS Record & Replay: Server Fork
 
-<a href="http://www.eprosima.com"><img src="https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSd0PDlVz1U_7MgdTe0FRIWD0Jc9_YH-gGi0ZpLkr-qgCI6ZEoJZ5GBqQ" align="left" hspace="8" vspace="2" width="100" height="100" ></a>
+## Introduction
 
-[![License](https://img.shields.io/github/license/eProsima/DDS-Recorder.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Issues](https://img.shields.io/github/issues/eProsima/DDS-Recorder.svg)](https://github.com/eProsima/DDS-Recorder/issues)
-[![Forks](https://img.shields.io/github/forks/eProsima/DDS-Recorder.svg)](https://github.com/eProsima/DDS-Recorder/network/members)
-[![Stars](https://img.shields.io/github/stars/eProsima/DDS-Recorder.svg)](https://github.com/eProsima/DDS-Recorder/stargazers)
-[![test](https://github.com/eProsima/DDS-Recorder/actions/workflows/test.yml/badge.svg)](https://github.com/eProsima/DDS-Recorder/actions/workflows/test.yml)
+This repo works similar to eProsima's DDS Record and Replay, the difference being that this fork is tailored to work with servers instead of simple discovery. 
 
-*eProsima DDS Record & Replay* is an end-user software application that efficiently saves DDS data published in a DDS environment into a MCAP format database.
-Thus, the exact playback of the recorded network events is possible as the data is linked to the timestamp at which the original data was published.
+## How It Works
 
-*eProsima DDS Record & Replay* is easily configurable and installed with a default setup, so that DDS topics, data types and entities are automatically discovered without the need to specify the types of data recorded.
-This is because the recording tool exploits the DynamicTypes functionality of [eProsima Fast DDS](https://fast-dds.docs.eprosima.com), the C++ implementation of the [DDS (Data Distribution Service) Specification](https://www.omg.org/spec/DDS/About-DDS/) defined by the [Object Management Group (OMG)](https://www.omg.org/).
+With DDS Record and Replay, you can record any topic on a given domain.
 
 
-## Documentation
+## How to Install
 
-You can access the documentation online, which is hosted on [Read the Docs](https://dds-recorder.readthedocs.io/).
+To install this repo, simply run the following after cloning this repo:
 
-* [Introduction](https://dds-recorder.readthedocs.io/en/latest/)
+```
+git clone https://github.com/Ryan-Red/DDS-Record-Replay.git
+git submodule init
+git submodule update --recursive
+sudo ./install_mcap_amd64.sh
+sudo ./install_dependencies.sh
+```
+All dependencies are installed in the install scripts. 
 
-**Recording application**
 
-* [Getting Started](https://dds-recorder.readthedocs.io/en/latest/rst/recording/getting_started/getting_started.html)
-* [Usage](https://dds-recorder.readthedocs.io/en/latest/rst/recording/usage/usage.html)
-* [Configuration](https://dds-recorder.readthedocs.io/en/latest/rst/recording/usage/configuration.html)
+**NOTE:** This MCAP install script uses the linux amd64 release, if using another architecture make sure to follow the same steps and find the right binary [here](https://github.com/foxglove/mcap/releases/)
 
-**Replay application**
+## Usage guide:
 
-* [Getting Started](https://dds-recorder.readthedocs.io/en/latest/rst/replaying/getting_started/getting_started.html)
-* [Usage](https://dds-recorder.readthedocs.io/en/latest/rst/replaying/usage/usage.html)
-* [Configuration](https://dds-recorder.readthedocs.io/en/latest/rst/replaying/usage/configuration.html)
+### DDSRecorder
 
-## Getting Help
+To record all topics on domain, simply run
 
-If you need support you can reach us by mail at `support@eProsima.com` or by phone at `+34 91 804 34 48`.
+```
+ddsrecord -d DOMAIN
+```
+Where DOMAIN is the domain we are recording over. It should just be a number. The recording will be saved as an MCAP file. 
+
+The program should print out the topics being recorded and the domain currently being used as a sanity check.
+
+There is a maximum number of samples to record per topic of 50 000 000 samples. This means that when recording a topic publishing at 1000 Hz, you can record up to 50 000 seconds or 13 hours and 58 minutes. 
+
+#### Optional Configuration
+If for some reason you need to ignore certain topics, follow [this guide](https://dds-recorder.readthedocs.io/en/latest/rst/recording/usage/configuration.html) to create your configuration file.
+
+To run this configuration file while recording, run:
+
+```
+ddsrecord -d DOMAIN -c CONFIGURATION.yaml
+```
+Where DOMAIN is the domain we are recording on and CONFIGURATION.yaml is the configuration file.
+
+
+### DDSReplayer
+
+To replay a recording, **first make sure that the discovery servers are running!**
+
+Next, to replay a file simply run:
+
+```
+ddsreplayer -i FILE.mcap -d DOMAIN
+
+```
+Where FILE.mcap is the MCAP file we want to replay (that we previously recorded) and DOMAIN is the domain we are replaying on.
+
+**NOTE:** We can replay a topic on any domain, not just the one we recorded it on.
+
+#### Optional Configuration
+
+Just like the recorder, there are some extra configuration parameters. Follow [this guide](https://dds-recorder.readthedocs.io/en/latest/rst/replaying/usage/configuration.html) to learn how to create the configuration file.
+
+To run this configuration:
+
+```
+ddsreplayer -i FILE.mcap -d DOMAIN -c CONFIGURATION.yaml
+```
+
+Where FILE.mcap is the MCAP file we want to replay, DOMAIN is the domain we are recording on and CONFIGURATION.yaml is the configuration file.
