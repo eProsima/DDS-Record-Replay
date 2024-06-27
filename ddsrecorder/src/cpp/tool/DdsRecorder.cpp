@@ -88,6 +88,7 @@ DdsRecorder::DdsRecorder(
     // Create DynTypes Participant
 
     configuration_.simple_configuration->domain = domain;
+    std::cout << "Recording on domain: " << domain << std::endl;
     dyn_participant_ = std::make_shared<DynTypesParticipant>(
         configuration_.simple_configuration,
         payload_pool_,

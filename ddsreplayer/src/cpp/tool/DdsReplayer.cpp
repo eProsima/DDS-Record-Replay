@@ -98,6 +98,7 @@ DdsReplayer::DdsReplayer(
 
     // Create Replayer Participant
     configuration.replayer_configuration->domain = domain;
+    std::cout << "Replaying on domain: " << domain << std::endl;
     replayer_participant_ = std::make_shared<ReplayerParticipant>(
         configuration.replayer_configuration,
         payload_pool_,
