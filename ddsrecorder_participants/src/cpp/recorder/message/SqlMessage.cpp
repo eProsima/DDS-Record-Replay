@@ -18,8 +18,17 @@
 
 
 #include <map>
+#include <string>
 
 #include <nlohmann/json.hpp>
+
+#include <fastdds/dds/xtypes/dynamic_types/DynamicDataFactory.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicPubSubType.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicTypeMember.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/MemberDescriptor.hpp>
+#include <fastdds/dds/xtypes/utils.hpp>
+
+#include <cpp_utils/Log.hpp>
 
 #include <ddsrecorder_participants/recorder/message/SqlMessage.hpp>
 
@@ -43,167 +52,73 @@ SqlMessage::SqlMessage(
 }
 
 void SqlMessage::set_key(
-        fastdds::dds::DynamicType::_ref_type dynamic_type)
+        const fastdds::dds::DynamicType::_ref_type& dynamic_type)
 {
-    // // Deserialize the payload
-    // fastdds::dds::xtypes::DynamicPubSubType pub_sub_type(dynamic_type);
-    // fastdds::dds::xtypes::DynamicData_ptr dynamic_data;
-    // dynamic_data = fastdds::dds::xtypes::DynamicDataFactory::get_instance()->create_data(dynamic_type);
+    // Deserialize the payload
+    fastdds::dds::DynamicPubSubType pub_sub_type(dynamic_type);
+    auto dynamic_data = fastdds::dds::DynamicDataFactory::get_instance()->create_data(dynamic_type);
 
-    // pub_sub_type.deserialize(&payload, dynamic_data.get());
+    pub_sub_type.deserialize(&payload, &dynamic_data);
 
-    // // Clear non-key values to free-up unnecessary space
-    // // dynamic_data->clear_nonkey_values();
+    // Clear non-key values to free-up unnecessary space
+    dynamic_data->clear_nonkey_values();
 
-    // // Serialize the key members into a JSON
-    // nlohmann::json key_json;
+    // Serialize the key members into a JSON
+    const auto ret = fastdds::dds::json_serialize(
+            dynamic_data, key, fastdds::dds::DynamicDataJsonFormat::EPROSIMA);
 
-    // std::map<fastdds::dds::xtypes::MemberId, fastdds::dds::xtypes::DynamicTypeMember*> members_map;
-    // dynamic_type->get_all_members(members_map);
+    if (ret != fastdds::dds::RETCODE_OK)
+    {
+        logWarning(SQL_MESSAGE, "Failed to serialize key members into JSON");
+    }
 
-    // for (const auto& member : members_map)
-    // {
-    //     if (!member.second->key_annotation())
-    //     {
-    //         // The member is not a key
-    //         continue;
-    //     }
+    nlohmann::json key_json = nlohmann::json::parse(key);
 
-    //     const auto descriptor = member.second->get_descriptor();
+    // Remove non-key values
+    remove_nonkey_values(dynamic_type, key_json);
 
-    //     if (descriptor == nullptr)
-    //     {
-    //         // The member has no descriptor
-    //         continue;
-    //     }
+    // Serialize the JSON back into a string
+    key = key_json.dump();
+}
 
-    //     switch (descriptor->get_kind())
-    //     {
-    //         case fastdds::dds::xtypes::TK_BOOLEAN:
-    //         {
-    //             key_json[descriptor->get_name()] = dynamic_data->get_bool_value(descriptor->get_id());
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_BYTE:
-    //         {
-    //             key_json[descriptor->get_name()] = dynamic_data->get_byte_value(descriptor->get_id());
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_INT16:
-    //         {
-    //             key_json[descriptor->get_name()] = dynamic_data->get_int16_value(descriptor->get_id());
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_INT32:
-    //         {
-    //             key_json[descriptor->get_name()] = dynamic_data->get_int32_value(descriptor->get_id());
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_INT64:
-    //         {
-    //             key_json[descriptor->get_name()] = dynamic_data->get_int64_value(descriptor->get_id());
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_UINT16:
-    //         {
-    //             key_json[descriptor->get_name()] = dynamic_data->get_uint16_value(descriptor->get_id());
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_UINT32:
-    //         {
-    //             key_json[descriptor->get_name()] = dynamic_data->get_uint32_value(descriptor->get_id());
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_UINT64:
-    //         {
-    //             key_json[descriptor->get_name()] = dynamic_data->get_uint64_value(descriptor->get_id());
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_FLOAT32:
-    //         {
-    //             key_json[descriptor->get_name()] = dynamic_data->get_float32_value(descriptor->get_id());
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_FLOAT64:
-    //         {
-    //             key_json[descriptor->get_name()] = dynamic_data->get_float64_value(descriptor->get_id());
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_FLOAT128:
-    //         {
-    //             key_json[descriptor->get_name()] = dynamic_data->get_float128_value(descriptor->get_id());
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_CHAR8:
-    //         {
-    //             key_json[descriptor->get_name()] = dynamic_data->get_char8_value(descriptor->get_id());
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_CHAR16:
-    //         {
-    //             key_json[descriptor->get_name()] = dynamic_data->get_char16_value(descriptor->get_id());
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_STRING8:
-    //         {
-    //             key_json[descriptor->get_name()] = dynamic_data->get_string_value(descriptor->get_id());
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_STRING16:
-    //         {
-    //             key_json[descriptor->get_name()] = dynamic_data->get_wstring_value(descriptor->get_id());
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_ALIAS:
-    //         {
-    //             // TODO
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_ENUM:
-    //         {
-    //             key_json[descriptor->get_name()] = dynamic_data->get_enum_value(descriptor->get_id());
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_BITMASK:
-    //         {
-    //             // TODO
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_ANNOTATION:
-    //         {
-    //             // TODO
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_STRUCTURE:
-    //         {
-    //             // TODO
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_UNION:
-    //         {
-    //             // TODO
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_BITSET:
-    //         {
-    //             // TODO
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_SEQUENCE:
-    //         {
-    //             // TODO
-    //             break;
-    //         }
-    //         case fastdds::dds::xtypes::TK_ARRAY:
-    //         {
-    //             // TODO
-    //             break;
-    //         }
-    //     }
-    // }
+void SqlMessage::remove_nonkey_values(
+        const fastdds::dds::DynamicType::_ref_type& dynamic_type,
+        nlohmann::json& key_json)
+{
+    fastdds::dds::DynamicTypeMembersById members_by_id;
 
-    // // Dump the JSON into a string
-    // key = key_json.dump();
+    if (dynamic_type->get_all_members(members_by_id) != fastdds::dds::RETCODE_OK)
+    {
+        logWarning(DDSRECORDER_DYNTYPES_KEY, "Failed to get all members");
+        return;
+    }
+
+    for (const auto& member_by_id : members_by_id)
+    {
+        const auto member = member_by_id.second;
+
+        fastdds::dds::MemberDescriptor::_ref_type member_descriptor{
+                fastdds::dds::traits<fastdds::dds::MemberDescriptor>::make_shared()};
+
+        if (member->get_descriptor(member_descriptor) != fastdds::dds::RETCODE_OK)
+        {
+            logWarning(DDSRECORDER_DYNTYPES_KEY, "Failed to get member descriptor");
+            continue;
+        }
+
+        const auto member_name = static_cast<std::string>(member_descriptor->name());
+
+        if (member_descriptor->is_key())
+        {
+            // Recursively remove non-key values from nested types
+            remove_nonkey_values(member_descriptor->type(), key_json[member_name]);
+        }
+        else
+        {
+            // Remove non-key value
+            key_json.erase(member_name);
+        }
+    }
 }
 
 } /* namespace participants */
