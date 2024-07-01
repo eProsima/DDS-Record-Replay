@@ -12,7 +12,7 @@
   <depend>cmake_utils</depend>
   <depend>cpp_utils</depend>
   <depend>fastcdr</depend>
-  <depend>fastrtps</depend>
+  <depend>fastdds</depend>
   <depend>fastdds_python</depend>
 
   <export>

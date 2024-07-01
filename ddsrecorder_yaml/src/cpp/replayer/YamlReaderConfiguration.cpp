@@ -90,7 +90,7 @@ void ReplayerConfiguration::load_ddsreplayer_configuration_(
         /////
         // Create MCAP Reader Participant Configuration
         // WARNING: Replayer configuration must have been parsed beforehand
-        mcap_reader_configuration = std::make_shared<McapReaderParticipantConfiguration>();
+        mcap_reader_configuration = std::make_shared<BaseReaderParticipantConfiguration>();
         mcap_reader_configuration->id = "McapReaderParticipant";
         mcap_reader_configuration->app_id = "DDS_REPLAYER";
         mcap_reader_configuration->app_metadata = "";

@@ -21,10 +21,18 @@
 #include <cstdint>
 #include <string>
 
+#include <cpp_utils/macros/custom_enumeration.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
+
+//! Supported output libraries
+ENUMERATION_BUILDER(
+    OutputLibrary,
+    mcap,                     //! MCAP library.
+    sql                       //! SQL library.
+    );
 
 /**
  * Structure encapsulating all output configuration options.
