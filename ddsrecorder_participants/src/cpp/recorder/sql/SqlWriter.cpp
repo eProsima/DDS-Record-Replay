@@ -16,7 +16,9 @@
  * @file SqlWriter.cpp
  */
 
+#include <sstream>
 #include <stdexcept>
+#include <vector>
 
 #include <sqlite3.h>
 
@@ -200,17 +202,17 @@ void SqlWriter::write_nts_(
 
 template <>
 void SqlWriter::write_nts_(
-        const SqlMessage& msg)
+        const std::vector<SqlMessage>& messages)
 {
     if (!enabled_)
     {
-        logWarning(DDSRECORDER_SQL_WRITER, "Attempting to write a message in a disabled writer.");
+        logWarning(DDSRECORDER_SQL_WRITER, "Attempting to write messages in a disabled writer.");
         return;
     }
 
-    logInfo(DDSRECORDER_SQL_WRITER, "Writing message: " << utils::from_bytes(msg.get_data_size()) << ".");
+    logInfo(DDSRECORDER_SQL_WRITER, "Writing << " << messages.size() << " messages.");
 
-    // Define the SQL statement
+    // Define the SQL statement for batch insert
     const char* insert_statement = R"(
         INSERT INTO Messages (writer_guid, sequence_number, data, data_size, topic, type, key, log_time, publish_time)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
@@ -222,7 +224,7 @@ void SqlWriter::write_nts_(
 
     if (prep_ret != SQLITE_OK)
     {
-        const std::string error_msg = utils::Formatter() << "Failed to prepare SQL statement to write message: "
+        const std::string error_msg = utils::Formatter() << "Failed to prepare SQL statement to write messages: "
                                                          << sqlite3_errmsg(database_);
         sqlite3_finalize(statement);
 
@@ -230,26 +232,55 @@ void SqlWriter::write_nts_(
         throw utils::InconsistencyException(error_msg);
     }
 
-    // Bind the SqlMessage to the SQL statement
-    std::ostringstream writer_guid_ss;
-    writer_guid_ss << msg.writer_guid;
-
-    sqlite3_bind_text(statement, 1, writer_guid_ss.str().c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int64(statement, 2, msg.sequence_number.to64long());
-    sqlite3_bind_blob(statement, 3, msg.get_data(), msg.get_data_size(), SQLITE_TRANSIENT);
-    sqlite3_bind_int64(statement, 4, msg.get_data_size());
-    sqlite3_bind_text(statement, 5, msg.topic.topic_name().c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(statement, 6, msg.topic.type_name.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(statement, 7, msg.key.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(statement, 8, to_sql_timestamp(msg.log_time).c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(statement, 9, to_sql_timestamp(msg.publish_time).c_str(), -1, SQLITE_TRANSIENT);
-
-    // Execute the SQL statement
-    const auto step_ret = sqlite3_step(statement);
-
-    if (step_ret != SQLITE_DONE)
+    // Begin transaction
+    if (sqlite3_exec(database_, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr) != SQLITE_OK)
     {
-        const std::string error_msg = utils::Formatter() << "Failed to write message to SQL database: "
+        const std::string error_msg = utils::Formatter() << "Failed to begin transaction: "
+                                                         << sqlite3_errmsg(database_);
+        sqlite3_finalize(statement);
+
+        logError(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
+        throw utils::InconsistencyException(error_msg);
+    }
+
+    for (const auto& message : messages)
+    {
+        // Bind the SqlMessage to the SQL statement
+        std::ostringstream writer_guid_ss;
+        writer_guid_ss << message.writer_guid;
+
+        sqlite3_bind_text(statement, 1, writer_guid_ss.str().c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int64(statement, 2, message.sequence_number.to64long());
+        sqlite3_bind_blob(statement, 3, message.get_data(), message.get_data_size(), SQLITE_TRANSIENT);
+        sqlite3_bind_int64(statement, 4, message.get_data_size());
+        sqlite3_bind_text(statement, 5, message.topic.topic_name().c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(statement, 6, message.topic.type_name.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(statement, 7, message.key.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(statement, 8, to_sql_timestamp(message.log_time).c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(statement, 9, to_sql_timestamp(message.publish_time).c_str(), -1, SQLITE_TRANSIENT);
+
+        // Execute the SQL statement
+        const auto step_ret = sqlite3_step(statement);
+
+        if (step_ret != SQLITE_DONE)
+        {
+            const std::string error_msg = utils::Formatter() << "Failed to write message to SQL database: "
+                                                             << sqlite3_errmsg(database_);
+            sqlite3_finalize(statement);
+            sqlite3_exec(database_, "ROLLBACK;", nullptr, nullptr, nullptr);
+
+            logError(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
+            throw utils::InconsistencyException(error_msg);
+        }
+
+        // Reset the statement for the next execution
+        sqlite3_reset(statement);
+    }
+
+    // Commit transaction
+    if (sqlite3_exec(database_, "COMMIT;", nullptr, nullptr, nullptr) != SQLITE_OK)
+    {
+        const std::string error_msg = utils::Formatter() << "Failed to commit transaction: "
                                                          << sqlite3_errmsg(database_);
         sqlite3_finalize(statement);
 

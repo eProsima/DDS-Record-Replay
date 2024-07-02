@@ -110,6 +110,10 @@ void SqlHandler::write_samples_(
 {
     logInfo(DDSRECORDER_SQL_HANDLER, "Writing samples to SQL file.");
 
+    // Samples to write in bulk
+    std::vector<SqlMessage> samples_to_write;
+    samples_to_write.reserve(samples.size());
+
     while (!samples.empty())
     {
         const auto sql_sample = static_cast<const SqlMessage*>(samples.front().get());
@@ -135,10 +139,13 @@ void SqlHandler::write_samples_(
             set_key_(*const_cast<SqlMessage*>(sql_sample));
         }
 
-        sql_writer_.write(*sql_sample);
+        samples_to_write.push_back(*sql_sample);
 
         samples.pop_front();
     }
+
+    // Write the samples in bulk
+    sql_writer_.write(samples_to_write);
 }
 
 void SqlHandler::set_key_(
