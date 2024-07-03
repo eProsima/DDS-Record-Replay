@@ -169,14 +169,16 @@ void FileTracker::set_current_file_size(
                 utils::from_bytes(configuration_.max_file_size) << ").");
     }
 
-    const auto size_diff = file_size - current_file_.size;
+    // If there's an overflow, the new size is too big
+    const auto new_size = size_ + file_size;
 
-    if (size_ + size_diff > configuration_.max_size)
+    if (new_size > configuration_.max_size || new_size < size_)
     {
         logWarning(DDSRECORDER_FILE_TRACKER,
                 "The aggregate output size (" <<
+                utils::from_bytes(size_) << ") plus the new file size (" <<
                 utils::from_bytes(file_size) << ") is greater than the maximum size (" <<
-                utils::from_bytes(configuration_.max_file_size) << ").");
+                utils::from_bytes(configuration_.max_size) << ").");
     }
 
     current_file_.size = file_size;
