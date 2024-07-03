@@ -30,9 +30,9 @@
 #include <fastdds/dds/subscriber/DataReader.hpp>
 #include <fastdds/dds/subscriber/DataReaderListener.hpp>
 #include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
-#include <fastdds/rtps/writer/WriterDiscoveryInfo.h>
+#include <fastdds/rtps/writer/WriterDiscoveryInfo.hpp>
 
-#include "types/configuration/ConfigurationPubSubTypes.h"
+#include "types/configuration/ConfigurationPubSubTypes.hpp"
 
 struct DataToCheck
 {

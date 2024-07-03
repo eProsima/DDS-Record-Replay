@@ -16,7 +16,7 @@
  * @file McapMessage.cpp
  */
 
-#include <fastdds/rtps/history/IPayloadPool.h>
+#include <fastdds/rtps/history/IPayloadPool.hpp>
 
 #include <ddsrecorder_participants/recorder/mcap/McapMessage.hpp>
 

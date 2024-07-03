@@ -36,9 +36,9 @@
 
 #include <ddspipe_participants/configuration/SimpleParticipantConfiguration.hpp>
 
-#include "types/DdsRecorderCommand/DdsRecorderCommandPubSubTypes.h"
+#include "types/DdsRecorderCommand/DdsRecorderCommandPubSubTypes.hpp"
 #include "types/DdsRecorderCommand/DdsRecorderCommandTypeObjectSupport.hpp"
-#include "types/DdsRecorderStatus/DdsRecorderStatusPubSubTypes.h"
+#include "types/DdsRecorderStatus/DdsRecorderStatusPubSubTypes.hpp"
 #include "types/DdsRecorderStatus/DdsRecorderStatusTypeObjectSupport.hpp"
 
 namespace eprosima {

@@ -40,7 +40,7 @@
 #include <mcap/reader.hpp>
 
 #include "../../resources/types/hello_world/HelloWorld.hpp"
-#include "../../resources/types/hello_world/HelloWorldPubSubTypes.h"
+#include "../../resources/types/hello_world/HelloWorldPubSubTypes.hpp"
 #include "../../resources/types/hello_world/HelloWorldTypeObjectSupport.hpp"
 
 using namespace eprosima::ddspipe;
