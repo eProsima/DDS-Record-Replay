@@ -31,7 +31,7 @@
 #include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
 
 #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/DdsRecorderMonitoringStatus.hpp>
-#include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/DdsRecorderMonitoringStatusPubSubTypes.h>
+#include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/DdsRecorderMonitoringStatusPubSubTypes.hpp>
 
 #include "../../constants.hpp"
 

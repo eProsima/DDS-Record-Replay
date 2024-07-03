@@ -36,9 +36,9 @@
 
 #include "TypeLookupServicePublisher.h"
 
-#include "types/complete/CompletePubSubTypes.h"
+#include "types/complete/CompletePubSubTypes.hpp"
 #include "types/complete/CompleteTypeObjectSupport.hpp"
-#include "types/hello_world/HelloWorldPubSubTypes.h"
+#include "types/hello_world/HelloWorldPubSubTypes.hpp"
 #include "types/hello_world/HelloWorldTypeObjectSupport.hpp"
 
 using namespace eprosima::fastdds::dds;

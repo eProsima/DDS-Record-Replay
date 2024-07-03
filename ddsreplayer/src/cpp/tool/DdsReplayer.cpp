@@ -19,8 +19,8 @@
 #include <cpp_utils/utils.hpp>
 #include <cpp_utils/ros2_mangling.hpp>
 
-#include <fastdds/rtps/common/CDRMessage_t.h>
-#include <fastdds/rtps/common/SerializedPayload.h>
+#include <fastdds/rtps/common/CDRMessage_t.hpp>
+#include <fastdds/rtps/common/SerializedPayload.hpp>
 
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/publisher/DataWriter.hpp>
@@ -36,7 +36,7 @@
 #include <ddspipe_core/types/dynamic_types/types.hpp>
 
 #include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
-#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollectionPubSubTypes.h>
+#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollectionPubSubTypes.hpp>
 
 #include <ddsrecorder_participants/constants.hpp>
 

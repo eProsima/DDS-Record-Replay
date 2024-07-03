@@ -23,7 +23,7 @@
 #include <ddsrecorder_participants/library/library_dll.h>
 
 #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/DdsRecorderMonitoringStatus.hpp>
-#include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/DdsRecorderMonitoringStatusPubSubTypes.h>
+#include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/DdsRecorderMonitoringStatusPubSubTypes.hpp>
 #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/DdsRecorderMonitoringStatusTypeObjectSupport.hpp>
 
 namespace eprosima {

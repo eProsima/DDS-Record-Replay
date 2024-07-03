@@ -36,7 +36,7 @@
 #include <tool/DdsRecorder.hpp>
 
 #include "../../resources/types/hello_world/HelloWorld.hpp"
-#include "../../resources/types/hello_world/HelloWorldPubSubTypes.h"
+#include "../../resources/types/hello_world/HelloWorldPubSubTypes.hpp"
 
 #include "../constants.hpp"
 

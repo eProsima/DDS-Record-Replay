@@ -24,7 +24,7 @@
 #include <fastdds/dds/domain/DomainParticipantListener.hpp>
 #include <fastdds/dds/subscriber/DataReaderListener.hpp>
 
-#include "types/configuration/ConfigurationPubSubTypes.h"
+#include "types/configuration/ConfigurationPubSubTypes.hpp"
 
 struct DataToCheck
 {

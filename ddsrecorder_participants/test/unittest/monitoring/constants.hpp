@@ -22,7 +22,7 @@
 #include <cstdint>
 #include <string>
 
-#include <fastdds/rtps/common/Time_t.h>
+#include <fastdds/rtps/common/Time_t.hpp>
 #include <ddspipe_core/types/dds/DomainId.hpp>
 #include <ddspipe_core/types/participant/ParticipantId.hpp>
 
