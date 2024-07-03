@@ -49,13 +49,16 @@ struct McapHandlerConfiguration : public BaseHandlerConfiguration
                 buffer_size,
                 event_window,
                 cleanup_period,
-                log_publishTime,
                 only_with_schema,
                 record_types,
                 ros2_types)
+        , log_publishTime(log_publishTime)
         , mcap_writer_options(mcap_writer_options)
     {
     }
+
+    //! Store messages with logTime set to sample publication timestamp
+    bool log_publishTime;
 
     //! Mcap writer configuration options
     mcap::McapWriterOptions mcap_writer_options;

@@ -41,9 +41,8 @@ SqlMessage::SqlMessage(
     const ddspipe::core::types::RtpsPayloadData& data,
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
     const ddspipe::core::types::DdsTopic& topic,
-    const bool log_publish_time,
     const std::string& key /* = "" */)
-    : BaseMessage(data, payload_pool, topic, log_publish_time)
+    : BaseMessage(data, payload_pool, topic)
     , writer_guid(data.sample_identity.writer_guid())
     , sequence_number(data.sample_identity.sequence_number())
     , instance_handle(data.instanceHandle)

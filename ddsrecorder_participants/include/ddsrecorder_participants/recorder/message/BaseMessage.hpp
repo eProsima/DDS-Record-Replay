@@ -52,8 +52,7 @@ struct BaseMessage
     BaseMessage(
             const ddspipe::core::types::RtpsPayloadData& data,
             std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
-            const ddspipe::core::types::DdsTopic& topic,
-            const bool log_publish_time);
+            const ddspipe::core::types::DdsTopic& topic);
 
     /**
      * @brief Message copy constructor

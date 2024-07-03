@@ -102,7 +102,7 @@ void SqlHandler::add_data(
     std::unique_lock<std::mutex> lock(mtx_);
 
     process_new_sample_nts_(std::make_shared<const SqlMessage>(
-            data, payload_pool_, topic, configuration_.log_publishTime));
+            data, payload_pool_, topic));
 }
 
 void SqlHandler::write_samples_(

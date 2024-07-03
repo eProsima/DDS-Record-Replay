@@ -57,7 +57,7 @@ public:
         FileCreationTest::SetUp();
 
         // Set the output library to MCAP
-        configuration_->output_library = ddsrecorder::participants::OutputLibrary::mcap;
+        configuration_->mcap_enabled = true;
     }
 
     void TearDown() override

@@ -36,7 +36,6 @@ struct SqlHandlerConfiguration : public BaseHandlerConfiguration
             const unsigned int buffer_size,
             const unsigned int event_window,
             const unsigned int cleanup_period,
-            const bool log_publishTime,
             const bool only_with_schema,
             const bool record_types,
             const bool ros2_types)
@@ -46,7 +45,6 @@ struct SqlHandlerConfiguration : public BaseHandlerConfiguration
                 buffer_size,
                 event_window,
                 cleanup_period,
-                log_publishTime,
                 only_with_schema,
                 record_types,
                 ros2_types)

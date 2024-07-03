@@ -45,6 +45,7 @@ McapHandler::McapHandler(
         const BaseHandlerStateCode& init_state /* = BaseHandlerStateCode::RUNNING */,
         const std::function<void()>& on_disk_full_lambda /* = nullptr */)
     : BaseHandler(config, payload_pool)
+    , configuration_(config)
     , mcap_writer_(config.output_settings, config.mcap_writer_options, file_tracker, config.record_types)
 {
     logInfo(DDSRECORDER_MCAP_HANDLER,

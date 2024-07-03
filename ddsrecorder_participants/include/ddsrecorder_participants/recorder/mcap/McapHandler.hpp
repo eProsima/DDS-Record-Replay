@@ -189,6 +189,9 @@ protected:
     mcap::SchemaId get_schema_id_nts_(
             const std::string& schema_name);
 
+    //! Configuration
+    const McapHandlerConfiguration configuration_;
+
     //! MCAP writer
     McapWriter mcap_writer_;
 

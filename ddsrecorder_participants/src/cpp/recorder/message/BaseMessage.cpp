@@ -48,21 +48,12 @@ BaseMessage::BaseMessage(
 BaseMessage::BaseMessage(
     const ddspipe::core::types::RtpsPayloadData& data,
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
-    const ddspipe::core::types::DdsTopic& topic,
-    const bool log_publish_time)
+    const ddspipe::core::types::DdsTopic& topic)
     : BaseMessage(data.payload, payload_pool.get())
 {
     this->topic = topic;
+    ddspipe::core::types::DataTime::now(log_time);
     publish_time = data.source_timestamp;
-
-    if (log_publish_time)
-    {
-        log_time = publish_time;
-    }
-    else
-    {
-        ddspipe::core::types::DataTime::now(log_time);
-    }
 }
 
 BaseMessage::BaseMessage(

@@ -53,7 +53,6 @@ struct SqlMessage : public BaseMessage
         const ddspipe::core::types::RtpsPayloadData& payload,
         std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
         const ddspipe::core::types::DdsTopic& topic,
-        const bool log_publish_time,
         const std::string& key = "");
 
     /**

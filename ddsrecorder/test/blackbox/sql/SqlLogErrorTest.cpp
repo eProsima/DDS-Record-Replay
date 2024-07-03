@@ -62,7 +62,6 @@ TEST(SqlLogErrorTest, fail_to_open_file) {
         test::handler::BUFFER_SIZE,
         test::handler::EVENT_WINDOW,
         test::handler::CLEANUP_PERIOD,
-        test::handler::LOG_PUBLISH_TIME,
         test::handler::ONLY_WITH_SCHEMA,
         test::handler::RECORD_TYPES,
         test::handler::ROS2_TYPES);

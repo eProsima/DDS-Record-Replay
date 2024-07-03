@@ -18,6 +18,10 @@
 
 #pragma once
 
+#include <cstdint>
+#include <memory>
+#include <string>
+
 #include <mcap/mcap.hpp>
 
 #include <cpp_utils/Formatter.hpp>
@@ -71,27 +75,35 @@ public:
     std::shared_ptr<ddspipe::participants::SimpleParticipantConfiguration> simple_configuration;
     std::shared_ptr<ddspipe::participants::ParticipantConfiguration> recorder_configuration;
 
+    // Recording generic params
+    unsigned int buffer_size = 100;
+    unsigned int cleanup_period;
+    unsigned int event_window = 20;
+    int max_pending_samples = 5000;  // -1 <-> no limit || 0 <-> no pending samples
+    bool only_with_type = false;
+    bool record_types = true;
+    bool ros2_types = false;
+
     // Output file params
-    participants::OutputLibrary output_library = participants::OutputLibrary::mcap;
     std::string output_filepath = ".";
     std::string output_filename = "output";
     std::string output_timestamp_format = "%Y-%m-%d_%H-%M-%S_%Z";
     bool output_local_timestamp = true;
-    uint64_t safety_margin = 0;
 
-    // Output resource limits
-    bool output_resource_limits_file_rotation = false;
-    std::uint64_t output_resource_limits_max_size = 0;
-    std::uint64_t output_resource_limits_max_file_size = 0;
-
-    // Recording params
-    unsigned int buffer_size = 100;
-    unsigned int event_window = 20;
-    bool log_publish_time = false;
-    bool only_with_type = false;
+    // Mcap params
+    bool mcap_enabled = false;
+    bool mcap_log_publish_time = false;
     mcap::McapWriterOptions mcap_writer_options{"ros2"};
-    bool record_types = true;
-    bool ros2_types = false;
+
+    // Mcap resource limits params
+    bool mcap_resource_limits_file_rotation = false;
+    std::uint64_t mcap_resource_limits_max_size = 0;
+    std::uint64_t mcap_resource_limits_max_file_size = 0;
+    std::uint64_t mcap_resource_limits_safety_margin = 0;
+
+    // Sql params
+    bool sql_enabled = false;
+    bool sql_store_data_serialized = true;
 
     // Remote controller configuration
     bool enable_remote_controller = true;
@@ -102,8 +114,6 @@ public:
 
     // Specs
     unsigned int n_threads = 12;
-    int max_pending_samples = 5000;  // -1 <-> no limit || 0 <-> no pending samples
-    unsigned int cleanup_period;
     ddspipe::core::types::TopicQoS topic_qos{};
     ddspipe::core::MonitorConfiguration monitor_configuration{};
 
@@ -114,6 +124,18 @@ protected:
             const CommandlineArgsRecorder* args);
 
     void load_recorder_configuration_(
+            const Yaml& yml,
+            const ddspipe::yaml::YamlReaderVersion& version);
+
+    void load_recorder_output_configuration_(
+            const Yaml& yml,
+            const ddspipe::yaml::YamlReaderVersion& version);
+
+    void load_recorder_mcap_configuration_(
+            const Yaml& yml,
+            const ddspipe::yaml::YamlReaderVersion& version);
+
+    void load_recorder_sql_configuration_(
             const Yaml& yml,
             const ddspipe::yaml::YamlReaderVersion& version);
 

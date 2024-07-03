@@ -89,34 +89,29 @@ DdsRecorder::DdsRecorder(
         output_settings.prepend_timestamp = false;
     }
 
-    switch (configuration_.output_library)
+    const auto space_available = std::filesystem::space(output_settings.filepath).available;
+    output_settings.max_file_size = space_available;
+    output_settings.max_size = space_available;
+
+    // Configure the resource-limits
+    if (configuration_.mcap_enabled)
     {
-        case participants::OutputLibrary::mcap:
-            output_settings.extension = ".mcap";
-            break;
-        case participants::OutputLibrary::sql:
-            output_settings.extension = ".db";
-            break;
-        default:
-            utils::tsnh(utils::Formatter() << "The library " << configuration_.output_library << " is not valid.");
-            break;
+        output_settings.safety_margin = configuration_.mcap_resource_limits_safety_margin;
+        output_settings.file_rotation = configuration_.mcap_resource_limits_file_rotation;
+
+        if (configuration_.mcap_resource_limits_max_file_size > 0)
+        {
+            output_settings.max_file_size = configuration_.mcap_resource_limits_max_file_size;
+            output_settings.max_size = configuration_.mcap_resource_limits_max_file_size;
+        }
+
+        if (configuration_.mcap_resource_limits_max_size > 0)
+        {
+            output_settings.max_size = configuration_.mcap_resource_limits_max_size;
+        }
     }
 
-    output_settings.safety_margin = configuration_.safety_margin;
-    output_settings.file_rotation = configuration_.output_resource_limits_file_rotation;
-    output_settings.max_file_size = configuration_.output_resource_limits_max_file_size;
-
-    if (output_settings.max_file_size == 0)
-    {
-        output_settings.max_file_size = std::filesystem::space(output_settings.filepath).available;
-    }
-
-    output_settings.max_size = configuration_.output_resource_limits_max_size;
-
-    if (output_settings.max_size == 0)
-    {
-        output_settings.max_size = output_settings.max_file_size;
-    }
+    output_settings.extension = (configuration_.mcap_enabled) ? ".mcap" : ".db";
 
     if (file_tracker == nullptr)
     {
@@ -127,64 +122,50 @@ DdsRecorder::DdsRecorder(
     const auto handler_state = recorder_to_handler_state_(init_state);
     const auto on_disk_full_lambda = std::bind(&DdsRecorder::on_disk_full, this);
 
-    switch (configuration_.output_library)
+    if (configuration_.mcap_enabled)
     {
-        case participants::OutputLibrary::mcap:
-        {
-            // Create MCAP Handler configuration
-            participants::McapHandlerConfiguration handler_config(
-                output_settings,
-                configuration_.max_pending_samples,
-                configuration_.buffer_size,
-                configuration_.event_window,
-                configuration_.cleanup_period,
-                configuration_.log_publish_time,
-                configuration_.only_with_type,
-                configuration_.mcap_writer_options,
-                configuration_.record_types,
-                configuration_.ros2_types);
+        // Create MCAP Handler configuration
+        participants::McapHandlerConfiguration handler_config(
+            output_settings,
+            configuration_.max_pending_samples,
+            configuration_.buffer_size,
+            configuration_.event_window,
+            configuration_.cleanup_period,
+            configuration_.mcap_log_publish_time,
+            configuration_.only_with_type,
+            configuration_.mcap_writer_options,
+            configuration_.record_types,
+            configuration_.ros2_types);
 
-            // Create MCAP Handler
-            handler_ = std::make_shared<participants::McapHandler>(
-                handler_config,
-                payload_pool_,
-                file_tracker,
-                handler_state,
-                on_disk_full_lambda);
-
-            break;
-        }
-        case participants::OutputLibrary::sql:
-        {
-            // Create SQL Handler configuration
-            participants::SqlHandlerConfiguration handler_config(
-                output_settings,
-                configuration_.max_pending_samples,
-                configuration_.buffer_size,
-                configuration_.event_window,
-                configuration_.cleanup_period,
-                configuration_.log_publish_time,
-                configuration_.only_with_type,
-                configuration_.record_types,
-                configuration_.ros2_types);
-
-            // Create MCAP Handler
-            handler_ = std::make_shared<participants::SqlHandler>(
-                handler_config,
-                payload_pool_,
-                file_tracker,
-                handler_state,
-                on_disk_full_lambda);
-
-            break;
-        }
-        default:
-        {
-            utils::tsnh(utils::Formatter() << "The library " << configuration_.output_library << " is not valid.");
-            break;
-        }
+        // Create MCAP Handler
+        handler_ = std::make_shared<participants::McapHandler>(
+            handler_config,
+            payload_pool_,
+            file_tracker,
+            handler_state,
+            on_disk_full_lambda);
     }
+    else if (configuration_.sql_enabled)
+    {
+        // Create SQL Handler configuration
+        participants::SqlHandlerConfiguration handler_config(
+            output_settings,
+            configuration_.max_pending_samples,
+            configuration_.buffer_size,
+            configuration_.event_window,
+            configuration_.cleanup_period,
+            configuration_.only_with_type,
+            configuration_.record_types,
+            configuration_.ros2_types);
 
+        // Create SQL Handler
+        handler_ = std::make_shared<participants::SqlHandler>(
+            handler_config,
+            payload_pool_,
+            file_tracker,
+            handler_state,
+            on_disk_full_lambda);
+    }
 
     // Create DynTypes Participant
     dyn_participant_ = std::make_shared<DynTypesParticipant>(

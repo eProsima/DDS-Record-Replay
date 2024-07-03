@@ -51,7 +51,7 @@ public:
         FileCreationTest::SetUp();
 
         // Set the output library to SQL
-        configuration_->output_library = ddsrecorder::participants::OutputLibrary::sql;
+        configuration_->sql_enabled = true;
     }
 
 protected:

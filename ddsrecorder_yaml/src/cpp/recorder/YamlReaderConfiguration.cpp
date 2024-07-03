@@ -17,6 +17,9 @@
  *
  */
 
+#include <cstdint>
+#include <string>
+
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/utils.hpp>
 
@@ -62,30 +65,42 @@ RecorderConfiguration::RecorderConfiguration(
 bool RecorderConfiguration::is_valid(
         utils::Formatter& error_msg) const noexcept
 {
-    if (output_resource_limits_max_size > 0)
+    if (!mcap_enabled && !sql_enabled)
     {
-        if (output_resource_limits_max_file_size == 0)
+        error_msg << "At least one of MCAP or SQL libraries must be enabled.";
+        return false;
+    }
+
+    if (mcap_enabled && sql_enabled)
+    {
+        error_msg << "Both MCAP and SQL libraries cannot be enabled at the same time.";
+        return false;
+    }
+
+    if (mcap_resource_limits_max_size > 0)
+    {
+        if (mcap_resource_limits_max_file_size == 0)
         {
             error_msg << "The max file size cannot be unlimited when the max size is limited.";
             return false;
         }
 
-        if (output_resource_limits_max_size < output_resource_limits_max_file_size)
+        if (mcap_resource_limits_max_size < mcap_resource_limits_max_file_size)
         {
             error_msg << "The max size cannot be lower than the max file size.";
             return false;
         }
     }
 
-    if (output_resource_limits_file_rotation)
+    if (mcap_resource_limits_file_rotation)
     {
-        if (output_resource_limits_max_file_size == 0)
+        if (mcap_resource_limits_max_file_size == 0)
         {
             error_msg << "The max file size cannot be unlimited when file rotation is enabled.";
             return false;
         }
 
-        if (output_resource_limits_max_size == 0)
+        if (mcap_resource_limits_max_size == 0)
         {
             error_msg << "The max size cannot be unlimited when file rotation is enabled.";
             return false;
@@ -212,100 +227,17 @@ void RecorderConfiguration::load_recorder_configuration_(
         const Yaml& yml,
         const YamlReaderVersion& version)
 {
-    if (YamlReader::is_tag_present(yml, RECORDER_OUTPUT_TAG))
-    {
-        auto output_yml = YamlReader::get_value_in_tag(yml, RECORDER_OUTPUT_TAG);
-
-        /////
-        // Get optional library
-        if (YamlReader::is_tag_present(output_yml, RECORDER_OUTPUT_LIBRARY_TAG))
-        {
-            output_library = YamlReader::get_enumeration<participants::OutputLibrary>(
-                    YamlReader::get_value_in_tag(output_yml, RECORDER_OUTPUT_LIBRARY_TAG),
-                    {
-                        {RECORDER_OUTPUT_LIBRARY_MCAP_TAG, participants::OutputLibrary::mcap},
-                        {RECORDER_OUTPUT_LIBRARY_SQL_TAG, participants::OutputLibrary::sql}
-                    });
-        }
-
-        /////
-        // Get optional file path
-        if (YamlReader::is_tag_present(output_yml, RECORDER_OUTPUT_PATH_FILE_TAG))
-        {
-            output_filepath = YamlReader::get<std::string>(output_yml, RECORDER_OUTPUT_PATH_FILE_TAG, version);
-        }
-
-        /////
-        // Get optional file name
-        if (YamlReader::is_tag_present(output_yml, RECORDER_OUTPUT_FILE_NAME_TAG))
-        {
-            output_filename = YamlReader::get<std::string>(output_yml, RECORDER_OUTPUT_FILE_NAME_TAG, version);
-        }
-
-        /////
-        // Get optional timestamp format
-        if (YamlReader::is_tag_present(output_yml, RECORDER_OUTPUT_TIMESTAMP_FORMAT_TAG))
-        {
-            output_timestamp_format = YamlReader::get<std::string>(output_yml, RECORDER_OUTPUT_TIMESTAMP_FORMAT_TAG,
-                            version);
-        }
-
-        /////
-        // Get optional timestamp format
-        if (YamlReader::is_tag_present(output_yml, RECORDER_OUTPUT_LOCAL_TIMESTAMP_TAG))
-        {
-            output_local_timestamp = YamlReader::get<bool>(output_yml, RECORDER_OUTPUT_LOCAL_TIMESTAMP_TAG, version);
-        }
-
-        /////
-        // Get optional safety margin
-        if (YamlReader::is_tag_present(output_yml, RECORDER_OUTPUT_SAFETY_MARGIN_TAG))
-        {
-            safety_margin =
-                    static_cast<uint64_t>(YamlReader::get_nonnegative_int(output_yml,
-                    RECORDER_OUTPUT_SAFETY_MARGIN_TAG));
-        }
-
-        // Get optional resource limits
-        if (YamlReader::is_tag_present(output_yml, RECORDER_OUTPUT_RESOURCE_LIMITS_TAG))
-        {
-            auto resource_limits_yml = YamlReader::get_value_in_tag(output_yml, RECORDER_OUTPUT_RESOURCE_LIMITS_TAG);
-
-            /////
-            // Get optional file rotation
-            if (YamlReader::is_tag_present(resource_limits_yml, RECORDER_OUTPUT_RESOURCE_LIMITS_FILE_ROTATION_TAG))
-            {
-                output_resource_limits_file_rotation = YamlReader::get<bool>(resource_limits_yml,
-                                RECORDER_OUTPUT_RESOURCE_LIMITS_FILE_ROTATION_TAG, version);
-            }
-
-            /////
-            // Get optional max file size
-            if (YamlReader::is_tag_present(resource_limits_yml, RECORDER_OUTPUT_RESOURCE_LIMITS_MAX_FILE_SIZE_TAG))
-            {
-                const auto& max_file_size = YamlReader::get<std::string>(resource_limits_yml,
-                                RECORDER_OUTPUT_RESOURCE_LIMITS_MAX_FILE_SIZE_TAG,
-                                version);
-                output_resource_limits_max_file_size = eprosima::utils::to_bytes(max_file_size);
-            }
-
-            /////
-            // Get optional max size
-            if (YamlReader::is_tag_present(resource_limits_yml, RECORDER_OUTPUT_RESOURCE_LIMITS_MAX_SIZE_TAG))
-            {
-                const auto& max_size = YamlReader::get<std::string>(resource_limits_yml,
-                                RECORDER_OUTPUT_RESOURCE_LIMITS_MAX_SIZE_TAG,
-                                version);
-                output_resource_limits_max_size = eprosima::utils::to_bytes(max_size);
-            }
-        }
-    }
-
     /////
     // Get optional buffer size
     if (YamlReader::is_tag_present(yml, RECORDER_BUFFER_SIZE_TAG))
     {
         buffer_size = YamlReader::get_positive_int(yml, RECORDER_BUFFER_SIZE_TAG);
+    }
+
+    // Get cleanup period
+    if (YamlReader::is_tag_present(yml, RECORDER_CLEANUP_PERIOD_TAG))
+    {
+        cleanup_period = YamlReader::get_positive_int(yml, RECORDER_CLEANUP_PERIOD_TAG);
     }
 
     /////
@@ -315,11 +247,16 @@ void RecorderConfiguration::load_recorder_configuration_(
         event_window = YamlReader::get_positive_int(yml, RECORDER_EVENT_WINDOW_TAG);
     }
 
-    /////
-    // Get optional log publishTime
-    if (YamlReader::is_tag_present(yml, RECORDER_LOG_PUBLISH_TIME_TAG))
+    // Get max pending samples
+    if (YamlReader::is_tag_present(yml, RECORDER_MAX_PENDING_SAMPLES_TAG))
     {
-        log_publish_time = YamlReader::get<bool>(yml, RECORDER_LOG_PUBLISH_TIME_TAG, version);
+        max_pending_samples = YamlReader::get<int>(yml, RECORDER_MAX_PENDING_SAMPLES_TAG, version);
+        if (max_pending_samples < -1)
+        {
+            throw eprosima::utils::ConfigurationException(
+                      utils::Formatter() << "Error reading value under tag <" << RECORDER_MAX_PENDING_SAMPLES_TAG <<
+                          "> : value cannot be lower than -1.");
+        }
     }
 
     /////
@@ -327,13 +264,6 @@ void RecorderConfiguration::load_recorder_configuration_(
     if (YamlReader::is_tag_present(yml, RECORDER_ONLY_WITH_TYPE_TAG))
     {
         only_with_type = YamlReader::get<bool>(yml, RECORDER_ONLY_WITH_TYPE_TAG, version);
-    }
-
-    /////
-    // Get optional compression settings
-    if (YamlReader::is_tag_present(yml, RECORDER_COMPRESSION_SETTINGS_TAG))
-    {
-        mcap_writer_options = YamlReader::get<mcap::McapWriterOptions>(yml, RECORDER_COMPRESSION_SETTINGS_TAG, version);
     }
 
     /////
@@ -348,6 +278,148 @@ void RecorderConfiguration::load_recorder_configuration_(
     if (YamlReader::is_tag_present(yml, RECORDER_ROS2_TYPES_TAG))
     {
         ros2_types = YamlReader::get<bool>(yml, RECORDER_ROS2_TYPES_TAG, version);
+    }
+
+    /////
+    // Get optional output configuration
+    if (YamlReader::is_tag_present(yml, RECORDER_OUTPUT_TAG))
+    {
+        const auto output_yml = YamlReader::get_value_in_tag(yml, RECORDER_OUTPUT_TAG);
+        load_recorder_output_configuration_(output_yml, version);
+    }
+
+    /////
+    // Get optional mcap configuration
+    if (YamlReader::is_tag_present(yml, RECORDER_MCAP_TAG))
+    {
+        const auto mcap_yml = YamlReader::get_value_in_tag(yml, RECORDER_MCAP_TAG);
+        load_recorder_mcap_configuration_(mcap_yml, version);
+    }
+
+    /////
+    // Get optional sql configuration
+    if (YamlReader::is_tag_present(yml, RECORDER_SQL_TAG))
+    {
+        const auto sql_yml = YamlReader::get_value_in_tag(yml, RECORDER_SQL_TAG);
+        load_recorder_sql_configuration_(sql_yml, version);
+    }
+}
+
+void RecorderConfiguration::load_recorder_output_configuration_(
+        const Yaml& yml,
+        const YamlReaderVersion& version)
+{
+    /////
+    // Get optional file path
+    if (YamlReader::is_tag_present(yml, RECORDER_OUTPUT_PATH_FILE_TAG))
+    {
+        output_filepath = YamlReader::get<std::string>(yml, RECORDER_OUTPUT_PATH_FILE_TAG, version);
+    }
+
+    /////
+    // Get optional file name
+    if (YamlReader::is_tag_present(yml, RECORDER_OUTPUT_FILE_NAME_TAG))
+    {
+        output_filename = YamlReader::get<std::string>(yml, RECORDER_OUTPUT_FILE_NAME_TAG, version);
+    }
+
+    /////
+    // Get optional timestamp format
+    if (YamlReader::is_tag_present(yml, RECORDER_OUTPUT_TIMESTAMP_FORMAT_TAG))
+    {
+        output_timestamp_format = YamlReader::get<std::string>(yml, RECORDER_OUTPUT_TIMESTAMP_FORMAT_TAG,
+                        version);
+    }
+
+    /////
+    // Get optional timestamp format
+    if (YamlReader::is_tag_present(yml, RECORDER_OUTPUT_LOCAL_TIMESTAMP_TAG))
+    {
+        output_local_timestamp = YamlReader::get<bool>(yml, RECORDER_OUTPUT_LOCAL_TIMESTAMP_TAG, version);
+    }
+}
+
+void RecorderConfiguration::load_recorder_mcap_configuration_(
+        const Yaml& yml,
+        const YamlReaderVersion& version)
+{
+    /////
+    // Get mandatory enable
+    mcap_enabled = YamlReader::get<bool>(yml, RECORDER_MCAP_ENABLE_TAG, version);
+
+    /////
+    // Get optional log publishTime
+    if (YamlReader::is_tag_present(yml, RECORDER_MCAP_LOG_PUBLISH_TIME_TAG))
+    {
+        mcap_log_publish_time = YamlReader::get<bool>(yml, RECORDER_MCAP_LOG_PUBLISH_TIME_TAG, version);
+    }
+
+    /////
+    // Get optional compression settings
+    if (YamlReader::is_tag_present(yml, RECORDER_MCAP_COMPRESSION_SETTINGS_TAG))
+    {
+        mcap_writer_options = YamlReader::get<mcap::McapWriterOptions>(yml, RECORDER_MCAP_COMPRESSION_SETTINGS_TAG, version);
+    }
+
+    /////
+    // Get optional resource limits
+    if (YamlReader::is_tag_present(yml, RECORDER_MCAP_RESOURCE_LIMITS_TAG))
+    {
+        auto resource_limits_yml = YamlReader::get_value_in_tag(yml, RECORDER_MCAP_RESOURCE_LIMITS_TAG);
+
+        /////
+        // Get optional file rotation
+        if (YamlReader::is_tag_present(resource_limits_yml, RECORDER_MCAP_RESOURCE_LIMITS_FILE_ROTATION_TAG))
+        {
+            mcap_resource_limits_file_rotation = YamlReader::get<bool>(resource_limits_yml,
+                            RECORDER_MCAP_RESOURCE_LIMITS_FILE_ROTATION_TAG, version);
+        }
+
+        /////
+        // Get optional max file size
+        if (YamlReader::is_tag_present(resource_limits_yml, RECORDER_MCAP_RESOURCE_LIMITS_MAX_FILE_SIZE_TAG))
+        {
+            const auto& max_file_size = YamlReader::get<std::string>(resource_limits_yml,
+                            RECORDER_MCAP_RESOURCE_LIMITS_MAX_FILE_SIZE_TAG,
+                            version);
+            mcap_resource_limits_max_file_size = eprosima::utils::to_bytes(max_file_size);
+        }
+
+        /////
+        // Get optional max size
+        if (YamlReader::is_tag_present(resource_limits_yml, RECORDER_MCAP_RESOURCE_LIMITS_MAX_SIZE_TAG))
+        {
+            const auto& max_size = YamlReader::get<std::string>(resource_limits_yml,
+                            RECORDER_MCAP_RESOURCE_LIMITS_MAX_SIZE_TAG,
+                            version);
+            mcap_resource_limits_max_size = eprosima::utils::to_bytes(max_size);
+        }
+
+        /////
+        // Get optional safety margin
+        if (YamlReader::is_tag_present(resource_limits_yml, RECORDER_MCAP_RESOURCE_LIMITS_SAFETY_MARGIN_TAG))
+        {
+            const auto& safety_margin = YamlReader::get<std::string>(resource_limits_yml,
+                            RECORDER_MCAP_RESOURCE_LIMITS_SAFETY_MARGIN_TAG,
+                            version);
+            mcap_resource_limits_safety_margin = eprosima::utils::to_bytes(safety_margin);
+        }
+    }
+}
+
+void RecorderConfiguration::load_recorder_sql_configuration_(
+        const Yaml& yml,
+        const YamlReaderVersion& version)
+{
+    /////
+    // Get mandatory enable
+    sql_enabled = YamlReader::get<bool>(yml, RECORDER_SQL_ENABLE_TAG, version);
+
+    /////
+    // Get optional log publishTime
+    if (YamlReader::is_tag_present(yml, RECORDER_SQL_STORE_DATA_SERIALIZED_TAG))
+    {
+        sql_store_data_serialized = YamlReader::get<bool>(yml, RECORDER_SQL_STORE_DATA_SERIALIZED_TAG, version);
     }
 }
 
@@ -409,24 +481,6 @@ void RecorderConfiguration::load_specs_configuration_(
     {
         YamlReader::fill<TopicQoS>(topic_qos, YamlReader::get_value_in_tag(yml, SPECS_QOS_TAG), version);
         TopicQoS::default_topic_qos.set_value(topic_qos);
-    }
-
-    // Get max pending samples
-    if (YamlReader::is_tag_present(yml, RECORDER_SPECS_MAX_PENDING_SAMPLES_TAG))
-    {
-        max_pending_samples = YamlReader::get<int>(yml, RECORDER_SPECS_MAX_PENDING_SAMPLES_TAG, version);
-        if (max_pending_samples < -1)
-        {
-            throw eprosima::utils::ConfigurationException(
-                      utils::Formatter() << "Error reading value under tag <" << RECORDER_SPECS_MAX_PENDING_SAMPLES_TAG <<
-                          "> : value cannot be lower than -1.");
-        }
-    }
-
-    // Get cleanup period
-    if (YamlReader::is_tag_present(yml, RECORDER_SPECS_CLEANUP_PERIOD_TAG))
-    {
-        cleanup_period = YamlReader::get_positive_int(yml, RECORDER_SPECS_CLEANUP_PERIOD_TAG);
     }
 
     /////

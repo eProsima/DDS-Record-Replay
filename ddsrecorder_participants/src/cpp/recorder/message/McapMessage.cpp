@@ -32,7 +32,7 @@ McapMessage::McapMessage(
     const ddspipe::core::types::DdsTopic& topic,
     const mcap::ChannelId channel_id,
     const bool log_publish_time)
-    : BaseMessage(data, payload_pool, topic, log_publish_time)
+    : BaseMessage(data, payload_pool, topic)
     , mcap::Message()
 {
     sequence = number_of_msgs.fetch_add(1);
@@ -43,6 +43,11 @@ McapMessage::McapMessage(
 
     publishTime = to_mcap_timestamp(publish_time);
     logTime = to_mcap_timestamp(log_time);
+
+    if (log_publish_time)
+    {
+        log_time = publish_time;
+    }
 }
 
 } /* namespace participants */

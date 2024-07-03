@@ -27,13 +27,6 @@ namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
 
-//! Supported output libraries
-ENUMERATION_BUILDER(
-    OutputLibrary,
-    mcap,                     //! MCAP library.
-    sql                       //! SQL library.
-    );
-
 /**
  * Structure encapsulating all output configuration options.
  */

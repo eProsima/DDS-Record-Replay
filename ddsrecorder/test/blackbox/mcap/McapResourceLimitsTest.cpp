@@ -76,6 +76,7 @@ public:
         Yaml yml;
         configuration_ = std::make_unique<ddsrecorder::yaml::RecorderConfiguration>(yml);
         configuration_->simple_configuration->domain = test::DOMAIN;
+        configuration_->mcap_enabled = true;
         configuration_->mcap_writer_options.compression = mcap::Compression::None;
         configuration_->buffer_size = 1;
     }
@@ -201,7 +202,7 @@ TEST_F(McapResourceLimitsTest, max_file_size)
     const std::string OUTPUT_FILE_NAME = "max_file_size_test";
     const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME);
 
-    configuration_->output_resource_limits_max_file_size = test::limits::MAX_FILE_SIZE;
+    configuration_->mcap_resource_limits_max_file_size = test::limits::MAX_FILE_SIZE;
 
     // Delete the output file if it exists
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
@@ -243,8 +244,8 @@ TEST_F(McapResourceLimitsTest, max_size)
     const std::string OUTPUT_FILE_NAME = "max_size_test";
     const auto OUTPUT_FILE_PATHS = get_output_file_paths_(NUMBER_OF_FILES, OUTPUT_FILE_NAME);
 
-    configuration_->output_resource_limits_max_file_size = test::limits::MAX_FILE_SIZE;
-    configuration_->output_resource_limits_max_size = test::limits::MAX_SIZE;
+    configuration_->mcap_resource_limits_max_file_size = test::limits::MAX_FILE_SIZE;
+    configuration_->mcap_resource_limits_max_size = test::limits::MAX_SIZE;
 
     // Delete the output files if they exist
     for (const auto& path : OUTPUT_FILE_PATHS)
@@ -322,9 +323,9 @@ TEST_F(McapResourceLimitsTest, file_rotation)
     const std::string OUTPUT_FILE_NAME = "file_rotation_test";
     const auto OUTPUT_FILE_PATHS = get_output_file_paths_(NUMBER_OF_FILES + 1, OUTPUT_FILE_NAME);
 
-    configuration_->output_resource_limits_max_file_size = test::limits::MAX_FILE_SIZE;
-    configuration_->output_resource_limits_max_size = test::limits::MAX_SIZE;
-    configuration_->output_resource_limits_file_rotation = true;
+    configuration_->mcap_resource_limits_max_file_size = test::limits::MAX_FILE_SIZE;
+    configuration_->mcap_resource_limits_max_size = test::limits::MAX_SIZE;
+    configuration_->mcap_resource_limits_file_rotation = true;
 
     // Delete the output files if they exist
     for (const auto& path : OUTPUT_FILE_PATHS)

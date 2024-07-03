@@ -35,7 +35,6 @@ struct BaseHandlerConfiguration
             const unsigned int buffer_size,
             const unsigned int event_window,
             const unsigned int cleanup_period,
-            const bool log_publishTime,
             const bool only_with_schema,
             const bool record_types,
             const bool ros2_types)
@@ -44,7 +43,6 @@ struct BaseHandlerConfiguration
         , buffer_size(buffer_size)
         , event_window(event_window)
         , cleanup_period(cleanup_period)
-        , log_publishTime(log_publishTime)
         , only_with_schema(only_with_schema)
         , record_types(record_types)
         , ros2_types(ros2_types)
@@ -65,9 +63,6 @@ struct BaseHandlerConfiguration
 
     //! Remove from buffer samples older than *now - event_window* with this period [s] (applies to paused state)
     unsigned int cleanup_period;
-
-    //! Store messages with logTime set to sample publication timestamp
-    bool log_publishTime;
 
     //! Only write messages whose schema is registered (i.e. discard pending samples when leaving RUNNING state)
     bool only_with_schema;
