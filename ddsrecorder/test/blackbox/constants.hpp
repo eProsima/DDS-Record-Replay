@@ -26,6 +26,7 @@
 #include <ddspipe_core/types/dds/DomainId.hpp>
 #include <ddspipe_core/types/participant/ParticipantId.hpp>
 
+#include <ddsrecorder_participants/recorder/sql/SqlHandlerConfiguration.hpp>
 
 namespace test {
 
@@ -53,6 +54,7 @@ constexpr auto LOG_PUBLISH_TIME = false;
 constexpr auto ONLY_WITH_SCHEMA = false;
 constexpr auto RECORD_TYPES = false;
 constexpr auto ROS2_TYPES = false;
+constexpr auto DATA_FORMAT = ddsrecorder::participants::DataFormat::both;
 
 }
 

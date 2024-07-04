@@ -18,12 +18,21 @@
 
 #pragma once
 
+#include <cpp_utils/macros/custom_enumeration.hpp>
+
 #include <ddsrecorder_participants/recorder/output/BaseHandlerConfiguration.hpp>
 #include <ddsrecorder_participants/recorder/output/OutputSettings.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
+
+ENUMERATION_BUILDER(
+    DataFormat,
+    cdr,
+    json,
+    both
+    );
 
 /**
  * Structure encapsulating the \c SqlHandler configuration options.
@@ -38,7 +47,8 @@ struct SqlHandlerConfiguration : public BaseHandlerConfiguration
             const unsigned int cleanup_period,
             const bool only_with_schema,
             const bool record_types,
-            const bool ros2_types)
+            const bool ros2_types,
+            const DataFormat data_format)
         : BaseHandlerConfiguration(
                 output_settings,
                 max_pending_samples,
@@ -48,8 +58,12 @@ struct SqlHandlerConfiguration : public BaseHandlerConfiguration
                 only_with_schema,
                 record_types,
                 ros2_types)
+        , data_format(data_format)
     {
     }
+
+    //! Whether to store data in cdr, in json, or in both.
+    DataFormat data_format;
 };
 
 } /* namespace participants */

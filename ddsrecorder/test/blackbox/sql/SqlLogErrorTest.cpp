@@ -64,7 +64,8 @@ TEST(SqlLogErrorTest, fail_to_open_file) {
         test::handler::CLEANUP_PERIOD,
         test::handler::ONLY_WITH_SCHEMA,
         test::handler::RECORD_TYPES,
-        test::handler::ROS2_TYPES);
+        test::handler::ROS2_TYPES,
+        test::handler::DATA_FORMAT);
 
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool;
     const auto init_state = ddsrecorder::participants::BaseHandlerStateCode::RUNNING;

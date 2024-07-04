@@ -147,6 +147,9 @@ protected:
     void set_key_(
             SqlMessage& sql_sample);
 
+    //! Configuration
+    const SqlHandlerConfiguration configuration_;
+
     //! SQL writer
     SqlWriter sql_writer_;
 

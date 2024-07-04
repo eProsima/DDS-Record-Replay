@@ -56,6 +56,17 @@ struct SqlMessage : public BaseMessage
         const std::string& key = "");
 
     /**
+     * @brief Deserialize the payload's data into a JSON object.
+     *
+     * The following steps are performed:
+     * - Deserialize the payload data into a DynamicData.
+     * - Serialize the DynamicData into a JSON object.
+     * - Store the JSON object in the payload's data attribute.
+     */
+    void deserialize(
+            const fastdds::dds::DynamicType::_ref_type& dynamic_type);
+
+    /**
      * @brief Set the key of the message.
      *
      * The following steps are performed:
@@ -78,6 +89,9 @@ struct SqlMessage : public BaseMessage
     // Hashed value identifying the instance
     ddspipe::core::types::InstanceHandle instance_handle;
 
+    // String containing the JSON-serialized payload
+    std::string data_json;
+
     // String containing the JSON-serialized instance key
     std::string key;
 
@@ -89,7 +103,7 @@ protected:
      * @param dynamic_type DynamicType of the message.
      * @param key_json JSON object containing the key values.
      */
-    void remove_nonkey_values(
+    void remove_nonkey_values_(
         const fastdds::dds::DynamicType::_ref_type& dynamic_type,
         nlohmann::json& key_json);
 };

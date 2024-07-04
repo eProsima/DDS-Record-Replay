@@ -78,12 +78,12 @@ struct BaseMessage
     /**
      * @brief Get the message's payload data
      */
-    std::byte* get_data() const;
+    std::byte* get_data_cdr() const;
 
     /**
      * @brief Get the message's payload size
      */
-    std::uint32_t get_data_size() const;
+    std::uint32_t get_data_cdr_size() const;
 
     //! Serialized payload
     fastdds::rtps::SerializedPayload_t payload{};

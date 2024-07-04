@@ -50,37 +50,49 @@ SqlMessage::SqlMessage(
 {
 }
 
-void SqlMessage::set_key(
+void SqlMessage::deserialize(
         const fastdds::dds::DynamicType::_ref_type& dynamic_type)
 {
+    if (!data_json.empty())
+    {
+        // The payload has already been deserialized
+        return;
+    }
+
     // Deserialize the payload
     fastdds::dds::DynamicPubSubType pub_sub_type(dynamic_type);
     auto dynamic_data = fastdds::dds::DynamicDataFactory::get_instance()->create_data(dynamic_type);
 
     pub_sub_type.deserialize(&payload, &dynamic_data);
 
-    // Clear non-key values to free-up unnecessary space
-    dynamic_data->clear_nonkey_values();
-
-    // Serialize the key members into a JSON
+    // Serialize the payload into a JSON
     const auto ret = fastdds::dds::json_serialize(
-            dynamic_data, key, fastdds::dds::DynamicDataJsonFormat::EPROSIMA);
+            dynamic_data, data_json, fastdds::dds::DynamicDataJsonFormat::EPROSIMA);
 
     if (ret != fastdds::dds::RETCODE_OK)
     {
-        logWarning(SQL_MESSAGE, "Failed to serialize key members into JSON");
+        logWarning(SQL_MESSAGE, "Failed to serialize payload into JSON");
+    }
+}
+
+void SqlMessage::set_key(
+        const fastdds::dds::DynamicType::_ref_type& dynamic_type)
+{
+    if (data_json.empty())
+    {
+        deserialize(dynamic_type);
     }
 
-    nlohmann::json key_json = nlohmann::json::parse(key);
+    nlohmann::json key_json = nlohmann::json::parse(data_json);
 
     // Remove non-key values
-    remove_nonkey_values(dynamic_type, key_json);
+    remove_nonkey_values_(dynamic_type, key_json);
 
     // Serialize the JSON back into a string
     key = key_json.dump();
 }
 
-void SqlMessage::remove_nonkey_values(
+void SqlMessage::remove_nonkey_values_(
         const fastdds::dds::DynamicType::_ref_type& dynamic_type,
         nlohmann::json& key_json)
 {
@@ -110,7 +122,7 @@ void SqlMessage::remove_nonkey_values(
         if (member_descriptor->is_key())
         {
             // Recursively remove non-key values from nested types
-            remove_nonkey_values(member_descriptor->type(), key_json[member_name]);
+            remove_nonkey_values_(member_descriptor->type(), key_json[member_name]);
         }
         else
         {

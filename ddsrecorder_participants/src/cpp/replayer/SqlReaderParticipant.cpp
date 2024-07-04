@@ -129,8 +129,8 @@ void SqlReaderParticipant::process_messages()
             utils::the_end_of_time());
 
     exec_sql_statement_(
-        "SELECT log_time, topic, type, data, data_size FROM Messages "
-        "WHERE log_time >= ? AND log_time <= ? "
+        "SELECT log_time, topic, type, data_cdr, data_cdr_size FROM Messages "
+        "WHERE log_time >= ? AND log_time <= ? AND data_cdr_size > 0 "
         "ORDER BY log_time;",
         {begin_time, end_time},
         [&](sqlite3_stmt* stmt)

@@ -34,6 +34,7 @@
 #include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
 #include <ddsrecorder_participants/recorder/message/SqlMessage.hpp>
 #include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
+#include <ddsrecorder_participants/recorder/sql/SqlHandlerConfiguration.hpp>
 #include <ddsrecorder_participants/recorder/sql/SqlWriter.hpp>
 #include <ddsrecorder_participants/common/time_utils.hpp>
 
@@ -50,9 +51,11 @@ SqlWriter::SqlWriter(
         const OutputSettings& configuration,
         std::shared_ptr<FileTracker>& file_tracker,
         const bool record_types,
-        const bool ros2_types)
+        const bool ros2_types,
+        const DataFormat data_format)
     : BaseWriter(configuration, file_tracker, record_types, MIN_SQL_SIZE)
     , ros2_types_(ros2_types)
+    , data_format_(data_format)
 {
 }
 
@@ -127,8 +130,9 @@ void SqlWriter::open_new_file_nts_(
         CREATE TABLE IF NOT EXISTS Messages (
             writer_guid TEXT NOT NULL,
             sequence_number INTEGER NOT NULL,
-            data BLOB NOT NULL,
-            data_size INTEGER NOT NULL,
+            data_json TEXT,
+            data_cdr BLOB,
+            data_cdr_size INTEGER,
             topic TEXT NOT NULL,
             type TEXT NOT NULL,
             key TEXT NOT NULL,
@@ -214,8 +218,8 @@ void SqlWriter::write_nts_(
 
     // Define the SQL statement for batch insert
     const char* insert_statement = R"(
-        INSERT INTO Messages (writer_guid, sequence_number, data, data_size, topic, type, key, log_time, publish_time)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+        INSERT INTO Messages (writer_guid, sequence_number, data_json, data_cdr, data_cdr_size, topic, type, key, log_time, publish_time)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     )";
 
     // Prepare the SQL statement
@@ -246,18 +250,42 @@ void SqlWriter::write_nts_(
     for (const auto& message : messages)
     {
         // Bind the SqlMessage to the SQL statement
+
+        // Bind the sample identity
         std::ostringstream writer_guid_ss;
         writer_guid_ss << message.writer_guid;
 
         sqlite3_bind_text(statement, 1, writer_guid_ss.str().c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int64(statement, 2, message.sequence_number.to64long());
-        sqlite3_bind_blob(statement, 3, message.get_data(), message.get_data_size(), SQLITE_TRANSIENT);
-        sqlite3_bind_int64(statement, 4, message.get_data_size());
-        sqlite3_bind_text(statement, 5, message.topic.topic_name().c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(statement, 6, message.topic.type_name.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(statement, 7, message.key.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(statement, 8, to_sql_timestamp(message.log_time).c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(statement, 9, to_sql_timestamp(message.publish_time).c_str(), -1, SQLITE_TRANSIENT);
+
+        // Bind the sample data
+        std::string data_json = "";
+        std::byte* data_cdr = new std::byte{0};
+        std::uint32_t data_cdr_size = 0;
+
+        if (data_format_ == DataFormat::both || data_format_ == DataFormat::json)
+        {
+            data_json = message.data_json;
+        }
+
+        if (data_format_ == DataFormat::both || data_format_ == DataFormat::cdr)
+        {
+            data_cdr = message.get_data_cdr();
+            data_cdr_size = message.get_data_cdr_size();
+        }
+
+        sqlite3_bind_text(statement, 3, data_json.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_blob(statement, 4, data_cdr, data_cdr_size, SQLITE_TRANSIENT);
+        sqlite3_bind_int64(statement, 5, data_cdr_size);
+
+        // Bind the topic data
+        sqlite3_bind_text(statement, 6, message.topic.topic_name().c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(statement, 7, message.topic.type_name.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(statement, 8, message.key.c_str(), -1, SQLITE_TRANSIENT);
+
+        // Bind the time data
+        sqlite3_bind_text(statement, 9, to_sql_timestamp(message.log_time).c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(statement, 10, to_sql_timestamp(message.publish_time).c_str(), -1, SQLITE_TRANSIENT);
 
         // Execute the SQL statement
         const auto step_ret = sqlite3_step(statement);

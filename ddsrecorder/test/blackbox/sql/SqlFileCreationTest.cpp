@@ -135,8 +135,8 @@ protected:
  * Verify that the DDS Recorder records properly in an SQL file.
  *
  * CASES:
- *  - Verify that the messages' sizes match the recorded data sizes.
- *  - Verify that the messages' data matches the recorded data.
+ *  - Verify that the messages' data_cdr_size match the recorded data_cdr sizes.
+ *  - Verify that the messages' data_cdr matches the recorded data_cdr.
  */
 TEST_F(SqlFileCreationTest, sql_data_msgs)
 {
@@ -157,7 +157,7 @@ TEST_F(SqlFileCreationTest, sql_data_msgs)
     // Read the recorded messages
     exec_sql_statement_(
         OUTPUT_FILE_PATH.string(),
-        "SELECT data, data_size FROM Messages ORDER BY log_time;", {}, [&](sqlite3_stmt* stmt)
+        "SELECT data_cdr, data_cdr_size FROM Messages ORDER BY log_time;", {}, [&](sqlite3_stmt* stmt)
     {
         read_message_count++;
 

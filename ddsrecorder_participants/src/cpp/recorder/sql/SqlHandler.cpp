@@ -35,7 +35,8 @@ SqlHandler::SqlHandler(
         const BaseHandlerStateCode& init_state /* = BaseHandlerStateCode::RUNNING */,
         const std::function<void()>& on_disk_full_lambda /* = nullptr */)
     : BaseHandler(config, payload_pool)
-    , sql_writer_(config.output_settings, file_tracker, config.record_types, config.ros2_types)
+    , configuration_(config)
+    , sql_writer_(config.output_settings, file_tracker, config.record_types, config.ros2_types, config.data_format)
 {
     logInfo(DDSRECORDER_SQL_HANDLER, "Creating SQL handler instance.");
 
@@ -116,7 +117,7 @@ void SqlHandler::write_samples_(
 
     while (!samples.empty())
     {
-        const auto sql_sample = static_cast<const SqlMessage*>(samples.front().get());
+        auto sql_sample = static_cast<SqlMessage*>(const_cast<BaseMessage*>(samples.front().get()));
 
         if (sql_sample == nullptr)
         {
@@ -133,10 +134,25 @@ void SqlHandler::write_samples_(
             written_topics_.insert(topic);
         }
 
-        // Write the sample
+        if (configuration_.data_format == DataFormat::json || configuration_.data_format == DataFormat::both)
+        {
+            if (received_types_.find(sql_sample->topic.type_name) == received_types_.end())
+            {
+                logWarning(DDSRECORDER_SQL_HANDLER,
+                          "Message on topic " << sql_sample->topic.m_topic_name <<
+                          " with type " << sql_sample->topic.type_name <<
+                          " cannot be formatted to JSON since the type has not been received.");
+            }
+            else
+            {
+                // Deserialize the payload
+                sql_sample->deserialize(received_types_[sql_sample->topic.type_name]);
+            }
+        }
+
         if (sql_sample->key.empty())
         {
-            set_key_(*const_cast<SqlMessage*>(sql_sample));
+            set_key_(*sql_sample);
         }
 
         samples_to_write.push_back(*sql_sample);

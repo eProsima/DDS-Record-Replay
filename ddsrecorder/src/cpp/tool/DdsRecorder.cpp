@@ -156,7 +156,8 @@ DdsRecorder::DdsRecorder(
             configuration_.cleanup_period,
             configuration_.only_with_type,
             configuration_.record_types,
-            configuration_.ros2_types);
+            configuration_.ros2_types,
+            configuration_.sql_data_format);
 
         // Create SQL Handler
         handler_ = std::make_shared<participants::SqlHandler>(

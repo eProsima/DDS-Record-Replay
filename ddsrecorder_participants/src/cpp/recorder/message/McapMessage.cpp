@@ -38,8 +38,8 @@ McapMessage::McapMessage(
     sequence = number_of_msgs.fetch_add(1);
     channelId = channel_id;
 
-    this->data = get_data();
-    dataSize = get_data_size();
+    this->data = get_data_cdr();
+    dataSize = get_data_cdr_size();
 
     publishTime = to_mcap_timestamp(publish_time);
     logTime = to_mcap_timestamp(log_time);

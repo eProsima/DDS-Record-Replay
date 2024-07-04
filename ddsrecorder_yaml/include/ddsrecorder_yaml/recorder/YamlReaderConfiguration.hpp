@@ -40,6 +40,7 @@
 #include <ddspipe_yaml/YamlReader.hpp>
 
 #include <ddsrecorder_participants/recorder/output/OutputSettings.hpp>
+#include <ddsrecorder_participants/recorder/sql/SqlHandlerConfiguration.hpp>
 
 #include <ddsrecorder_yaml/library/library_dll.h>
 #include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
@@ -103,7 +104,7 @@ public:
 
     // Sql params
     bool sql_enabled = false;
-    bool sql_store_data_serialized = true;
+    ddsrecorder::participants::DataFormat sql_data_format = ddsrecorder::participants::DataFormat::both;
 
     // Remote controller configuration
     bool enable_remote_controller = true;

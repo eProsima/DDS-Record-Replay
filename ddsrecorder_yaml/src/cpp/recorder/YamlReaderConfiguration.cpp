@@ -34,6 +34,7 @@
 #include <ddspipe_yaml/YamlManager.hpp>
 
 #include <ddsrecorder_participants/recorder/output/OutputSettings.hpp>
+#include <ddsrecorder_participants/recorder/sql/SqlHandlerConfiguration.hpp>
 
 #include <ddsrecorder_yaml/recorder/yaml_configuration_tags.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
@@ -417,9 +418,15 @@ void RecorderConfiguration::load_recorder_sql_configuration_(
 
     /////
     // Get optional log publishTime
-    if (YamlReader::is_tag_present(yml, RECORDER_SQL_STORE_DATA_SERIALIZED_TAG))
+    if (YamlReader::is_tag_present(yml, RECORDER_SQL_DATA_FORMAT_TAG))
     {
-        sql_store_data_serialized = YamlReader::get<bool>(yml, RECORDER_SQL_STORE_DATA_SERIALIZED_TAG, version);
+        const auto data_format_yml = YamlReader::get_value_in_tag(yml, RECORDER_SQL_DATA_FORMAT_TAG);
+        sql_data_format = YamlReader::get_enumeration<ddsrecorder::participants::DataFormat>(data_format_yml,
+                    {
+                        {RECORDER_SQL_DATA_FORMAT_CDR_TAG,  ddsrecorder::participants::DataFormat::cdr},
+                        {RECORDER_SQL_DATA_FORMAT_JSON_TAG, ddsrecorder::participants::DataFormat::json},
+                        {RECORDER_SQL_DATA_FORMAT_BOTH_TAG, ddsrecorder::participants::DataFormat::both}
+                    });
     }
 }
 

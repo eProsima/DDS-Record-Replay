@@ -86,7 +86,10 @@ constexpr const char* RECORDER_MCAP_RESOURCE_LIMITS_SAFETY_MARGIN_TAG("safety-ma
 
 constexpr const char* RECORDER_SQL_TAG("sql");
 constexpr const char* RECORDER_SQL_ENABLE_TAG("enable");
-constexpr const char* RECORDER_SQL_STORE_DATA_SERIALIZED_TAG("store-data-serialized");
+constexpr const char* RECORDER_SQL_DATA_FORMAT_TAG("data-format");
+constexpr const char* RECORDER_SQL_DATA_FORMAT_CDR_TAG("cdr");
+constexpr const char* RECORDER_SQL_DATA_FORMAT_JSON_TAG("json");
+constexpr const char* RECORDER_SQL_DATA_FORMAT_BOTH_TAG("both");
 
 ////////////////////////////////////
 // Remote controller related tags //

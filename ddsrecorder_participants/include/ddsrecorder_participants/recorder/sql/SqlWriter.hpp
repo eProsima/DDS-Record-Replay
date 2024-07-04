@@ -26,6 +26,7 @@
 #include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/recorder/output/BaseWriter.hpp>
+#include <ddsrecorder_participants/recorder/sql/SqlHandlerConfiguration.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -39,7 +40,8 @@ public:
             const OutputSettings& configuration,
             std::shared_ptr<FileTracker>& file_tracker,
             const bool record_types = true,
-            const bool ros2_types = false);
+            const bool ros2_types = false,
+            const DataFormat data_format = DataFormat::both);
 
     /**
      * @brief Writes data to the output file.
@@ -118,6 +120,9 @@ protected:
 
     // Whether to format types for ROS 2
     const bool ros2_types_;
+
+    // Whether to record the data in cdr, in json, or in both formats
+    const DataFormat data_format_;
 
     // The size of an empty SQL file
     static constexpr std::uint64_t MIN_SQL_SIZE{20480};

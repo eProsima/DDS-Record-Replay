@@ -215,7 +215,7 @@ protected:
             sent_messages.push_back(payload);
 
             // Wait for the message to be sent
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
 
         // Delete the DataWriter

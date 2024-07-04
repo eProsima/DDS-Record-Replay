@@ -74,12 +74,12 @@ BaseMessage::~BaseMessage()
     }
 }
 
-std::byte* BaseMessage::get_data() const
+std::byte* BaseMessage::get_data_cdr() const
 {
     return reinterpret_cast<std::byte*>(payload.data);
 }
 
-std::uint32_t BaseMessage::get_data_size() const
+std::uint32_t BaseMessage::get_data_cdr_size() const
 {
     return payload.length;
 }
