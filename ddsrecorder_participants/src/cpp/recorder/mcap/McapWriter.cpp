@@ -145,6 +145,12 @@ void McapWriter::update_dynamic_types(
             on_disk_full_();
         }
     }
+    catch (const FullDiskException& e)
+    {
+        logError(DDSRECORDER_MCAP_HANDLER,
+                "FAIL_MCAP_WRITE | Disk is full. Error message:\n " << e.what());
+        on_disk_full_();
+    }
 
     dynamic_types_payload_.reset(const_cast<fastrtps::rtps::SerializedPayload_t*>(&dynamic_types_payload));
     file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
@@ -168,6 +174,10 @@ void McapWriter::open_new_file_nts_(
         throw FullDiskException(
                   "The minimum MCAP size (" + utils::from_bytes(min_file_size) + ") is greater than the maximum MCAP "
                   "size (" + utils::from_bytes(configuration_.max_file_size) + ").");
+    }
+    catch (const utils::InconsistencyException& e)
+    {
+        throw FullDiskException(e.what());
     }
 
     const auto filename = file_tracker_->get_current_filename();

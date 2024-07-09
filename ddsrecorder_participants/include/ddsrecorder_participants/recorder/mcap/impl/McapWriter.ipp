@@ -49,6 +49,12 @@ void McapWriter::write(
             on_disk_full_();
         }
     }
+    catch (const FullDiskException& e)
+    {
+        logError(DDSRECORDER_MCAP_HANDLER,
+                "FAIL_MCAP_WRITE | Disk is full. Error message:\n " << e.what());
+        on_disk_full_();
+    }
 }
 
 } /* namespace participants */
