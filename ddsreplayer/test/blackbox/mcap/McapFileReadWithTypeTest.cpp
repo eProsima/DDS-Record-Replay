@@ -55,7 +55,7 @@ const std::string ros2_type_name = "std_msgs::msg::dds_::String_";
 void create_subscriber_replayer(
         DataToCheck& data,
         const std::string& configuration_path = "resources/config_file_withtypes.yaml",
-        std::string input_file = "resources/configuration_withtypes.mcap",
+        std::string input_file = "resources/configuration.mcap",
         bool ros2 = false)
 {
     {
@@ -128,8 +128,8 @@ TEST(McapFileReadWithTypeTest, dds_data_to_check)
     ASSERT_EQ(data.min_index_msg, 1);
     ASSERT_EQ(data.max_index_msg, 10);
     // ms ~ 200
-    ASSERT_GT(data.mean_ms_between_msgs, 1197.5);
-    ASSERT_LT(data.mean_ms_between_msgs, 1202.5);
+    ASSERT_GT(data.mean_ms_between_msgs, 197.5);
+    ASSERT_LT(data.mean_ms_between_msgs, 202.5);
 }
 
 TEST(McapFileReadWithTypeTest, dds_more_playback_rate)
@@ -139,8 +139,8 @@ TEST(McapFileReadWithTypeTest, dds_more_playback_rate)
     const std::string configuration = "resources/config_file_more_hz_withtypes.yaml";
     create_subscriber_replayer(data, configuration);
     // ms ~ 100
-    ASSERT_GT(data.mean_ms_between_msgs, 597.5);
-    ASSERT_LT(data.mean_ms_between_msgs, 602.5);
+    ASSERT_GT(data.mean_ms_between_msgs, 98.5);
+    ASSERT_LT(data.mean_ms_between_msgs, 102.5);
 }
 
 TEST(McapFileReadWithTypeTest, dds_less_playback_rate)
@@ -150,8 +150,8 @@ TEST(McapFileReadWithTypeTest, dds_less_playback_rate)
     const std::string configuration = "resources/config_file_less_hz_withtypes.yaml";
     create_subscriber_replayer(data, configuration);
     // ms ~ 400
-    ASSERT_GT(data.mean_ms_between_msgs, 2397.5);
-    ASSERT_LT(data.mean_ms_between_msgs, 2403.5);
+    ASSERT_GT(data.mean_ms_between_msgs, 397.5);
+    ASSERT_LT(data.mean_ms_between_msgs, 402.5);
 }
 
 TEST(McapFileReadWithTypeTest, begin_time)
@@ -160,8 +160,8 @@ TEST(McapFileReadWithTypeTest, begin_time)
     DataToCheck data;
     const std::string configuration = "resources/config_file_begin_time_with_types.yaml";
     create_subscriber_replayer(data, configuration);
-    ASSERT_EQ(data.n_received_msgs, 7);
-    ASSERT_EQ(data.min_index_msg, 4);
+    ASSERT_EQ(data.n_received_msgs, 4);
+    ASSERT_EQ(data.min_index_msg, 7);
     ASSERT_EQ(data.max_index_msg, 10);
 }
 
@@ -171,9 +171,9 @@ TEST(McapFileReadWithTypeTest, end_time)
     DataToCheck data;
     const std::string configuration = "resources/config_file_end_time_with_types.yaml";
     create_subscriber_replayer(data, configuration);
-    ASSERT_EQ(data.n_received_msgs, 3);
+    ASSERT_EQ(data.n_received_msgs, 6);
     ASSERT_EQ(data.min_index_msg, 1);
-    ASSERT_EQ(data.max_index_msg, 3);
+    ASSERT_EQ(data.max_index_msg, 6);
 }
 
 TEST(McapFileReadWithTypeTest, start_replay_time_earlier)
