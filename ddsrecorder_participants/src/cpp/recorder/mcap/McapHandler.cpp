@@ -30,6 +30,7 @@
 #include <fastdds/dds/topic/TypeSupport.hpp>
 #include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
 #include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
+#include <fastdds/dds/xtypes/utils.hpp>
 #include <fastdds/rtps/common/CDRMessage_t.hpp>
 #include <fastdds/rtps/common/CdrSerialization.hpp>
 #include <fastdds/rtps/common/SerializedPayload.hpp>
@@ -124,6 +125,7 @@ void McapHandler::add_schema(
 
     if (configuration_.ros2_types)
     {
+        // NOTE: Currently ROS2 types are not supported, change when supported
         name = utils::demangle_if_ros_type(type_name);
         encoding = "ros2msg";
         data = msg::generate_ros2_schema(dynamic_type);
@@ -132,7 +134,15 @@ void McapHandler::add_schema(
     {
         name = type_name;
         encoding = "omgidl";
-        data = idl::generate_idl_schema(dynamic_type);
+
+        std::stringstream idl;
+        auto ret = idl_serialize(dynamic_type, idl);
+        if (ret != fastdds::dds::RETCODE_OK)
+        {
+            logError(DDSRECORDER_MCAP_HANDLER, "MCAP_WRITE | Failed to serialize DynamicType to idl for type wth name: " << dynamic_type->get_name().to_string());
+            return;
+        }
+        data = idl.str();
     }
 
     mcap::Schema new_schema(name, encoding, data);
