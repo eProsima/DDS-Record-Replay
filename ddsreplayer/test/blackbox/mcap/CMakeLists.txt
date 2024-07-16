@@ -37,7 +37,7 @@ set(TEST_LIST
     )
 
 set(TEST_NEEDED_SOURCES
-        resources/configuration_withtypes.mcap
+        resources/configuration.mcap
         resources/config_file_notype.yaml
         resources/config_file_less_hz_notype.yaml
         resources/config_file_more_hz_notype.yaml
@@ -83,7 +83,7 @@ set(TEST_LIST
     )
 
 set(TEST_NEEDED_SOURCES
-        resources/configuration_withtypes.mcap
+        resources/configuration.mcap
         resources/config_file_withtypes.yaml
         resources/config_file_less_hz_withtypes.yaml
         resources/config_file_more_hz_withtypes.yaml
