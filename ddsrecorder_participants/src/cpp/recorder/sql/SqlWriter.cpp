@@ -31,17 +31,12 @@
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
 #include <ddsrecorder_participants/common/serialize/Serializer.hpp>
+#include <ddsrecorder_participants/common/time_utils.hpp>
 #include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
 #include <ddsrecorder_participants/recorder/message/SqlMessage.hpp>
 #include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
 #include <ddsrecorder_participants/recorder/sql/SqlHandlerConfiguration.hpp>
 #include <ddsrecorder_participants/recorder/sql/SqlWriter.hpp>
-#include <ddsrecorder_participants/common/time_utils.hpp>
-
-#if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-#else
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollection.hpp>
-#endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
 
 namespace eprosima {
 namespace ddsrecorder {

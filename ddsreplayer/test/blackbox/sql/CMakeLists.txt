@@ -18,28 +18,12 @@
 
 set(TEST_NAME SqlFileReadTest)
 
-# Determine Fast DDS version
-if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
-    set(DDS_TYPES_VERSION "v1")
-else()
-    set(DDS_TYPES_VERSION "v2")
-endif()
-
 file(
     GLOB_RECURSE TEST_SOURCES
     SqlFileReadTest.cpp
     "${PROJECT_SOURCE_DIR}/test/resources/dds/*.c*"
     "${PROJECT_SOURCE_DIR}/test/resources/types/*.c*"
     )
-
-list(FILTER TEST_LIBRARY_SOURCES EXCLUDE REGEX "/main.cpp")
-
-# Exclude types' files depending on the Fast DDS version
-if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
-    list(FILTER TEST_SOURCES EXCLUDE REGEX "v2/")
-else()
-    list(FILTER TEST_SOURCES EXCLUDE REGEX "v1/")
-endif()
 
 set(TEST_LIST
         trivial
@@ -78,28 +62,12 @@ add_blackbox_executable(
 
 set(TEST_NAME SqlFileReadWithTypeTest)
 
-# Determine Fast DDS version
-if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
-    set(DDS_TYPES_VERSION "v1")
-else()
-    set(DDS_TYPES_VERSION "v2")
-endif()
-
 file(
     GLOB_RECURSE TEST_SOURCES
     SqlFileReadWithTypeTest.cpp
     "${PROJECT_SOURCE_DIR}/test/resources/dds/*.c*"
     "${PROJECT_SOURCE_DIR}/test/resources/types/*.c*"
     )
-
-list(FILTER TEST_LIBRARY_SOURCES EXCLUDE REGEX "/main.cpp")
-
-# Exclude types' files depending on the Fast DDS version
-if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
-    list(FILTER TEST_SOURCES EXCLUDE REGEX "v2/")
-else()
-    list(FILTER TEST_SOURCES EXCLUDE REGEX "v1/")
-endif()
 
 set(TEST_LIST
         trivial

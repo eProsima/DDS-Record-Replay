@@ -24,16 +24,7 @@
 #include <fastdds/dds/domain/DomainParticipantListener.hpp>
 #include <fastdds/dds/subscriber/DataReaderListener.hpp>
 
-<<<<<<< HEAD
-<<<<<<< HEAD:ddsreplayer/test/blackbox/mcap/dds/ConfigurationSubscriber.h
-#include "types/configuration/ConfigurationPubSubTypes.hpp"
-=======
-<<<<<<<< HEAD:ddsreplayer/test/resources/ConfigurationSubscriber.h
-#include "types/configuration/ConfigurationPubSubTypes.h"
->>>>>>> b00497a (Strip replaying methods from McapFileReadTest & McapFileReadWithTypeTest):ddsreplayer/test/resources/dds/ConfigurationSubscriber.h
-=======
 #include "../types/configuration/Configuration.hpp"
->>>>>>> 8d371bc (Rebase fix)
 
 #include "DataToCheck.hpp"
 

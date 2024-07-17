@@ -66,8 +66,12 @@ void SqlMessage::deserialize(
     pub_sub_type.deserialize(&payload, &dynamic_data);
 
     // Serialize the payload into a JSON
+    std::stringstream data_json_stream;
+
     const auto ret = fastdds::dds::json_serialize(
-            dynamic_data, data_json, fastdds::dds::DynamicDataJsonFormat::EPROSIMA);
+            dynamic_data, fastdds::dds::DynamicDataJsonFormat::EPROSIMA, data_json_stream);
+
+    data_json = data_json_stream.str();
 
     if (ret != fastdds::dds::RETCODE_OK)
     {

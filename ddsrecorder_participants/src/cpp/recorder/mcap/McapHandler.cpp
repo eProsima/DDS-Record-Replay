@@ -22,6 +22,8 @@
 
 #include <mcap/reader.hpp>
 
+#include <fastdds/dds/xtypes/utils.hpp>
+
 #include <cpp_utils/exception/InconsistencyException.hpp>
 #include <cpp_utils/ros2_mangling.hpp>
 
@@ -118,7 +120,7 @@ void McapHandler::add_schema(
         encoding = "omgidl";
 
         std::stringstream idl;
-        auto ret = idl_serialize(dynamic_type, idl);
+        auto ret = fastdds::dds::idl_serialize(dynamic_type, idl);
         if (ret != fastdds::dds::RETCODE_OK)
         {
             logError(DDSRECORDER_MCAP_HANDLER, "MCAP_WRITE | Failed to serialize DynamicType to idl for type wth name: " << dynamic_type->get_name().to_string());

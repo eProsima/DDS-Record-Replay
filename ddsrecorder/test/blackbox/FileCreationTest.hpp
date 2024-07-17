@@ -48,7 +48,7 @@
 #include "constants.hpp"
 
 #include "../resources/types/hello_world/HelloWorld.hpp"
-#include "../resources/types/hello_world/HelloWorldPubSubTypes.h"
+#include "../resources/types/hello_world/HelloWorldPubSubTypes.hpp"
 
 using namespace eprosima;
 using DdsRecorderState = ddsrecorder::recorder::DdsRecorderStateCode;
