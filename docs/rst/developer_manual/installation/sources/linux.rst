@@ -195,14 +195,6 @@ To install PyQt6 simply run:
 
     pip3 install PyQt6
 
-.. note::
-
-    To install PyQt6 on Ubuntu 20.04, update ``pip`` and ``setuptools`` packages first.
-
-    .. code-block:: bash
-
-        python3 -m pip install pip setuptools --upgrade
-
 .. _mcap_dependencies:
 
 MCAP dependencies
