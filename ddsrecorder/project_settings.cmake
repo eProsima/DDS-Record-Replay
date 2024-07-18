@@ -25,7 +25,7 @@ set(MODULE_SUMMARY
 set(MODULE_FIND_PACKAGES
     yaml-cpp
     fastcdr
-    fastrtps
+    fastdds
     cpp_utils
     ddspipe_core
     ddspipe_participants
@@ -43,7 +43,7 @@ endif()
 set(MODULE_DEPENDENCIES
     yaml-cpp
     fastcdr
-    fastrtps
+    fastdds
     cpp_utils
     ddspipe_core
     ddspipe_participants

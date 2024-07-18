@@ -25,10 +25,9 @@
 #include <fastdds/dds/subscriber/qos/DataReaderQos.hpp>
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
 #include <fastdds/dds/subscriber/Subscriber.hpp>
-#include <fastrtps/types/DynamicDataFactory.h>
-#include <fastrtps/types/DynamicDataHelper.hpp>
-#include <fastrtps/types/TypeObjectFactory.h>
-#include <fastrtps/types/TypesBase.h>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicData.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicDataFactory.hpp>
+#include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
 
 #include "TypeLookupServiceSubscriber.h"
 
@@ -144,8 +143,8 @@ void TypeLookupServiceSubscriber::on_data_available(
         DataReader* reader)
 {
     // Create a new DynamicData to read the sample
-    eprosima::fastrtps::types::DynamicData_ptr new_dynamic_data;
-    new_dynamic_data = eprosima::fastrtps::types::DynamicDataFactory::get_instance()->create_data(dynamic_type_);
+    eprosima::fastdds::dds::DynamicData::_ref_type new_dynamic_data;
+    new_dynamic_data = eprosima::fastdds::dds::xtypes::DynamicDataFactory::get_instance()->create_data(dynamic_type_);
 
     SampleInfo info;
 
@@ -157,7 +156,7 @@ void TypeLookupServiceSubscriber::on_data_available(
             samples_++;
 
             std::cout << "Message " << samples_ << " received:\n" << std::endl;
-            eprosima::fastrtps::types::DynamicDataHelper::print(new_dynamic_data);
+            eprosima::fastdds::dds::xtypes::DynamicDataHelper::print(new_dynamic_data);
             std::cout << "-----------------------------------------------------" << std::endl;
 
             // Stop if all expecting messages has been received (max_messages number reached)
@@ -171,9 +170,9 @@ void TypeLookupServiceSubscriber::on_data_available(
 
 void TypeLookupServiceSubscriber::on_type_information_received(
         eprosima::fastdds::dds::DomainParticipant*,
-        const eprosima::fastrtps::string_255 topic_name,
-        const eprosima::fastrtps::string_255 type_name,
-        const eprosima::fastrtps::types::TypeInformation& type_information)
+        const eprosima::fastcdr::string_255 topic_name,
+        const eprosima::fastcdr::string_255 type_name,
+        const eprosima::fastdds::dds::xtypes::TypeInformation& type_information)
 {
     // First check if the topic received is the one we are expecting
     if (topic_name.to_string() != topic_name_)
@@ -197,9 +196,9 @@ void TypeLookupServiceSubscriber::on_type_information_received(
         " > by lookup service. Registering..." << std::endl;
 
     // Create the callback to register the remote dynamic type
-    std::function<void(const std::string&, const eprosima::fastrtps::types::DynamicType_ptr)> callback(
+    std::function<void(const std::string&, const eprosima::fastdds::dds::traits<eprosima::fastdds::dds::DynamicType>::ref_type)> callback(
             [this]
-            (const std::string& name, const eprosima::fastrtps::types::DynamicType_ptr type)
+            (const std::string& name, const eprosima::fastdds::dds::traits<eprosima::fastdds::dds::DynamicType>::ref_type type)
             {
                 this->register_remote_type_callback_(name, type);
             });
@@ -277,11 +276,11 @@ void TypeLookupServiceSubscriber::run(
 
 void TypeLookupServiceSubscriber::register_remote_type_callback_(
         const std::string&,
-        const eprosima::fastrtps::types::DynamicType_ptr dynamic_type)
+        const eprosima::fastdds::dds::traits<eprosima::fastdds::dds::DynamicType>::ref_type dynamic_type)
 {
     ////////////////////
     // Register the type
-    TypeSupport type(new eprosima::fastrtps::types::DynamicPubSubType(dynamic_type));
+    TypeSupport type(new eprosima::fastdds::dds::DynamicPubSubType(dynamic_type));
     type.register_type(participant_);
 
     ///////////////////////
