@@ -203,6 +203,9 @@ protected:
     // Whether the writer can write to the MCAP library
     bool enabled_{false};
 
+    // Whether the output file is open
+    bool opened_{false};
+
     // Track the size of the current MCAP file
     McapSizeTracker size_tracker_;
 

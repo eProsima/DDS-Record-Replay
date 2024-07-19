@@ -145,6 +145,12 @@ void McapWriter::update_dynamic_types(
             on_disk_full_();
         }
     }
+    catch (const FullDiskException& e)
+    {
+        logError(DDSRECORDER_MCAP_HANDLER,
+                "FAIL_MCAP_WRITE | Disk is full. Error message:\n " << e.what());
+        on_disk_full_();
+    }
 
     dynamic_types_payload_.reset(const_cast<fastrtps::rtps::SerializedPayload_t*>(&dynamic_types_payload));
     file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
@@ -159,6 +165,11 @@ void McapWriter::set_on_disk_full_callback(
 void McapWriter::open_new_file_nts_(
         const std::uint64_t min_file_size)
 {
+    if (opened_)
+    {
+        return;
+    }
+
     try
     {
         file_tracker_->new_file(min_file_size);
@@ -168,6 +179,10 @@ void McapWriter::open_new_file_nts_(
         throw FullDiskException(
                   "The minimum MCAP size (" + utils::from_bytes(min_file_size) + ") is greater than the maximum MCAP "
                   "size (" + utils::from_bytes(configuration_.max_file_size) + ").");
+    }
+    catch (const utils::InconsistencyException& e)
+    {
+        throw FullDiskException(e.what());
     }
 
     const auto filename = file_tracker_->get_current_filename();
@@ -181,6 +196,8 @@ void McapWriter::open_new_file_nts_(
                 "FAIL_MCAP_OPEN | " << error_msg);
         throw utils::InitializationException(error_msg);
     }
+
+    opened_ = true;
 
     // Set the file's maximum size
     const auto max_file_size = std::min(
@@ -204,6 +221,11 @@ void McapWriter::open_new_file_nts_(
 
 void McapWriter::close_current_file_nts_()
 {
+    if (!opened_)
+    {
+        return;
+    }
+
     if (record_types_ && dynamic_types_payload_ != nullptr)
     {
         // NOTE: This write should never fail since the minimum size accounts for it.
@@ -214,6 +236,8 @@ void McapWriter::close_current_file_nts_()
     size_tracker_.reset(file_tracker_->get_current_filename());
 
     writer_.close();
+    opened_ = false;
+
     file_tracker_->close_file();
 }
 
@@ -221,6 +245,11 @@ template <>
 void McapWriter::write_nts_(
         const mcap::Attachment& attachment)
 {
+    if (!opened_)
+    {
+        return;
+    }
+
     logInfo(DDSRECORDER_MCAP_WRITER,
             "MCAP_WRITE | Writing attachment: " << attachment.name << " (" << utils::from_bytes(attachment.dataSize) <<
             ").");
@@ -243,6 +272,11 @@ template <>
 void McapWriter::write_nts_(
         const mcap::Channel& channel)
 {
+    if (!opened_)
+    {
+        return;
+    }
+
     logInfo(DDSRECORDER_MCAP_WRITER,
             "MCAP_WRITE | Writing channel " << channel.topic << ".");
 
@@ -264,10 +298,8 @@ template <>
 void McapWriter::write_nts_(
         const McapMessage& msg)
 {
-    if (!enabled_)
+    if (!opened_ || !enabled_)
     {
-        logWarning(DDSRECORDER_MCAP_WRITER,
-                "MCAP_WRITE | Attempting to write a message in a disabled writer.");
         return;
     }
 
@@ -291,6 +323,11 @@ template <>
 void McapWriter::write_nts_(
         const mcap::Metadata& metadata)
 {
+    if (!opened_)
+    {
+        return;
+    }
+
     logInfo(DDSRECORDER_MCAP_WRITER,
             "MCAP_WRITE | Writing metadata: " << metadata.name << ".");
 
@@ -312,6 +349,11 @@ template <>
 void McapWriter::write_nts_(
         const mcap::Schema& schema)
 {
+    if (!opened_)
+    {
+        return;
+    }
+
     logInfo(DDSRECORDER_MCAP_WRITER,
             "MCAP_WRITE | Writing schema: " << schema.name << ".");
 
@@ -327,6 +369,11 @@ void McapWriter::write_nts_(
 
 void McapWriter::write_attachment_nts_()
 {
+    if (!opened_)
+    {
+        return;
+    }
+
     mcap::Attachment attachment;
 
     // Write down the attachment with the dynamic types
@@ -342,7 +389,7 @@ void McapWriter::write_attachment_nts_()
 
 void McapWriter::write_channels_nts_()
 {
-    if (channels_.empty())
+    if (!opened_ || channels_.empty())
     {
         return;
     }
@@ -359,6 +406,11 @@ void McapWriter::write_channels_nts_()
 
 void McapWriter::write_metadata_nts_()
 {
+    if (!opened_)
+    {
+        return;
+    }
+
     mcap::Metadata metadata;
 
     // Write down the metadata with the version
@@ -371,7 +423,7 @@ void McapWriter::write_metadata_nts_()
 
 void McapWriter::write_schemas_nts_()
 {
-    if (schemas_.empty())
+    if (!opened_ || schemas_.empty())
     {
         return;
     }
