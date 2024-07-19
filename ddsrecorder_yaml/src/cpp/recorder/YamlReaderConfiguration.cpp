@@ -23,9 +23,11 @@
 #include <cpp_utils/utils.hpp>
 
 #include <ddspipe_core/configuration/DdsPipeLogConfiguration.hpp>
+#include <ddspipe_core/types/dds/DomainId.hpp>
 #include <ddspipe_core/types/dynamic_types/types.hpp>
 #include <ddspipe_core/types/topic/filter/ManualTopic.hpp>
 #include <ddspipe_core/types/topic/filter/WildcardDdsFilterTopic.hpp>
+
 #include <ddspipe_participants/types/address/Address.hpp>
 
 #include <ddspipe_yaml/yaml_configuration_tags.hpp>
