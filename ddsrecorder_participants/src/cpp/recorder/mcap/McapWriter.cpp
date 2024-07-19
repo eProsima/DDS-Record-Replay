@@ -102,7 +102,7 @@ void McapWriter::disable()
 }
 
 void McapWriter::update_dynamic_types(
-        const fastrtps::rtps::SerializedPayload_t& dynamic_types_payload)
+        const fastdds::rtps::SerializedPayload_t& dynamic_types_payload)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
@@ -146,7 +146,7 @@ void McapWriter::update_dynamic_types(
         }
     }
 
-    dynamic_types_payload_.reset(const_cast<fastrtps::rtps::SerializedPayload_t*>(&dynamic_types_payload));
+    dynamic_types_payload_.reset(const_cast<fastdds::rtps::SerializedPayload_t*>(&dynamic_types_payload));
     file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
 }
 

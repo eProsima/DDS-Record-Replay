@@ -31,15 +31,6 @@ file(
 
 list(FILTER TEST_LIBRARY_SOURCES EXCLUDE REGEX "/main.cpp")
 
-# Exclude types' files depending on the Fast DDS version
-if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
-    list(FILTER TEST_SOURCES EXCLUDE REGEX "v2/")
-    list(FILTER TEST_LIBRARY_SOURCES EXCLUDE REGEX "v2/")
-else()
-    list(FILTER TEST_SOURCES EXCLUDE REGEX "v1/")
-    list(FILTER TEST_LIBRARY_SOURCES EXCLUDE REGEX "v1/")
-endif()
-
 set(TEST_LIST
         mcap_data_msgs
         mcap_dds_topic

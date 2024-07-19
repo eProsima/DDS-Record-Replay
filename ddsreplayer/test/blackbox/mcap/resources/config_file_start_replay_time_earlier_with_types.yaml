@@ -1,10 +1,11 @@
 topics:
-  - name: /dds/topic
-    type: HelloWorld
+  - name: configuration_topic
+    type: Configuration
     qos:
       reliability: true       # Use QoS RELIABLE
 
 replayer:
+  replay-types: true
   start-replay-time:
     local: false
     format: "%H-%M-%S_%Y-%m-%d"

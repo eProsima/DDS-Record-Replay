@@ -18,19 +18,12 @@
 
 set(TEST_NAME McapFileReadTest)
 
-# Determine Fast DDS version
-if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
-    set(DDS_TYPES_VERSION "v1")
-else()
-    set(DDS_TYPES_VERSION "v2")
-endif()
-
 set(TEST_SOURCES
     McapFileReadTest.cpp
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/${DDS_TYPES_VERSION}/hello_world/HelloWorld.cxx
-    $<$<STREQUAL:${DDS_TYPES_VERSION},v2>:${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/v2/hello_world/HelloWorldv1.cxx>
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/${DDS_TYPES_VERSION}/hello_world/HelloWorldPubSubTypes.cxx
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/HelloWorldSubscriber.cpp
+    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/configuration/Configuration.hpp
+    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/configuration/ConfigurationPubSubTypes.cxx
+    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/configuration/ConfigurationTypeObjectSupport.cxx
+    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/ConfigurationSubscriber.cpp
 )
 
 set(TEST_LIST
@@ -44,13 +37,13 @@ set(TEST_LIST
     )
 
 set(TEST_NEEDED_SOURCES
-        resources/helloworld_file.mcap
-        resources/config_file.yaml
-        resources/config_file_less_hz.yaml
-        resources/config_file_more_hz.yaml
-        resources/config_file_begin_time.yaml
-        resources/config_file_end_time.yaml
-        resources/config_file_start_replay_time_earlier.yaml
+        resources/configuration.mcap
+        resources/config_file_notype.yaml
+        resources/config_file_less_hz_notype.yaml
+        resources/config_file_more_hz_notype.yaml
+        resources/config_file_begin_time_notype.yaml
+        resources/config_file_end_time_notype.yaml
+        resources/config_file_start_replay_time_earlier_notype.yaml
     )
 
 set(TEST_EXTRA_HEADERS
@@ -72,28 +65,28 @@ set(TEST_NAME McapFileReadWithTypeTest)
 
 set(TEST_SOURCES
         McapFileReadWithTypeTest.cpp
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/HelloWorldDynTypesSubscriber.cpp
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/configuration/Configuration.hpp
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/configuration/ConfigurationPubSubTypes.cxx
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/configuration/ConfigurationTypeObjectSupport.cxx
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/ConfigurationSubscriber.cpp
+        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/ConfigurationDynTypesSubscriber.cpp
     )
 
 set(TEST_LIST
         trivial
         dds_data_to_check
-        ros2_data_to_check
         dds_less_playback_rate
-        ros2_less_playback_rate
         dds_more_playback_rate
-        ros2_more_playback_rate
         begin_time
         end_time
         start_replay_time_earlier
     )
 
 set(TEST_NEEDED_SOURCES
-        resources/helloworld_withtype_file.mcap
-        resources/ros2_file.mcap
-        resources/config_file.yaml
-        resources/config_file_less_hz.yaml
-        resources/config_file_more_hz.yaml
+        resources/configuration.mcap
+        resources/config_file_withtypes.yaml
+        resources/config_file_less_hz_withtypes.yaml
+        resources/config_file_more_hz_withtypes.yaml
         resources/config_file_begin_time_with_types.yaml
         resources/config_file_end_time_with_types.yaml
         resources/config_file_start_replay_time_earlier_with_types.yaml
