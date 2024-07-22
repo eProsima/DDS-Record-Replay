@@ -34,6 +34,13 @@
 #include <fastdds/dds/topic/qos/TopicQos.hpp>
 #include <fastdds/dds/topic/Topic.hpp>
 #include <fastdds/dds/topic/TypeSupport.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicData.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicDataFactory.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicTypeBuilderFactory.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicPubSubType.hpp>
+#include <fastdds/dds/xtypes/type_representation/ITypeObjectRegistry.hpp>
+#include <fastdds/dds/xtypes/utils.hpp>
 
 #include <cpp_utils/testing/gtest_aux.hpp>
 #include <cpp_utils/ros2_mangling.hpp>
@@ -77,8 +84,8 @@ public:
         ASSERT_NE(participant_, nullptr);
 
         // Register the type
-        fastdds::dds::TypeSupport type(new HelloWorldPubSubType());
-        participant_->register_type(type);
+        type_support_ = fastdds::dds::TypeSupport(new HelloWorldPubSubType());
+        participant_->register_type(type_support_);
 
         // Create the publisher
         publisher_ = participant_->create_publisher(fastdds::dds::PUBLISHER_QOS_DEFAULT, nullptr);
@@ -109,7 +116,7 @@ public:
 
 protected:
 
-    std::vector<std::shared_ptr<fastdds::rtps::SerializedPayload_t>> record_messages_(
+    std::vector<HelloWorld> record_messages_(
             const std::string& file_name,
             const unsigned int messages1,
             const DdsRecorderState state1 = DdsRecorderState::RUNNING,
@@ -184,7 +191,7 @@ protected:
         return sent_messages;
     }
 
-    std::vector<std::shared_ptr<fastdds::rtps::SerializedPayload_t>> send_messages_(
+    std::vector<HelloWorld> send_messages_(
             const unsigned int number_of_messages)
     {
         // Create the DataWriter
@@ -194,25 +201,20 @@ protected:
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
         // Send the messages
-        std::vector<std::shared_ptr<fastdds::rtps::SerializedPayload_t>> sent_messages;
+        std::vector<HelloWorld> sent_messages;
 
         for (std::uint32_t i = 0; i < number_of_messages; i++)
         {
             // Create the message
             HelloWorld hello;
             hello.index(i);
+            hello.message("Hello World!");
 
             // Send the message
             writer_->write(&hello);
 
-            // Serialize the message
-            HelloWorldPubSubType pubsubType;
-            const auto payload_size = pubsubType.getSerializedSizeProvider(&hello)();
-            auto payload = std::make_shared<fastdds::rtps::SerializedPayload_t>(payload_size);
-            pubsubType.serialize(&hello, payload.get());
-
-            // Store the serialized message
-            sent_messages.push_back(payload);
+            // Store the message
+            sent_messages.push_back(hello);
 
             // Wait for the message to be sent
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -222,6 +224,50 @@ protected:
         delete_datawriter_();
 
         return sent_messages;
+    }
+
+    std::shared_ptr<fastdds::rtps::SerializedPayload_t> to_cdr(
+            const HelloWorld& message)
+    {
+        HelloWorldPubSubType pubsubType;
+        const auto payload_size = pubsubType.getSerializedSizeProvider(&message)();
+        auto payload = std::make_shared<fastdds::rtps::SerializedPayload_t>(payload_size);
+        pubsubType.serialize(&message, payload.get());
+
+        return payload;
+    }
+
+    std::string to_json(
+            const HelloWorld& message)
+    {
+        // Get type object
+        fastdds::dds::xtypes::TypeObjectPair type_objects;
+        fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_objects(
+                    type_support_->getName(),
+                    type_objects);
+
+        // Build dynamic type
+        fastdds::dds::DynamicType::_ref_type dyn_type =
+            fastdds::dds::DynamicTypeBuilderFactory::get_instance()->create_type_w_type_object(
+                type_objects.complete_type_object)->build();
+
+        // Build dynamic data
+        fastdds::dds::DynamicData::_ref_type dyn_data =
+            fastdds::dds::DynamicDataFactory::get_instance()->create_data(dyn_type);
+
+        // Transform the message into DynamicData
+        const auto payload_size = type_support_->getSerializedSizeProvider(&message)();
+        auto payload = std::make_shared<fastdds::rtps::SerializedPayload_t>(payload_size);
+        type_support_->serialize(&message, payload.get());
+
+        fastdds::dds::TypeSupport dyn_type_support(new fastdds::dds::DynamicPubSubType(dyn_type));
+        dyn_type_support->deserialize(payload.get(), &dyn_data);
+
+        // Serialize DynamicType into its IDL representation
+        std::stringstream data_json;
+        json_serialize(dyn_data, fastdds::dds::DynamicDataJsonFormat::EPROSIMA, data_json);
+
+        return data_json.str();
     }
 
     void create_datawriter_()
@@ -275,6 +321,7 @@ protected:
     }
 
     fastdds::dds::DomainParticipant* participant_ = nullptr;
+    fastdds::dds::TypeSupport type_support_;
     fastdds::dds::Publisher* publisher_ = nullptr;
     fastdds::dds::Topic* topic_ = nullptr;
     fastdds::dds::DataWriter* writer_ = nullptr;

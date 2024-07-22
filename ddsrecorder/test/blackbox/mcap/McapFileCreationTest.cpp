@@ -154,11 +154,11 @@ TEST_F(McapFileCreationTest, mcap_data_msgs)
 
         // Verify the data size
         const auto read_data_size = it.message.dataSize;
-        ASSERT_EQ((*sent_message)->length, read_data_size);
+        ASSERT_EQ(to_cdr(*sent_message)->length, read_data_size);
 
         // Verify the data
         const auto read_data = (unsigned char*) reinterpret_cast<unsigned char const*>(it.message.data);
-        ASSERT_EQ(strcmp((char*) (*sent_message)->data, (char*) read_data), 0);
+        ASSERT_EQ(strcmp((char*) to_cdr(*sent_message)->data, (char*) read_data), 0);
 
         sent_message++;
     }

@@ -135,17 +135,20 @@ protected:
  * Verify that the DDS Recorder records properly in an SQL file.
  *
  * CASES:
- *  - Verify that the messages' data_cdr_size match the recorded data_cdr sizes.
+ *  - Verify that the messages' data_cdr_size matches the recorded data_cdr sizes.
  *  - Verify that the messages' data_cdr matches the recorded data_cdr.
+ *  - Verify that the messages' data_json is empty.
  */
-TEST_F(SqlFileCreationTest, sql_data_msgs)
+TEST_F(SqlFileCreationTest, sql_data_format_cdr)
 {
-    const std::string OUTPUT_FILE_NAME = "sql_data_msgs";
+    const std::string OUTPUT_FILE_NAME = "sql_data_cdr_msgs";
     const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".db");
 
     constexpr auto NUMBER_OF_MESSAGES = 10;
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    configuration_->sql_data_format = ddsrecorder::participants::DataFormat::cdr;
 
     // Record messages
     auto sent_messages = record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES);
@@ -157,17 +160,125 @@ TEST_F(SqlFileCreationTest, sql_data_msgs)
     // Read the recorded messages
     exec_sql_statement_(
         OUTPUT_FILE_PATH.string(),
-        "SELECT data_cdr, data_cdr_size FROM Messages ORDER BY log_time;", {}, [&](sqlite3_stmt* stmt)
+        "SELECT data_cdr_size, data_cdr, data_json FROM Messages ORDER BY log_time;", {}, [&](sqlite3_stmt* stmt)
     {
         read_message_count++;
 
-        // Verify the data size
-        const auto read_data_size = sqlite3_column_int(stmt, 1);
-        ASSERT_EQ((*sent_message)->length, read_data_size);
+        // Verify the data_cdr_size
+        const auto read_data_cdr_size = sqlite3_column_int(stmt, 0);
+        ASSERT_EQ(to_cdr(*sent_message)->length, read_data_cdr_size);
 
-        // Verify the data
-        const auto read_data = (unsigned char*) reinterpret_cast<unsigned char const*>(sqlite3_column_blob(stmt, 0));
-        ASSERT_EQ(strcmp((char*) (*sent_message)->data, (char*) read_data), 0);
+        // Verify the data_cdr
+        const auto read_data_cdr = (unsigned char*) reinterpret_cast<unsigned char const*>(sqlite3_column_blob(stmt, 1));
+        ASSERT_EQ(strcmp((char*) to_cdr(*sent_message)->data, (char*) read_data_cdr), 0);
+
+        // Verify the data_json
+        const std::string read_data_json = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        ASSERT_EQ(read_data_json.size(), 0);
+
+        sent_message++;
+    });
+
+    // Verify that it read messages
+    ASSERT_GT(read_message_count, 0);
+}
+
+/**
+ * Verify that the DDS Recorder records properly in an SQL file.
+ *
+ * CASES:
+ *  - Verify that the messages' data_cdr_size is 0.
+ *  - Verify that the messages' data_cdr is empty.
+ *  - Verify that the messages' data_json matches the recorded data_json.
+ */
+TEST_F(SqlFileCreationTest, sql_data_format_json)
+{
+    const std::string OUTPUT_FILE_NAME = "sql_data_json_msgs";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".db");
+
+    constexpr auto NUMBER_OF_MESSAGES = 10;
+
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    configuration_->sql_data_format = ddsrecorder::participants::DataFormat::json;
+
+    // Record messages
+    auto sent_messages = record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES);
+
+    auto sent_message = sent_messages.begin();
+
+    auto read_message_count = 0;
+
+    // Read the recorded messages
+    exec_sql_statement_(
+        OUTPUT_FILE_PATH.string(),
+        "SELECT data_cdr_size, data_cdr, data_json FROM Messages ORDER BY log_time;", {}, [&](sqlite3_stmt* stmt)
+    {
+        read_message_count++;
+
+        // Verify the data_cdr_size
+        const auto read_data_cdr_size = sqlite3_column_int(stmt, 0);
+        ASSERT_EQ(read_data_cdr_size, 0);
+
+        // Verify the data_cdr
+        const auto read_data_cdr = sqlite3_column_bytes(stmt, 1);
+        ASSERT_EQ(read_data_cdr, 0);
+
+        // Verify the data_json
+        const std::string read_data_json = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        ASSERT_EQ(to_json(*sent_message), read_data_json);
+
+        sent_message++;
+    });
+
+    // Verify that it read messages
+    ASSERT_GT(read_message_count, 0);
+}
+
+/**
+ * Verify that the DDS Recorder records properly in an SQL file.
+ *
+ * CASES:
+ *  - Verify that the messages' data_cdr_size matches the recorded data_cdr sizes.
+ *  - Verify that the messages' data_cdr matches the recorded data_cdr.
+ *  - Verify that the messages' data_json matches the recorded data_json.
+ */
+TEST_F(SqlFileCreationTest, sql_data_format_both)
+{
+    const std::string OUTPUT_FILE_NAME = "sql_data_cdr_msgs";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".db");
+
+    constexpr auto NUMBER_OF_MESSAGES = 10;
+
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    configuration_->sql_data_format = ddsrecorder::participants::DataFormat::both;
+
+    // Record messages
+    auto sent_messages = record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES);
+
+    auto sent_message = sent_messages.begin();
+
+    auto read_message_count = 0;
+
+    // Read the recorded messages
+    exec_sql_statement_(
+        OUTPUT_FILE_PATH.string(),
+        "SELECT data_cdr_size, data_cdr, data_json FROM Messages ORDER BY log_time;", {}, [&](sqlite3_stmt* stmt)
+    {
+        read_message_count++;
+
+        // Verify the data_cdr_size
+        const auto read_data_cdr_size = sqlite3_column_int(stmt, 0);
+        ASSERT_EQ(to_cdr(*sent_message)->length, read_data_cdr_size);
+
+        // Verify the data_cdr
+        const auto read_data_cdr = (unsigned char*) reinterpret_cast<unsigned char const*>(sqlite3_column_blob(stmt, 1));
+        ASSERT_EQ(strcmp((char*) to_cdr(*sent_message)->data, (char*) read_data_cdr), 0);
+
+        // Verify the data_json
+        const std::string read_data_json = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        ASSERT_EQ(to_json(*sent_message), read_data_json);
 
         sent_message++;
     });

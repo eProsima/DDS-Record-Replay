@@ -28,11 +28,14 @@ set(TEST_LIBRARY_SOURCES
     )
 
 set(TEST_LIST
-        sql_data_msgs
         sql_dds_topic
         sql_ros2_topic
         sql_data_num_msgs
         sql_data_num_msgs_downsampling
+
+        sql_data_format_cdr
+        sql_data_format_json
+        sql_data_format_both
 
         # State
         transition_running
