@@ -177,6 +177,7 @@ void ConfigurationSubscriber::init_info(
 {
     data_->n_received_msgs = 0;
     data_->type_msg = type_name;
+    data_->message_msg = "";
     data_->min_index_msg = -1;
     data_->max_index_msg = -1;
     data_->cummulated_ms_between_msgs = -1;
@@ -188,6 +189,7 @@ void ConfigurationSubscriber::fill_info(
         uint64_t time_arrive_msg)
 {
     data_->n_received_msgs++;
+    data_->message_msg = configuration_.message().data();
 
     if (data_->min_index_msg == -1 || data_->min_index_msg > static_cast<int>(configuration_.index()))
     {

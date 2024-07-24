@@ -5,7 +5,7 @@ topics:
       reliability: true       # Use QoS RELIABLE
 
 replayer:
-  replay-types: true
+  replay-types: false
 
 specs:
   wait-all-acked-timeout: 2000

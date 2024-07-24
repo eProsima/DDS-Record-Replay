@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <chrono>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <thread>
@@ -76,10 +77,10 @@ public:
         const auto data = replay_(configuration, input_file, publish_types);
 
         // Verify that the received data is correct
-        ASSERT_EQ(data.n_received_msgs, 11);
+        ASSERT_EQ(data.n_received_msgs, 10);
         ASSERT_EQ(data.type_msg, "Configuration");
-        ASSERT_EQ(data.message_msg, "Hello World");
-        ASSERT_EQ(data.min_index_msg, 0);
+        ASSERT_EQ(data.message_msg, "Configuration");
+        ASSERT_EQ(data.min_index_msg, 1);
         ASSERT_EQ(data.max_index_msg, 10);
 
         // Verify that the average miliseconds between messages is about 200 ms
@@ -159,8 +160,8 @@ public:
         const auto data = replay_(configuration, input_file, publish_types);
 
         // Verify that only the messages after the begin-time were received
-        ASSERT_EQ(data.n_received_msgs, 3);
-        ASSERT_EQ(data.min_index_msg, 8);
+        ASSERT_EQ(data.n_received_msgs, 7);
+        ASSERT_EQ(data.min_index_msg, 4);
         ASSERT_EQ(data.max_index_msg, 10);
     }
 
@@ -180,9 +181,9 @@ public:
         const auto data = replay_(configuration, input_file, publish_types);
 
         // Verify that only the messages before the end-time were received
-        ASSERT_EQ(data.n_received_msgs, 8);
-        ASSERT_EQ(data.min_index_msg, 0);
-        ASSERT_EQ(data.max_index_msg, 7);
+        ASSERT_EQ(data.n_received_msgs, 3);
+        ASSERT_EQ(data.min_index_msg, 1);
+        ASSERT_EQ(data.max_index_msg, 3);
     }
 
     /**
@@ -201,8 +202,8 @@ public:
         const auto data = replay_(configuration, input_file, publish_types);
 
         // Verify that all the messages were received
-        ASSERT_EQ(data.n_received_msgs, 11);
-        ASSERT_EQ(data.min_index_msg, 0);
+        ASSERT_EQ(data.n_received_msgs, 10);
+        ASSERT_EQ(data.min_index_msg, 1);
         ASSERT_EQ(data.max_index_msg, 10);
     }
 
@@ -235,15 +236,17 @@ protected:
         }
         else
         {
-            subscriber = std::make_unique<ConfigurationDynTypesSubscriber>(topic_name, test::DOMAIN, data);
+            subscriber = std::make_unique<ConfigurationSubscriber>(topic_name, test::DOMAIN, data);
         }
 
         // Configuration
-        ddsrecorder::yaml::ReplayerConfiguration configuration(configuration_path);
+        const auto full_configuration_path = std::filesystem::current_path() / configuration_path;
+        ddsrecorder::yaml::ReplayerConfiguration configuration(full_configuration_path.string());
         configuration.replayer_configuration->domain.domain_id = test::DOMAIN;
 
         // Create replayer instance
-        auto replayer = std::make_unique<ddsrecorder::replayer::DdsReplayer>(configuration, input_file);
+        const auto input_file_path = std::filesystem::current_path() / input_file;
+        auto replayer = std::make_unique<ddsrecorder::replayer::DdsReplayer>(configuration, input_file_path.string());
 
         // Give time for replayer and subscriber to match.
         // Waiting for the subscriber to match the replayer

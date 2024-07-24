@@ -42,7 +42,7 @@ set(TEST_NEEDED_SOURCES
         ../../resources/config/config_file_begin_time.yaml
         ../../resources/config/config_file_end_time.yaml
         ../../resources/config/config_file_start_replay_time_earlier.yaml
-        ../../resources/recordings/basic/helloworld.db
+        ../../resources/recordings/basic/configuration.db
     )
 
 set(TEST_EXTRA_HEADERS

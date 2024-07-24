@@ -25,5 +25,5 @@ class SqlFileReadTest : public FileReadTest
 {
 protected:
 
-    const std::string input_file_{"../../resources/recordings/basic/helloworld.db"};
+    const std::string input_file_{"../../resources/recordings/basic/configuration.db"};
 };

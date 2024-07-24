@@ -23,7 +23,7 @@
 
 namespace test {
 
-constexpr std::uint32_t DOMAIN = 110;
+constexpr std::uint32_t DOMAIN = 80;
 
 const auto DDS_TOPIC_NAME = "/dds/topic";
 const auto DDS_TYPE_NAME = "HelloWorld";

@@ -23,11 +23,11 @@
 
 struct DataToCheck
 {
-    unsigned int n_received_msgs;
-    std::string type_msg;
-    std::string message_msg;
-    int min_index_msg;
-    int max_index_msg;
-    double mean_ms_between_msgs;
-    double cummulated_ms_between_msgs;
+    unsigned int n_received_msgs{0};
+    std::string type_msg{""};
+    std::string message_msg{""};
+    int min_index_msg{0};
+    int max_index_msg{0};
+    double mean_ms_between_msgs{0};
+    double cummulated_ms_between_msgs{0};
 };
