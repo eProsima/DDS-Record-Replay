@@ -131,6 +131,12 @@ void serialize_key(
 
     static_cast<void>(scdr);
     static_cast<void>(data);
+                        scdr << data.type_name();
+
+                        scdr << data.type_information();
+
+                        scdr << data.type_object();
+
 }
 
 
@@ -215,6 +221,8 @@ void serialize_key(
 
     static_cast<void>(scdr);
     static_cast<void>(data);
+                        scdr << data.dynamic_types();
+
 }
 
 

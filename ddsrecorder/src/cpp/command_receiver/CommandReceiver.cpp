@@ -177,7 +177,7 @@ bool CommandReceiver::init()
     // CREATE THE TOPIC
     command_topic_ = participant_->create_topic(
         command_topic_name_,
-        command_type_->getName(),
+        command_type_->get_name(),
         TOPIC_QOS_DEFAULT);
 
     if (command_topic_ == nullptr)
@@ -217,7 +217,7 @@ bool CommandReceiver::init()
     // CREATE THE TOPIC
     status_topic_ = participant_->create_topic(
         status_topic_name_,
-        status_type_->getName(),
+        status_type_->get_name(),
         TOPIC_QOS_DEFAULT);
 
     if (status_topic_ == nullptr)

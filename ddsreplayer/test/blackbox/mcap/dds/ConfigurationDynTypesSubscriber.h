@@ -30,7 +30,8 @@
 #include <fastdds/dds/subscriber/DataReader.hpp>
 #include <fastdds/dds/subscriber/DataReaderListener.hpp>
 #include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
-#include <fastdds/rtps/writer/WriterDiscoveryInfo.hpp>
+#include <fastdds/rtps/builtin/data/PublicationBuiltinTopicData.hpp>
+#include <fastdds/rtps/writer/WriterDiscoveryStatus.hpp>
 
 #include "types/configuration/ConfigurationPubSubTypes.hpp"
 
@@ -81,7 +82,8 @@ public:
     //! DomainParticipant callback to inform new data readers discovered
     void on_data_writer_discovery(
             eprosima::fastdds::dds::DomainParticipant* participant,
-            eprosima::fastdds::rtps::WriterDiscoveryInfo&& info,
+            eprosima::fastdds::rtps::WriterDiscoveryStatus reason,
+            const eprosima::fastdds::dds::PublicationBuiltinTopicData& info,
             bool& /*should_be_ignored*/) override;
 
     void init_info(

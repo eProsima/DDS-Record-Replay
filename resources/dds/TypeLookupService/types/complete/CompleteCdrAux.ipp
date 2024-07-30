@@ -113,8 +113,13 @@ void serialize_key(
         eprosima::fastcdr::Cdr& scdr,
         const Timestamp& data)
 {
+
     static_cast<void>(scdr);
     static_cast<void>(data);
+                        scdr << data.seconds();
+
+                        scdr << data.milliseconds();
+
 }
 
 
@@ -205,8 +210,15 @@ void serialize_key(
         eprosima::fastcdr::Cdr& scdr,
         const Point& data)
 {
+
     static_cast<void>(scdr);
     static_cast<void>(data);
+                        scdr << data.x();
+
+                        scdr << data.y();
+
+                        scdr << data.z();
+
 }
 
 
@@ -297,8 +309,19 @@ void serialize_key(
         eprosima::fastcdr::Cdr& scdr,
         const MessageDescriptor& data)
 {
+            extern void serialize_key(
+                    Cdr& scdr,
+                    const Timestamp& data);
+
+
     static_cast<void>(scdr);
     static_cast<void>(data);
+                        scdr << data.id();
+
+                        scdr << data.topic();
+
+                        serialize_key(scdr, data.time());
+
 }
 
 
@@ -381,8 +404,18 @@ void serialize_key(
         eprosima::fastcdr::Cdr& scdr,
         const Message& data)
 {
+            extern void serialize_key(
+                    Cdr& scdr,
+                    const MessageDescriptor& data);
+
+
+
     static_cast<void>(scdr);
     static_cast<void>(data);
+                        serialize_key(scdr, data.descriptor());
+
+                        scdr << data.message();
+
 }
 
 
@@ -481,8 +514,23 @@ void serialize_key(
         eprosima::fastcdr::Cdr& scdr,
         const CompleteData& data)
 {
+            extern void serialize_key(
+                    Cdr& scdr,
+                    const Point& data);
+
+
+
+
     static_cast<void>(scdr);
     static_cast<void>(data);
+                        scdr << data.index();
+
+                        serialize_key(scdr, data.main_point());
+
+                        scdr << data.internal_data();
+
+                        scdr << data.messages();
+
 }
 
 

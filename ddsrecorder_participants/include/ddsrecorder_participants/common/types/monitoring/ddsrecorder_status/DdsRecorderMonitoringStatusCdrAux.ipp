@@ -113,8 +113,13 @@ void serialize_key(
         eprosima::fastcdr::Cdr& scdr,
         const DdsRecorderMonitoringErrorStatus& data)
 {
+
     static_cast<void>(scdr);
     static_cast<void>(data);
+                        scdr << data.mcap_file_creation_failure();
+
+                        scdr << data.disk_full();
+
 }
 
 
@@ -205,8 +210,10 @@ void serialize_key(
         eprosima::fastcdr::Cdr& scdr,
         const DdsRecorderMonitoringStatus& data)
 {
-    static_cast<void>(scdr);
-    static_cast<void>(data);
+    extern void serialize_key(
+            Cdr& scdr,
+            const MonitoringStatus& data);
+    serialize_key(scdr, static_cast<const MonitoringStatus&>(data));
 }
 
 

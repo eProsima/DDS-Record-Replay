@@ -217,7 +217,7 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
         serialized_payload.data,
         reinterpret_cast<const unsigned char*>(dynamic_attachment.data),
         dynamic_attachment.dataSize);
-    type_support.deserialize(&serialized_payload, &dynamic_types);
+    type_support.deserialize(serialized_payload, &dynamic_types);
 
     if (configuration.replay_types)
     {

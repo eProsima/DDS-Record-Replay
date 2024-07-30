@@ -31,8 +31,6 @@
 #include <fastdds/dds/xtypes/dynamic_types/DynamicTypeBuilder.hpp>
 #include <fastdds/dds/xtypes/dynamic_types/DynamicTypeBuilderFactory.hpp>
 #include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
-// #include <fastdds/dds/xtypes/utils.hpp>
-#include <fastdds/rtps/builtin/data/WriterProxyData.hpp>
 
 #include "ConfigurationDynTypesSubscriber.h"
 
@@ -164,15 +162,14 @@ void ConfigurationDynTypesSubscriber::on_data_available(
 
 void ConfigurationDynTypesSubscriber::on_data_writer_discovery(
         fastdds::dds::DomainParticipant*,
-        fastdds::rtps::WriterDiscoveryInfo&& info,
+        fastdds::rtps::WriterDiscoveryStatus reason,
+        const fastdds::rtps::PublicationBuiltinTopicData& info,
         bool&)
 {
-    fastdds::rtps::WriterProxyData proxy_copy(info.info);
-
     // Get type information
-    const auto type_info = proxy_copy.type_information().type_information;
-    const auto type_name = proxy_copy.typeName();
-    const auto topic_name = proxy_copy.topicName();
+    const auto type_info = info.type_information.type_information;
+    const auto type_name = info.type_name;
+    const auto topic_name = info.topic_name;
 
     notify_type_discovered_(type_info, type_name, topic_name);
 }
