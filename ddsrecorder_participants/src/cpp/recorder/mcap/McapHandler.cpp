@@ -27,6 +27,7 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <fastdds/dds/core/policy/QosPolicies.hpp>
 #include <fastdds/dds/topic/TypeSupport.hpp>
 #include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
 #include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
@@ -933,8 +934,8 @@ fastdds::rtps::SerializedPayload_t* McapHandler::serialize_dynamic_types_(
     // Serialize dynamic types collection using CDR
     fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
     fastdds::rtps::SerializedPayload_t* serialized_payload = new fastdds::rtps::SerializedPayload_t(
-        type_support.get_serialized_size_provider(&dynamic_types)());
-    type_support.serialize(&dynamic_types, serialized_payload);
+        type_support.calculate_serialized_size(&dynamic_types, fastdds::dds::DEFAULT_DATA_REPRESENTATION));
+    type_support.serialize(&dynamic_types, *serialized_payload, fastdds::dds::DEFAULT_DATA_REPRESENTATION);
 
     return serialized_payload;
 }

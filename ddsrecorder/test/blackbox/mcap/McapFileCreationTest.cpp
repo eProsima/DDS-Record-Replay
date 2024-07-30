@@ -143,9 +143,6 @@ void create_publisher(
     test::dynamic_type_ = eprosima::fastdds::dds::DynamicTypeBuilderFactory::get_instance()->create_type_w_type_object(
                 dyn_type_objects.complete_type_object)->build();
 
-    // Set type so introspection info is sent
-    type->auto_fill_type_information(true);
-
     // Register the type in the Participant
     participant_->register_type(type);
 

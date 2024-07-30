@@ -121,8 +121,15 @@ void serialize_key(
         eprosima::fastcdr::Cdr& scdr,
         const DdsRecorderStatus& data)
 {
+
     static_cast<void>(scdr);
     static_cast<void>(data);
+                        scdr << data.previous();
+
+                        scdr << data.current();
+
+                        scdr << data.info();
+
 }
 
 

@@ -32,10 +32,10 @@
 #include "DdsRecorderLogEntry.hpp"
 
 
-#if !defined(GEN_API_VER) || (GEN_API_VER != 2)
+#if !defined(FASTDDS_GEN_API_VER) || (FASTDDS_GEN_API_VER != 3)
 #error \
     Generated DdsRecorderLogEntry is not compatible with current installed Fast DDS. Please, regenerate it with fastddsgen.
-#endif  // GEN_API_VER
+#endif  // FASTDDS_GEN_API_VER
 
 
 #endif // FAST_DDS_GENERATED__DDSRECORDERLOGENTRY_PUBSUBTYPES_HPP
