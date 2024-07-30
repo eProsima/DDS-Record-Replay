@@ -24,7 +24,7 @@
 
 #include <mcap/mcap.hpp>
 
-#include <fastdds/rtps/common/SerializedPayload.h>
+#include <fastdds/rtps/common/SerializedPayload.hpp>
 
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/library/library_dll.h>
@@ -95,7 +95,7 @@ public:
      * - @throws \c InitializationException if the MCAP library fails to open a new file.
      */
     void update_dynamic_types(
-            const fastrtps::rtps::SerializedPayload_t& dynamic_types_payload);
+            const fastdds::rtps::SerializedPayload_t& dynamic_types_payload);
 
     /**
      * @brief Sets the callback to be called when the disk is full.
@@ -210,7 +210,7 @@ protected:
     mcap::McapWriter writer_;
 
     // The dynamic types payload to be written as an attachment
-    std::unique_ptr<fastrtps::rtps::SerializedPayload_t> dynamic_types_payload_;
+    std::unique_ptr<fastdds::rtps::SerializedPayload_t> dynamic_types_payload_;
 
     // The channels that have been written
     std::map<mcap::ChannelId, mcap::Channel> channels_;

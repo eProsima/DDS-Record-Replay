@@ -22,7 +22,7 @@
 #include <cstdint>
 #include <string>
 
-#include <fastdds/rtps/common/Time_t.h>
+#include <fastdds/rtps/common/Time_t.hpp>
 #include <ddspipe_core/types/dds/DomainId.hpp>
 #include <ddspipe_core/types/participant/ParticipantId.hpp>
 
@@ -40,7 +40,7 @@ const std::string TOPIC_NAME = "DdsRecorderBlackboxTestTopic";
 const ParticipantId PARTICIPANT_ID = "DdsRecorderBlackboxTestParticipant";
 
 // The maximum amount of time (in seconds) to wait for the subscriber to acknowledge messages.
-const fastrtps::Duration_t MAX_WAITING_TIME(10);
+const fastdds::dds::Duration_t MAX_WAITING_TIME(10);
 
 namespace limits {
 

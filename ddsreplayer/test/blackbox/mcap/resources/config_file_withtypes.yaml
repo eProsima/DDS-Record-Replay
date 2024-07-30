@@ -1,0 +1,11 @@
+topics:
+  - name: configuration_topic
+    type: Configuration
+    qos:
+      reliability: true       # Use QoS RELIABLE
+
+replayer:
+  replay-types: true
+
+specs:
+  wait-all-acked-timeout: 2000

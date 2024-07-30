@@ -1,13 +1,15 @@
 topics:
-  - name: /dds/topic
+  - name: configuration_topic
+    type: Configuration
     qos:
       reliability: true       # Use QoS RELIABLE
 
 replayer:
+  replay-types: true
   end-time:
     local: false
     format: "%H-%M-%S_%Y-%m-%d"
-    datetime: 11-48-47_2023-05-26
+    datetime: 10-41-42_2024-07-16
 
 specs:
   wait-all-acked-timeout: 2000

@@ -30,7 +30,7 @@ set(TEST_LIST
 set(TEST_EXTRA_LIBRARIES
         yaml-cpp
         fastcdr
-        fastrtps
+        fastdds
         cpp_utils
         ddspipe_core
         ddspipe_participants
