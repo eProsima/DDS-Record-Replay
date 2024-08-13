@@ -241,7 +241,7 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
         auto channel_topic = utils::Heritable<DdsTopic>::make_heritable();
         channel_topic->m_topic_name = topic_name;
         channel_topic->type_name = type_name;
-        channel_topic->type_ids = registered_types_[type_name];
+        channel_topic->type_identifiers = registered_types_[type_name];
 
         // Apply the QoS stored in the MCAP file as if they were the discovered QoS.
         channel_topic->topic_qos.set_qos(
