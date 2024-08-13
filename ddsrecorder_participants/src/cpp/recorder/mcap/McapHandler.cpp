@@ -102,8 +102,7 @@ McapHandler::~McapHandler()
 
 void McapHandler::add_schema(
         const fastdds::dds::DynamicType::_ref_type& dynamic_type,
-        const std::string& type_name,
-        const fastdds::dds::xtypes::TypeIdentifier& type_id)
+        const fastdds::dds::xtypes::TypeIdentifier& type_identifier)
 {
     std::lock_guard<std::mutex> lock(mtx_);
 
@@ -111,7 +110,7 @@ void McapHandler::add_schema(
 
     assert(nullptr != dynamic_type);
 
-    // const std::string type_name = dynamic_type->get_name();
+    const std::string type_name = dynamic_type->get_name().to_string();
 
     // Check if it exists already
     if (received_types_.find(type_name) != received_types_.end())
@@ -140,7 +139,7 @@ void McapHandler::add_schema(
         auto ret = idl_serialize(dynamic_type, idl);
         if (ret != fastdds::dds::RETCODE_OK)
         {
-            logError(DDSRECORDER_MCAP_HANDLER, "MCAP_WRITE | Failed to serialize DynamicType to idl for type wth name: " << dynamic_type->get_name().to_string());
+            logError(DDSRECORDER_MCAP_HANDLER, "MCAP_WRITE | Failed to serialize DynamicType to idl for type wth name: " << type_name);
             return;
         }
         data = idl.str();
@@ -150,7 +149,7 @@ void McapHandler::add_schema(
 
     // Add schema to writer and to schemas map
     logInfo(DDSRECORDER_MCAP_HANDLER,
-            "MCAP_WRITE | Adding schema with name " << dynamic_type->get_name().to_string() << " :\n" << data << "\n");
+            "MCAP_WRITE | Adding schema with name " << type_name << " :\n" << data << "\n");
 
     mcap_writer_.write(new_schema);
 
@@ -169,7 +168,7 @@ void McapHandler::add_schema(
     if (configuration_.record_types)
     {
         // Store dynamic type in dynamic_types collection
-        store_dynamic_type_(type_name, type_id, dynamic_types_);
+        store_dynamic_type_(type_name, type_identifier, dynamic_types_);
 
         // Serialize dynamic types collection
         const auto serialized_dynamic_types = serialize_dynamic_types_(dynamic_types_);
@@ -869,15 +868,15 @@ mcap::SchemaId McapHandler::get_schema_id_nts_(
 
 void McapHandler::store_dynamic_type_(
         const std::string& type_name,
-        const fastdds::dds::xtypes::TypeIdentifier& type_id,
+        const fastdds::dds::xtypes::TypeIdentifier& type_identifier,
         DynamicTypesCollection& dynamic_types) const
 {
-    fastdds::dds::xtypes::TypeIdentifierPair type_ids_pair;
-    type_ids_pair.type_identifier1(type_id);
+    fastdds::dds::xtypes::TypeIdentifierPair type_identifiers;
+    type_identifiers.type_identifier1(type_identifier);
 
     fastdds::dds::xtypes::TypeInformation type_info;
     if (fastdds::dds::RETCODE_OK == fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_information(
-            type_ids_pair,
+            type_identifiers,
             type_info,
             true))
     {
@@ -886,30 +885,30 @@ void McapHandler::store_dynamic_type_(
         auto type_dependencies = type_info.complete().dependent_typeids();
         for (auto dependency : type_dependencies)
         {
-            fastdds::dds::xtypes::TypeIdentifier type_identifier;
-            type_identifier = dependency.type_id();
+            fastdds::dds::xtypes::TypeIdentifier dependency_type_identifier;
+            dependency_type_identifier = dependency.type_id();
 
-            fastdds::dds::xtypes::TypeObject type_object;
+            fastdds::dds::xtypes::TypeObject dependency_type_object;
             const auto ret = fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_object(
-                    type_identifier,
-                    type_object);
+                    dependency_type_identifier,
+                    dependency_type_object);
 
             dependency_name = type_name + "_" + std::to_string(dependency_index);
 
             // Store dependency in dynamic_types collection
-            store_dynamic_type_(type_identifier, type_object, dependency_name, dynamic_types);
+            store_dynamic_type_(dependency_type_identifier, dependency_type_object, dependency_name, dynamic_types);
 
             // Increment suffix counter
             dependency_index++;
         }
 
-        fastdds::dds::xtypes::TypeObject type_obj;
+        fastdds::dds::xtypes::TypeObject type_object;
         if (fastdds::dds::RETCODE_OK == fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_object(
-                type_id,
-                type_obj))
+                type_identifier,
+                type_object))
         {
             // Store dynamic type in dynamic_types collection
-            store_dynamic_type_(type_id, type_obj, type_name, dynamic_types);
+            store_dynamic_type_(type_identifier, type_object, type_name, dynamic_types);
         }
     }
 }

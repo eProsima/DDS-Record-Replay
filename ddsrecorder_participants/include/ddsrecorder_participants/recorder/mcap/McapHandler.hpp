@@ -119,8 +119,7 @@ public:
     DDSRECORDER_PARTICIPANTS_DllAPI
     void add_schema(
             const fastdds::dds::DynamicType::_ref_type& dynamic_type,
-            const std::string& type_name,
-            const fastdds::dds::xtypes::TypeIdentifier& type_id) override;
+            const fastdds::dds::xtypes::TypeIdentifier& type_identifier) override;
 
     /**
      * @brief Add a data sample, to be written through a mcap \c Channel associated to the given \c topic.
@@ -393,7 +392,7 @@ protected:
      */
     void store_dynamic_type_(
             const std::string& type_name,
-            const fastdds::dds::xtypes::TypeIdentifier& type_id,
+            const fastdds::dds::xtypes::TypeIdentifier& type_identifier,
             DynamicTypesCollection& dynamic_types) const;
 
     /**
