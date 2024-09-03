@@ -24,7 +24,7 @@ void DdsRecorderStatusMonitorProducer::register_consumer(
 {
     if (!enabled_)
     {
-        logWarning(DDSRECORDER_MONITOR, "MONITOR | Not registering consumer " << consumer->get_name() << " on "
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MONITOR, "MONITOR | Not registering consumer " << consumer->get_name() << " on "
                 "DdsRecorderStatusMonitorProducer since the DdsRecorderStatusMonitorProducer is disabled.");
 
         return;
@@ -32,7 +32,7 @@ void DdsRecorderStatusMonitorProducer::register_consumer(
 
     std::lock_guard<std::mutex> lock(mutex_);
 
-    logInfo(DDSRECORDER_MONITOR, "MONITOR | Registering consumer " << consumer->get_name() << " on "
+    EPROSIMA_LOG_INFO(DDSRECORDER_MONITOR, "MONITOR | Registering consumer " << consumer->get_name() << " on "
             "DdsRecorderStatusMonitorProducer.");
 
     consumers_.push_back(std::move(consumer));
@@ -42,7 +42,7 @@ void DdsRecorderStatusMonitorProducer::clear_consumers()
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    logInfo(DDSRECORDER_MONITOR, "MONITOR | Clearing consumers on DdsRecorderStatusMonitorProducer.");
+    EPROSIMA_LOG_INFO(DDSRECORDER_MONITOR, "MONITOR | Clearing consumers on DdsRecorderStatusMonitorProducer.");
 
     consumers_.clear();
 }
@@ -97,7 +97,7 @@ void DdsRecorderStatusMonitorProducer::clear_data()
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    logInfo(DDSRECORDER_MONITOR, "MONITOR | Clearing data on DdsRecorderStatusMonitorProducer.");
+    EPROSIMA_LOG_INFO(DDSRECORDER_MONITOR, "MONITOR | Clearing data on DdsRecorderStatusMonitorProducer.");
 
     error_status_.type_mismatch(false);
     error_status_.qos_mismatch(false);
@@ -124,7 +124,7 @@ void DdsRecorderStatusMonitorProducer::add_error_to_status(
     //      2. Simultaneous calls to add_error_to_status.
     std::lock_guard<std::mutex> lock(mutex_);
 
-    logInfo(DDSRECORDER_MONITOR, "MONITOR | Adding error " << error << " to status.");
+    EPROSIMA_LOG_INFO(DDSRECORDER_MONITOR, "MONITOR | Adding error " << error << " to status.");
 
     if (error == "TYPE_MISMATCH")
     {
@@ -148,7 +148,7 @@ void DdsRecorderStatusMonitorProducer::add_error_to_status(
 
 void DdsRecorderStatusMonitorProducer::produce_nts_()
 {
-    logInfo(DDSRECORDER_MONITOR, "MONITOR | Producing DdsRecorderMonitoringStatus.");
+    EPROSIMA_LOG_INFO(DDSRECORDER_MONITOR, "MONITOR | Producing DdsRecorderMonitoringStatus.");
 
     data_.error_status(error_status_);
     data_.ddsrecorder_error_status(ddsrecorder_error_status_);
@@ -157,7 +157,7 @@ void DdsRecorderStatusMonitorProducer::produce_nts_()
 
 void DdsRecorderStatusMonitorProducer::consume_nts_()
 {
-    logInfo(DDSRECORDER_MONITOR, "MONITOR | Consuming DdsRecorderMonitoringStatus.");
+    EPROSIMA_LOG_INFO(DDSRECORDER_MONITOR, "MONITOR | Consuming DdsRecorderMonitoringStatus.");
 
     for (auto& consumer : consumers_)
     {

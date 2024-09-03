@@ -215,7 +215,7 @@ void ConfigurationDynTypesSubscriber::notify_type_discovered_(
 
     // Notify type_identifier and its associated tyme_name.
     // NOTE: We assume each type_name corresponds to only one type_identifier
-    // logInfo("Participant " << this->id() << " discovered type object " << dyn_type->get_name());
+    // EPROSIMA_LOG_INFO("Participant " << this->id() << " discovered type object " << dyn_type->get_name());
 
     // Register DynamicType
     register_remote_type_callback_(type_name_, dyn_type);

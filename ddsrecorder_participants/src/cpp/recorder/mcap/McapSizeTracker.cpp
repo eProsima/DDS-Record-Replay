@@ -44,12 +44,12 @@ void McapSizeTracker::init(
         const std::uint64_t& space_available,
         const std::uint64_t& safety_margin)
 {
-    logInfo(DDSRECORDER_MCAP_SIZE_TRACKER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_SIZE_TRACKER,
             "MCAP_WRITE | Initializing tracker with a size of " << utils::from_bytes(space_available));
 
     if (enabled_)
     {
-        logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
                 "MCAP_WRITE | Attempting to initialize already enabled tracker.");
         return;
     }
@@ -70,12 +70,12 @@ void McapSizeTracker::init(
 void McapSizeTracker::reset(
         const std::string& filepath)
 {
-    logInfo(DDSRECORDER_MCAP_SIZE_TRACKER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_SIZE_TRACKER,
             "MCAP_WRITE | Resetting tracker for: " << filepath);
 
     if (!enabled_)
     {
-        logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
                 "MCAP_WRITE | Attempting to reset disabled tracker.");
         return;
     }
@@ -84,13 +84,13 @@ void McapSizeTracker::reset(
 
     if (written_mcap_size_ > space_available_)
     {
-        logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
                 "MCAP_WRITE | Written size exceeds available space in disk.");
         // assert(false); // TODO: uncomment when estimation is exact
     }
     else if (potential_mcap_size_ != written_mcap_size_)
     {
-        logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
                 "MCAP_WRITE | Written size exceeds potential one.");
         // assert(false); // TODO: uncomment when estimation is exact
     }
@@ -102,7 +102,7 @@ void McapSizeTracker::reset(
     // const auto actual_written_size = std::filesystem::file_size(p);
     // if (written_mcap_size_ != actual_written_size)
     // {
-    //     logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
+    //     EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
     //                "MCAP_WRITE | Actual written size is different from expected size: " << actual_written_size <<
     //                " vs " << written_mcap_size_);
     //     // assert(false); // TODO: uncomment when estimation is exact
@@ -230,7 +230,7 @@ bool McapSizeTracker::can_increase_potential_mcap_size_(
 
     if (potential_mcap_size_ < size_to_remove)
     {
-        logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
                 "MCAP_WRITE | Attempting to decrease potential size more than possible.");
         // assert(false); // TODO: uncomment when estimation is exact
         return false;
@@ -245,7 +245,7 @@ void McapSizeTracker::check_and_increase_potential_mcap_size_(
 {
     if (!enabled_)
     {
-        logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
                 "MCAP_WRITE | Attempting to increase potential size in disabled tracker.");
         return;
     }
@@ -275,14 +275,14 @@ void McapSizeTracker::decrease_potential_mcap_size_(
 {
     if (!enabled_)
     {
-        logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
                 "MCAP_WRITE | Attempting to decrease potential size in disabled tracker.");
         return;
     }
 
     if (potential_mcap_size_ < size)
     {
-        logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
                 "MCAP_WRITE | Attempting to decrease potential size more than possible.");
         // assert(false); // TODO: uncomment when estimation is exact
         return;
@@ -301,14 +301,14 @@ void McapSizeTracker::check_and_increase_written_mcap_size_(
 {
     if (!enabled_)
     {
-        logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
                 "MCAP_WRITE | Attempting to increase written size in disabled tracker.");
         return;
     }
 
     if ((written_mcap_size_ + size) > space_available_)
     {
-        logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
                 "MCAP_WRITE | Written size exceeds available space in disk.");
         // assert(false); // TODO: uncomment when estimation is exact
         return;
@@ -316,7 +316,7 @@ void McapSizeTracker::check_and_increase_written_mcap_size_(
 
     if ((written_mcap_size_ + size) > potential_mcap_size_)
     {
-        logWarning(DDSRECORDER_MCAP_SIZE_TRACKER,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
                 "MCAP_WRITE | Written size exceeds potential one.");
         // assert(false); // TODO: uncomment when estimation is exact
         return;

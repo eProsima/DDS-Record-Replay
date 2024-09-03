@@ -88,7 +88,7 @@ std::shared_ptr<IReader> McapReaderParticipant::create_reader(
 {
     if (!utils::can_cast<DdsTopic>(topic))
     {
-        logWarning(DDSREPLAYER_MCAP_READER_PARTICIPANT, "Not creating Writer for topic " << topic.topic_name());
+        EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT, "Not creating Writer for topic " << topic.topic_name());
         return std::make_shared<BlankReader>();
     }
 
@@ -133,7 +133,7 @@ void McapReaderParticipant::process_mcap()
     // Read messages
     const auto onProblem = [](const mcap::Status& status)
             {
-                logWarning(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
                         "An error occurred while reading messages: " << status.message << ".");
             };
     auto messages = mcap_reader.readMessages(onProblem, read_options);
@@ -148,7 +148,7 @@ void McapReaderParticipant::process_mcap()
     }
     else
     {
-        logWarning(DDSREPLAYER_MCAP_READER_PARTICIPANT, "Provided input file contains no messages in the given range.");
+        EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT, "Provided input file contains no messages in the given range.");
         return;
     }
 
@@ -161,7 +161,7 @@ void McapReaderParticipant::process_mcap()
 
         if (initial_ts < now)
         {
-            logWarning(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+            EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
                     "Provided start-replay-time already expired, starting immediately...");
             initial_ts = now;
         }
@@ -209,12 +209,12 @@ void McapReaderParticipant::process_mcap()
         auto readers_it = readers_.find(channel_topic);
         if (readers_it == readers_.end())
         {
-            logError(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+            EPROSIMA_LOG_ERROR(DDSREPLAYER_MCAP_READER_PARTICIPANT,
                     "Failed to replay message in topic " << channel_topic << ": topic not found, skipping...");
             continue;
         }
 
-        logInfo(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+        EPROSIMA_LOG_INFO(DDSREPLAYER_MCAP_READER_PARTICIPANT,
                 "Scheduling message to be replayed in topic " << readers_it->first << ".");
 
         {
@@ -229,13 +229,13 @@ void McapReaderParticipant::process_mcap()
 
             if (stop_)
             {
-                logInfo(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                EPROSIMA_LOG_INFO(DDSREPLAYER_MCAP_READER_PARTICIPANT,
                         "Participant stopped while processing MCAP file.");
                 break;
             }
         }
 
-        logInfo(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+        EPROSIMA_LOG_INFO(DDSREPLAYER_MCAP_READER_PARTICIPANT,
                 "Replaying message in topic " << readers_it->first << ".");
 
         // Insert new data in internal reader queue

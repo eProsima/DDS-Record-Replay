@@ -64,8 +64,8 @@ void McapWriter::enable()
         return;
     }
 
-    logInfo(DDSRECORDER_MCAP_WRITER,
-            "MCAP_WRITE | Enabling MCAP writer.")
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,
+            "MCAP_WRITE | Enabling MCAP writer.");
 
     try
     {
@@ -73,7 +73,7 @@ void McapWriter::enable()
     }
     catch (const FullDiskException& e)
     {
-        logError(DDSRECORDER_MCAP_WRITER,
+        EPROSIMA_LOG_ERROR(DDSRECORDER_MCAP_WRITER,
                 "MCAP_WRITE | Error opening a new MCAP file: " << e.what());
         on_disk_full_();
     }
@@ -90,8 +90,8 @@ void McapWriter::disable()
         return;
     }
 
-    logInfo(DDSRECORDER_MCAP_WRITER,
-            "MCAP_WRITE | Disabling MCAP writer.")
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,
+            "MCAP_WRITE | Disabling MCAP writer.");
 
     close_current_file_nts_();
 
@@ -110,7 +110,7 @@ void McapWriter::update_dynamic_types(
             {
                 if (dynamic_types_payload_ == nullptr)
                 {
-                    logInfo(DDSRECORDER_MCAP_WRITER,
+                    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,
                             "MCAP_WRITE | Setting the dynamic types payload to " <<
                             utils::from_bytes(dynamic_types_payload.length) << ".");
 
@@ -118,7 +118,7 @@ void McapWriter::update_dynamic_types(
                 }
                 else
                 {
-                    logInfo(DDSRECORDER_MCAP_WRITER,
+                    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,
                             "MCAP_WRITE | Updating the dynamic types payload from " <<
                             utils::from_bytes(dynamic_types_payload_->length) << " to " <<
                             utils::from_bytes(dynamic_types_payload.length) << ".");
@@ -140,7 +140,7 @@ void McapWriter::update_dynamic_types(
         }
         catch (const FullDiskException& e)
         {
-            logError(DDSRECORDER_MCAP_HANDLER,
+            EPROSIMA_LOG_ERROR(DDSRECORDER_MCAP_HANDLER,
                     "FAIL_MCAP_WRITE | Disk is full. Error message:\n " << e.what());
             on_disk_full_();
         }
@@ -177,7 +177,7 @@ void McapWriter::open_new_file_nts_(
     {
         const auto error_msg = "Failed to open MCAP file " + filename + " for writing: " + status.message;
 
-        logError(DDSRECORDER_MCAP_WRITER,
+        EPROSIMA_LOG_ERROR(DDSRECORDER_MCAP_WRITER,
                 "FAIL_MCAP_OPEN | " << error_msg);
         throw utils::InitializationException(error_msg);
     }
@@ -221,7 +221,7 @@ template <>
 void McapWriter::write_nts_(
         const mcap::Attachment& attachment)
 {
-    logInfo(DDSRECORDER_MCAP_WRITER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,
             "MCAP_WRITE | Writing attachment: " << attachment.name << " (" << utils::from_bytes(attachment.dataSize) <<
             ").");
 
@@ -230,7 +230,7 @@ void McapWriter::write_nts_(
 
     if (!status.ok())
     {
-        logError(DDSRECORDER_MCAP_WRITER,
+        EPROSIMA_LOG_ERROR(DDSRECORDER_MCAP_WRITER,
                 "MCAP_WRITE | Error writing in MCAP. Error message: " << status.message);
         return;
     }
@@ -243,7 +243,7 @@ template <>
 void McapWriter::write_nts_(
         const mcap::Channel& channel)
 {
-    logInfo(DDSRECORDER_MCAP_WRITER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,
             "MCAP_WRITE | Writing channel " << channel.topic << ".");
 
     size_tracker_.channel_to_write(channel);
@@ -266,19 +266,19 @@ void McapWriter::write_nts_(
 {
     if (!enabled_)
     {
-        logWarning(DDSRECORDER_MCAP_WRITER,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_WRITER,
                 "MCAP_WRITE | Attempting to write a message in a disabled writer.");
         return;
     }
 
-    logInfo(DDSRECORDER_MCAP_WRITER, "Writing message: " << utils::from_bytes(msg.dataSize) << ".");
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER, "Writing message: " << utils::from_bytes(msg.dataSize) << ".");
 
     size_tracker_.message_to_write(msg.dataSize);
     const auto status = writer_.write(msg);
 
     if (!status.ok())
     {
-        logError(DDSRECORDER_MCAP_WRITER,
+        EPROSIMA_LOG_ERROR(DDSRECORDER_MCAP_WRITER,
                 "MCAP_WRITE | Error writing in MCAP. Error message: " << status.message);
         return;
     }
@@ -291,7 +291,7 @@ template <>
 void McapWriter::write_nts_(
         const mcap::Metadata& metadata)
 {
-    logInfo(DDSRECORDER_MCAP_WRITER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,
             "MCAP_WRITE | Writing metadata: " << metadata.name << ".");
 
     size_tracker_.metadata_to_write(metadata);
@@ -299,7 +299,7 @@ void McapWriter::write_nts_(
 
     if (!status.ok())
     {
-        logError(DDSRECORDER_MCAP_WRITER,
+        EPROSIMA_LOG_ERROR(DDSRECORDER_MCAP_WRITER,
                 "MCAP_WRITE | Error writing in MCAP. Error message: " << status.message);
         return;
     }
@@ -312,7 +312,7 @@ template <>
 void McapWriter::write_nts_(
         const mcap::Schema& schema)
 {
-    logInfo(DDSRECORDER_MCAP_WRITER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,
             "MCAP_WRITE | Writing schema: " << schema.name << ".");
 
     size_tracker_.schema_to_write(schema);
@@ -347,7 +347,7 @@ void McapWriter::write_channels_nts_()
         return;
     }
 
-    logInfo(DDSRECORDER_MCAP_WRITER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,
             "MCAP_WRITE | Writing received channels.");
 
     // Write channels to MCAP file
@@ -376,7 +376,7 @@ void McapWriter::write_schemas_nts_()
         return;
     }
 
-    logInfo(DDSRECORDER_MCAP_WRITER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,
             "MCAP_WRITE | Writing received schemas.");
 
     // Write schemas to MCAP file

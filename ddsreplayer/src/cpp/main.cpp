@@ -67,7 +67,7 @@ std::unique_ptr<eprosima::utils::event::FileWatcherHandler> create_filewatcher(
                 }
                 catch (const std::exception& e)
                 {
-                    logWarning(DDSREPLAYER_EXECUTION,
+                    EPROSIMA_LOG_WARNING(DDSREPLAYER_EXECUTION,
                             "Error reloading configuration file " << file_name << " with error: " <<
                             e.what());
                 }
@@ -98,7 +98,7 @@ std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> create_periodic_ha
                 }
                 catch (const std::exception& e)
                 {
-                    logWarning(DDSREPLAYER_EXECUTION,
+                    EPROSIMA_LOG_WARNING(DDSREPLAYER_EXECUTION,
                             "Error reloading configuration file " << file_path << " with error: " <<
                             e.what());
                 }
@@ -150,7 +150,7 @@ int main(
         // NOTE: this check is redundant with option parse arg check
         if (!is_file_accessible(commandline_args.file_path.c_str(), eprosima::utils::FileAccessMode::read))
         {
-            logError(
+            EPROSIMA_LOG_ERROR(
                 DDSREPLAYER_ARGS,
                 "File '" << commandline_args.file_path << "' does not exist or it is not accessible.");
             return static_cast<int>(ProcessReturnCode::required_argument_failed);
@@ -212,7 +212,7 @@ int main(
                 // Check file exists and it is readable
                 if (!is_file_accessible(commandline_args.input_file.c_str(), eprosima::utils::FileAccessMode::read))
                 {
-                    logError(
+                    EPROSIMA_LOG_ERROR(
                         DDSREPLAYER_ARGS,
                         "File '" << commandline_args.input_file << "' does not exist or it is not accessible.");
                     return static_cast<int>(ProcessReturnCode::required_argument_failed);
@@ -220,7 +220,7 @@ int main(
             }
             else
             {
-                logError(
+                EPROSIMA_LOG_ERROR(
                     DDSREPLAYER_ARGS,
                     "An input MCAP file must be provided through argument '-i' / '--input-file' " <<
                         "or under 'input-file' YAML tag.");
@@ -264,7 +264,7 @@ int main(
                     }
                     catch (const eprosima::utils::InconsistencyException& e)
                     {
-                        logError(DDSREPLAYER_ERROR,
+                        EPROSIMA_LOG_ERROR(DDSREPLAYER_ERROR,
                         "Error processing MCAP file. Error message:\n " <<
                             e.what());
                         read_success = false;
@@ -292,7 +292,7 @@ int main(
     }
     catch (const eprosima::utils::ConfigurationException& e)
     {
-        logError(DDSREPLAYER_ERROR,
+        EPROSIMA_LOG_ERROR(DDSREPLAYER_ERROR,
                 "Error Loading DDS Replayer Configuration from file " << commandline_args.file_path <<
                 ". Error message:\n " <<
                 e.what());
@@ -300,7 +300,7 @@ int main(
     }
     catch (const eprosima::utils::InitializationException& e)
     {
-        logError(DDSREPLAYER_ERROR,
+        EPROSIMA_LOG_ERROR(DDSREPLAYER_ERROR,
                 "Error Initializing DDS Replayer. Error message:\n " <<
                 e.what());
         return static_cast<int>(ProcessReturnCode::execution_failed);

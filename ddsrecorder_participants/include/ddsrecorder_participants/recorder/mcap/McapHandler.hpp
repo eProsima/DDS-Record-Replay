@@ -428,6 +428,13 @@ protected:
             const ddspipe::core::types::TopicQoS& qos);
 
     /**
+     * @brief TODO.
+     */
+    template<class DynamicTypeData>
+    static std::string serialize_type_data_(
+            const DynamicTypeData& type_data);
+
+    /**
      * @brief Serialize a \c TypeIdentifier into a string.
      *
      * @param [in] type_identifier TypeIdentifier to be serialized

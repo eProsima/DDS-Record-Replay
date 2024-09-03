@@ -171,7 +171,7 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
     // Scan and parse channels and schemas
     const auto onProblem = [](const mcap::Status& status)
             {
-                logWarning(DDSREPLAYER_REPLAYER,
+                EPROSIMA_LOG_WARNING(DDSREPLAYER_REPLAYER,
                         "An error occurred while reading summary: " << status.message << ".");
             };
     // Read mcap summary: ForceScan method required for parsing metadata and attachments
@@ -198,7 +198,7 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
 
     if (recording_version != DDSRECORDER_PARTICIPANTS_VERSION_STRING)
     {
-        logWarning(DDSREPLAYER_REPLAYER,
+        EPROSIMA_LOG_WARNING(DDSREPLAYER_REPLAYER,
                 "MCAP file generated with a different DDS Record & Replay version (" << recording_version <<
                 ", current is " << DDSRECORDER_PARTICIPANTS_VERSION_STRING << "), incompatibilities might arise...");
     }
@@ -288,7 +288,7 @@ void DdsReplayer::register_dynamic_type_(
     if (fastdds::dds::RETCODE_OK != fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().register_type_object(
                 type_object, type_identifiers))
     {
-        logWarning(DDSREPLAYER_REPLAYER,
+        EPROSIMA_LOG_WARNING(DDSREPLAYER_REPLAYER,
                 "Failed to register " << dynamic_type.type_name() << " DynamicType.");
     }
     else

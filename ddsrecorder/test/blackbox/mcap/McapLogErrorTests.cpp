@@ -24,17 +24,17 @@ const bool RECORD_TYPES = true;
 const bool ROS2_TYPES = false;
 
 /**
- * Test case to verify a logError is displayed when the opening mcap file fails
+ * Test case to verify a EPROSIMA_LOG_ERROR is displayed when the opening mcap file fails
  *
  * CASES:
  *  This test attemps to open a mcap file in a folder that does not exist, leading to
- *  its correspondent Log Error. An additional logError failing to rename the MCAP file
+ *  its correspondent Log Error. An additional EPROSIMA_LOG_ERROR failing to rename the MCAP file
  *  will appear when the McapHandler destructor is called (this happens after
  *  log_checker.check_valid() assertion)
  */
-TEST(McapLogErrorTests, fail_to_open_file) {
+TEST(McapEPROSIMA_LOG_ERRORTests, fail_to_open_file) {
 
-    // Create an instance of the Log Checker, in charge of capturing 1 LogError
+    // Create an instance of the Log Checker, in charge of capturing 1 EPROSIMA_LOG_ERROR
     eprosima::utils::testing::LogChecker log_checker(
         eprosima::utils::Log::Kind::Error,
         1,
@@ -79,7 +79,7 @@ TEST(McapLogErrorTests, fail_to_open_file) {
         eprosima::ddsrecorder::participants::McapHandler mcap_handler(config, payload_pool, file_tracker, init_state),
         eprosima::utils::InitializationException);
 
-    // Assert that logErrors were captured
+    // Assert that EPROSIMA_LOG_ERRORs were captured
     ASSERT_TRUE(log_checker.check_valid());
 }
 
