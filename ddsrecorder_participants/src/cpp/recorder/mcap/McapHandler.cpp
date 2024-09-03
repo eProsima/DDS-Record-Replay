@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <filesystem>
+#include <memory>
 #include <vector>
 
 #include <mcap/reader.hpp>
@@ -1029,7 +1030,7 @@ std::string McapHandler::serialize_type_data_(
     size = (ser.get_serialized_data_length() + 3) & ~3;
 
     // Create CDR message with payload
-    fastdds::rtps::CDRMessage_t* cdr_message = new fastdds::rtps::CDRMessage_t(payload);
+    std::unique_ptr<fastdds::rtps::CDRMessage_t> cdr_message = std::make_unique<fastdds::rtps::CDRMessage_t>(payload);
 
     // Add data
     if (!(cdr_message && (cdr_message->pos + payload.length <= cdr_message->max_size))|| (payload.length > 0 && !payload.data))
@@ -1078,7 +1079,6 @@ std::string McapHandler::serialize_type_data_(
     // Delete CDR message
     // NOTE: set wraps attribute to avoid double free (buffer released by payload on destruction)
     cdr_message->wraps = true;
-    delete cdr_message;
 
     return typedata_str;
 }
