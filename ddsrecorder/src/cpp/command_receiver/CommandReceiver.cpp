@@ -307,7 +307,7 @@ void CommandReceiver::publish_status(
     {
         status.info(info);
     }
-    logInfo(
+    EPROSIMA_LOG_INFO(
         DDSRECORDER_COMMAND_RECEIVER,
         "Publishing status: " << status.previous() << " ---> " << status.current() <<  " with info [" << status.info() <<
             " ].");
@@ -320,19 +320,19 @@ void CommandReceiver::on_subscription_matched(
 {
     if (info.current_count_change == 1)
     {
-        logInfo(
+        EPROSIMA_LOG_INFO(
             DDSRECORDER_COMMAND_RECEIVER,
             "Subscriber matched [ " << iHandle2GUID(info.last_publication_handle) << " ].");
     }
     else if (info.current_count_change == -1)
     {
-        logInfo(
+        EPROSIMA_LOG_INFO(
             DDSRECORDER_COMMAND_RECEIVER,
             "Subscriber unmatched [ " << iHandle2GUID(info.last_publication_handle) << " ].");
     }
     else
     {
-        logWarning(
+        EPROSIMA_LOG_WARNING(
             DDSRECORDER_COMMAND_RECEIVER,
             info.current_count_change << " is not a valid value for SubscriptionMatchedStatus current count change");
     }
@@ -346,7 +346,7 @@ void CommandReceiver::on_data_available(
     while ((reader->take_next_sample(&controller_command,
             &info)) == (RETCODE_OK && info.instance_state == ALIVE_INSTANCE_STATE))
     {
-        logInfo(
+        EPROSIMA_LOG_INFO(
             DDSRECORDER_COMMAND_RECEIVER,
             "New command received: " << controller_command.command() << " [" << controller_command.args() << "]");
         {

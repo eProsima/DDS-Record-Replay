@@ -177,7 +177,7 @@ eprosima::fastdds::dds::traits<eprosima::fastdds::dds::DynamicData>::ref_type se
     dynamic_data_->set_string_value(dynamic_data_->get_member_id_by_name("message"), test::send_message);
     test::writer_->write(dynamic_data_.get());
 
-    logInfo(DDSRECORDER_EXECUTION, "Message published.");
+    EPROSIMA_LOG_INFO(DDSRECORDER_EXECUTION, "Message published.");
 
     std::this_thread::sleep_for(std::chrono::milliseconds(time_sleep));
 
