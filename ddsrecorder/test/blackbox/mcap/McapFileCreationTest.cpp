@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <chrono>
 #include <iostream>
 #include <thread>
-#include <chrono>
 
 #include <gtest/gtest.h>
 
@@ -32,8 +32,8 @@
 #include <cpp_utils/testing/gtest_aux.hpp>
 
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
-#include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 #include <ddsrecorder_yaml/recorder/yaml_configuration_tags.hpp>
+#include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
 #include <tool/DdsRecorder.hpp>
 
