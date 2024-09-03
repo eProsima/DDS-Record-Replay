@@ -126,7 +126,6 @@ void McapHandler::add_schema(
 
     if (configuration_.ros2_types)
     {
-        // NOTE: Currently ROS2 types are not supported, change when supported
         name = utils::demangle_if_ros_type(type_name);
         encoding = "ros2msg";
         data = msg::generate_ros2_schema(dynamic_type);
@@ -140,7 +139,8 @@ void McapHandler::add_schema(
         auto ret = idl_serialize(dynamic_type, idl);
         if (ret != fastdds::dds::RETCODE_OK)
         {
-            EPROSIMA_LOG_ERROR(DDSRECORDER_MCAP_HANDLER, "MCAP_WRITE | Failed to serialize DynamicType to idl for type wth name: " << type_name);
+            EPROSIMA_LOG_ERROR(
+                DDSRECORDER_MCAP_HANDLER, "MCAP_WRITE | Failed to serialize DynamicType to idl for type with name: " << type_name);
             return;
         }
         data = idl.str();
@@ -873,6 +873,8 @@ void McapHandler::store_dynamic_type_(
         DynamicTypesCollection& dynamic_types) const
 {
     fastdds::dds::xtypes::TypeIdentifierPair type_identifiers;
+
+    // NOTE: type_identifier is assumed to be complete
     type_identifiers.type_identifier1(type_identifier);
 
     fastdds::dds::xtypes::TypeInformation type_info;
@@ -1075,10 +1077,6 @@ std::string McapHandler::serialize_type_data_(
 
     // Copy buffer to string
     std::string typedata_str(reinterpret_cast<char const*>(cdr_message->buffer), size);
-
-    // Delete CDR message
-    // NOTE: set wraps attribute to avoid double free (buffer released by payload on destruction)
-    cdr_message->wraps = true;
 
     return typedata_str;
 }

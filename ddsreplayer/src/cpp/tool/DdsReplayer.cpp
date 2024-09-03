@@ -284,7 +284,7 @@ void DdsReplayer::register_dynamic_type_(
     fastdds::dds::xtypes::TypeIdentifierPair type_identifiers;
     type_identifiers.type_identifier1(type_identifier);
 
-    // // Register in factory
+    // Register in factory
     if (fastdds::dds::RETCODE_OK != fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().register_type_object(
                 type_object, type_identifiers))
     {
