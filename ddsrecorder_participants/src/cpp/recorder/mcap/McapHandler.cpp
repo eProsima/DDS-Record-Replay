@@ -878,42 +878,53 @@ void McapHandler::store_dynamic_type_(
     type_identifiers.type_identifier1(type_identifier);
 
     fastdds::dds::xtypes::TypeInformation type_info;
-    if (fastdds::dds::RETCODE_OK == fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_information(
+    if (fastdds::dds::RETCODE_OK != fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_information(
             type_identifiers,
             type_info,
             true))
     {
-        std::string dependency_name;
-        unsigned int dependency_index = 0;
-        auto type_dependencies = type_info.complete().dependent_typeids();
-        for (auto dependency : type_dependencies)
-        {
-            fastdds::dds::xtypes::TypeIdentifier dependency_type_identifier;
-            dependency_type_identifier = dependency.type_id();
-
-            fastdds::dds::xtypes::TypeObject dependency_type_object;
-            const auto ret = fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_object(
-                    dependency_type_identifier,
-                    dependency_type_object);
-
-            dependency_name = type_name + "_" + std::to_string(dependency_index);
-
-            // Store dependency in dynamic_types collection
-            store_dynamic_type_(dependency_type_identifier, dependency_type_object, dependency_name, dynamic_types);
-
-            // Increment suffix counter
-            dependency_index++;
-        }
-
-        fastdds::dds::xtypes::TypeObject type_object;
-        if (fastdds::dds::RETCODE_OK == fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_object(
-                type_identifier,
-                type_object))
-        {
-            // Store dynamic type in dynamic_types collection
-            store_dynamic_type_(type_identifier, type_object, type_name, dynamic_types);
-        }
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER, "MCAP_WRITE | Error getting TypeInformation for type " << type_name);
+        return;
     }
+
+    std::string dependency_name;
+    unsigned int dependency_index = 0;
+    const auto type_dependencies = type_info.complete().dependent_typeids();
+    for (auto dependency : type_dependencies)
+    {
+        fastdds::dds::xtypes::TypeIdentifier dependency_type_identifier;
+        dependency_type_identifier = dependency.type_id();
+
+        fastdds::dds::xtypes::TypeObject dependency_type_object;
+        if (fastdds::dds::RETCODE_OK != fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_object(
+                dependency_type_identifier,
+                dependency_type_object))
+        {
+            EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER, "MCAP_WRITE | Error getting TypeObject of dependency "
+                << "for type " << type_name);
+            return;
+        }
+
+        dependency_name = type_name + "_" + std::to_string(dependency_index);
+
+        // Store dependency in dynamic_types collection
+        store_dynamic_type_(dependency_type_identifier, dependency_type_object, dependency_name, dynamic_types);
+
+        // Increment suffix counter
+        dependency_index++;
+    }
+
+    fastdds::dds::xtypes::TypeObject type_object;
+    if (fastdds::dds::RETCODE_OK != fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_object(
+            type_identifier,
+            type_object))
+    {
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER, "MCAP_WRITE | Error getting TypeObject for type " << type_name);
+        return;
+    }
+
+    // Store dynamic type in dynamic_types collection
+    store_dynamic_type_(type_identifier, type_object, type_name, dynamic_types);
 }
 
 void McapHandler::store_dynamic_type_(
