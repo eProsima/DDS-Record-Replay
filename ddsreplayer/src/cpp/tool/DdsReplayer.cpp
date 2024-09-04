@@ -95,22 +95,19 @@ DdsReplayer::DdsReplayer(
         replayer_participant_
         );
 
-    if (configuration.replay_types)
-    {
-        // Create participant sending dynamic types
-        fastdds::dds::DomainParticipantQos pqos;
-        pqos.name("DdsReplayer_dynTypesPublisher");
+    // Create participant sending dynamic types
+    fastdds::dds::DomainParticipantQos pqos;
+    pqos.name("DdsReplayer_dynTypesPublisher");
 
-        // Set app properties
-        pqos.properties().properties().emplace_back(
-            "fastdds.application.id",
-            configuration.replayer_configuration->app_id,
-            "true");
-        pqos.properties().properties().emplace_back(
-            "fastdds.application.metadata",
-            configuration.replayer_configuration->app_metadata,
-            "true");
-    }
+    // Set app properties
+    pqos.properties().properties().emplace_back(
+        "fastdds.application.id",
+        configuration.replayer_configuration->app_id,
+        "true");
+    pqos.properties().properties().emplace_back(
+        "fastdds.application.metadata",
+        configuration.replayer_configuration->app_metadata,
+        "true");
 
     // Generate builtin-topics from the topics in the MCAP file
     configuration.ddspipe_configuration.builtin_topics = generate_builtin_topics_(configuration, input_file);
@@ -219,13 +216,10 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
         dynamic_attachment.dataSize);
     type_support.deserialize(serialized_payload, &dynamic_types);
 
-    if (configuration.replay_types)
+    // Register in factory dynamic types from attachment
+    for (auto& dynamic_type : dynamic_types.dynamic_types())
     {
-        // Register in factory dynamic types from attachment
-        for (auto& dynamic_type : dynamic_types.dynamic_types())
-        {
-            register_dynamic_type_(dynamic_type);
-        }
+        register_dynamic_type_(dynamic_type);
     }
 
     auto channels = mcap_reader.channels();
@@ -251,7 +245,7 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
         // Insert channel topic in builtin topics list
         builtin_topics.insert(channel_topic);
 
-        if (configuration.replay_types && registered_types_.count(type_name) != 0)
+        if (registered_types_.count(type_name) != 0)
         {
             // Make a copy of the Topic to customize it according to the Participant's configured QoS.
             utils::Heritable<DistributedTopic> topic = channel_topic->copy();

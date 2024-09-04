@@ -160,8 +160,8 @@ TEST(McapFileReadWithTypeTest, begin_time)
     DataToCheck data;
     const std::string configuration = "resources/config_file_begin_time_with_types.yaml";
     create_subscriber_replayer(data, configuration);
-    ASSERT_EQ(data.n_received_msgs, 4);
-    ASSERT_EQ(data.min_index_msg, 7);
+    ASSERT_EQ(data.n_received_msgs, 7);
+    ASSERT_EQ(data.min_index_msg, 4);
     ASSERT_EQ(data.max_index_msg, 10);
 }
 
@@ -171,9 +171,9 @@ TEST(McapFileReadWithTypeTest, end_time)
     DataToCheck data;
     const std::string configuration = "resources/config_file_end_time_with_types.yaml";
     create_subscriber_replayer(data, configuration);
-    ASSERT_EQ(data.n_received_msgs, 6);
+    ASSERT_EQ(data.n_received_msgs, 3);
     ASSERT_EQ(data.min_index_msg, 1);
-    ASSERT_EQ(data.max_index_msg, 6);
+    ASSERT_EQ(data.max_index_msg, 3);
 }
 
 TEST(McapFileReadWithTypeTest, start_replay_time_earlier)
