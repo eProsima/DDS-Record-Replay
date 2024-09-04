@@ -18,6 +18,7 @@
 
 #include <gtest/gtest.h>
 
+#include <fastdds/dds/core/policy/QosPolicies.hpp>
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/publisher/DataWriter.hpp>
 #include <fastdds/dds/publisher/Publisher.hpp>
@@ -330,11 +331,12 @@ std::tuple<unsigned int, double> record_with_transitions(
 //     eprosima::fastdds::dds::DynamicPubSubType pubsubType;
 //     eprosima::fastdds::rtps::SerializedPayload_t payload;
 //     payload.reserve(
-//         pubsubType.getSerializedSizeProvider(
-//             send_data.get()
-//             )()
+//         pubsubType.calculate_serialized_size(
+//             send_data.get(),
+//             eprosima::fastdds::dds::DEFAULT_DATA_REPRESENTATION
+//             )
 //         );
-//     pubsubType.serialize(send_data.get(), &payload);
+//     pubsubType.serialize(send_data.get(), payload, eprosima::fastdds::dds::DEFAULT_DATA_REPRESENTATION);
 
 //     mcap::McapReader mcap_reader;
 //     auto messages = get_msgs_mcap(file_name, mcap_reader);
