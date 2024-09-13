@@ -59,6 +59,13 @@ on:
         default: '_nightly'
         type: string
 
+      ref:
+        description: >
+          The branch or tag name to checkout.
+        required: true
+        type: string
+        default: 'main'
+
 env:
   # TODO: controller is not tested as it has no tests
   code_packages_names: 'ddsrecorder_participants ddsrecorder_yaml ddsrecorder_tool ddsreplayer_tool'
@@ -89,6 +96,7 @@ jobs:
         uses: eProsima/eProsima-CI/external/checkout@v0
         with:
           path: src
+          ref: ${{ inputs.ref }}
 
       - name: Download dependencies and install requirements
         uses: ./src/.github/actions/project_dependencies
@@ -120,6 +128,7 @@ jobs:
         uses: eProsima/eProsima-CI/external/checkout@v0
         with:
           path: src
+          ref: ${{ inputs.ref }}
 
       - name: Download dependencies and install requirements
         uses: ./src/.github/actions/project_dependencies
@@ -148,6 +157,7 @@ jobs:
         uses: eProsima/eProsima-CI/external/checkout@v0
         with:
           path: src
+          ref: ${{ inputs.ref }}
 
       - name: Download dependencies and install requirements
         uses: ./src/.github/actions/project_dependencies
@@ -176,6 +186,7 @@ jobs:
         uses: eProsima/eProsima-CI/external/checkout@v0
         with:
           path: src
+          ref: ${{ inputs.ref }}
 
       - name: Download dependencies and install requirements
         uses: ./src/.github/actions/project_dependencies
@@ -206,6 +217,7 @@ jobs:
         uses: eProsima/eProsima-CI/external/checkout@v0
         with:
           path: src
+          ref: ${{ inputs.ref }}
 
       - name: Download dependencies and install requirements
         uses: ./src/.github/actions/project_dependencies
@@ -236,6 +248,7 @@ jobs:
         uses: eProsima/eProsima-CI/external/checkout@v0
         with:
           path: src
+          ref: ${{ inputs.ref }}
 
       - name: Download dependencies and install requirements
         uses: ./src/.github/actions/project_dependencies
