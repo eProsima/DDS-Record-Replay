@@ -115,6 +115,7 @@ public:
      * Previously created channels (for this type) associated with a blank schema are updated to use the new one.
      *
      * @param [in] dynamic_type DynamicType containing the type information required to generate the schema.
+     * @param [in] type_identifier  The TypeIdentifier that uniquely identifies the type in DDS systems.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void add_schema(
@@ -388,7 +389,11 @@ protected:
     /**
      * @brief Serialize type identifier and object, and insert the result into a \c DynamicTypesCollection .
      *
-     * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
+     * @param [in] type_name        The name of the type, which serves as the key for storing the serialized type
+     *                              identifier and object in the \c dynamic_types map.
+     * @param [in] type_identifier  The TypeIdentifier that represents the type to be serialized.
+     * @param [in, out] dynamic_types  The collection where the serialized type and identifier are stored.
+     * @return bool  Returns true if the serialization and insertion were successful, false otherwise.
      */
     bool store_dynamic_type_(
             const std::string& type_name,
@@ -402,6 +407,7 @@ protected:
      * @param [in] type_object Type object to be serialized and stored.
      * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
      * @param [in,out] dynamic_types Collection where to store serialized dynamic type.
+     * @return bool  Returns true if the serialization and insertion were successful, false otherwise.
      */
     bool store_dynamic_type_(
             const fastdds::dds::xtypes::TypeIdentifier& type_identifier,
@@ -428,7 +434,14 @@ protected:
             const ddspipe::core::types::TopicQoS& qos);
 
     /**
-     * @brief TODO.
+     * @brief Serialize the provided dynamic type data into a string format.
+     *
+     * This method converts the given \c type_data of type \c TypeIdentifier / \c TypeObject into a serialized
+     * string representation.
+     *
+     * @tparam DynamicTypeData  The type of the dynamic type data to be serialized ( \c TypeIdentifier / \c TypeObject)
+     * @param [in] type_data    The data to be serialized, represented as an instance of \c DynamicTypeData.
+     * @return std::string      A string containing the serialized representation of the \c type_data.
      */
     template<class DynamicTypeData>
     static std::string serialize_type_data_(
