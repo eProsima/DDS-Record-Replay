@@ -169,13 +169,14 @@ void McapHandler::add_schema(
     if (configuration_.record_types)
     {
         // Store dynamic type in dynamic_types collection
-        store_dynamic_type_(type_name, type_identifier, dynamic_types_);
+        if (true == store_dynamic_type_(type_name, type_identifier, dynamic_types_))
+        {
+            // Serialize dynamic types collection
+            const auto serialized_dynamic_types = serialize_dynamic_types_(dynamic_types_);
 
-        // Serialize dynamic types collection
-        const auto serialized_dynamic_types = serialize_dynamic_types_(dynamic_types_);
-
-        // Recalculate the attachment
-        mcap_writer_.update_dynamic_types(*serialized_dynamic_types);
+            // Recalculate the attachment
+            mcap_writer_.update_dynamic_types(*serialized_dynamic_types);
+        }
     }
 
     // Check if there are any pending samples for this new schema. If so, add them.
@@ -867,7 +868,7 @@ mcap::SchemaId McapHandler::get_schema_id_nts_(
     }
 }
 
-void McapHandler::store_dynamic_type_(
+bool McapHandler::store_dynamic_type_(
         const std::string& type_name,
         const fastdds::dds::xtypes::TypeIdentifier& type_identifier,
         DynamicTypesCollection& dynamic_types) const
@@ -884,7 +885,7 @@ void McapHandler::store_dynamic_type_(
             true))
     {
         EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER, "MCAP_WRITE | Error getting TypeInformation for type " << type_name);
-        return;
+        return false;
     }
 
     std::string dependency_name;
@@ -902,7 +903,7 @@ void McapHandler::store_dynamic_type_(
         {
             EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER, "MCAP_WRITE | Error getting TypeObject of dependency "
                 << "for type " << type_name);
-            return;
+            return false;
         }
 
         dependency_name = type_name + "_" + std::to_string(dependency_index);
@@ -920,14 +921,14 @@ void McapHandler::store_dynamic_type_(
             type_object))
     {
         EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER, "MCAP_WRITE | Error getting TypeObject for type " << type_name);
-        return;
+        return false;
     }
 
     // Store dynamic type in dynamic_types collection
-    store_dynamic_type_(type_identifier, type_object, type_name, dynamic_types);
+    return store_dynamic_type_(type_identifier, type_object, type_name, dynamic_types);
 }
 
-void McapHandler::store_dynamic_type_(
+bool McapHandler::store_dynamic_type_(
         const fastdds::dds::xtypes::TypeIdentifier& type_identifier,
         const fastdds::dds::xtypes::TypeObject& type_object,
         const std::string& type_name,
@@ -945,10 +946,12 @@ void McapHandler::store_dynamic_type_(
     {
         EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER,
                 "MCAP_WRITE | Error serializing DynamicType. Error message:\n " << e.what());
-        return;
+        return false;
     }
 
     dynamic_types.dynamic_types().push_back(dynamic_type);
+
+    return true;
 
 }
 
