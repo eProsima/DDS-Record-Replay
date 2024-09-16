@@ -444,7 +444,7 @@ void RecorderConfiguration::load_dds_configuration_(
     // Get optional whitelist interfaces
     if (YamlReader::is_tag_present(yml, WHITELIST_INTERFACES_TAG))
     {
-        simple_configuration->whitelist = YamlReader::get_set<IpType>(yml, WHITELIST_INTERFACES_TAG,
+        simple_configuration->whitelist = YamlReader::get_set<WhitelistType>(yml, WHITELIST_INTERFACES_TAG,
                         version);
     }
 
