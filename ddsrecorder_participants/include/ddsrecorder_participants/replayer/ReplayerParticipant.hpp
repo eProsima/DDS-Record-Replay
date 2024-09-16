@@ -54,12 +54,13 @@ public:
     std::shared_ptr<ddspipe::core::IReader> create_reader(
             const ddspipe::core::ITopic& topic) override;
 
-    bool replay_types = true;
-
 protected:
 
     fastdds::rtps::RTPSParticipantAttributes add_participant_att_properties_(
             fastdds::rtps::RTPSParticipantAttributes& params) const override;
+
+    // Boolean flag that indicates whether the participant should replay previously recorded data types.
+    bool replay_types_ = true;
 };
 
 } /* namespace participants */

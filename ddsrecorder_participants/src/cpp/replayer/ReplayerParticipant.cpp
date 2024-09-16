@@ -29,12 +29,11 @@ ReplayerParticipant::ReplayerParticipant(
         const std::shared_ptr<PayloadPool>& payload_pool,
         const std::shared_ptr<DiscoveryDatabase>& discovery_database,
         const bool& replay_types)
-
-    : replay_types(replay_types)
-    , SimpleParticipant(
+    : SimpleParticipant(
         participant_configuration,
         payload_pool,
         discovery_database)
+    , replay_types_(replay_types)
 {
 }
 
@@ -49,7 +48,7 @@ fastdds::rtps::RTPSParticipantAttributes ReplayerParticipant::add_participant_at
 {
     CommonParticipant::add_participant_att_properties_(params);
 
-    if (replay_types == true)
+    if (replay_types_ == true)
     {
         params.properties.properties().emplace_back(
             "fastdds.type_propagation",
