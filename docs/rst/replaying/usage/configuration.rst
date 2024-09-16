@@ -472,10 +472,6 @@ The type of the logs published is defined as follows:
       string timestamp;
     };
 
-.. note::
-
-    The type of the logs can be published by setting ``publish-type: true``.
-
 **Example of usage**
 
 .. code-block:: yaml
