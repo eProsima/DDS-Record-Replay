@@ -32,7 +32,7 @@ const bool ROS2_TYPES = false;
  *  will appear when the McapHandler destructor is called (this happens after
  *  log_checker.check_valid() assertion)
  */
-TEST(McapEPROSIMA_LOG_ERRORTests, fail_to_open_file) {
+TEST(McapLogErrorTests, fail_to_open_file) {
 
     // Create an instance of the Log Checker, in charge of capturing 1 EPROSIMA_LOG_ERROR
     eprosima::utils::testing::LogChecker log_checker(

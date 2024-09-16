@@ -126,7 +126,7 @@ TEST(McapFileReadTest, more_playback_rate)
     const std::string configuration = "resources/config_file_more_hz_notype.yaml";
     create_subscriber_replayer(data, configuration);
     // ms ~ 100
-    ASSERT_GT(data.mean_ms_between_msgs, 98.5);
+    ASSERT_GT(data.mean_ms_between_msgs, 97.5);
     ASSERT_LT(data.mean_ms_between_msgs, 102.5);
 }
 

@@ -124,7 +124,6 @@ TEST(McapFileReadWithTypeTest, dds_data_to_check)
     create_subscriber_replayer(data);
     ASSERT_EQ(data.n_received_msgs, 10);
     ASSERT_EQ(data.type_msg, test::dds_type_name);
-    // ASSERT_EQ(data.message_msg, "Configuration");
     ASSERT_EQ(data.min_index_msg, 1);
     ASSERT_EQ(data.max_index_msg, 10);
     // ms ~ 200

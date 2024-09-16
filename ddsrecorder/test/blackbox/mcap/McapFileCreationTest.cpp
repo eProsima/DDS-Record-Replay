@@ -138,6 +138,7 @@ void create_publisher(
             type_name,
             dyn_type_objects))
     {
+        EPROSIMA_LOG_WARNING(DDSRECORDER_EXECUTION, "Failed to get TypeObjects for type with name " << type_name);
         return;
     }
 
@@ -162,11 +163,9 @@ eprosima::fastdds::dds::traits<eprosima::fastdds::dds::DynamicData>::ref_type se
         const unsigned int index = 1,
         const unsigned int time_sleep = 100)
 {
-    // Create and initialize new dynamic data
-    // eprosima::fastdds::dds::traits<eprosima::fastdds::dds::DynamicData>::ref_type dynamic_data_;
-
     if (test::dynamic_type_ == nullptr)
     {
+        EPROSIMA_LOG_WARNING(DDSRECORDER_EXECUTION, "Dynamic type is null. Cannot send sample of index: " << index);
         return nullptr;
     }
 
