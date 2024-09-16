@@ -169,7 +169,7 @@ void McapHandler::add_schema(
     if (configuration_.record_types)
     {
         // Store dynamic type in dynamic_types collection
-        if (true == store_dynamic_type_(type_name, type_identifier, dynamic_types_))
+        if (store_dynamic_type_(type_name, type_identifier, dynamic_types_))
         {
             // Serialize dynamic types collection
             const auto serialized_dynamic_types = serialize_dynamic_types_(dynamic_types_);
@@ -942,7 +942,7 @@ bool McapHandler::store_dynamic_type_(
         dynamic_type.type_information(utils::base64_encode(serialize_type_identifier_(type_identifier)));
         dynamic_type.type_object(utils::base64_encode(serialize_type_object_(type_object)));
     }
-    catch(const utils::InconsistencyException& e)
+    catch (const utils::InconsistencyException& e)
     {
         EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER,
                 "MCAP_WRITE | Error serializing DynamicType. Error message:\n " << e.what());
@@ -1103,7 +1103,7 @@ std::string McapHandler::serialize_type_identifier_(
     {
         typeid_string = serialize_type_data_(type_identifier);
     }
-    catch(const utils::InconsistencyException& e)
+    catch (const utils::InconsistencyException& e)
     {
         throw utils::InconsistencyException(std::string("Failed to serialize TypeIdentifier: ") + e.what());
     }
@@ -1119,7 +1119,7 @@ std::string McapHandler::serialize_type_object_(
     {
         typeobj_string = serialize_type_data_(type_object);
     }
-    catch(const utils::InconsistencyException& e)
+    catch (const utils::InconsistencyException& e)
     {
         throw utils::InconsistencyException(std::string("Failed to serialize TypeObject: ") + e.what());
     }
