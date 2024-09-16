@@ -33,6 +33,8 @@
 #include <fastdds/dds/xtypes/dynamic_types/DynamicTypeBuilderFactory.hpp>
 #include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
 
+#include <cpp_utils/exception/InconsistencyException.hpp>
+
 #include <ddspipe_core/types/dynamic_types/types.hpp>
 
 #include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
@@ -106,10 +108,6 @@ DdsReplayer::DdsReplayer(
         payload_pool_,
         participants_database_,
         thread_pool_);
-}
-
-DdsReplayer::~DdsReplayer()
-{
 }
 
 utils::ReturnCode DdsReplayer::reload_configuration(
@@ -234,19 +232,6 @@ std::set<utils::Heritable<DistributedTopic>> DdsReplayer::generate_builtin_topic
 
         // Insert channel topic in builtin topics list
         builtin_topics.insert(channel_topic);
-
-        // if (configuration.replay_types && registered_types_.count(type_name) != 0)
-        // if(registered_types_.count(type_name) != 0)
-        // {
-        //     // Make a copy of the Topic to customize it according to the Participant's configured QoS.
-        //     utils::Heritable<DistributedTopic> topic = channel_topic->copy();
-
-        //     // Apply the Manual Topics for this participant.
-        //     for (const auto& manual_topic : configuration.ddspipe_configuration.get_manual_topics(*channel_topic))
-        //     {
-        //         topic->topic_qos.set_qos(manual_topic.first->topic_qos, utils::FuzzyLevelValues::fuzzy_level_hard);
-        //     }
-        // }
     }
 
     mcap_reader.close();
@@ -260,10 +245,22 @@ void DdsReplayer::register_dynamic_type_(
     // Decode type identifer and object strings
     std::string typeid_str = utils::base64_decode(dynamic_type.type_information());
     std::string typeobj_str = utils::base64_decode(dynamic_type.type_object());
+    fastdds::dds::xtypes::TypeIdentifier type_identifier;
+    fastdds::dds::xtypes::TypeObject type_object;
 
-    // Deserialize type identifer and object strings
-    fastdds::dds::xtypes::TypeIdentifier type_identifier = deserialize_type_identifier_(typeid_str);
-    fastdds::dds::xtypes::TypeObject type_object = deserialize_type_object_(typeobj_str);
+    try
+    {
+        // Deserialize type identifer and object strings
+        type_identifier = deserialize_type_identifier_(typeid_str);
+        type_object = deserialize_type_object_(typeobj_str);
+    }
+    catch (const utils::InconsistencyException& e)
+    {
+        EPROSIMA_LOG_WARNING(DDSREPLAYER_REPLAYER,
+                "Failed to deserialize " << dynamic_type.type_name() << " DynamicType: " << e.what());
+        return;
+    }
+
 
     // Create a TypeIdentifierPair to use in register_type_identifier
     fastdds::dds::xtypes::TypeIdentifierPair type_identifiers;
@@ -331,14 +328,15 @@ TopicQoS DdsReplayer::deserialize_qos_(
     return qos;
 }
 
-fastdds::dds::xtypes::TypeIdentifier DdsReplayer::deserialize_type_identifier_(
-        const std::string& typeid_str)
+template<class DynamicTypeData>
+DynamicTypeData DdsReplayer::deserialize_type_data_(
+        const std::string& typedata_str)
 {
     // Create CDR message from string
     // NOTE: Use 0 length to avoid allocation
     fastdds::rtps::CDRMessage_t* cdr_message = new fastdds::rtps::CDRMessage_t(0);
-    cdr_message->buffer = (unsigned char*)reinterpret_cast<const unsigned char*>(typeid_str.c_str());
-    cdr_message->length = typeid_str.length();
+    cdr_message->buffer = (unsigned char*)reinterpret_cast<const unsigned char*>(typedata_str.c_str());
+    cdr_message->length = typedata_str.length();
 #if __BIG_ENDIAN__
     cdr_message->msg_endian = fastdds::rtps::BIGEND;
 #else
@@ -350,87 +348,84 @@ fastdds::dds::xtypes::TypeIdentifier DdsReplayer::deserialize_type_identifier_(
     fastdds::rtps::SerializedPayload_t payload(parameter_length);
     fastcdr::FastBuffer fastbuffer((char*)payload.data, parameter_length);
 
-    // Read data
-    if (cdr_message != nullptr)
+    // Check cdr message is valid
+    if (!cdr_message)
     {
-        if (cdr_message->length >= cdr_message->pos + parameter_length)
-        {
-            if (parameter_length > 0)
-            {
-                if (payload.data != nullptr)
-                {
-                    memcpy(payload.data, &cdr_message->buffer[cdr_message->pos], parameter_length);
-                    cdr_message->pos += parameter_length;
-                }
-            }
-        }
+        throw utils::InconsistencyException(
+                "Error reading data -> cdr_message is null.");
     }
+
+    // Check enough space in buffer
+    if (!(cdr_message->length >= cdr_message->pos + parameter_length))
+    {
+        throw utils::InconsistencyException(
+                "Error reading data -> not enough space in cdr_message buffer.");
+    }
+
+    // Check length is consistent
+    if (!(parameter_length > 0))
+    {
+        throw utils::InconsistencyException(
+                "Error reading data -> payload length is greater than 0.");
+    }
+
+    // Check payload is valid
+    if (!payload.data)
+    {
+        throw utils::InconsistencyException(
+                "Error reading data -> payload data is null.");
+    }
+
+    // Copy data
+    memcpy(payload.data, &cdr_message->buffer[cdr_message->pos], parameter_length);
+    cdr_message->pos += parameter_length;
 
     // Create CDR deserializer
     fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::CdrVersion::XCDRv2);
     payload.encapsulation = deser.endianness() == fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
 
     // Deserialize
-    fastdds::dds::xtypes::TypeIdentifier type_identifier;
-    fastcdr::deserialize(deser, type_identifier);
+    DynamicTypeData type_data;
+    fastcdr::deserialize(deser, type_data);
 
     // Delete CDR message
     // NOTE: set wraps attribute to avoid double free (buffer released by string on destruction)
     cdr_message->wraps = true;
     delete cdr_message;
 
-    return type_identifier;
+    return type_data;
+}
+
+fastdds::dds::xtypes::TypeIdentifier DdsReplayer::deserialize_type_identifier_(
+        const std::string& typeid_str)
+{
+    fastdds::dds::xtypes::TypeIdentifier type_id;
+    try
+    {
+        type_id = deserialize_type_data_<fastdds::dds::xtypes::TypeIdentifier>(typeid_str);
+    }
+    catch (const utils::InconsistencyException& e)
+    {
+        throw utils::InconsistencyException(std::string("Failed to deserialize TypeIdentifier: ") + e.what());
+    }
+
+    return type_id;
 }
 
 fastdds::dds::xtypes::TypeObject DdsReplayer::deserialize_type_object_(
         const std::string& typeobj_str)
 {
-    // Create CDR message from string
-    // NOTE: Use 0 length to avoid allocation
-    fastdds::rtps::CDRMessage_t* cdr_message = new fastdds::rtps::CDRMessage_t(0);
-    cdr_message->buffer = (unsigned char*)reinterpret_cast<const unsigned char*>(typeobj_str.c_str());
-    cdr_message->length = typeobj_str.length();
-#if __BIG_ENDIAN__
-    cdr_message->msg_endian = fastdds::rtps::BIGEND;
-#else
-    cdr_message->msg_endian = fastdds::rtps::LITTLEEND;
-#endif // if __BIG_ENDIAN__
-
-    // Reserve payload and create buffer
-    const auto parameter_length = cdr_message->length;
-    fastdds::rtps::SerializedPayload_t payload(parameter_length);
-    fastcdr::FastBuffer fastbuffer((char*)payload.data, parameter_length);
-
-    // Read data
-    if (cdr_message != nullptr)
+    fastdds::dds::xtypes::TypeObject type_obj;
+    try
     {
-        if (cdr_message->length >= cdr_message->pos + parameter_length)
-        {
-            if (parameter_length > 0)
-            {
-                if (payload.data != nullptr)
-                {
-                    memcpy(payload.data, &cdr_message->buffer[cdr_message->pos], parameter_length);
-                    cdr_message->pos += parameter_length;
-                }
-            }
-        }
+        type_obj = deserialize_type_data_<fastdds::dds::xtypes::TypeObject>(typeobj_str);
+    }
+    catch (const utils::InconsistencyException& e)
+    {
+        throw utils::InconsistencyException(std::string("Failed to deserialize TypeObject: ") + e.what());
     }
 
-    // Create CDR deserializer
-    fastcdr::Cdr deser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN, fastcdr::CdrVersion::XCDRv2);
-    payload.encapsulation = deser.endianness() == fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
-
-    // Deserialize
-    fastdds::dds::xtypes::TypeObject type_object;
-    fastcdr::deserialize(deser, type_object);
-
-    // Delete CDR message
-    // NOTE: set wraps attribute to avoid double free (buffer released by string on destruction)
-    cdr_message->wraps = true;
-    delete cdr_message;
-
-    return type_object;
+    return type_obj;
 }
 
 } /* namespace replayer */

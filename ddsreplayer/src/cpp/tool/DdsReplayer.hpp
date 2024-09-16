@@ -66,13 +66,6 @@ public:
             std::string& input_file);
 
     /**
-     * @brief Destructor
-     *
-     * Removes all DDS resources created via the \c fastdds::DomainParticipantFactory
-     */
-    ~DdsReplayer();
-
-    /**
      * Reconfigure the Replayer with the new configuration.
      *
      * @param new_configuration: The configuration to replace the previous configuration with.
@@ -131,6 +124,13 @@ protected:
      */
     static ddspipe::core::types::TopicQoS deserialize_qos_(
             const std::string& qos_str);
+
+    /**
+     * @brief TODO.
+     */
+    template<class DynamicTypeData>
+    static DynamicTypeData deserialize_type_data_(
+            const std::string& typedata_str);
 
     /**
      * @brief Deserialize a serialized \c TypeIdentifier string.
