@@ -29,6 +29,7 @@
 #include <fastdds/dds/xtypes/dynamic_types/DynamicTypeBuilder.hpp>
 #include <fastdds/dds/xtypes/dynamic_types/DynamicTypeBuilderFactory.hpp>
 #include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
+#include <fastdds/dds/xtypes/utils.hpp>
 
 #include <cpp_utils/ros2_mangling.hpp>
 
@@ -129,6 +130,7 @@ void create_publisher(
             DomainParticipantFactory::get_instance()->create_participant(domain, pqos);
 
     // Register the type
+    // NOTE: the sheer use of this type support is to register the type object representation
     eprosima::fastdds::dds::TypeSupport type(new HelloWorldPubSubType());
     type->register_type_object_representation();
 
@@ -145,11 +147,12 @@ void create_publisher(
     test::dynamic_type_ = eprosima::fastdds::dds::DynamicTypeBuilderFactory::get_instance()->create_type_w_type_object(
                 dyn_type_objects.complete_type_object)->build();
 
-    // Register the type in the Participant
-    participant_->register_type(type);
-
     // Create the Publisher
     eprosima::fastdds::dds::Publisher* publisher_ = participant_->create_publisher(PUBLISHER_QOS_DEFAULT, nullptr);
+
+    // Register the (dynamic) type support in the Participant
+    eprosima::fastdds::dds::TypeSupport dyn_type_support(new eprosima::fastdds::dds::DynamicPubSubType(test::dynamic_type_));
+    participant_->register_type(dyn_type_support);
 
     // Create the DDS Topic
     eprosima::fastdds::dds::Topic* topic_ = participant_->create_topic(topic_name, type_name,
@@ -176,7 +179,7 @@ eprosima::fastdds::dds::traits<eprosima::fastdds::dds::DynamicData>::ref_type se
     dynamic_data_->set_uint32_value(dynamic_data_->get_member_id_by_name("index"), index);
     // Set message
     dynamic_data_->set_string_value(dynamic_data_->get_member_id_by_name("message"), test::send_message);
-    test::writer_->write(dynamic_data_.get());
+    test::writer_->write(&dynamic_data_);
 
     EPROSIMA_LOG_INFO(DDSRECORDER_TEST, "Message published.");
 
