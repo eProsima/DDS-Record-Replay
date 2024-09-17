@@ -439,7 +439,7 @@ protected:
      * This method converts the given \c type_data of type \c TypeIdentifier / \c TypeObject into a serialized
      * string representation.
      *
-     * @tparam DynamicTypeData  The type of the dynamic type data to be serialized ( \c TypeIdentifier / \c TypeObject)
+     * @tparam DynamicTypeData  The type of the dynamic type data to be serialized ( \c TypeIdentifier / \c TypeObject )
      * @param [in] type_data    The data to be serialized, represented as an instance of \c DynamicTypeData.
      * @return std::string      A string containing the serialized representation of the \c type_data.
      */

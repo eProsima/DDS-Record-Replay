@@ -126,7 +126,14 @@ protected:
             const std::string& qos_str);
 
     /**
-     * @brief TODO.
+     * @brief Deserialize the provided string into dynamic type data.
+     *
+     * This method converts the given serialized string representation of \c type_data
+     * into a \c TypeIdentifier or \c TypeObject, depending on the template parameter \c DynamicTypeData.
+     *
+     * @tparam DynamicTypeData  The type of dynamic data to deserialize into (e.g., \c TypeIdentifier / \c TypeObject )
+     * @param [in] std::string  A string containing the serialized representation of the \c type_data .
+     * @return DynamicTypeData  The deserialized data, represented as an instance of \c DynamicTypeData .
      */
     template<class DynamicTypeData>
     static DynamicTypeData deserialize_type_data_(
