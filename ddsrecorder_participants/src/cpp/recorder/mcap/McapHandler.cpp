@@ -21,11 +21,22 @@
 #include <algorithm>
 #include <cstdio>
 #include <filesystem>
+#include <memory>
 #include <vector>
 
 #include <mcap/reader.hpp>
 
 #include <yaml-cpp/yaml.h>
+
+#include <fastdds/dds/core/policy/QosPolicies.hpp>
+#include <fastdds/dds/topic/TypeSupport.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
+#include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
+#include <fastdds/dds/xtypes/utils.hpp>
+#include <fastdds/rtps/common/CDRMessage_t.hpp>
+#include <fastdds/rtps/common/CdrSerialization.hpp>
+#include <fastdds/rtps/common/SerializedPayload.hpp>
+#include <fastdds/rtps/common/Types.hpp>
 
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/exception/InconsistencyException.hpp>
@@ -33,26 +44,10 @@
 #include <cpp_utils/utils.hpp>
 #include <cpp_utils/ros2_mangling.hpp>
 
-#include <fastdds/dds/topic/TypeSupport.hpp>
-#include <fastdds/rtps/common/CDRMessage_t.h>
-#include <fastdds/rtps/common/SerializedPayload.h>
-#include <fastrtps/types/DynamicType.h>
-#include <fastrtps/types/TypeObjectFactory.h>
-
 #include <ddspipe_core/types/dynamic_types/schema.hpp>
 
-#if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    #include <fastcdr/Cdr.h>
-    #include <fastcdr/FastBuffer.h>
-    #include <fastcdr/FastCdr.h>
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollectionPubSubTypes.hpp>
-#else
-    #include <fastdds/rtps/common/CdrSerialization.hpp>
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollection.hpp>
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollectionPubSubTypes.hpp>
-#endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-
+#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
+#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollectionPubSubTypes.hpp>
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
 #include <ddsrecorder_participants/recorder/mcap/McapMessage.hpp>
@@ -74,7 +69,7 @@ McapHandler::McapHandler(
     , state_(McapHandlerStateCode::STOPPED)
     , mcap_writer_(config.output_settings, config.mcap_writer_options, file_tracker, config.record_types)
 {
-    logInfo(DDSRECORDER_MCAP_HANDLER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
             "MCAP_STATE | Creating MCAP handler instance.");
 
     if (on_disk_full_lambda != nullptr)
@@ -99,7 +94,7 @@ McapHandler::McapHandler(
 
 McapHandler::~McapHandler()
 {
-    logInfo(DDSRECORDER_MCAP_HANDLER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
             "MCAP_STATE | Destroying handler.");
 
     // Stop handler prior to destruction
@@ -107,7 +102,8 @@ McapHandler::~McapHandler()
 }
 
 void McapHandler::add_schema(
-        const fastrtps::types::DynamicType_ptr& dynamic_type)
+        const fastdds::dds::DynamicType::_ref_type& dynamic_type,
+        const fastdds::dds::xtypes::TypeIdentifier& type_identifier)
 {
     std::lock_guard<std::mutex> lock(mtx_);
 
@@ -115,7 +111,7 @@ void McapHandler::add_schema(
 
     assert(nullptr != dynamic_type);
 
-    const std::string type_name = dynamic_type->get_name();
+    const std::string type_name = dynamic_type->get_name().to_string();
 
     // Check if it exists already
     if (received_types_.find(type_name) != received_types_.end())
@@ -138,18 +134,28 @@ void McapHandler::add_schema(
     {
         name = type_name;
         encoding = "omgidl";
-        data = idl::generate_idl_schema(dynamic_type);
+
+        std::stringstream idl;
+        auto ret = idl_serialize(dynamic_type, idl);
+        if (ret != fastdds::dds::RETCODE_OK)
+        {
+            EPROSIMA_LOG_ERROR(
+                DDSRECORDER_MCAP_HANDLER,
+                "MCAP_WRITE | Failed to serialize DynamicType to idl for type with name: " << type_name);
+            return;
+        }
+        data = idl.str();
     }
 
     mcap::Schema new_schema(name, encoding, data);
 
     // Add schema to writer and to schemas map
-    logInfo(DDSRECORDER_MCAP_HANDLER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
             "MCAP_WRITE | Adding schema with name " << type_name << " :\n" << data << "\n");
 
     mcap_writer_.write(new_schema);
 
-    logInfo(DDSRECORDER_MCAP_HANDLER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
             "MCAP_WRITE | Schema created: " << new_schema.name << ".");
 
     auto it = schemas_.find(type_name);
@@ -164,13 +170,14 @@ void McapHandler::add_schema(
     if (configuration_.record_types)
     {
         // Store dynamic type in dynamic_types collection
-        store_dynamic_type_(type_name, dynamic_types_);
+        if (store_dynamic_type_(type_name, type_identifier, dynamic_types_))
+        {
+            // Serialize dynamic types collection
+            const auto serialized_dynamic_types = serialize_dynamic_types_(dynamic_types_);
 
-        // Serialize dynamic types collection
-        const auto serialized_dynamic_types = serialize_dynamic_types_(dynamic_types_);
-
-        // Recalculate the attachment
-        mcap_writer_.update_dynamic_types(*serialized_dynamic_types);
+            // Recalculate the attachment
+            mcap_writer_.update_dynamic_types(*serialized_dynamic_types);
+        }
     }
 
     // Check if there are any pending samples for this new schema. If so, add them.
@@ -190,12 +197,12 @@ void McapHandler::add_data(
 
     if (state_ == McapHandlerStateCode::STOPPED)
     {
-        logInfo(DDSRECORDER_MCAP_HANDLER,
+        EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
                 "FAIL_MCAP_WRITE | Attempting to add sample through a stopped handler, dropping...");
         return;
     }
 
-    logInfo(
+    EPROSIMA_LOG_INFO(
         DDSRECORDER_MCAP_HANDLER,
         "MCAP_WRITE | Adding data in topic " << topic);
 
@@ -215,15 +222,10 @@ void McapHandler::add_data(
 
     if (data.payload.length > 0)
     {
-        auto payload_owner =
-                const_cast<eprosima::fastrtps::rtps::IPayloadPool*>((eprosima::fastrtps::rtps::IPayloadPool*)data.
-                        payload_owner);
-
-        if (payload_owner)
+        if (data.payload_owner != nullptr)
         {
             payload_pool_->get_payload(
                 data.payload,
-                payload_owner,
                 msg.payload);
 
             msg.payload_owner = payload_pool_.get();
@@ -267,7 +269,7 @@ void McapHandler::add_data(
             }
             else
             {
-                logInfo(DDSRECORDER_MCAP_HANDLER,
+                EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
                         "MCAP_WRITE | Schema for topic " << topic << " not yet available. "
                         "Inserting to pending samples queue.");
 
@@ -276,7 +278,7 @@ void McapHandler::add_data(
         }
         else if (state_ == McapHandlerStateCode::PAUSED)
         {
-            logInfo(DDSRECORDER_MCAP_HANDLER,
+            EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
                     "MCAP_WRITE | Schema for topic " << topic << " not yet available. "
                     "Inserting to (paused) pending samples queue.");
 
@@ -311,12 +313,12 @@ void McapHandler::start()
 
     if (prev_state == McapHandlerStateCode::RUNNING)
     {
-        logWarning(DDSRECORDER_MCAP_HANDLER,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER,
                 "MCAP_STATE | Ignoring start command, instance already started.");
     }
     else
     {
-        logInfo(DDSRECORDER_MCAP_HANDLER,
+        EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
                 "MCAP_STATE | Starting handler.");
 
         if (prev_state == McapHandlerStateCode::STOPPED)
@@ -353,14 +355,14 @@ void McapHandler::stop(
     {
         if (!on_destruction)
         {
-            logWarning(DDSRECORDER_MCAP_HANDLER,
+            EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER,
                     "MCAP_STATE | Ignoring stop command, instance already stopped.");
         }
 
         return;
     }
 
-    logInfo(DDSRECORDER_MCAP_HANDLER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
             "MCAP_STATE | Stopping handler.");
 
     if (prev_state == McapHandlerStateCode::PAUSED)
@@ -406,12 +408,12 @@ void McapHandler::pause()
 
     if (prev_state == McapHandlerStateCode::PAUSED)
     {
-        logWarning(DDSRECORDER_MCAP_HANDLER,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER,
                 "MCAP_STATE | Ignoring pause command, instance already paused.");
     }
     else
     {
-        logInfo(DDSRECORDER_MCAP_HANDLER,
+        EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
                 "MCAP_STATE | Pausing handler.");
 
         if (prev_state == McapHandlerStateCode::STOPPED)
@@ -449,12 +451,12 @@ void McapHandler::trigger_event()
 
     if (state_ != McapHandlerStateCode::PAUSED)
     {
-        logWarning(DDSRECORDER_MCAP_HANDLER,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER,
                 "MCAP_STATE | Ignoring trigger event command, instance is not paused.");
     }
     else
     {
-        logInfo(DDSRECORDER_MCAP_HANDLER,
+        EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
                 "MCAP_STATE | Triggering event.");
 
         // Notify event routine thread an event has been triggered
@@ -498,7 +500,7 @@ void McapHandler::add_data_nts_(
 
         if (state_ == McapHandlerStateCode::RUNNING && samples_buffer_.size() == configuration_.buffer_size)
         {
-            logInfo(DDSRECORDER_MCAP_HANDLER,
+            EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
                     "MCAP_WRITE | Full buffer, writing to disk...");
             dump_data_nts_();
         }
@@ -517,7 +519,7 @@ void McapHandler::add_data_nts_(
     }
     catch (const utils::InconsistencyException& e)
     {
-        logWarning(DDSRECORDER_MCAP_HANDLER,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER,
                 "MCAP_WRITE | Error adding message in topic " << topic << ". Error message:\n " << e.what());
         return;
     }
@@ -537,13 +539,13 @@ void McapHandler::add_to_pending_nts_(
         if (configuration_.only_with_schema)
         {
             // Discard oldest message in pending samples
-            logWarning(DDSRECORDER_MCAP_HANDLER,
+            EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER,
                     "MCAP_WRITE | Dropping pending sample in type " << topic.type_name << ": buffer limit (" <<
                     configuration_.max_pending_samples << ") reached.");
         }
         else
         {
-            logInfo(DDSRECORDER_MCAP_HANDLER,
+            EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
                     "MCAP_WRITE | Buffer limit (" << configuration_.max_pending_samples <<  ") reached for type " <<
                     topic.type_name << ": writing oldest sample without schema.");
 
@@ -561,7 +563,7 @@ void McapHandler::add_to_pending_nts_(
 void McapHandler::add_pending_samples_nts_(
         const std::string& schema_name)
 {
-    logInfo(DDSRECORDER_MCAP_HANDLER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
             "MCAP_WRITE | Adding pending samples for type: " << schema_name << ".");
     if (pending_samples_.find(schema_name) != pending_samples_.end())
     {
@@ -596,7 +598,7 @@ void McapHandler::add_pending_samples_nts_(
 
 void McapHandler::add_pending_samples_nts_()
 {
-    logInfo(DDSRECORDER_MCAP_HANDLER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
             "MCAP_WRITE | Adding pending samples for all types.");
 
     auto pending_types = utils::get_keys(pending_samples_);
@@ -640,7 +642,7 @@ void McapHandler::event_thread_routine_()
 
         if (event_flag_ == EventCode::stopped)
         {
-            logInfo(DDSRECORDER_MCAP_HANDLER,
+            EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
                     "MCAP_STATE | Finishing event thread routine.");
             keep_going = false;
         }
@@ -656,12 +658,12 @@ void McapHandler::event_thread_routine_()
 
             if (timeout)
             {
-                logInfo(DDSRECORDER_MCAP_HANDLER,
+                EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
                         "MCAP_STATE | Event thread timeout.");
             }
             else
             {
-                logInfo(DDSRECORDER_MCAP_HANDLER,
+                EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
                         "MCAP_STATE | Event triggered: dumping buffered data.");
 
                 if (!(configuration_.max_pending_samples == 0 && configuration_.only_with_schema))
@@ -709,7 +711,7 @@ void McapHandler::event_thread_routine_()
 
 void McapHandler::remove_outdated_samples_nts_()
 {
-    logInfo(DDSRECORDER_MCAP_HANDLER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
             "MCAP_STATE | Removing outdated samples.");
 
     auto threshold = std_timepoint_to_mcap_timestamp(utils::now() - std::chrono::seconds(configuration_.event_window));
@@ -735,7 +737,7 @@ void McapHandler::stop_event_thread_nts_(
     // WARNING: state must have been set different to PAUSED before calling this method
     assert(state_ != McapHandlerStateCode::PAUSED);
 
-    logInfo(DDSRECORDER_MCAP_HANDLER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
             "MCAP_STATE | Stopping event thread.");
 
     if (event_thread_.joinable())
@@ -752,7 +754,7 @@ void McapHandler::stop_event_thread_nts_(
 
 void McapHandler::dump_data_nts_()
 {
-    logInfo(DDSRECORDER_MCAP_HANDLER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
             "MCAP_WRITE | Writing data stored in buffer.");
 
     while (!samples_buffer_.empty())
@@ -780,7 +782,7 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     {
         if (!configuration_.only_with_schema)
         {
-            logInfo(DDSRECORDER_MCAP_HANDLER,
+            EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
                     "MCAP_WRITE | Schema not found for type: " << topic.type_name << ". Creating blank schema...");
 
             std::string encoding = configuration_.ros2_types ? "ros2msg" : "omgidl";
@@ -812,7 +814,7 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
 
     auto channel_id = new_channel.id;
     channels_.insert({topic, std::move(new_channel)});
-    logInfo(DDSRECORDER_MCAP_HANDLER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
             "MCAP_WRITE | Channel created: " << topic << ".");
 
     return channel_id;
@@ -839,7 +841,7 @@ void McapHandler::update_channels_nts_(
     {
         if (channel.second.schemaId == old_schema_id)
         {
-            logInfo(DDSRECORDER_MCAP_HANDLER,
+            EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
                     "MCAP_WRITE | Updating channel in topic " << channel.first.m_topic_name << ".");
 
             assert(channel.first.m_topic_name == channel.second.topic);
@@ -867,88 +869,105 @@ mcap::SchemaId McapHandler::get_schema_id_nts_(
     }
 }
 
-void McapHandler::store_dynamic_type_(
+bool McapHandler::store_dynamic_type_(
         const std::string& type_name,
+        const fastdds::dds::xtypes::TypeIdentifier& type_identifier,
         DynamicTypesCollection& dynamic_types) const
 {
-    const eprosima::fastrtps::types::TypeIdentifier* type_identifier = nullptr;
-    const eprosima::fastrtps::types::TypeObject* type_object = nullptr;
-    const eprosima::fastrtps::types::TypeInformation* type_information = nullptr;
+    fastdds::dds::xtypes::TypeIdentifierPair type_identifiers;
 
-    type_information =
-            eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_information(type_name);
-    if (type_information != nullptr)
+    // NOTE: type_identifier is assumed to be complete
+    type_identifiers.type_identifier1(type_identifier);
+
+    fastdds::dds::xtypes::TypeInformation type_info;
+    if (fastdds::dds::RETCODE_OK !=
+            fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_information(
+                type_identifiers,
+                type_info,
+                true))
     {
-        auto dependencies = type_information->complete().dependent_typeids();
-        std::string dependency_name;
-        unsigned int dependency_index = 0;
-        for (auto dependency: dependencies)
-        {
-            type_identifier = &dependency.type_id();
-            type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(
-                type_identifier);
-            dependency_name = type_name + "_" + std::to_string(dependency_index);
-
-            // Store dependency in dynamic_types collection
-            store_dynamic_type_(type_identifier, type_object, dependency_name, dynamic_types);
-
-            // Increment suffix counter
-            dependency_index++;
-        }
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER,
+                "MCAP_WRITE | Error getting TypeInformation for type " << type_name);
+        return false;
     }
 
-    type_identifier = nullptr;
-    type_object = nullptr;
-
-    type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(type_name,
-                    true);
-    if (type_identifier)
+    std::string dependency_name;
+    unsigned int dependency_index = 0;
+    const auto type_dependencies = type_info.complete().dependent_typeids();
+    for (auto dependency : type_dependencies)
     {
-        type_object =
-                eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name, true);
+        fastdds::dds::xtypes::TypeIdentifier dependency_type_identifier;
+        dependency_type_identifier = dependency.type_id();
+
+        fastdds::dds::xtypes::TypeObject dependency_type_object;
+        if (fastdds::dds::RETCODE_OK !=
+                fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_object(
+                    dependency_type_identifier,
+                    dependency_type_object))
+        {
+            EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER, "MCAP_WRITE | Error getting TypeObject of dependency "
+                    << "for type " << type_name);
+            return false;
+        }
+
+        dependency_name = type_name + "_" + std::to_string(dependency_index);
+
+        // Store dependency in dynamic_types collection
+        store_dynamic_type_(dependency_type_identifier, dependency_type_object, dependency_name, dynamic_types);
+
+        // Increment suffix counter
+        dependency_index++;
     }
 
-    // If complete not found, try with minimal
-    if (!type_object)
+    fastdds::dds::xtypes::TypeObject type_object;
+    if (fastdds::dds::RETCODE_OK !=
+            fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_object(
+                type_identifier,
+                type_object))
     {
-        type_identifier = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_identifier(
-            type_name, false);
-        if (type_identifier)
-        {
-            type_object = eprosima::fastrtps::types::TypeObjectFactory::get_instance()->get_type_object(type_name,
-                            false);
-        }
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER, "MCAP_WRITE | Error getting TypeObject for type " << type_name);
+        return false;
     }
 
     // Store dynamic type in dynamic_types collection
-    store_dynamic_type_(type_identifier, type_object, type_name, dynamic_types);
+    return store_dynamic_type_(type_identifier, type_object, type_name, dynamic_types);
 }
 
-void McapHandler::store_dynamic_type_(
-        const eprosima::fastrtps::types::TypeIdentifier* type_identifier,
-        const eprosima::fastrtps::types::TypeObject* type_object,
+bool McapHandler::store_dynamic_type_(
+        const fastdds::dds::xtypes::TypeIdentifier& type_identifier,
+        const fastdds::dds::xtypes::TypeObject& type_object,
         const std::string& type_name,
         DynamicTypesCollection& dynamic_types) const
 {
-    if (type_identifier != nullptr && type_object != nullptr)
+    DynamicType dynamic_type;
+    dynamic_type.type_name(type_name);
+
+    try
     {
-        DynamicType dynamic_type;
-        dynamic_type.type_name(type_name);
         dynamic_type.type_information(utils::base64_encode(serialize_type_identifier_(type_identifier)));
         dynamic_type.type_object(utils::base64_encode(serialize_type_object_(type_object)));
-
-        dynamic_types.dynamic_types().push_back(dynamic_type);
     }
+    catch (const utils::InconsistencyException& e)
+    {
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER,
+                "MCAP_WRITE | Error serializing DynamicType. Error message:\n " << e.what());
+        return false;
+    }
+
+    dynamic_types.dynamic_types().push_back(dynamic_type);
+
+    return true;
+
 }
 
-fastrtps::rtps::SerializedPayload_t* McapHandler::serialize_dynamic_types_(
+fastdds::rtps::SerializedPayload_t* McapHandler::serialize_dynamic_types_(
         DynamicTypesCollection& dynamic_types) const
 {
     // Serialize dynamic types collection using CDR
-    eprosima::fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
-    fastrtps::rtps::SerializedPayload_t* serialized_payload = new fastrtps::rtps::SerializedPayload_t(
-        type_support.get_serialized_size_provider(&dynamic_types)());
-    type_support.serialize(&dynamic_types, serialized_payload);
+    fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
+    fastdds::rtps::SerializedPayload_t* serialized_payload = new fastdds::rtps::SerializedPayload_t(
+        type_support.calculate_serialized_size(&dynamic_types, fastdds::dds::DEFAULT_DATA_REPRESENTATION));
+    type_support.serialize(&dynamic_types, *serialized_payload, fastdds::dds::DEFAULT_DATA_REPRESENTATION);
 
     return serialized_payload;
 }
@@ -1007,119 +1026,111 @@ std::string McapHandler::serialize_qos_(
     return YAML::Dump(qos_yaml);
 }
 
-std::string McapHandler::serialize_type_identifier_(
-        const eprosima::fastrtps::types::TypeIdentifier* type_identifier)
+template<class DynamicTypeData>
+std::string McapHandler::serialize_type_data_(
+        const DynamicTypeData& type_data)
 {
     // Reserve payload and create buffer
-    size_t size = fastrtps::types::TypeIdentifier::getCdrSerializedSize(*type_identifier) +
-            eprosima::fastrtps::rtps::SerializedPayload_t::representation_header_size;
-    fastrtps::rtps::SerializedPayload_t payload(static_cast<uint32_t>(size));
-    eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
+    fastcdr::CdrSizeCalculator calculator(fastcdr::CdrVersion::XCDRv2);
+    size_t current_alignment {0};
+    size_t size = calculator.calculate_serialized_size(type_data, current_alignment) +
+            fastdds::rtps::SerializedPayload_t::representation_header_size;
+
+    fastdds::rtps::SerializedPayload_t payload(static_cast<uint32_t>(size));
+    fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
 
     // Create CDR serializer
-    #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN, eprosima::fastcdr::Cdr::DDS_CDR);
-    #else
-    eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN,
-            eprosima::fastcdr::CdrVersion::XCDRv1);
-    #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
+    fastcdr::Cdr ser(fastbuffer, fastcdr::Cdr::DEFAULT_ENDIAN,
+            fastcdr::CdrVersion::XCDRv2);
 
-    payload.encapsulation = ser.endianness() == eprosima::fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
+    payload.encapsulation = ser.endianness() == fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
 
     // Serialize
-    type_identifier->serialize(ser);
-#if FASTCDR_VERSION_MAJOR == 1
-    payload.length = (uint32_t)ser.getSerializedDataLength();
-    size = (ser.getSerializedDataLength() + 3) & ~3;
-#else
+    fastcdr::serialize(ser, type_data);
     payload.length = (uint32_t)ser.get_serialized_data_length();
     size = (ser.get_serialized_data_length() + 3) & ~3;
-#endif // if FASTCDR_VERSION_MAJOR == 1
 
-    // Create CDR message
-    // NOTE: Use 0 length to avoid allocation (memory already reserved in payload creation)
-    eprosima::fastrtps::rtps::CDRMessage_t* cdr_message = new eprosima::fastrtps::rtps::CDRMessage_t(0);
-    cdr_message->buffer = payload.data;
-    cdr_message->max_size = payload.max_size;
-    cdr_message->length = payload.length;
-#if __BIG_ENDIAN__
-    cdr_message->msg_endian = eprosima::fastrtps::rtps::BIGEND;
-#else
-    cdr_message->msg_endian = eprosima::fastrtps::rtps::LITTLEEND;
-#endif // if __BIG_ENDIAN__
+    // Create CDR message with payload
+    std::unique_ptr<fastdds::rtps::CDRMessage_t> cdr_message = std::make_unique<fastdds::rtps::CDRMessage_t>(payload);
 
     // Add data
-    bool valid = fastrtps::rtps::CDRMessage::addData(cdr_message, payload.data, payload.length);
+    if (!(cdr_message && (cdr_message->pos + payload.length <= cdr_message->max_size)) ||
+            (payload.length > 0 && !payload.data))
+    {
+        if (!cdr_message)
+        {
+            throw utils::InconsistencyException(
+                      "Error adding data -> cdr_message is null.");
+        }
+        else if (cdr_message->pos + payload.length > cdr_message->max_size)
+        {
+            throw utils::InconsistencyException(
+                      "Error adding data -> not enough space in cdr_message buffer.");
+        }
+        else if (payload.length > 0 && !payload.data)
+        {
+            throw utils::InconsistencyException(
+                      "Error adding data -> payload length is greater than 0, but payload data is null.");
+        }
+    }
+
+    memcpy(&cdr_message->buffer[cdr_message->pos], payload.data, payload.length);
+    cdr_message->pos += payload.length;
+    cdr_message->length += payload.length;
+
+    fastdds::rtps::octet value = 0;
     for (uint32_t count = payload.length; count < size; ++count)
     {
-        valid &= fastrtps::rtps::CDRMessage::addOctet(cdr_message, 0);
+        const uint32_t size_octet = sizeof(value);
+        if (!(cdr_message && (cdr_message->pos + size_octet <= cdr_message->max_size)))
+        {
+            throw utils::InconsistencyException(
+                      "Not enough space in cdr_message buffer.");
+        }
+        for (uint32_t i = 0; i < size_octet; i++)
+        {
+            cdr_message->buffer[cdr_message->pos + i] = *((fastdds::rtps::octet*)&value + size_octet - 1 - i);
+        }
+        cdr_message->pos += size_octet;
+        cdr_message->length += size_octet;
     }
+
     // Copy buffer to string
-    std::string typeid_str(reinterpret_cast<char const*>(cdr_message->buffer), size);
+    std::string typedata_str(reinterpret_cast<char const*>(cdr_message->buffer), size);
 
-    // Delete CDR message
-    // NOTE: set wraps attribute to avoid double free (buffer released by payload on destruction)
-    cdr_message->wraps = true;
-    delete cdr_message;
+    return typedata_str;
+}
 
-    return typeid_str;
+std::string McapHandler::serialize_type_identifier_(
+        const fastdds::dds::xtypes::TypeIdentifier& type_identifier)
+{
+    std::string typeid_string;
+    try
+    {
+        typeid_string = serialize_type_data_(type_identifier);
+    }
+    catch (const utils::InconsistencyException& e)
+    {
+        throw utils::InconsistencyException(std::string("Failed to serialize TypeIdentifier: ") + e.what());
+    }
+
+    return typeid_string;
 }
 
 std::string McapHandler::serialize_type_object_(
-        const eprosima::fastrtps::types::TypeObject* type_object)
+        const fastdds::dds::xtypes::TypeObject& type_object)
 {
-    // Reserve payload and create buffer
-    size_t size = fastrtps::types::TypeObject::getCdrSerializedSize(*type_object) +
-            eprosima::fastrtps::rtps::SerializedPayload_t::representation_header_size;
-    fastrtps::rtps::SerializedPayload_t payload(static_cast<uint32_t>(size));
-    eprosima::fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
-
-    // Create CDR serializer
-    #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN, eprosima::fastcdr::Cdr::DDS_CDR);
-    #else
-    eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN,
-            eprosima::fastcdr::CdrVersion::XCDRv1);
-    #endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    payload.encapsulation = ser.endianness() == eprosima::fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
-
-    // Serialize
-    type_object->serialize(ser);
-#if FASTCDR_VERSION_MAJOR == 1
-    payload.length = (uint32_t)ser.getSerializedDataLength();
-    size = (ser.getSerializedDataLength() + 3) & ~3;
-#else
-    payload.length = (uint32_t)ser.get_serialized_data_length();
-    size = (ser.get_serialized_data_length() + 3) & ~3;
-#endif // if FASTCDR_VERSION_MAJOR == 1
-
-    // Create CDR message
-    // NOTE: Use 0 length to avoid allocation (memory already reserved in payload creation)
-    eprosima::fastrtps::rtps::CDRMessage_t* cdr_message = new eprosima::fastrtps::rtps::CDRMessage_t(0);
-    cdr_message->buffer = payload.data;
-    cdr_message->max_size = payload.max_size;
-    cdr_message->length = payload.length;
-#if __BIG_ENDIAN__
-    cdr_message->msg_endian = eprosima::fastrtps::rtps::BIGEND;
-#else
-    cdr_message->msg_endian = eprosima::fastrtps::rtps::LITTLEEND;
-#endif // if __BIG_ENDIAN__
-
-    // Add data
-    bool valid = fastrtps::rtps::CDRMessage::addData(cdr_message, payload.data, payload.length);
-    for (uint32_t count = payload.length; count < size; ++count)
+    std::string typeobj_string;
+    try
     {
-        valid &= fastrtps::rtps::CDRMessage::addOctet(cdr_message, 0);
+        typeobj_string = serialize_type_data_(type_object);
     }
-    // Copy buffer to string
-    std::string typeobj_str(reinterpret_cast<char const*>(cdr_message->buffer), size);
+    catch (const utils::InconsistencyException& e)
+    {
+        throw utils::InconsistencyException(std::string("Failed to serialize TypeObject: ") + e.what());
+    }
 
-    // Delete CDR message
-    // NOTE: set wraps attribute to avoid double free (buffer released by payload on destruction)
-    cdr_message->wraps = true;
-    delete cdr_message;
-
-    return typeobj_str;
+    return typeobj_string;
 }
 
 } /* namespace participants */

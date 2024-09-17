@@ -31,15 +31,6 @@ file(
 
 list(FILTER TEST_LIBRARY_SOURCES EXCLUDE REGEX "/main.cpp")
 
-# Exclude types' files depending on the Fast DDS version
-if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
-    list(FILTER TEST_SOURCES EXCLUDE REGEX "v2/")
-    list(FILTER TEST_LIBRARY_SOURCES EXCLUDE REGEX "v2/")
-else()
-    list(FILTER TEST_SOURCES EXCLUDE REGEX "v1/")
-    list(FILTER TEST_LIBRARY_SOURCES EXCLUDE REGEX "v1/")
-endif()
-
 set(TEST_LIST
         max_file_size
         max_size
@@ -52,13 +43,6 @@ set(TEST_NEEDED_SOURCES
 set(TEST_EXTRA_HEADERS
     ${PROJECT_SOURCE_DIR}/test/resources/types/hello_world/
     )
-
-# Exclude types' files depending on the Fast DDS version
-if ("${fastrtps_VERSION}" VERSION_LESS 2.13)
-    list(FILTER TEST_EXTRA_HEADERS EXCLUDE REGEX "v2/")
-else()
-    list(FILTER TEST_EXTRA_HEADERS EXCLUDE REGEX "v1/")
-endif()
 
 add_blackbox_executable(
     "${TEST_NAME}"

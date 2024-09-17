@@ -135,7 +135,7 @@ class Controller(QObject):
 
         # Initialize command topic
         self.command_topic_data_type = DdsRecorderCommandPubSubType()
-        self.command_topic_data_type.setName('DdsRecorderCommand')
+        self.command_topic_data_type.set_name('DdsRecorderCommand')
         self.command_type_support = fastdds.TypeSupport(self.command_topic_data_type)
         self.participant.register_type(self.command_type_support)
 
@@ -143,12 +143,12 @@ class Controller(QObject):
         self.participant.get_default_topic_qos(command_topic_qos)
         self.command_topic = self.participant.create_topic(
             command_topic,
-            self.command_topic_data_type.getName(),
+            self.command_topic_data_type.get_name(),
             command_topic_qos)
 
         # Initialize status topic
         self.status_topic_data_type = DdsRecorderStatusPubSubType()
-        self.status_topic_data_type.setName('DdsRecorderStatus')
+        self.status_topic_data_type.set_name('DdsRecorderStatus')
         self.status_type_support = fastdds.TypeSupport(self.status_topic_data_type)
         self.participant.register_type(self.status_type_support)
 
@@ -156,7 +156,7 @@ class Controller(QObject):
         self.participant.get_default_topic_qos(status_topic_qos)
         self.status_topic = self.participant.create_topic(
             status_topic,
-            self.status_topic_data_type.getName(),
+            self.status_topic_data_type.get_name(),
             status_topic_qos)
 
         # Initialize Command writer

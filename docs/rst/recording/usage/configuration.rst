@@ -685,10 +685,6 @@ The type of the logs published is defined as follows:
       string timestamp;
     };
 
-.. note::
-
-    The type of the logs can be published by setting ``publish-type: true``.
-
 **Example of usage**
 
 .. code-block:: yaml
@@ -703,7 +699,6 @@ The type of the logs published is defined as follows:
         enable: true
         domain: 84
         topic-name: "DdsRecorderLogs"
-        publish-type: false
       stdout: true
 
 .. _recorder_specs_monitor:
@@ -886,7 +881,6 @@ A complete example of all the configurations described on this page can be found
           enable: true
           domain: 84
           topic-name: "DdsRecorderLogs"
-          publish-type: false
         stdout: true
 
       monitor:
@@ -908,19 +902,8 @@ A complete example of all the configurations described on this page can be found
 Fast DDS Configuration
 ======================
 
-As explained in :ref:`this section <recorder_getting_started_project_overview>`, a |ddsrecorder| instance stores (by default) all data regardless of whether their associated data type is received or not.
+|ddsrecorder| instance stores (by default) all data regardless of whether their associated data type is received or not.
 Some applications rely on this information being recorded and written in the resulting MCAP file, which requires that the user application is configured to send the necessary type information.
-However, *Fast DDS* does not send the data type information by default, it must be configured to do so.
+By default, *Fast DDS* automatically sends the data type information, so no additional configuration is required.
 
-First of all, when generating the topic types using *eProsima Fast DDS Gen*, the option ``-typeobject`` must be added in order to generate the needed code to fill the ``TypeObject`` data.
-
-For native types (data types that does not rely in other data types) this is enough, as *Fast DDS* will send the ``TypeObject`` by default.
-However, for more complex types, it is required to use ``TypeInformation`` mechanism.
-In the *Fast DDS* ``DomainParticipant`` set the following QoS in order to send this information:
-
-.. code-block:: c
-
-    DomainParticipantQos pqos;
-    pqos.wire_protocol().builtin.typelookup_config.use_server = true;
-
-Feel free to review :ref:`this <tutorials_dynamic_types>` section, where it is explained in detail how to configure a Fast DDS Publisher/Subscriber leveraging :term:`Dynamic Types<DynamicTypes>`.
+Feel free to review `this <https://github.com/eProsima/Fast-DDS/tree/master/examples/cpp/xtypes>`_ section, where it is explained in detail how to configure a Fast DDS Publisher/Subscriber leveraging :term:`Dynamic Types<DynamicTypes>`.

@@ -39,17 +39,28 @@ public:
      * @param participant_configuration:  Structure encapsulating all configuration options.
      * @param payload_pool:               Owner of every payload contained in messages to be sent.
      * @param discovery_database:         Reference to a \c DiscoveryDatabase instance.
+     * @param replay_types:               Boolean flag in the Replayer configuration that determines whether
+     *                                    previously recorded types are transmitted.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     ReplayerParticipant(
             const std::shared_ptr<ddspipe::participants::SimpleParticipantConfiguration>& participant_configuration,
             const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
-            const std::shared_ptr<ddspipe::core::DiscoveryDatabase>& discovery_database);
+            const std::shared_ptr<ddspipe::core::DiscoveryDatabase>& discovery_database,
+            const bool& replay_types);
 
     //! Override create_reader_() IParticipant method
     DDSRECORDER_PARTICIPANTS_DllAPI
     std::shared_ptr<ddspipe::core::IReader> create_reader(
             const ddspipe::core::ITopic& topic) override;
+
+protected:
+
+    fastdds::rtps::RTPSParticipantAttributes add_participant_att_properties_(
+            fastdds::rtps::RTPSParticipantAttributes& params) const override;
+
+    // Boolean flag that indicates whether the participant should replay previously recorded data types.
+    bool replay_types_ = true;
 };
 
 } /* namespace participants */

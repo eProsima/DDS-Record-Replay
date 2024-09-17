@@ -61,7 +61,6 @@
    :numbered: 5
    :hidden:
 
-   /rst/tutorials/dynamic_types
    /rst/tutorials/foxglove_tutorial
 
 

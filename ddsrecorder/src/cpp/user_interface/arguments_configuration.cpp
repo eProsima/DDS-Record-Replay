@@ -218,7 +218,7 @@ ProcessReturnCode parse_arguments(
         // Unknown args provided
         if (parse.nonOptionsCount())
         {
-            logError(DDSRECORDER_ARGS, "ERROR: Unknown argument: <" << parse.nonOption(0) << ">." );
+            EPROSIMA_LOG_ERROR(DDSRECORDER_ARGS, "ERROR: Unknown argument: <" << parse.nonOption(0) << ">." );
             option::printUsage(fwrite, stdout, usage, columns);
             return ProcessReturnCode::incorrect_argument;
         }
@@ -272,7 +272,7 @@ ProcessReturnCode parse_arguments(
                     break;
 
                 case optionIndex::UNKNOWN_OPT:
-                    logError(DDSRECORDER_ARGS, opt << " is not a valid argument.");
+                    EPROSIMA_LOG_ERROR(DDSRECORDER_ARGS, opt << " is not a valid argument.");
                     option::printUsage(fwrite, stdout, usage, columns);
                     return ProcessReturnCode::incorrect_argument;
                     break;
@@ -297,7 +297,7 @@ option::ArgStatus Arg::Unknown(
 {
     if (msg)
     {
-        logError(
+        EPROSIMA_LOG_ERROR(
             DDSRECORDER_ARGS,
             "Unknown option '" << option << "'. Use -h to see this executable possible arguments.");
     }
@@ -315,7 +315,7 @@ option::ArgStatus Arg::Required(
 
     if (msg)
     {
-        logError(DDSRECORDER_ARGS, "Option '" << option << "' required.");
+        EPROSIMA_LOG_ERROR(DDSRECORDER_ARGS, "Option '" << option << "' required.");
     }
     return option::ARG_ILLEGAL;
 }
@@ -335,7 +335,7 @@ option::ArgStatus Arg::Numeric(
 
     if (msg)
     {
-        logError(DDSRECORDER_ARGS, "Option '" << option << "' requires a numeric argument.");
+        EPROSIMA_LOG_ERROR(DDSRECORDER_ARGS, "Option '" << option << "' requires a numeric argument.");
     }
     return option::ARG_ILLEGAL;
 }
@@ -355,7 +355,7 @@ option::ArgStatus Arg::Float(
 
     if (msg)
     {
-        logError(DDSRECORDER_ARGS, "Option '" << option << "' requires a float argument.");
+        EPROSIMA_LOG_ERROR(DDSRECORDER_ARGS, "Option '" << option << "' requires a float argument.");
     }
     return option::ARG_ILLEGAL;
 }
@@ -370,7 +370,7 @@ option::ArgStatus Arg::String(
     }
     if (msg)
     {
-        logError(DDSRECORDER_ARGS, "Option '" << option << "' requires a text argument.");
+        EPROSIMA_LOG_ERROR(DDSRECORDER_ARGS, "Option '" << option << "' requires a text argument.");
     }
     return option::ARG_ILLEGAL;
 }
@@ -389,7 +389,8 @@ option::ArgStatus Arg::Readable_File(
     }
     if (msg)
     {
-        logError(DDSRECORDER_ARGS, "Option '" << option << "' requires an existing readable file as argument.");
+        EPROSIMA_LOG_ERROR(DDSRECORDER_ARGS,
+                "Option '" << option << "' requires an existing readable file as argument.");
     }
     return option::ARG_ILLEGAL;
 }
@@ -410,7 +411,7 @@ option::ArgStatus Arg::Valid_Options(
     {
         if (msg)
         {
-            logError(DDSRECORDER_ARGS, "Option '" << option.name << "' requires a text argument.");
+            EPROSIMA_LOG_ERROR(DDSRECORDER_ARGS, "Option '" << option.name << "' requires a text argument.");
         }
         return option::ARG_ILLEGAL;
     }
@@ -429,7 +430,7 @@ option::ArgStatus Arg::Valid_Options(
         }
         error_msg << "}.";
 
-        logError(DDSRECORDER_ARGS, error_msg);
+        EPROSIMA_LOG_ERROR(DDSRECORDER_ARGS, error_msg);
     }
 
     return option::ARG_ILLEGAL;

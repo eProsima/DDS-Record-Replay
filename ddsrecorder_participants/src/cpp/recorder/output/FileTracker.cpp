@@ -90,7 +90,7 @@ void FileTracker::new_file(
         space_to_free -= oldest_file_size;
     }
 
-    logInfo(DDSRECORDER_FILE_TRACKER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_FILE_TRACKER,
             "Creating a new file with a minimum size of " + utils::from_bytes(min_file_size) + ".");
 
     // Generate the new file's ID
@@ -102,11 +102,11 @@ void FileTracker::new_file(
 
     if (std::filesystem::exists(name))
     {
-        logError(DDSRECORDER_FILE_TRACKER, "File " + name + " already exists.");
+        EPROSIMA_LOG_ERROR(DDSRECORDER_FILE_TRACKER, "File " + name + " already exists.");
     }
     else if (std::filesystem::exists(tmp_name))
     {
-        logError(DDSRECORDER_FILE_TRACKER, "File " + tmp_name + " already exists.");
+        EPROSIMA_LOG_ERROR(DDSRECORDER_FILE_TRACKER, "File " + tmp_name + " already exists.");
     }
 
     // Save the new file
@@ -117,17 +117,17 @@ void FileTracker::close_file() noexcept
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    logInfo(DDSRECORDER_FILE_TRACKER, "Closing file " + current_file_.to_str() + ".");
+    EPROSIMA_LOG_INFO(DDSRECORDER_FILE_TRACKER, "Closing file " + current_file_.to_str() + ".");
 
     if (current_file_.name.empty())
     {
-        logWarning(DDSRECORDER_FILE_TRACKER, "No file to close.");
+        EPROSIMA_LOG_WARNING(DDSRECORDER_FILE_TRACKER, "No file to close.");
         return;
     }
 
     if (current_file_.size > configuration_.max_file_size)
     {
-        logWarning(DDSRECORDER_FILE_TRACKER,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_FILE_TRACKER,
                 current_file_.to_str() + " has a greater file size than the maximum (" +
                 utils::from_bytes(configuration_.max_file_size) + ").");
     }
@@ -142,7 +142,7 @@ void FileTracker::close_file() noexcept
     }
     catch (const std::filesystem::filesystem_error& e)
     {
-        logError(DDSRECORDER_FILE_TRACKER,
+        EPROSIMA_LOG_ERROR(DDSRECORDER_FILE_TRACKER,
                 "Error renaming " + get_current_filename() + ": " << e.what());
     }
 
@@ -164,7 +164,7 @@ void FileTracker::set_current_file_size(
 {
     if (file_size > configuration_.max_file_size)
     {
-        logWarning(DDSRECORDER_FILE_TRACKER,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_FILE_TRACKER,
                 "The file's size (" << utils::from_bytes(file_size) << ") is greater than the maximum file size (" <<
                 utils::from_bytes(configuration_.max_file_size) << ").");
     }
@@ -173,7 +173,7 @@ void FileTracker::set_current_file_size(
 
     if (size_ + size_diff > configuration_.max_size)
     {
-        logWarning(DDSRECORDER_FILE_TRACKER,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_FILE_TRACKER,
                 "The aggregate output size (" <<
                 utils::from_bytes(file_size) << ") is greater than the maximum size (" <<
                 utils::from_bytes(configuration_.max_file_size) << ").");
@@ -184,11 +184,11 @@ void FileTracker::set_current_file_size(
 
 std::uint64_t FileTracker::remove_oldest_file_nts_() noexcept
 {
-    logInfo(DDSRECORDER_FILE_TRACKER, "Removing the oldest file.")
+    EPROSIMA_LOG_INFO(DDSRECORDER_FILE_TRACKER, "Removing the oldest file.");
 
     if (closed_files_.empty())
     {
-        logWarning(DDSRECORDER_FILE_TRACKER, "No files to remove.");
+        EPROSIMA_LOG_WARNING(DDSRECORDER_FILE_TRACKER, "No files to remove.");
         return 0;
     }
 
@@ -203,12 +203,12 @@ std::uint64_t FileTracker::remove_oldest_file_nts_() noexcept
 
     if (!ret)
     {
-        logWarning(DDSRECORDER_FILE_TRACKER,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_FILE_TRACKER,
                 "File " << oldest_file.to_str() << " doesn't exist and could not be deleted.");
         return 0;
     }
 
-    logInfo(DDSRECORDER_FILE_TRACKER, "File " << oldest_file.to_str() << " removed.");
+    EPROSIMA_LOG_INFO(DDSRECORDER_FILE_TRACKER, "File " << oldest_file.to_str() << " removed.");
     return oldest_file.size;
 }
 

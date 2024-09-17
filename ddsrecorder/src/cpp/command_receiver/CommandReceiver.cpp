@@ -23,9 +23,8 @@
 #include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
 #include <fastdds/dds/subscriber/qos/DataReaderQos.hpp>
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
-#include <fastdds/rtps/transport/UDPv4TransportDescriptor.h>
-#include <fastdds/rtps/transport/shared_mem/SharedMemTransportDescriptor.h>
-#include <fastrtps/xmlparser/XMLProfileManager.h>
+#include <fastdds/rtps/transport/shared_mem/SharedMemTransportDescriptor.hpp>
+#include <fastdds/rtps/transport/UDPv4TransportDescriptor.hpp>
 
 #include <ddspipe_participants/participant/rtps/CommonParticipant.hpp>
 
@@ -60,8 +59,6 @@ CommandReceiver::CommandReceiver(
     , event_handler_(event_handler)
     , participant_configuration_(participant_configuration)
 {
-    registerDdsRecorderCommandTypes();
-    registerDdsRecorderStatusTypes();
 }
 
 bool CommandReceiver::init()
@@ -116,25 +113,25 @@ bool CommandReceiver::init()
     {
         case ddspipe::core::types::IgnoreParticipantFlags::no_filter:
             pqos.wire_protocol().builtin.discovery_config.ignoreParticipantFlags =
-                    eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::NO_FILTER;
+                    eprosima::fastdds::rtps::ParticipantFilteringFlags::NO_FILTER;
             break;
         case ddspipe::core::types::IgnoreParticipantFlags::filter_different_host:
             pqos.wire_protocol().builtin.discovery_config.ignoreParticipantFlags =
-                    eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::FILTER_DIFFERENT_HOST;
+                    eprosima::fastdds::rtps::ParticipantFilteringFlags::FILTER_DIFFERENT_HOST;
             break;
         case ddspipe::core::types::IgnoreParticipantFlags::filter_different_process:
             pqos.wire_protocol().builtin.discovery_config.ignoreParticipantFlags =
-                    eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::FILTER_DIFFERENT_PROCESS;
+                    eprosima::fastdds::rtps::ParticipantFilteringFlags::FILTER_DIFFERENT_PROCESS;
             break;
         case ddspipe::core::types::IgnoreParticipantFlags::filter_same_process:
             pqos.wire_protocol().builtin.discovery_config.ignoreParticipantFlags =
-                    eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::FILTER_SAME_PROCESS;
+                    eprosima::fastdds::rtps::ParticipantFilteringFlags::FILTER_SAME_PROCESS;
             break;
         case ddspipe::core::types::IgnoreParticipantFlags::filter_different_and_same_process:
             pqos.wire_protocol().builtin.discovery_config.ignoreParticipantFlags =
-                    static_cast<eprosima::fastrtps::rtps::ParticipantFilteringFlags_t>(
-                eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::FILTER_DIFFERENT_PROCESS |
-                eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::FILTER_SAME_PROCESS);
+                    static_cast<eprosima::fastdds::rtps::ParticipantFilteringFlags>(
+                eprosima::fastdds::rtps::ParticipantFilteringFlags::FILTER_DIFFERENT_PROCESS |
+                eprosima::fastdds::rtps::ParticipantFilteringFlags::FILTER_SAME_PROCESS);
             break;
         default:
             break;
@@ -152,18 +149,6 @@ bool CommandReceiver::init()
         "fastdds.application.metadata",
         participant_configuration_->app_metadata,
         "true");
-
-    // Enable type information sending
-    pqos.wire_protocol().builtin.typelookup_config.use_server = true;
-
-    // Set Intraprocess OFF
-    // WORKAROUND: This is a temporal solution to fix a potential deadlock in the communication
-    // between a recorder and its corresponding command receiver (both being in the same
-    // DDS domain). More precisely, the deadlock affects the current implementation of
-    // TypeLookupService module with intraprocess communication.
-    auto settings = fastrtps::xmlparser::XMLProfileManager::library_settings();
-    settings.intraprocess_delivery = fastrtps::INTRAPROCESS_OFF;
-    fastrtps::xmlparser::XMLProfileManager::library_settings(settings);
 
     participant_ = DomainParticipantFactory::get_instance()->create_participant(domain_, pqos);
 
@@ -190,7 +175,7 @@ bool CommandReceiver::init()
     // CREATE THE TOPIC
     command_topic_ = participant_->create_topic(
         command_topic_name_,
-        command_type_->getName(),
+        command_type_->get_name(),
         TOPIC_QOS_DEFAULT);
 
     if (command_topic_ == nullptr)
@@ -230,7 +215,7 @@ bool CommandReceiver::init()
     // CREATE THE TOPIC
     status_topic_ = participant_->create_topic(
         status_topic_name_,
-        status_type_->getName(),
+        status_type_->get_name(),
         TOPIC_QOS_DEFAULT);
 
     if (status_topic_ == nullptr)
@@ -320,7 +305,7 @@ void CommandReceiver::publish_status(
     {
         status.info(info);
     }
-    logInfo(
+    EPROSIMA_LOG_INFO(
         DDSRECORDER_COMMAND_RECEIVER,
         "Publishing status: " << status.previous() << " ---> " << status.current() <<  " with info [" << status.info() <<
             " ].");
@@ -333,19 +318,19 @@ void CommandReceiver::on_subscription_matched(
 {
     if (info.current_count_change == 1)
     {
-        logInfo(
+        EPROSIMA_LOG_INFO(
             DDSRECORDER_COMMAND_RECEIVER,
             "Subscriber matched [ " << iHandle2GUID(info.last_publication_handle) << " ].");
     }
     else if (info.current_count_change == -1)
     {
-        logInfo(
+        EPROSIMA_LOG_INFO(
             DDSRECORDER_COMMAND_RECEIVER,
             "Subscriber unmatched [ " << iHandle2GUID(info.last_publication_handle) << " ].");
     }
     else
     {
-        logWarning(
+        EPROSIMA_LOG_WARNING(
             DDSRECORDER_COMMAND_RECEIVER,
             info.current_count_change << " is not a valid value for SubscriptionMatchedStatus current count change");
     }
@@ -357,9 +342,9 @@ void CommandReceiver::on_data_available(
     SampleInfo info;
     DdsRecorderCommand controller_command;
     while ((reader->take_next_sample(&controller_command,
-            &info)) == (ReturnCode_t::RETCODE_OK && info.instance_state == ALIVE_INSTANCE_STATE))
+            &info)) == (RETCODE_OK && info.instance_state == ALIVE_INSTANCE_STATE))
     {
-        logInfo(
+        EPROSIMA_LOG_INFO(
             DDSRECORDER_COMMAND_RECEIVER,
             "New command received: " << controller_command.command() << " [" << controller_command.args() << "]");
         {

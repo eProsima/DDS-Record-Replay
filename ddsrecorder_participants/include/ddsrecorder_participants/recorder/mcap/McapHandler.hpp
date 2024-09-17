@@ -31,7 +31,8 @@
 #include <cpp_utils/macros/custom_enumeration.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 
-#include <fastrtps/types/DynamicTypePtr.h>
+#include <fastdds/dds/domain/DomainParticipantFactory.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
 
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
 #include <ddspipe_core/types/data/RtpsPayloadData.hpp>
@@ -46,11 +47,7 @@
 #include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 
-#if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v1/DynamicTypesCollection.hpp>
-#else
-    #include <ddsrecorder_participants/common/types/dynamic_types_collection/v2/DynamicTypesCollection.hpp>
-#endif // if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
+#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -118,10 +115,12 @@ public:
      * Previously created channels (for this type) associated with a blank schema are updated to use the new one.
      *
      * @param [in] dynamic_type DynamicType containing the type information required to generate the schema.
+     * @param [in] type_identifier  The TypeIdentifier that uniquely identifies the type in DDS systems.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void add_schema(
-            const fastrtps::types::DynamicType_ptr& dynamic_type) override;
+            const fastdds::dds::DynamicType::_ref_type& dynamic_type,
+            const fastdds::dds::xtypes::TypeIdentifier& type_identifier) override;
 
     /**
      * @brief Add a data sample, to be written through a mcap \c Channel associated to the given \c topic.
@@ -390,10 +389,15 @@ protected:
     /**
      * @brief Serialize type identifier and object, and insert the result into a \c DynamicTypesCollection .
      *
-     * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
+     * @param [in] type_name        The name of the type, which serves as the key for storing the serialized type
+     *                              identifier and object in the \c dynamic_types map.
+     * @param [in] type_identifier  The TypeIdentifier that represents the type to be serialized.
+     * @param [in, out] dynamic_types  The collection where the serialized type and identifier are stored.
+     * @return bool  Returns true if the serialization and insertion were successful, false otherwise.
      */
-    void store_dynamic_type_(
+    bool store_dynamic_type_(
             const std::string& type_name,
+            const fastdds::dds::xtypes::TypeIdentifier& type_identifier,
             DynamicTypesCollection& dynamic_types) const;
 
     /**
@@ -403,10 +407,11 @@ protected:
      * @param [in] type_object Type object to be serialized and stored.
      * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
      * @param [in,out] dynamic_types Collection where to store serialized dynamic type.
+     * @return bool  Returns true if the serialization and insertion were successful, false otherwise.
      */
-    void store_dynamic_type_(
-            const eprosima::fastrtps::types::TypeIdentifier* type_identifier,
-            const eprosima::fastrtps::types::TypeObject* type_object,
+    bool store_dynamic_type_(
+            const fastdds::dds::xtypes::TypeIdentifier& type_identifier,
+            const fastdds::dds::xtypes::TypeObject& type_object,
             const std::string& type_name,
             DynamicTypesCollection& dynamic_types) const;
 
@@ -416,7 +421,7 @@ protected:
      * @param [in] dynamic_types Dynamic types collection to be serialized.
      * @return Serialized payload for the given dynamic types collection.
      */
-    fastrtps::rtps::SerializedPayload_t* serialize_dynamic_types_(
+    fastdds::rtps::SerializedPayload_t* serialize_dynamic_types_(
             DynamicTypesCollection& dynamic_types) const;
 
     /**
@@ -429,13 +434,27 @@ protected:
             const ddspipe::core::types::TopicQoS& qos);
 
     /**
+     * @brief Serialize the provided dynamic type data into a string format.
+     *
+     * This method converts the given \c type_data of type \c TypeIdentifier / \c TypeObject into a serialized
+     * string representation.
+     *
+     * @tparam DynamicTypeData  The type of the dynamic type data to be serialized ( \c TypeIdentifier / \c TypeObject )
+     * @param [in] type_data    The data to be serialized, represented as an instance of \c DynamicTypeData.
+     * @return std::string      A string containing the serialized representation of the \c type_data.
+     */
+    template<class DynamicTypeData>
+    static std::string serialize_type_data_(
+            const DynamicTypeData& type_data);
+
+    /**
      * @brief Serialize a \c TypeIdentifier into a string.
      *
      * @param [in] type_identifier TypeIdentifier to be serialized
      * @return Serialized TypeIdentifier string
      */
     static std::string serialize_type_identifier_(
-            const eprosima::fastrtps::types::TypeIdentifier* type_identifier);
+            const fastdds::dds::xtypes::TypeIdentifier& type_identifier);
 
     /**
      * @brief Serialize a \c TypeObject into a string.
@@ -444,7 +463,7 @@ protected:
      * @return Serialized TypeObject string
      */
     static std::string serialize_type_object_(
-            const eprosima::fastrtps::types::TypeObject* type_object);
+            const fastdds::dds::xtypes::TypeObject& type_object);
 
     //! Handler configuration
     McapHandlerConfiguration configuration_;

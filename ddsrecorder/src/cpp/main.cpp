@@ -78,7 +78,7 @@ std::unique_ptr<eprosima::utils::event::FileWatcherHandler> create_filewatcher(
                 }
                 catch (const std::exception& e)
                 {
-                    logWarning(DDSRECORDER_EXECUTION,
+                    EPROSIMA_LOG_WARNING(DDSRECORDER_EXECUTION,
                             "Error reloading configuration file " << file_name << " with error: " <<
                             e.what());
                 }
@@ -109,7 +109,7 @@ std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> create_periodic_ha
                 }
                 catch (const std::exception& e)
                 {
-                    logWarning(DDSRECORDER_EXECUTION,
+                    EPROSIMA_LOG_WARNING(DDSRECORDER_EXECUTION,
                             "Error reloading configuration file " << file_path << " with error: " <<
                             e.what());
                 }
@@ -135,7 +135,7 @@ void parse_command(
     bool found = string_to_command(command_str, command_code);
     if (!found)
     {
-        logWarning(DDSRECORDER_EXECUTION,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_EXECUTION,
                 "Command " << command_str <<
                 " is not a valid command (only start/pause/suspend/stop/close).");
     }
@@ -148,7 +148,7 @@ void parse_command(
         }
         catch (const std::exception& e)
         {
-            logWarning(
+            EPROSIMA_LOG_WARNING(
                 DDSRECORDER_EXECUTION,
                 "Received command argument <" << args_str << "> is not a valid json object : <" << e.what() << ">.");
         }
@@ -222,7 +222,7 @@ int main(
         // NOTE: this check is redundant with option parse arg check
         if (!is_file_accessible(commandline_args.file_path.c_str(), eprosima::utils::FileAccessMode::read))
         {
-            logError(
+            EPROSIMA_LOG_ERROR(
                 DDSRECORDER_ARGS,
                 "File '" << commandline_args.file_path << "' does not exist or it is not accessible.");
             return static_cast<int>(ProcessReturnCode::required_argument_failed);
@@ -317,7 +317,7 @@ int main(
                             initial_state);
             if (!found)
             {
-                logWarning(DDSRECORDER_EXECUTION,
+                EPROSIMA_LOG_WARNING(DDSRECORDER_EXECUTION,
                         "Initial state " << configuration.initial_state <<
                         " is not a valid one (only RUNNING/PAUSED/SUSPENDED/STOPPED). Using instead default RUNNING initial state...");
                 initial_state = DdsRecorderState::RUNNING;
@@ -360,7 +360,7 @@ int main(
 
                         case CommandCode::event:
                         case CommandCode::stop:
-                            logWarning(DDSRECORDER_EXECUTION,
+                            EPROSIMA_LOG_WARNING(DDSRECORDER_EXECUTION,
                                     "Ignoring " << command << " command, recorder not active yet.");
                             command = CommandCode::stop;  // Stay in STOPPED state
                             continue;
@@ -469,7 +469,7 @@ int main(
                         case CommandCode::event:
                             if (prev_command != CommandCode::pause)
                             {
-                                logWarning(DDSRECORDER_EXECUTION,
+                                EPROSIMA_LOG_WARNING(DDSRECORDER_EXECUTION,
                                         "Ignoring event command, instance is not paused.");
 
                                 command = prev_command;  // Back to state before event received
@@ -493,7 +493,7 @@ int main(
                                                 next_state != DdsRecorderState::SUSPENDED &&
                                                 next_state != DdsRecorderState::STOPPED))
                                         {
-                                            logWarning(DDSRECORDER_EXECUTION,
+                                            EPROSIMA_LOG_WARNING(DDSRECORDER_EXECUTION,
                                                     "Value " << next_state_str <<
                                                     " is not a valid event next_state argument (only RUNNING/SUSPENDED/STOPPED). Ignoring...");
 
@@ -518,7 +518,7 @@ int main(
                         case CommandCode::stop:
                         case CommandCode::close:
                             // Unreachable
-                            logError(DDSRECORDER_EXECUTION,
+                            EPROSIMA_LOG_ERROR(DDSRECORDER_EXECUTION,
                                     "Reached an unstable execution state: command " << command << " case.");
                             continue;
 
@@ -567,7 +567,7 @@ int main(
     }
     catch (const eprosima::utils::ConfigurationException& e)
     {
-        logError(DDSRECORDER_ERROR,
+        EPROSIMA_LOG_ERROR(DDSRECORDER_ERROR,
                 "Error Loading DDS Recorder Configuration from file " << commandline_args.file_path <<
                 ". Error message:\n " <<
                 e.what());
@@ -575,7 +575,7 @@ int main(
     }
     catch (const eprosima::utils::InitializationException& e)
     {
-        logError(DDSRECORDER_ERROR,
+        EPROSIMA_LOG_ERROR(DDSRECORDER_ERROR,
                 "Error Initializing DDS Recorder. Error message:\n " <<
                 e.what());
         return static_cast<int>(ProcessReturnCode::execution_failed);

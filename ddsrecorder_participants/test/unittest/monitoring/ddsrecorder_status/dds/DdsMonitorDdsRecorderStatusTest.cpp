@@ -30,15 +30,9 @@
 #include <ddsrecorder_participants/recorder/monitoring/DdsRecorderMonitor.hpp>
 #include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
 
-#if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
-    #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v1/DdsRecorderMonitoringStatus.h>
-    #include \
-    <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v1/DdsRecorderMonitoringStatusPubSubTypes.h>
-#else
-    #include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatus.h>
-    #include \
-    <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/v2/DdsRecorderMonitoringStatusPubSubTypes.h>
-#endif // if FASTRTPS_VERSION_MAJOR < 2 || (FASTRTPS_VERSION_MAJOR == 2 && FASTRTPS_VERSION_MINOR < 13)
+#include <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/DdsRecorderMonitoringStatus.hpp>
+#include \
+    <ddsrecorder_participants/common/types/monitoring/ddsrecorder_status/DdsRecorderMonitoringStatusPubSubTypes.hpp>
 
 #include "../../constants.hpp"
 
@@ -134,7 +128,7 @@ TEST_F(DdsMonitorDdsRecorderStatusTest, type_mismatch)
     // Wait for the monitor to publish the next message
     ASSERT_TRUE(reader_->wait_for_unread_message(test::monitor::MAX_WAITING_TIME));
 
-    ASSERT_EQ(reader_->take_next_sample(&status, &info), ReturnCode_t::RETCODE_OK);
+    ASSERT_EQ(reader_->take_next_sample(&status, &info), RETCODE_OK);
     ASSERT_EQ(info.instance_state, ALIVE_INSTANCE_STATE);
 
     // Verify that the content of the DdsRecorderMonitoringStatus published by the Monitor is correct
@@ -160,7 +154,7 @@ TEST_F(DdsMonitorDdsRecorderStatusTest, qos_mismatch)
     // Wait for the monitor to publish the next message
     ASSERT_TRUE(reader_->wait_for_unread_message(test::monitor::MAX_WAITING_TIME));
 
-    ASSERT_EQ(reader_->take_next_sample(&status, &info), ReturnCode_t::RETCODE_OK);
+    ASSERT_EQ(reader_->take_next_sample(&status, &info), RETCODE_OK);
     ASSERT_EQ(info.instance_state, ALIVE_INSTANCE_STATE);
 
     // Verify that the content of the DdsRecorderMonitoringStatus published by the Monitor is correct
@@ -186,7 +180,7 @@ TEST_F(DdsMonitorDdsRecorderStatusTest, mcap_file_creation_failure)
     // Wait for the monitor to publish the next message
     ASSERT_TRUE(reader_->wait_for_unread_message(test::monitor::MAX_WAITING_TIME));
 
-    ASSERT_EQ(reader_->take_next_sample(&status, &info), ReturnCode_t::RETCODE_OK);
+    ASSERT_EQ(reader_->take_next_sample(&status, &info), RETCODE_OK);
     ASSERT_EQ(info.instance_state, ALIVE_INSTANCE_STATE);
 
     // Verify that the content of the DdsRecorderMonitoringStatus published by the Monitor is correct
@@ -214,7 +208,7 @@ TEST_F(DdsMonitorDdsRecorderStatusTest, disk_full)
     // Wait for the monitor to publish the next message
     ASSERT_TRUE(reader_->wait_for_unread_message(test::monitor::MAX_WAITING_TIME));
 
-    ASSERT_EQ(reader_->take_next_sample(&status, &info), ReturnCode_t::RETCODE_OK);
+    ASSERT_EQ(reader_->take_next_sample(&status, &info), RETCODE_OK);
     ASSERT_EQ(info.instance_state, ALIVE_INSTANCE_STATE);
 
     // Verify that the content of the DdsRecorderMonitoringStatus published by the Monitor is correct
