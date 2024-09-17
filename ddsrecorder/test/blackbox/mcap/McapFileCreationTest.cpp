@@ -138,7 +138,7 @@ void create_publisher(
             type_name,
             dyn_type_objects))
     {
-        EPROSIMA_LOG_WARNING(DDSRECORDER_EXECUTION, "Failed to get TypeObjects for type with name " << type_name);
+        EPROSIMA_LOG_WARNING(DDSRECORDER_TEST, "Failed to get TypeObjects for type with name " << type_name);
         return;
     }
 
@@ -165,19 +165,20 @@ eprosima::fastdds::dds::traits<eprosima::fastdds::dds::DynamicData>::ref_type se
 {
     if (test::dynamic_type_ == nullptr)
     {
-        EPROSIMA_LOG_WARNING(DDSRECORDER_EXECUTION, "Dynamic type is null. Cannot send sample of index: " << index);
+        EPROSIMA_LOG_WARNING(DDSRECORDER_TEST, "Dynamic type is null. Cannot send sample of index: " << index);
         return nullptr;
     }
 
+    // Create and initialize new dynamic data
     auto dynamic_data_ = eprosima::fastdds::dds::DynamicDataFactory::get_instance()->create_data(test::dynamic_type_);
 
     // Set index
-    dynamic_data_->set_uint32_value(dynamic_data_->get_member_id_by_name("index"), 0);
+    dynamic_data_->set_uint32_value(dynamic_data_->get_member_id_by_name("index"), index);
     // Set message
     dynamic_data_->set_string_value(dynamic_data_->get_member_id_by_name("message"), test::send_message);
     test::writer_->write(dynamic_data_.get());
 
-    EPROSIMA_LOG_INFO(DDSRECORDER_EXECUTION, "Message published.");
+    EPROSIMA_LOG_INFO(DDSRECORDER_TEST, "Message published.");
 
     std::this_thread::sleep_for(std::chrono::milliseconds(time_sleep));
 
@@ -320,38 +321,36 @@ std::tuple<unsigned int, double> record_with_transitions(
     return std::tuple<unsigned int, double>{n_received_msgs, max_timestamp};
 }
 
-// TEST(McapFileCreationTest, mcap_data_msgs)
-// {
+TEST(McapFileCreationTest, mcap_data_msgs)
+{
+    const std::string file_name = "output_mcap_data_msgs";
+    eprosima::fastdds::dds::traits<eprosima::fastdds::dds::DynamicData>::ref_type send_data;
+    send_data = record(file_name);
 
-//     const std::string file_name = "output_mcap_data_msgs";
-//     eprosima::fastdds::dds::traits<eprosima::fastdds::dds::DynamicData>::ref_type send_data;
-//     send_data = record(file_name);
+    eprosima::fastdds::dds::DynamicPubSubType pubsubType(test::dynamic_type_);
+    eprosima::fastdds::rtps::SerializedPayload_t payload;
+    payload.reserve(
+        pubsubType.calculate_serialized_size(
+            &send_data,
+            eprosima::fastdds::dds::DEFAULT_DATA_REPRESENTATION
+            )
+        );
+    pubsubType.serialize(&send_data, payload, eprosima::fastdds::dds::DEFAULT_DATA_REPRESENTATION);
 
-//     eprosima::fastdds::dds::DynamicPubSubType pubsubType;
-//     eprosima::fastdds::rtps::SerializedPayload_t payload;
-//     payload.reserve(
-//         pubsubType.calculate_serialized_size(
-//             send_data.get(),
-//             eprosima::fastdds::dds::DEFAULT_DATA_REPRESENTATION
-//             )
-//         );
-//     pubsubType.serialize(send_data.get(), payload, eprosima::fastdds::dds::DEFAULT_DATA_REPRESENTATION);
+    mcap::McapReader mcap_reader;
+    auto messages = get_msgs_mcap(file_name, mcap_reader);
 
-//     mcap::McapReader mcap_reader;
-//     auto messages = get_msgs_mcap(file_name, mcap_reader);
-
-//     for (auto it = messages.begin(); it != messages.end(); it++)
-//     {
-//         auto received_msg = reinterpret_cast<unsigned char const*>(it->message.data);
-//         for (unsigned int i = 0; i < payload.length; i++)
-//         {
-//             ASSERT_EQ(payload.data[i], received_msg[i]) << "wrong data !!";
-//         }
-//         ASSERT_EQ(payload.length, it->message.dataSize) << "length fails !!";
-//     }
-//     mcap_reader.close();
-
-// }
+    for (auto it = messages.begin(); it != messages.end(); it++)
+    {
+        auto received_msg = reinterpret_cast<unsigned char const*>(it->message.data);
+        for (unsigned int i = 0; i < payload.length; i++)
+        {
+            ASSERT_EQ(payload.data[i], received_msg[i]) << "wrong data !!";
+        }
+        ASSERT_EQ(payload.length, it->message.dataSize) << "length fails !!";
+    }
+    mcap_reader.close();
+}
 
 TEST(McapFileCreationTest, mcap_dds_topic)
 {
