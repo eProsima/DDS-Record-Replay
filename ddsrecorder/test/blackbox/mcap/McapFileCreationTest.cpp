@@ -76,6 +76,9 @@ const std::string dds_topic_name = "TypeIntrospectionTopic";
 const std::string dds_type_name = "HelloWorld";
 
 const std::string ros2_topic_name = "rt/hello";
+// Note: The ros2_type_name will not be used, as it's not possible to set the type name
+// In previous versions, it was possible to set it directly, but now generating a new
+// type just to change the name would be overkill.
 const std::string ros2_type_name = "std_msgs::msg::dds_::String_";
 
 const unsigned int n_msgs = 3;
