@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>ddsrecorder_yaml</name>
-  <version>0.3.0</version>
+  <version>1.0.0</version>
   <description>
      *eprosima DDS Recorder* Yaml Module is a C++ implementation to read and parse YAML configuration files.
   </description>
