@@ -88,7 +88,8 @@ std::shared_ptr<IReader> McapReaderParticipant::create_reader(
 {
     if (!utils::can_cast<DdsTopic>(topic))
     {
-        EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT, "Not creating Writer for topic " << topic.topic_name());
+        EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                "Not creating Writer for topic " << topic.topic_name());
         return std::make_shared<BlankReader>();
     }
 
@@ -148,7 +149,8 @@ void McapReaderParticipant::process_mcap()
     }
     else
     {
-        EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT, "Provided input file contains no messages in the given range.");
+        EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                "Provided input file contains no messages in the given range.");
         return;
     }
 

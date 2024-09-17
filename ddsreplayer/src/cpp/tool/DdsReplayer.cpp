@@ -267,7 +267,8 @@ void DdsReplayer::register_dynamic_type_(
     type_identifiers.type_identifier1(type_identifier);
 
     // Register in factory
-    if (fastdds::dds::RETCODE_OK != fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().register_type_object(
+    if (fastdds::dds::RETCODE_OK !=
+            fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().register_type_object(
                 type_object, type_identifiers))
     {
         EPROSIMA_LOG_WARNING(DDSREPLAYER_REPLAYER,
@@ -352,28 +353,28 @@ DynamicTypeData DdsReplayer::deserialize_type_data_(
     if (!cdr_message)
     {
         throw utils::InconsistencyException(
-                "Error reading data -> cdr_message is null.");
+                  "Error reading data -> cdr_message is null.");
     }
 
     // Check enough space in buffer
     if (!(cdr_message->length >= cdr_message->pos + parameter_length))
     {
         throw utils::InconsistencyException(
-                "Error reading data -> not enough space in cdr_message buffer.");
+                  "Error reading data -> not enough space in cdr_message buffer.");
     }
 
     // Check length is consistent
     if (!(parameter_length > 0))
     {
         throw utils::InconsistencyException(
-                "Error reading data -> payload length is greater than 0.");
+                  "Error reading data -> payload length is greater than 0.");
     }
 
     // Check payload is valid
     if (!payload.data)
     {
         throw utils::InconsistencyException(
-                "Error reading data -> payload data is null.");
+                  "Error reading data -> payload data is null.");
     }
 
     // Copy data

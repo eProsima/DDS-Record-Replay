@@ -45,7 +45,8 @@ void McapWriter::write(
         }
         catch (const FullDiskException& e)
         {
-            EPROSIMA_LOG_ERROR(DDSRECORDER_MCAP_HANDLER, "FAIL_MCAP_WRITE | Disk is full. Error message:\n " << e.what());
+            EPROSIMA_LOG_ERROR(DDSRECORDER_MCAP_HANDLER,
+                    "FAIL_MCAP_WRITE | Disk is full. Error message:\n " << e.what());
             on_disk_full_();
         }
     }

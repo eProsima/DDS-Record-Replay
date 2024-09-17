@@ -24,7 +24,8 @@ void DdsRecorderStatusMonitorProducer::register_consumer(
 {
     if (!enabled_)
     {
-        EPROSIMA_LOG_WARNING(DDSRECORDER_MONITOR, "MONITOR | Not registering consumer " << consumer->get_name() << " on "
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MONITOR,
+                "MONITOR | Not registering consumer " << consumer->get_name() << " on "
                 "DdsRecorderStatusMonitorProducer since the DdsRecorderStatusMonitorProducer is disabled.");
 
         return;

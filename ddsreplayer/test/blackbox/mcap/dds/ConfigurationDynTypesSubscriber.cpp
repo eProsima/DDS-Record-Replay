@@ -127,7 +127,7 @@ void ConfigurationDynTypesSubscriber::on_data_available(
 {
     // Dynamic DataType
     eprosima::fastdds::dds::DynamicData::_ref_type new_data =
-                        eprosima::fastdds::dds::DynamicDataFactory::get_instance()->create_data(dynamic_type_);
+            eprosima::fastdds::dds::DynamicDataFactory::get_instance()->create_data(dynamic_type_);
 
     SampleInfo info;
 
@@ -175,9 +175,9 @@ void ConfigurationDynTypesSubscriber::on_data_writer_discovery(
 }
 
 void ConfigurationDynTypesSubscriber::notify_type_discovered_(
-            const fastdds::dds::xtypes::TypeInformation& type_info,
-            const fastcdr::string_255& type_name,
-            const fastcdr::string_255& topic_name)
+        const fastdds::dds::xtypes::TypeInformation& type_info,
+        const fastcdr::string_255& type_name,
+        const fastcdr::string_255& topic_name)
 {
     // First check if the topic received is the one we are expecting
     if (topic_name.to_string() != topic_name_)
@@ -198,16 +198,18 @@ void ConfigurationDynTypesSubscriber::notify_type_discovered_(
 
     const auto type_identifier = type_info.complete().typeid_with_size().type_id();
     fastdds::dds::xtypes::TypeObject dyn_type_object;
-    if (fastdds::dds::RETCODE_OK != fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_object(
-            type_identifier,
-            dyn_type_object))
+    if (fastdds::dds::RETCODE_OK !=
+            fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_object(
+                type_identifier,
+                dyn_type_object))
     {
         return;
     }
 
     // Create Dynamic Type
-    fastdds::dds::DynamicType::_ref_type dyn_type = fastdds::dds::DynamicTypeBuilderFactory::get_instance()->create_type_w_type_object(
-                dyn_type_object)->build();
+    fastdds::dds::DynamicType::_ref_type dyn_type =
+            fastdds::dds::DynamicTypeBuilderFactory::get_instance()->create_type_w_type_object(
+        dyn_type_object)->build();
     if (!dyn_type)
     {
         return;

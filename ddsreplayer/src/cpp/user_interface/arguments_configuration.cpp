@@ -387,7 +387,8 @@ option::ArgStatus Arg::Readable_File(
     }
     if (msg)
     {
-        EPROSIMA_LOG_ERROR(DDSREPLAYER_ARGS, "Option '" << option << "' requires an existing readable file as argument.");
+        EPROSIMA_LOG_ERROR(DDSREPLAYER_ARGS,
+                "Option '" << option << "' requires an existing readable file as argument.");
     }
     return option::ARG_ILLEGAL;
 }

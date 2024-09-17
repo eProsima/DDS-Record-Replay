@@ -140,7 +140,8 @@ void McapHandler::add_schema(
         if (ret != fastdds::dds::RETCODE_OK)
         {
             EPROSIMA_LOG_ERROR(
-                DDSRECORDER_MCAP_HANDLER, "MCAP_WRITE | Failed to serialize DynamicType to idl for type with name: " << type_name);
+                DDSRECORDER_MCAP_HANDLER,
+                "MCAP_WRITE | Failed to serialize DynamicType to idl for type with name: " << type_name);
             return;
         }
         data = idl.str();
@@ -879,12 +880,14 @@ bool McapHandler::store_dynamic_type_(
     type_identifiers.type_identifier1(type_identifier);
 
     fastdds::dds::xtypes::TypeInformation type_info;
-    if (fastdds::dds::RETCODE_OK != fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_information(
-            type_identifiers,
-            type_info,
-            true))
+    if (fastdds::dds::RETCODE_OK !=
+            fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_information(
+                type_identifiers,
+                type_info,
+                true))
     {
-        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER, "MCAP_WRITE | Error getting TypeInformation for type " << type_name);
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER,
+                "MCAP_WRITE | Error getting TypeInformation for type " << type_name);
         return false;
     }
 
@@ -897,12 +900,13 @@ bool McapHandler::store_dynamic_type_(
         dependency_type_identifier = dependency.type_id();
 
         fastdds::dds::xtypes::TypeObject dependency_type_object;
-        if (fastdds::dds::RETCODE_OK != fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_object(
-                dependency_type_identifier,
-                dependency_type_object))
+        if (fastdds::dds::RETCODE_OK !=
+                fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_object(
+                    dependency_type_identifier,
+                    dependency_type_object))
         {
             EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER, "MCAP_WRITE | Error getting TypeObject of dependency "
-                << "for type " << type_name);
+                    << "for type " << type_name);
             return false;
         }
 
@@ -916,9 +920,10 @@ bool McapHandler::store_dynamic_type_(
     }
 
     fastdds::dds::xtypes::TypeObject type_object;
-    if (fastdds::dds::RETCODE_OK != fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_object(
-            type_identifier,
-            type_object))
+    if (fastdds::dds::RETCODE_OK !=
+            fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_object(
+                type_identifier,
+                type_object))
     {
         EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER, "MCAP_WRITE | Error getting TypeObject for type " << type_name);
         return false;
@@ -1029,7 +1034,7 @@ std::string McapHandler::serialize_type_data_(
     fastcdr::CdrSizeCalculator calculator(fastcdr::CdrVersion::XCDRv2);
     size_t current_alignment {0};
     size_t size = calculator.calculate_serialized_size(type_data, current_alignment) +
-                            fastdds::rtps::SerializedPayload_t::representation_header_size;
+            fastdds::rtps::SerializedPayload_t::representation_header_size;
 
     fastdds::rtps::SerializedPayload_t payload(static_cast<uint32_t>(size));
     fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
@@ -1049,22 +1054,23 @@ std::string McapHandler::serialize_type_data_(
     std::unique_ptr<fastdds::rtps::CDRMessage_t> cdr_message = std::make_unique<fastdds::rtps::CDRMessage_t>(payload);
 
     // Add data
-    if (!(cdr_message && (cdr_message->pos + payload.length <= cdr_message->max_size))|| (payload.length > 0 && !payload.data))
+    if (!(cdr_message && (cdr_message->pos + payload.length <= cdr_message->max_size)) ||
+            (payload.length > 0 && !payload.data))
     {
         if (!cdr_message)
         {
             throw utils::InconsistencyException(
-                    "Error adding data -> cdr_message is null.");
+                      "Error adding data -> cdr_message is null.");
         }
         else if (cdr_message->pos + payload.length > cdr_message->max_size)
         {
             throw utils::InconsistencyException(
-                    "Error adding data -> not enough space in cdr_message buffer.");
+                      "Error adding data -> not enough space in cdr_message buffer.");
         }
         else if (payload.length > 0 && !payload.data)
         {
             throw utils::InconsistencyException(
-                    "Error adding data -> payload length is greater than 0, but payload data is null.");
+                      "Error adding data -> payload length is greater than 0, but payload data is null.");
         }
     }
 
@@ -1079,7 +1085,7 @@ std::string McapHandler::serialize_type_data_(
         if (!(cdr_message && (cdr_message->pos + size_octet <= cdr_message->max_size)))
         {
             throw utils::InconsistencyException(
-                    "Not enough space in cdr_message buffer.");
+                      "Not enough space in cdr_message buffer.");
         }
         for (uint32_t i = 0; i < size_octet; i++)
         {

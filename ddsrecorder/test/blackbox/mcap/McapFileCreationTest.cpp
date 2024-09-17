@@ -137,21 +137,22 @@ void create_publisher(
     eprosima::fastdds::dds::xtypes::TypeObjectPair dyn_type_objects;
     if (eprosima::fastdds::dds::RETCODE_OK !=
             eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_objects(
-            type_name,
-            dyn_type_objects))
+                type_name,
+                dyn_type_objects))
     {
         EPROSIMA_LOG_WARNING(DDSRECORDER_TEST, "Failed to get TypeObjects for type with name " << type_name);
         return;
     }
 
     test::dynamic_type_ = eprosima::fastdds::dds::DynamicTypeBuilderFactory::get_instance()->create_type_w_type_object(
-                dyn_type_objects.complete_type_object)->build();
+        dyn_type_objects.complete_type_object)->build();
 
     // Create the Publisher
     eprosima::fastdds::dds::Publisher* publisher_ = participant_->create_publisher(PUBLISHER_QOS_DEFAULT, nullptr);
 
     // Register the (dynamic) type support in the Participant
-    eprosima::fastdds::dds::TypeSupport dyn_type_support(new eprosima::fastdds::dds::DynamicPubSubType(test::dynamic_type_));
+    eprosima::fastdds::dds::TypeSupport dyn_type_support(new eprosima::fastdds::dds::DynamicPubSubType(test::
+                    dynamic_type_));
     participant_->register_type(dyn_type_support);
 
     // Create the DDS Topic
