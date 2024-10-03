@@ -13,7 +13,7 @@ jobs:
     with:
       custom_version_build: 'v2'
       dependencies_artifact_postfix: '_nightly'
-      ref: '2.x'
+      ref: '0.x'
     secrets: inherit
 
   reusable_tests_v3:
