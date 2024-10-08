@@ -5,38 +5,6 @@
 #     - [ Debug | Release ]
 #     - execute tests in different versions of ubuntu with different build types
 #
-#   - asan
-#     - ubuntu-22.04
-#     - execute tests with ASAN flag
-#
-#   - tsan
-#     - ubuntu-22.04
-#     - execute tests with TSAN flag
-#
-#   - clang
-#     - ubuntu-22.04
-#     - execute clang-tidy check
-#
-#   - coverage
-#     - ubuntu-22.04
-#     - execute test with coverage flag and upload results
-#
-#   - flaky
-#     - ubuntu-22.04
-#     - execute flaky tests
-#
-#   - docs
-#     - ubuntu-22.04
-#     - execute docs compile and tests
-#
-#   - uncrustify
-#     - ubuntu-22.04
-#     - test uncrustify
-#
-#   - python-linter
-#     - ubuntu-22.04
-#     - test python linter
-#
 
 name: windows-ci
 
@@ -78,7 +46,7 @@ jobs:
 # TEST
 
   multiplatform-tests:
-    runs-on: ${{ matrix.os }}-ci
+    name: ${{ matrix.os }}-ci
     strategy:
       fail-fast: false
       matrix:

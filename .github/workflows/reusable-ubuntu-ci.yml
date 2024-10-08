@@ -78,7 +78,7 @@ jobs:
 # TEST
 
   multiplatform-tests:
-    runs-on: ${{ matrix.os }}-ci
+    name: ${{ matrix.os }}-ci
     strategy:
       fail-fast: false
       matrix:
