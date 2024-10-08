@@ -1,7 +1,7 @@
 # Reusable workflow to run the following jobs:
 #
 #   - multiplatform-tests
-#     - [ ubuntu-22.04 | ubuntu-24.04 | windows-2019 | windows-2022 ]
+#     - [ windows-2019 | windows-2022 ]
 #     - [ Debug | Release ]
 #     - execute tests in different versions of ubuntu with different build types
 #
@@ -38,10 +38,11 @@
 #     - test python linter
 #
 
-name: reusable-workflow
+name: windows-ci
 
 on:
 
+  workflow_dispatch:
   workflow_call:
     inputs:
 
@@ -66,12 +67,6 @@ on:
         type: string
         default: 'main'
 
-      os:
-        description: 'Specify runs-on machine to download specific artifact'
-        required: true
-        type: string
-
-
 env:
   # TODO: controller is not tested as it has no tests
   code_packages_names: 'ddsrecorder_participants ddsrecorder_yaml ddsrecorder_tool ddsreplayer_tool'
@@ -83,37 +78,17 @@ jobs:
 # TEST
 
   multiplatform-tests:
-    name: ${{ inputs.os }}-ci-${{ matrix.cmake_build_type }}
-    runs-on: ${{ inputs.os }}
+    runs-on: ${{ matrix.os }}-ci
     strategy:
       fail-fast: false
       matrix:
-        cmake_build_type:
-          - Release
-          - Debug
-    steps:
-
-      - name: Sync repository
-        uses: eProsima/eProsima-CI/external/checkout@v0
-        with:
-          path: src
-          ref: ${{ inputs.ref }}
-
-      - name: Download dependencies and install requirements
-        uses: ./src/.github/actions/project_dependencies
-        with:
-          os: ${{ inputs.os }}
-          cmake_build_type: ${{ matrix.cmake_build_type }}
-          custom_version_build: ${{ inputs.custom_version_build }}
-          dependencies_artifact_postfix: ${{ inputs.dependencies_artifact_postfix }}
-          secret_token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Compile and run tests
-        uses: eProsima/eProsima-CI/multiplatform/colcon_build_test@v0
-        with:
-          packages_names: ${{ env.code_packages_names }}
-          cmake_args: -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }}
-          workspace_dependencies: './install'
-          ctest_args: --label-exclude "xfail"
-          colcon_meta_file: ./src/.github/workflows/configurations/${{ runner.os }}/colcon.meta
-          test_report_artifact: test_report${{ inputs.dependencies_artifact_postfix }}_${{ inputs.custom_version_build }}_${{ inputs.os }}_${{ matrix.cmake_build_type }}
+        os:
+          - windows-2019
+          - windows-2022
+    uses: ./.github/workflows/reusable-workflow.yml
+    with:
+      os: ${{ matrix.os }}
+      custom_version_build: ${{ inputs.custom_version_build || 'v3' }}
+      dependencies_artifact_postfix: ${{ inputs.dependencies_artifact_postfix || '_nightly' }}
+      ref: ${{ inputs.ref }}
+    secrets: inherit
