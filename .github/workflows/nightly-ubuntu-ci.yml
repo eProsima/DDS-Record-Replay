@@ -1,7 +1,9 @@
 # Nightly test workflow for DDS Record & Replay
-name: nightly
+name: nightly-ubuntu-ci
 
 on:
+  workflow_dispatch:
+
   schedule:
     - cron: '0 5 * * *'
 
@@ -9,7 +11,7 @@ jobs:
 
   reusable_tests_v2:
     name: reusable_tests_v2
-    uses: ./.github/workflows/reusable-workflow.yml
+    uses: ./.github/workflows/reusable-ubuntu-ci.yml
     with:
       custom_version_build: 'v2'
       dependencies_artifact_postfix: '_nightly'
@@ -18,7 +20,7 @@ jobs:
 
   reusable_tests_v3:
     name: reusable_tests_v3
-    uses: ./.github/workflows/reusable-workflow.yml
+    uses: ./.github/workflows/reusable-ubuntu-ci.yml
     with:
       custom_version_build: 'v3'
       dependencies_artifact_postfix: '_nightly'
