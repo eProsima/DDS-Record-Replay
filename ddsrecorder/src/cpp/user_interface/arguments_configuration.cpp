@@ -250,9 +250,9 @@ ProcessReturnCode parse_arguments(
                     break;
 
                 case optionIndex::ACTIVATE_DEBUG:
-                    commandline_args.log_filter[utils::VerbosityKind::Error].set_value("");
-                    commandline_args.log_filter[utils::VerbosityKind::Warning].set_value("DDSRECORDER");
-                    commandline_args.log_filter[utils::VerbosityKind::Info].set_value("DDSRECORDER");
+                    commandline_args.log_filter.error.set_value("");
+                    commandline_args.log_filter.warning.set_value("DDSRECORDER");
+                    commandline_args.log_filter.info.set_value("DDSRECORDER");
                     commandline_args.log_verbosity = utils::VerbosityKind::Info;
                     break;
 
@@ -261,9 +261,9 @@ ProcessReturnCode parse_arguments(
                     break;
 
                 case optionIndex::LOG_FILTER:
-                    commandline_args.log_filter[utils::VerbosityKind::Error].set_value(opt.arg);
-                    commandline_args.log_filter[utils::VerbosityKind::Warning].set_value(opt.arg);
-                    commandline_args.log_filter[utils::VerbosityKind::Info].set_value(opt.arg);
+                    commandline_args.log_filter.error.set_value(opt.arg);
+                    commandline_args.log_filter.warning.set_value(opt.arg);
+                    commandline_args.log_filter.info.set_value(opt.arg);
                     break;
 
                 case optionIndex::LOG_VERBOSITY:

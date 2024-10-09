@@ -44,7 +44,7 @@ public:
 
         utils::BaseLogConfiguration log_conf;
         log_conf.verbosity = utils::VerbosityKind::Info;
-        log_conf.filter[utils::VerbosityKind::Info].set_value("MONITOR_DATA");
+        log_conf.filter.info.set_value("MONITOR_DATA");
 
         utils::Log::SetVerbosity(log_conf.verbosity);
 

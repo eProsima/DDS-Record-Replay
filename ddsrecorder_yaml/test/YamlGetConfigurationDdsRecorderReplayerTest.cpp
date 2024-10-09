@@ -40,7 +40,7 @@ TEST(YamlGetConfigurationDdsRecorderReplayerTest, get_ddsrecorder_configuration_
     CommandlineArgsRecorder commandline_args;
 
     // Setting CommandLine arguments as if configured from CommandLine
-    commandline_args.log_filter[eprosima::utils::VerbosityKind::Warning].set_value("DDSRECORDER|DDSPIPE|DEBUG");
+    commandline_args.log_filter.warning.set_value("DDSRECORDER|DDSPIPE|DEBUG");
 
     const char* yml_str =
             R"(
@@ -62,14 +62,11 @@ TEST(YamlGetConfigurationDdsRecorderReplayerTest, get_ddsrecorder_configuration_
     ASSERT_TRUE(configuration.ddspipe_configuration.log_configuration.is_valid(error_msg));
     ASSERT_EQ(configuration.ddspipe_configuration.log_configuration.verbosity.get_value(), utils::VerbosityKind::Info);
     ASSERT_EQ(
-        configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Error].get_value(),
-        "DEBUG");
+        configuration.ddspipe_configuration.log_configuration.filter.error.get_value(), "DEBUG");
     ASSERT_EQ(
-        configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Warning].get_value(),
-        "DDSRECORDER|DDSPIPE|DEBUG");
+        configuration.ddspipe_configuration.log_configuration.filter.warning.get_value(), "DDSRECORDER|DDSPIPE|DEBUG");
     ASSERT_EQ(
-        configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Info].get_value(),
-        "DDSRECORDER");
+        configuration.ddspipe_configuration.log_configuration.filter.info.get_value(), "DDSRECORDER");
 }
 
 /**
@@ -87,7 +84,7 @@ TEST(YamlGetConfigurationDdsRecorderReplayerTest, get_ddsreplayer_configuration_
     CommandlineArgsReplayer commandline_args;
 
     // Setting CommandLine arguments as if configured from CommandLine
-    commandline_args.log_filter[eprosima::utils::VerbosityKind::Warning].set_value("DDSREPLAYER|DDSPIPE|DEBUG");
+    commandline_args.log_filter.warning.set_value("DDSREPLAYER|DDSPIPE|DEBUG");
 
     const char* yml_str =
             R"(
@@ -109,14 +106,11 @@ TEST(YamlGetConfigurationDdsRecorderReplayerTest, get_ddsreplayer_configuration_
     ASSERT_TRUE(configuration.ddspipe_configuration.log_configuration.is_valid(error_msg));
     ASSERT_EQ(configuration.ddspipe_configuration.log_configuration.verbosity.get_value(), utils::VerbosityKind::Info);
     ASSERT_EQ(
-        configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Error].get_value(),
-        "DEBUG");
+        configuration.ddspipe_configuration.log_configuration.filter.error.get_value(), "DEBUG");
     ASSERT_EQ(
-        configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Warning].get_value(),
-        "DDSREPLAYER|DDSPIPE|DEBUG");
+        configuration.ddspipe_configuration.log_configuration.filter.warning.get_value(), "DDSREPLAYER|DDSPIPE|DEBUG");
     ASSERT_EQ(
-        configuration.ddspipe_configuration.log_configuration.filter[utils::VerbosityKind::Info].get_value(),
-        "DDSREPLAYER");
+        configuration.ddspipe_configuration.log_configuration.filter.info.get_value(), "DDSREPLAYER");
 }
 
 int main(
