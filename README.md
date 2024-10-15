@@ -38,6 +38,11 @@ Thus, the exact playback of the recorded network events is possible as the data 
 *eProsima DDS Record & Replay* is easily configurable and installed with a default setup, so that DDS topics, data types and entities are automatically discovered without the need to specify the types of data recorded.
 This is because the recording tool exploits the DynamicTypes functionality of [eProsima Fast DDS](https://fast-dds.docs.eprosima.com), the C++ implementation of the [DDS (Data Distribution Service) Specification](https://www.omg.org/spec/DDS/About-DDS/) defined by the [Object Management Group (OMG)](https://www.omg.org/).
 
+## Commercial support
+
+Looking for commercial support? Write us to info@eprosima.com
+
+Find more about us at [eProsima’s webpage](https://eprosima.com/).
 
 ## Documentation
 
@@ -56,7 +61,3 @@ You can access the documentation online, which is hosted on [Read the Docs](http
 * [Getting Started](https://dds-recorder.readthedocs.io/en/latest/rst/replaying/getting_started/getting_started.html)
 * [Usage](https://dds-recorder.readthedocs.io/en/latest/rst/replaying/usage/usage.html)
 * [Configuration](https://dds-recorder.readthedocs.io/en/latest/rst/replaying/usage/configuration.html)
-
-## Getting Help
-
-If you need support you can reach us by mail at `support@eProsima.com` or by phone at `+34 91 804 34 48`.
