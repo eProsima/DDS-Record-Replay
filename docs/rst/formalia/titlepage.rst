@@ -1,8 +1,6 @@
-.. raw:: html
-
-  <h1>
-    eProsima DDS Record & Replay Documentation
-  </h1>
+##########################################
+eProsima DDS Record & Replay Documentation
+##########################################
 
 .. image:: /rst/figures/eprosima_logo.svg
   :height: 100px
