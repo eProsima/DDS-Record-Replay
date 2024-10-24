@@ -255,11 +255,11 @@ int main(
 
         // Start replaying data
         bool read_success;
-        std::thread process_mcap_thread([&]
+        std::thread process_file_thread([&]
                 {
                     try
                     {
-                        replayer->process_mcap();
+                        replayer->process_file();
                         read_success = true;
                     }
                     catch (const eprosima::utils::InconsistencyException& e)
@@ -278,7 +278,7 @@ int main(
         // Disable inner pipe, which would abort replaying messages in case execution stopped by signal
         replayer->stop();
 
-        process_mcap_thread.join();
+        process_file_thread.join();
 
         if (!read_success)
         {
