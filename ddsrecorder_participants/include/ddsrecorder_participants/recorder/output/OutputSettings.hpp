@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <string>
 
+#include <cpp_utils/macros/custom_enumeration.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {

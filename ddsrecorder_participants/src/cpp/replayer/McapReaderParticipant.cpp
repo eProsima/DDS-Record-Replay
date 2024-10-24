@@ -16,23 +16,27 @@
  * @file McapReaderParticipant.cpp
  */
 
+#include <chrono>
+#include <string>
+
+#include <mcap/errors.hpp>
 #include <mcap/reader.hpp>
+#include <mcap/types.hpp>
 
 #include <fastdds/rtps/common/Time_t.hpp>
 
-#include <cpp_utils/exception/InconsistencyException.hpp>
+#include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/Log.hpp>
-#include <cpp_utils/ros2_mangling.hpp>
+#include <cpp_utils/memory/Heritable.hpp>
 #include <cpp_utils/time/time_utils.hpp>
-#include <cpp_utils/types/cast.hpp>
-#include <cpp_utils/utils.hpp>
+#include <cpp_utils/types/Fuzzy.hpp>
 
-#include <ddspipe_core/types/data/RtpsPayloadData.hpp>
-#include <ddspipe_core/types/dds/Payload.hpp>
+#include <ddspipe_core/types/dds/TopicQoS.hpp>
+#include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
-#include <ddspipe_participants/reader/auxiliar/BlankReader.hpp>
-#include <ddspipe_participants/writer/auxiliar/BlankWriter.hpp>
-
+#include <ddsrecorder_participants/common/serialize/Serializer.hpp>
+#include <ddsrecorder_participants/common/time_utils.hpp>
+#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
 
@@ -40,175 +44,88 @@ namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
 
-using namespace eprosima::ddspipe::core;
-using namespace eprosima::ddspipe::core::types;
-using namespace eprosima::ddspipe::participants;
-using namespace eprosima::utils;
-
 McapReaderParticipant::McapReaderParticipant(
-        std::shared_ptr<McapReaderParticipantConfiguration> configuration,
-        std::shared_ptr<PayloadPool> payload_pool,
-        std::string& file_path)
-    : configuration_(configuration)
-    , payload_pool_(payload_pool)
-    , file_path_(file_path)
-    , stop_(false)
+        const std::shared_ptr<BaseReaderParticipantConfiguration>& configuration,
+        const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
+        const std::string& file_path)
+    : BaseReaderParticipant(configuration, payload_pool, file_path)
 {
-    // Do nothing
 }
 
-ParticipantId McapReaderParticipant::id() const noexcept
+void McapReaderParticipant::process_summary(
+    std::set<utils::Heritable<ddspipe::core::types::DdsTopic>>& topics,
+    DynamicTypesCollection& types)
 {
-    return configuration_->id;
-}
+    open_file_();
 
-bool McapReaderParticipant::is_repeater() const noexcept
-{
-    return false;
-}
+    read_mcap_summary_();
 
-bool McapReaderParticipant::is_rtps_kind() const noexcept
-{
-    return false;
-}
+    // Get the topics from the channels and schemas
+    const auto channels = mcap_reader_.channels();
+    const auto schemas = mcap_reader_.schemas();
 
-TopicQoS McapReaderParticipant::topic_qos() const noexcept
-{
-    return configuration_->topic_qos;
-}
-
-std::shared_ptr<IWriter> McapReaderParticipant::create_writer(
-        const ITopic& /* topic */)
-{
-    return std::make_shared<BlankWriter>();
-}
-
-std::shared_ptr<IReader> McapReaderParticipant::create_reader(
-        const ITopic& topic)
-{
-    if (!utils::can_cast<DdsTopic>(topic))
+    for (const auto& [_, channel]: channels)
     {
-        EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
-                "Not creating Writer for topic " << topic.topic_name());
-        return std::make_shared<BlankReader>();
+        const auto topic_name = channel->topic;
+        const auto type_name = schemas.at(channel->schemaId)->name;
+
+        const bool is_topic_ros2_type = channel->metadata[ROS2_TYPES] == "true";
+        const auto topic = utils::Heritable<ddspipe::core::types::DdsTopic>::make_heritable(
+                create_topic_(topic_name, type_name, is_topic_ros2_type));
+
+        // Apply the QoS stored in the MCAP file as if they were the discovered QoS.
+        const auto topic_qos_str = channel->metadata[QOS_SERIALIZATION_QOS];
+        const auto topic_qos = Serializer::deserialize<ddspipe::core::types::TopicQoS>(topic_qos_str);
+
+        topic->topic_qos.set_qos(topic_qos, utils::FuzzyLevelValues::fuzzy_level_fuzzy);
+
+        topics.insert(topic);
     }
 
-    auto reader = std::make_shared<InternalReader>(id());
+    // Get the dynamic types from the attachment
+    const auto attachments = mcap_reader_.attachments();
 
-    auto dds_topic = dynamic_cast<const DdsTopic&>(topic);
+    if (attachments.find(DYNAMIC_TYPES_ATTACHMENT_NAME) != attachments.end())
+    {
+        const auto dynamic_types_attachment = attachments.at(DYNAMIC_TYPES_ATTACHMENT_NAME);
 
-    readers_[dds_topic] = reader;
+        const std::string dynamic_types_str(
+                reinterpret_cast<const char*>(dynamic_types_attachment.data), dynamic_types_attachment.dataSize);
 
-    return reader;
+        types = Serializer::deserialize<DynamicTypesCollection>(dynamic_types_str);
+    }
+
+    close_file_();
 }
 
-void McapReaderParticipant::process_mcap()
+void McapReaderParticipant::process_messages()
 {
-    // Read MCAP file
-    mcap::McapReader mcap_reader;
-    auto status = mcap_reader.open(file_path_);
-    if (status.code != mcap::StatusCode::Success)
-    {
-        throw utils::InconsistencyException(
-                  STR_ENTRY << "Failed MCAP read."
-                  );
-    }
+    open_file_();
 
-    // NOTE: begin_time < end_time assertion already done in YAML module
-    mcap::Timestamp begin_time = 0;
-    mcap::Timestamp end_time = mcap::MaxTime;
-    if (configuration_->begin_time.is_set())
-    {
-        begin_time = std_timepoint_to_mcap_timestamp(configuration_->begin_time.get_reference());
-    }
-    if (configuration_->end_time.is_set())
-    {
-        end_time = std_timepoint_to_mcap_timestamp(configuration_->end_time.get_reference());
-    }
-    mcap::ReadMessageOptions read_options(begin_time, end_time);
+    auto messages = read_mcap_messages_();
 
-    // Iterate over messages ordered by incremental log_time
-    // NOTE: this corresponds to recording time (not publication) unless recorder configured with `log-publish-time: true`
-    read_options.readOrder = mcap::ReadMessageOptions::ReadOrder::LogTimeOrder;
-
-    // Read messages
-    const auto onProblem = [](const mcap::Status& status)
-            {
-                EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
-                        "An error occurred while reading messages: " << status.message << ".");
-            };
-    auto messages = mcap_reader.readMessages(onProblem, read_options);
-
-    // Obtain timestamp of first recorded message
-    utils::Timestamp initial_ts_origin;
-    auto messages_it = messages.begin();
-    auto messages_end = messages.end();
-    if (messages_it != messages_end)
+    if (messages.begin() == messages.end())
     {
-        initial_ts_origin = mcap_timestamp_to_std_timepoint(messages_it->message.logTime);
-    }
-    else
-    {
-        EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
-                "Provided input file contains no messages in the given range.");
+        EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT, "Provided input file contains no messages in the given range.");
+        close_file_();
         return;
     }
 
+    // Obtain timestamp of first recorded message
+    const auto first_message_timestamp = to_std_timestamp(messages.begin()->message.logTime);
+
     // Define the time to start replaying messages
-    utils::Timestamp initial_ts;
-    utils::Timestamp now = utils::now();
-    if (configuration_->start_replay_time.is_set())
+    const auto initial_timestamp = when_to_start_replay_(configuration_->start_replay_time);
+
+    // Replay messages
+    for (const auto& it : messages)
     {
-        initial_ts = configuration_->start_replay_time.get_reference();
-
-        if (initial_ts < now)
-        {
-            EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
-                    "Provided start-replay-time already expired, starting immediately...");
-            initial_ts = now;
-        }
-    }
-    else
-    {
-        initial_ts = now;
-    }
-
-    // Schedule messages to be replayed
-    utils::Timestamp scheduled_write_ts;
-    for (auto it = messages.begin(); it != messages_end; it++)
-    {
-        // Create RTPS data
-        auto data = std::make_unique<RtpsPayloadData>();
-
-        // Create data payload
-        Payload mcap_payload;
-        mcap_payload.length = it->message.dataSize;
-        mcap_payload.max_size = it->message.dataSize;
-        mcap_payload.data = (unsigned char*)reinterpret_cast<const unsigned char*>(it->message.data);
-
-        // Copy payload from MCAP file to RTPS data through payload pool
-        payload_pool_->get_payload(mcap_payload, data->payload); // this reserves and copies payload
-        mcap_payload.data = nullptr; // Set to nullptr after copy to avoid free on destruction
-
-        // Set publication delay from original log time and configured playback rate
-        auto delay = mcap_timestamp_to_std_timepoint(it->message.logTime) - initial_ts_origin;
-        scheduled_write_ts = std::chrono::time_point_cast<utils::Timestamp::duration>(initial_ts + std::chrono::duration_cast<std::chrono::nanoseconds>(
-                            delay / configuration_->rate));
-
-        // Set source timestamp
-        // NOTE: this is important for QoS such as LifespanQosPolicy
-        data->source_timestamp =
-                fastdds::rtps::Time_t(std::chrono::duration_cast<std::chrono::nanoseconds>(scheduled_write_ts
-                                .time_since_epoch()).count() / 1e9);
-
         // Create topic on which this message should be published
-        DdsTopic channel_topic;
-        channel_topic.m_topic_name = it->channel->metadata[ROS2_TYPES] == "true" ? utils::mangle_if_ros_topic(
-            it->channel->topic) : it->channel->topic;
-        channel_topic.type_name = it->channel->metadata[ROS2_TYPES] == "true" ? utils::mangle_if_ros_type(
-            it->schema->name) : it->schema->name;
+        const bool is_topic_ros2_type = it.channel->metadata[ROS2_TYPES] == "true";
+        const auto topic = create_topic_(it.channel->topic, it.schema->name, is_topic_ros2_type);
 
-        auto readers_it = readers_.find(channel_topic);
+        const auto readers_it = readers_.find(topic);
+
         if (readers_it == readers_.end())
         {
             EPROSIMA_LOG_ERROR(DDSREPLAYER_MCAP_READER_PARTICIPANT,
@@ -217,56 +134,108 @@ void McapReaderParticipant::process_mcap()
         }
 
         EPROSIMA_LOG_INFO(DDSREPLAYER_MCAP_READER_PARTICIPANT,
-                "Scheduling message to be replayed in topic " << readers_it->first << ".");
+                "Scheduling message to be replayed in topic " << topic << ".");
 
-        {
-            std::unique_lock<std::mutex> lock(scheduling_cv_mtx_);
-            scheduling_cv_.wait_until(
-                lock,
-                scheduled_write_ts,
-                [&]
-                {
-                    return stop_ || (utils::now() >= scheduled_write_ts);
-                });
+        // Set publication delay from original log time and configured playback rate
+        auto delay = to_std_timestamp(it.message.logTime) - first_message_timestamp;
+        auto scheduled_write_ts =
+                std::chrono::time_point_cast<utils::Timestamp::duration>(initial_timestamp +
+                std::chrono::duration_cast<std::chrono::nanoseconds>(delay / configuration_->rate));
 
-            if (stop_)
-            {
-                EPROSIMA_LOG_INFO(DDSREPLAYER_MCAP_READER_PARTICIPANT,
-                        "Participant stopped while processing MCAP file.");
-                break;
-            }
-        }
+        // Create RTPS data
+        auto data = create_payload_(it.message.data, it.message.dataSize);
+
+        // Set source timestamp
+        // NOTE: this is important for QoS such as LifespanQosPolicy
+        data->source_timestamp = fastdds::Time_t(to_ticks(scheduled_write_ts) / 1e9);
+
+        // Wait until it's time to write the message
+        wait_until_timestamp_(scheduled_write_ts);
 
         EPROSIMA_LOG_INFO(DDSREPLAYER_MCAP_READER_PARTICIPANT,
-                "Replaying message in topic " << readers_it->first << ".");
+                "Replaying message in topic " << topic << ".");
 
         // Insert new data in internal reader queue
         readers_it->second->simulate_data_reception(std::move(data));
     }
 
-    mcap_reader.close();
+    close_file_();
 }
 
-void McapReaderParticipant::stop() noexcept
+void McapReaderParticipant::open_file_()
 {
+    const auto status = mcap_reader_.open(file_path_);
+
+    if (status.code != mcap::StatusCode::Success)
     {
-        std::lock_guard<std::mutex> lock(scheduling_cv_mtx_);
-        stop_ = true;
+        throw utils::InitializationException(STR_ENTRY << "Failed to open MCAP.");
     }
-    scheduling_cv_.notify_one();
 }
 
-utils::Timestamp McapReaderParticipant::mcap_timestamp_to_std_timepoint(
-        const mcap::Timestamp& time)
+void McapReaderParticipant::close_file_()
 {
-    return std::chrono::time_point_cast<utils::Timestamp::duration>(utils::Timestamp() +
-                   std::chrono::nanoseconds(time));
+    mcap_reader_.close();
 }
 
-mcap::Timestamp McapReaderParticipant::std_timepoint_to_mcap_timestamp(
-        const utils::Timestamp& time)
+void McapReaderParticipant::read_mcap_summary_()
 {
-    return mcap::Timestamp(std::chrono::duration_cast<std::chrono::nanoseconds>(time.time_since_epoch()).count());
+    // Read mcap summary: ForceScan method required for parsing metadata and attachments
+    const auto status = mcap_reader_.readSummary(mcap::ReadSummaryMethod::ForceScan, [](const mcap::Status& status)
+            {
+                logWarning(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                        "An error occurred while reading MCAP summary: " << status.message << ".");
+            });
+
+    if (status.code != mcap::StatusCode::Success)
+    {
+        throw utils::InitializationException(STR_ENTRY << "Failed to read summary.");
+    }
+
+    // Check the recording version is correct
+    const auto metadata = mcap_reader_.metadata();
+    std::string recording_version;
+
+    if (metadata.find(VERSION_METADATA_NAME) != metadata.end())
+    {
+        const auto version_metadata = metadata.at(VERSION_METADATA_NAME).metadata;
+        recording_version = version_metadata.at(VERSION_METADATA_RELEASE);
+    }
+
+    if (recording_version != DDSRECORDER_PARTICIPANTS_VERSION_STRING)
+    {
+        logWarning(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                "MCAP file generated with a different DDS Record & Replay version (" << recording_version <<
+                ", current is " << DDSRECORDER_PARTICIPANTS_VERSION_STRING << "), incompatibilities might arise...");
+    }
+}
+
+mcap::LinearMessageView McapReaderParticipant::read_mcap_messages_()
+{
+    // NOTE: begin_time < end_time assertion already done in YAML module
+    const mcap::Timestamp begin_time =
+            configuration_->begin_time.is_set() ?
+            to_mcap_timestamp(configuration_->begin_time.get_reference()) :
+            0;
+
+    const mcap::Timestamp end_time =
+            configuration_->end_time.is_set() ?
+            to_mcap_timestamp(configuration_->end_time.get_reference()) :
+            mcap::MaxTime;
+
+    mcap::ReadMessageOptions read_options(begin_time, end_time);
+
+    // Iterate over messages ordered by incremental log_time
+    // NOTE: this corresponds to recording time (not publication) unless recorder configured with `log-publish-time: true`
+    read_options.readOrder = mcap::ReadMessageOptions::ReadOrder::LogTimeOrder;
+
+    // Read messages
+    auto messages = mcap_reader_.readMessages([](const mcap::Status& status)
+            {
+                logWarning(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                        "An error occurred while reading MCAP messages: " << status.message << ".");
+            }, read_options);
+
+    return messages;
 }
 
 } /* namespace participants */

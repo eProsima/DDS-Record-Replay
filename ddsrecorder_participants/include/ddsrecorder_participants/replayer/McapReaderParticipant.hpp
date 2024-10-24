@@ -14,21 +14,19 @@
 
 #pragma once
 
-#include <condition_variable>
-#include <map>
+#include <set>
+#include <string>
 
-#include <mcap/mcap.hpp>
+#include <mcap/reader.hpp>
 
-#include <cpp_utils/time/time_utils.hpp>
+#include <cpp_utils/memory/Heritable.hpp>
 
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
-#include <ddspipe_core/interface/IParticipant.hpp>
-#include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
-#include <ddspipe_participants/reader/auxiliar/InternalReader.hpp>
-
+#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
 #include <ddsrecorder_participants/library/library_dll.h>
-#include <ddsrecorder_participants/replayer/McapReaderParticipantConfiguration.hpp>
+#include <ddsrecorder_participants/replayer/BaseReaderParticipant.hpp>
+#include <ddsrecorder_participants/replayer/BaseReaderParticipantConfiguration.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -37,9 +35,9 @@ namespace participants {
 /**
  * Participant that reads MCAP files and passes its messages to other DDS Pipe participants.
  *
- * @implements IParticipant
+ * @implements BaseReaderParticipant
  */
-class McapReaderParticipant : public ddspipe::core::IParticipant
+class McapReaderParticipant : public BaseReaderParticipant
 {
 public:
 
@@ -54,90 +52,63 @@ public:
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     McapReaderParticipant(
-            std::shared_ptr<McapReaderParticipantConfiguration> configuration,
-            std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
-            std::string& file_path);
+            const std::shared_ptr<BaseReaderParticipantConfiguration>& configuration,
+            const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
+            const std::string& file_path);
 
-    //! Override id() IParticipant method
+    /**
+     * @brief Process the MCAP file summary.
+     *
+     * Fills the topics with the MCAP file's channels and schemas.
+     * Fills the types with the MCAP file's attachment.
+     *
+     * @param topics: Set of topics to be filled with the information from the MCAP file.
+     * @param types:  DynamicTypesCollection instance to be filled with the types' information from the MCAP file.
+     */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    ddspipe::core::types::ParticipantId id() const noexcept override;
-
-    //! Override is_repeater() IParticipant method
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    bool is_repeater() const noexcept override;
-
-    //! Override is_rtps_kind() IParticipant method
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    bool is_rtps_kind() const noexcept override;
-
-    //! Override topic_qos() IParticipant method
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    ddspipe::core::types::TopicQoS topic_qos() const noexcept override;
-
-    //! Override create_writer_() IParticipant method
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    std::shared_ptr<ddspipe::core::IWriter> create_writer(
-            const ddspipe::core::ITopic& topic) override;
-
-    //! Override create_reader_() IParticipant method
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    std::shared_ptr<ddspipe::core::IReader> create_reader(
-            const ddspipe::core::ITopic& topic) override;
+    void process_summary(
+        std::set<utils::Heritable<ddspipe::core::types::DdsTopic>>& topics,
+        DynamicTypesCollection& types) override;
 
     /**
      * @brief Read and send messages sequentially (according to timestamp).
      *
-     * @throw utils::InconsistencyException if failed to read mcap file.
+     * Reads the MCAP file messages and sends them to the participants.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    void process_mcap();
-
-    //! Stop participant (abort processing mcap)
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    void stop() noexcept;
-
-    /**
-     * @brief This method converts a mcap timestamp to standard format.
-     *
-     * @param [in] time Timestamp to be converted
-     * @return Timestamp in standard format
-     */
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    static utils::Timestamp mcap_timestamp_to_std_timepoint(
-            const mcap::Timestamp& time);
-
-    /**
-     * @brief This method converts a timestamp in standard format to its mcap equivalent.
-     *
-     * @param [in] time Timestamp to be converted
-     * @return Timestamp in mcap format
-     */
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    static mcap::Timestamp std_timepoint_to_mcap_timestamp(
-            const utils::Timestamp& time);
+    void process_messages() override;
 
 protected:
 
-    //! Participant Configuration
-    std::shared_ptr<McapReaderParticipantConfiguration> configuration_;
+    /**
+     * @brief Open the MCAP file.
+     *
+     * @throws \c InitializationException if failed to open MCAP file.
+     */
+    void open_file_();
 
-    //! DDS Pipe shared Payload Pool
-    std::shared_ptr<ddspipe::core::PayloadPool> payload_pool_;
+    /**
+     * @brief Close the MCAP file.
+     */
+    void close_file_();
 
-    //! Input file path
-    std::string file_path_;
+    /**
+     * @brief Read the MCAP file summary.
+     *
+     * Reads the MCAP file summary.
+     * Checks if the version of the MCAP file is supported.
+     */
+    void read_mcap_summary_();
 
-    //! Internal readers map
-    std::map<ddspipe::core::types::DdsTopic, std::shared_ptr<ddspipe::participants::InternalReader>> readers_;
+    /**
+     * @brief Read the MCAP file messages.
+     *
+     * @return A \c LinearMessageView instance with the messages read.
+     */
+    mcap::LinearMessageView read_mcap_messages_();
 
-    //! Stop flag
-    bool stop_;
-
-    //! Scheduling condition variable
-    std::condition_variable scheduling_cv_;
-
-    //! Scheduling condition variable mutex
-    std::mutex scheduling_cv_mtx_;
+    //! MCAP reader instance.
+    mcap::McapReader mcap_reader_;
 };
 
 } /* namespace participants */

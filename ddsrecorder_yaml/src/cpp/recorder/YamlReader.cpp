@@ -33,35 +33,35 @@ YamlReader::get<mcap::McapWriterOptions>(
     mcap::McapWriterOptions mcap_writer_options{"ros2"};
 
     // Parse optional compression algorithm
-    if (YamlReader::is_tag_present(yml, RECORDER_COMPRESSION_SETTINGS_ALGORITHM_TAG))
+    if (YamlReader::is_tag_present(yml, RECORDER_MCAP_COMPRESSION_SETTINGS_ALGORITHM_TAG))
     {
-        auto algorithm_yml = YamlReader::get_value_in_tag(yml, RECORDER_COMPRESSION_SETTINGS_ALGORITHM_TAG);
+        auto algorithm_yml = YamlReader::get_value_in_tag(yml, RECORDER_MCAP_COMPRESSION_SETTINGS_ALGORITHM_TAG);
         mcap_writer_options.compression = YamlReader::get_enumeration<mcap::Compression>(algorithm_yml,
                     {
-                        {RECORDER_COMPRESSION_SETTINGS_ALGORITHM_NONE_TAG, mcap::Compression::None},
-                        {RECORDER_COMPRESSION_SETTINGS_ALGORITHM_LZ4_TAG, mcap::Compression::Lz4},
-                        {RECORDER_COMPRESSION_SETTINGS_ALGORITHM_ZSTD_TAG, mcap::Compression::Zstd},
+                        {RECORDER_MCAP_COMPRESSION_SETTINGS_ALGORITHM_NONE_TAG, mcap::Compression::None},
+                        {RECORDER_MCAP_COMPRESSION_SETTINGS_ALGORITHM_LZ4_TAG, mcap::Compression::Lz4},
+                        {RECORDER_MCAP_COMPRESSION_SETTINGS_ALGORITHM_ZSTD_TAG, mcap::Compression::Zstd},
                     });
     }
 
     // Parse optional compression level
-    if (YamlReader::is_tag_present(yml, RECORDER_COMPRESSION_SETTINGS_LEVEL_TAG))
+    if (YamlReader::is_tag_present(yml, RECORDER_MCAP_COMPRESSION_SETTINGS_LEVEL_TAG))
     {
-        auto level_yml = YamlReader::get_value_in_tag(yml, RECORDER_COMPRESSION_SETTINGS_LEVEL_TAG);
+        auto level_yml = YamlReader::get_value_in_tag(yml, RECORDER_MCAP_COMPRESSION_SETTINGS_LEVEL_TAG);
         mcap_writer_options.compressionLevel = YamlReader::get_enumeration<mcap::CompressionLevel>(level_yml,
                     {
-                        {RECORDER_COMPRESSION_SETTINGS_LEVEL_FASTEST_TAG, mcap::CompressionLevel::Fastest},
-                        {RECORDER_COMPRESSION_SETTINGS_LEVEL_FAST_TAG, mcap::CompressionLevel::Fast},
-                        {RECORDER_COMPRESSION_SETTINGS_LEVEL_DEFAULT_TAG, mcap::CompressionLevel::Default},
-                        {RECORDER_COMPRESSION_SETTINGS_LEVEL_SLOW_TAG, mcap::CompressionLevel::Slow},
-                        {RECORDER_COMPRESSION_SETTINGS_LEVEL_SLOWEST_TAG, mcap::CompressionLevel::Slowest},
+                        {RECORDER_MCAP_COMPRESSION_SETTINGS_LEVEL_FASTEST_TAG, mcap::CompressionLevel::Fastest},
+                        {RECORDER_MCAP_COMPRESSION_SETTINGS_LEVEL_FAST_TAG, mcap::CompressionLevel::Fast},
+                        {RECORDER_MCAP_COMPRESSION_SETTINGS_LEVEL_DEFAULT_TAG, mcap::CompressionLevel::Default},
+                        {RECORDER_MCAP_COMPRESSION_SETTINGS_LEVEL_SLOW_TAG, mcap::CompressionLevel::Slow},
+                        {RECORDER_MCAP_COMPRESSION_SETTINGS_LEVEL_SLOWEST_TAG, mcap::CompressionLevel::Slowest},
                     });
     }
 
     // Parse optional compression force
-    if (YamlReader::is_tag_present(yml, RECORDER_COMPRESSION_SETTINGS_FORCE_TAG))
+    if (YamlReader::is_tag_present(yml, RECORDER_MCAP_COMPRESSION_SETTINGS_FORCE_TAG))
     {
-        mcap_writer_options.forceCompression = YamlReader::get<bool>(yml, RECORDER_COMPRESSION_SETTINGS_FORCE_TAG,
+        mcap_writer_options.forceCompression = YamlReader::get<bool>(yml, RECORDER_MCAP_COMPRESSION_SETTINGS_FORCE_TAG,
                         version);
     }
 
