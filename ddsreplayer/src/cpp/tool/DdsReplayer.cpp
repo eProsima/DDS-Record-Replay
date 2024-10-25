@@ -83,7 +83,8 @@ DdsReplayer::DdsReplayer(
     auto replayer_participant = std::make_shared<participants::ReplayerParticipant>(
         configuration.replayer_configuration,
         payload_pool,
-        discovery_database);
+        discovery_database,
+        configuration.replay_types);
 
     replayer_participant->init();
 

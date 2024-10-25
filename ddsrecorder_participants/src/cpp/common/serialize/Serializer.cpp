@@ -20,7 +20,7 @@
 
 #include <fastdds/dds/topic/TypeSupport.hpp>
 #include <fastdds/dds/xtypes/type_representation/detail/dds_xtypes_typeobject.hpp>
-#include <fastdds/rtps/common/SerializedPayload.h>
+#include <fastdds/rtps/common/SerializedPayload.hpp>
 
 #include <ddspipe_core/types/dds/TopicQoS.hpp>
 
@@ -72,8 +72,8 @@ std::string Serializer::serialize(
 
     // Serialize dynamic types collection using CDR
     fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
-    fastdds::rtps::SerializedPayload_t payload(type_support.get_serialized_size_provider(dynamic_types_ptr)());
-    type_support.serialize(dynamic_types_ptr, &payload);
+    fastdds::rtps::SerializedPayload_t payload(type_support.calculate_serialized_size(dynamic_types_ptr, fastdds::dds::DEFAULT_DATA_REPRESENTATION));
+    type_support.serialize(dynamic_types_ptr, payload, fastdds::dds::DEFAULT_DATA_REPRESENTATION);
 
     return std::string(reinterpret_cast<char*>(payload.data));;
 }
@@ -159,7 +159,7 @@ DynamicTypesCollection Serializer::deserialize(
     DynamicTypesCollection dynamic_types;
     fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
 
-    type_support.deserialize(&serialized_payload, &dynamic_types);
+    type_support.deserialize(serialized_payload, &dynamic_types);
 
     return dynamic_types;
 }

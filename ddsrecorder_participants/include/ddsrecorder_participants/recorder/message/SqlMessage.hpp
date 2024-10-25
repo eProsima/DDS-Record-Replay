@@ -23,7 +23,7 @@
 
 #include <nlohmann/json.hpp>
 
-#include <fastdds/rtps/common/SequenceNumber.h>
+#include <fastdds/rtps/common/SequenceNumber.hpp>
 #include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
 
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
