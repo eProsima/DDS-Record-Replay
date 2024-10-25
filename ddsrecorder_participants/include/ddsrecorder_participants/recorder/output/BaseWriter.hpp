@@ -23,7 +23,7 @@
 #include <memory>
 #include <mutex>
 
-#include <fastdds/rtps/common/SerializedPayload.h>
+#include <fastdds/rtps/common/SerializedPayload.hpp>
 
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/library/library_dll.h>

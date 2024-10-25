@@ -18,7 +18,7 @@
 
 #include <chrono>
 
-#include <fastdds/rtps/history/IPayloadPool.h>
+#include <fastdds/rtps/history/IPayloadPool.hpp>
 
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/ros2_mangling.hpp>

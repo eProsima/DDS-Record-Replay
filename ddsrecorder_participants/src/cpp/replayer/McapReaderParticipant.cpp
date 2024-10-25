@@ -23,7 +23,7 @@
 #include <mcap/reader.hpp>
 #include <mcap/types.hpp>
 
-#include <fastdds/rtps/common/Time_t.hpp>
+#include <fastdds/dds/core/Time_t.hpp>
 
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/Log.hpp>
@@ -129,7 +129,7 @@ void McapReaderParticipant::process_messages()
         if (readers_it == readers_.end())
         {
             EPROSIMA_LOG_ERROR(DDSREPLAYER_MCAP_READER_PARTICIPANT,
-                    "Failed to replay message in topic " << channel_topic << ": topic not found, skipping...");
+                    "Failed to replay message in topic " << topic << ": topic not found, skipping...");
             continue;
         }
 
@@ -147,7 +147,7 @@ void McapReaderParticipant::process_messages()
 
         // Set source timestamp
         // NOTE: this is important for QoS such as LifespanQosPolicy
-        data->source_timestamp = fastdds::Time_t(to_ticks(scheduled_write_ts) / 1e9);
+        data->source_timestamp = fastdds::dds::Time_t(to_ticks(scheduled_write_ts) / 1e9);
 
         // Wait until it's time to write the message
         wait_until_timestamp_(scheduled_write_ts);

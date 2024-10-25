@@ -38,14 +38,14 @@ namespace ddsrecorder {
 namespace participants {
 
 SqlMessage::SqlMessage(
-    const ddspipe::core::types::RtpsPayloadData& data,
+    const ddspipe::core::types::RtpsPayloadData& payload,
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
     const ddspipe::core::types::DdsTopic& topic,
     const std::string& key /* = "" */)
-    : BaseMessage(data, payload_pool, topic)
-    , writer_guid(data.sample_identity.writer_guid())
-    , sequence_number(data.sample_identity.sequence_number())
-    , instance_handle(data.instanceHandle)
+    : BaseMessage(payload, payload_pool, topic)
+    , writer_guid(payload.source_guid)
+    , sequence_number(fastdds::rtps::SequenceNumber_t())
+    , instance_handle(payload.instanceHandle)
     , key(key)
 {
 }
@@ -63,7 +63,7 @@ void SqlMessage::deserialize(
     fastdds::dds::DynamicPubSubType pub_sub_type(dynamic_type);
     auto dynamic_data = fastdds::dds::DynamicDataFactory::get_instance()->create_data(dynamic_type);
 
-    pub_sub_type.deserialize(&payload, &dynamic_data);
+    pub_sub_type.deserialize(payload, &dynamic_data);
 
     // Serialize the payload into a JSON
     std::stringstream data_json_stream;

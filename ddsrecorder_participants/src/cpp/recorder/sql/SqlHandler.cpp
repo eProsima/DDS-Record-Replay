@@ -57,17 +57,18 @@ SqlHandler::~SqlHandler()
 
 void SqlHandler::add_schema(
         const fastdds::dds::DynamicType::_ref_type& dynamic_type,
-        const std::string& type_name,
-        const fastdds::dds::xtypes::TypeIdentifier& type_id)
+        const fastdds::dds::xtypes::TypeIdentifier& type_identifier)
 {
     // NOTE: Process schemas even if in STOPPED state to avoid losing them (only sent/received once in discovery)
     std::lock_guard<std::mutex> lock(mtx_);
 
     if (dynamic_type == nullptr)
     {
-        logWarning(DDSRECORDER_SQL_HANDLER, "Received nullptr dynamic type. Skipping...");
+        EPROSIMA_LOG_WARNING(DDSRECORDER_SQL_HANDLER, "Received nullptr dynamic type. Skipping...");
         return;
     }
+
+    const std::string type_name = dynamic_type->get_name().to_string();
 
     // Check if it exists already
     if (received_types_.find(type_name) != received_types_.end())
@@ -79,7 +80,7 @@ void SqlHandler::add_schema(
     received_types_[type_name] = dynamic_type;
 
     // Add type to the collection of dynamic types
-    store_dynamic_type_(type_name, type_id);
+    store_dynamic_type_(type_name, type_identifier);
 
     if (configuration_.record_types)
     {

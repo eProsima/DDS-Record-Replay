@@ -23,6 +23,8 @@
 
 #include <sqlite3.h>
 
+#include <fastdds/dds/core/Time_t.hpp>
+
 #include <cpp_utils/exception/InconsistencyException.hpp>
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/memory/Heritable.hpp>
@@ -181,7 +183,7 @@ void SqlReaderParticipant::process_messages()
 
         // Set source timestamp
         // NOTE: this is important for QoS such as LifespanQosPolicy
-        data->source_timestamp = fastdds::Time_t(to_ticks(time_to_write) / 1e9);
+        data->source_timestamp = fastdds::dds::Time_t(to_ticks(time_to_write) / 1e9);
 
         // Wait until it's time to write the message
         wait_until_timestamp_(time_to_write);

@@ -16,7 +16,7 @@
  * @file BaseMessage.cpp
  */
 
-#include <fastdds/rtps/history/IPayloadPool.h>
+#include <fastdds/rtps/history/IPayloadPool.hpp>
 
 #include <cpp_utils/exception/InconsistencyException.hpp>
 #include <cpp_utils/time/time_utils.hpp>
