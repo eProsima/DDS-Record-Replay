@@ -83,6 +83,9 @@ struct SqlMessage : public BaseMessage
     // Writer GUID
     ddspipe::core::types::Guid writer_guid;
 
+    // Number of SqlMessages created
+    static std::atomic<std::uint64_t> number_of_msgs;
+
     // Sequence number
     fastdds::rtps::SequenceNumber_t sequence_number;
 
