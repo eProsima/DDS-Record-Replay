@@ -91,6 +91,9 @@ void SqlWriter::open_new_file_nts_(
         throw utils::InitializationException(error_msg);
     }
 
+    // Enable WAL mode: appends changes to a separate file before applying them to the main database, reducing the risk of corruption in the event of a crash
+    sqlite3_exec(database_, "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
+
     // Create Types table
     const std::string create_types_table{
     R"(
@@ -194,6 +197,8 @@ void SqlWriter::write_nts_(
         logError(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
         throw utils::InconsistencyException(error_msg);
     }
+
+    sqlite3_exec(database_, "PRAGMA wal_checkpoint(PASSIVE);", nullptr, nullptr, nullptr);
 
     // Finalize the SQL statement
     sqlite3_finalize(statement);
@@ -311,6 +316,9 @@ void SqlWriter::write_nts_(
         throw utils::InconsistencyException(error_msg);
     }
 
+    sqlite3_exec(database_, "PRAGMA wal_checkpoint(PASSIVE);", nullptr, nullptr, nullptr);
+
+
     // Finalize the SQL statement
     sqlite3_finalize(statement);
 }
@@ -368,6 +376,8 @@ void SqlWriter::write_nts_(
         logError(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
         throw utils::InconsistencyException(error_msg);
     }
+
+    sqlite3_exec(database_, "PRAGMA wal_checkpoint(PASSIVE);", nullptr, nullptr, nullptr);
 
     // Finalize the SQL statement
     sqlite3_finalize(statement);
