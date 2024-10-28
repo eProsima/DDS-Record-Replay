@@ -290,19 +290,22 @@ void RecorderConfiguration::load_recorder_configuration_(
     }
 
     /////
-    // Get optional mcap configuration
-    if (YamlReader::is_tag_present(yml, RECORDER_MCAP_TAG))
-    {
-        const auto mcap_yml = YamlReader::get_value_in_tag(yml, RECORDER_MCAP_TAG);
-        load_recorder_mcap_configuration_(mcap_yml, version);
-    }
-
-    /////
     // Get optional sql configuration
     if (YamlReader::is_tag_present(yml, RECORDER_SQL_TAG))
     {
         const auto sql_yml = YamlReader::get_value_in_tag(yml, RECORDER_SQL_TAG);
         load_recorder_sql_configuration_(sql_yml, version);
+        // Disable default MCAP if SQL is enabled
+        if(sql_enabled)
+            mcap_enabled = false;
+    }
+
+    /////
+    // Get optional mcap configuration
+    if (YamlReader::is_tag_present(yml, RECORDER_MCAP_TAG))
+    {
+        const auto mcap_yml = YamlReader::get_value_in_tag(yml, RECORDER_MCAP_TAG);
+        load_recorder_mcap_configuration_(mcap_yml, version);
     }
 }
 
@@ -347,6 +350,9 @@ void RecorderConfiguration::load_recorder_mcap_configuration_(
     /////
     // Get mandatory enable
     mcap_enabled = YamlReader::get<bool>(yml, RECORDER_MCAP_ENABLE_TAG, version);
+
+    if(!mcap_enabled)
+        return;
 
     /////
     // Get optional log publishTime
@@ -415,6 +421,9 @@ void RecorderConfiguration::load_recorder_sql_configuration_(
     /////
     // Get mandatory enable
     sql_enabled = YamlReader::get<bool>(yml, RECORDER_SQL_ENABLE_TAG, version);
+
+    if(!sql_enabled)
+        return;
 
     /////
     // Get optional log publishTime

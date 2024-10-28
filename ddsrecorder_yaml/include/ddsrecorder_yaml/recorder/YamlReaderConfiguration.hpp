@@ -92,7 +92,7 @@ public:
     bool output_local_timestamp = true;
 
     // Mcap params
-    bool mcap_enabled = false;
+    bool mcap_enabled = true;
     bool mcap_log_publish_time = false;
     mcap::McapWriterOptions mcap_writer_options{"ros2"};
 
