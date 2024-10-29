@@ -91,6 +91,11 @@ constexpr const char* RECORDER_SQL_DATA_FORMAT_CDR_TAG("cdr");
 constexpr const char* RECORDER_SQL_DATA_FORMAT_JSON_TAG("json");
 constexpr const char* RECORDER_SQL_DATA_FORMAT_BOTH_TAG("both");
 
+// Resource limits tags
+constexpr const char* RECORDER_SQL_RESOURCE_LIMITS_TAG("resource-limits");
+constexpr const char* RECORDER_SQL_RESOURCE_LIMITS_MAX_SIZE_TAG("max-size");
+constexpr const char* RECORDER_SQL_RESOURCE_LIMITS_SAFETY_MARGIN_TAG("safety-margin");
+
 ////////////////////////////////////
 // Remote controller related tags //
 ////////////////////////////////////

@@ -71,7 +71,7 @@ DdsRecorder::DdsRecorder(
     // Create Thread Pool
     thread_pool_ = std::make_shared<SlotThreadPool>(configuration_.n_threads);
 
-    // Fill MCAP output file settings
+    // Fill output file settings
     participants::OutputSettings output_settings;
 
     if (file_name == "")
@@ -94,21 +94,18 @@ DdsRecorder::DdsRecorder(
     output_settings.max_size = space_available;
 
     // Configure the resource-limits
-    if (configuration_.mcap_enabled)
+    output_settings.safety_margin = configuration_.resource_limits_safety_margin;
+    output_settings.file_rotation = configuration_.resource_limits_file_rotation;
+
+    if (configuration_.resource_limits_max_file_size > 0)
     {
-        output_settings.safety_margin = configuration_.mcap_resource_limits_safety_margin;
-        output_settings.file_rotation = configuration_.mcap_resource_limits_file_rotation;
+        output_settings.max_file_size = configuration_.resource_limits_max_file_size;
+        output_settings.max_size = configuration_.resource_limits_max_file_size;
+    }
 
-        if (configuration_.mcap_resource_limits_max_file_size > 0)
-        {
-            output_settings.max_file_size = configuration_.mcap_resource_limits_max_file_size;
-            output_settings.max_size = configuration_.mcap_resource_limits_max_file_size;
-        }
-
-        if (configuration_.mcap_resource_limits_max_size > 0)
-        {
-            output_settings.max_size = configuration_.mcap_resource_limits_max_size;
-        }
+    if (configuration_.resource_limits_max_size > 0)
+    {
+        output_settings.max_size = configuration_.resource_limits_max_size;
     }
 
     output_settings.extension = (configuration_.mcap_enabled) ? ".mcap" : ".db";

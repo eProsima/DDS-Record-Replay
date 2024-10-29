@@ -96,15 +96,15 @@ public:
     bool mcap_log_publish_time = false;
     mcap::McapWriterOptions mcap_writer_options{"ros2"};
 
-    // Mcap resource limits params
-    bool mcap_resource_limits_file_rotation = false;
-    std::uint64_t mcap_resource_limits_max_size = 0;
-    std::uint64_t mcap_resource_limits_max_file_size = 0;
-    std::uint64_t mcap_resource_limits_safety_margin = 0;
-
     // Sql params
     bool sql_enabled = false;
     ddsrecorder::participants::DataFormat sql_data_format = ddsrecorder::participants::DataFormat::both;
+
+    // Resource limits params
+    bool resource_limits_file_rotation = false;
+    std::uint64_t resource_limits_max_size = 0;
+    std::uint64_t resource_limits_max_file_size = 0;
+    std::uint64_t resource_limits_safety_margin = 0;
 
     // Remote controller configuration
     bool enable_remote_controller = true;

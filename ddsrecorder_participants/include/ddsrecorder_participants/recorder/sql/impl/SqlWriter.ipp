@@ -35,14 +35,15 @@ void SqlWriter::write(
     }
     catch (const FullFileException& e)
     {
-        try
-        {
+        EPROSIMA_LOG_WARNING(DDSRECORDER_SQL_HANDLER,
+                    "FAIL_SQL_WRITE | Disk is full. Error message:\n " << e.what());
+        try{
             on_file_full_nts_(e, MIN_SQL_SIZE);
-            write_nts_(data);
         }
         catch(const FullDiskException& e)
         {
-            logError(DDSRECORDER_SQL_HANDLER, "FAIL_SQL_WRITE | Disk is full. Error message:\n " << e.what());
+            EPROSIMA_LOG_WARNING(DDSRECORDER_SQL_HANDLER,
+                    "FAIL_SQL_WRITE | Disk is full. Error message:\n " << e.what());
             on_disk_full_();
         }
     }

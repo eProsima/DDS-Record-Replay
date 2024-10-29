@@ -5,3 +5,16 @@ recorder:
   output:
     filename: "output"
     path: "."
+  
+  mcap:
+    enable: false
+    resource-limits:
+      max-file-size: "100KB"
+      max-size: "100KB"
+  	
+
+  sql: 
+    enable: true
+    resource-limits:
+      max-size: "500KB"
+      safety-margin: "1GB"

@@ -43,6 +43,22 @@ recorder:
     force: true
   record-types: true
   ros2-types: false
+  
+  mcap:
+    enable: false
+    resource-limits:
+      max-file-size: "100KB"
+      max-size: "300KB"
+      file-rotation: false
+      safety-margin: "1GB"
+  	
+
+  sql: 
+    enable: true
+    resource-limits:
+      max-size: "2MB"
+      safety-margin: "1GB"
+      
 
 remote-controller:
   enable: true
