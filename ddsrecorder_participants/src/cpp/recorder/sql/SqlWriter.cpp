@@ -94,9 +94,32 @@ void SqlWriter::open_new_file_nts_(
     // Enable WAL mode: appends changes to a separate file before applying them to the main database, reducing the risk of corruption in the event of a crash
     sqlite3_exec(database_, "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
 
-    // NOTE: These tables creation should never fail since the minimum size accounts for them.
+    // Enable Incremental Auto-Vacuum mode (for antifragmentation memory management)
+    sqlite3_exec(database_, "PRAGMA auto_vacuum = INCREMENTAL;", nullptr, nullptr, nullptr);
+
+    // Perform an initial VACUUM if needed (only on new databases, as it can be costly)
+    sqlite3_exec(database_, "VACUUM;", nullptr, nullptr, nullptr);
+
+    // Get the page size for later vacuuming
+    sqlite3_stmt* stmt;
+    const char* query = "PRAGMA page_size;";
+
+    if (sqlite3_prepare_v2(database_, query, -1, &stmt, nullptr) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            page_size_ = sqlite3_column_int(stmt, 0);
+        }
+    } else {
+        const std::string error_msg = utils::Formatter() << "Failed to calculate SQL page size: " << sqlite3_errmsg(database_);
+        sqlite3_close(database_);
+
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_OPEN | " << error_msg);
+        throw utils::InitializationException(error_msg);
+    }
+
+    sqlite3_finalize(stmt);
 
     // Create Types table
+    // NOTE: These tables creation should never fail since the minimum size accounts for them.
     const std::string create_types_table{
     R"(
         CREATE TABLE IF NOT EXISTS Types (
@@ -508,6 +531,92 @@ void SqlWriter::create_sql_table_(
     }
 }
 
+std::uint64_t SqlWriter::remove_oldest_entries_(
+        const std::uint64_t size_required)
+{
+    std::uint64_t freed_size = 0;
+
+    while (freed_size < size_required)
+    {
+        // SQL query to select the oldest message based on publish_time
+        const char* select_oldest_statement = R"(
+            SELECT rowid, LENGTH(writer_guid), LENGTH(sequence_number), LENGTH(data_json), 
+                   LENGTH(data_cdr), data_cdr_size, LENGTH(topic), LENGTH(type), 
+                   LENGTH(key), LENGTH(log_time), LENGTH(publish_time)
+            FROM Messages
+            ORDER BY publish_time ASC
+            LIMIT 1;
+        )";
+
+        sqlite3_stmt* select_stmt;
+        if (sqlite3_prepare_v2(database_, select_oldest_statement, -1, &select_stmt, nullptr) != SQLITE_OK)
+        {
+            // Failed to prepare select statement
+            const std::string error_msg = utils::Formatter() << "Failed to prepare SQL select statement to free space: "
+                                                         << sqlite3_errmsg(database_);
+            sqlite3_finalize(select_stmt);
+
+            EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_REMOVE | " << error_msg);
+            throw utils::InconsistencyException(error_msg);
+        }
+
+        // Fetch the oldest entry's size
+        if (sqlite3_step(select_stmt) == SQLITE_ROW)
+        {
+            // Calculate the size of the row data in bytes
+            size_t entry_size = 0;
+            for (int i = 1; i <= 10; ++i) // Skipping rowid (index 0) and summing lengths of columns
+            {
+                entry_size += sqlite3_column_int(select_stmt, i);
+            }
+
+            // Get the rowid of the entry to delete
+            int rowid = sqlite3_column_int(select_stmt, 0);
+
+            // Prepare delete statement
+            const char* delete_statement = "DELETE FROM Messages WHERE rowid = ?;";
+            sqlite3_stmt* delete_stmt;
+            if (sqlite3_prepare_v2(database_, delete_statement, -1, &delete_stmt, nullptr) != SQLITE_OK)
+            {
+                sqlite3_finalize(delete_stmt);
+                sqlite3_finalize(select_stmt);
+                return 0; // Failed to prepare delete statement
+            }
+
+            // Bind the rowid to the delete statement
+            sqlite3_bind_int(delete_stmt, 1, rowid);
+
+            // Execute delete statement
+            if (sqlite3_step(delete_stmt) == SQLITE_DONE)
+            {
+                freed_size += static_cast<std::uint64_t>(entry_size); // Update the freed size
+            }
+
+            sqlite3_finalize(delete_stmt);
+        }
+        else
+        {
+            sqlite3_finalize(select_stmt);
+
+            // No more rows to delete, unable to free enough space
+            EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_REMOVE | No more rows to delete.");
+            throw FullFileException("SQL file is full and not removable.", size_required);
+        }
+
+        // Reclaim 10 pages after freeing space, adjustable based on observation
+        sqlite3_exec(database_, "PRAGMA incremental_vacuum = 10;", nullptr, nullptr, nullptr);
+
+        sqlite3_finalize(select_stmt);
+    }
+
+    // Vacuum as many pages as the freed size in bytes
+    int pages_to_reclaim = size_required / page_size_;
+    if (pages_to_reclaim > 0) {
+        sqlite3_exec(database_, ("PRAGMA incremental_vacuum = " + std::to_string(pages_to_reclaim) + ";").c_str(), nullptr, nullptr, nullptr);
+    }
+
+    return(freed_size);
+}
 
 size_t SqlWriter::calculate_int_storage_size(std::int64_t value) const noexcept
 {
@@ -537,6 +646,33 @@ void SqlWriter::size_control_(size_t entry_size, bool force)
     {
         bool free_space = false;
         // Free space in case of file rotation
+        if(configuration_.file_rotation)
+        {
+            try
+            {
+                // To avoid removing entries in every write, we will try to free space for entities_multiplier*entries, in a range [pages_multiplier pages, file_percentage]
+                constexpr int entries_multiplier = 30;
+                constexpr int pages_multiplier = 10;
+                constexpr float file_percentage = 0.05;
+                std::uint64_t desired_space = (entry_size * entries_multiplier > page_size_*pages_multiplier) ? entry_size * entries_multiplier : page_size_*pages_multiplier;
+                desired_space = (desired_space < configuration_.max_file_size*file_percentage) ? desired_space : configuration_.max_file_size*file_percentage;
+
+                std::uint64_t remove_size = remove_oldest_entries_(desired_space);
+                written_sql_size_ -= remove_size;
+                checked_sql_size_ -= remove_size;
+                free_space = true;
+            }
+            catch (const FullFileException& e)
+            {
+                EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_REMOVE | " << e.what());
+                throw e;
+            }
+            catch (const utils::InconsistencyException& e)
+            {
+                EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_REMOVE | " << e.what());
+                throw e;
+            }
+        }
 
         // If there is no free space, close the current file
         if(! free_space)

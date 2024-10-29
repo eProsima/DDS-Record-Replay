@@ -444,6 +444,13 @@ void RecorderConfiguration::load_recorder_sql_configuration_(
     {
         auto resource_limits_yml = YamlReader::get_value_in_tag(yml, RECORDER_SQL_RESOURCE_LIMITS_TAG);
 
+        /////
+        // Get optional file rotation
+        if (YamlReader::is_tag_present(resource_limits_yml, RECORDER_SQL_RESOURCE_LIMITS_LOG_ROTATION_TAG))
+        {
+            resource_limits_file_rotation = YamlReader::get<bool>(resource_limits_yml,
+                            RECORDER_SQL_RESOURCE_LIMITS_LOG_ROTATION_TAG, version);
+        }
 
         /////
         // Get optional max size
