@@ -38,7 +38,7 @@ SqlHandler::SqlHandler(
     , configuration_(config)
     , sql_writer_(config.output_settings, file_tracker, config.record_types, config.ros2_types, config.data_format)
 {
-    logInfo(DDSRECORDER_SQL_HANDLER, "Creating SQL handler instance.");
+    EPROSIMA_LOG_INFO(DDSRECORDER_SQL_HANDLER, "Creating SQL handler instance.");
 
     // Set the BaseHandler's writer
     writer_ = &sql_writer_;
@@ -49,7 +49,7 @@ SqlHandler::SqlHandler(
 
 SqlHandler::~SqlHandler()
 {
-    logInfo(DDSRECORDER_SQL_HANDLER, "Destroying SQL handler.");
+    EPROSIMA_LOG_INFO(DDSRECORDER_SQL_HANDLER, "Destroying SQL handler.");
 
     // Stop handler prior to destruction
     stop(true);
@@ -110,7 +110,7 @@ void SqlHandler::add_data(
 void SqlHandler::write_samples_(
         std::list<std::shared_ptr<const BaseMessage>>& samples)
 {
-    logInfo(DDSRECORDER_SQL_HANDLER, "Writing samples to SQL file.");
+    EPROSIMA_LOG_INFO(DDSRECORDER_SQL_HANDLER, "Writing samples to SQL file.");
 
     // Samples to write in bulk
     std::vector<SqlMessage> samples_to_write;
@@ -122,7 +122,7 @@ void SqlHandler::write_samples_(
 
         if (sql_sample == nullptr)
         {
-            logWarning(DDSRECORDER_SQL_HANDLER, "Error downcasting sample to SqlMessage. Skipping...");
+            EPROSIMA_LOG_WARNING(DDSRECORDER_SQL_HANDLER, "Error downcasting sample to SqlMessage. Skipping...");
             continue;
         }
 
@@ -139,7 +139,7 @@ void SqlHandler::write_samples_(
         {
             if (received_types_.find(sql_sample->topic.type_name) == received_types_.end())
             {
-                logWarning(DDSRECORDER_SQL_HANDLER,
+                EPROSIMA_LOG_WARNING(DDSRECORDER_SQL_HANDLER,
                           "Message on topic " << sql_sample->topic.m_topic_name <<
                           " with type " << sql_sample->topic.type_name <<
                           " cannot be formatted to JSON since the type has not been received.");

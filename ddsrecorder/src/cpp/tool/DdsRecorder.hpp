@@ -148,7 +148,7 @@ protected:
     //! Participants Database
     std::shared_ptr<ddspipe::core::ParticipantsDatabase> participants_database_;
 
-    //! MCAP Handler
+    //! MCAP/SQL Handler
     std::shared_ptr<ddsrecorder::participants::BaseHandler> handler_;
 
     //! Dynamic Types Participant

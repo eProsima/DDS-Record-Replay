@@ -47,11 +47,8 @@ public:
      * @brief Writes data to the output file.
      *
      * @param data Pointer to the data to be written.
-     *
-     * After a \c FullFileException :
-     * - @throws \c InconsistencyException if the allocated space is not enough to close the current file or to open a
-     * new one.
-     * - @throws \c InitializationException if the output library fails to open a new file.
+     * 
+     * @throws \c InconsistencyException if there is a database error
      */
     template <typename T>
     void write(
@@ -95,6 +92,8 @@ protected:
      *
      * @param data The data to be written.
      * @throws \c FullFileException if the SQL file is full.
+     * 
+     * @throws \c InconsistencyException if there is a database error
      */
     template <typename T>
     void write_nts_(
@@ -112,6 +111,30 @@ protected:
             const std::string& table_name,
             const std::string& table_definition);
 
+
+    /**
+     * @brief calculates the storage required (bytes) in an sql database for an integer value
+     *
+     * @param value The int value to be evaluated
+     * 
+     * @returns The size freed.
+     */
+    size_t calculate_int_storage_size(
+                std::int64_t value) const noexcept;
+
+    /**
+     * @brief Checks for free space remaining in the SQL file, if there is not and file rotation is enabled, it will remove the oldest entries.
+     * 
+     * @param entry_size The size of the entry to be written.
+     * @param force Whether to force the entry (only used with the dynamic types entry).
+     * 
+     * @throws \c FullFileException if the SQL file is full or there is no space to remove entries.
+     * 
+     * @throws \c InconsistencyException if there is a database error when removing entries.
+     */
+    void size_control_(
+                size_t entry_size, bool force);
+
     // The SQLite database
     sqlite3* database_;
 
@@ -125,7 +148,10 @@ protected:
     const DataFormat data_format_;
 
     // The size of an empty SQL file
-    static constexpr std::uint64_t MIN_SQL_SIZE{20480};
+    static constexpr std::uint64_t MIN_SQL_SIZE{28672};
+
+    // Written (estimated) file size, that takes into account written objects
+    std::uint64_t written_sql_size_{MIN_SQL_SIZE};
 };
 
 } /* namespace participants */

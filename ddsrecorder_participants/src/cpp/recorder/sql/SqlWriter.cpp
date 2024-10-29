@@ -87,12 +87,14 @@ void SqlWriter::open_new_file_nts_(
                                                          << " for writing: " << sqlite3_errmsg(database_);
         sqlite3_close(database_);
 
-        logError(DDSRECORDER_SQL_WRITER, "FAIL_SQL_OPEN | " << error_msg);
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_OPEN | " << error_msg);
         throw utils::InitializationException(error_msg);
     }
 
     // Enable WAL mode: appends changes to a separate file before applying them to the main database, reducing the risk of corruption in the event of a crash
     sqlite3_exec(database_, "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
+
+    // NOTE: These tables creation should never fail since the minimum size accounts for them.
 
     // Create Types table
     const std::string create_types_table{
@@ -142,6 +144,8 @@ void SqlWriter::open_new_file_nts_(
     )"};
 
     create_sql_table_("Messages", create_messages_table);
+
+    written_sql_size_ = MIN_SQL_SIZE;
 }
 
 template <>
@@ -150,11 +154,11 @@ void SqlWriter::write_nts_(
 {
     if (!enabled_)
     {
-        logWarning(DDSRECORDER_SQL_WRITER, "Attempting to write a dynamic type in a disabled writer.");
+        EPROSIMA_LOG_WARNING(DDSRECORDER_SQL_WRITER, "Attempting to write a dynamic type in a disabled writer.");
         return;
     }
 
-    logInfo(DDSRECORDER_SQL_WRITER, "Writing dynamic type " << dynamic_type.type_name() << ".");
+    EPROSIMA_LOG_INFO(DDSRECORDER_SQL_WRITER, "Writing dynamic type " << dynamic_type.type_name() << ".");
 
     // Define the SQL statement
     const char* insert_statement = R"(
@@ -172,7 +176,7 @@ void SqlWriter::write_nts_(
                                                          << sqlite3_errmsg(database_);
         sqlite3_finalize(statement);
 
-        logError(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
         throw utils::InconsistencyException(error_msg);
     }
 
@@ -185,6 +189,32 @@ void SqlWriter::write_nts_(
     sqlite3_bind_text(statement, 3, dynamic_type.type_object().c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(statement, 4, is_type_ros2_type ? "true" : "false", -1, SQLITE_TRANSIENT);
 
+    // Calculate the estimated size of this entry
+    size_t entry_size = 0;
+
+    entry_size += type_name.size();
+    entry_size += dynamic_type.type_information().size();
+    entry_size += dynamic_type.type_object().size();
+    entry_size += sizeof("false");
+
+    try{
+        size_control_(entry_size, true);
+    }
+    catch (const FullFileException& e)
+    {
+        sqlite3_finalize(statement);
+
+        EPROSIMA_LOG_INFO(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << e.what());
+        throw e;
+    }
+    catch (const utils::InconsistencyException& e)
+    {
+        sqlite3_finalize(statement);
+
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << e.what());
+        throw e;
+    }
+
     // Execute the SQL statement
     const auto step_ret = sqlite3_step(statement);
 
@@ -194,7 +224,7 @@ void SqlWriter::write_nts_(
                                                          << sqlite3_errmsg(database_);
         sqlite3_finalize(statement);
 
-        logError(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
         throw utils::InconsistencyException(error_msg);
     }
 
@@ -210,11 +240,11 @@ void SqlWriter::write_nts_(
 {
     if (!enabled_)
     {
-        logWarning(DDSRECORDER_SQL_WRITER, "Attempting to write messages in a disabled writer.");
+        EPROSIMA_LOG_WARNING(DDSRECORDER_SQL_WRITER, "Attempting to write messages in a disabled writer.");
         return;
     }
 
-    logInfo(DDSRECORDER_SQL_WRITER, "Writing << " << messages.size() << " messages.");
+    EPROSIMA_LOG_INFO(DDSRECORDER_SQL_WRITER, "Writing << " << messages.size() << " messages.");
 
     // Define the SQL statement for batch insert
     const char* insert_statement = R"(
@@ -232,7 +262,7 @@ void SqlWriter::write_nts_(
                                                          << sqlite3_errmsg(database_);
         sqlite3_finalize(statement);
 
-        logError(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
         throw utils::InconsistencyException(error_msg);
     }
 
@@ -243,7 +273,7 @@ void SqlWriter::write_nts_(
                                                          << sqlite3_errmsg(database_);
         sqlite3_finalize(statement);
 
-        logError(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
         throw utils::InconsistencyException(error_msg);
     }
 
@@ -287,6 +317,39 @@ void SqlWriter::write_nts_(
         sqlite3_bind_text(statement, 9, to_sql_timestamp(message.log_time).c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(statement, 10, to_sql_timestamp(message.publish_time).c_str(), -1, SQLITE_TRANSIENT);
 
+        // Calculate the estimated size of this entry
+        size_t entry_size = 0;
+
+        entry_size += writer_guid_ss.str().size();
+        entry_size += calculate_int_storage_size(message.sequence_number.to64long());
+        entry_size += data_json.size();
+        entry_size += data_cdr_size;
+        entry_size += calculate_int_storage_size(data_cdr_size);
+        entry_size += message.topic.topic_name().size();
+        entry_size += message.topic.type_name.size();
+        entry_size += message.key.size();
+        entry_size += to_sql_timestamp(message.log_time).size();
+        entry_size += to_sql_timestamp(message.publish_time).size();
+
+        try{
+            size_control_(entry_size, false);
+        }
+        catch (const FullFileException& e)
+        {
+            sqlite3_finalize(statement);
+
+            EPROSIMA_LOG_INFO(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << e.what());
+            throw e;
+        }
+        catch (const utils::InconsistencyException& e)
+        {
+            sqlite3_finalize(statement);
+
+            EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << e.what());
+            throw e;
+        }
+
+        
         // Execute the SQL statement
         const auto step_ret = sqlite3_step(statement);
 
@@ -297,7 +360,7 @@ void SqlWriter::write_nts_(
             sqlite3_finalize(statement);
             sqlite3_exec(database_, "ROLLBACK;", nullptr, nullptr, nullptr);
 
-            logError(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
+            EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
             throw utils::InconsistencyException(error_msg);
         }
 
@@ -312,7 +375,7 @@ void SqlWriter::write_nts_(
                                                          << sqlite3_errmsg(database_);
         sqlite3_finalize(statement);
 
-        logError(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
         throw utils::InconsistencyException(error_msg);
     }
 
@@ -329,11 +392,11 @@ void SqlWriter::write_nts_(
 {
     if (!enabled_)
     {
-        logWarning(DDSRECORDER_SQL_WRITER, "Attempting to write a topic in a disabled writer.");
+        EPROSIMA_LOG_WARNING(DDSRECORDER_SQL_WRITER, "Attempting to write a topic in a disabled writer.");
         return;
     }
 
-    logInfo(DDSRECORDER_SQL_WRITER, "Writing topic " << topic.topic_name() << ".");
+    EPROSIMA_LOG_INFO(DDSRECORDER_SQL_WRITER, "Writing topic " << topic.topic_name() << ".");
 
     // Define the SQL statement
     const char* insert_statement = R"(
@@ -351,18 +414,45 @@ void SqlWriter::write_nts_(
                                                         << sqlite3_errmsg(database_);
         sqlite3_finalize(statement);
 
-        logError(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
         throw utils::InconsistencyException(error_msg);
     }
 
     // Bind the Topic to the SQL statement
     const auto topic_name = ros2_types_ ? utils::demangle_if_ros_topic(topic.topic_name()) : topic.topic_name();
+    const auto topic_qos_serialized = Serializer::serialize(topic.topic_qos);
     const auto is_topic_ros2_type = ros2_types_ && topic_name != topic.topic_name();
 
     sqlite3_bind_text(statement, 1, topic_name.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(statement, 2, topic.type_name.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(statement, 3, Serializer::serialize(topic.topic_qos).c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 3, topic_qos_serialized.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(statement, 4, is_topic_ros2_type ? "true" : "false", -1, SQLITE_TRANSIENT);
+
+    // Calculate the estimated size of this entry
+    size_t entry_size = 0;
+
+    entry_size += topic_name.size();
+    entry_size += topic.type_name.size();
+    entry_size += topic_qos_serialized.size();
+    entry_size += sizeof("false");
+
+    try{
+        size_control_(entry_size, false);
+    }
+    catch (const FullFileException& e)
+    {
+        sqlite3_finalize(statement);
+
+        EPROSIMA_LOG_INFO(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << e.what());
+        throw e;
+    }
+    catch (const utils::InconsistencyException& e)
+    {
+        sqlite3_finalize(statement);
+
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << e.what());
+        throw e;
+    }
 
     // Execute the SQL statement
     const auto step_ret = sqlite3_step(statement);
@@ -373,7 +463,7 @@ void SqlWriter::write_nts_(
                                                         << sqlite3_errmsg(database_);
         sqlite3_finalize(statement);
 
-        logError(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
         throw utils::InconsistencyException(error_msg);
     }
 
@@ -395,6 +485,8 @@ void SqlWriter::close_current_file_nts_()
         }
     }
 
+    file_tracker_->set_current_file_size(written_sql_size_);
+
     sqlite3_close(database_);
     file_tracker_->close_file();
 }
@@ -411,9 +503,55 @@ void SqlWriter::create_sql_table_(
                                                          << sqlite3_errmsg(database_);
         close_current_file_nts_();
 
-        logError(DDSRECORDER_SQL_WRITER, "FAIL_SQL_OPEN | " << error_msg);
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_OPEN | " << error_msg);
         throw utils::InitializationException(error_msg);
     }
+}
+
+
+size_t SqlWriter::calculate_int_storage_size(std::int64_t value) const noexcept
+{
+    if (value >= 0 && value <= 127) {
+        return 1;
+    } else if (value >= -32768 && value <= 32767) {
+        return 2;
+    } else if (value >= -8388608 && value <= 8388607) {
+        return 3;
+    } else if (value >= -2147483648LL && value <= 2147483647LL) {
+        return 4;
+    } else if (value >= -1099511627776LL && value <= 1099511627775LL) {
+        return 6;
+    } else {
+        return 8;
+    }
+}
+
+void SqlWriter::size_control_(size_t entry_size, bool force)
+{
+    // Add a fixed overhead per row for SQLite storage (headers, etc.)
+    constexpr size_t SQLITE_ROW_OVERHEAD = 32;
+    entry_size += SQLITE_ROW_OVERHEAD;
+
+    // Check if the entry fits in the current file or it has been forced
+    if(written_sql_size_ + entry_size > configuration_.max_file_size && !force)
+    {
+        bool free_space = false;
+        // Free space in case of file rotation
+
+        // If there is no free space, close the current file
+        if(! free_space)
+        {
+            EPROSIMA_LOG_INFO(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << "SQL file is full.");
+            throw FullFileException(
+                STR_ENTRY << "Attempted to write " << utils::from_bytes(entry_size) << " on a SQL of "
+                            << utils::from_bytes(written_sql_size_) << " but there is not enough space available: "
+                            << utils::from_bytes(configuration_.max_file_size - written_sql_size_) << "."
+                    , entry_size);
+        }
+    }
+
+    // Update the written size
+    written_sql_size_ += entry_size;
 }
 
 } /* namespace participants */
