@@ -111,6 +111,19 @@ protected:
             const std::string& table_name,
             const std::string& table_definition);
 
+    /**
+     * @brief Removes oldest entries (publish time wise) from the Messages table.
+     *
+     * @param size_required The size required to be freed.
+     *
+     * @throws \c FullDiskException if there are no enough entries to be removed.
+     * 
+     * @throws \c InconsistencyException if it fails to prepare select statement
+     * 
+     * @returns The size freed.
+     */
+    std::uint64_t remove_oldest_entries_(
+            const std::uint64_t size_required);
 
     /**
      * @brief calculates the storage required (bytes) in an sql database for an integer value
@@ -152,6 +165,9 @@ protected:
 
     // Written (estimated) file size, that takes into account written objects
     std::uint64_t written_sql_size_{MIN_SQL_SIZE};
+
+    // The size of each page in the SQL file (useful for vacuuming in order to defragment the file)
+    std::uint64_t page_size_{0};
 };
 
 } /* namespace participants */

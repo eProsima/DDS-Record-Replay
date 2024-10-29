@@ -16,5 +16,6 @@ recorder:
   sql: 
     enable: true
     resource-limits:
-      max-size: "500KB"
+      max-size: "400KB"
+      log-rotation: true
       safety-margin: "1GB"

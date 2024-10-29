@@ -57,6 +57,7 @@ recorder:
     enable: true
     resource-limits:
       max-size: "2MB"
+      log-rotation: false
       safety-margin: "1GB"
       
 
