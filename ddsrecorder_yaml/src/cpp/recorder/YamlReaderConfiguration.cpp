@@ -71,39 +71,70 @@ bool RecorderConfiguration::is_valid(
         error_msg << "At least one of MCAP or SQL libraries must be enabled.";
         return false;
     }
-
-    if (mcap_enabled && sql_enabled)
+    
+    if(mcap_enabled && !is_mcap_valid(error_msg))
     {
-        error_msg << "Both MCAP and SQL libraries cannot be enabled at the same time.";
         return false;
     }
 
-    if (resource_limits_max_size > 0)
+    if (sql_enabled && !is_sql_valid(error_msg))
     {
-        if (resource_limits_max_file_size == 0)
+        return false;
+    }
+
+    return true;
+}
+
+bool RecorderConfiguration::is_mcap_valid(
+        utils::Formatter& error_msg) const noexcept
+{
+    if (mcap_resource_limits_max_size > 0)
+    {
+        if (mcap_resource_limits_max_file_size == 0)
         {
-            error_msg << "The max file size cannot be unlimited when the max size is limited.";
+            error_msg << "MCAP: The max file size cannot be unlimited when the max size is limited.";
             return false;
         }
 
-        if (resource_limits_max_size < resource_limits_max_file_size)
+        if (mcap_resource_limits_max_size < mcap_resource_limits_max_file_size)
         {
-            error_msg << "The max size cannot be lower than the max file size.";
+            error_msg << "MCAP: The max size cannot be lower than the max file size.";
             return false;
         }
     }
 
-    if (resource_limits_file_rotation)
+    if (mcap_resource_limits_file_rotation)
     {
-        if (resource_limits_max_file_size == 0)
+        if (mcap_resource_limits_max_file_size == 0)
         {
-            error_msg << "The max file size cannot be unlimited when file rotation is enabled.";
+            error_msg << "MCAP: The max file size cannot be unlimited when file rotation is enabled.";
             return false;
         }
 
-        if (resource_limits_max_size == 0)
+        if (mcap_resource_limits_max_size == 0)
         {
-            error_msg << "The max size cannot be unlimited when file rotation is enabled.";
+            error_msg << "MCAP: The max size cannot be unlimited when file rotation is enabled.";
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool RecorderConfiguration::is_sql_valid(
+        utils::Formatter& error_msg) const noexcept
+{
+    if (sql_resource_limits_max_size != sql_resource_limits_max_file_size)
+    {
+        error_msg << "SQL: The max file size and file size must be the same.";
+        return false;
+    }
+
+    if (sql_resource_limits_file_rotation)
+    {
+        if (sql_resource_limits_max_size == 0)
+        {
+            error_msg << "SQL: The max size cannot be unlimited when file rotation is enabled.";
             return false;
         }
     }
@@ -132,13 +163,22 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
         simple_configuration->is_repeater = false;
 
         /////
-        // Create Recorder Participant Configuration
-        recorder_configuration = std::make_shared<ParticipantConfiguration>();
-        recorder_configuration->id = "RecorderRecorderParticipant";
-        recorder_configuration->app_id = "DDS_RECORDER";
+        // Create MCAP Recorder Participant Configuration
+        mcap_recorder_configuration = std::make_shared<ParticipantConfiguration>();
+        mcap_recorder_configuration->id = "MCAPRecorderRecorderParticipant";
+        mcap_recorder_configuration->app_id = "DDS_RECORDER";
         // TODO: fill metadata field once its content has been defined.
-        recorder_configuration->app_metadata = "";
-        recorder_configuration->is_repeater = false;
+        mcap_recorder_configuration->app_metadata = "";
+        mcap_recorder_configuration->is_repeater = false;
+
+         /////
+        // Create SQL Recorder Participant Configuration
+        sql_recorder_configuration = std::make_shared<ParticipantConfiguration>();
+        sql_recorder_configuration->id = "SQLRecorderRecorderParticipant";
+        sql_recorder_configuration->app_id = "DDS_RECORDER";
+        // TODO: fill metadata field once its content has been defined.
+        sql_recorder_configuration->app_metadata = "";
+        sql_recorder_configuration->is_repeater = false;
 
         /////
         // Get optional Recorder configuration options
@@ -372,44 +412,44 @@ void RecorderConfiguration::load_recorder_mcap_configuration_(
     // Get optional resource limits
     if (YamlReader::is_tag_present(yml, RECORDER_MCAP_RESOURCE_LIMITS_TAG))
     {
-        auto resource_limits_yml = YamlReader::get_value_in_tag(yml, RECORDER_MCAP_RESOURCE_LIMITS_TAG);
+        auto mcap_resource_limits_yml = YamlReader::get_value_in_tag(yml, RECORDER_MCAP_RESOURCE_LIMITS_TAG);
 
         /////
         // Get optional file rotation
-        if (YamlReader::is_tag_present(resource_limits_yml, RECORDER_MCAP_RESOURCE_LIMITS_FILE_ROTATION_TAG))
+        if (YamlReader::is_tag_present(mcap_resource_limits_yml, RECORDER_MCAP_RESOURCE_LIMITS_FILE_ROTATION_TAG))
         {
-            resource_limits_file_rotation = YamlReader::get<bool>(resource_limits_yml,
+            mcap_resource_limits_file_rotation = YamlReader::get<bool>(mcap_resource_limits_yml,
                             RECORDER_MCAP_RESOURCE_LIMITS_FILE_ROTATION_TAG, version);
         }
 
         /////
         // Get optional max file size
-        if (YamlReader::is_tag_present(resource_limits_yml, RECORDER_MCAP_RESOURCE_LIMITS_MAX_FILE_SIZE_TAG))
+        if (YamlReader::is_tag_present(mcap_resource_limits_yml, RECORDER_MCAP_RESOURCE_LIMITS_MAX_FILE_SIZE_TAG))
         {
-            const auto& max_file_size = YamlReader::get<std::string>(resource_limits_yml,
+            const auto& max_file_size = YamlReader::get<std::string>(mcap_resource_limits_yml,
                             RECORDER_MCAP_RESOURCE_LIMITS_MAX_FILE_SIZE_TAG,
                             version);
-            resource_limits_max_file_size = eprosima::utils::to_bytes(max_file_size);
+            mcap_resource_limits_max_file_size = eprosima::utils::to_bytes(max_file_size);
         }
 
         /////
         // Get optional max size
-        if (YamlReader::is_tag_present(resource_limits_yml, RECORDER_MCAP_RESOURCE_LIMITS_MAX_SIZE_TAG))
+        if (YamlReader::is_tag_present(mcap_resource_limits_yml, RECORDER_MCAP_RESOURCE_LIMITS_MAX_SIZE_TAG))
         {
-            const auto& max_size = YamlReader::get<std::string>(resource_limits_yml,
+            const auto& max_size = YamlReader::get<std::string>(mcap_resource_limits_yml,
                             RECORDER_MCAP_RESOURCE_LIMITS_MAX_SIZE_TAG,
                             version);
-            resource_limits_max_size = eprosima::utils::to_bytes(max_size);
+            mcap_resource_limits_max_size = eprosima::utils::to_bytes(max_size);
         }
 
         /////
         // Get optional safety margin
-        if (YamlReader::is_tag_present(resource_limits_yml, RECORDER_MCAP_RESOURCE_LIMITS_SAFETY_MARGIN_TAG))
+        if (YamlReader::is_tag_present(mcap_resource_limits_yml, RECORDER_MCAP_RESOURCE_LIMITS_SAFETY_MARGIN_TAG))
         {
-            const auto& safety_margin = YamlReader::get<std::string>(resource_limits_yml,
+            const auto& safety_margin = YamlReader::get<std::string>(mcap_resource_limits_yml,
                             RECORDER_MCAP_RESOURCE_LIMITS_SAFETY_MARGIN_TAG,
                             version);
-            resource_limits_safety_margin = eprosima::utils::to_bytes(safety_margin);
+            mcap_resource_limits_safety_margin = eprosima::utils::to_bytes(safety_margin);
         }
     }
 }
@@ -442,37 +482,45 @@ void RecorderConfiguration::load_recorder_sql_configuration_(
     // Get optional resource limits
     if (YamlReader::is_tag_present(yml, RECORDER_SQL_RESOURCE_LIMITS_TAG))
     {
-        auto resource_limits_yml = YamlReader::get_value_in_tag(yml, RECORDER_SQL_RESOURCE_LIMITS_TAG);
+        auto sql_resource_limits_yml = YamlReader::get_value_in_tag(yml, RECORDER_SQL_RESOURCE_LIMITS_TAG);
 
         /////
         // Get optional file rotation
-        if (YamlReader::is_tag_present(resource_limits_yml, RECORDER_SQL_RESOURCE_LIMITS_LOG_ROTATION_TAG))
+        if (YamlReader::is_tag_present(sql_resource_limits_yml, RECORDER_SQL_RESOURCE_LIMITS_LOG_ROTATION_TAG))
         {
-            resource_limits_file_rotation = YamlReader::get<bool>(resource_limits_yml,
+            sql_resource_limits_file_rotation = YamlReader::get<bool>(sql_resource_limits_yml,
                             RECORDER_SQL_RESOURCE_LIMITS_LOG_ROTATION_TAG, version);
         }
 
         /////
         // Get optional max size
-        if (YamlReader::is_tag_present(resource_limits_yml, RECORDER_SQL_RESOURCE_LIMITS_MAX_SIZE_TAG))
+        if (YamlReader::is_tag_present(sql_resource_limits_yml, RECORDER_SQL_RESOURCE_LIMITS_MAX_SIZE_TAG))
         {
-            const auto& max_size = YamlReader::get<std::string>(resource_limits_yml,
+            const auto& max_size = YamlReader::get<std::string>(sql_resource_limits_yml,
                             RECORDER_SQL_RESOURCE_LIMITS_MAX_SIZE_TAG,
                             version);
-            resource_limits_max_size = eprosima::utils::to_bytes(max_size);
+            sql_resource_limits_max_size = eprosima::utils::to_bytes(max_size);
             
             // DEPRECATED IN SQL CONFIG
-            resource_limits_max_file_size = resource_limits_max_size;
+            sql_resource_limits_max_file_size = sql_resource_limits_max_size;
+        }
+
+        /////
+        // Check for max file size
+        if (YamlReader::is_tag_present(sql_resource_limits_yml, RECORDER_MCAP_RESOURCE_LIMITS_MAX_FILE_SIZE_TAG))
+        {
+            EPROSIMA_LOG_ERROR(YAML_READER_CONFIGURATION, "DEPRECATED_TAG | " << RECORDER_MCAP_RESOURCE_LIMITS_MAX_FILE_SIZE_TAG << " is deprecated in SQL configuration. Using " << RECORDER_SQL_RESOURCE_LIMITS_MAX_SIZE_TAG << " instead.");
         }
 
         /////
         // Get optional safety margin
-        if (YamlReader::is_tag_present(resource_limits_yml, RECORDER_SQL_RESOURCE_LIMITS_SAFETY_MARGIN_TAG))
+        if (YamlReader::is_tag_present(sql_resource_limits_yml, RECORDER_SQL_RESOURCE_LIMITS_SAFETY_MARGIN_TAG))
         {
-            const auto& safety_margin = YamlReader::get<std::string>(resource_limits_yml,
+            const auto& safety_margin = YamlReader::get<std::string>(sql_resource_limits_yml,
                             RECORDER_SQL_RESOURCE_LIMITS_SAFETY_MARGIN_TAG,
                             version);
-            resource_limits_safety_margin = eprosima::utils::to_bytes(safety_margin);
+            sql_resource_limits_safety_margin = eprosima::utils::to_bytes(safety_margin);
+            EPROSIMA_LOG_ERROR(YAML_READER_CONFIGURATION, "DEPRECATED_TAG | " << RECORDER_SQL_RESOURCE_LIMITS_SAFETY_MARGIN_TAG << " is deprecated in SQL configuration. Safety margin is not used in SQL configuration.");
         }
     }
 }

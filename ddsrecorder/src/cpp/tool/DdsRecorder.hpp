@@ -46,8 +46,8 @@ ENUMERATION_BUILDER(
     DdsRecorderStateCode,
     STOPPED,                  //! Internal entities are not created and thus no messages are received.
     SUSPENDED,                //! Messages are received (internal entities created) but discarded.
-    RUNNING,                  //! Messages are stored in MCAP file.
-    PAUSED                    //! Messages are stored in buffer and stored in MCAP file if event triggered.
+    RUNNING,                  //! Messages are stored in MCAP/SQL file.
+    PAUSED                    //! Messages are stored in buffer and stored in MCAP/SQL file if event triggered.
     );
 
 /**
@@ -64,13 +64,15 @@ public:
      *
      * @param configuration: Structure encapsulating all recorder configuration options.
      * @param init_state:    Initial instance state (RUNNING/PAUSED/SUSPENDED/STOPPED).
-     * @param file_tracker:  Reference to file tracker used to manage mcap files.
+     * @param mcap_file_tracker:  Reference to file tracker used to manage mcap files.
+     * @param sql_file_tracker:  Reference to file tracker used to manage sql files.
      * @param file_name:     Name of the mcap file where data is recorded. If not provided, the one from configuration is used instead.
      */
     DdsRecorder(
             const yaml::RecorderConfiguration& configuration,
             const DdsRecorderStateCode& init_state,
-            std::shared_ptr<participants::FileTracker>& file_tracker,
+            std::shared_ptr<participants::FileTracker>& mcap_file_tracker,
+            std::shared_ptr<participants::FileTracker>& sql_file_tracker,
             const std::string& file_name = "");
 
     /**
@@ -80,15 +82,16 @@ public:
      *
      * @param configuration: Structure encapsulating all recorder configuration options.
      * @param init_state:    Initial instance state (RUNNING/PAUSED/SUSPENDED/STOPPED).
-     * @param event_handler: Reference to event handler used for thread synchronization in main application.
-     * @param file_tracker:  Reference to file tracker used to manage mcap files.
+     * @param mcap_file_tracker:  Reference to file tracker used to manage mcap files.
+     * @param sql_file_tracker:  Reference to file tracker used to manage sql files.
      * @param file_name:     Name of the mcap file where data is recorded. If not provided, the one from configuration is used instead.
      */
     DdsRecorder(
             const yaml::RecorderConfiguration& configuration,
             const DdsRecorderStateCode& init_state,
             std::shared_ptr<utils::event::MultipleEventHandler> event_handler,
-            std::shared_ptr<participants::FileTracker>& file_tracker,
+            std::shared_ptr<participants::FileTracker>& mcap_file_tracker,
+            std::shared_ptr<participants::FileTracker>& sql_file_tracker,
             const std::string& file_name = "");
 
     /**
@@ -148,15 +151,20 @@ protected:
     //! Participants Database
     std::shared_ptr<ddspipe::core::ParticipantsDatabase> participants_database_;
 
-    //! MCAP/SQL Handler
-    std::shared_ptr<ddsrecorder::participants::BaseHandler> handler_;
+    //! MCAP Handler
+    std::shared_ptr<ddsrecorder::participants::BaseHandler> mcap_handler_;
+
+    //! SQL Handler
+    std::shared_ptr<ddsrecorder::participants::BaseHandler> sql_handler_;
 
     //! Dynamic Types Participant
     std::shared_ptr<ddspipe::participants::DynTypesParticipant> dyn_participant_;
 
-    //! Schema Participant
-    std::shared_ptr<ddspipe::participants::SchemaParticipant> recorder_participant_;
+    //! MCAP Schema Participant
+    std::shared_ptr<ddspipe::participants::SchemaParticipant> mcap_recorder_participant_;
 
+    //! SQL Schema Participant
+    std::shared_ptr<ddspipe::participants::SchemaParticipant> sql_recorder_participant_;
     //! DDS Pipe
     std::unique_ptr<ddspipe::core::DdsPipe> pipe_;
 

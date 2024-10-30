@@ -45,9 +45,10 @@ using namespace eprosima::utils;
 DdsRecorder::DdsRecorder(
         const yaml::RecorderConfiguration& configuration,
         const DdsRecorderStateCode& init_state,
-        std::shared_ptr<participants::FileTracker>& file_tracker,
+        std::shared_ptr<participants::FileTracker>& mcap_file_tracker,
+        std::shared_ptr<participants::FileTracker>& sql_file_tracker,
         const std::string& file_name /* = "" */)
-    : DdsRecorder(configuration, init_state, nullptr, file_tracker, file_name)
+    : DdsRecorder(configuration, init_state, nullptr, mcap_file_tracker, sql_file_tracker, file_name)
 {
 }
 
@@ -55,7 +56,8 @@ DdsRecorder::DdsRecorder(
         const yaml::RecorderConfiguration& configuration,
         const DdsRecorderStateCode& init_state,
         std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler,
-        std::shared_ptr<participants::FileTracker>& file_tracker,
+        std::shared_ptr<participants::FileTracker>& mcap_file_tracker,
+        std::shared_ptr<participants::FileTracker>& sql_file_tracker,
         const std::string& file_name /* = "" */)
     : configuration_(configuration)
     , event_handler_(event_handler)
@@ -93,37 +95,80 @@ DdsRecorder::DdsRecorder(
     output_settings.max_file_size = space_available;
     output_settings.max_size = space_available;
 
-    // Configure the resource-limits
-    output_settings.safety_margin = configuration_.resource_limits_safety_margin;
-    output_settings.file_rotation = configuration_.resource_limits_file_rotation;
+    // Configure the resource-limits depending on sql or mcap
+    participants::OutputSettings mcap_output_settings = output_settings;
+    participants::OutputSettings sql_output_settings = output_settings;
+    if(configuration_.mcap_enabled){
+        mcap_output_settings.safety_margin = configuration_.mcap_resource_limits_safety_margin;
+        mcap_output_settings.file_rotation = configuration_.mcap_resource_limits_file_rotation;
 
-    if (configuration_.resource_limits_max_file_size > 0)
-    {
-        output_settings.max_file_size = configuration_.resource_limits_max_file_size;
-        output_settings.max_size = configuration_.resource_limits_max_file_size;
+        if (configuration_.mcap_resource_limits_max_file_size > 0)
+        {
+            mcap_output_settings.max_file_size = configuration_.mcap_resource_limits_max_file_size;
+            mcap_output_settings.max_size = configuration_.mcap_resource_limits_max_file_size;
+        }
+
+        if (configuration_.mcap_resource_limits_max_size > 0)
+        {
+            mcap_output_settings.max_size = configuration_.mcap_resource_limits_max_size;
+        }
+
+        mcap_output_settings.extension = ".mcap";
     }
 
-    if (configuration_.resource_limits_max_size > 0)
-    {
-        output_settings.max_size = configuration_.resource_limits_max_size;
+    if(configuration_.sql_enabled){
+        sql_output_settings.safety_margin = configuration_.sql_resource_limits_safety_margin;
+        sql_output_settings.file_rotation = configuration_.sql_resource_limits_file_rotation;
+
+        if (configuration_.sql_resource_limits_max_file_size > 0)
+        {
+            sql_output_settings.max_file_size = configuration_.sql_resource_limits_max_file_size;
+            sql_output_settings.max_size = configuration_.sql_resource_limits_max_file_size;
+        }
+
+        if (configuration_.sql_resource_limits_max_size > 0)
+        {
+            sql_output_settings.max_size = configuration_.sql_resource_limits_max_size;
+        }
+
+        sql_output_settings.extension = ".db";
     }
 
-    output_settings.extension = (configuration_.mcap_enabled) ? ".mcap" : ".db";
-
-    if (file_tracker == nullptr)
+    if (mcap_file_tracker == nullptr)
     {
-        // Create the File Tracker
-        file_tracker.reset(new participants::FileTracker(output_settings));
+        // Create the MCAP File Tracker
+        mcap_file_tracker.reset(new participants::FileTracker(mcap_output_settings));
+    }
+    if(sql_file_tracker == nullptr)
+    {
+        // Create the SQL File Tracker
+        sql_file_tracker.reset(new participants::FileTracker(sql_output_settings));
     }
 
     const auto handler_state = recorder_to_handler_state_(init_state);
     const auto on_disk_full_lambda = std::bind(&DdsRecorder::on_disk_full, this);
 
+    // Create DynTypes Participant
+    dyn_participant_ = std::make_shared<DynTypesParticipant>(
+        configuration_.simple_configuration,
+        payload_pool_,
+        discovery_database_);
+    dyn_participant_->init();
+
+    // Create Participant Database
+    participants_database_ = std::make_shared<ParticipantsDatabase>();
+
+    // Populate Participant Database
+    participants_database_->add_participant(
+        dyn_participant_->id(),
+        dyn_participant_
+        );
+
     if (configuration_.mcap_enabled)
     {
         // Create MCAP Handler configuration
         participants::McapHandlerConfiguration handler_config(
-            output_settings,
+            mcap_output_settings,
             configuration_.max_pending_samples,
             configuration_.buffer_size,
             configuration_.event_window,
@@ -135,18 +180,31 @@ DdsRecorder::DdsRecorder(
             configuration_.ros2_types);
 
         // Create MCAP Handler
-        handler_ = std::make_shared<participants::McapHandler>(
+        mcap_handler_ = std::make_shared<participants::McapHandler>(
             handler_config,
             payload_pool_,
-            file_tracker,
+            mcap_file_tracker,
             handler_state,
             on_disk_full_lambda);
+
+        // Create Recorder Participant
+        mcap_recorder_participant_ = std::make_shared<SchemaParticipant>(
+            configuration_.mcap_recorder_configuration,
+            payload_pool_,
+            discovery_database_,
+            mcap_handler_);
+
+        // Populate Participant Database with the mcap recorder participant
+        participants_database_->add_participant(
+        mcap_recorder_participant_->id(),
+        mcap_recorder_participant_
+        );
     }
-    else if (configuration_.sql_enabled)
+    if (configuration_.sql_enabled)
     {
         // Create SQL Handler configuration
         participants::SqlHandlerConfiguration handler_config(
-            output_settings,
+            sql_output_settings,
             configuration_.max_pending_samples,
             configuration_.buffer_size,
             configuration_.event_window,
@@ -157,40 +215,29 @@ DdsRecorder::DdsRecorder(
             configuration_.sql_data_format);
 
         // Create SQL Handler
-        handler_ = std::make_shared<participants::SqlHandler>(
+        sql_handler_ = std::make_shared<participants::SqlHandler>(
             handler_config,
             payload_pool_,
-            file_tracker,
+            sql_file_tracker,
             handler_state,
             on_disk_full_lambda);
+
+        // Create Recorder Participant
+        sql_recorder_participant_ = std::make_shared<SchemaParticipant>(
+            configuration_.sql_recorder_configuration,
+            payload_pool_,
+            discovery_database_,
+            sql_handler_);
+
+        // Populate Participant Database with the sql recorder participant
+        participants_database_->add_participant(
+        sql_recorder_participant_->id(),
+        sql_recorder_participant_
+        );
     }
 
-    // Create DynTypes Participant
-    dyn_participant_ = std::make_shared<DynTypesParticipant>(
-        configuration_.simple_configuration,
-        payload_pool_,
-        discovery_database_);
-    dyn_participant_->init();
-
-    // Create Recorder Participant
-    recorder_participant_ = std::make_shared<SchemaParticipant>(
-        configuration_.recorder_configuration,
-        payload_pool_,
-        discovery_database_,
-        handler_);
-
-    // Create Participant Database
-    participants_database_ = std::make_shared<ParticipantsDatabase>();
-
-    // Populate Participant Database
-    participants_database_->add_participant(
-        dyn_participant_->id(),
-        dyn_participant_
-        );
-    participants_database_->add_participant(
-        recorder_participant_->id(),
-        recorder_participant_
-        );
+    
+    
 
     // Create DDS Pipe
     pipe_ = std::make_unique<DdsPipe>(
@@ -228,27 +275,62 @@ utils::ReturnCode DdsRecorder::reload_configuration(
 
 void DdsRecorder::start()
 {
-    handler_->start();
+    if(configuration_.sql_enabled)
+    {
+        sql_handler_->start();
+    }
+    if(configuration_.mcap_enabled)
+    {
+        mcap_handler_->start();
+    }
 }
 
 void DdsRecorder::pause()
 {
-    handler_->pause();
+    if(configuration_.sql_enabled)
+    {
+        sql_handler_->pause();
+    }
+    if(configuration_.mcap_enabled)
+    {
+        mcap_handler_->pause();
+    }
 }
 
 void DdsRecorder::suspend()
 {
-    handler_->stop();
+    if(configuration_.sql_enabled)
+    {
+        sql_handler_->stop();
+    }
+    if(configuration_.mcap_enabled)
+    {
+        mcap_handler_->stop();
+    }
 }
 
 void DdsRecorder::stop()
 {
-    handler_->stop();
+    if(configuration_.sql_enabled)
+    {
+        sql_handler_->stop();
+    }
+    if(configuration_.mcap_enabled)
+    {
+        mcap_handler_->stop();
+    }
 }
 
 void DdsRecorder::trigger_event()
 {
-    handler_->trigger_event();
+    if(configuration_.sql_enabled)
+    {
+        sql_handler_->trigger_event();
+    }
+    if(configuration_.mcap_enabled)
+    {
+        mcap_handler_->trigger_event();
+    }
 }
 
 void DdsRecorder::on_disk_full()
