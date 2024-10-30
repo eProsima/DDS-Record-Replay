@@ -166,6 +166,9 @@ protected:
     // Written (estimated) file size, that takes into account written objects
     std::uint64_t written_sql_size_{MIN_SQL_SIZE};
 
+    // The last size checked for the SQL file (it is signed to allow negative when freeing space)
+    std::int64_t checked_sql_size_{0};
+
     // The size of each page in the SQL file (useful for vacuuming in order to defragment the file)
     std::uint64_t page_size_{0};
 };

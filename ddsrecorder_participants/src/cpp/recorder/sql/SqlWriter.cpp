@@ -38,6 +38,8 @@
 #include <ddsrecorder_participants/recorder/sql/SqlHandlerConfiguration.hpp>
 #include <ddsrecorder_participants/recorder/sql/SqlWriter.hpp>
 
+#include <filesystem>
+
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
@@ -684,6 +686,12 @@ void SqlWriter::size_control_(size_t entry_size, bool force)
                             << utils::from_bytes(configuration_.max_file_size - written_sql_size_) << "."
                     , entry_size);
         }
+    }
+    if(written_sql_size_ - checked_sql_size_ > 100000){
+        const auto filename = file_tracker_->get_current_filename();
+        auto file_size = std::filesystem::file_size(filename);
+        written_sql_size_ = file_size;
+        checked_sql_size_ = written_sql_size_;
     }
 
     // Update the written size
