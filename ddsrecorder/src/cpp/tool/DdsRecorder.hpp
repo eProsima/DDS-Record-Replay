@@ -120,8 +120,11 @@ public:
     //! Trigger event (in \c mcap_handler_)
     void trigger_event();
 
-    //! Callback to execute when disk is full
-    void on_disk_full();
+    //! Callback to execute when disk is full on mcap criteria
+    void mcap_on_disk_full();
+
+    //! Callback to execute when disk is full on sql criteria
+    void sql_on_disk_full();
 
 protected:
 

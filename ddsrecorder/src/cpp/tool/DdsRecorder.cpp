@@ -146,7 +146,8 @@ DdsRecorder::DdsRecorder(
     }
 
     const auto handler_state = recorder_to_handler_state_(init_state);
-    const auto on_disk_full_lambda = std::bind(&DdsRecorder::on_disk_full, this);
+    const auto mcap_on_disk_full_lambda = std::bind(&DdsRecorder::mcap_on_disk_full, this);
+    const auto sql_on_disk_full_lambda = std::bind(&DdsRecorder::sql_on_disk_full, this);
 
     // Create DynTypes Participant
     dyn_participant_ = std::make_shared<DynTypesParticipant>(
@@ -185,7 +186,7 @@ DdsRecorder::DdsRecorder(
             payload_pool_,
             mcap_file_tracker,
             handler_state,
-            on_disk_full_lambda);
+            mcap_on_disk_full_lambda);
 
         // Create Recorder Participant
         mcap_recorder_participant_ = std::make_shared<SchemaParticipant>(
@@ -220,7 +221,7 @@ DdsRecorder::DdsRecorder(
             payload_pool_,
             sql_file_tracker,
             handler_state,
-            on_disk_full_lambda);
+            sql_on_disk_full_lambda);
 
         // Create Recorder Participant
         sql_recorder_participant_ = std::make_shared<SchemaParticipant>(
@@ -333,12 +334,29 @@ void DdsRecorder::trigger_event()
     }
 }
 
-void DdsRecorder::on_disk_full()
+void DdsRecorder::mcap_on_disk_full()
 {
     if (nullptr != event_handler_)
     {
-        // Notify main application to proceed and close
-        event_handler_->simulate_event_occurred();
+        configuration_.mcap_enabled = false;
+        if(!configuration_.sql_enabled)
+        {
+            // Notify main application to proceed and close
+            event_handler_->simulate_event_occurred();
+        }
+    }
+}
+
+void DdsRecorder::sql_on_disk_full()
+{
+    if (nullptr != event_handler_)
+    {
+        configuration_.sql_enabled = false;
+        if(!configuration_.mcap_enabled)
+        {
+            // Notify main application to proceed and close
+            event_handler_->simulate_event_occurred();
+        }
     }
 }
 
