@@ -59,11 +59,11 @@ public:
     DDSRECORDER_PARTICIPANTS_DllAPI
     void init(
             const std::uint64_t& space_available,
-            const std::uint64_t& safety_margin);
+            const std::uint64_t& safety_margin,
+            const std::string& filepath);
 
     DDSRECORDER_PARTICIPANTS_DllAPI
-    void reset(
-            const std::string& filepath);
+    void reset();
 
     DDSRECORDER_PARTICIPANTS_DllAPI
     void message_to_write(
@@ -174,11 +174,26 @@ protected:
     std::uint64_t get_metadata_size_(
             const mcap::Metadata& metadata);
 
+    //! File path for the MCAP file
+    std::string file_path_;
+
     //! Potential (estimated) file size, that takes into account objects to be written (not yet written)
     std::uint64_t potential_mcap_size_{MCAP_FILE_OVERHEAD}; // TODO: move initialization to init, and also set disk_full_ to false
 
     //! Written (estimated) file size, that takes into account written objects
     std::uint64_t written_mcap_size_{MCAP_FILE_OVERHEAD};
+
+    /* To have a size checker of the MCAP file, we need to check the size of the file every X bytes but the file may not be written yet
+    * so we need a variable to "time" the check (variation between written_mcap_size_ and checked_written_mcap_size_) and another variable 
+    * to store the size of the file the last time it was checked to know if it has been updated (checked_actual_mcap_size_)
+    */
+    // The value written_mcap_size_ had when doing the last check
+    std::uint64_t checked_written_mcap_size_{0};
+
+    // The actual size of the mcap file the last time it was checked
+    std::uint64_t checked_actual_mcap_size_{0};
+
+    const std::uint64_t CHECK_INTERVAL{300 * 1024}; // 300 KB
 
     //! The minimum size of an MCAP file without data
     std::uint64_t min_mcap_size_{MCAP_FILE_OVERHEAD};

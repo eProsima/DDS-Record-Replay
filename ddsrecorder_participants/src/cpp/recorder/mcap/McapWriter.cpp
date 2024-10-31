@@ -131,7 +131,7 @@ void McapWriter::open_new_file_nts_(
         configuration_.max_file_size,
         configuration_.max_size - file_tracker_->get_total_size());
 
-    size_tracker_.init(max_file_size, configuration_.safety_margin);
+    size_tracker_.init(max_file_size, configuration_.safety_margin, file_tracker_->get_current_filename());
 
     // NOTE: These writes should never fail since the minimum size accounts for them.
     write_metadata_nts_();
@@ -155,7 +155,7 @@ void McapWriter::close_current_file_nts_()
     }
 
     file_tracker_->set_current_file_size(size_tracker_.get_written_mcap_size());
-    size_tracker_.reset(file_tracker_->get_current_filename());
+    size_tracker_.reset();
 
     writer_.close();
     file_tracker_->close_file();
