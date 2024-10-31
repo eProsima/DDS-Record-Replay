@@ -96,13 +96,7 @@ void SqlWriter::open_new_file_nts_(
     // Enable WAL mode: appends changes to a separate file before applying them to the main database, reducing the risk of corruption in the event of a crash
     sqlite3_exec(database_, "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
 
-    // Enable Incremental Auto-Vacuum mode (for antifragmentation memory management)
-    sqlite3_exec(database_, "PRAGMA auto_vacuum = INCREMENTAL;", nullptr, nullptr, nullptr);
-
-    // Perform an initial VACUUM if needed (only on new databases, as it can be costly)
-    sqlite3_exec(database_, "VACUUM;", nullptr, nullptr, nullptr);
-
-    // Get the page size for later vacuuming
+    // Get the page size for later vacuuming and auto checkpointing
     sqlite3_stmt* stmt;
     const char* query = "PRAGMA page_size;";
 
@@ -119,6 +113,19 @@ void SqlWriter::open_new_file_nts_(
     }
 
     sqlite3_finalize(stmt);
+
+    // Set autocheckpoint every SIZE_CHECKPOINT_ bytes
+    const int checkpoint_pages = SIZE_CHECKPOINT_ / page_size_;
+    std::string pragma_cmd = "PRAGMA wal_autocheckpoint = " + std::to_string(checkpoint_pages) + ";";
+    sqlite3_exec(database_, pragma_cmd.c_str(), nullptr, nullptr, nullptr);
+
+    // Enable Incremental Auto-Vacuum mode (for antifragmentation memory management)
+    sqlite3_exec(database_, "PRAGMA auto_vacuum = INCREMENTAL;", nullptr, nullptr, nullptr);
+
+    // Perform an initial VACUUM if needed (only on new databases, as it can be costly)
+    sqlite3_exec(database_, "VACUUM;", nullptr, nullptr, nullptr);
+
+    
 
     // Create Types table
     // NOTE: These tables creation should never fail since the minimum size accounts for them.
@@ -252,8 +259,6 @@ void SqlWriter::write_nts_(
         EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
         throw utils::InconsistencyException(error_msg);
     }
-
-    sqlite3_exec(database_, "PRAGMA wal_checkpoint(PASSIVE);", nullptr, nullptr, nullptr);
 
     // Finalize the SQL statement
     sqlite3_finalize(statement);
@@ -404,8 +409,6 @@ void SqlWriter::write_nts_(
         throw utils::InconsistencyException(error_msg);
     }
 
-    sqlite3_exec(database_, "PRAGMA wal_checkpoint(PASSIVE);", nullptr, nullptr, nullptr);
-
 
     // Finalize the SQL statement
     sqlite3_finalize(statement);
@@ -491,9 +494,6 @@ void SqlWriter::write_nts_(
         EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
         throw utils::InconsistencyException(error_msg);
     }
-
-    sqlite3_exec(database_, "PRAGMA wal_checkpoint(PASSIVE);", nullptr, nullptr, nullptr);
-
     // Finalize the SQL statement
     sqlite3_finalize(statement);
 }
@@ -509,6 +509,9 @@ void SqlWriter::close_current_file_nts_()
             write_nts_(dynamic_type);
         }
     }
+
+    // Checkpoint any remaining data in the WAL file
+    sqlite3_wal_checkpoint_v2(database_, nullptr, SQLITE_CHECKPOINT_FULL, nullptr, nullptr);
 
     file_tracker_->set_current_file_size(written_sql_size_);
 
@@ -661,7 +664,7 @@ void SqlWriter::size_control_(size_t entry_size, bool force)
 
                 std::uint64_t remove_size = remove_oldest_entries_(desired_space);
                 written_sql_size_ -= remove_size;
-                checked_sql_size_ -= remove_size;
+                checked_written_sql_size_ -= remove_size;
                 free_space = true;
             }
             catch (const FullFileException& e)
@@ -687,11 +690,16 @@ void SqlWriter::size_control_(size_t entry_size, bool force)
                     , entry_size);
         }
     }
-    if(written_sql_size_ - checked_sql_size_ > 100000){
+
+    // Check the actual size of the file if CHECK_INTERVAL has passed
+    if(written_sql_size_ - checked_written_sql_size_ > CHECK_INTERVAL){
         const auto filename = file_tracker_->get_current_filename();
         auto file_size = std::filesystem::file_size(filename);
-        written_sql_size_ = file_size;
-        checked_sql_size_ = written_sql_size_;
+        if(checked_actual_sql_size_ != file_size){
+            checked_actual_sql_size_ = file_size;
+            written_sql_size_ = file_size;
+        }
+        checked_written_sql_size_ = written_sql_size_;
     }
 
     // Update the written size

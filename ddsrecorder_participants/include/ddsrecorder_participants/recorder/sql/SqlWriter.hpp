@@ -163,11 +163,26 @@ protected:
     // The size of an empty SQL file
     static constexpr std::uint64_t MIN_SQL_SIZE{28672};
 
+    // The maximum size of the wal file (in bytes) before being checkpointed to the actual database file
+    // TODO: This value should be configurable (safety_margin?)
+    static constexpr std::uint64_t SIZE_CHECKPOINT_{200000};
+
     // Written (estimated) file size, that takes into account written objects
     std::uint64_t written_sql_size_{MIN_SQL_SIZE};
 
-    // The last size checked for the SQL file (it is signed to allow negative when freeing space)
-    std::int64_t checked_sql_size_{0};
+    /* To have a size checker of the SQL file, we need to check the size of the file every X bytes but the file may not be written yet
+    * so we need a variable to "time" the check (variation between written_sql_size_ and checked_written_sql_size_) and another variable 
+    * to store the size of the file the last time it was checked to know if it has been updated (checked_actual_sql_size_)
+    */
+    // The value written_sql_size_ had when doing the last check (it is signed to allow negative when freeing space)
+    std::int64_t checked_written_sql_size_{0};
+
+    // The actual size of the sql file the last time it was checked
+    std::uint64_t checked_actual_sql_size_{0};
+
+    // Threshold of bytes stimated between checks before checking the size of the file again
+    // TODO: This value should be configurable (safety_margin?)
+    const std::uint64_t CHECK_INTERVAL{300 * 1024}; // 300 KB
 
     // The size of each page in the SQL file (useful for vacuuming in order to defragment the file)
     std::uint64_t page_size_{0};
