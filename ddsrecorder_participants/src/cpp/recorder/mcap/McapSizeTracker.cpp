@@ -42,7 +42,8 @@ McapSizeTracker::~McapSizeTracker()
 
 void McapSizeTracker::init(
         const std::uint64_t& space_available,
-        const std::uint64_t& safety_margin)
+        const std::uint64_t& safety_margin,
+        const std::string& file_path)
 {
     EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_SIZE_TRACKER,
             "MCAP_WRITE | Initializing tracker with a size of " << utils::from_bytes(space_available));
@@ -64,14 +65,15 @@ void McapSizeTracker::init(
 
     space_available_ = space_available;
 
+    file_path_ = file_path;
+
     enabled_ = true;
 }
 
-void McapSizeTracker::reset(
-        const std::string& filepath)
+void McapSizeTracker::reset()
 {
     EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_SIZE_TRACKER,
-            "MCAP_WRITE | Resetting tracker for: " << filepath);
+            "MCAP_WRITE | Resetting tracker for: " << file_path_);
 
     if (!enabled_)
     {
@@ -323,6 +325,22 @@ void McapSizeTracker::check_and_increase_written_mcap_size_(
     }
 
     written_mcap_size_ += size;
+
+    // Check the real size of the file every CHECK_INTERVAL Bytes
+    // TODO: the size interval for checking should be configurable (safety-margin?
+    if(written_mcap_size_ - checked_written_mcap_size_ > CHECK_INTERVAL)
+    {
+        auto file_size = std::filesystem::file_size(file_path_);
+        if(file_size != checked_actual_mcap_size_)
+        {
+            // The file has been updated
+            checked_actual_mcap_size_ = file_size;
+            std::int64_t dif_potential_written = potential_mcap_size_ - written_mcap_size_; // Signed to allow negative values in case of decrease (error?)
+            written_mcap_size_ = file_size;
+            potential_mcap_size_ = written_mcap_size_ + dif_potential_written;
+        }
+        checked_written_mcap_size_ = written_mcap_size_;
+    }
 }
 
 std::uint64_t McapSizeTracker::get_message_size_(
