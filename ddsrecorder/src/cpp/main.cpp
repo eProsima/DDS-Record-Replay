@@ -261,6 +261,8 @@ int main(
 
         // Load configuration from YAML
         eprosima::ddsrecorder::yaml::RecorderConfiguration configuration(commandline_args.file_path, &commandline_args);
+        // Flag to avoid reloading configuration in the first iteration of enable_remote_controller loop
+        bool config_loaded = true;
 
         /////
         // Logging
@@ -404,7 +406,14 @@ int main(
 
                 // Reload YAML configuration file, in case it changed during STOPPED state
                 // NOTE: Changes to all (but controller specific) recorder configuration options are taken into account
-                configuration = eprosima::ddsrecorder::yaml::RecorderConfiguration(commandline_args.file_path);
+                if(!config_loaded)
+                {
+                    configuration = eprosima::ddsrecorder::yaml::RecorderConfiguration(commandline_args.file_path);
+                }
+                else
+                {
+                    config_loaded = false;
+                }
 
                 // Create DDS Recorder
                 auto recorder = std::make_unique<DdsRecorder>(
