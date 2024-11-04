@@ -139,6 +139,29 @@ protected:
     static participants::BaseHandlerStateCode recorder_to_handler_state_(
             const DdsRecorderStateCode& recorder_state);
 
+    /**
+     * Encapsulate the logic to load the resource limits configuration into the output settings.
+     * 
+     * RESOURCE LIMITS LOGIC
+     * A: If only one recorder is enabled
+     *  1. If no resource limits are set, the space available will be occupied by the enabled recorder
+     *  2. If resource limits are set, just check if the space available and resource limits conflict
+     * B: If both recorders are enabled
+     *  1. If no resource limits are set, the space available will be divided by half for each recorder
+     *  2. If only one resource limits is set, then the other recorder will be set by default to the remaining space
+     *  3. If both resource limits are set, just check if the space available and both resource limits altogether conflict
+     * 
+     * @param mcap_output_settings: Reference to the output settings for the MCAP recorder.
+     * @param sql_output_settings: Reference to the output settings for the SQL recorder.
+     * @param error_msg: Reference to the error message to be filled in case of error.
+     * 
+     * @return Error flag if the resource limits are not valid.
+     */
+    bool load_resource_limits(
+            participants::OutputSettings& mcap_output_settings,
+            participants::OutputSettings& sql_output_settings,
+            utils::Formatter& error_msg) const;
+
     //! Configuration of the DDS Recorder
     yaml::RecorderConfiguration configuration_;
 

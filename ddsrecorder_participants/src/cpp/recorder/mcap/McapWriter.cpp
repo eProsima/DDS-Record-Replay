@@ -111,7 +111,7 @@ void McapWriter::open_new_file_nts_(
     {
         throw FullDiskException(
                   "The minimum MCAP size (" + utils::from_bytes(min_file_size) + ") is greater than the maximum MCAP "
-                  "size (" + utils::from_bytes(configuration_.max_file_size) + ").");
+                  "size (" + utils::from_bytes(configuration_.resource_limits.max_file_size_) + ").");
     }
 
     const auto filename = file_tracker_->get_current_filename();
@@ -128,10 +128,10 @@ void McapWriter::open_new_file_nts_(
 
     // Set the file's maximum size
     const auto max_file_size = std::min(
-        configuration_.max_file_size,
-        configuration_.max_size - file_tracker_->get_total_size());
+        configuration_.resource_limits.max_file_size_,
+        configuration_.resource_limits.max_size_ - file_tracker_->get_total_size());
 
-    size_tracker_.init(max_file_size, configuration_.safety_margin, file_tracker_->get_current_filename());
+    size_tracker_.init(max_file_size, configuration_.resource_limits.size_tolerance_, file_tracker_->get_current_filename());
 
     // NOTE: These writes should never fail since the minimum size accounts for them.
     write_metadata_nts_();

@@ -53,6 +53,8 @@ SqlWriter::SqlWriter(
     : BaseWriter(configuration, file_tracker, record_types, MIN_SQL_SIZE)
     , ros2_types_(ros2_types)
     , data_format_(data_format)
+    , check_interval_(configuration.resource_limits.size_tolerance_/2)
+    , size_checkpoint_(configuration.resource_limits.size_tolerance_/4)
 {
 }
 
@@ -75,7 +77,7 @@ void SqlWriter::open_new_file_nts_(
     {
         throw FullDiskException(
                     "The minimum SQL size (" + utils::from_bytes(min_file_size) + ") is greater than the maximum SQL "
-                    "size (" + utils::from_bytes(configuration_.max_file_size) + ").");
+                    "size (" + utils::from_bytes(configuration_.resource_limits.max_file_size_) + ").");
     }
 
     const auto filename = file_tracker_->get_current_filename();
@@ -114,8 +116,8 @@ void SqlWriter::open_new_file_nts_(
 
     sqlite3_finalize(stmt);
 
-    // Set autocheckpoint every SIZE_CHECKPOINT_ bytes
-    const int checkpoint_pages = SIZE_CHECKPOINT_ / page_size_;
+    // Set autocheckpoint every size_checkpoint_ bytes
+    const int checkpoint_pages = size_checkpoint_ / page_size_;
     std::string pragma_cmd = "PRAGMA wal_autocheckpoint = " + std::to_string(checkpoint_pages) + ";";
     sqlite3_exec(database_, pragma_cmd.c_str(), nullptr, nullptr, nullptr);
 
@@ -647,11 +649,11 @@ void SqlWriter::size_control_(size_t entry_size, bool force)
     entry_size += SQLITE_ROW_OVERHEAD;
 
     // Check if the entry fits in the current file or it has been forced
-    if(written_sql_size_ + entry_size > configuration_.max_file_size && !force)
+    if(written_sql_size_ + entry_size > configuration_.resource_limits.max_file_size_ && !force)
     {
         bool free_space = false;
         // Free space in case of file rotation
-        if(configuration_.file_rotation)
+        if(configuration_.resource_limits.file_rotation_)
         {
             try
             {
@@ -660,7 +662,7 @@ void SqlWriter::size_control_(size_t entry_size, bool force)
                 constexpr int pages_multiplier = 10;
                 constexpr float file_percentage = 0.05;
                 std::uint64_t desired_space = (entry_size * entries_multiplier > page_size_*pages_multiplier) ? entry_size * entries_multiplier : page_size_*pages_multiplier;
-                desired_space = (desired_space < configuration_.max_file_size*file_percentage) ? desired_space : configuration_.max_file_size*file_percentage;
+                desired_space = (desired_space < configuration_.resource_limits.max_file_size_*file_percentage) ? desired_space : configuration_.resource_limits.max_file_size_*file_percentage;
 
                 std::uint64_t remove_size = remove_oldest_entries_(desired_space);
                 written_sql_size_ -= remove_size;
@@ -686,13 +688,13 @@ void SqlWriter::size_control_(size_t entry_size, bool force)
             throw FullFileException(
                 STR_ENTRY << "Attempted to write " << utils::from_bytes(entry_size) << " on a SQL of "
                             << utils::from_bytes(written_sql_size_) << " but there is not enough space available: "
-                            << utils::from_bytes(configuration_.max_file_size - written_sql_size_) << "."
+                            << utils::from_bytes(configuration_.resource_limits.max_file_size_ - written_sql_size_) << "."
                     , entry_size);
         }
     }
 
-    // Check the actual size of the file if CHECK_INTERVAL has passed
-    if(written_sql_size_ - checked_written_sql_size_ > CHECK_INTERVAL){
+    // Check the actual size of the file if check_interval_ has passed
+    if(written_sql_size_ - checked_written_sql_size_ > check_interval_){
         const auto filename = file_tracker_->get_current_filename();
         auto file_size = std::filesystem::file_size(filename);
         if(checked_actual_sql_size_ != file_size){
