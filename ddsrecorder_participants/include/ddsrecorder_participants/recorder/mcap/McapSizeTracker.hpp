@@ -54,12 +54,12 @@ public:
     ~McapSizeTracker();
 
     /**
-     * @brief Initialize the tracker with a given \c space_available and \c safety_margin.
+     * @brief Initialize the tracker with a given \c space_available and \c size_tolerance.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void init(
             const std::uint64_t& space_available,
-            const std::uint64_t& safety_margin,
+            const std::uint64_t& size_tolerance,
             const std::string& filepath);
 
     DDSRECORDER_PARTICIPANTS_DllAPI
@@ -193,7 +193,8 @@ protected:
     // The actual size of the mcap file the last time it was checked
     std::uint64_t checked_actual_mcap_size_{0};
 
-    const std::uint64_t CHECK_INTERVAL{300 * 1024}; // 300 KB
+    // Threshold of bytes stimated between checks before checking the size of the file again. This value is set to half size_tolerance in init
+    std::uint64_t check_interval_{500 * 1024}; // 300 KB
 
     //! The minimum size of an MCAP file without data
     std::uint64_t min_mcap_size_{MCAP_FILE_OVERHEAD};

@@ -163,9 +163,8 @@ protected:
     // The size of an empty SQL file
     static constexpr std::uint64_t MIN_SQL_SIZE{28672};
 
-    // The maximum size of the wal file (in bytes) before being checkpointed to the actual database file
-    // TODO: This value should be configurable (safety_margin?)
-    static constexpr std::uint64_t SIZE_CHECKPOINT_{200000};
+    // The maximum size of the wal file (in bytes) before being checkpointed to the actual database file. This value is set to quarter size_tolerance in constructor
+    std::uint64_t size_checkpoint_{500 * 1024};
 
     // Written (estimated) file size, that takes into account written objects
     std::uint64_t written_sql_size_{MIN_SQL_SIZE};
@@ -180,9 +179,8 @@ protected:
     // The actual size of the sql file the last time it was checked
     std::uint64_t checked_actual_sql_size_{0};
 
-    // Threshold of bytes stimated between checks before checking the size of the file again
-    // TODO: This value should be configurable (safety_margin?)
-    const std::uint64_t CHECK_INTERVAL{300 * 1024}; // 300 KB
+    // Threshold of bytes stimated between checks before checking the size of the file again. This value is set to half size_tolerance in constructor
+    std::uint64_t check_interval_{500 * 1024}; // 300 KB
 
     // The size of each page in the SQL file (useful for vacuuming in order to defragment the file)
     std::uint64_t page_size_{0};

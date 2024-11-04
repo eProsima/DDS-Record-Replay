@@ -39,11 +39,11 @@
 #include <ddspipe_yaml/Yaml.hpp>
 #include <ddspipe_yaml/YamlReader.hpp>
 
-#include <ddsrecorder_participants/recorder/output/OutputSettings.hpp>
 #include <ddsrecorder_participants/recorder/sql/SqlHandlerConfiguration.hpp>
 
 #include <ddsrecorder_yaml/library/library_dll.h>
 #include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
+#include <ddsrecorder_yaml/recorder/ResourceLimitsConfiguration.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -67,13 +67,7 @@ public:
             const CommandlineArgsRecorder* args = nullptr);
 
     virtual bool is_valid(
-            utils::Formatter& error_msg) const noexcept;
-
-    virtual bool is_mcap_valid(
-            utils::Formatter& error_msg) const noexcept;
-
-    virtual bool is_sql_valid(
-            utils::Formatter& error_msg) const noexcept;
+            utils::Formatter& error_msg) noexcept;
 
     // DDS Pipe Configuration
     ddspipe::core::DdsPipeConfiguration ddspipe_configuration;
@@ -97,27 +91,22 @@ public:
     std::string output_filename = "output";
     std::string output_timestamp_format = "%Y-%m-%d_%H-%M-%S_%Z";
     bool output_local_timestamp = true;
+    std::uint64_t output_safety_margin = 10 * 1024 * 1024; // Force the system to have at least 10MB free
 
     // Mcap params
     bool mcap_enabled = true;
     bool mcap_log_publish_time = false;
     mcap::McapWriterOptions mcap_writer_options{"ros2"};
 
-    // Mcap resource limits params
-    bool mcap_resource_limits_file_rotation = false;
-    std::uint64_t mcap_resource_limits_max_size = 0;
-    std::uint64_t mcap_resource_limits_max_file_size = 0;
-    std::uint64_t mcap_resource_limits_safety_margin = 0;
-
     // Sql params
     bool sql_enabled = false;
     ddsrecorder::participants::DataFormat sql_data_format = ddsrecorder::participants::DataFormat::both;
 
-    // Sql resource limits params
-    bool sql_resource_limits_file_rotation = false;
-    std::uint64_t sql_resource_limits_max_size = 0;
-    std::uint64_t sql_resource_limits_max_file_size = 0;
-    std::uint64_t sql_resource_limits_safety_margin = 0;
+    // Resource limits params
+    ResourceLimitsConfiguration mcap_resource_limits;
+    ResourceLimitsConfiguration sql_resource_limits;
+    bool mcap_resource_limits_enabled{false};
+    bool sql_resource_limits_enabled{false};
 
     // Remote controller configuration
     bool enable_remote_controller = true;

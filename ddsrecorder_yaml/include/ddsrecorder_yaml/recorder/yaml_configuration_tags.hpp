@@ -50,6 +50,7 @@ constexpr const char* RECORDER_OUTPUT_PATH_FILE_TAG("path");
 constexpr const char* RECORDER_OUTPUT_FILE_NAME_TAG("filename");
 constexpr const char* RECORDER_OUTPUT_TIMESTAMP_FORMAT_TAG("timestamp-format");
 constexpr const char* RECORDER_OUTPUT_LOCAL_TIMESTAMP_TAG("local-timestamp");
+constexpr const char* RECORDER_OUTPUT_SAFETY_MARGIN_TAG("safety-margin");
 
 ///////////////
 // Mcap tags //
@@ -73,12 +74,6 @@ constexpr const char* RECORDER_MCAP_COMPRESSION_SETTINGS_LEVEL_SLOW_TAG("slow");
 constexpr const char* RECORDER_MCAP_COMPRESSION_SETTINGS_LEVEL_SLOWEST_TAG("slowest");
 constexpr const char* RECORDER_MCAP_COMPRESSION_SETTINGS_FORCE_TAG("force");
 
-// Resource limits tags
-constexpr const char* RECORDER_MCAP_RESOURCE_LIMITS_TAG("resource-limits");
-constexpr const char* RECORDER_MCAP_RESOURCE_LIMITS_FILE_ROTATION_TAG("file-rotation");
-constexpr const char* RECORDER_MCAP_RESOURCE_LIMITS_MAX_SIZE_TAG("max-size");
-constexpr const char* RECORDER_MCAP_RESOURCE_LIMITS_MAX_FILE_SIZE_TAG("max-file-size");
-constexpr const char* RECORDER_MCAP_RESOURCE_LIMITS_SAFETY_MARGIN_TAG("safety-margin");
 
 //////////////
 // SQL tags //
@@ -91,11 +86,15 @@ constexpr const char* RECORDER_SQL_DATA_FORMAT_CDR_TAG("cdr");
 constexpr const char* RECORDER_SQL_DATA_FORMAT_JSON_TAG("json");
 constexpr const char* RECORDER_SQL_DATA_FORMAT_BOTH_TAG("both");
 
-// Resource limits tags
-constexpr const char* RECORDER_SQL_RESOURCE_LIMITS_TAG("resource-limits");
-constexpr const char* RECORDER_SQL_RESOURCE_LIMITS_LOG_ROTATION_TAG("log-rotation");
-constexpr const char* RECORDER_SQL_RESOURCE_LIMITS_MAX_SIZE_TAG("max-size");
-constexpr const char* RECORDER_SQL_RESOURCE_LIMITS_SAFETY_MARGIN_TAG("safety-margin");
+
+//////////////////////////
+// Resource limits tags //
+//////////////////////////
+constexpr const char* RECORDER_RESOURCE_LIMITS_TAG("resource-limits");
+constexpr const char* RECORDER_RESOURCE_LIMITS_LOG_ROTATION_TAG("log-rotation");
+constexpr const char* RECORDER_RESOURCE_LIMITS_MAX_SIZE_TAG("max-size");
+constexpr const char* RECORDER_RESOURCE_LIMITS_MAX_FILE_SIZE_TAG("max-file-size");
+constexpr const char* RECORDER_RESOURCE_LIMITS_SIZE_TOLERANCE_TAG("size-tolerance");
 
 ////////////////////////////////////
 // Remote controller related tags //

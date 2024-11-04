@@ -59,9 +59,10 @@ DdsRecorder::DdsRecorder(
         std::shared_ptr<participants::FileTracker>& mcap_file_tracker,
         std::shared_ptr<participants::FileTracker>& sql_file_tracker,
         const std::string& file_name /* = "" */)
-    : configuration_(configuration)
-    , event_handler_(event_handler)
+        : configuration_(configuration),
+        event_handler_(event_handler)
 {
+
     load_internal_topics_(configuration_);
 
     // Create Discovery Database
@@ -91,47 +92,16 @@ DdsRecorder::DdsRecorder(
         output_settings.prepend_timestamp = false;
     }
 
-    const auto space_available = std::filesystem::space(output_settings.filepath).available;
-    output_settings.max_file_size = space_available;
-    output_settings.max_size = space_available;
-
     // Configure the resource-limits depending on sql or mcap
     participants::OutputSettings mcap_output_settings = output_settings;
     participants::OutputSettings sql_output_settings = output_settings;
-    if(configuration_.mcap_enabled){
-        mcap_output_settings.safety_margin = configuration_.mcap_resource_limits_safety_margin;
-        mcap_output_settings.file_rotation = configuration_.mcap_resource_limits_file_rotation;
-
-        if (configuration_.mcap_resource_limits_max_file_size > 0)
-        {
-            mcap_output_settings.max_file_size = configuration_.mcap_resource_limits_max_file_size;
-            mcap_output_settings.max_size = configuration_.mcap_resource_limits_max_file_size;
-        }
-
-        if (configuration_.mcap_resource_limits_max_size > 0)
-        {
-            mcap_output_settings.max_size = configuration_.mcap_resource_limits_max_size;
-        }
-
-        mcap_output_settings.extension = ".mcap";
-    }
-
-    if(configuration_.sql_enabled){
-        sql_output_settings.safety_margin = configuration_.sql_resource_limits_safety_margin;
-        sql_output_settings.file_rotation = configuration_.sql_resource_limits_file_rotation;
-
-        if (configuration_.sql_resource_limits_max_file_size > 0)
-        {
-            sql_output_settings.max_file_size = configuration_.sql_resource_limits_max_file_size;
-            sql_output_settings.max_size = configuration_.sql_resource_limits_max_file_size;
-        }
-
-        if (configuration_.sql_resource_limits_max_size > 0)
-        {
-            sql_output_settings.max_size = configuration_.sql_resource_limits_max_size;
-        }
-
-        sql_output_settings.extension = ".db";
+    mcap_output_settings.extension = ".mcap";
+    sql_output_settings.extension = ".db";
+    utils::Formatter error_msg;
+    if(!load_resource_limits(mcap_output_settings, sql_output_settings, error_msg))
+    {
+        EPROSIMA_LOG_ERROR(DDSRECORDER, "Error loading resource limits: " << error_msg);
+        throw InitializationException("Error loading resource limits, not enough available space");
     }
 
     if (mcap_file_tracker == nullptr)
@@ -399,6 +369,116 @@ participants::BaseHandlerStateCode DdsRecorder::recorder_to_handler_state_(
                 utils::Formatter() << "Trying to convert to McapHandler state an invalid DdsRecorder state.");
             return participants::BaseHandlerStateCode::STOPPED;
     }
+}
+
+bool DdsRecorder::load_resource_limits(
+        participants::OutputSettings& mcap_output_settings,
+        participants::OutputSettings& sql_output_settings,
+        utils::Formatter& error_msg) const
+{
+    /**
+     * RESOURCE LIMITS CONFIGURATION
+     * A: If only one recorder is enabled
+     *  1. If no resource limits are set, the space available will be occupied by the enabled recorder
+     *  2. If resource limits are set, just check if the space available and resource limits conflict
+     * B: If both recorders are enabled
+     *  1. If no resource limits are set, the space available will be divided by half for each recorder
+     *  2. If only one resource limits is set, then the other recorder will be set by default to the remaining space
+     *  3. If both resource limits are set, just check if the space available and both resource limits altogether conflict
+     */
+
+    std::uint64_t space_available = std::filesystem::space(mcap_output_settings.filepath).available - configuration_.output_safety_margin;
+    if(space_available < 0)
+    {
+        error_msg << "The available space is lower than the safety margin.";
+        return 0;
+    }
+
+    // Case A
+    if(configuration_.mcap_enabled ^ configuration_.sql_enabled)
+    {
+        if(configuration_.mcap_enabled)
+        {
+            // Subcase 1
+            if(configuration_.mcap_resource_limits_enabled)
+            {
+                if(!mcap_output_settings.set_resource_limits(configuration_.mcap_resource_limits.resource_limits_struct, space_available))
+                {
+                    error_msg << "The available space given the MCAP conditions is lower than the safety margin.";
+                    return 0;
+                }
+            }
+            // Subcase 2
+            else{
+                mcap_output_settings.set_resource_limits_by_default(configuration_.mcap_resource_limits.resource_limits_struct, space_available);
+            }
+        }
+        else
+        {
+            // Subcase 1
+            if(configuration_.sql_resource_limits_enabled)
+            {
+                if(!sql_output_settings.set_resource_limits(configuration_.sql_resource_limits.resource_limits_struct, space_available))
+                {
+                    error_msg << "The available space given the SQL conditions is lower than the safety margin.";
+                    return 0;
+                }
+            }
+            // Subcase 2
+            else{
+                sql_output_settings.set_resource_limits_by_default(configuration_.sql_resource_limits.resource_limits_struct, space_available);
+            }
+        }
+    }
+    // Case B
+    else{
+        // Subcase 1
+        if(!configuration_.mcap_resource_limits_enabled && !configuration_.sql_resource_limits_enabled)
+        {
+            EPROSIMA_LOG_WARNING(DDSRECORDER, "Both MCAP and SQL are enabled but no resource limits are set. Defaulting to half of the available space for each.");
+            mcap_output_settings.set_resource_limits_by_default(configuration_.mcap_resource_limits.resource_limits_struct, space_available/2);
+            sql_output_settings.set_resource_limits_by_default(configuration_.sql_resource_limits.resource_limits_struct, space_available/2);
+        }
+        // Subcase 2
+        else if(configuration_.mcap_resource_limits_enabled ^ configuration_.sql_resource_limits_enabled)
+        {
+            if(configuration_.mcap_resource_limits_enabled)
+            {
+                if(!mcap_output_settings.set_resource_limits(configuration_.mcap_resource_limits.resource_limits_struct, space_available))
+                {
+                    error_msg << "The available space given the MCAP conditions is lower than the safety margin.";
+                    return 0;
+                }
+                sql_output_settings.set_resource_limits_by_default(configuration_.sql_resource_limits.resource_limits_struct, space_available - mcap_output_settings.resource_limits.max_size_);
+            }
+            else
+            {
+                if(!sql_output_settings.set_resource_limits(configuration_.sql_resource_limits.resource_limits_struct, space_available))
+                {
+                    error_msg << "The available space given the SQL conditions is lower than the safety margin.";
+                    return 0;
+                }
+                mcap_output_settings.set_resource_limits_by_default(configuration_.mcap_resource_limits.resource_limits_struct, space_available - sql_output_settings.resource_limits.max_size_);
+            }
+        }
+        // Subcase 3
+        else
+        {
+            if(!mcap_output_settings.set_resource_limits(configuration_.mcap_resource_limits.resource_limits_struct, space_available))
+            {
+                error_msg << "The available space given the MCAP conditions is lower than the safety margin.";
+                return 0;
+            }
+            space_available -= mcap_output_settings.resource_limits.max_size_;
+            if(!sql_output_settings.set_resource_limits(configuration_.sql_resource_limits.resource_limits_struct, space_available))
+            {
+                error_msg << "The available space given the SQL conditions after MCAP is lower than the safety margin.";
+                return 0;
+            }
+        }
+    }
+
+    return 1;
 }
 
 } /* namespace recorder */

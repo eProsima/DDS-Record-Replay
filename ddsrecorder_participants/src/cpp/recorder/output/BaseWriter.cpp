@@ -107,7 +107,7 @@ void BaseWriter::on_file_full_nts_(
     // Disable the writer in case opening a new file fails
     enabled_ = false;
 
-    if (configuration_.max_file_size == configuration_.max_size)
+    if (configuration_.resource_limits.max_file_size_ == configuration_.resource_limits.max_size_)
     {
         // There can only be one file and it's full
         throw FullDiskException(e.what());
