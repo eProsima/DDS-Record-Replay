@@ -399,7 +399,7 @@ bool DdsRecorder::load_resource_limits(
     {
         if(configuration_.mcap_enabled)
         {
-            // Subcase 1
+            // Subcase 2
             if(configuration_.mcap_resource_limits_enabled)
             {
                 if(!mcap_output_settings.set_resource_limits(configuration_.mcap_resource_limits.resource_limits_struct, space_available))
@@ -408,14 +408,14 @@ bool DdsRecorder::load_resource_limits(
                     return 0;
                 }
             }
-            // Subcase 2
+            // Subcase 1
             else{
                 mcap_output_settings.set_resource_limits_by_default(configuration_.mcap_resource_limits.resource_limits_struct, space_available);
             }
         }
         else
         {
-            // Subcase 1
+            // Subcase 2
             if(configuration_.sql_resource_limits_enabled)
             {
                 if(!sql_output_settings.set_resource_limits(configuration_.sql_resource_limits.resource_limits_struct, space_available))
@@ -424,7 +424,7 @@ bool DdsRecorder::load_resource_limits(
                     return 0;
                 }
             }
-            // Subcase 2
+            // Subcase 1
             else{
                 sql_output_settings.set_resource_limits_by_default(configuration_.sql_resource_limits.resource_limits_struct, space_available);
             }

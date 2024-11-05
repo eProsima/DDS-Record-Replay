@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 
 #include <cpp_utils/Log.hpp>
+#include <cpp_utils/exception/InconsistencyException.hpp>
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/testing/gtest_aux.hpp>
 #include <cpp_utils/testing/LogChecker.hpp>
@@ -34,15 +35,15 @@
 using namespace eprosima;
 
 /**
- * Test case to verify a logError is displayed when the opening mcap file fails
+ * Test case to verify a logError is displayed when the opening sql file fails
  *
  * CASES:
- *  This test attemps to open a mcap file in a folder that does not exist, leading to
+ *  This test attemps to open a sql file in a folder that does not exist, leading to
  *  its correspondent Log Error. An additional logError failing to rename the SQL file
  *  will appear when the McapHandler destructor is called (this happens after
  *  log_checker.check_valid() assertion)
  */
-TEST(SqlLogErrorTest, fail_to_open_file) {
+TEST(SqlLogErrorTest, fail_to_open_non_existent_file) {
 
     // Create an instance of the Log Checker to capture the LogError
     utils::testing::LogChecker log_checker(utils::Log::Kind::Error, 1, 1);
@@ -54,6 +55,12 @@ TEST(SqlLogErrorTest, fail_to_open_file) {
     ddsrecorder::participants::OutputSettings output_settings;
     output_settings.filepath = "./fake_folder";
     output_settings.filename = "output_dummy";
+
+    {
+        std::uint64_t space_available = 10 * 1024 * 1024; // 10MB
+        ddsrecorder::participants::ResourceLimitsStruct resource_limits_struct;
+        output_settings.set_resource_limits_by_default(resource_limits_struct, space_available);
+    }
 
     // Create the SQL Handler's Configuration
     ddsrecorder::participants::SqlHandlerConfiguration config(
@@ -77,6 +84,59 @@ TEST(SqlLogErrorTest, fail_to_open_file) {
     ASSERT_THROW(
         ddsrecorder::participants::SqlHandler(config, payload_pool, file_tracker, init_state),
         utils::InitializationException);
+
+    // Verify that a logError was captured
+    ASSERT_TRUE(log_checker.check_valid());
+}
+
+/**
+ * Test case to verify a logError is displayed when the opening sql file fails
+ *
+ * CASES:
+ *  This test attemps to open a sql file in a folder with theoretical no space available, leading to
+ *  its correspondent Log Error
+ */
+TEST(SqlLogErrorTest, fail_to_open_empty_folder) {
+
+    // Create an instance of the Log Checker to capture the LogError
+    utils::testing::LogChecker log_checker(utils::Log::Kind::Error, 1, 1);
+
+    // Verify that no logs have been captured yet
+    ASSERT_FALSE(log_checker.check_valid());
+
+    // Configure a fake file path and name to trigger the error
+    ddsrecorder::participants::OutputSettings output_settings;
+    output_settings.filepath = "./fake_folder";
+    output_settings.filename = "output_dummy";
+
+    {
+        std::uint64_t space_available = 0; // 10MB
+        ddsrecorder::participants::ResourceLimitsStruct resource_limits_struct;
+        output_settings.set_resource_limits_by_default(resource_limits_struct, space_available);
+    }
+
+    // Create the SQL Handler's Configuration
+    ddsrecorder::participants::SqlHandlerConfiguration config(
+        output_settings,
+        test::handler::MAX_PENDING_SAMPLES,
+        test::handler::BUFFER_SIZE,
+        test::handler::EVENT_WINDOW,
+        test::handler::CLEANUP_PERIOD,
+        test::handler::ONLY_WITH_SCHEMA,
+        test::handler::RECORD_TYPES,
+        test::handler::ROS2_TYPES,
+        test::handler::DATA_FORMAT);
+
+    std::shared_ptr<ddspipe::core::PayloadPool> payload_pool;
+    const auto init_state = ddsrecorder::participants::BaseHandlerStateCode::RUNNING;
+
+    // Create the FileTracker
+    auto file_tracker = std::make_shared<ddsrecorder::participants::FileTracker>(config.output_settings);
+
+    // Verify that an InitializationException was thrown
+    ASSERT_THROW(
+        ddsrecorder::participants::SqlHandler(config, payload_pool, file_tracker, init_state),
+        utils::InconsistencyException);
 
     // Verify that a logError was captured
     ASSERT_TRUE(log_checker.check_valid());

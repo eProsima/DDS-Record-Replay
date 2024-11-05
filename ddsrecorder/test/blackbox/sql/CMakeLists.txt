@@ -94,7 +94,8 @@ set(TEST_SOURCES
     )
 
 set(TEST_LIST
-        fail_to_open_file
+        fail_to_open_non_existent_file
+        fail_to_open_empty_folder
     )
 
 set(EXTRA_LIBRARIES
