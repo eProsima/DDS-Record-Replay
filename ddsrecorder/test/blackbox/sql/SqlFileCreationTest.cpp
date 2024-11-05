@@ -132,7 +132,7 @@ protected:
 };
 
 /**
- * Verify that the DDS Recorder records properly in an SQL file.
+ * Verify that the DDS Recorder records properly in an SQL file in data format CDR.
  *
  * CASES:
  *  - Verify that the messages' data_cdr_size matches the recorded data_cdr sizes.
@@ -184,7 +184,7 @@ TEST_F(SqlFileCreationTest, sql_data_format_cdr)
 }
 
 /**
- * Verify that the DDS Recorder records properly in an SQL file.
+ * Verify that the DDS Recorder records properly in an SQL file in data format JSON.
  *
  * CASES:
  *  - Verify that the messages' data_cdr_size is 0.
@@ -236,7 +236,7 @@ TEST_F(SqlFileCreationTest, sql_data_format_json)
 }
 
 /**
- * Verify that the DDS Recorder records properly in an SQL file.
+ * Verify that the DDS Recorder records properly in an SQL file in both data formats.
  *
  * CASES:
  *  - Verify that the messages' data_cdr_size matches the recorded data_cdr sizes.
@@ -395,7 +395,7 @@ TEST_F(SqlFileCreationTest, sql_data_num_msgs)
 }
 
 /**
- * Verify that the DDS Recorder records every message in an SQL file.
+ * Verify that the DDS Recorder records every message in an SQL file with DOWNSAMPLING.
  *
  * CASES:
  *  - Verify that the message count matches the recorded message count.

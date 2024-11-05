@@ -69,7 +69,7 @@ constexpr std::uint32_t MAX_ACCEPTABLE_FILE_SIZE = MAX_FILE_SIZE * (1 + ACCEPTAB
 constexpr std::uint32_t MIN_ACCEPTABLE_FILE_SIZE = MAX_FILE_SIZE * (1 - ACCEPTABLE_ERROR);
 
 // The minimum number of messages that cause the DDS Recorder to create a new file
-constexpr std::uint32_t FILE_OVERFLOW_THRESHOLD = 110;
+constexpr std::uint32_t FILE_OVERFLOW_THRESHOLD = 1.2 * MAX_FILE_SIZE / 50; //50 bytes per message
 
 } // namespace limits
 } // namespace test

@@ -126,8 +126,9 @@ protected:
             const EventKind event = EventKind::NO_EVENT)
     {
         // Create the Recorder
-        std::shared_ptr<ddsrecorder::participants::FileTracker> file_tracker;
-        auto recorder = std::make_unique<ddsrecorder::recorder::DdsRecorder>(*configuration_, state1, file_tracker, file_name);
+        std::shared_ptr<ddsrecorder::participants::FileTracker> mcap_file_tracker;
+        std::shared_ptr<ddsrecorder::participants::FileTracker> sql_file_tracker;
+        auto recorder = std::make_unique<ddsrecorder::recorder::DdsRecorder>(*configuration_, state1, mcap_file_tracker, sql_file_tracker, file_name);
 
         // Create the topic
         const auto topic_name = (configuration_->ros2_types) ? test::ROS2_TOPIC_NAME : test::TOPIC_NAME;
@@ -230,9 +231,9 @@ protected:
             const HelloWorld& message)
     {
         HelloWorldPubSubType pubsubType;
-        const auto payload_size = pubsubType.getSerializedSizeProvider(&message)();
+        const auto payload_size = pubsubType.calculate_serialized_size(&message, fastdds::dds::DEFAULT_DATA_REPRESENTATION);
         auto payload = std::make_shared<fastdds::rtps::SerializedPayload_t>(payload_size);
-        pubsubType.serialize(&message, payload.get());
+        pubsubType.serialize(&message, *payload, fastdds::dds::DEFAULT_DATA_REPRESENTATION);
 
         return payload;
     }
@@ -243,7 +244,7 @@ protected:
         // Get type object
         fastdds::dds::xtypes::TypeObjectPair type_objects;
         fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_objects(
-                    type_support_->getName(),
+                    type_support_->get_name(),
                     type_objects);
 
         // Build dynamic type
@@ -256,12 +257,12 @@ protected:
             fastdds::dds::DynamicDataFactory::get_instance()->create_data(dyn_type);
 
         // Transform the message into DynamicData
-        const auto payload_size = type_support_->getSerializedSizeProvider(&message)();
+        const auto payload_size = type_support_->calculate_serialized_size(&message, fastdds::dds::DEFAULT_DATA_REPRESENTATION);
         auto payload = std::make_shared<fastdds::rtps::SerializedPayload_t>(payload_size);
-        type_support_->serialize(&message, payload.get());
+        type_support_->serialize(&message, *payload, fastdds::dds::DEFAULT_DATA_REPRESENTATION);
 
         fastdds::dds::TypeSupport dyn_type_support(new fastdds::dds::DynamicPubSubType(dyn_type));
-        dyn_type_support->deserialize(payload.get(), &dyn_data);
+        dyn_type_support->deserialize(*payload, &dyn_data);
 
         // Serialize DynamicType into its IDL representation
         std::stringstream data_json;

@@ -57,8 +57,8 @@ TEST(McapLogErrorTest, fail_to_open_file) {
     output_settings.filename = "output_dummy";
 
     // Configure the max sizes to avoid triggering a different error
-    output_settings.max_file_size = 10000;
-    output_settings.max_size = output_settings.max_file_size;
+    output_settings.resource_limits.max_file_size_ = 10000;
+    output_settings.resource_limits.max_size_ = output_settings.resource_limits.max_file_size_;
 
     // Create the MCAP Handler's Configuration
     mcap::McapWriterOptions mcap_writer_options{"ros2"};
