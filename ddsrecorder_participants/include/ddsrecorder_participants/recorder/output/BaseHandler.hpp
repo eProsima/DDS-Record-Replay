@@ -300,8 +300,10 @@ protected:
      *
      * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
      * @param [in] type_identifier Type identifier to be serialized and stored.
+     * 
+     * @return bool  Returns true if the serialization and insertion were successful, false otherwise.
      */
-    void store_dynamic_type_(
+    bool store_dynamic_type_(
             const std::string& type_name,
             const fastdds::dds::xtypes::TypeIdentifier& type_identifier);
 
@@ -311,8 +313,10 @@ protected:
      * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
      * @param [in] type_identifier Type identifier to be serialized and stored.
      * @param [in] type_object Type object to be serialized and stored.
+     * 
+     * @return bool  Returns true if the serialization and insertion were successful, false otherwise.
      */
-    void store_dynamic_type_(
+    bool store_dynamic_type_(
             const std::string& type_name,
             const fastdds::dds::xtypes::TypeIdentifier& type_identifier,
             const fastdds::dds::xtypes::TypeObject& type_object);

@@ -62,18 +62,18 @@ void McapWriter::update_dynamic_types(
                 {
                     EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,
                             "MCAP_WRITE | Setting the dynamic types payload to " <<
-                            utils::from_bytes(dynamic_types.size()) << ".");
+                            utils::from_bytes(dynamic_types.length()) << ".");
 
-                    size_tracker_.attachment_to_write(dynamic_types.size());
+                    size_tracker_.attachment_to_write(dynamic_types.length());
                 }
                 else
                 {
                     EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,
                             "MCAP_WRITE | Updating the dynamic types payload from " <<
-                            utils::from_bytes(dynamic_types_.size()) << " to " <<
-                            utils::from_bytes(dynamic_types.size()) << ".");
+                            utils::from_bytes(dynamic_types_.length()) << " to " <<
+                            utils::from_bytes(dynamic_types.length()) << ".");
 
-                    size_tracker_.attachment_to_write(dynamic_types.size(), dynamic_types_.size());
+                    size_tracker_.attachment_to_write(dynamic_types.length(), dynamic_types_.length());
                 }
             };
 
@@ -138,9 +138,9 @@ void McapWriter::open_new_file_nts_(
     write_schemas_nts_();
     write_channels_nts_();
 
-    if (record_types_ && dynamic_types_.size() > 0)
+    if (record_types_ && dynamic_types_.length() > 0)
     {
-        size_tracker_.attachment_to_write(dynamic_types_.size());
+        size_tracker_.attachment_to_write(dynamic_types_.length());
     }
 
     file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
@@ -148,7 +148,7 @@ void McapWriter::open_new_file_nts_(
 
 void McapWriter::close_current_file_nts_()
 {
-    if (record_types_ && dynamic_types_.size() > 0)
+    if (record_types_ && dynamic_types_.length() > 0)
     {
         // NOTE: This write should never fail since the minimum size accounts for it.
         write_attachment_nts_();
@@ -276,7 +276,7 @@ void McapWriter::write_attachment_nts_()
     // Write down the attachment with the dynamic types
     attachment.name = DYNAMIC_TYPES_ATTACHMENT_NAME;
     attachment.data = reinterpret_cast<std::byte*>(const_cast<char*>(dynamic_types_.c_str()));
-    attachment.dataSize = dynamic_types_.size();
+    attachment.dataSize = dynamic_types_.length();
     attachment.createTime = to_mcap_timestamp(utils::now());
 
     write_nts_(attachment);
