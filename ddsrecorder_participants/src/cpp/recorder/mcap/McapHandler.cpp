@@ -158,7 +158,12 @@ void McapHandler::add_schema(
 
     if (configuration_.record_types)
     {
-        mcap_writer_.update_dynamic_types(Serializer::serialize(dynamic_types_));
+        // Store dynamic type in dynamic_types collection
+        if (store_dynamic_type_(type_name, type_identifier))
+        {
+            // Recalculate the attachment
+            mcap_writer_.update_dynamic_types(Serializer::serialize(dynamic_types_));
+        }
     }
 
     // Check if there are any pending samples for this new type. If so, dump them.

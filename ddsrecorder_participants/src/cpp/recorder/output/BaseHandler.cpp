@@ -25,6 +25,7 @@
 
 #include <cpp_utils/Formatter.hpp>
 #include <cpp_utils/utils.hpp>
+#include <cpp_utils/exception/InconsistencyException.hpp>
 
 #include <ddsrecorder_participants/common/serialize/Serializer.hpp>
 #include <ddsrecorder_participants/recorder/output/BaseHandler.hpp>
@@ -565,11 +566,13 @@ void BaseHandler::remove_outdated_samples_nts_()
     }
 }
 
-void BaseHandler::store_dynamic_type_(
+bool BaseHandler::store_dynamic_type_(
         const std::string& type_name,
         const fastdds::dds::xtypes::TypeIdentifier& type_identifier)
 {
     fastdds::dds::xtypes::TypeIdentifierPair type_identifiers;
+
+    // NOTE: type_identifier is assumed to be complete
     type_identifiers.type_identifier1(type_identifier);
 
     auto factory = fastdds::dds::DomainParticipantFactory::get_instance();
@@ -578,7 +581,9 @@ void BaseHandler::store_dynamic_type_(
     if (fastdds::dds::RETCODE_OK != factory->type_object_registry().get_type_information(
             type_identifiers, type_information, true))
     {
-        return;
+        EPROSIMA_LOG_ERROR(DDSRECORDER_MCAP_HANDLER,
+                "MCAP_WRITE | Error getting TypeInformation for type " << type_name);
+        return false;
     }
 
     // Store dependencies as dynamic types
@@ -594,7 +599,9 @@ void BaseHandler::store_dynamic_type_(
         if (fastdds::dds::RETCODE_OK != factory->type_object_registry().get_type_object(
                 dep_type_identifier, dep_type_object))
         {
-            continue;
+            EPROSIMA_LOG_ERROR(DDSRECORDER_MCAP_HANDLER, "MCAP_WRITE | Error getting TypeObject of dependency "
+                        << "for type " << type_name);
+            return false;
         }
 
         const auto dep_type_name = type_name + "_" + std::to_string(dependency_index);
@@ -611,23 +618,38 @@ void BaseHandler::store_dynamic_type_(
     if (fastdds::dds::RETCODE_OK != factory->type_object_registry().get_type_object(
             type_identifier, type_object))
     {
-        return;
+        EPROSIMA_LOG_ERROR(DDSRECORDER_MCAP_HANDLER, "MCAP_WRITE | Error getting TypeObject of dependency "
+                    << "for type " << type_name);
+        return false;
     }
 
     // Store dynamic type in dynamic_types collection
-    store_dynamic_type_(type_name, type_identifier, type_object);
+    return store_dynamic_type_(type_name, type_identifier, type_object);
 }
 
-void BaseHandler::store_dynamic_type_(
+bool BaseHandler::store_dynamic_type_(
         const std::string& type_name,
         const fastdds::dds::xtypes::TypeIdentifier& type_identifier,
         const fastdds::dds::xtypes::TypeObject& type_object)
 {
     DynamicType dynamic_type;
     dynamic_type.type_name(type_name);
-    dynamic_type.type_information(utils::base64_encode(Serializer::serialize(type_identifier)));
-    dynamic_type.type_object(utils::base64_encode(Serializer::serialize(type_object)));
+    
+    try
+    {
+        dynamic_type.type_information(utils::base64_encode(Serializer::serialize(type_identifier)));
+        dynamic_type.type_object(utils::base64_encode(Serializer::serialize(type_object)));
+    }
+    catch (const utils::InconsistencyException& e)
+    {
+        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER,
+                "MCAP_WRITE | Error serializing DynamicType. Error message:\n " << e.what());
+        return false;
+    }
+
     dynamic_types_.dynamic_types().push_back(dynamic_type);
+    std::cout << "Dynamic type size: " << dynamic_types_.dynamic_types().size() << std::endl;
+    return true;
 }
 
 } /* namespace participants */

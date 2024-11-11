@@ -79,13 +79,14 @@ void SqlHandler::add_schema(
     // Add type to the list of received types
     received_types_[type_name] = dynamic_type;
 
-    // Add type to the collection of dynamic types
-    store_dynamic_type_(type_name, type_identifier);
-
     if (configuration_.record_types)
     {
-        const auto dynamic_type = dynamic_types_.dynamic_types().back();
-        sql_writer_.update_dynamic_types(dynamic_type);
+        // Add type to the collection of dynamic types
+        if(store_dynamic_type_(type_name, type_identifier))
+        {
+            const auto dynamic_type = dynamic_types_.dynamic_types().back();
+            sql_writer_.update_dynamic_types(dynamic_type);
+        }
     }
 
     // Check if there are any pending samples for this new type. If so, dump them.
