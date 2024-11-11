@@ -65,9 +65,15 @@ struct OutputSettings
     ResourceLimitsStruct resource_limits;
 
     bool set_resource_limits(
-        const ResourceLimitsStruct& limits,
+        ResourceLimitsStruct& limits,
         std::uint64_t& space_available)
     {
+        // If the max size is not set but resource limits are enabled, set the max size to the available space
+        if(limits.max_size_ == 0)
+        {
+            limits.max_size_ = space_available;
+        }
+        
         if(limits.max_size_ > space_available)
         {
             EPROSIMA_LOG_ERROR(DDSRECORDER, "The max size cannot be greater than the available space");

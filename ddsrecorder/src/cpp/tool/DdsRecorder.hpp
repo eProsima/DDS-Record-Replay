@@ -160,7 +160,7 @@ protected:
     bool load_resource_limits(
             participants::OutputSettings& mcap_output_settings,
             participants::OutputSettings& sql_output_settings,
-            utils::Formatter& error_msg) const;
+            utils::Formatter& error_msg);
 
     //! Configuration of the DDS Recorder
     yaml::RecorderConfiguration configuration_;

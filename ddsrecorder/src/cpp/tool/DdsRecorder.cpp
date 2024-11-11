@@ -374,7 +374,7 @@ participants::BaseHandlerStateCode DdsRecorder::recorder_to_handler_state_(
 bool DdsRecorder::load_resource_limits(
         participants::OutputSettings& mcap_output_settings,
         participants::OutputSettings& sql_output_settings,
-        utils::Formatter& error_msg) const
+        utils::Formatter& error_msg)
 {
     /**
      * RESOURCE LIMITS CONFIGURATION
@@ -444,6 +444,11 @@ bool DdsRecorder::load_resource_limits(
         {
             if(configuration_.mcap_resource_limits_enabled)
             {
+                if(mcap_output_settings.resource_limits.max_size_ == 0)
+                {
+                    EPROSIMA_LOG_WARNING(DDSRECORDER, "MCAP resource limits are set but no max size is set. Defaulting to half of the available space for MCAP and SQL.");
+                    mcap_output_settings.resource_limits.max_size_ = space_available/2;
+                }
                 if(!mcap_output_settings.set_resource_limits(configuration_.mcap_resource_limits.resource_limits_struct, space_available))
                 {
                     error_msg << "The available space given the MCAP conditions is lower than the safety margin.";
@@ -453,6 +458,11 @@ bool DdsRecorder::load_resource_limits(
             }
             else
             {
+                if(sql_output_settings.resource_limits.max_size_ == 0)
+                {
+                    EPROSIMA_LOG_WARNING(DDSRECORDER, "SQL resource limits are set but no max size is set. Defaulting to half of the available space for MCAP and SQL.");
+                    sql_output_settings.resource_limits.max_size_ = space_available/2;
+                }
                 if(!sql_output_settings.set_resource_limits(configuration_.sql_resource_limits.resource_limits_struct, space_available))
                 {
                     error_msg << "The available space given the SQL conditions is lower than the safety margin.";
@@ -464,15 +474,28 @@ bool DdsRecorder::load_resource_limits(
         // Subcase 3
         else
         {
-            if(!mcap_output_settings.set_resource_limits(configuration_.mcap_resource_limits.resource_limits_struct, space_available))
+            // If any has max_size_ defined, it will be initialized first and the remaining space available will be used for the other
+            participants::OutputSettings* first_output_settings = &mcap_output_settings;
+            participants::OutputSettings* second_output_settings = &sql_output_settings;
+            participants::ResourceLimitsStruct* first_resource_limits = &configuration_.mcap_resource_limits.resource_limits_struct;
+            participants::ResourceLimitsStruct* second_resource_limits = &configuration_.sql_resource_limits.resource_limits_struct;
+            if(mcap_output_settings.resource_limits.max_size_ == 0)
             {
-                error_msg << "The available space given the MCAP conditions is lower than the safety margin.";
+                first_output_settings = &sql_output_settings;
+                second_output_settings = &mcap_output_settings;
+                first_resource_limits = &configuration_.sql_resource_limits.resource_limits_struct;
+                second_resource_limits = &configuration_.mcap_resource_limits.resource_limits_struct;
+            }
+
+            if(!first_output_settings->set_resource_limits(*first_resource_limits, space_available))
+            {
+                error_msg << "The available space is lower than the safety margin.";
                 return 0;
             }
-            space_available -= mcap_output_settings.resource_limits.max_size_;
-            if(!sql_output_settings.set_resource_limits(configuration_.sql_resource_limits.resource_limits_struct, space_available))
+            space_available -= first_resource_limits->max_size_;
+            if(!second_output_settings->set_resource_limits(*second_resource_limits, space_available))
             {
-                error_msg << "The available space given the SQL conditions after MCAP is lower than the safety margin.";
+                error_msg << "The available space is lower than the safety margin.";
                 return 0;
             }
         }
