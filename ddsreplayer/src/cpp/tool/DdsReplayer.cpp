@@ -111,14 +111,15 @@ DdsReplayer::DdsReplayer(
 
     reader_participant_->process_summary(topics, types);
 
+    // Register the dynamic types
+    auto registered_types = register_dynamic_types_(types);
+
     // Store the topics as built-in topics
-    for (const auto& topic : topics)
+    for (auto& topic : topics)
     {
+        topic->type_identifiers = registered_types[topic->type_name];
         configuration.ddspipe_configuration.builtin_topics.insert(topic);
     }
-
-    // Register the dynamic types
-    const auto& registered_types = register_dynamic_types_(types);
 
     // Create DDS Pipe
     pipe_ = std::make_unique<ddspipe::core::DdsPipe>(
@@ -153,10 +154,10 @@ void DdsReplayer::stop()
     pipe_->disable();
 }
 
-std::set<std::string> DdsReplayer::register_dynamic_types_(
+std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair> DdsReplayer::register_dynamic_types_(
         const participants::DynamicTypesCollection& dynamic_types)
 {
-    std::set<std::string> registered_types{};
+    std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair> registered_types{};
 
     for (const auto& dynamic_type : dynamic_types.dynamic_types())
     {
@@ -170,10 +171,11 @@ std::set<std::string> DdsReplayer::register_dynamic_types_(
 
         // Register in factory
         fastdds::dds::xtypes::TypeIdentifierPair type_identifiers;
+        type_identifiers.type_identifier1(type_identifier);
         fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().register_type_object(
                 type_object, type_identifiers);
 
-        registered_types.insert(dynamic_type.type_name());
+        registered_types.insert({dynamic_type.type_name(), type_identifiers});
     }
 
     return registered_types;

@@ -93,7 +93,7 @@ protected:
      * @param dynamic_types: The dynamic types to be registered.
      * @return The set of registered types.
      */
-    std::set<std::string> register_dynamic_types_(
+    std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair> register_dynamic_types_(
             const participants::DynamicTypesCollection& dynamic_types);
 
     //! Replayer Configuration
@@ -122,9 +122,6 @@ protected:
 
     //! Dynamic DDS DataWriters map
     std::map<utils::Heritable<ddspipe::core::types::DdsTopic>, fastdds::dds::DataWriter*> dyn_writers_;
-
-    //! Map of TypeName-TypeIdentifierPair for the registered types
-    std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair> registered_types_{};
 };
 
 } /* namespace replayer */
