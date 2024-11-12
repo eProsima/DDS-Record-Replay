@@ -61,7 +61,7 @@ public:
     ddspipe::core::DdsPipeConfiguration ddspipe_configuration;
 
     // Participants configurations
-    std::shared_ptr<ddsrecorder::participants::BaseReaderParticipantConfiguration> mcap_reader_configuration;
+    std::shared_ptr<ddsrecorder::participants::BaseReaderParticipantConfiguration> base_reader_configuration;
     std::shared_ptr<ddspipe::participants::SimpleParticipantConfiguration> replayer_configuration;
 
     // Replay params
