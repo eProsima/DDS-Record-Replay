@@ -64,7 +64,7 @@ void SqlReaderParticipant::process_summary(
         // Create a DdsTopic to publish the message
         const std::string topic_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
         const std::string type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-        const bool is_topic_ros2_type = strcmp(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)), "True") == 0;
+        const bool is_topic_ros2_type = strcmp(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)), "true") == 0;
 
         const auto topic = utils::Heritable<ddspipe::core::types::DdsTopic>::make_heritable(
                 create_topic_(topic_name, type_name, is_topic_ros2_type));
@@ -76,7 +76,7 @@ void SqlReaderParticipant::process_summary(
         topic->topic_qos.set_qos(topic_qos, utils::FuzzyLevelValues::fuzzy_level_fuzzy);
 
         // Store the topic in the cache
-        const auto topic_id = std::make_pair(topic_name, type_name);
+        const auto topic_id = std::make_pair(topic->m_topic_name, type_name);
 
         if (topics_.find(topic_id) != topics_.end())
         {
@@ -97,7 +97,7 @@ void SqlReaderParticipant::process_summary(
         const std::string type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
         const std::string type_information = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
         const std::string type_object = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
-        const bool is_type_ros2_type = strcmp(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)), "True") == 0;
+        const bool is_type_ros2_type = strcmp(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)), "true") == 0;
 
         // Create a DynamicType to store the type data
         DynamicType type;

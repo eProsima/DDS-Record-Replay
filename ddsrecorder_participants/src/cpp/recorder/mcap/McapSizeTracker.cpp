@@ -332,7 +332,6 @@ void McapSizeTracker::check_and_increase_written_mcap_size_(
     if(written_mcap_size_ - checked_written_mcap_size_ > check_interval_)
     {
         auto file_size = std::filesystem::file_size(file_path_);
-        std::cout << "File size: " << file_size << " written size: " << written_mcap_size_ << " potential size: " << potential_mcap_size_ << " check_interval_ " << check_interval_<< std::endl;
         if(file_size != checked_actual_mcap_size_)
         {
             // The file has been updated
