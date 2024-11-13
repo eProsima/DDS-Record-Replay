@@ -64,14 +64,14 @@ DdsReplayer::DdsReplayer(
     if (input_file.size() >= 3 && input_file.substr(input_file.size() - 3) == ".db")
     {
         reader_participant_ = std::make_shared<participants::SqlReaderParticipant>(
-            configuration.mcap_reader_configuration,
+            configuration.base_reader_configuration,
             payload_pool,
             input_file);
     }
     else
     {
         reader_participant_ = std::make_shared<participants::McapReaderParticipant>(
-            configuration.mcap_reader_configuration,
+            configuration.base_reader_configuration,
             payload_pool,
             input_file);
     }
