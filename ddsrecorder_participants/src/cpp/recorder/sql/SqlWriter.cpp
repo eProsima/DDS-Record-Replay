@@ -645,7 +645,7 @@ size_t SqlWriter::calculate_int_storage_size(std::int64_t value) const noexcept
 void SqlWriter::size_control_(size_t entry_size, bool force)
 {
     // Add a fixed overhead per row for SQLite storage (headers, etc.)
-    constexpr size_t SQLITE_ROW_OVERHEAD = 32;
+    constexpr size_t SQLITE_ROW_OVERHEAD = 67;
     entry_size += SQLITE_ROW_OVERHEAD;
 
     // Check if the entry fits in the current file or it has been forced
@@ -658,15 +658,13 @@ void SqlWriter::size_control_(size_t entry_size, bool force)
             try
             {
                 // To avoid removing entries in every write, we will try to free space for entities_multiplier*entries, in a range [pages_multiplier pages, file_percentage]
-                constexpr int entries_multiplier = 30;
-                constexpr int pages_multiplier = 10;
                 constexpr float file_percentage = 0.05;
-                std::uint64_t desired_space = (entry_size * entries_multiplier > page_size_*pages_multiplier) ? entry_size * entries_multiplier : page_size_*pages_multiplier;
-                desired_space = (desired_space < configuration_.resource_limits.max_file_size_*file_percentage) ? desired_space : configuration_.resource_limits.max_file_size_*file_percentage;
+                std::uint64_t desired_space = configuration_.resource_limits.max_file_size_*file_percentage;
 
                 std::uint64_t remove_size = remove_oldest_entries_(desired_space);
                 written_sql_size_ -= remove_size;
                 checked_written_sql_size_ -= remove_size;
+                check_file_size_();
                 free_space = true;
             }
             catch (const FullFileException& e)
@@ -693,19 +691,24 @@ void SqlWriter::size_control_(size_t entry_size, bool force)
         }
     }
 
-    // Check the actual size of the file if check_interval_ has passed
-    if(written_sql_size_ - checked_written_sql_size_ > check_interval_){
-        const auto filename = file_tracker_->get_current_filename();
-        auto file_size = std::filesystem::file_size(filename);
-        if(checked_actual_sql_size_ != file_size){
-            checked_actual_sql_size_ = file_size;
-            written_sql_size_ = file_size;
-        }
-        checked_written_sql_size_ = written_sql_size_;
-    }
-
     // Update the written size
     written_sql_size_ += entry_size;
+
+    // Check the actual size of the file if check_interval_ has passed
+    if(written_sql_size_ - checked_written_sql_size_ > check_interval_){
+        check_file_size_();
+    }
+}
+
+void SqlWriter::check_file_size_()
+{
+    const auto filename = file_tracker_->get_current_filename();
+    auto file_size = std::filesystem::file_size(filename);
+    if(checked_actual_sql_size_ != file_size){
+        checked_actual_sql_size_ = file_size;
+        written_sql_size_ = file_size;
+    }
+    checked_written_sql_size_ = written_sql_size_;
 }
 
 } /* namespace participants */

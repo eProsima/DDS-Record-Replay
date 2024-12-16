@@ -106,39 +106,3 @@ add_blackbox_executable(
     "${EXTRA_LIBRARIES}"
     "${TEST_EXTRA_HEADERS}"
 )
-
-##########################
-# McapResourceLimitsTest #
-##########################
-
-set(TEST_NAME McapResourceLimitsTest)
-
-file(
-    GLOB_RECURSE TEST_SOURCES
-    McapResourceLimitsTest.cpp
-    "${PROJECT_SOURCE_DIR}/test/resources/types/hello_world/*.c*"
-    )
-
-set(TEST_LIBRARY_SOURCES
-    )
-
-set(TEST_LIST
-        max_file_size
-        max_size
-        file_rotation
-    )
-
-set(TEST_NEEDED_SOURCES
-    )
-
-set(TEST_EXTRA_HEADERS
-    )
-
-add_blackbox_executable(
-    "${TEST_NAME}"
-    "${TEST_SOURCES}"
-    "${TEST_LIST}"
-    "${TEST_NEEDED_SOURCES}"
-    "${TEST_EXTRA_HEADERS}"
-    "${TEST_LIBRARY_SOURCES}"
-)

@@ -148,6 +148,11 @@ protected:
     void size_control_(
                 size_t entry_size, bool force);
 
+    /**
+     * @brief Checks the actual file size in memory and updates the written_sql_size_ variable.
+     */
+    void check_file_size_();
+
     // The SQLite database
     sqlite3* database_;
 
@@ -161,7 +166,7 @@ protected:
     const DataFormat data_format_;
 
     // The size of an empty SQL file
-    static constexpr std::uint64_t MIN_SQL_SIZE{28672};
+    static constexpr std::uint64_t MIN_SQL_SIZE{33672};
 
     // The maximum size of the wal file (in bytes) before being checkpointed to the actual database file. This value is set to quarter size_tolerance in constructor
     std::uint64_t size_checkpoint_{500 * 1024};

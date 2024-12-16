@@ -387,6 +387,9 @@ bool DdsRecorder::load_resource_limits(
      *  3. If both resource limits are set, just check if the space available and both resource limits altogether conflict
      */
 
+    bool mcap_size_limited = (mcap_output_settings.resource_limits.max_size_ > 0);
+    bool sql_size_limited = (sql_output_settings.resource_limits.max_size_ > 0);
+
     std::uint64_t space_available = std::filesystem::space(mcap_output_settings.filepath).available - configuration_.output_safety_margin;
     if(space_available < 0)
     {
@@ -400,7 +403,7 @@ bool DdsRecorder::load_resource_limits(
         if(configuration_.mcap_enabled)
         {
             // Subcase 2
-            if(configuration_.mcap_resource_limits_enabled)
+            if(mcap_size_limited)
             {
                 if(!mcap_output_settings.set_resource_limits(configuration_.mcap_resource_limits.resource_limits_struct, space_available))
                 {
@@ -410,13 +413,13 @@ bool DdsRecorder::load_resource_limits(
             }
             // Subcase 1
             else{
-                mcap_output_settings.set_resource_limits_by_default(configuration_.mcap_resource_limits.resource_limits_struct, space_available);
+                mcap_output_settings.set_resource_limits(configuration_.mcap_resource_limits.resource_limits_struct, space_available);
             }
         }
         else
         {
             // Subcase 2
-            if(configuration_.sql_resource_limits_enabled)
+            if(sql_size_limited)
             {
                 if(!sql_output_settings.set_resource_limits(configuration_.sql_resource_limits.resource_limits_struct, space_available))
                 {
@@ -426,23 +429,23 @@ bool DdsRecorder::load_resource_limits(
             }
             // Subcase 1
             else{
-                sql_output_settings.set_resource_limits_by_default(configuration_.sql_resource_limits.resource_limits_struct, space_available);
+                sql_output_settings.set_resource_limits(configuration_.sql_resource_limits.resource_limits_struct, space_available);
             }
         }
     }
     // Case B
     else{
         // Subcase 1
-        if(!configuration_.mcap_resource_limits_enabled && !configuration_.sql_resource_limits_enabled)
+        if(!mcap_size_limited && !sql_size_limited)
         {
             EPROSIMA_LOG_WARNING(DDSRECORDER, "Both MCAP and SQL are enabled but no resource limits are set. Defaulting to half of the available space for each.");
-            mcap_output_settings.set_resource_limits_by_default(configuration_.mcap_resource_limits.resource_limits_struct, space_available/2);
-            sql_output_settings.set_resource_limits_by_default(configuration_.sql_resource_limits.resource_limits_struct, space_available/2);
+            mcap_output_settings.set_resource_limits(configuration_.mcap_resource_limits.resource_limits_struct, space_available/2);
+            sql_output_settings.set_resource_limits(configuration_.sql_resource_limits.resource_limits_struct, space_available/2);
         }
         // Subcase 2
-        else if(configuration_.mcap_resource_limits_enabled ^ configuration_.sql_resource_limits_enabled)
+        else if(mcap_size_limited ^ sql_size_limited)
         {
-            if(configuration_.mcap_resource_limits_enabled)
+            if(mcap_size_limited)
             {
                 if(mcap_output_settings.resource_limits.max_size_ == 0)
                 {
@@ -454,7 +457,7 @@ bool DdsRecorder::load_resource_limits(
                     error_msg << "The available space given the MCAP conditions is lower than the safety margin.";
                     return 0;
                 }
-                sql_output_settings.set_resource_limits_by_default(configuration_.sql_resource_limits.resource_limits_struct, space_available - mcap_output_settings.resource_limits.max_size_);
+                sql_output_settings.set_resource_limits(configuration_.sql_resource_limits.resource_limits_struct, space_available - mcap_output_settings.resource_limits.max_size_);
             }
             else
             {
@@ -468,7 +471,7 @@ bool DdsRecorder::load_resource_limits(
                     error_msg << "The available space given the SQL conditions is lower than the safety margin.";
                     return 0;
                 }
-                mcap_output_settings.set_resource_limits_by_default(configuration_.mcap_resource_limits.resource_limits_struct, space_available - sql_output_settings.resource_limits.max_size_);
+                mcap_output_settings.set_resource_limits(configuration_.mcap_resource_limits.resource_limits_struct, space_available - sql_output_settings.resource_limits.max_size_);
             }
         }
         // Subcase 3
