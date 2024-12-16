@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * @file ConfigurationDynTypesSubscriber.cpp
+ * @file TestDynTypesSubscriber.cpp
  *
  */
 
@@ -32,18 +32,19 @@
 #include <fastdds/dds/xtypes/dynamic_types/DynamicTypeBuilderFactory.hpp>
 #include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
 
-#include "ConfigurationDynTypesSubscriber.h"
+#include "TestDynTypesSubscriber.h"
 
 using namespace eprosima;
 using namespace fastdds::dds;
 
-std::atomic<bool> ConfigurationDynTypesSubscriber::type_discovered_(false);
-std::atomic<bool> ConfigurationDynTypesSubscriber::type_registered_(false);
-std::mutex ConfigurationDynTypesSubscriber::type_discovered_cv_mtx_;
-std::condition_variable ConfigurationDynTypesSubscriber::type_discovered_cv_;
+std::atomic<bool> TestDynTypesSubscriber::type_discovered_(false);
+std::atomic<bool> TestDynTypesSubscriber::type_registered_(false);
+std::mutex TestDynTypesSubscriber::type_discovered_cv_mtx_;
+std::condition_variable TestDynTypesSubscriber::type_discovered_cv_;
 
-ConfigurationDynTypesSubscriber::ConfigurationDynTypesSubscriber(
+TestDynTypesSubscriber::TestDynTypesSubscriber(
         const std::string& topic_name,
+        const std::string& type_name,
         uint32_t domain,
         DataToCheck& data)
     : participant_(nullptr)
@@ -52,13 +53,14 @@ ConfigurationDynTypesSubscriber::ConfigurationDynTypesSubscriber(
     , datareader_(nullptr)
     , data_(&data)
     , topic_name_(topic_name)
+    , type_name_(type_name)
     , samples_(0)
     , prev_time_(0)
 {
     ///////////////////////////////
     // Create the DomainParticipant
     DomainParticipantQos pqos;
-    pqos.name("ConfigurationDynTypes_Subscriber");
+    pqos.name("TestDynTypes_Subscriber");
 
     // Create listener mask so the data do not go to on_data_on_readers from subscriber
     StatusMask mask;
@@ -83,7 +85,7 @@ ConfigurationDynTypesSubscriber::ConfigurationDynTypesSubscriber(
     }
 }
 
-ConfigurationDynTypesSubscriber::~ConfigurationDynTypesSubscriber()
+TestDynTypesSubscriber::~TestDynTypesSubscriber()
 {
     if (participant_ != nullptr)
     {
@@ -103,7 +105,7 @@ ConfigurationDynTypesSubscriber::~ConfigurationDynTypesSubscriber()
     }
 }
 
-void ConfigurationDynTypesSubscriber::on_subscription_matched(
+void TestDynTypesSubscriber::on_subscription_matched(
         DataReader*,
         const SubscriptionMatchedStatus& info)
 {
@@ -122,7 +124,7 @@ void ConfigurationDynTypesSubscriber::on_subscription_matched(
     }
 }
 
-void ConfigurationDynTypesSubscriber::on_data_available(
+void TestDynTypesSubscriber::on_data_available(
         DataReader* reader)
 {
     // Dynamic DataType
@@ -141,7 +143,7 @@ void ConfigurationDynTypesSubscriber::on_data_available(
 
             samples_++;
 
-            if (dynamic_type_->get_name() == "Configuration")
+            if (dynamic_type_->get_name() == type_name_)
             {
                 uint32_t index;
                 char message;
@@ -160,7 +162,7 @@ void ConfigurationDynTypesSubscriber::on_data_available(
     }
 }
 
-void ConfigurationDynTypesSubscriber::on_data_writer_discovery(
+void TestDynTypesSubscriber::on_data_writer_discovery(
         fastdds::dds::DomainParticipant*,
         fastdds::rtps::WriterDiscoveryStatus reason,
         const fastdds::rtps::PublicationBuiltinTopicData& info,
@@ -174,7 +176,7 @@ void ConfigurationDynTypesSubscriber::on_data_writer_discovery(
     notify_type_discovered_(type_info, type_name, topic_name);
 }
 
-void ConfigurationDynTypesSubscriber::notify_type_discovered_(
+void TestDynTypesSubscriber::notify_type_discovered_(
         const fastdds::dds::xtypes::TypeInformation& type_info,
         const fastcdr::string_255& type_name,
         const fastcdr::string_255& topic_name)
@@ -194,7 +196,7 @@ void ConfigurationDynTypesSubscriber::notify_type_discovered_(
         return;
     }
 
-    std::string type_name_ = type_name.to_string();
+    std::string type_name_str = type_name.to_string();
 
     const auto type_identifier = type_info.complete().typeid_with_size().type_id();
     fastdds::dds::xtypes::TypeObject dyn_type_object;
@@ -203,6 +205,7 @@ void ConfigurationDynTypesSubscriber::notify_type_discovered_(
                 type_identifier,
                 dyn_type_object))
     {
+        EPROSIMA_LOG_ERROR(TestDynTypesSubscriber, "Error getting TypeObject of dependency for type " << type_name_str);
         return;
     }
 
@@ -220,10 +223,10 @@ void ConfigurationDynTypesSubscriber::notify_type_discovered_(
     // EPROSIMA_LOG_INFO("Participant " << this->id() << " discovered type object " << dyn_type->get_name());
 
     // Register DynamicType
-    register_remote_type_callback_(type_name_, dyn_type);
+    register_remote_type_callback_(type_name_str, dyn_type);
 }
 
-void ConfigurationDynTypesSubscriber::register_remote_type_callback_(
+void TestDynTypesSubscriber::register_remote_type_callback_(
         const std::string&,
         const fastdds::dds::traits<fastdds::dds::DynamicType>::ref_type dynamic_type)
 {
@@ -266,7 +269,7 @@ void ConfigurationDynTypesSubscriber::register_remote_type_callback_(
         " > with data type < " << dynamic_type->get_name() << " > " <<
         std::endl;
 
-    // Update ConfigurationDynTypesSubscriber members
+    // Update TestDynTypesSubscriber members
     dynamic_type_ = dynamic_type;
     type_discovered_.store(true);
     type_registered_.store(true);
@@ -274,7 +277,7 @@ void ConfigurationDynTypesSubscriber::register_remote_type_callback_(
     type_discovered_cv_.notify_all();
 }
 
-void ConfigurationDynTypesSubscriber::init_info(
+void TestDynTypesSubscriber::init_info(
         const std::string& type_name)
 {
 
@@ -287,7 +290,7 @@ void ConfigurationDynTypesSubscriber::init_info(
     data_->mean_ms_between_msgs = -1;
 }
 
-void ConfigurationDynTypesSubscriber::fill_info(
+void TestDynTypesSubscriber::fill_info(
         int index,
         uint64_t time_arrive_msg)
 {

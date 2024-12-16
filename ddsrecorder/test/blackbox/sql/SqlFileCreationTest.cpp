@@ -148,6 +148,9 @@ TEST_F(SqlFileCreationTest, sql_data_format_cdr)
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
+
     configuration_->sql_data_format = ddsrecorder::participants::DataFormat::cdr;
 
     // Record messages
@@ -199,6 +202,9 @@ TEST_F(SqlFileCreationTest, sql_data_format_json)
     constexpr auto NUMBER_OF_MESSAGES = 10;
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     configuration_->sql_data_format = ddsrecorder::participants::DataFormat::json;
 
@@ -252,6 +258,9 @@ TEST_F(SqlFileCreationTest, sql_data_format_both)
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
+
     configuration_->sql_data_format = ddsrecorder::participants::DataFormat::both;
 
     // Record messages
@@ -303,6 +312,9 @@ TEST_F(SqlFileCreationTest, sql_dds_topic)
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
+
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES);
 
@@ -341,6 +353,9 @@ TEST_F(SqlFileCreationTest, sql_ros2_topic)
     constexpr auto NUMBER_OF_MESSAGES = 10;
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     configuration_->ros2_types = true;
 
@@ -382,6 +397,9 @@ TEST_F(SqlFileCreationTest, sql_data_num_msgs)
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
+
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES);
 
@@ -409,6 +427,9 @@ TEST_F(SqlFileCreationTest, sql_data_num_msgs_downsampling)
     constexpr int DOWNSAMPLING = 2;
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // TODO: Change mechanism setting topic qos' default values from specs
     configuration_->topic_qos.downsampling = DOWNSAMPLING;
@@ -452,6 +473,9 @@ TEST_F(SqlFileCreationTest, transition_running)
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
+
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
@@ -484,6 +508,9 @@ TEST_F(SqlFileCreationTest, transition_paused)
     constexpr auto STATE_2 = DdsRecorderState::PAUSED;
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
@@ -518,6 +545,9 @@ TEST_F(SqlFileCreationTest, transition_suspended)
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
+
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
@@ -546,6 +576,9 @@ TEST_F(SqlFileCreationTest, transition_stopped)
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
+
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
@@ -572,6 +605,9 @@ TEST_F(SqlFileCreationTest, transition_running_paused)
     constexpr auto STATE_2 = DdsRecorderState::PAUSED;
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
@@ -605,6 +641,9 @@ TEST_F(SqlFileCreationTest, transition_running_suspended)
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
+
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
@@ -636,6 +675,9 @@ TEST_F(SqlFileCreationTest, transition_running_stopped)
     constexpr auto STATE_2 = DdsRecorderState::STOPPED;
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
@@ -669,6 +711,9 @@ TEST_F(SqlFileCreationTest, transition_paused_running)
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
+
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
@@ -700,6 +745,9 @@ TEST_F(SqlFileCreationTest, transition_paused_suspended)
     constexpr auto STATE_2 = DdsRecorderState::SUSPENDED;
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
@@ -733,6 +781,9 @@ TEST_F(SqlFileCreationTest, transition_paused_stopped)
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
+
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
@@ -764,6 +815,9 @@ TEST_F(SqlFileCreationTest, transition_suspended_running)
     constexpr auto STATE_2 = DdsRecorderState::RUNNING;
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
@@ -797,6 +851,9 @@ TEST_F(SqlFileCreationTest, transition_suspended_paused)
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
+
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
@@ -829,6 +886,9 @@ TEST_F(SqlFileCreationTest, transition_suspended_stopped)
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
+
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
@@ -855,6 +915,9 @@ TEST_F(SqlFileCreationTest, transition_stopped_running)
     constexpr auto STATE_2 = DdsRecorderState::RUNNING;
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
@@ -888,6 +951,9 @@ TEST_F(SqlFileCreationTest, transition_stopped_paused)
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
+
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
@@ -919,6 +985,9 @@ TEST_F(SqlFileCreationTest, transition_stopped_suspended)
     constexpr auto STATE_2 = DdsRecorderState::SUSPENDED;
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
@@ -959,6 +1028,9 @@ TEST_F(SqlFileCreationTest, transition_paused_event_less_window)
     configuration_->event_window = EVENT_WINDOW;
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, WAIT, EVENT);
@@ -1015,6 +1087,9 @@ TEST_F(SqlFileCreationTest, transition_paused_event_max_window)
     configuration_->event_window = EVENT_WINDOW;
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, WAIT, EVENT);
@@ -1075,6 +1150,9 @@ TEST_F(SqlFileCreationTest, transition_paused_event_start)
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
+
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, WAIT, EVENT);
 
@@ -1130,6 +1208,9 @@ TEST_F(SqlFileCreationTest, transition_paused_event_suspend)
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
+
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, WAIT, EVENT);
 
@@ -1184,6 +1265,9 @@ TEST_F(SqlFileCreationTest, transition_paused_event_stop)
     configuration_->event_window = EVENT_WINDOW;
 
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, WAIT, EVENT);

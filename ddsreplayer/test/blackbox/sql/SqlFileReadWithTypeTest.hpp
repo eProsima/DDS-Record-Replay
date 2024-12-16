@@ -26,6 +26,6 @@ class SqlFileReadWithTypeTest : public SqlFileReadTest
 protected:
 
     const bool publish_type_ = true;
-    const std::string input_file_type_{"../../resources/recordings/type/helloworld_with_type.db"};
+    const std::string input_file_type_{"../../resources/recordings/type/configuration_type.db"};
     const std::string input_file_ros2_{"../../resources/recordings/ros2/ros2.db"};
 };

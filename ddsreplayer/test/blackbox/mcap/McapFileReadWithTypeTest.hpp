@@ -26,6 +26,6 @@ class McapFileReadWithTypeTest : public McapFileReadTest
 protected:
 
     const bool publish_type_ = true;
-    const std::string input_file_type_{"../../resources/recordings/basic/configuration.mcap"};
-    const std::string input_file_ros2_{"../../resources/recordings/ros2/ros2.mcap"};
+    const std::string input_file_type_{"../../resources/recordings/type/configuration_type.mcap"};
+    const std::string input_file_ros2_{"/home/eugenio/Workspace/src/ddsrecordreplay/resources/recordings/ros2/ros2_talker.mcap"};
 };

@@ -32,27 +32,30 @@
 #include <fastdds/rtps/transport/UDPv6TransportDescriptor.hpp>
 
 #include "../types/configuration/ConfigurationPubSubTypes.hpp"
-#include "ConfigurationSubscriber.h"
+#include "TestSubscriber.h"
 
 using namespace eprosima::fastdds::dds;
 
-ConfigurationSubscriber::ConfigurationSubscriber(
+TestSubscriber::TestSubscriber(
         const std::string& topic_name,
+        const std::string& type_name,
         uint32_t domain,
         DataToCheck& data)
     : participant_(nullptr)
     , subscriber_(nullptr)
     , topic_(nullptr)
     , datareader_(nullptr)
-    , type_(new ConfigurationPubSubType())
     , data_(&data)
     , samples_(0)
     , prev_time_(0)
 {
+    //TODO Change this to the desired type (ROS2 or DDS)
+    eprosima::fastdds::dds::TypeSupport type(new ConfigurationPubSubType());
+    
     ///////////////////////////////
     // Create the DomainParticipant
     DomainParticipantQos pqos;
-    pqos.name("Configuration_Subscriber");
+    pqos.name("Test_Subscriber");
 
     participant_ = DomainParticipantFactory::get_instance()->create_participant(domain, pqos);
 
@@ -63,11 +66,11 @@ ConfigurationSubscriber::ConfigurationSubscriber(
 
     ////////////////////////
     // REGISTER THE TYPE
-    type_.register_type(participant_);
+    type.register_type(participant_);
 
     //////////////////////////////
     // INIT DATA TO CHECK STRUCT
-    init_info(type_.get_type_name());
+    init_info(type.get_type_name());
 
     ////////////////////////
     // Create the Subscriber
@@ -82,7 +85,7 @@ ConfigurationSubscriber::ConfigurationSubscriber(
     // CREATE THE TOPIC
     topic_ = participant_->create_topic(
         topic_name,
-        type_.get_type_name(),
+        type.get_type_name(),
         TOPIC_QOS_DEFAULT);
 
     if (topic_ == nullptr)
@@ -108,7 +111,7 @@ ConfigurationSubscriber::ConfigurationSubscriber(
         std::endl;
 }
 
-ConfigurationSubscriber::~ConfigurationSubscriber()
+TestSubscriber::~TestSubscriber()
 {
     if (participant_ != nullptr)
     {
@@ -128,7 +131,7 @@ ConfigurationSubscriber::~ConfigurationSubscriber()
     }
 }
 
-void ConfigurationSubscriber::on_subscription_matched(
+void TestSubscriber::on_subscription_matched(
         DataReader*,
         const SubscriptionMatchedStatus& info)
 {
@@ -147,7 +150,7 @@ void ConfigurationSubscriber::on_subscription_matched(
     }
 }
 
-void ConfigurationSubscriber::on_data_available(
+void TestSubscriber::on_data_available(
         DataReader* reader)
 {
     SampleInfo info;
@@ -172,7 +175,7 @@ void ConfigurationSubscriber::on_data_available(
 
 }
 
-void ConfigurationSubscriber::init_info(
+void TestSubscriber::init_info(
         const std::string& type_name)
 {
     data_->n_received_msgs = 0;
@@ -184,7 +187,7 @@ void ConfigurationSubscriber::init_info(
     data_->mean_ms_between_msgs = -1;
 }
 
-void ConfigurationSubscriber::fill_info(
+void TestSubscriber::fill_info(
         Configuration configuration_,
         uint64_t time_arrive_msg)
 {

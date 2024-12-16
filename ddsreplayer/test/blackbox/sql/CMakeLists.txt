@@ -36,12 +36,12 @@ set(TEST_LIST
     )
 
 set(TEST_NEEDED_SOURCES
-        ../../resources/config/config_file.yaml
-        ../../resources/config/config_file_less_hz.yaml
-        ../../resources/config/config_file_more_hz.yaml
-        ../../resources/config/config_file_begin_time.yaml
-        ../../resources/config/config_file_end_time.yaml
-        ../../resources/config/config_file_start_replay_time_earlier.yaml
+        ../../resources/config/basic/config_file.yaml
+        ../../resources/config/basic/config_file_less_hz.yaml
+        ../../resources/config/basic/config_file_more_hz.yaml
+        ../../resources/config/basic/config_file_begin_time.yaml
+        ../../resources/config/basic/config_file_end_time.yaml
+        ../../resources/config/basic/config_file_start_replay_time_earlier.yaml
         ../../resources/recordings/basic/configuration.db
     )
 
@@ -83,14 +83,14 @@ set(TEST_LIST
     )
 
 set(TEST_NEEDED_SOURCES
-        ../../resources/config/config_file.yaml
-        ../../resources/config/config_file_less_hz.yaml
-        ../../resources/config/config_file_more_hz.yaml
-        ../../resources/config/config_file_begin_time_with_types.yaml
-        ../../resources/config/config_file_end_time_with_types.yaml
-        ../../resources/config/config_file_start_replay_time_earlier_with_types.yaml
-        ../../resources/recordings/ros2/ros2.db
-        ../../resources/recordings/type/helloworld_with_type.db
+        ../../resources/config/type/config_file.yaml
+        ../../resources/config/type/config_file_less_hz.yaml
+        ../../resources/config/type/config_file_more_hz.yaml
+        ../../resources/config/type/config_file_begin_time.yaml
+        ../../resources/config/type/config_file_end_time.yaml
+        ../../resources/config/type/config_file_start_replay_time_earlier.yaml
+        ../../resources/recordings/ros2/ros2_talker.db
+        ../../resources/recordings/type/configuration_type.db
     )
 
 set(TEST_EXTRA_HEADERS

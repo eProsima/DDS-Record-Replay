@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * @file ConfigurationDynTypesSubscriber.h
+ * @file TestDynTypesSubscriber.h
  *
  */
 
@@ -41,7 +41,7 @@
  * @brief Class used to group into a single working unit a Subscriber with a DataReader and its listener.
  *
  */
-class ConfigurationDynTypesSubscriber : public eprosima::fastdds::dds::DomainParticipantListener
+class TestDynTypesSubscriber : public eprosima::fastdds::dds::DomainParticipantListener
 {
 public:
 
@@ -51,8 +51,9 @@ public:
      * @param topic_name Name of the DDS Topic
      * @param domain DDS Domain of the DomainParticipant
      */
-    ConfigurationDynTypesSubscriber(
+    TestDynTypesSubscriber(
             const std::string& topic_name,
+            const std::string& type_name,
             uint32_t domain,
             DataToCheck& data);
 
@@ -60,7 +61,7 @@ public:
      * @brief Destroy the Type Lookup Service Publisher object
      *
      */
-    virtual ~ConfigurationDynTypesSubscriber();
+    virtual ~TestDynTypesSubscriber();
 
     //! DataReader callback executed when a new sample is received
     void on_data_available(

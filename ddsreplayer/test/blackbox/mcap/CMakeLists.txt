@@ -22,8 +22,8 @@ set(TEST_SOURCES
     McapFileReadTest.cpp
     ${PROJECT_SOURCE_DIR}/test/resources/types/configuration/ConfigurationPubSubTypes.cxx
     ${PROJECT_SOURCE_DIR}/test/resources/types/configuration/ConfigurationTypeObjectSupport.cxx
-    ${PROJECT_SOURCE_DIR}/test/resources/dds/ConfigurationSubscriber.cpp
-    ${PROJECT_SOURCE_DIR}/test/resources/dds/ConfigurationDynTypesSubscriber.cpp
+    ${PROJECT_SOURCE_DIR}/test/resources/dds/TestSubscriber.cpp
+    ${PROJECT_SOURCE_DIR}/test/resources/dds/TestDynTypesSubscriber.cpp
 )
 
 set(TEST_LIST
@@ -37,12 +37,12 @@ set(TEST_LIST
     )
 
 set(TEST_NEEDED_SOURCES
-        ../../resources/config/config_file.yaml
-        ../../resources/config/config_file_less_hz.yaml
-        ../../resources/config/config_file_more_hz.yaml
-        ../../resources/config/config_file_begin_time.yaml
-        ../../resources/config/config_file_end_time.yaml
-        ../../resources/config/config_file_start_replay_time_earlier.yaml
+        ../../resources/config/basic/config_file.yaml
+        ../../resources/config/basic/config_file_less_hz.yaml
+        ../../resources/config/basic/config_file_more_hz.yaml
+        ../../resources/config/basic/config_file_begin_time.yaml
+        ../../resources/config/basic/config_file_end_time.yaml
+        ../../resources/config/basic/config_file_start_replay_time_earlier.yaml
         ../../resources/recordings/basic/configuration.mcap
     )
 
@@ -67,8 +67,8 @@ set(TEST_SOURCES
     McapFileReadWithTypeTest.cpp
     ${PROJECT_SOURCE_DIR}/test/resources/types/configuration/ConfigurationPubSubTypes.cxx
     ${PROJECT_SOURCE_DIR}/test/resources/types/configuration/ConfigurationTypeObjectSupport.cxx
-    ${PROJECT_SOURCE_DIR}/test/resources/dds/ConfigurationSubscriber.cpp
-    ${PROJECT_SOURCE_DIR}/test/resources/dds/ConfigurationDynTypesSubscriber.cpp
+    ${PROJECT_SOURCE_DIR}/test/resources/dds/TestSubscriber.cpp
+    ${PROJECT_SOURCE_DIR}/test/resources/dds/TestDynTypesSubscriber.cpp
 )
 
 set(TEST_LIST
@@ -82,13 +82,14 @@ set(TEST_LIST
     )
 
 set(TEST_NEEDED_SOURCES
-        ../../resources/config/config_file.yaml
-        ../../resources/config/config_file_less_hz.yaml
-        ../../resources/config/config_file_more_hz.yaml
-        ../../resources/config/config_file_begin_time_with_types.yaml
-        ../../resources/config/config_file_end_time_with_types.yaml
-        ../../resources/config/config_file_start_replay_time_earlier_with_types.yaml
-        ../../resources/recordings/basic/configuration.mcap
+        ../../resources/config/type/config_file.yaml
+        ../../resources/config/type/config_file_less_hz.yaml
+        ../../resources/config/type/config_file_more_hz.yaml
+        ../../resources/config/type/config_file_begin_time.yaml
+        ../../resources/config/type/config_file_end_time.yaml
+        ../../resources/config/type/config_file_start_replay_time_earlier.yaml
+        ../../resources/recordings/type/configuration_type.mcap
+        ../../resources/recordings/ros2/ros2_talker.mcap
     )
 
 set(TEST_EXTRA_HEADERS
