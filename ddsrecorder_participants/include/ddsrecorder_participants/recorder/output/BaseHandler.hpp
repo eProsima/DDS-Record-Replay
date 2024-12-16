@@ -353,7 +353,7 @@ protected:
     // BUFFER MANAGEMENT //
     ///////////////////////
 
-    //! MCAP writer
+    //! MCAP/SQL writer
     BaseWriter* writer_;
 
     //! Samples buffer

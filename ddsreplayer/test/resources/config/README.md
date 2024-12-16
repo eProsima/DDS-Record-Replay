@@ -68,6 +68,9 @@ DdsRecorderStatus
     current "RUNNING"
     info ""
 
+## WARNING
+Due to race conditions in writer-reader match, the first message may not be correctly recorded.
+
 ## START TIME
 2024-08-01T11:24:35.338269976+02:00 (1722504275.338269976)
 

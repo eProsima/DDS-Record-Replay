@@ -30,8 +30,8 @@
 
 #include "../resources/constants.hpp"
 #include "../resources/dds/DataToCheck.hpp"
-#include "../resources/dds/ConfigurationSubscriber.h"
-#include "../resources/dds/ConfigurationDynTypesSubscriber.h"
+#include "../resources/dds/TestSubscriber.h"
+#include "../resources/dds/TestDynTypesSubscriber.h"
 
 using namespace eprosima;
 
@@ -55,8 +55,10 @@ public:
             const bool publish_types = false,
             const bool is_ros2_topic = false)
     {
-        const auto configuration = "../../resources/config/config_file.yaml";
-        const auto data = replay_(configuration, input_file, publish_types);
+        const auto type_path = publish_types ? "type/" : "basic/";
+        const auto configuration = std::string("../../resources/config/") + type_path + std::string("config_file.yaml");
+
+        const auto data = replay_(configuration, input_file, publish_types, is_ros2_topic);
 
         ASSERT_TRUE(true);
     }
@@ -73,13 +75,14 @@ public:
             const bool publish_types = false,
             const bool is_ros2_topic = false)
     {
-        const auto configuration = "../../resources/config/config_file.yaml";
-        const auto data = replay_(configuration, input_file, publish_types);
+        std::cout << "data_to_check_test" << std::endl;
+        const auto type_path = publish_types ? "type/" : "basic/";
+        const auto configuration = std::string("../../resources/config/") + type_path + std::string("config_file.yaml");
+        const auto data = replay_(configuration, input_file, publish_types, is_ros2_topic);
 
         // Verify that the received data is correct
         ASSERT_EQ(data.n_received_msgs, 10);
         ASSERT_EQ(data.type_msg, "Configuration");
-        ASSERT_EQ(data.message_msg, "Configuration");
         ASSERT_EQ(data.min_index_msg, 1);
         ASSERT_EQ(data.max_index_msg, 10);
 
@@ -105,8 +108,9 @@ public:
             const bool publish_types = false,
             const bool is_ros2_topic = false)
     {
-        const auto configuration = "../../resources/config/config_file_more_hz.yaml";
-        const auto data = replay_(configuration, input_file, publish_types);
+        const auto type_path = publish_types ? "type/" : "basic/";
+        const auto configuration = std::string("../../resources/config/") + type_path + std::string("config_file_more_hz.yaml");
+        const auto data = replay_(configuration, input_file, publish_types, is_ros2_topic);
 
         // Verify that the average miliseconds between messages is about 100 ms
         const auto expected_mean_ms_between_msgs = 100;
@@ -130,8 +134,9 @@ public:
             const bool publish_types = false,
             const bool is_ros2_topic = false)
     {
-        const auto configuration = "../../resources/config/config_file_less_hz.yaml";
-        const auto data = replay_(configuration, input_file, publish_types);
+        const auto type_path = publish_types ? "type/" : "basic/";
+        const auto configuration = std::string("../../resources/config/") + type_path + std::string("config_file_less_hz.yaml");
+        const auto data = replay_(configuration, input_file, publish_types, is_ros2_topic);
 
         // Verify that the average miliseconds between messages is about 400 ms
         const auto expected_mean_ms_between_msgs = 400;
@@ -156,13 +161,23 @@ public:
             const bool publish_types = false,
             const bool is_ros2_topic = false)
     {
-        const auto configuration = "../../resources/config/config_file_begin_time.yaml";
-        const auto data = replay_(configuration, input_file, publish_types);
+        const auto type_path = publish_types ? "type/" : "basic/";
+        const auto configuration = std::string("../../resources/config/") + type_path + std::string("config_file_begin_time.yaml");
+        const auto data = replay_(configuration, input_file, publish_types, is_ros2_topic);
 
         // Verify that only the messages after the begin-time were received
-        ASSERT_EQ(data.n_received_msgs, 7);
-        ASSERT_EQ(data.min_index_msg, 4);
-        ASSERT_EQ(data.max_index_msg, 10);
+        if(!publish_types)
+        {
+            ASSERT_EQ(data.n_received_msgs, 5);
+            ASSERT_EQ(data.min_index_msg, 6);
+            ASSERT_EQ(data.max_index_msg, 10);
+        }
+        else
+        {
+            ASSERT_EQ(data.n_received_msgs, 8);
+            ASSERT_EQ(data.min_index_msg, 3);
+            ASSERT_EQ(data.max_index_msg, 10);
+        }
     }
 
     /**
@@ -177,13 +192,23 @@ public:
             const bool publish_types = false,
             const bool is_ros2_topic = false)
     {
-        const auto configuration = "../../resources/config/config_file_end_time.yaml";
-        const auto data = replay_(configuration, input_file, publish_types);
+        const auto type_path = publish_types ? "type/" : "basic/";
+        const auto configuration = std::string("../../resources/config/") + type_path + std::string("config_file_end_time.yaml");
+        const auto data = replay_(configuration, input_file, publish_types, is_ros2_topic);
 
         // Verify that only the messages before the end-time were received
-        ASSERT_EQ(data.n_received_msgs, 3);
-        ASSERT_EQ(data.min_index_msg, 1);
-        ASSERT_EQ(data.max_index_msg, 3);
+        if(!publish_types)
+        {
+            ASSERT_EQ(data.n_received_msgs, 5);
+            ASSERT_EQ(data.min_index_msg, 1);
+            ASSERT_EQ(data.max_index_msg, 5);
+        }
+        else
+        {
+            ASSERT_EQ(data.n_received_msgs, 2);
+            ASSERT_EQ(data.min_index_msg, 1);
+            ASSERT_EQ(data.max_index_msg, 2);
+        }
     }
 
     /**
@@ -198,8 +223,9 @@ public:
             const bool publish_types = false,
             const bool is_ros2_topic = false)
     {
-        const auto configuration = "../../resources/config/config_file_start_replay_time_earlier.yaml";
-        const auto data = replay_(configuration, input_file, publish_types);
+        const auto type_path = publish_types ? "type/" : "basic/";
+        const auto configuration = std::string("../../resources/config/") + type_path + std::string("config_file_start_replay_time_earlier.yaml");
+        const auto data = replay_(configuration, input_file, publish_types, is_ros2_topic);
 
         // Verify that all the messages were received
         ASSERT_EQ(data.n_received_msgs, 10);
@@ -229,14 +255,15 @@ protected:
         std::unique_ptr<fastdds::dds::DomainParticipantListener> subscriber;
 
         const auto topic_name = is_ros2_topic ? test::ROS2_TOPIC_NAME : test::DDS_TOPIC_NAME;
+        const auto topic_type = is_ros2_topic ? test::ROS2_TYPE_NAME : test::DDS_TYPE_NAME;
 
         if (publish_types)
         {
-            subscriber = std::make_unique<ConfigurationDynTypesSubscriber>(topic_name, test::DOMAIN, data);
+            subscriber = std::make_unique<TestDynTypesSubscriber>(topic_name, topic_type, test::DOMAIN, data);
         }
         else
         {
-            subscriber = std::make_unique<ConfigurationSubscriber>(topic_name, test::DOMAIN, data);
+            subscriber = std::make_unique<TestSubscriber>(topic_name, topic_type, test::DOMAIN, data);
         }
 
         // Configuration

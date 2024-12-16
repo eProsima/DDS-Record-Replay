@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * @file ConfigurationSubscriber.h
+ * @file TestSubscriber.h
  *
  */
 
@@ -32,7 +32,7 @@
  * @brief Class used to group into a single working unit a Subscriber with a DataReader and its listener.
  *
  */
-class ConfigurationSubscriber : public eprosima::fastdds::dds::DomainParticipantListener
+class TestSubscriber : public eprosima::fastdds::dds::DomainParticipantListener
 {
 public:
 
@@ -42,8 +42,9 @@ public:
      * @param topic_name Name of the DDS Topic
      * @param domain DDS Domain of the DomainParticipant
      */
-    ConfigurationSubscriber(
+    TestSubscriber(
             const std::string& topic_name,
+            const std::string& type_name,
             uint32_t domain,
             DataToCheck& data);
 
@@ -51,7 +52,7 @@ public:
      * @brief Destroy the Type Lookup Service Publisher object
      *
      */
-    virtual ~ConfigurationSubscriber();
+    virtual ~TestSubscriber();
 
     //! DataReader callback executed when a new sample is received
     void on_data_available(
@@ -76,7 +77,6 @@ protected:
     eprosima::fastdds::dds::Subscriber* subscriber_;
     eprosima::fastdds::dds::Topic* topic_;
     eprosima::fastdds::dds::DataReader* datareader_;
-    eprosima::fastdds::dds::TypeSupport type_;
 
     DataToCheck* data_;
 
