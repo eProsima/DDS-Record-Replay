@@ -14,3 +14,4 @@
 
 add_subdirectory(mcap)
 add_subdirectory(sql)
+add_subdirectory(both)

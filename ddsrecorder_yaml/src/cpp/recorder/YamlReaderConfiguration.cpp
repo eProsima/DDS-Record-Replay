@@ -82,7 +82,7 @@ bool RecorderConfiguration::is_valid(
         return false;
     }
 
-    if(sql_resource_limits.resource_limits_struct.max_file_size_ < sql_resource_limits.resource_limits_struct.max_size_)
+    if(sql_enabled && sql_resource_limits.resource_limits_struct.max_file_size_ != sql_resource_limits.resource_limits_struct.max_size_)
     {
         EPROSIMA_LOG_ERROR(DDSRECORDER, "SQL max file size is not used as SQL records everything in just one file. It is only used in MCAP configuration.");
         error_msg << "SQL max file size is not used as SQL records everything in just one file. It is only used in MCAP configuration.";

@@ -59,7 +59,7 @@ TEST(SqlLogErrorTest, fail_to_open_non_existent_file) {
     {
         std::uint64_t space_available = 10 * 1024 * 1024; // 10MB
         ddsrecorder::participants::ResourceLimitsStruct resource_limits_struct;
-        output_settings.set_resource_limits_by_default(resource_limits_struct, space_available);
+        output_settings.set_resource_limits(resource_limits_struct, space_available);
     }
 
     // Create the SQL Handler's Configuration
@@ -112,7 +112,7 @@ TEST(SqlLogErrorTest, fail_to_open_empty_folder) {
     {
         std::uint64_t space_available = 0; // 10MB
         ddsrecorder::participants::ResourceLimitsStruct resource_limits_struct;
-        output_settings.set_resource_limits_by_default(resource_limits_struct, space_available);
+        output_settings.set_resource_limits(resource_limits_struct, space_available);
     }
 
     // Create the SQL Handler's Configuration

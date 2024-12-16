@@ -58,18 +58,34 @@ constexpr auto DATA_FORMAT = ddsrecorder::participants::DataFormat::both;
 
 }
 
-namespace limits {
+enum class FileTypes
+{
+    MCAP,
+    SQL,
+    BOTH
+};
 
-constexpr std::uint32_t MAX_SIZE = 30000;
-constexpr std::uint32_t MAX_FILE_SIZE = 7500;
-constexpr std::uint32_t MAX_FILES = MAX_SIZE / MAX_FILE_SIZE;
+struct limits {
+    std::uint32_t MAX_SIZE;
+    std::uint32_t MAX_FILE_SIZE;
+    double ACCEPTABLE_ERROR;
+    std::uint32_t BYTES_MESSAGE;
 
-constexpr double ACCEPTABLE_ERROR = 0.10;
-constexpr std::uint32_t MAX_ACCEPTABLE_FILE_SIZE = MAX_FILE_SIZE * (1 + ACCEPTABLE_ERROR);
-constexpr std::uint32_t MIN_ACCEPTABLE_FILE_SIZE = MAX_FILE_SIZE * (1 - ACCEPTABLE_ERROR);
+    std::uint32_t MAX_FILES;
+    std::uint32_t MAX_ACCEPTABLE_FILE_SIZE;
+    std::uint32_t MIN_ACCEPTABLE_FILE_SIZE;
+    std::uint32_t FILE_OVERFLOW_THRESHOLD;
 
-// The minimum number of messages that cause the DDS Recorder to create a new file
-constexpr std::uint32_t FILE_OVERFLOW_THRESHOLD = 1.2 * MAX_FILE_SIZE / 50; //50 bytes per message
+    // Constructor to initialize values and calculate dependent fields
+    limits(std::uint32_t max_size, std::uint32_t max_file_size, double acceptable_error, std::uint32_t bytes_message)
+        : MAX_SIZE(max_size),
+          MAX_FILE_SIZE(max_file_size),
+          ACCEPTABLE_ERROR(acceptable_error),
+          BYTES_MESSAGE(bytes_message),
+          MAX_FILES(max_size / max_file_size),
+          MAX_ACCEPTABLE_FILE_SIZE(max_file_size * (1 + acceptable_error)),
+          MIN_ACCEPTABLE_FILE_SIZE(max_file_size * (1 - acceptable_error)),
+          FILE_OVERFLOW_THRESHOLD(static_cast<std::uint32_t>(max_file_size / bytes_message)) {}
+};
 
-} // namespace limits
 } // namespace test
