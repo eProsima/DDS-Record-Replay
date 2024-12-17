@@ -75,19 +75,22 @@ public:
             const bool publish_types = false,
             const bool is_ros2_topic = false)
     {
-        std::cout << "data_to_check_test" << std::endl;
         const auto type_path = publish_types ? "type/" : "basic/";
         const auto configuration = std::string("../../resources/config/") + type_path + std::string("config_file.yaml");
         const auto data = replay_(configuration, input_file, publish_types, is_ros2_topic);
 
         // Verify that the received data is correct
         ASSERT_EQ(data.n_received_msgs, 10);
-        ASSERT_EQ(data.type_msg, "Configuration");
+        if(!is_ros2_topic)
+            ASSERT_EQ(data.type_msg, "Configuration");
+        else
+            ASSERT_EQ(data.type_msg, "std_msgs::msg::dds_::String_");
+
         ASSERT_EQ(data.min_index_msg, 1);
         ASSERT_EQ(data.max_index_msg, 10);
 
         // Verify that the average miliseconds between messages is about 200 ms
-        const auto expected_mean_ms_between_msgs = 200;
+        const auto expected_mean_ms_between_msgs = is_ros2_topic ? 1000 : 200;
         const auto expected_error = 0.01;
 
         const auto min_expected_ms = expected_mean_ms_between_msgs * (1 - expected_error);
@@ -113,7 +116,7 @@ public:
         const auto data = replay_(configuration, input_file, publish_types, is_ros2_topic);
 
         // Verify that the average miliseconds between messages is about 100 ms
-        const auto expected_mean_ms_between_msgs = 100;
+        const auto expected_mean_ms_between_msgs = is_ros2_topic ? 500 : 100;
         const auto expected_error = 0.01;
 
         const auto min_expected_ms = expected_mean_ms_between_msgs * (1 - expected_error);
@@ -139,7 +142,7 @@ public:
         const auto data = replay_(configuration, input_file, publish_types, is_ros2_topic);
 
         // Verify that the average miliseconds between messages is about 400 ms
-        const auto expected_mean_ms_between_msgs = 400;
+        const auto expected_mean_ms_between_msgs = is_ros2_topic ? 2000 : 400;
         const auto expected_error = 0.01;
 
         const auto min_expected_ms = expected_mean_ms_between_msgs * (1 - expected_error);
@@ -259,7 +262,7 @@ protected:
 
         if (publish_types)
         {
-            subscriber = std::make_unique<TestDynTypesSubscriber>(topic_name, topic_type, test::DOMAIN, data);
+            subscriber = std::make_unique<TestDynTypesSubscriber>(topic_name, topic_type, is_ros2_topic, test::DOMAIN, data);
         }
         else
         {

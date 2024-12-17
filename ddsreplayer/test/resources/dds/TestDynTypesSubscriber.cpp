@@ -19,6 +19,7 @@
 
 #include <csignal>
 #include <functional>
+#include <regex>
 
 #include <fastdds/dds/core/detail/DDSReturnCode.hpp>
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
@@ -45,6 +46,7 @@ std::condition_variable TestDynTypesSubscriber::type_discovered_cv_;
 TestDynTypesSubscriber::TestDynTypesSubscriber(
         const std::string& topic_name,
         const std::string& type_name,
+        const bool hello_world,
         uint32_t domain,
         DataToCheck& data)
     : participant_(nullptr)
@@ -54,6 +56,7 @@ TestDynTypesSubscriber::TestDynTypesSubscriber(
     , data_(&data)
     , topic_name_(topic_name)
     , type_name_(type_name)
+    , hello_world_(hello_world)
     , samples_(0)
     , prev_time_(0)
 {
@@ -124,6 +127,21 @@ void TestDynTypesSubscriber::on_subscription_matched(
     }
 }
 
+// Extracts the integer from a string that matches the pattern "Hello World: <integer>"
+int extractInteger(const std::string& input) {
+    // Define the regular expression pattern
+    std::regex pattern(R"(Hello World: (-?\d+))");
+
+    std::smatch match;
+    if (std::regex_match(input, match, pattern)) {
+        // If a match is found, convert the captured group to an integer and return it
+        return std::stoi(match[1].str());
+    }
+
+    // If the string does not match, return -1
+    return -1;
+}
+
 void TestDynTypesSubscriber::on_data_available(
         DataReader* reader)
 {
@@ -146,12 +164,25 @@ void TestDynTypesSubscriber::on_data_available(
             if (dynamic_type_->get_name() == type_name_)
             {
                 uint32_t index;
-                char message;
-                new_data->get_uint32_value(index, new_data->get_member_id_by_name("index"));
+                if(hello_world_) //If value makes no sense probably is ros2 hello world message
+                {
+                    std::string message;
+                    new_data->get_string_value(message, new_data->get_member_id_by_name("data"));
+                    index = extractInteger(message);
+                    if(index == -1)
+                    {
+                        std::cout << "Message does not fit in the expected helloworld format" << std::endl;
+                        continue;
+                    }
+                }
+                else
+                {
+                    new_data->get_uint32_value(index, new_data->get_member_id_by_name("index"));
+                }
 
                 fill_info(static_cast<int>(index), current_time);
 
-                std::cout << "Message " << samples_ << " received:\n" << std::endl;
+                std::cout << "Message " << samples_ << " received with index: " << index << std::endl;
                 std::stringstream ss;
                 ss << std::setw(4);
                 // auto ret = fastdds::dds::json_serialize(new_data, ss, fastdds::dds::DynamicDataJsonFormat::EPROSIMA);
