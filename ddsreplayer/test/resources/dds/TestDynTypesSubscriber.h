@@ -54,6 +54,7 @@ public:
     TestDynTypesSubscriber(
             const std::string& topic_name,
             const std::string& type_name,
+            const bool hello_world,
             uint32_t domain,
             DataToCheck& data);
 
@@ -132,5 +133,8 @@ protected:
     static std::mutex type_discovered_cv_mtx_;
     //! Waits until a type has been discovered
     static std::condition_variable type_discovered_cv_;
+    
+    //! Flag to obtain the message index
+    bool hello_world_{false};
 
 };
