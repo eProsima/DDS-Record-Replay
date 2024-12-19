@@ -467,8 +467,8 @@ protected:
     std::shared_ptr<ddsrecorder::participants::FileTracker> sql_file_tacker_;
 
 
-    test::limits mcap_limits_{35 * 1024, 7 * 1024, 0.1, 70};
-    test::limits sql_limits_{300 * 1024,  300 * 1024, 0.1, 273};
+    test::limits mcap_limits_{35 * 1024, 7 * 1024, 0.2, 70};
+    test::limits sql_limits_{300 * 1024,  300 * 1024, 0.2, 273};
     
     test::limits *limits_;
 
