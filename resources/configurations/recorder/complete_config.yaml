@@ -32,6 +32,7 @@ recorder:
     path: "."
     timestamp-format: "%Y-%m-%d_%H-%M-%S_%Z"
     local-timestamp: false
+    safety-margin: "1GB"
 
   buffer-size: 50
   event-window: 60
@@ -49,16 +50,15 @@ recorder:
     resource-limits:
       max-file-size: "100KB"
       max-size: "300KB"
-      file-rotation: false
-      safety-margin: "1GB"
-  	
+      log-rotation: false
+      size-margin: "1MB"
 
   sql: 
     enable: true
     resource-limits:
       max-size: "2MB"
       log-rotation: false
-      safety-margin: "1GB"
+      size-margin: "1MB"
       
 
 remote-controller:

@@ -499,19 +499,56 @@ The supported compression options are:
 Resource Limits
 """""""""""""""
 
-The ``resource-limits`` tag allows users to limit the size of the *DDS Recorder's* output.
-The ``max-file-size`` tag specifies the maximum size of each output file and the ``max-size`` tag specifies the maximum aggregate size of all output files.
-If the ``max-size`` is higher than the ``max-file-size``, the |ddsrecorder| will create multiple files with a maximum size of ``max-file-size``.
-By default, however, the ``max-file-size`` is unlimited (``0B``) and the ``max-size`` is the same as the ``max-file-size``; that is, by default the |ddsrecorder| creates a single file of unlimited size.
-The ``safety-margin`` tag allows users to set a safety margin (in bytes) used when estimating the size of MCAP files.
-By default, the safety margin is set to ``0``.
+The ``resource-limits`` tag allows users to control the size of the *DDS Recorder's* output by setting limits on disk usage. This configuration allows distinct limits for the MCAP and SQL outputs while maintaining a shared safety margin to ensure stable memory usage.
+
+- **``max-file-size``**: Specifies the maximum size of each output file. Applicable only to the MCAP recorder, as the SQL recorder uses a single database file.
+- **``max-size``**: Specifies the maximum aggregate size of all output files. For the SQL recorder, this defines the maximum size of the database file. For the MCAP recorder, this determines the total size of all generated files.
+
+### Safety Margin
+The **``safety-margin``** property is shared between the SQL and MCAP outputs and is configured in the ``output`` section. This parameter reserves a buffer of free disk space, ensuring that at least ``safety-margin`` bytes remain available to prevent the system from running out of memory. This applies regardless of whether one or both recorders are enabled.
+By default, the safety margin is set to ``10MB``.
+
+### MCAP Recorder Behavior
+If the ``max-size`` is greater than the ``max-file-size``, the |ddsrecorder| will create multiple files, each with a size up to the value of ``max-file-size``, until the total size reaches ``max-size``.
+
+### SQL Recorder Behavior
+For the SQL recorder:
+- The database is always stored in a single file.
+- **Both ``max-file-size`` and ``max-size`` control the same parameter, i.e., total size of the database**. This is why setting just one of them is sufficient as the other will be automatically set to the same value. If both are set to different values, an error will be returned.
+
+### Default Behavior
+By default:
+- ``max-file-size`` is unlimited (``0B``).
+- ``max-size`` is equal to ``max-file-size``, which means the |ddsrecorder| creates a single output file of unlimited size.
+
+### Resource Limits Configuration Rules
+The relation between ``max-size`` and ``safety-margin`` introduces resource limits that dictate memory usage. The behavior depends on the enabled recorders:
+
+#### A. If only one recorder is enabled:
+1. **No resource limits set**: The recorder will use all available disk space.
+2. **Resource limits set**: Ensure the available space is sufficient to meet the specified limits.
+
+#### B. If both recorders are enabled:
+1. **No resource limits set**: Available disk space is divided equally between the recorders.
+2. **One recorder with resource limits set**: The other recorder will use the remaining disk space.
+3. **Both recorders with resource limits set**: Ensure the combined limits do not exceed the available disk space, returning an error otherwise. 
+
+### Size Margin
+The **``size-margin``** property is an optional parameter that stablish the margin of error for the size of the output files.
+
 
 .. warning::
 
-    If the ``max-file-size`` or the ``max-size`` are set to a value lower than the available space in the disk, the |ddsrecorder| will replace them with the available space in the disk.
+    If the ``max-file-size`` or the ``max-size`` are set to a value higher than the available space in the disk (counting for the safety-margin), an error will be returned.
 
-To keep the |ddsrecorder| recording after reaching the ``max-size``, users can set the ``file-rotation`` tag to ``true``.
-Enabling ``file-rotation`` allows the |ddsrecorder| to overwrite old files to free space for new ones.
+To keep the |ddsrecorder| recording after reaching the ``max-size``, users can set the ``log-rotation`` tag to ``true``.
+Enabling ``log-rotation`` allows the |ddsrecorder| to overwrite old files to free space for new ones.
+
+### MCAP Log-Rotation Behavior
+When the mcap ``log-rotation`` is enabled, the |ddsrecorder| will remove the oldest file whenever ``max-size`` is reached.
+
+### SQL Log-Rotation Behavior
+When the SQL ``log-rotation`` is enabled, the |ddsrecorder| will remove the oldest entries of the database whenever ``max-size`` is reached.
 
 .. note::
 
@@ -526,11 +563,24 @@ Enabling ``file-rotation`` allows the |ddsrecorder| to overwrite old files to fr
 
 .. code-block:: yaml
 
+recorder:
+  output:
+    safety-margin: "1GB"
+
+  mcap:
+    enable: true
     resource-limits:
-      max-file-size: 250KB
-      max-size: 2MiB
-      file-rotation: true
-      safety-margin: 10KB
+      max-file-size: 25MB
+      max-size: 200MB
+      log-rotation: true
+      size-margin: 2MB
+
+  sql:
+    enable: true
+    resource-limits:
+      max-size: 20MiB
+      log-rotation: true
+      size-margin: 1MB
 
 .. _recorder_usage_configuration_sql:
 
@@ -877,6 +927,7 @@ A complete example of all the configurations described on this page can be found
         path: "."
         timestamp-format: "%Y-%m-%d_%H-%M-%S_%Z"
         local-timestamp: false
+        safety-margin: 10GB
 
       mcap:
         enable: true
@@ -885,8 +936,8 @@ A complete example of all the configurations described on this page can be found
         resource-limits:
           max-file-size: 250KB
           max-size: 2MiB
-          file-rotation: true
-          safety-margin: 10KB
+          log-rotation: true
+          size-tolerance: 10KB
 
         compression:
           algorithm: lz4
@@ -896,6 +947,11 @@ A complete example of all the configurations described on this page can be found
       sql:
         enable: false
         data-format: "json"
+
+        resource-limits:
+          max-size: 2MiB
+          log-rotation: true
+          size-tolerance: 10KB
 
     remote-controller:
       enable: true
