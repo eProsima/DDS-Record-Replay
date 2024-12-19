@@ -519,7 +519,7 @@ TEST_F(ResourceLimitsTest, sql_max_size)
 }
 
 /**
- * @brief Test that the DDS Recorder's applies file-rotation to its output after reaching the max-size.
+ * @brief Test that the DDS Recorder's applies log-rotation to its output after reaching the max-size.
  *
  * In this test, the DDS Recorder's output is configured to have a max-size of 30KiB and a max-file-size of 7.5KiB.
  * The DDS Recorder should create 3 output files, each of them with a size between 7KiB and 8KiB. Then, after
