@@ -45,6 +45,8 @@
 #include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
 #include <ddsrecorder_yaml/recorder/ResourceLimitsConfiguration.hpp>
 
+#define OUTPUT_SAFETY_MARGIN_MIN 10 * 1024 * 1024 // Force the system to have at least 10MB free
+
 namespace eprosima {
 namespace ddsrecorder {
 namespace yaml {
@@ -91,7 +93,7 @@ public:
     std::string output_filename = "output";
     std::string output_timestamp_format = "%Y-%m-%d_%H-%M-%S_%Z";
     bool output_local_timestamp = true;
-    std::uint64_t output_safety_margin = 10 * 1024 * 1024; // Force the system to have at least 10MB free
+    std::uint64_t output_safety_margin = OUTPUT_SAFETY_MARGIN_MIN; // Force always the system to have at least 10MB free
 
     // Mcap params
     bool mcap_enabled = true;

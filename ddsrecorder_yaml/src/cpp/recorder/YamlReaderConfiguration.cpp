@@ -72,12 +72,12 @@ bool RecorderConfiguration::is_valid(
         return false;
     }
     
-    if(mcap_enabled && !mcap_resource_limits.are_limits_valid(error_msg, output_safety_margin > 0))
+    if(mcap_enabled && !mcap_resource_limits.are_limits_valid(error_msg, output_safety_margin > OUTPUT_SAFETY_MARGIN_MIN))
     {
         return false;
     }
 
-    if (sql_enabled && !sql_resource_limits.are_limits_valid(error_msg, output_safety_margin > 0))
+    if (sql_enabled && !sql_resource_limits.are_limits_valid(error_msg, output_safety_margin > OUTPUT_SAFETY_MARGIN_MIN))
     {
         return false;
     }
@@ -339,13 +339,14 @@ void RecorderConfiguration::load_recorder_output_configuration_(
     // Get optional size tolerance
     if (YamlReader::is_tag_present(yml, RECORDER_OUTPUT_TAG))
     {
-        const auto& size_tolerance = YamlReader::get<std::string>(yml,
+        const auto& output_safety_margin_tmp = YamlReader::get<std::string>(yml,
                         RECORDER_OUTPUT_TAG,
                         version);
-        if(eprosima::utils::to_bytes(size_tolerance) < output_safety_margin)
+        output_safety_margin = eprosima::utils::to_bytes(output_safety_margin_tmp);
+        if(output_safety_margin < OUTPUT_SAFETY_MARGIN_MIN){
+            output_safety_margin = OUTPUT_SAFETY_MARGIN_MIN;
             EPROSIMA_LOG_ERROR(YAML_READER_CONFIGURATION, "NOT VALID VALUE | SQL " << RECORDER_OUTPUT_TAG << " must be greater than the minimum value accepted. Defaulting to (Kb): " << output_safety_margin / 1024);
-        else
-            output_safety_margin = eprosima::utils::to_bytes(size_tolerance);
+        }
     }
 }
 
@@ -415,6 +416,15 @@ void RecorderConfiguration::load_recorder_sql_configuration_(
         auto sql_resource_limits_yml = YamlReader::get_value_in_tag(yml, RECORDER_RESOURCE_LIMITS_TAG);
         sql_resource_limits_enabled = true;
         sql_resource_limits = ResourceLimitsConfiguration(sql_resource_limits_yml, version);
+        // As max_file_size is not used in SQL configuration, if only any of the two is set, both must coincide.
+        // If both are set and different, an error will be thrown in is_valid()
+        if(sql_resource_limits.resource_limits_struct.max_file_size_ == 0 ^ sql_resource_limits.resource_limits_struct.max_size_ == 0)
+        {
+            if(sql_resource_limits.resource_limits_struct.max_file_size_ == 0)
+                sql_resource_limits.resource_limits_struct.max_file_size_ = sql_resource_limits.resource_limits_struct.max_size_;
+            else
+                sql_resource_limits.resource_limits_struct.max_size_ = sql_resource_limits.resource_limits_struct.max_file_size_;
+        }
     }
 }
 
