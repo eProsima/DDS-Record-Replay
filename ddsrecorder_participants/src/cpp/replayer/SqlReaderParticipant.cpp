@@ -21,7 +21,7 @@
 #include <string>
 #include <utility>
 
-#include <sqlite3.h>
+#include <sqlite/sqlite3.h>
 
 #include <fastdds/dds/core/Time_t.hpp>
 

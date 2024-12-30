@@ -58,6 +58,7 @@ set(MODULE_THIRDPARTY_HEADERONLY
     mcap
     nlohmann-json
     optionparser
+    sqlite
     )
 
 set(MODULE_THIRDPARTY_PATH

@@ -39,7 +39,8 @@ endif()
 
 set(MODULE_THIRDPARTY_HEADERONLY
     mcap
-    nlohmann-json)
+    nlohmann-json
+    sqlite)
 
 set(fastdds_MINIMUM_VERSION "3.0.0")
 
@@ -52,8 +53,7 @@ set(MODULE_DEPENDENCIES
     ddspipe_core
     ddspipe_participants
     $<IF:$<BOOL:${WIN32}>,lz4::lz4,lz4>
-    $<IF:$<BOOL:${WIN32}>,$<IF:$<TARGET_EXISTS:zstd::libzstd_shared>,zstd::libzstd_shared,zstd::libzstd_static>,zstd>
-    sqlite3)
+    $<IF:$<BOOL:${WIN32}>,$<IF:$<TARGET_EXISTS:zstd::libzstd_shared>,zstd::libzstd_shared,zstd::libzstd_static>,zstd>)
 
 set(MODULE_CPP_VERSION
     C++17)

@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-#include <sqlite3.h>
+#include <sqlite/sqlite3.h>
 
 #include <gtest/gtest.h>
 
