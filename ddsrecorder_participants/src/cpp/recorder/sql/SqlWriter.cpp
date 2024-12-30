@@ -322,7 +322,9 @@ void SqlWriter::write_nts_(
 
         // Bind the sample data
         std::string data_json = "";
-        std::byte* data_cdr = new std::byte{0};
+        // Empty data_cdr aux to avoid binding nullptr
+        std::byte data_cdr_aux = std::byte(0);
+        std::byte* data_cdr = &data_cdr_aux;
         std::uint32_t data_cdr_size = 0;
 
         if (data_format_ == DataFormat::both || data_format_ == DataFormat::json)
