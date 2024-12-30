@@ -18,6 +18,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 # Done this to set machine architecture and be able to call cmake_utils
+enable_language(C)
 enable_language(CXX)
 
 ###############################################################################
@@ -63,6 +64,7 @@ configure_project_cpp()
 file(
     GLOB_RECURSE SOURCES_FILES
         "${PROJECT_SOURCE_DIR}/src/cpp/*.c*"
+        "${PROJECT_SOURCE_DIR}/../thirdparty/sqlite/*.c"
     )
 
 file(

@@ -20,7 +20,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include <sqlite3.h>
+#include <sqlite/sqlite3.h>
 
 #include <cpp_utils/exception/InconsistencyException.hpp>
 #include <cpp_utils/exception/InitializationException.hpp>

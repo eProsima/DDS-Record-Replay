@@ -56,6 +56,7 @@ set(MODULE_DEPENDENCIES
 set(MODULE_THIRDPARTY_HEADERONLY
     filewatch
     mcap
+    sqlite
     optionparser
     )
 

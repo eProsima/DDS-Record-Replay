@@ -19,7 +19,7 @@
 #include <string>
 #include <utility>
 
-#include <sqlite3.h>
+#include <sqlite/sqlite3.h>
 
 #include <cpp_utils/memory/Heritable.hpp>
 
