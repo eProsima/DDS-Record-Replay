@@ -110,7 +110,7 @@ std::unique_ptr<ddspipe::core::types::RtpsPayloadData> BaseReaderParticipant::cr
     auto data = std::make_unique<ddspipe::core::types::RtpsPayloadData>();
 
     // Store the raw data in a payload
-    ddspipe::core::types::Payload payload(raw_data_size);
+    ddspipe::core::types::Payload payload;
     payload.max_size = raw_data_size;
     payload.length = raw_data_size;
     payload.data = (unsigned char*) reinterpret_cast<const unsigned char*>(raw_data);
