@@ -91,39 +91,42 @@ protected:
             throw std::runtime_error(error_msg);
         }
 
-        // Guard the statement to ensure it's always finalized
-        std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)> stmt_guard(stmt, sqlite3_finalize);
-
-        // Bind the values to the statement
-        for (int i = 0; i < (int) bind_values.size(); i++)
         {
-            const auto bind_ret = sqlite3_bind_text(stmt, i+1, bind_values[i].c_str(), -1, SQLITE_STATIC);
 
-            if (bind_ret != SQLITE_OK)
+            // Guard the statement to ensure it's always finalized
+            std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)> stmt_guard(stmt, sqlite3_finalize);
+
+            // Bind the values to the statement
+            for (int i = 0; i < (int) bind_values.size(); i++)
             {
-                const std::string error_msg = utils::Formatter() << "Failed to bind SQL statement to read messages: "
+                const auto bind_ret = sqlite3_bind_text(stmt, i+1, bind_values[i].c_str(), -1, SQLITE_STATIC);
+
+                if (bind_ret != SQLITE_OK)
+                {
+                    const std::string error_msg = utils::Formatter() << "Failed to bind SQL statement to read messages: "
+                                                                    << sqlite3_errmsg(database);
+
+                    logError(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
+                    throw std::runtime_error(error_msg);
+                }
+            }
+
+            // Step through the statement and process the rows
+            int step_ret;
+
+            while ((step_ret = sqlite3_step(stmt)) == SQLITE_ROW)
+            {
+                process_row(stmt);
+            }
+
+            if (step_ret != SQLITE_DONE)
+            {
+                const std::string error_msg = utils::Formatter() << "Failed to fetch data: "
                                                                 << sqlite3_errmsg(database);
 
                 logError(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
                 throw std::runtime_error(error_msg);
             }
-        }
-
-        // Step through the statement and process the rows
-        int step_ret;
-
-        while ((step_ret = sqlite3_step(stmt)) == SQLITE_ROW)
-        {
-            process_row(stmt);
-        }
-
-        if (step_ret != SQLITE_DONE)
-        {
-            const std::string error_msg = utils::Formatter() << "Failed to fetch data: "
-                                                            << sqlite3_errmsg(database);
-
-            logError(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
-            throw std::runtime_error(error_msg);
         }
 
         // Close the database
