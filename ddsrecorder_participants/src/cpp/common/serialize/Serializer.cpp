@@ -22,10 +22,7 @@
 #include <fastdds/dds/xtypes/type_representation/detail/dds_xtypes_typeobject.hpp>
 #include <fastdds/rtps/common/SerializedPayload.hpp>
 
-#include <ddspipe_core/types/dds/TopicQoS.hpp>
-
 #include <ddsrecorder_participants/common/serialize/Serializer.hpp>
-#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
 #include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollectionPubSubTypes.hpp>
 #include <ddsrecorder_participants/constants.hpp>
 
@@ -79,6 +76,7 @@ std::string Serializer::serialize(
 }
 
 template <>
+DDSRECORDER_PARTICIPANTS_DllAPI
 ddspipe::core::types::TopicQoS Serializer::deserialize(
         const std::string& topic_qos_str)
 {
@@ -129,6 +127,7 @@ ddspipe::core::types::TopicQoS Serializer::deserialize(
 }
 
 template <>
+DDSRECORDER_PARTICIPANTS_DllAPI
 fastdds::dds::xtypes::TypeIdentifier Serializer::deserialize(
         const std::string& type_identifier_str)
 {
@@ -136,6 +135,7 @@ fastdds::dds::xtypes::TypeIdentifier Serializer::deserialize(
 }
 
 template <>
+DDSRECORDER_PARTICIPANTS_DllAPI
 fastdds::dds::xtypes::TypeObject Serializer::deserialize(
         const std::string& type_object_str)
 {
@@ -143,6 +143,7 @@ fastdds::dds::xtypes::TypeObject Serializer::deserialize(
 }
 
 template <>
+DDSRECORDER_PARTICIPANTS_DllAPI
 DynamicTypesCollection Serializer::deserialize(
         const std::string& raw_data_str)
 {

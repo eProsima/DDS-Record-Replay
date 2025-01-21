@@ -18,11 +18,10 @@
 #include <string>
 #include <thread>
 
+#include <cpp_utils/testing/gtest_aux.hpp>
 #include <gtest/gtest.h>
 
 #include <fastdds/dds/domain/DomainParticipantListener.hpp>
-
-#include <cpp_utils/testing/gtest_aux.hpp>
 
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
 
