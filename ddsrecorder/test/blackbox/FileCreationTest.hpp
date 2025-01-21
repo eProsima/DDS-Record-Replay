@@ -21,6 +21,7 @@
 #include <thread>
 #include <vector>
 
+#include <cpp_utils/testing/gtest_aux.hpp>
 #include <gtest/gtest.h>
 
 #include <fastdds/dds/core/policy/QosPolicies.hpp>
@@ -42,7 +43,6 @@
 #include <fastdds/dds/xtypes/type_representation/ITypeObjectRegistry.hpp>
 #include <fastdds/dds/xtypes/utils.hpp>
 
-#include <cpp_utils/testing/gtest_aux.hpp>
 #include <cpp_utils/ros2_mangling.hpp>
 
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>

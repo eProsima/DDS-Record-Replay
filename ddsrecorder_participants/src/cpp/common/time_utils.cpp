@@ -52,7 +52,7 @@ utils::Timestamp to_std_timestamp(
         throw std::runtime_error("No dot found in the timestamp");
     }
 
-    auto time_point = utils::string_to_timestamp(time.substr(0, dot_pos), SQL_TIMESTAMP_FORMAT);
+    std::chrono::time_point<std::chrono::system_clock> time_point = utils::string_to_timestamp(time.substr(0, dot_pos), SQL_TIMESTAMP_FORMAT);
 
     const auto decimals = time.substr(dot_pos + 1);
     std::uint32_t nanoseconds;
@@ -63,7 +63,7 @@ utils::Timestamp to_std_timestamp(
         throw std::runtime_error("Failed to parse fractional part as an integer");
     }
 
-    time_point += std::chrono::nanoseconds(nanoseconds);
+    time_point = std::chrono::time_point_cast<utils::Timestamp::duration>(time_point + std::chrono::nanoseconds(nanoseconds));
 
     return time_point;
 }

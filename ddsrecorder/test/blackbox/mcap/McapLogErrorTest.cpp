@@ -14,12 +14,12 @@
 
 #include <memory>
 
+#include <cpp_utils/testing/gtest_aux.hpp>
 #include <gtest/gtest.h>
 #include <mcap/writer.hpp>
 
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/exception/InitializationException.hpp>
-#include <cpp_utils/testing/gtest_aux.hpp>
 #include <cpp_utils/testing/LogChecker.hpp>
 
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>

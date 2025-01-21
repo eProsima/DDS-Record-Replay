@@ -17,6 +17,8 @@
 #include <string>
 
 #include <mcap/reader.hpp>
+
+#include <cpp_utils/testing/gtest_aux.hpp>
 #include <gtest/gtest.h>
 
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
@@ -30,7 +32,6 @@
 #include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
 
 #include <cpp_utils/ros2_mangling.hpp>
-#include <cpp_utils/testing/gtest_aux.hpp>
 
 #include <ddspipe_core/types/dds/TopicQoS.hpp>
 

@@ -22,6 +22,10 @@
 
 #include <ddsrecorder_participants/library/library_dll.h>
 
+#include <ddspipe_core/types/dds/TopicQoS.hpp>
+#include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
+
+
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
@@ -74,6 +78,20 @@ protected:
     static T type_str_to_type_data_(
             const std::string& type_str);
 };
+
+// Explicitly declare the specializations
+template <>
+DDSRECORDER_PARTICIPANTS_DllAPI ddspipe::core::types::TopicQoS Serializer::deserialize(const std::string& topic_qos_str);
+
+template <>
+DDSRECORDER_PARTICIPANTS_DllAPI fastdds::dds::xtypes::TypeIdentifier Serializer::deserialize(const std::string& serialized_str);
+
+template <>
+DDSRECORDER_PARTICIPANTS_DllAPI fastdds::dds::xtypes::TypeObject Serializer::deserialize(const std::string& serialized_str);
+
+template <>
+DDSRECORDER_PARTICIPANTS_DllAPI DynamicTypesCollection Serializer::deserialize(const std::string& raw_data_str);
+
 
 } /* namespace participants */
 } /* namespace ddsrecorder */

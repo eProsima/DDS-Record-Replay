@@ -23,12 +23,12 @@
 
 #include <sqlite/sqlite3.h>
 
+#include <cpp_utils/testing/gtest_aux.hpp>
 #include <gtest/gtest.h>
 
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/Formatter.hpp>
 #include <cpp_utils/ros2_mangling.hpp>
-#include <cpp_utils/testing/gtest_aux.hpp>
 
 #include <ddspipe_core/types/dds/TopicQoS.hpp>
 
