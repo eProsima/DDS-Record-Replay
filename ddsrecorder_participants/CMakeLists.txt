@@ -16,6 +16,8 @@
 # CMake build rules for DDS Recorder Submodule
 ###############################################################################
 cmake_minimum_required(VERSION 3.5)
+set(CMAKE_SYSTEM_VERSION 10.0)
+
 
 # Done this to set machine architecture and be able to call cmake_utils
 enable_language(C)
