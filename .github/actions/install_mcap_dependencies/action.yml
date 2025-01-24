@@ -32,7 +32,7 @@ runs:
       uses: lukka/run-vcpkg@v11
       with:
         vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-        vcpkgGitCommitId: 'a42af01b72c28a8e1d7b48107b33e4f286a55ef6'
+        vcpkgGitCommitId: '6f29f12e82a8293156836ad81cc9bf5af41fe836'
 
     - name: Install lz4 and zstd
       if: runner.os == 'Windows'
