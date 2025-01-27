@@ -266,6 +266,7 @@ jobs:
           path_to_requirements: "${{ github.workspace }}/src/ddsrecordreplay/docs/requirements.txt"
           docs_subpackage_name: ${{ env.docs_packages_names }}
           secret_token: ${{ secrets.GITHUB_TOKEN }}
+          upload_artifact: false
 
 
 #####################################################################
