@@ -58,7 +58,7 @@ set(MODULE_THIRDPARTY_HEADERONLY
     mcap
     nlohmann-json
     optionparser
-    sqlite
+    sqlite # Not header-only though, need to link .c
     )
 
 set(MODULE_THIRDPARTY_PATH

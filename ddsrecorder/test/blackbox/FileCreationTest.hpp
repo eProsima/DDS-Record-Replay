@@ -293,14 +293,14 @@ protected:
         }
     }
 
-    std::filesystem::path get_output_file_path_(
+    std::string get_output_file_path_(
             const std::string& output_file_name)
     {
         const auto file_path = std::filesystem::current_path() / output_file_name;
 
         paths_.push_back(file_path);
 
-        return file_path;
+        return file_path.string();
     }
 
     bool delete_file_(

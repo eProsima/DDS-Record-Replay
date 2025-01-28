@@ -69,17 +69,11 @@ file(
         "${PROJECT_SOURCE_DIR}/../thirdparty/sqlite/*.c"
     )
 
-file(
-    GLOB_RECURSE HEADERS_FILES
-        "${PROJECT_SOURCE_DIR}/include/*.h*"
-    )
-
 # Compile C++ library
 compile_library(
     "${PROJECT_SOURCE_DIR}/src/cpp" # Source directory
     "${PROJECT_SOURCE_DIR}/include" # Include directory
     "${SOURCES_FILES}"
-    "${HEADERS_FILES}"
 )
 
 ###############################################################################

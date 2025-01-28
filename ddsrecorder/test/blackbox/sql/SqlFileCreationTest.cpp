@@ -165,7 +165,7 @@ TEST_F(SqlFileCreationTest, sql_data_format_cdr)
 
     // Read the recorded messages
     exec_sql_statement_(
-        OUTPUT_FILE_PATH.string(),
+        OUTPUT_FILE_PATH,
         "SELECT data_cdr_size, data_cdr, data_json FROM Messages ORDER BY log_time;", {}, [&](sqlite3_stmt* stmt)
     {
         read_message_count++;
@@ -220,7 +220,7 @@ TEST_F(SqlFileCreationTest, sql_data_format_json)
 
     // Read the recorded messages
     exec_sql_statement_(
-        OUTPUT_FILE_PATH.string(),
+        OUTPUT_FILE_PATH,
         "SELECT data_cdr_size, data_cdr, data_json FROM Messages ORDER BY log_time;", {}, [&](sqlite3_stmt* stmt)
     {
         read_message_count++;
@@ -275,7 +275,7 @@ TEST_F(SqlFileCreationTest, sql_data_format_both)
 
     // Read the recorded messages
     exec_sql_statement_(
-        OUTPUT_FILE_PATH.string(),
+        OUTPUT_FILE_PATH,
         "SELECT data_cdr_size, data_cdr, data_json FROM Messages ORDER BY log_time;", {}, [&](sqlite3_stmt* stmt)
     {
         read_message_count++;
@@ -324,7 +324,7 @@ TEST_F(SqlFileCreationTest, sql_dds_topic)
     // Read the recorded topics
     auto read_topics_count = 0;
 
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT name, type FROM Topics;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT name, type FROM Topics;", {}, [&](sqlite3_stmt* stmt)
     {
         read_topics_count++;
 
@@ -368,7 +368,7 @@ TEST_F(SqlFileCreationTest, sql_ros2_topic)
     // Read the recorded topics
     auto read_topics_count = 0;
 
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT name, type FROM Topics;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT name, type FROM Topics;", {}, [&](sqlite3_stmt* stmt)
     {
         read_topics_count++;
 
@@ -407,7 +407,7 @@ TEST_F(SqlFileCreationTest, sql_data_num_msgs)
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES);
 
     // Count the recorded messages
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the recorded messages count
         const auto recorded_messages = sqlite3_column_int(stmt, 0);
@@ -442,7 +442,7 @@ TEST_F(SqlFileCreationTest, sql_data_num_msgs_downsampling)
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES);
 
     // Count the recorded messages
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the recorded messages count
         const auto recorded_messages = sqlite3_column_int(stmt, 0);
@@ -483,7 +483,7 @@ TEST_F(SqlFileCreationTest, transition_running)
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
     // Count the recorded messages
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the recorded messages count
         const auto recorded_messages = sqlite3_column_int(stmt, 0);
@@ -519,7 +519,7 @@ TEST_F(SqlFileCreationTest, transition_paused)
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
     // Count the recorded messages
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the recorded messages count
         const auto recorded_messages = sqlite3_column_int(stmt, 0);
@@ -616,7 +616,7 @@ TEST_F(SqlFileCreationTest, transition_running_paused)
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
     // Count the recorded messages
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the recorded messages count
         const auto recorded_messages = sqlite3_column_int(stmt, 0);
@@ -651,7 +651,7 @@ TEST_F(SqlFileCreationTest, transition_running_suspended)
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
     // Count the recorded messages
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the recorded messages count
         const auto recorded_messages = sqlite3_column_int(stmt, 0);
@@ -686,7 +686,7 @@ TEST_F(SqlFileCreationTest, transition_running_stopped)
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
     // Count the recorded messages
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the recorded messages count
         const auto recorded_messages = sqlite3_column_int(stmt, 0);
@@ -721,7 +721,7 @@ TEST_F(SqlFileCreationTest, transition_paused_running)
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
     // Count the recorded messages
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the recorded messages count
         const auto recorded_messages = sqlite3_column_int(stmt, 0);
@@ -756,7 +756,7 @@ TEST_F(SqlFileCreationTest, transition_paused_suspended)
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
     // Count the recorded messages
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the recorded messages count
         const auto recorded_messages = sqlite3_column_int(stmt, 0);
@@ -791,7 +791,7 @@ TEST_F(SqlFileCreationTest, transition_paused_stopped)
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
     // Count the recorded messages
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the recorded messages count
         const auto recorded_messages = sqlite3_column_int(stmt, 0);
@@ -826,7 +826,7 @@ TEST_F(SqlFileCreationTest, transition_suspended_running)
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
     // Count the recorded messages
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the recorded messages count
         const auto recorded_messages = sqlite3_column_int(stmt, 0);
@@ -861,7 +861,7 @@ TEST_F(SqlFileCreationTest, transition_suspended_paused)
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
     // Count the recorded messages
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the recorded messages count
         const auto recorded_messages = sqlite3_column_int(stmt, 0);
@@ -926,7 +926,7 @@ TEST_F(SqlFileCreationTest, transition_stopped_running)
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
     // Count the recorded messages
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the recorded messages count
         const auto recorded_messages = sqlite3_column_int(stmt, 0);
@@ -961,7 +961,7 @@ TEST_F(SqlFileCreationTest, transition_stopped_paused)
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2);
 
     // Count the recorded messages
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the recorded messages count
         const auto recorded_messages = sqlite3_column_int(stmt, 0);
@@ -1039,7 +1039,7 @@ TEST_F(SqlFileCreationTest, transition_paused_event_less_window)
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, WAIT, EVENT);
 
     // Count the recorded messages
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the recorded messages count
         const auto recorded_messages = sqlite3_column_int(stmt, 0);
@@ -1050,7 +1050,7 @@ TEST_F(SqlFileCreationTest, transition_paused_event_less_window)
     const auto now_tks = ddsrecorder::participants::to_ticks(now);
 
     // Find the oldest recorded message
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT MIN(log_time) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT MIN(log_time) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the oldest recorded message was recorded in the event window
         const auto log_time = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
@@ -1098,7 +1098,7 @@ TEST_F(SqlFileCreationTest, transition_paused_event_max_window)
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, WAIT, EVENT);
 
     // Count the recorded messages
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the recorded messages count
         const auto recorded_messages = sqlite3_column_int(stmt, 0);
@@ -1109,7 +1109,7 @@ TEST_F(SqlFileCreationTest, transition_paused_event_max_window)
     const auto now_tks = ddsrecorder::participants::to_ticks(now);
 
     // Find the oldest recorded message
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT MIN(log_time) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT MIN(log_time) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the oldest recorded message was recorded in the event window
         const auto log_time = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
@@ -1160,7 +1160,7 @@ TEST_F(SqlFileCreationTest, transition_paused_event_start)
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, WAIT, EVENT);
 
     // Count the recorded messages
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the recorded messages count
         const auto recorded_messages = sqlite3_column_int(stmt, 0);
@@ -1171,7 +1171,7 @@ TEST_F(SqlFileCreationTest, transition_paused_event_start)
     const auto now_tks = ddsrecorder::participants::to_ticks(now);
 
     // Find the oldest recorded message
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT MIN(log_time) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT MIN(log_time) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the oldest recorded message was recorded in the event window
         const auto log_time = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
@@ -1218,7 +1218,7 @@ TEST_F(SqlFileCreationTest, transition_paused_event_suspend)
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, WAIT, EVENT);
 
     // Count the recorded messages
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the recorded messages count
         const auto recorded_messages = sqlite3_column_int(stmt, 0);
@@ -1229,7 +1229,7 @@ TEST_F(SqlFileCreationTest, transition_paused_event_suspend)
     const auto now_tks = ddsrecorder::participants::to_ticks(now);
 
     // Find the oldest recorded message
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT MIN(log_time) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT MIN(log_time) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the oldest recorded message was recorded in the event window
         const auto log_time = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
@@ -1276,7 +1276,7 @@ TEST_F(SqlFileCreationTest, transition_paused_event_stop)
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, WAIT, EVENT);
 
     // Count the recorded messages
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the recorded messages count
         const auto recorded_messages = sqlite3_column_int(stmt, 0);
@@ -1287,7 +1287,7 @@ TEST_F(SqlFileCreationTest, transition_paused_event_stop)
     const auto now_tks = ddsrecorder::participants::to_ticks(now);
 
     // Find the oldest recorded message
-    exec_sql_statement_(OUTPUT_FILE_PATH.string(), "SELECT MIN(log_time) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT MIN(log_time) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
     {
         // Verify the oldest recorded message was recorded in the event window
         const auto log_time = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
