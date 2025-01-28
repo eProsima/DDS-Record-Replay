@@ -22,6 +22,7 @@ file(
     GLOB_RECURSE TEST_SOURCES
     SqlFileCreationTest.cpp
     "${PROJECT_SOURCE_DIR}/test/resources/types/hello_world/*.c*"
+    "${PROJECT_SOURCE_DIR}/../thirdparty/sqlite/*.c"
     )
 
 set(TEST_LIBRARY_SOURCES

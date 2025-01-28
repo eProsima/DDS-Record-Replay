@@ -40,7 +40,8 @@ endif()
 set(MODULE_THIRDPARTY_HEADERONLY
     mcap
     nlohmann-json
-    sqlite)
+    sqlite # Not header-only though, need to link .c
+    )
 
 set(fastdds_MINIMUM_VERSION "3.0.0")
 

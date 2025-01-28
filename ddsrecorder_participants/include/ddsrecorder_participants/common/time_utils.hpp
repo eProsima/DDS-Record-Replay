@@ -49,6 +49,7 @@ utils::Timestamp to_std_timestamp(
  * @param [in] time Timestamp to be converted
  * @param [in] format Format of the timestamp
  */
+DDSRECORDER_PARTICIPANTS_DllAPI
 utils::Timestamp to_std_timestamp(
         const std::string& time);
 
