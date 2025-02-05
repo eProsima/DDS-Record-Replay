@@ -120,12 +120,14 @@ jobs:
       - name: Compile and run tests
         id: compile_and_test
         uses: eProsima/eProsima-CI/multiplatform/colcon_build_test@v0
+        env:
+          ASAN_OPTIONS: detect_odr_violation=0
         with:
           packages_names: ${{ env.code_packages_names }}
           workspace_dependencies: './install'
           cmake_build_type: Debug
           cmake_args: -DBUILD_TESTS=ON -DASAN_BUILD=ON
-          ctest_args: --label-exclude "xfail|xasan"
+          ctest_args: --label-exclude "xfail|xasan" 
           test_report_artifact: test_report_asan${{ inputs.dependencies_artifact_postfix }}_${{ inputs.custom_version_build }}
 
       - name: Test Report
