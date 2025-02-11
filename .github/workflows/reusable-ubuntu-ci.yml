@@ -269,7 +269,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Build and test documentation
-        uses: eProsima/eProsima-CI/ubuntu/sphinx_docs@main
+        uses: eProsima/eProsima-CI/ubuntu/sphinx_docs@v0
         with:
           checkout_path: "${{ github.workspace }}/src/ddsrecordreplay"
           path_to_requirements: "${{ github.workspace }}/src/ddsrecordreplay/docs/requirements.txt"
