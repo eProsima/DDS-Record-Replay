@@ -32,6 +32,8 @@
 #include <cpp_utils/types/Fuzzy.hpp>
 #include <cpp_utils/utils.hpp>
 
+#include <ddspipe_core/configuration/DdsPipeLogConfiguration.hpp>
+
 #include <ddsrecorder_participants/recorder/logging/DdsRecorderLogConsumer.hpp>
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 #include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
@@ -180,6 +182,41 @@ CommandCode state_to_command(
     }
 }
 
+void register_log_consumers(const eprosima::ddspipe::core::DdsPipeLogConfiguration& configuration)
+{
+    eprosima::utils::Log::ClearConsumers();
+    eprosima::utils::Log::SetVerbosity(configuration.verbosity);
+
+    // Std Log Consumer
+    if (configuration.stdout_enable)
+    {
+        eprosima::utils::Log::RegisterConsumer(
+            std::make_unique<eprosima::utils::StdLogConsumer>(&configuration));
+    }
+
+    // DDS Recorder Log Consumer
+    if (configuration.publish.enable)
+    {
+        eprosima::utils::Log::RegisterConsumer(
+            std::make_unique<eprosima::ddsrecorder::participants::DdsRecorderLogConsumer>(&configuration));
+    }
+
+    // NOTE:
+    // It will not filter any log, so Fast DDS logs will be visible unless Fast DDS is compiled
+    // in non debug or with LOG_NO_INFO=ON.
+    // This is the easiest way to allow to see Warnings and Errors from Fast DDS.
+    // Change it when Log Module is independent and with more extensive API.
+    // utils::Log::SetCategoryFilter(std::regex("(DDSRECORDER)"));
+}
+
+int exit(ProcessReturnCode code)
+{
+    // Delete the consumers before closing
+    eprosima::utils::Log::ClearConsumers();
+
+    return static_cast<int>(code);
+}
+
 int main(
         int argc,
         char** argv)
@@ -193,15 +230,15 @@ int main(
 
     if (arg_parse_result == ProcessReturnCode::help_argument)
     {
-        return static_cast<int>(ProcessReturnCode::success);
+        return exit(ProcessReturnCode::success);
     }
     else if (arg_parse_result == ProcessReturnCode::version_argument)
     {
-        return static_cast<int>(ProcessReturnCode::success);
+        return exit(ProcessReturnCode::success);
     }
     else if (arg_parse_result != ProcessReturnCode::success)
     {
-        return static_cast<int>(arg_parse_result);
+        return exit(arg_parse_result);
     }
 
     // Check file is in args, else get the default file
@@ -225,7 +262,7 @@ int main(
             EPROSIMA_LOG_ERROR(
                 DDSRECORDER_ARGS,
                 "File '" << commandline_args.file_path << "' does not exist or it is not accessible.");
-            return static_cast<int>(ProcessReturnCode::required_argument_failed);
+            return exit(ProcessReturnCode::required_argument_failed);
         }
     }
 
@@ -256,34 +293,19 @@ int main(
                     commandline_args.timeout));
         }
 
+        // Register the LogConsumers to log the YAML configuration errors
+        eprosima::ddspipe::core::DdsPipeLogConfiguration log_configuration;
+        log_configuration.set(eprosima::utils::VerbosityKind::Warning);
+
+        register_log_consumers(log_configuration);
+
         /////
         // DDS Recorder Initialization
 
         // Load configuration from YAML
         eprosima::ddsrecorder::yaml::RecorderConfiguration configuration(commandline_args.file_path, &commandline_args);
 
-        /////
-        // Logging
-        {
-            const auto log_configuration = configuration.ddspipe_configuration.log_configuration;
-
-            eprosima::utils::Log::ClearConsumers();
-            eprosima::utils::Log::SetVerbosity(log_configuration.verbosity);
-
-            // Std Log Consumer
-            if (log_configuration.stdout_enable)
-            {
-                eprosima::utils::Log::RegisterConsumer(
-                    std::make_unique<eprosima::utils::StdLogConsumer>(&log_configuration));
-            }
-
-            // DDS Recorder Log Consumer
-            if (log_configuration.publish.enable)
-            {
-                eprosima::utils::Log::RegisterConsumer(
-                    std::make_unique<eprosima::ddsrecorder::participants::DdsRecorderLogConsumer>(&log_configuration));
-            }
-        }
+        register_log_consumers(configuration.ddspipe_configuration.log_configuration);
 
         // Verify that the configuration is correct
         eprosima::utils::Formatter error_msg;
@@ -400,9 +422,12 @@ int main(
                             " command.");
                 }
 
-                // Reload YAML configuration file, in case it changed during STOPPED state
-                // NOTE: Changes to all (but controller specific) recorder configuration options are taken into account
-                configuration = eprosima::ddsrecorder::yaml::RecorderConfiguration(commandline_args.file_path);
+                if (prev_command != CommandCode::close)
+                {
+                    // Reload YAML configuration file, in case it changed during STOPPED state
+                    // NOTE: Changes to all (but controller specific) recorder configuration options are taken into account
+                    configuration = eprosima::ddsrecorder::yaml::RecorderConfiguration(commandline_args.file_path);
+                }
 
                 // Create DDS Recorder
                 auto recorder = std::make_unique<DdsRecorder>(
@@ -571,23 +596,17 @@ int main(
                 "Error Loading DDS Recorder Configuration from file " << commandline_args.file_path <<
                 ". Error message:\n " <<
                 e.what());
-        return static_cast<int>(ProcessReturnCode::execution_failed);
+        return exit(ProcessReturnCode::execution_failed);
     }
     catch (const eprosima::utils::InitializationException& e)
     {
         EPROSIMA_LOG_ERROR(DDSRECORDER_ERROR,
                 "Error Initializing DDS Recorder. Error message:\n " <<
                 e.what());
-        return static_cast<int>(ProcessReturnCode::execution_failed);
+        return exit(ProcessReturnCode::execution_failed);
     }
 
     logUser(DDSRECORDER_EXECUTION, "Finishing DDS Recorder execution correctly.");
 
-    // Force print every log before closing
-    eprosima::utils::Log::Flush();
-
-    // Delete the consumers before closing
-    eprosima::utils::Log::ClearConsumers();
-
-    return static_cast<int>(ProcessReturnCode::success);
+    return exit(ProcessReturnCode::success);
 }
