@@ -141,6 +141,9 @@ protected:
             yml_str +=
             "      log-rotation: true\n";
         }
+        #if defined(_WIN32) // On windows, the path separator is '\', but the yaml parser expects '/'.
+        std::replace(yml_str.begin(), yml_str.end(), '\\', '/');
+        #endif // _WIN32
         Yaml yml = YAML::Load(yml_str);
 
         // Setting CommandLine arguments as if configured from CommandLine
