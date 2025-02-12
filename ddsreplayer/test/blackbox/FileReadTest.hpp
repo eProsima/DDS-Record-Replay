@@ -270,12 +270,20 @@ protected:
 
         // Configuration
         const auto full_configuration_path = std::filesystem::current_path() / configuration_path;
-        ddsrecorder::yaml::ReplayerConfiguration configuration(full_configuration_path.string());
+        auto str_full_configuration_path = full_configuration_path.string();
+        #if defined(_WIN32) // On windows, the path separator is '\'
+        std::replace(str_full_configuration_path.begin(), str_full_configuration_path.end(), '/', '\\');
+        #endif // _WIN32
+        ddsrecorder::yaml::ReplayerConfiguration configuration(str_full_configuration_path);
         configuration.replayer_configuration->domain.domain_id = test::DOMAIN;
 
         // Create replayer instance
         const auto input_file_path = std::filesystem::current_path() / input_file;
-        auto replayer = std::make_unique<ddsrecorder::replayer::DdsReplayer>(configuration, input_file_path.string());
+        auto str_input_file_path = input_file_path.string();
+        #if defined(_WIN32) // On windows, the path separator is '\'
+        std::replace(str_input_file_path.begin(), str_input_file_path.end(), '/', '\\');
+        #endif // _WIN32
+        auto replayer = std::make_unique<ddsrecorder::replayer::DdsReplayer>(configuration, str_input_file_path);
 
         // Give time for replayer and subscriber to match.
         // Waiting for the subscriber to match the replayer
