@@ -35,7 +35,7 @@ namespace ddsrecorder {
 namespace participants {
 
 /**
- * Structure encapsulating a tracked MCAP file.
+ * Structure encapsulating a tracked file.
  */
 struct File
 {

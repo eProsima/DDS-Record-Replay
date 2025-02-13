@@ -13,4 +13,5 @@
 # limitations under the License.
 
 add_subdirectory(mcap)
-add_subdirectory(resource_limits)
+add_subdirectory(sql)
+add_subdirectory(both)

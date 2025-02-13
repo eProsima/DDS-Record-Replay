@@ -38,7 +38,10 @@ if(WIN32)
 endif()
 
 set(MODULE_THIRDPARTY_HEADERONLY
-    mcap)
+    mcap
+    nlohmann-json
+    sqlite # Not header-only though, need to link .c
+    )
 
 set(fastdds_MINIMUM_VERSION "3.0.0")
 
