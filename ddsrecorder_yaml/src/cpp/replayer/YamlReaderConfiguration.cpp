@@ -274,6 +274,12 @@ void ReplayerConfiguration::load_dds_configuration_(
         replayer_configuration->transport = TransportDescriptors::builtin;
     }
 
+    // Optional get ROS 2 easy mode IP
+    if (YamlReader::is_tag_present(yml, EASY_MODE_TAG))
+    {
+        replayer_configuration->easy_mode_ip = YamlReader::get<IpType>(yml, EASY_MODE_TAG, version);
+    }
+
     // Optional get ignore participant flags
     if (YamlReader::is_tag_present(yml, IGNORE_PARTICIPANT_FLAGS_TAG))
     {

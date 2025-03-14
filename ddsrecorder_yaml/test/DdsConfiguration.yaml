@@ -1,0 +1,7 @@
+dds:
+  domain: 0
+  ignore-participant-flags: no_filter
+  transport: builtin
+  ros2-easy-mode: "2.2.2.2"
+  whitelist-interfaces:
+    - "127.0.0.1"
