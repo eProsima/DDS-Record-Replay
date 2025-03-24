@@ -250,7 +250,7 @@ through the ``ros2-easy-mode`` tag:
 
 .. warning::
     This configuration is incompatible with the ``transports`` tag.
-    Setting ``ros2-easy-mode`` along with ``transports: udp`` or ``transports: shm``
+    Setting ``ros2-easy-mode`` other than ``transports: builtin``
     will prevent Easy Mode from being configured.
 
     For now, only IPv4 addresses are supported.
