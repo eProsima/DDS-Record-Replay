@@ -137,13 +137,15 @@ TEST(YamlGetConfigurationDdsRecorderReplayerTest, get_simple_participant_configu
     ASSERT_EQ(recorder_config.simple_configuration->whitelist, std::set<std::string>{"127.0.0.1"});
     ASSERT_EQ(recorder_config.simple_configuration->transport, ddspipe::core::types::TransportDescriptors::builtin);
     ASSERT_EQ(recorder_config.simple_configuration->easy_mode_ip, "2.2.2.2");
-    ASSERT_EQ(recorder_config.simple_configuration->ignore_participant_flags, ddspipe::core::types::IgnoreParticipantFlags::no_filter);
+    ASSERT_EQ(recorder_config.simple_configuration->ignore_participant_flags,
+            ddspipe::core::types::IgnoreParticipantFlags::no_filter);
 
     ASSERT_EQ(replayer_config.replayer_configuration->domain, 0);
     ASSERT_EQ(replayer_config.replayer_configuration->whitelist, std::set<std::string>{"127.0.0.1"});
     ASSERT_EQ(replayer_config.replayer_configuration->transport, ddspipe::core::types::TransportDescriptors::builtin);
     ASSERT_EQ(replayer_config.replayer_configuration->easy_mode_ip, "2.2.2.2");
-    ASSERT_EQ(replayer_config.replayer_configuration->ignore_participant_flags, ddspipe::core::types::IgnoreParticipantFlags::no_filter);
+    ASSERT_EQ(replayer_config.replayer_configuration->ignore_participant_flags,
+            ddspipe::core::types::IgnoreParticipantFlags::no_filter);
 }
 
 int main(
