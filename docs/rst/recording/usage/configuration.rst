@@ -269,6 +269,26 @@ However, a user may desire to force the use of one of the two, which can be acco
     When configured with ``transport: shm``, |ddsrecorder| will only communicate with applications using Shared Memory Transport exclusively (with disabled UDP transport).
 
 
+.. _recorder_easy_mode:
+
+ROS 2 Easy Mode Configuration
+-----------------------------
+
+|ddsrecorder| allows configuring the address of a remote discovery server when using
+`ROS 2 Easy Mode <https://docs.vulcanexus.org/en/latest/rst/enhancements/easy_mode/easy_mode.html>`__
+through the ``ros2-easy-mode`` tag:
+
+.. code-block:: yaml
+
+    ros2-easy-mode: "2.2.2.2"       # Remote discovery server address
+
+.. warning::
+    This configuration is incompatible with the ``transports`` tag.
+    Setting ``ros2-easy-mode`` other than ``transports: builtin``
+    will prevent Easy Mode from being configured.
+
+    For now, only IPv4 addresses are supported.
+
 .. _recorder_interface_whitelist:
 
 Interface Whitelist
@@ -828,6 +848,7 @@ A complete example of all the configurations described on this page can be found
 
       ignore-participant-flags: no_filter
       transport: builtin
+      ros2-easy-mode: "2.2.2.2"
       whitelist-interfaces:
         - "127.0.0.1"
 

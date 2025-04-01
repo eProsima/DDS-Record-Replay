@@ -25,6 +25,7 @@ set(TEST_SOURCES
 set(TEST_LIST
         get_ddsrecorder_configuration_yaml_vs_commandline
         get_ddsreplayer_configuration_yaml_vs_commandline
+        get_simple_participant_configuration_from_yaml
     )
 
 set(TEST_EXTRA_LIBRARIES
@@ -37,6 +38,10 @@ set(TEST_EXTRA_LIBRARIES
         ddspipe_yaml
         ddsrecorder_yaml
     )
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/DdsConfiguration.yaml
+${CMAKE_CURRENT_BINARY_DIR}/DdsConfiguration.yaml
+COPYONLY)
 
 add_unittest_executable(
     "${TEST_NAME}"
