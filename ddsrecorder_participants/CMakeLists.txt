@@ -16,8 +16,11 @@
 # CMake build rules for DDS Recorder Submodule
 ###############################################################################
 cmake_minimum_required(VERSION 3.5)
+set(CMAKE_SYSTEM_VERSION 10.0)
+
 
 # Done this to set machine architecture and be able to call cmake_utils
+enable_language(C)
 enable_language(CXX)
 
 ###############################################################################
@@ -63,11 +66,7 @@ configure_project_cpp()
 file(
     GLOB_RECURSE SOURCES_FILES
         "${PROJECT_SOURCE_DIR}/src/cpp/*.c*"
-    )
-
-file(
-    GLOB_RECURSE HEADERS_FILES
-        "${PROJECT_SOURCE_DIR}/include/*.h*"
+        "${PROJECT_SOURCE_DIR}/../thirdparty/sqlite/*.c"
     )
 
 # Compile C++ library
@@ -75,7 +74,6 @@ compile_library(
     "${PROJECT_SOURCE_DIR}/src/cpp" # Source directory
     "${PROJECT_SOURCE_DIR}/include" # Include directory
     "${SOURCES_FILES}"
-    "${HEADERS_FILES}"
 )
 
 ###############################################################################
