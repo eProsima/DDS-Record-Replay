@@ -19,6 +19,7 @@
 
   <depend>cpp_utils</depend>
   <depend>ddspipe_core</depend>
+  <depend>ddsrecorder_participants</depend>
   <depend>ddsrecorder_yaml</depend>
 
   <doc_depend>doxygen</doc_depend>

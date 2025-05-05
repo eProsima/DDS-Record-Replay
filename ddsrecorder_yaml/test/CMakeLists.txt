@@ -48,3 +48,40 @@ add_unittest_executable(
     "${TEST_SOURCES}"
     "${TEST_LIST}"
     "${TEST_EXTRA_LIBRARIES}")
+
+
+######################
+# ResourceLimits Test#
+######################
+
+set(RESOURCE_LIMITS_TEST_NAME YamlResourceLimitsTest)
+
+set(RESOURCE_LIMITS_TEST_SOURCES
+    ${PROJECT_SOURCE_DIR}/test/YamlResourceLimitsTest.cpp
+)
+
+set(RESOURCE_LIMITS_TEST_LIST
+    none
+    full_config
+    sql_max_file_size
+    sql_log_rotation
+    mcap_max_size
+    mcap_file_rotation
+)
+
+set(RESOURCE_LIMITS_TEST_EXTRA_LIBRARIES
+    yaml-cpp
+    fastcdr
+    fastdds
+    cpp_utils
+    ddspipe_core
+    ddspipe_participants
+    ddspipe_yaml
+    ddsrecorder_yaml
+)
+
+add_unittest_executable(
+    "${RESOURCE_LIMITS_TEST_NAME}"
+    "${RESOURCE_LIMITS_TEST_SOURCES}"
+    "${RESOURCE_LIMITS_TEST_LIST}"
+    "${RESOURCE_LIMITS_TEST_EXTRA_LIBRARIES}")
