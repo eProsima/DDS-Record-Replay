@@ -9,9 +9,11 @@ Version v1.2.0
 ##############
 
 This release includes the following **features**:
+
 * Support ROS2 Easy Mode.
 
 This release includes the following **improvements and bugfixes**:
+
 * Fix Windows CI ``vcpkg`` installation.
 * Update GitHub banner.
 
