@@ -201,7 +201,7 @@ class Controller(QObject):
         data = DdsRecorderCommand()
         data.command(command.name)
         data.args(args)
-        if (not self.command_writer.write(data)):
+        if (fastdds.RETCODE_OK != self.command_writer.write(data)):
             logger.error('Publish failed')
             return False
 
