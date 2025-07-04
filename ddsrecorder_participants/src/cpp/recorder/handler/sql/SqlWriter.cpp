@@ -33,10 +33,10 @@
 #include <ddsrecorder_participants/common/serialize/Serializer.hpp>
 #include <ddsrecorder_participants/common/time_utils.hpp>
 #include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
+#include <ddsrecorder_participants/recorder/handler/sql/SqlHandlerConfiguration.hpp>
+#include <ddsrecorder_participants/recorder/handler/sql/SqlWriter.hpp>
 #include <ddsrecorder_participants/recorder/message/SqlMessage.hpp>
 #include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
-#include <ddsrecorder_participants/recorder/sql/SqlHandlerConfiguration.hpp>
-#include <ddsrecorder_participants/recorder/sql/SqlWriter.hpp>
 
 #include <filesystem>
 
@@ -127,7 +127,7 @@ void SqlWriter::open_new_file_nts_(
     // Perform an initial VACUUM if needed (only on new databases, as it can be costly)
     sqlite3_exec(database_, "VACUUM;", nullptr, nullptr, nullptr);
 
-    
+
 
     // Create Types table
     // NOTE: These tables creation should never fail since the minimum size accounts for them.
@@ -383,7 +383,7 @@ void SqlWriter::write_nts_(
             throw e;
         }
 
-        
+
         // Execute the SQL statement
         const auto step_ret = sqlite3_step(statement);
 
@@ -549,8 +549,8 @@ std::uint64_t SqlWriter::remove_oldest_entries_(
     {
         // SQL query to select the oldest message based on publish_time
         const char* select_oldest_statement = R"(
-            SELECT rowid, LENGTH(writer_guid), LENGTH(sequence_number), LENGTH(data_json), 
-                   LENGTH(data_cdr), data_cdr_size, LENGTH(topic), LENGTH(type), 
+            SELECT rowid, LENGTH(writer_guid), LENGTH(sequence_number), LENGTH(data_json),
+                   LENGTH(data_cdr), data_cdr_size, LENGTH(topic), LENGTH(type),
                    LENGTH(key), LENGTH(log_time), LENGTH(publish_time)
             FROM Messages
             ORDER BY publish_time ASC

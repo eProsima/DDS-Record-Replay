@@ -39,7 +39,7 @@
 #include <ddspipe_yaml/Yaml.hpp>
 #include <ddspipe_yaml/YamlReader.hpp>
 
-#include <ddsrecorder_participants/recorder/sql/SqlHandlerConfiguration.hpp>
+#include <ddsrecorder_participants/recorder/handler/sql/SqlHandlerConfiguration.hpp>
 
 #include <ddsrecorder_yaml/library/library_dll.h>
 #include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>

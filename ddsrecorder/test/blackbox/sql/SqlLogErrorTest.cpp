@@ -24,11 +24,11 @@
 
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
 
-#include <ddsrecorder_participants/recorder/output/BaseHandler.hpp>
+#include <ddsrecorder_participants/recorder/handler/BaseHandler.hpp>
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 #include <ddsrecorder_participants/recorder/output/OutputSettings.hpp>
-#include <ddsrecorder_participants/recorder/sql/SqlHandler.hpp>
-#include <ddsrecorder_participants/recorder/sql/SqlHandlerConfiguration.hpp>
+#include <ddsrecorder_participants/recorder/handler/sql/SqlHandler.hpp>
+#include <ddsrecorder_participants/recorder/handler/sql/SqlHandlerConfiguration.hpp>
 
 #include "../constants.hpp"
 

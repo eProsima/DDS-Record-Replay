@@ -24,9 +24,9 @@
 
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
 
-#include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
-#include <ddsrecorder_participants/recorder/mcap/McapHandlerConfiguration.hpp>
-#include <ddsrecorder_participants/recorder/output/BaseHandler.hpp>
+#include <ddsrecorder_participants/recorder/handler/mcap/McapHandler.hpp>
+#include <ddsrecorder_participants/recorder/handler/mcap/McapHandlerConfiguration.hpp>
+#include <ddsrecorder_participants/recorder/handler/BaseHandler.hpp>
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 #include <ddsrecorder_participants/recorder/output/OutputSettings.hpp>
 

@@ -34,7 +34,7 @@
 #include <ddspipe_yaml/YamlManager.hpp>
 
 #include <ddsrecorder_participants/recorder/output/OutputSettings.hpp>
-#include <ddsrecorder_participants/recorder/sql/SqlHandlerConfiguration.hpp>
+#include <ddsrecorder_participants/recorder/handler/sql/SqlHandlerConfiguration.hpp>
 
 #include <ddsrecorder_yaml/recorder/yaml_configuration_tags.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>

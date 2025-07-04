@@ -25,8 +25,8 @@
 #include <fastdds/rtps/common/SerializedPayload.hpp>
 
 #include <ddsrecorder_participants/library/library_dll.h>
-#include <ddsrecorder_participants/recorder/mcap/McapSizeTracker.hpp>
-#include <ddsrecorder_participants/recorder/output/BaseWriter.hpp>
+#include <ddsrecorder_participants/recorder/handler/mcap/McapSizeTracker.hpp>
+#include <ddsrecorder_participants/recorder/handler/BaseWriter.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -164,4 +164,4 @@ protected:
 } /* namespace ddsrecorder */
 } /* namespace eprosima */
 
-#include <ddsrecorder_participants/recorder/mcap/impl/McapWriter.ipp>
+#include <ddsrecorder_participants/recorder/handler/mcap/impl/McapWriter.ipp>

@@ -32,7 +32,7 @@
 #include <ddspipe_participants/participant/dynamic_types/SchemaParticipant.hpp>
 
 #include <ddsrecorder_participants/recorder/monitoring/DdsRecorderMonitor.hpp>
-#include <ddsrecorder_participants/recorder/output/BaseHandler.hpp>
+#include <ddsrecorder_participants/recorder/handler/BaseHandler.hpp>
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>

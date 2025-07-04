@@ -40,8 +40,8 @@
 #include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/recorder/message/BaseMessage.hpp>
-#include <ddsrecorder_participants/recorder/output/BaseHandlerConfiguration.hpp>
-#include <ddsrecorder_participants/recorder/output/BaseWriter.hpp>
+#include <ddsrecorder_participants/recorder/handler/BaseHandlerConfiguration.hpp>
+#include <ddsrecorder_participants/recorder/handler/BaseWriter.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -300,7 +300,7 @@ protected:
      *
      * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
      * @param [in] type_identifier Type identifier to be serialized and stored.
-     * 
+     *
      * @return bool  Returns true if the serialization and insertion were successful, false otherwise.
      */
     bool store_dynamic_type_(
@@ -313,7 +313,7 @@ protected:
      * @param [in] type_name Name of the type to be stored, used as key in \c dynamic_types map.
      * @param [in] type_identifier Type identifier to be serialized and stored.
      * @param [in] type_object Type object to be serialized and stored.
-     * 
+     *
      * @return bool  Returns true if the serialization and insertion were successful, false otherwise.
      */
     bool store_dynamic_type_(

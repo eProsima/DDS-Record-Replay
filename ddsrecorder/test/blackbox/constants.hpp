@@ -26,7 +26,7 @@
 #include <ddspipe_core/types/dds/DomainId.hpp>
 #include <ddspipe_core/types/participant/ParticipantId.hpp>
 
-#include <ddsrecorder_participants/recorder/sql/SqlHandlerConfiguration.hpp>
+#include <ddsrecorder_participants/recorder/handler/sql/SqlHandlerConfiguration.hpp>
 
 namespace test {
 

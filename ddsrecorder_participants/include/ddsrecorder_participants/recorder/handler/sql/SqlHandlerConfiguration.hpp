@@ -1,4 +1,4 @@
-// Copyright 2023 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+// Copyright 2024 Proyectos y Sistemas de Mantenimiento SL (eProsima).
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,36 +13,42 @@
 // limitations under the License.
 
 /**
- * @file McapHandlerConfiguration.hpp
+ * @file SqlHandlerConfiguration.hpp
  */
 
 #pragma once
 
-#include <mcap/mcap.hpp>
+#include <cpp_utils/macros/custom_enumeration.hpp>
 
-#include <ddsrecorder_participants/recorder/output/BaseHandlerConfiguration.hpp>
+#include <ddsrecorder_participants/recorder/handler/BaseHandlerConfiguration.hpp>
 #include <ddsrecorder_participants/recorder/output/OutputSettings.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
 
+ENUMERATION_BUILDER(
+    DataFormat,
+    cdr,
+    json,
+    both
+    );
+
 /**
- * Structure encapsulating all of \c McapHandler configuration options.
+ * Structure encapsulating the \c SqlHandler configuration options.
  */
-struct McapHandlerConfiguration : public BaseHandlerConfiguration
+struct SqlHandlerConfiguration : public BaseHandlerConfiguration
 {
-    McapHandlerConfiguration(
+    SqlHandlerConfiguration(
             const OutputSettings& output_settings,
             const int max_pending_samples,
             const unsigned int buffer_size,
             const unsigned int event_window,
             const unsigned int cleanup_period,
-            const bool log_publishTime,
             const bool only_with_schema,
-            const mcap::McapWriterOptions& mcap_writer_options,
             const bool record_types,
-            const bool ros2_types)
+            const bool ros2_types,
+            const DataFormat data_format)
         : BaseHandlerConfiguration(
                 output_settings,
                 max_pending_samples,
@@ -52,16 +58,12 @@ struct McapHandlerConfiguration : public BaseHandlerConfiguration
                 only_with_schema,
                 record_types,
                 ros2_types)
-        , log_publishTime(log_publishTime)
-        , mcap_writer_options(mcap_writer_options)
+        , data_format(data_format)
     {
     }
 
-    //! Store messages with logTime set to sample publication timestamp
-    bool log_publishTime;
-
-    //! Mcap writer configuration options
-    mcap::McapWriterOptions mcap_writer_options;
+    //! Whether to store data in cdr, in json, or in both.
+    DataFormat data_format;
 };
 
 } /* namespace participants */

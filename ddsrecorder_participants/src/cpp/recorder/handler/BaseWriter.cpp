@@ -26,7 +26,7 @@
 #include <ddsrecorder_participants/recorder/exceptions/FullDiskException.hpp>
 #include <ddsrecorder_participants/recorder/exceptions/FullFileException.hpp>
 #include <ddsrecorder_participants/recorder/monitoring/producers/DdsRecorderStatusMonitorProducer.hpp>
-#include <ddsrecorder_participants/recorder/output/BaseWriter.hpp>
+#include <ddsrecorder_participants/recorder/handler/BaseWriter.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {

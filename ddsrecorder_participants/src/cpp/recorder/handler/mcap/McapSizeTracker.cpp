@@ -26,7 +26,7 @@
 #include <cpp_utils/utils.hpp>
 
 #include <ddsrecorder_participants/recorder/exceptions/FullFileException.hpp>
-#include <ddsrecorder_participants/recorder/mcap/McapSizeTracker.hpp>
+#include <ddsrecorder_participants/recorder/handler/mcap/McapSizeTracker.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {

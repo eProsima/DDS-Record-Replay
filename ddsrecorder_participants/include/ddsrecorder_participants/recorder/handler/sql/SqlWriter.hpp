@@ -25,8 +25,8 @@
 #include <cstdint>
 #include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
 #include <ddsrecorder_participants/library/library_dll.h>
-#include <ddsrecorder_participants/recorder/output/BaseWriter.hpp>
-#include <ddsrecorder_participants/recorder/sql/SqlHandlerConfiguration.hpp>
+#include <ddsrecorder_participants/recorder/handler/BaseWriter.hpp>
+#include <ddsrecorder_participants/recorder/handler/sql/SqlHandlerConfiguration.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -47,7 +47,7 @@ public:
      * @brief Writes data to the output file.
      *
      * @param data Pointer to the data to be written.
-     * 
+     *
      * @throws \c InconsistencyException if there is a database error
      */
     template <typename T>
@@ -92,7 +92,7 @@ protected:
      *
      * @param data The data to be written.
      * @throws \c FullFileException if the SQL file is full.
-     * 
+     *
      * @throws \c InconsistencyException if there is a database error
      */
     template <typename T>
@@ -117,9 +117,9 @@ protected:
      * @param size_required The size required to be freed.
      *
      * @throws \c FullDiskException if there are no enough entries to be removed.
-     * 
+     *
      * @throws \c InconsistencyException if it fails to prepare select statement
-     * 
+     *
      * @returns The size freed.
      */
     std::uint64_t remove_oldest_entries_(
@@ -129,7 +129,7 @@ protected:
      * @brief calculates the storage required (bytes) in an sql database for an integer value
      *
      * @param value The int value to be evaluated
-     * 
+     *
      * @returns The size freed.
      */
     size_t calculate_int_storage_size(
@@ -137,12 +137,12 @@ protected:
 
     /**
      * @brief Checks for free space remaining in the SQL file, if there is not and file rotation is enabled, it will remove the oldest entries.
-     * 
+     *
      * @param entry_size The size of the entry to be written.
      * @param force Whether to force the entry (only used with the dynamic types entry).
-     * 
+     *
      * @throws \c FullFileException if the SQL file is full or there is no space to remove entries.
-     * 
+     *
      * @throws \c InconsistencyException if there is a database error when removing entries.
      */
     void size_control_(
@@ -175,7 +175,7 @@ protected:
     std::uint64_t written_sql_size_{MIN_SQL_SIZE};
 
     /* To have a size checker of the SQL file, we need to check the size of the file every X bytes but the file may not be written yet
-    * so we need a variable to "time" the check (variation between written_sql_size_ and checked_written_sql_size_) and another variable 
+    * so we need a variable to "time" the check (variation between written_sql_size_ and checked_written_sql_size_) and another variable
     * to store the size of the file the last time it was checked to know if it has been updated (checked_actual_sql_size_)
     */
     // The value written_sql_size_ had when doing the last check (it is signed to allow negative when freeing space)
@@ -195,4 +195,4 @@ protected:
 } /* namespace ddsrecorder */
 } /* namespace eprosima */
 
-#include <ddsrecorder_participants/recorder/sql/impl/SqlWriter.ipp>
+#include <ddsrecorder_participants/recorder/handler/sql/impl/SqlWriter.ipp>

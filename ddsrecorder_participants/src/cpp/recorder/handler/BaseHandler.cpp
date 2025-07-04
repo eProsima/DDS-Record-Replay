@@ -28,7 +28,7 @@
 #include <cpp_utils/exception/InconsistencyException.hpp>
 
 #include <ddsrecorder_participants/common/serialize/Serializer.hpp>
-#include <ddsrecorder_participants/recorder/output/BaseHandler.hpp>
+#include <ddsrecorder_participants/recorder/handler/BaseHandler.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -634,7 +634,7 @@ bool BaseHandler::store_dynamic_type_(
 {
     DynamicType dynamic_type;
     dynamic_type.type_name(type_name);
-    
+
     try
     {
         dynamic_type.type_information(utils::base64_encode(Serializer::serialize(type_identifier)));

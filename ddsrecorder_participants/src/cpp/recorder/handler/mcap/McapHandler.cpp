@@ -31,7 +31,7 @@
 
 #include <ddsrecorder_participants/common/serialize/Serializer.hpp>
 #include <ddsrecorder_participants/constants.hpp>
-#include <ddsrecorder_participants/recorder/mcap/McapHandler.hpp>
+#include <ddsrecorder_participants/recorder/handler/mcap/McapHandler.hpp>
 #include <ddsrecorder_participants/recorder/message/McapMessage.hpp>
 
 namespace eprosima {

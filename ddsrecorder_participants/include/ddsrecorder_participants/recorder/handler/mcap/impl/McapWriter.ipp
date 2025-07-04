@@ -20,7 +20,7 @@
 
 #include <ddsrecorder_participants/recorder/exceptions/FullDiskException.hpp>
 #include <ddsrecorder_participants/recorder/exceptions/FullFileException.hpp>
-#include <ddsrecorder_participants/recorder/mcap/McapWriter.hpp>
+#include <ddsrecorder_participants/recorder/handler/mcap/McapWriter.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
