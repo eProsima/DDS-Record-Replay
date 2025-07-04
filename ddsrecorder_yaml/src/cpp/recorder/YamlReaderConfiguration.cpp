@@ -71,7 +71,7 @@ bool RecorderConfiguration::is_valid(
         error_msg << "At least one of MCAP or SQL libraries must be enabled.";
         return false;
     }
-    
+
     if(mcap_enabled && !mcap_resource_limits.are_limits_valid(error_msg, output_safety_margin > OUTPUT_SAFETY_MARGIN_MIN))
     {
         return false;

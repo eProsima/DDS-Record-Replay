@@ -36,8 +36,6 @@ namespace yaml {
 
 using namespace eprosima::ddspipe::yaml;
 
-
-
 ResourceLimitsConfiguration::ResourceLimitsConfiguration(
             const eprosima::Yaml& yml,
             const YamlReaderVersion& version)
@@ -58,10 +56,10 @@ ResourceLimitsConfiguration::ResourceLimitsConfiguration(
                         RECORDER_RESOURCE_LIMITS_MAX_SIZE_TAG,
                         version);
         resource_limits_struct.max_size_ = eprosima::utils::to_bytes(max_size_str);
-        
+
         resource_limits_struct.max_file_size_ = resource_limits_struct.max_size_;
     }
-    
+
 
     /////
     // Get optional max file size
