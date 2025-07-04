@@ -47,8 +47,8 @@ ENUMERATION_BUILDER(
     DdsRecorderStateCode,
     STOPPED,                  //! Internal entities are not created and thus no messages are received.
     SUSPENDED,                //! Messages are received (internal entities created) but discarded.
-    RUNNING,                  //! Messages are stored in MCAP/SQL file.
-    PAUSED                    //! Messages are stored in buffer and stored in MCAP/SQL file if event triggered.
+    RUNNING,                  //! Messages are stored in MCAP/SQL file/database.
+    PAUSED                    //! Messages are stored in buffer and stored in MCAP/SQL file/database if event triggered.
     );
 
 /**
@@ -79,6 +79,7 @@ public:
      *
      * @param configuration: Structure encapsulating all recorder configuration options.
      * @param init_state:    Initial instance state (RUNNING/PAUSED/SUSPENDED/STOPPED).
+     * @param event_handler: Reference to event handler used for thread synchronization in main application.
      * @param file_name:     Name of the mcap file where data is recorded. If not provided, the one from configuration is used instead.
      */
     DdsRecorder(

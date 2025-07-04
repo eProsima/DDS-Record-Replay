@@ -29,6 +29,7 @@
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/domain/qos/DomainParticipantQos.hpp>
 #include <fastdds/dds/publisher/DataWriter.hpp>
+#include <fastdds/dds/publisher/DataWriterListener.hpp>
 #include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
 #include <fastdds/dds/publisher/qos/PublisherQos.hpp>
 #include <fastdds/dds/publisher/Publisher.hpp>
@@ -69,7 +70,8 @@ enum class EventKind
     EVENT_SUSPEND,
 };
 
-class FileCreationTest : public testing::Test
+class FileCreationTest : public testing::Test,
+                         public fastdds::dds::DataWriterListener
 {
 public:
 
@@ -96,6 +98,12 @@ public:
         Yaml yml;
         configuration_ = std::make_unique<ddsrecorder::yaml::RecorderConfiguration>(yml);
         configuration_->simple_configuration->domain = test::DOMAIN;
+
+        // Create the topic
+        create_topic_();
+
+        // Create the DataWriter
+        create_datawriter_();
     }
 
     void TearDown() override
@@ -114,6 +122,21 @@ public:
         }
     }
 
+    void on_publication_matched(
+            fastdds::dds::DataWriter* /*writer*/,
+            const fastdds::dds::PublicationMatchedStatus& info) override
+    {
+        if (info.current_count_change > 0)
+        {
+            matched_ = true;
+            cv_.notify_one();
+        }
+        else if (info.current_count == 0)
+        {
+            matched_ = false;
+        }
+    }
+
 protected:
 
     std::vector<HelloWorld> record_messages_(
@@ -127,10 +150,6 @@ protected:
     {
         // Create the Recorder
         auto recorder = std::make_unique<ddsrecorder::recorder::DdsRecorder>(*configuration_, state1, file_name);
-
-        // Create the topic
-        const auto topic_name = (configuration_->ros2_types) ? test::ROS2_TOPIC_NAME : test::TOPIC_NAME;
-        topic_ = participant_->create_topic(topic_name, "HelloWorld", fastdds::dds::TOPIC_QOS_DEFAULT);
 
         // Send messages
         auto sent_messages = send_messages_(messages1);
@@ -196,8 +215,8 @@ protected:
         // Create the DataWriter
         create_datawriter_();
 
-        // Wait for the DataReader to match the DataWriter
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        // Wait for the DataWriter to match the DataReader
+        wait_for_matching();
 
         // Send the messages
         std::vector<HelloWorld> sent_messages;
@@ -269,6 +288,30 @@ protected:
         return data_json.str();
     }
 
+    void recreate_datawriter_()
+    {
+        // Delete the existing DataWriter
+        delete_datawriter_();
+
+        // delete the topic
+        if (topic_ != nullptr)
+        {
+            participant_->delete_topic(topic_);
+        }
+
+        // Create a new topic
+        create_topic_();
+
+        // Create a new DataWriter
+        create_datawriter_();
+    }
+
+    void create_topic_()
+    {
+        const auto topic_name = (configuration_->ros2_types) ? test::ROS2_TOPIC_NAME : test::TOPIC_NAME;
+        topic_ = participant_->create_topic(topic_name, "HelloWorld", fastdds::dds::TOPIC_QOS_DEFAULT);
+    }
+
     void create_datawriter_()
     {
         // Configure the DataWriter's QoS to ensure that the DDS Recorder receives all the msgs
@@ -278,7 +321,7 @@ protected:
         wqos.history().kind = fastdds::dds::KEEP_ALL_HISTORY_QOS;
 
         // Create the writer
-        writer_ = publisher_->create_datawriter(topic_, wqos);
+        writer_ = publisher_->create_datawriter(topic_, wqos, this);
 
         ASSERT_NE(writer_, nullptr);
     }
@@ -288,6 +331,17 @@ protected:
         if (writer_ != nullptr)
         {
             publisher_->delete_datawriter(writer_);
+        }
+    }
+
+    void wait_for_matching(std::chrono::seconds timeout = std::chrono::seconds(2))
+    {
+        std::unique_lock<std::mutex> lock(mtx_);
+        cv_.wait_for(lock, timeout, [this]() { return matched_; });
+
+        if (!matched_)
+        {
+            FAIL() << "DataWriter did not match any DataReader within the timeout.";
         }
     }
 
@@ -328,4 +382,8 @@ protected:
     std::vector<std::filesystem::path> paths_;
 
     std::unique_ptr<ddsrecorder::yaml::RecorderConfiguration> configuration_;
+
+    bool matched_{false};
+    std::mutex mtx_;
+    std::condition_variable cv_;
 };

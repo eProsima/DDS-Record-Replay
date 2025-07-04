@@ -364,6 +364,8 @@ TEST_F(SqlFileCreationTest, sql_ros2_topic)
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     configuration_->ros2_types = true;
+    // Recreate the topic with ROS 2 types
+    recreate_datawriter_();
 
     // Record messages
     record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES);
