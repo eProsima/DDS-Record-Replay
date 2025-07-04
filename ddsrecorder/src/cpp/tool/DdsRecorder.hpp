@@ -31,6 +31,7 @@
 #include <ddspipe_participants/participant/dynamic_types/DynTypesParticipant.hpp>
 #include <ddspipe_participants/participant/dynamic_types/SchemaParticipant.hpp>
 
+#include <ddsrecorder_participants/recorder/handler/HandlerContextCollection.hpp>
 #include <ddsrecorder_participants/recorder/monitoring/DdsRecorderMonitor.hpp>
 #include <ddsrecorder_participants/recorder/handler/BaseHandler.hpp>
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
@@ -64,15 +65,11 @@ public:
      *
      * @param configuration: Structure encapsulating all recorder configuration options.
      * @param init_state:    Initial instance state (RUNNING/PAUSED/SUSPENDED/STOPPED).
-     * @param mcap_file_tracker:  Reference to file tracker used to manage mcap files.
-     * @param sql_file_tracker:  Reference to file tracker used to manage sql files.
      * @param file_name:     Name of the mcap file where data is recorded. If not provided, the one from configuration is used instead.
      */
     DdsRecorder(
             const yaml::RecorderConfiguration& configuration,
             const DdsRecorderStateCode& init_state,
-            std::shared_ptr<participants::FileTracker>& mcap_file_tracker,
-            std::shared_ptr<participants::FileTracker>& sql_file_tracker,
             const std::string& file_name = "");
 
     /**
@@ -82,16 +79,12 @@ public:
      *
      * @param configuration: Structure encapsulating all recorder configuration options.
      * @param init_state:    Initial instance state (RUNNING/PAUSED/SUSPENDED/STOPPED).
-     * @param mcap_file_tracker:  Reference to file tracker used to manage mcap files.
-     * @param sql_file_tracker:  Reference to file tracker used to manage sql files.
      * @param file_name:     Name of the mcap file where data is recorded. If not provided, the one from configuration is used instead.
      */
     DdsRecorder(
             const yaml::RecorderConfiguration& configuration,
             const DdsRecorderStateCode& init_state,
             std::shared_ptr<utils::event::MultipleEventHandler> event_handler,
-            std::shared_ptr<participants::FileTracker>& mcap_file_tracker,
-            std::shared_ptr<participants::FileTracker>& sql_file_tracker,
             const std::string& file_name = "");
 
     /**
@@ -120,11 +113,12 @@ public:
     //! Trigger event (in \c mcap_handler_)
     void trigger_event();
 
-    //! Callback to execute when disk is full on mcap criteria
-    void mcap_on_disk_full();
+    //! Callback to execute when disk is full on any of the
+    //! context handlers.
+    void on_disk_full();
 
-    //! Callback to execute when disk is full on sql criteria
-    void sql_on_disk_full();
+    //! Resets all active file trackers.
+    void reset_file_trackers();
 
 protected:
 
@@ -141,7 +135,7 @@ protected:
 
     /**
      * Encapsulate the logic to load the resource limits configuration into the output settings.
-     * 
+     *
      * RESOURCE LIMITS LOGIC
      * A: If only one recorder is enabled
      *  1. If no resource limits are set, the space available will be occupied by the enabled recorder
@@ -150,11 +144,11 @@ protected:
      *  1. If no resource limits are set, the space available will be divided by half for each recorder
      *  2. If only one resource limits is set, then the other recorder will be set by default to the remaining space
      *  3. If both resource limits are set, just check if the space available and both resource limits altogether conflict
-     * 
+     *
      * @param mcap_output_settings: Reference to the output settings for the MCAP recorder.
      * @param sql_output_settings: Reference to the output settings for the SQL recorder.
      * @param error_msg: Reference to the error message to be filled in case of error.
-     * 
+     *
      * @return Error flag if the resource limits are not valid.
      */
     bool load_resource_limits(
@@ -177,20 +171,9 @@ protected:
     //! Participants Database
     std::shared_ptr<ddspipe::core::ParticipantsDatabase> participants_database_;
 
-    //! MCAP Handler
-    std::shared_ptr<ddsrecorder::participants::BaseHandler> mcap_handler_;
-
-    //! SQL Handler
-    std::shared_ptr<ddsrecorder::participants::BaseHandler> sql_handler_;
-
     //! Dynamic Types Participant
     std::shared_ptr<ddspipe::participants::DynTypesParticipant> dyn_participant_;
 
-    //! MCAP Schema Participant
-    std::shared_ptr<ddspipe::participants::SchemaParticipant> mcap_recorder_participant_;
-
-    //! SQL Schema Participant
-    std::shared_ptr<ddspipe::participants::SchemaParticipant> sql_recorder_participant_;
     //! DDS Pipe
     std::unique_ptr<ddspipe::core::DdsPipe> pipe_;
 
@@ -199,6 +182,9 @@ protected:
 
     //! Reference to event handler used for thread synchronization in main application
     std::shared_ptr<utils::event::MultipleEventHandler> event_handler_;
+
+    //! Handler context collection
+    participants::HandlerContextCollection handler_contexts_;
 };
 
 } /* namespace recorder */

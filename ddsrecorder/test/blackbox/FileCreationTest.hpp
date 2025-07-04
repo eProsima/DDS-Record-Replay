@@ -126,9 +126,7 @@ protected:
             const EventKind event = EventKind::NO_EVENT)
     {
         // Create the Recorder
-        std::shared_ptr<ddsrecorder::participants::FileTracker> mcap_file_tracker;
-        std::shared_ptr<ddsrecorder::participants::FileTracker> sql_file_tracker;
-        auto recorder = std::make_unique<ddsrecorder::recorder::DdsRecorder>(*configuration_, state1, mcap_file_tracker, sql_file_tracker, file_name);
+        auto recorder = std::make_unique<ddsrecorder::recorder::DdsRecorder>(*configuration_, state1, file_name);
 
         // Create the topic
         const auto topic_name = (configuration_->ros2_types) ? test::ROS2_TOPIC_NAME : test::TOPIC_NAME;

@@ -264,7 +264,7 @@ protected:
         ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
         ddsrecorder::recorder::DdsRecorder recorder(*configuration_, ddsrecorder::recorder::DdsRecorderStateCode::RUNNING,
-                mcap_file_tacker_, sql_file_tacker_, OUTPUT_FILE_NAME);
+                OUTPUT_FILE_NAME);
 
         // Send many more messages than can be stored in a file with a size of max-file-size
         const auto WAY_TOO_MANY_MSGS = limits_->FILE_OVERFLOW_THRESHOLD * 2;
@@ -305,7 +305,7 @@ protected:
         }
 
         ddsrecorder::recorder::DdsRecorder recorder(*configuration_, ddsrecorder::recorder::DdsRecorderStateCode::RUNNING,
-            mcap_file_tacker_, sql_file_tacker_, OUTPUT_FILE_NAME);
+            OUTPUT_FILE_NAME);
 
 
         for (std::uint32_t i = 0; i < limits_->MAX_FILES; i++)
@@ -379,7 +379,7 @@ protected:
         }
 
         ddsrecorder::recorder::DdsRecorder recorder(*configuration_, ddsrecorder::recorder::DdsRecorderStateCode::RUNNING,
-                mcap_file_tacker_, sql_file_tacker_, OUTPUT_FILE_NAME);
+                OUTPUT_FILE_NAME);
 
         // Verify that the DDS Recorder creates a new file after each batch of messages, before reaching the max-size
         for (std::int32_t i = 0; i < NUMBER_OF_FILES; i++)
@@ -432,7 +432,7 @@ protected:
         }
 
         ddsrecorder::recorder::DdsRecorder recorder(*configuration_, ddsrecorder::recorder::DdsRecorderStateCode::RUNNING,
-                mcap_file_tacker_, sql_file_tacker_, OUTPUT_FILE_NAME);
+                OUTPUT_FILE_NAME);
 
 
         // Verify that the DDS Recorder doesnt create a new file after each batch of messages, even when reaching the max-size
@@ -465,10 +465,6 @@ protected:
 
     std::unique_ptr<ddsrecorder::yaml::RecorderConfiguration> configuration_;
     std::vector<std::filesystem::path> paths_;
-
-    std::shared_ptr<ddsrecorder::participants::FileTracker> mcap_file_tacker_;
-    std::shared_ptr<ddsrecorder::participants::FileTracker> sql_file_tacker_;
-
 
     test::limits mcap_limits_{35 * 1024, 7 * 1024, 0.2, 70};
     test::limits sql_limits_{300 * 1024,  300 * 1024, 0.2, 273};

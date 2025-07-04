@@ -298,9 +298,8 @@ int main(
 
         logUser(DDSRECORDER_EXECUTION, "DDS Recorder running.");
 
-        // The file tracker must be stored outside of the loop since it is shared between instances
-        std::shared_ptr<eprosima::ddsrecorder::participants::FileTracker> mcap_file_tracker;
-        std::shared_ptr<eprosima::ddsrecorder::participants::FileTracker> sql_file_tracker;
+        // File trackers will be accessed through the recorder handler contexts (if any)
+        std::unique_ptr<DdsRecorder> recorder = nullptr;
 
         if (configuration.enable_remote_controller)
         {
@@ -347,8 +346,10 @@ int main(
                     {
                         // Save the set of output files from being overwritten.
                         // WARNING: If set, the resource-limits won't be consistent after stopping the DDS Recorder.
-                        mcap_file_tracker.reset();
-                        sql_file_tracker.reset();
+                        if (recorder)
+                        {
+                            recorder->reset_file_trackers();
+                        }
                     }
 
                     prev_command = CommandCode::stop;
@@ -416,8 +417,8 @@ int main(
                 }
 
                 // Create DDS Recorder
-                auto recorder = std::make_unique<DdsRecorder>(
-                    configuration, initial_state, close_handler, mcap_file_tracker, sql_file_tracker);
+                recorder = std::make_unique<DdsRecorder>(
+                    configuration, initial_state, close_handler);
 
                 // Create File Watcher Handler
                 std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;
@@ -550,8 +551,8 @@ int main(
         else
         {
             // Start recording right away
-            auto recorder = std::make_unique<DdsRecorder>(
-                configuration, DdsRecorderState::RUNNING, close_handler, mcap_file_tracker, sql_file_tracker);
+            recorder = std::make_unique<DdsRecorder>(
+                configuration, DdsRecorderState::RUNNING, close_handler);
 
             // Create File Watcher Handler
             std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;

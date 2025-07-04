@@ -28,6 +28,7 @@
 #include <ddsrecorder_participants/recorder/output/OutputSettings.hpp>
 #include <ddsrecorder_participants/recorder/handler/sql/SqlHandler.hpp>
 #include <ddsrecorder_participants/recorder/handler/sql/SqlHandlerConfiguration.hpp>
+#include <ddsrecorder_participants/recorder/handler/HandlerContext.hpp>
 
 #include "DdsRecorder.hpp"
 
@@ -45,10 +46,8 @@ using namespace eprosima::utils;
 DdsRecorder::DdsRecorder(
         const yaml::RecorderConfiguration& configuration,
         const DdsRecorderStateCode& init_state,
-        std::shared_ptr<participants::FileTracker>& mcap_file_tracker,
-        std::shared_ptr<participants::FileTracker>& sql_file_tracker,
         const std::string& file_name /* = "" */)
-    : DdsRecorder(configuration, init_state, nullptr, mcap_file_tracker, sql_file_tracker, file_name)
+    : DdsRecorder(configuration, init_state, nullptr, file_name)
 {
 }
 
@@ -56,8 +55,6 @@ DdsRecorder::DdsRecorder(
         const yaml::RecorderConfiguration& configuration,
         const DdsRecorderStateCode& init_state,
         std::shared_ptr<eprosima::utils::event::MultipleEventHandler> event_handler,
-        std::shared_ptr<participants::FileTracker>& mcap_file_tracker,
-        std::shared_ptr<participants::FileTracker>& sql_file_tracker,
         const std::string& file_name /* = "" */)
         : configuration_(configuration),
         event_handler_(event_handler)
@@ -98,26 +95,15 @@ DdsRecorder::DdsRecorder(
     mcap_output_settings.extension = ".mcap";
     sql_output_settings.extension = ".db";
     utils::Formatter error_msg;
+
     if(!load_resource_limits(mcap_output_settings, sql_output_settings, error_msg))
     {
         EPROSIMA_LOG_ERROR(DDSRECORDER, "Error loading resource limits: " << error_msg);
         throw InitializationException("Error loading resource limits, not enough available space");
     }
 
-    if (mcap_file_tracker == nullptr)
-    {
-        // Create the MCAP File Tracker
-        mcap_file_tracker.reset(new participants::FileTracker(mcap_output_settings));
-    }
-    if(sql_file_tracker == nullptr)
-    {
-        // Create the SQL File Tracker
-        sql_file_tracker.reset(new participants::FileTracker(sql_output_settings));
-    }
-
     const auto handler_state = recorder_to_handler_state_(init_state);
-    const auto mcap_on_disk_full_lambda = std::bind(&DdsRecorder::mcap_on_disk_full, this);
-    const auto sql_on_disk_full_lambda = std::bind(&DdsRecorder::sql_on_disk_full, this);
+    const auto on_disk_full_lambda = std::bind(&DdsRecorder::on_disk_full, this);
 
     // Create DynTypes Participant
     dyn_participant_ = std::make_shared<DynTypesParticipant>(
@@ -150,27 +136,19 @@ DdsRecorder::DdsRecorder(
             configuration_.record_types,
             configuration_.ros2_types);
 
-        // Create MCAP Handler
-        mcap_handler_ = std::make_shared<participants::McapHandler>(
-            handler_config,
-            payload_pool_,
-            mcap_file_tracker,
-            handler_state,
-            mcap_on_disk_full_lambda);
-
-        // Create Recorder Participant
-        mcap_recorder_participant_ = std::make_shared<SchemaParticipant>(
+        auto mcap_handler_context = HandlerContext::create_context(
+            HandlerContext::HandlerKind::MCAP,
+            &handler_config,
             configuration_.mcap_recorder_configuration,
             payload_pool_,
+            participants_database_,
             discovery_database_,
-            mcap_handler_);
+            handler_state,
+            on_disk_full_lambda);
 
-        // Populate Participant Database with the mcap recorder participant
-        participants_database_->add_participant(
-        mcap_recorder_participant_->id(),
-        mcap_recorder_participant_
-        );
+        handler_contexts_.init_handler_context(mcap_handler_context);
     }
+
     if (configuration_.sql_enabled)
     {
         // Create SQL Handler configuration
@@ -185,30 +163,19 @@ DdsRecorder::DdsRecorder(
             configuration_.ros2_types,
             configuration_.sql_data_format);
 
-        // Create SQL Handler
-        sql_handler_ = std::make_shared<participants::SqlHandler>(
-            handler_config,
-            payload_pool_,
-            sql_file_tracker,
-            handler_state,
-            sql_on_disk_full_lambda);
-
-        // Create Recorder Participant
-        sql_recorder_participant_ = std::make_shared<SchemaParticipant>(
+        // Create SQL Handler context
+        auto sql_handler_context = HandlerContext::create_context(
+            HandlerContext::HandlerKind::SQL,
+            &handler_config,
             configuration_.sql_recorder_configuration,
             payload_pool_,
+            participants_database_,
             discovery_database_,
-            sql_handler_);
+            handler_state,
+            on_disk_full_lambda);
 
-        // Populate Participant Database with the sql recorder participant
-        participants_database_->add_participant(
-        sql_recorder_participant_->id(),
-        sql_recorder_participant_
-        );
+        handler_contexts_.init_handler_context(sql_handler_context);
     }
-
-    
-    
 
     // Create DDS Pipe
     pipe_ = std::make_unique<DdsPipe>(
@@ -246,88 +213,41 @@ utils::ReturnCode DdsRecorder::reload_configuration(
 
 void DdsRecorder::start()
 {
-    if(configuration_.sql_enabled)
-    {
-        sql_handler_->start();
-    }
-    if(configuration_.mcap_enabled)
-    {
-        mcap_handler_->start();
-    }
+    handler_contexts_.start_nts();
 }
 
 void DdsRecorder::pause()
 {
-    if(configuration_.sql_enabled)
-    {
-        sql_handler_->pause();
-    }
-    if(configuration_.mcap_enabled)
-    {
-        mcap_handler_->pause();
-    }
+    handler_contexts_.pause_nts();
 }
 
 void DdsRecorder::suspend()
 {
-    if(configuration_.sql_enabled)
-    {
-        sql_handler_->stop();
-    }
-    if(configuration_.mcap_enabled)
-    {
-        mcap_handler_->stop();
-    }
+    handler_contexts_.stop_nts();
 }
 
 void DdsRecorder::stop()
 {
-    if(configuration_.sql_enabled)
-    {
-        sql_handler_->stop();
-    }
-    if(configuration_.mcap_enabled)
-    {
-        mcap_handler_->stop();
-    }
+    handler_contexts_.stop_nts();
 }
 
 void DdsRecorder::trigger_event()
 {
-    if(configuration_.sql_enabled)
-    {
-        sql_handler_->trigger_event();
-    }
-    if(configuration_.mcap_enabled)
-    {
-        mcap_handler_->trigger_event();
-    }
+    handler_contexts_.trigger_event_nts();
 }
 
-void DdsRecorder::mcap_on_disk_full()
+void DdsRecorder::on_disk_full()
 {
     if (nullptr != event_handler_)
     {
-        configuration_.mcap_enabled = false;
-        if(!configuration_.sql_enabled)
-        {
-            // Notify main application to proceed and close
-            event_handler_->simulate_event_occurred();
-        }
+        // Notify main application to proceed and close
+        event_handler_->simulate_event_occurred();
     }
 }
 
-void DdsRecorder::sql_on_disk_full()
+void DdsRecorder::reset_file_trackers()
 {
-    if (nullptr != event_handler_)
-    {
-        configuration_.sql_enabled = false;
-        if(!configuration_.mcap_enabled)
-        {
-            // Notify main application to proceed and close
-            event_handler_->simulate_event_occurred();
-        }
-    }
+    handler_contexts_.reset_file_trackers_nts();
 }
 
 void DdsRecorder::load_internal_topics_(
@@ -394,7 +314,7 @@ bool DdsRecorder::load_resource_limits(
     if(space_available < 0)
     {
         error_msg << "The available space is lower than the safety margin.";
-        return 0;
+        return false;
     }
 
     // Case A
@@ -408,7 +328,7 @@ bool DdsRecorder::load_resource_limits(
                 if(!mcap_output_settings.set_resource_limits(configuration_.mcap_resource_limits.resource_limits_struct, space_available))
                 {
                     error_msg << "The available space given the MCAP conditions is lower than the safety margin.";
-                    return 0;
+                    return false;
                 }
             }
             // Subcase 1
@@ -424,7 +344,7 @@ bool DdsRecorder::load_resource_limits(
                 if(!sql_output_settings.set_resource_limits(configuration_.sql_resource_limits.resource_limits_struct, space_available))
                 {
                     error_msg << "The available space given the SQL conditions is lower than the safety margin.";
-                    return 0;
+                    return false;
                 }
             }
             // Subcase 1
@@ -455,7 +375,7 @@ bool DdsRecorder::load_resource_limits(
                 if(!mcap_output_settings.set_resource_limits(configuration_.mcap_resource_limits.resource_limits_struct, space_available))
                 {
                     error_msg << "The available space given the MCAP conditions is lower than the safety margin.";
-                    return 0;
+                    return false;
                 }
                 sql_output_settings.set_resource_limits(configuration_.sql_resource_limits.resource_limits_struct, space_available - mcap_output_settings.resource_limits.max_size_);
             }
@@ -469,7 +389,7 @@ bool DdsRecorder::load_resource_limits(
                 if(!sql_output_settings.set_resource_limits(configuration_.sql_resource_limits.resource_limits_struct, space_available))
                 {
                     error_msg << "The available space given the SQL conditions is lower than the safety margin.";
-                    return 0;
+                    return false;
                 }
                 mcap_output_settings.set_resource_limits(configuration_.mcap_resource_limits.resource_limits_struct, space_available - sql_output_settings.resource_limits.max_size_);
             }
@@ -493,18 +413,18 @@ bool DdsRecorder::load_resource_limits(
             if(!first_output_settings->set_resource_limits(*first_resource_limits, space_available))
             {
                 error_msg << "The available space is lower than the safety margin.";
-                return 0;
+                return false;
             }
             space_available -= first_resource_limits->max_size_;
             if(!second_output_settings->set_resource_limits(*second_resource_limits, space_available))
             {
                 error_msg << "The available space is lower than the safety margin.";
-                return 0;
+                return false;
             }
         }
     }
 
-    return 1;
+    return true;
 }
 
 } /* namespace recorder */
