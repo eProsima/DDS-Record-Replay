@@ -128,12 +128,18 @@ public:
     {
         if (info.current_count_change > 0)
         {
-            matched_ = true;
+            {
+                std::lock_guard<std::mutex> lock(mtx_);
+                matched_ = true;
+            }
             cv_.notify_one();
         }
         else if (info.current_count == 0)
         {
-            matched_ = false;
+            {
+                std::lock_guard<std::mutex> lock(mtx_);
+                matched_ = false;
+            }
         }
     }
 

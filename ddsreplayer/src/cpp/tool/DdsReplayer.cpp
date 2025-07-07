@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <memory>
+#include <regex>
 #include <set>
 #include <string>
 
@@ -58,21 +59,36 @@ DdsReplayer::DdsReplayer(
     : configuration_(configuration)
 {
     // Create Payload Pool
-    auto payload_pool = std::make_shared<ddspipe::core::FastPayloadPool>();
+    payload_pool_ = std::make_shared<ddspipe::core::FastPayloadPool>();
+
+    bool is_sql_file = false;
+    // Match the filename with a regex that captures the extension
+    std::regex ext_regex(R"(.*\.([a-zA-Z0-9]+)$)");
+    std::smatch match;
+
+    if (std::regex_match(input_file, match, ext_regex)) {
+        // Capture the extension (e.g., "db", "DB", etc.)
+        std::string ext = match[1];
+
+        // Make extension lowercase for comparison
+        std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+
+        is_sql_file = (ext == "db");
+    }
 
     // Create Reader Participant
-    if (input_file.size() >= 3 && input_file.substr(input_file.size() - 3) == ".db")
+    if (is_sql_file)
     {
         reader_participant_ = std::make_shared<participants::SqlReaderParticipant>(
             configuration.base_reader_configuration,
-            payload_pool,
+            payload_pool_,
             input_file);
     }
     else
     {
         reader_participant_ = std::make_shared<participants::McapReaderParticipant>(
             configuration.base_reader_configuration,
-            payload_pool,
+            payload_pool_,
             input_file);
     }
 
@@ -82,7 +98,7 @@ DdsReplayer::DdsReplayer(
     // Create Replayer Participant
     auto replayer_participant = std::make_shared<participants::ReplayerParticipant>(
         configuration.replayer_configuration,
-        payload_pool,
+        payload_pool_,
         discovery_database,
         configuration.replay_types);
 
@@ -111,13 +127,23 @@ DdsReplayer::DdsReplayer(
 
     reader_participant_->process_summary(topics, types);
 
-    // Register the dynamic types
-    auto registered_types = register_dynamic_types_(types);
+    std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair> registered_types;
+    if (configuration.replay_types)
+    {
+        // Register the dynamic types
+        registered_types = register_dynamic_types_(types);
+    }
 
     // Store the topics as built-in topics
     for (auto& topic : topics)
     {
-        topic->type_identifiers = registered_types[topic->type_name];
+        auto it = registered_types.find(topic->type_name);
+
+        if (it != registered_types.end())
+        {
+            topic->type_identifiers = it->second;
+        }
+
         configuration.ddspipe_configuration.builtin_topics.insert(topic);
     }
 
@@ -125,7 +151,7 @@ DdsReplayer::DdsReplayer(
     pipe_ = std::make_unique<ddspipe::core::DdsPipe>(
         configuration.ddspipe_configuration,
         discovery_database,
-        payload_pool,
+        payload_pool_,
         participants_database,
         thread_pool_);
 }
@@ -159,21 +185,27 @@ std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair> DdsReplayer::reg
 {
     std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair> registered_types{};
 
+    std::cout << "Registering dynamic types..." << dynamic_types.dynamic_types().size() << std::endl;
+
     for (const auto& dynamic_type : dynamic_types.dynamic_types())
     {
         // Deserialize type identifier
-        const auto type_identifier_str = utils::base64_decode(dynamic_type.type_information());
-        const auto type_identifier = participants::Serializer::deserialize<fastdds::dds::xtypes::TypeIdentifier>(type_identifier_str);
+        const auto type_identifier_str = utils::base64_decode(dynamic_type.type_identifier());
+        fastdds::dds::xtypes::TypeIdentifier type_identifier;
+        participants::Serializer::deserialize<fastdds::dds::xtypes::TypeIdentifier>(type_identifier_str, type_identifier);
 
         // Deserialize type object
         const auto type_object_str = utils::base64_decode(dynamic_type.type_object());
-        const auto type_object = participants::Serializer::deserialize<fastdds::dds::xtypes::TypeObject>(type_object_str);
+        fastdds::dds::xtypes::TypeObject type_object;
+        participants::Serializer::deserialize<fastdds::dds::xtypes::TypeObject>(type_object_str, type_object);
 
         // Register in factory
         fastdds::dds::xtypes::TypeIdentifierPair type_identifiers;
         type_identifiers.type_identifier1(type_identifier);
         fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().register_type_object(
                 type_object, type_identifiers);
+
+        std::cout << "Registered type: " << dynamic_type.type_name() << std::endl;
 
         registered_types.insert({dynamic_type.type_name(), type_identifiers});
     }

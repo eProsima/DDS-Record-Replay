@@ -219,7 +219,7 @@ void SqlWriter::write_nts_(
     const auto is_type_ros2_type = ros2_types_ && type_name != dynamic_type.type_name();
 
     sqlite3_bind_text(statement, 1, type_name.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(statement, 2, dynamic_type.type_information().c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 2, dynamic_type.type_identifier().c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(statement, 3, dynamic_type.type_object().c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(statement, 4, is_type_ros2_type ? "true" : "false", -1, SQLITE_TRANSIENT);
 
@@ -227,7 +227,7 @@ void SqlWriter::write_nts_(
     size_t entry_size = 0;
 
     entry_size += type_name.size();
-    entry_size += dynamic_type.type_information().size();
+    entry_size += dynamic_type.type_identifier().size();
     entry_size += dynamic_type.type_object().size();
     entry_size += sizeof("false");
 
@@ -452,7 +452,8 @@ void SqlWriter::write_nts_(
 
     // Bind the Topic to the SQL statement
     const auto topic_name = ros2_types_ ? utils::demangle_if_ros_topic(topic.topic_name()) : topic.topic_name();
-    const auto topic_qos_serialized = Serializer::serialize(topic.topic_qos);
+    std::string topic_qos_serialized;
+    Serializer::serialize(topic.topic_qos, topic_qos_serialized);
     const auto is_topic_ros2_type = ros2_types_ && topic_name != topic.topic_name();
 
     sqlite3_bind_text(statement, 1, topic_name.c_str(), -1, SQLITE_TRANSIENT);

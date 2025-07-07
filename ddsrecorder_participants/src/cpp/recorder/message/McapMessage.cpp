@@ -42,11 +42,13 @@ McapMessage::McapMessage(
     dataSize = get_data_cdr_size();
 
     publishTime = to_mcap_timestamp(publish_time);
-    logTime = to_mcap_timestamp(log_time);
-
     if (log_publish_time)
     {
-        log_time = publish_time;
+        logTime = publishTime;
+    }
+    else
+    {
+        logTime = to_mcap_timestamp(log_time);
     }
 }
 

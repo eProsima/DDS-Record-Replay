@@ -90,12 +90,7 @@ void SqlHandler::add_schema(
     }
 
     // Check if there are any pending samples for this new type. If so, dump them.
-    if (pending_samples_.find(type_name) != pending_samples_.end() ||
-            (state_ == BaseHandlerStateCode::PAUSED &&
-            pending_samples_paused_.find(type_name) != pending_samples_paused_.end()))
-    {
-        dump_pending_samples_nts_(type_name);
-    }
+    dump_pending_samples_nts_(type_name);
 }
 
 void SqlHandler::add_data(

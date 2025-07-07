@@ -31,8 +31,9 @@ namespace ddsrecorder {
 namespace participants {
 
 template <>
-std::string Serializer::serialize(
-        const ddspipe::core::types::TopicQoS& qos)
+bool Serializer::serialize(
+        const ddspipe::core::types::TopicQoS& qos,
+        std::string& serialized_str)
 {
     // TODO: Reuse code from ddspipe_yaml
 
@@ -43,26 +44,30 @@ std::string Serializer::serialize(
     qos_yaml[QOS_SERIALIZATION_OWNERSHIP] = qos.has_ownership();
     qos_yaml[QOS_SERIALIZATION_KEYED] = qos.keyed.get_value();
 
-    return YAML::Dump(qos_yaml);
+    serialized_str = YAML::Dump(qos_yaml);
+    return true;
 }
 
 template <>
-std::string Serializer::serialize(
-        const fastdds::dds::xtypes::TypeIdentifier& type_identifier)
+bool Serializer::serialize(
+        const fastdds::dds::xtypes::TypeIdentifier& type_identifier,
+        std::string& serialized_str)
 {
-    return type_data_to_type_str_(type_identifier);
+    return type_data_to_type_str_(type_identifier, serialized_str);
 }
 
 template <>
-std::string Serializer::serialize(
-        const fastdds::dds::xtypes::TypeObject& type_object)
+bool Serializer::serialize(
+        const fastdds::dds::xtypes::TypeObject& type_object,
+        std::string& serialized_str)
 {
-    return type_data_to_type_str_(type_object);
+    return type_data_to_type_str_(type_object, serialized_str);
 }
 
 template <>
-std::string Serializer::serialize(
-        const DynamicTypesCollection& dynamic_types)
+bool Serializer::serialize(
+        const DynamicTypesCollection& dynamic_types,
+        std::string& serialized_str)
 {
     // Remove the const qualifier to serialize the dynamic types collection
     auto dynamic_types_ptr = const_cast<DynamicTypesCollection*>(&dynamic_types);
@@ -72,17 +77,17 @@ std::string Serializer::serialize(
     fastdds::rtps::SerializedPayload_t payload(type_support.calculate_serialized_size(dynamic_types_ptr, fastdds::dds::DEFAULT_DATA_REPRESENTATION));
     type_support.serialize(dynamic_types_ptr, payload, fastdds::dds::DEFAULT_DATA_REPRESENTATION);
 
-    return std::string(reinterpret_cast<char*>(payload.data), payload.length);
+    serialized_str = std::string(reinterpret_cast<char*>(payload.data), payload.length);
+    return true;
 }
 
 template <>
 DDSRECORDER_PARTICIPANTS_DllAPI
-ddspipe::core::types::TopicQoS Serializer::deserialize(
-        const std::string& topic_qos_str)
+bool Serializer::deserialize(
+        const std::string& topic_qos_str,
+        ddspipe::core::types::TopicQoS& qos)
 {
     // TODO: Reuse code from ddspipe_yaml
-
-    ddspipe::core::types::TopicQoS qos{};
 
     auto qos_yaml = YAML::Load(topic_qos_str);
     bool reliable = qos_yaml[QOS_SERIALIZATION_RELIABILITY].as<bool>();
@@ -123,29 +128,32 @@ ddspipe::core::types::TopicQoS Serializer::deserialize(
     // Parse keyed
     qos.keyed = keyed;
 
-    return qos;
+    return true;
 }
 
 template <>
 DDSRECORDER_PARTICIPANTS_DllAPI
-fastdds::dds::xtypes::TypeIdentifier Serializer::deserialize(
-        const std::string& type_identifier_str)
+bool Serializer::deserialize(
+        const std::string& type_identifier_str,
+        fastdds::dds::xtypes::TypeIdentifier& type_identifier)
 {
-    return type_str_to_type_data_<fastdds::dds::xtypes::TypeIdentifier>(type_identifier_str);
+    return type_str_to_type_data_<fastdds::dds::xtypes::TypeIdentifier>(type_identifier_str, type_identifier);
 }
 
 template <>
 DDSRECORDER_PARTICIPANTS_DllAPI
-fastdds::dds::xtypes::TypeObject Serializer::deserialize(
-        const std::string& type_object_str)
+bool Serializer::deserialize(
+        const std::string& type_object_str,
+        fastdds::dds::xtypes::TypeObject& type_object)
 {
-    return type_str_to_type_data_<fastdds::dds::xtypes::TypeObject>(type_object_str);
+    return type_str_to_type_data_<fastdds::dds::xtypes::TypeObject>(type_object_str, type_object);
 }
 
 template <>
 DDSRECORDER_PARTICIPANTS_DllAPI
-DynamicTypesCollection Serializer::deserialize(
-        const std::string& raw_data_str)
+bool Serializer::deserialize(
+        const std::string& raw_data_str,
+        DynamicTypesCollection& dynamic_types)
 {
     // Copy raw data into a payload
     fastdds::rtps::SerializedPayload_t serialized_payload{(std::uint32_t) raw_data_str.size()};
@@ -157,12 +165,11 @@ DynamicTypesCollection Serializer::deserialize(
         raw_data_str.size());
 
     // Deserialize the payload into a DynamicTypesCollection
-    DynamicTypesCollection dynamic_types;
     fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
 
     type_support.deserialize(serialized_payload, &dynamic_types);
 
-    return dynamic_types;
+    return true;
 }
 
 } /* namespace participants */

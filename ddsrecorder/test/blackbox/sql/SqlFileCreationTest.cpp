@@ -90,7 +90,7 @@ protected:
                                                             << sqlite3_errmsg(database);
             sqlite3_finalize(stmt);
 
-            logError(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
+            EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
             throw std::runtime_error(error_msg);
         }
 
@@ -109,7 +109,7 @@ protected:
                     const std::string error_msg = utils::Formatter() << "Failed to bind SQL statement to read messages: "
                                                                     << sqlite3_errmsg(database);
 
-                    logError(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
+                    EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
                     throw std::runtime_error(error_msg);
                 }
             }
@@ -127,7 +127,7 @@ protected:
                 const std::string error_msg = utils::Formatter() << "Failed to fetch data: "
                                                                 << sqlite3_errmsg(database);
 
-                logError(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
+                EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
                 throw std::runtime_error(error_msg);
             }
         }

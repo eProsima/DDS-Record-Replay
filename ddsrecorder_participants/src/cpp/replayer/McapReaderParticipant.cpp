@@ -75,7 +75,8 @@ void McapReaderParticipant::process_summary(
 
         // Apply the QoS stored in the MCAP file as if they were the discovered QoS.
         const auto topic_qos_str = channel->metadata[QOS_SERIALIZATION_QOS];
-        const auto topic_qos = Serializer::deserialize<ddspipe::core::types::TopicQoS>(topic_qos_str);
+        ddspipe::core::types::TopicQoS topic_qos;
+        Serializer::deserialize<ddspipe::core::types::TopicQoS>(topic_qos_str, topic_qos);
 
         topic->topic_qos.set_qos(topic_qos, utils::FuzzyLevelValues::fuzzy_level_fuzzy);
 
@@ -92,7 +93,7 @@ void McapReaderParticipant::process_summary(
         const std::string dynamic_types_str(
                 reinterpret_cast<const char*>(dynamic_types_attachment.data), dynamic_types_attachment.dataSize);
 
-        types = Serializer::deserialize<DynamicTypesCollection>(dynamic_types_str);
+        Serializer::deserialize<DynamicTypesCollection>(dynamic_types_str, types);
     }
 
     close_file_();
@@ -182,7 +183,7 @@ void McapReaderParticipant::read_mcap_summary_()
     // Read mcap summary: ForceScan method required for parsing metadata and attachments
     const auto status = mcap_reader_.readSummary(mcap::ReadSummaryMethod::ForceScan, [](const mcap::Status& status)
             {
-                logWarning(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
                         "An error occurred while reading MCAP summary: " << status.message << ".");
             });
 
@@ -203,7 +204,7 @@ void McapReaderParticipant::read_mcap_summary_()
 
     if (recording_version != DDSRECORDER_PARTICIPANTS_VERSION_STRING)
     {
-        logWarning(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+        EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
                 "MCAP file generated with a different DDS Record & Replay version (" << recording_version <<
                 ", current is " << DDSRECORDER_PARTICIPANTS_VERSION_STRING << "), incompatibilities might arise...");
     }
@@ -231,7 +232,7 @@ mcap::LinearMessageView McapReaderParticipant::read_mcap_messages_()
     // Read messages
     auto messages = mcap_reader_.readMessages([](const mcap::Status& status)
             {
-                logWarning(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
                         "An error occurred while reading MCAP messages: " << status.message << ".");
             }, read_options);
 

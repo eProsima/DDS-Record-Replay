@@ -51,9 +51,9 @@ class DdsReplayer
 public:
 
     /**
-     * @brief DdsRecorder constructor by required values.
+     * @brief DdsReplayer constructor by required values.
      *
-     * Creates a DdsRecorder instance with a configuration, an initial state, and input file name.
+     * Creates a DdsReplayer instance with a configuration, an initial state, and input file name.
      *
      * @param configuration: Structure encapsulating all replayer configuration options.
      * @param input_file:    File containing the DDS data to be played back.

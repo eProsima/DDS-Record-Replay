@@ -77,7 +77,7 @@ void SqlMessage::deserialize(
 
     if (ret != fastdds::dds::RETCODE_OK)
     {
-        logWarning(SQL_MESSAGE, "Failed to serialize payload into JSON");
+        EPROSIMA_LOG_WARNING(SQL_MESSAGE, "Failed to serialize payload into JSON");
     }
 }
 
@@ -106,7 +106,7 @@ void SqlMessage::remove_nonkey_values_(
 
     if (dynamic_type->get_all_members(members_by_id) != fastdds::dds::RETCODE_OK)
     {
-        logWarning(DDSRECORDER_DYNTYPES_KEY, "Failed to get all members");
+        EPROSIMA_LOG_WARNING(DDSRECORDER_DYNTYPES_KEY, "Failed to get all members");
         return;
     }
 
@@ -119,7 +119,7 @@ void SqlMessage::remove_nonkey_values_(
 
         if (member->get_descriptor(member_descriptor) != fastdds::dds::RETCODE_OK)
         {
-            logWarning(DDSRECORDER_DYNTYPES_KEY, "Failed to get member descriptor");
+            EPROSIMA_LOG_WARNING(DDSRECORDER_DYNTYPES_KEY, "Failed to get member descriptor");
             continue;
         }
 

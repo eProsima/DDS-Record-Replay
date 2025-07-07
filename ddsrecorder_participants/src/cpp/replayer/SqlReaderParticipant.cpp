@@ -71,7 +71,8 @@ void SqlReaderParticipant::process_summary(
 
         // Apply the QoS stored in the SQL file as if they were the discovered QoS.
         const auto topic_qos_str = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
-        const auto topic_qos = Serializer::deserialize<ddspipe::core::types::TopicQoS>(topic_qos_str);
+        ddspipe::core::types::TopicQoS topic_qos;
+        Serializer::deserialize<ddspipe::core::types::TopicQoS>(topic_qos_str, topic_qos);
 
         topic->topic_qos.set_qos(topic_qos, utils::FuzzyLevelValues::fuzzy_level_fuzzy);
 
@@ -80,7 +81,7 @@ void SqlReaderParticipant::process_summary(
 
         if (topics_.find(topic_id) != topics_.end())
         {
-            logWarning(DDSREPLAYER_SQL_READER_PARTICIPANT,
+            EPROSIMA_LOG_WARNING(DDSREPLAYER_SQL_READER_PARTICIPANT,
                        "Topic " << topic_name << " with type " << type_name << " already exists. Skipping...");
             return;
         }
@@ -103,7 +104,7 @@ void SqlReaderParticipant::process_summary(
         DynamicType type;
 
         type.type_name(is_type_ros2_type ? utils::mangle_if_ros_type(type_name) : type_name);
-        type.type_information(type_information);
+        type.type_identifier(type_information);
         type.type_object(type_object);
 
         // Store the DynamicType in the DynamicTypesCollection
@@ -151,7 +152,7 @@ void SqlReaderParticipant::process_messages()
         // Find the topic
         if (topics_.find(topic_id) == topics_.end())
         {
-            logError(DDSREPLAYER_SQL_READER_PARTICIPANT,
+            EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT,
                     "Failed to find topic " << topic_name << " with type " << type_name << ". "
                     "Did you process the summary before the messages? Skipping...");
             return;
@@ -162,12 +163,12 @@ void SqlReaderParticipant::process_messages()
         // Find the reader for the topic
         if (readers_.find(topic) == readers_.end())
         {
-            logError(DDSREPLAYER_SQL_READER_PARTICIPANT,
+            EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT,
                     "Failed to replay message in topic " << topic << ": topic not found, skipping...");
             return;
         }
 
-        logInfo(DDSREPLAYER_SQL_READER_PARTICIPANT,
+        EPROSIMA_LOG_INFO(DDSREPLAYER_SQL_READER_PARTICIPANT,
                 "Scheduling message to be replayed in topic " << topic << ".");
 
         // Set publication delay from original log time and configured playback rate
@@ -188,7 +189,7 @@ void SqlReaderParticipant::process_messages()
         // Wait until it's time to write the message
         wait_until_timestamp_(time_to_write);
 
-        logInfo(DDSREPLAYER_SQL_READER_PARTICIPANT,
+        EPROSIMA_LOG_INFO(DDSREPLAYER_SQL_READER_PARTICIPANT,
                 "Replaying message in topic " << topic << ".");
 
         // Insert new data in internal reader queue
@@ -208,7 +209,7 @@ void SqlReaderParticipant::open_file_()
                                                          << " for reading: " << sqlite3_errmsg(database_);
         sqlite3_close(database_);
 
-        logError(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_OPEN | " << error_msg);
+        EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_OPEN | " << error_msg);
         throw utils::InitializationException(error_msg);
     }
 }
@@ -234,7 +235,7 @@ void SqlReaderParticipant::exec_sql_statement_(
                                                          << sqlite3_errmsg(database_);
         sqlite3_finalize(stmt);
 
-        logError(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
+        EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
         throw std::runtime_error(error_msg);
     }
 
@@ -251,7 +252,7 @@ void SqlReaderParticipant::exec_sql_statement_(
             const std::string error_msg = utils::Formatter() << "Failed to bind SQL statement to read messages: "
                                                             << sqlite3_errmsg(database_);
 
-            logError(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
+            EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
             throw utils::InconsistencyException(error_msg);
         }
     }
@@ -269,7 +270,7 @@ void SqlReaderParticipant::exec_sql_statement_(
         const std::string error_msg = utils::Formatter() << "Failed to fetch data: "
                                                          << sqlite3_errmsg(database_);
 
-        logError(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
+        EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
         throw std::runtime_error(error_msg);
     }
 }

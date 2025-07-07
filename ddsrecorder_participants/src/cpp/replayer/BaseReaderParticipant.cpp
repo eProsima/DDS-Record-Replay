@@ -81,7 +81,7 @@ std::shared_ptr<ddspipe::core::IReader> BaseReaderParticipant::create_reader(
 {
     if (!utils::can_cast<ddspipe::core::types::DdsTopic>(topic))
     {
-        logWarning(DDSREPLAYER_SQL_READER_PARTICIPANT, "Not creating Writer for topic " << topic.topic_name());
+        EPROSIMA_LOG_WARNING(DDSREPLAYER_SQL_READER_PARTICIPANT, "Not creating Writer for topic " << topic.topic_name());
         return std::make_shared<ddspipe::participants::BlankReader>();
     }
 
@@ -160,7 +160,7 @@ utils::Timestamp BaseReaderParticipant::when_to_start_replay_(
 
     if (time < now)
     {
-        logWarning(DDSREPLAYER_SQL_READER_PARTICIPANT,
+        EPROSIMA_LOG_WARNING(DDSREPLAYER_SQL_READER_PARTICIPANT,
                 "Provided start-replay-time already expired, starting immediately...");
         return now;
     }

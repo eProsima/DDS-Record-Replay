@@ -132,7 +132,7 @@ void McapHandler::add_schema(
     }
 
     mcap::Schema new_schema(name, encoding, data);
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Schema created: " << new_schema.name << ".");
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER, "Schema created: " << new_schema.name << ".");
 
     // Add schema to writer
     EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
@@ -162,17 +162,14 @@ void McapHandler::add_schema(
         if (store_dynamic_type_(type_name, type_identifier))
         {
             // Recalculate the attachment
-            mcap_writer_.update_dynamic_types(Serializer::serialize(dynamic_types_));
+            std::string dynamic_types_serialized;
+            Serializer::serialize(dynamic_types_, dynamic_types_serialized);
+            mcap_writer_.update_dynamic_types(dynamic_types_serialized);
         }
     }
 
     // Check if there are any pending samples for this new type. If so, dump them.
-    if (pending_samples_.find(type_name) != pending_samples_.end() ||
-            (state_ == BaseHandlerStateCode::PAUSED &&
-            pending_samples_paused_.find(type_name) != pending_samples_paused_.end()))
-    {
-        dump_pending_samples_nts_(type_name);
-    }
+    dump_pending_samples_nts_(type_name);
 }
 
 void McapHandler::add_data(
@@ -194,14 +191,17 @@ void McapHandler::add_data(
                 "MCAP_WRITE | Error adding message in topic " << topic << ". Error message:\n " << e.what());
     }
 
-    process_new_sample_nts_(std::make_shared<const McapMessage>(
-            data, payload_pool_, topic, channel_id, configuration_.log_publishTime));
+    if (state_ != BaseHandlerStateCode::STOPPED)
+    {
+        process_new_sample_nts_(std::make_shared<const McapMessage>(
+                data, payload_pool_, topic, channel_id, configuration_.log_publishTime));
+    }
 }
 
 void McapHandler::write_samples_(
         std::list<std::shared_ptr<const BaseMessage>>& samples)
 {
-    logInfo(DDSRECORDER_MCAP_HANDLER, "Writing samples to MCAP file.");
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER, "Writing samples to MCAP file.");
 
     while (!samples.empty())
     {
@@ -209,7 +209,7 @@ void McapHandler::write_samples_(
 
         if (mcap_sample == nullptr)
         {
-            logWarning(DDSRECORDER_MCAP_HANDLER, "Error downcasting sample to McapMessage. Skipping...");
+            EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER, "Error downcasting sample to McapMessage. Skipping...");
             continue;
         }
 
@@ -253,7 +253,7 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
 
     // Create new channel
     mcap::KeyValueMap metadata = {};
-    metadata[QOS_SERIALIZATION_QOS] = Serializer::serialize(topic.topic_qos);
+    Serializer::serialize(topic.topic_qos, metadata[QOS_SERIALIZATION_QOS]);
 
     const auto topic_name = configuration_.ros2_types ? utils::demangle_if_ros_topic(topic.m_topic_name) : topic.m_topic_name;
     const auto is_topic_ros2_type = configuration_.ros2_types && topic_name != topic.m_topic_name;

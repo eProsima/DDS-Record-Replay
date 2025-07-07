@@ -35,17 +35,17 @@
 using namespace eprosima;
 
 /**
- * Test case to verify a logError is displayed when the opening mcap file fails
+ * Test case to verify a EPROSIMA_LOG_ERROR is displayed when the opening mcap file fails
  *
  * CASES:
  *  This test attemps to open a mcap file in a folder that does not exist, leading to
- *  its correspondent Log Error. An additional logError failing to rename the MCAP file
+ *  its correspondent Log Error. An additional EPROSIMA_LOG_ERROR failing to rename the MCAP file
  *  will appear when the McapHandler destructor is called (this happens after
  *  log_checker.check_valid() assertion)
  */
 TEST(McapLogErrorTest, fail_to_open_file) {
 
-    // Create an instance of the Log Checker to capture the LogError
+    // Create an instance of the Log Checker to capture the EPROSIMA_LOG_ERROR
     utils::testing::LogChecker log_checker(utils::Log::Kind::Error, 1, 1);
 
     // Verify that no logs have been captured yet
@@ -86,7 +86,7 @@ TEST(McapLogErrorTest, fail_to_open_file) {
         ddsrecorder::participants::McapHandler(config, payload_pool, file_tracker, init_state),
         utils::InitializationException);
 
-    // Verify that a logError was captured
+    // Verify that a EPROSIMA_LOG_ERROR was captured
     ASSERT_TRUE(log_checker.check_valid());
 }
 

@@ -40,58 +40,57 @@ public:
     /**
      * @brief Serialize \c object into a string.
      *
-     * @param [in] object Object to serialize
+     * @param [in]  object Object to serialize
+     * @param [out] serialized_str String to store the serialized object
+     *
      * @return Serialized object string
      */
     template <typename T>
-    static std::string serialize(
-            const T& object);
+    static bool serialize(
+            const T& object,
+            std::string& serialized_str);
 
     /**
      * @brief Deserialize \c serialized_str into \c T.
      *
-     * @param [in] serialized_str String to deserialize
+     * @param [in]  serialized_str String to deserialize
+     * @param [out] deserialized_object Reference to store the deserialized object
+     *
      * @return Deserialized \c T
      */
     template <typename T>
-    static T deserialize(
-            const std::string& serialized_str);
+    static bool deserialize(
+            const std::string& serialized_str,
+            T& deserialized_object);
 
 protected:
 
     /**
      * @brief Serialize a \c TypeObject or a \c TypeIdentifier into a string.
      *
-     * @param [in] object \c TypeObject or \c TypeIdentifier to serialize
+     * @param [in]  data \c TypeObject or \c TypeIdentifier to serialize
+     * @param [out] type_str String to store the serialized data
+     *
+     * @return Whether the serialization was successful
      */
     template <typename T>
-    static std::string type_data_to_type_str_(
-            const T& data);
+    static bool type_data_to_type_str_(
+            const T& data,
+            std::string& type_str);
 
     /**
      * @brief Deserialize \c type_str into a \c TypeObject or a \c TypeIdentifier.
      *
-     * @param [in] type_str String to deserialize
+     * @param [in]  type_str String to deserialize
+     * @param [out] type_data Reference to store the deserialized data
+     *
      * @return Deserialized \c TypeObject or \c TypeIdentifier
      */
     template <typename T>
-    static T type_str_to_type_data_(
-            const std::string& type_str);
+    static bool type_str_to_type_data_(
+            const std::string& type_str,
+            T& type_data);
 };
-
-// Explicitly declare the specializations
-template <>
-DDSRECORDER_PARTICIPANTS_DllAPI ddspipe::core::types::TopicQoS Serializer::deserialize(const std::string& topic_qos_str);
-
-template <>
-DDSRECORDER_PARTICIPANTS_DllAPI fastdds::dds::xtypes::TypeIdentifier Serializer::deserialize(const std::string& serialized_str);
-
-template <>
-DDSRECORDER_PARTICIPANTS_DllAPI fastdds::dds::xtypes::TypeObject Serializer::deserialize(const std::string& serialized_str);
-
-template <>
-DDSRECORDER_PARTICIPANTS_DllAPI DynamicTypesCollection Serializer::deserialize(const std::string& raw_data_str);
-
 
 } /* namespace participants */
 } /* namespace ddsrecorder */

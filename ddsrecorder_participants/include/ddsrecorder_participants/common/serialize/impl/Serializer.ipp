@@ -28,14 +28,17 @@
 #include <fastdds/rtps/common/CDRMessage_t.hpp>
 #include <fastdds/rtps/common/SerializedPayload.hpp>
 
+#include <cpp_utils/exception/InconsistencyException.hpp>
+
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
 
 
 template <typename T>
-std::string Serializer::type_data_to_type_str_(
-        const T& type_data)
+bool Serializer::type_data_to_type_str_(
+        const T& type_data,
+        std::string& type_str)
 {
     // Reserve payload and create buffer
     fastcdr::CdrSizeCalculator calculator(fastcdr::CdrVersion::XCDRv2);
@@ -61,16 +64,29 @@ std::string Serializer::type_data_to_type_str_(
     auto cdr_message = std::make_unique<fastdds::rtps::CDRMessage_t>(payload);
 
     // Add data
-    if (!(cdr_message && (cdr_message->pos + payload.length <= cdr_message->max_size))|| (payload.length > 0 && !payload.data))
+    if (!(cdr_message && (cdr_message->pos + payload.length <= cdr_message->max_size)) ||
+            (payload.length > 0 && !payload.data))
     {
-        // TODO Warning
+        if (!cdr_message)
+        {
+            throw utils::InconsistencyException(
+                      "Error adding data -> cdr_message is null.");
+        }
+        else if (cdr_message->pos + payload.length > cdr_message->max_size)
+        {
+            throw utils::InconsistencyException(
+                      "Error adding data -> not enough space in cdr_message buffer.");
+        }
+        else if (payload.length > 0 && !payload.data)
+        {
+            throw utils::InconsistencyException(
+                      "Error adding data -> payload length is greater than 0, but payload data is null.");
+        }
     }
-    else
-    {
-        memcpy(&cdr_message->buffer[cdr_message->pos], payload.data, payload.length);
-        cdr_message->pos += payload.length;
-        cdr_message->length += payload.length;
-    }
+
+    memcpy(&cdr_message->buffer[cdr_message->pos], payload.data, payload.length);
+    cdr_message->pos += payload.length;
+    cdr_message->length += payload.length;
 
     fastdds::rtps::octet value = 0;
 
@@ -79,8 +95,8 @@ std::string Serializer::type_data_to_type_str_(
         const std::uint32_t size_octet = sizeof(value);
         if (!(cdr_message && (cdr_message->pos + size_octet <= cdr_message->max_size)))
         {
-            // TODO Warning
-            continue;
+            throw utils::InconsistencyException(
+                      "Not enough space in cdr_message buffer.");
         }
 
         for (std::uint32_t i = 0; i < size_octet; i++)
@@ -93,18 +109,19 @@ std::string Serializer::type_data_to_type_str_(
     }
 
     // Copy buffer to string
-    std::string type_data_str(reinterpret_cast<char const*>(cdr_message->buffer), type_data_size);
+    type_str = std::string(reinterpret_cast<char const*>(cdr_message->buffer), type_data_size);
 
     // Delete CDR message
     // NOTE: set wraps attribute to avoid double free (buffer released by payload on destruction)
     cdr_message->wraps = true;
 
-    return type_data_str;
+    return true;
 }
 
 template <typename T>
-T Serializer::type_str_to_type_data_(
-        const std::string& type_str)
+bool Serializer::type_str_to_type_data_(
+        const std::string& type_str,
+        T& type_data)
 {
     // Create CDR message from string
     // NOTE: Use 0 length to avoid allocation
@@ -135,14 +152,13 @@ T Serializer::type_str_to_type_data_(
     payload.encapsulation = deser.endianness() == fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
 
     // Deserialize
-    T type_data;
     fastcdr::deserialize(deser, type_data);
 
     // Delete CDR message
     // NOTE: set wraps attribute to avoid double free (buffer released by string on destruction)
     cdr_message->wraps = true;
 
-    return type_data;
+    return true;
 }
 
 } /* namespace participants */

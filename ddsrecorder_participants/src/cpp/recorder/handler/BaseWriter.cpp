@@ -58,7 +58,7 @@ void BaseWriter::enable()
         return;
     }
 
-    logInfo(DDSRECORDER_BASE_WRITER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_BASE_WRITER,
             "WRITE | Enabling writer.");
 
     try
@@ -67,7 +67,7 @@ void BaseWriter::enable()
     }
     catch (const FullDiskException& e)
     {
-        logError(DDSRECORDER_BASE_WRITER,
+        EPROSIMA_LOG_ERROR(DDSRECORDER_BASE_WRITER,
                 "WRITE | Error opening a new output file: " << e.what());
         on_disk_full_();
     }
@@ -84,7 +84,7 @@ void BaseWriter::disable()
         return;
     }
 
-    logInfo(DDSRECORDER_BASE_WRITER,
+    EPROSIMA_LOG_INFO(DDSRECORDER_BASE_WRITER,
             "WRITE | Disabling writer.");
 
     close_current_file_nts_();

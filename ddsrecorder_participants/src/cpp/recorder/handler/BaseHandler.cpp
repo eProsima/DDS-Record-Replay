@@ -43,12 +43,12 @@ BaseHandler::BaseHandler(
     , payload_pool_(payload_pool)
     , state_(BaseHandlerStateCode::STOPPED)
 {
-    logInfo(DDSRECORDER_DATA_HANDLER, "Creating handler instance.");
+    EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Creating handler instance.");
 }
 
 BaseHandler::~BaseHandler()
 {
-    logInfo(DDSRECORDER_DATA_HANDLER, "Destroying handler.");
+    EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Destroying handler.");
 }
 
 void BaseHandler::init(
@@ -77,14 +77,14 @@ void BaseHandler::init(
 
 void BaseHandler::enable()
 {
-    logInfo(DDSRECORDER_BASE_HANDLER, "Enabling handler.");
+    EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Enabling handler.");
 
     writer_->enable();
 }
 
 void BaseHandler::disable()
 {
-    logInfo(DDSRECORDER_BASE_HANDLER, "Disabling handler.");
+    EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Disabling handler.");
 
     writer_->disable();
 }
@@ -109,14 +109,14 @@ void BaseHandler::start()
 
     if (prev_state == BaseHandlerStateCode::RUNNING)
     {
-        logWarning(
-            DDSRECORDER_DATA_HANDLER,
+        EPROSIMA_LOG_WARNING(
+            DDSRECORDER_BASE_HANDLER,
             "Ignoring start command, instance already started.");
     }
     else
     {
-        logInfo(
-            DDSRECORDER_DATA_HANDLER,
+        EPROSIMA_LOG_INFO(
+            DDSRECORDER_BASE_HANDLER,
             "Starting handler.");
 
         if (prev_state == BaseHandlerStateCode::STOPPED)
@@ -156,8 +156,8 @@ void BaseHandler::stop(
 
             if (!on_destruction)
             {
-                logWarning(
-                    DDSRECORDER_DATA_HANDLER,
+                EPROSIMA_LOG_WARNING(
+                    DDSRECORDER_BASE_HANDLER,
                     "Ignoring stop command, instance already stopped.");
             }
 
@@ -165,16 +165,16 @@ void BaseHandler::stop(
 
         case BaseHandlerStateCode::PAUSED:
 
+            EPROSIMA_LOG_INFO(
+                DDSRECORDER_BASE_HANDLER,
+                "Stopping handler.");
+
             // Stop event routine (cleans buffers)
             stop_event_thread_nts_(event_lock);
 
             [[fallthrough]];
 
         default:
-
-            logInfo(
-                DDSRECORDER_DATA_HANDLER,
-                "Stopping handler.");
 
             if (!configuration_.only_with_schema)
             {
@@ -214,14 +214,14 @@ void BaseHandler::pause()
 
     if (prev_state == BaseHandlerStateCode::PAUSED)
     {
-        logWarning(
-            DDSRECORDER_DATA_HANDLER,
+        EPROSIMA_LOG_WARNING(
+            DDSRECORDER_BASE_HANDLER,
             "Ignoring pause command, instance already paused.");
     }
     else
     {
-        logInfo(
-            DDSRECORDER_DATA_HANDLER,
+        EPROSIMA_LOG_INFO(
+            DDSRECORDER_BASE_HANDLER,
             "Pausing handler.");
 
         if (prev_state == BaseHandlerStateCode::STOPPED)
@@ -256,14 +256,14 @@ void BaseHandler::trigger_event()
 
     if (state_ != BaseHandlerStateCode::PAUSED)
     {
-        logWarning(
-            DDSRECORDER_DATA_HANDLER,
+        EPROSIMA_LOG_WARNING(
+            DDSRECORDER_BASE_HANDLER,
             "Ignoring trigger event command, instance is not paused.");
     }
     else
     {
-        logInfo(
-            DDSRECORDER_DATA_HANDLER,
+        EPROSIMA_LOG_INFO(
+            DDSRECORDER_BASE_HANDLER,
             "Triggering event.");
 
         // Notify event routine thread an event has been triggered
@@ -307,7 +307,7 @@ void BaseHandler::event_thread_routine_()
 
         if (event_flag_ == EventCode::stopped)
         {
-            logInfo(DDSRECORDER_DATA_HANDLER, "Finishing event thread routine.");
+            EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Finishing event thread routine.");
             keep_going = false;
         }
         else
@@ -322,11 +322,11 @@ void BaseHandler::event_thread_routine_()
 
             if (timeout)
             {
-                logInfo(DDSRECORDER_DATA_HANDLER, "Event thread timeout.");
+                EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Event thread timeout.");
             }
             else
             {
-                logInfo(DDSRECORDER_DATA_HANDLER, "Event triggered: writing buffered data.");
+                EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Event triggered: writing buffered data.");
 
                 if (!(configuration_.max_pending_samples == 0 && configuration_.only_with_schema))
                 {
@@ -373,7 +373,7 @@ void BaseHandler::stop_event_thread_nts_(
     // WARNING: state must have been set different to PAUSED before calling this method
     assert(state_ != BaseHandlerStateCode::PAUSED);
 
-    logInfo(DDSRECORDER_DATA_HANDLER, "Stopping event thread.");
+    EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Stopping event thread.");
 
     if (event_thread_.joinable())
     {
@@ -392,11 +392,11 @@ void BaseHandler::process_new_sample_nts_(
 {
     if (state_ == BaseHandlerStateCode::STOPPED)
     {
-        logInfo(DDSRECORDER_BASE_HANDLER, "Attempting to add sample through a stopped handler, dropping...");
+        EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Attempting to add sample through a stopped handler, dropping...");
         return;
     }
 
-    logInfo(DDSRECORDER_BASE_HANDLER, "Adding data in topic " << sample->topic);
+    EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Adding data in topic " << sample->topic);
 
     if (received_types_.find(sample->topic.type_name) != received_types_.end())
     {
@@ -410,22 +410,30 @@ void BaseHandler::process_new_sample_nts_(
 
             if (configuration_.max_pending_samples != 0)
             {
-                logInfo(DDSRECORDER_BASE_HANDLER,
+                EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER,
                         "Dynamic type for topic " << sample->topic << " not yet available, inserting to pending "
                         "samples queue.");
 
                 add_sample_to_pending_nts_(sample);
             }
-            else if (!configuration_.only_with_schema)
+            else
             {
-                // No schema available + no pending samples -> Add to buffer with blank schema
-                add_sample_to_buffer_nts_(sample);
+                if (!configuration_.only_with_schema)
+                {
+                    // No schema available + no pending samples -> Add to buffer with blank schema
+                    add_sample_to_buffer_nts_(sample);
+                }
+                else
+                {
+                    // No schema available + no pending samples + only_with_schema -> Discard message
+                    return;
+                }
             }
             break;
 
         case BaseHandlerStateCode::PAUSED:
 
-            logInfo(
+            EPROSIMA_LOG_INFO(
                 DDSRECORDER_BASE_HANDLER,
                 "Dynamic type for topic " << sample->topic << " not yet available, inserting to (paused) pending "
                 "samples queue.");
@@ -454,12 +462,12 @@ void BaseHandler::add_sample_to_buffer_nts_(
 
     if (samples_buffer_.size() == configuration_.buffer_size)
     {
-        logInfo(DDSRECORDER_BASE_HANDLER,
+        EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER,
                 "The buffer is full. Writing to disk...");
     }
     else
     {
-        logWarning(DDSRECORDER_BASE_HANDLER,
+        EPROSIMA_LOG_WARNING(DDSRECORDER_BASE_HANDLER,
                    "The buffer's size (" << samples_buffer_.size() << ") exceeds its limit (" <<
                    configuration_.buffer_size << "). Writing to disk...");
     }
@@ -492,13 +500,13 @@ void BaseHandler::add_sample_to_pending_nts_(
 
         if (configuration_.only_with_schema)
         {
-            logWarning(DDSRECORDER_BASE_HANDLER,
+            EPROSIMA_LOG_WARNING(DDSRECORDER_BASE_HANDLER,
                       "Dropping pending sample in type " << sample->topic.type_name << ": buffer limit (" <<
                       configuration_.max_pending_samples << ") reached.");
         }
         else
         {
-            logInfo(DDSRECORDER_BASE_HANDLER,
+            EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER,
                     "Buffer limit (" << configuration_.max_pending_samples <<  ") reached for type " <<
                     sample->topic.type_name << ": writing oldest sample without schema.");
 
@@ -512,7 +520,7 @@ void BaseHandler::add_sample_to_pending_nts_(
 void BaseHandler::dump_pending_samples_nts_(
         const std::string& type_name)
 {
-    logInfo(DDSRECORDER_BASE_HANDLER, "Adding pending samples for type: " << type_name << ".");
+    EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Adding pending samples for type: " << type_name << ".");
 
     if (pending_samples_.find(type_name) != pending_samples_.end())
     {
@@ -542,7 +550,7 @@ void BaseHandler::dump_pending_samples_nts_(
 
 void BaseHandler::remove_outdated_samples_nts_()
 {
-    logInfo(DDSRECORDER_BASE_HANDLER, "Removing outdated samples.");
+    EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Removing outdated samples.");
 
     ddspipe::core::types::DataTime threshold;
     ddspipe::core::types::DataTime::now(threshold);
@@ -551,7 +559,7 @@ void BaseHandler::remove_outdated_samples_nts_()
     // NOTE: the outdated pending samples are not removed since they must be written as soon as they receive their type.
 
     // Buffer
-    samples_buffer_.remove_if([&](const auto sample)
+    samples_buffer_.remove_if([&](const auto& sample)
             {
                 return sample->log_time < threshold;
             });
@@ -637,8 +645,14 @@ bool BaseHandler::store_dynamic_type_(
 
     try
     {
-        dynamic_type.type_information(utils::base64_encode(Serializer::serialize(type_identifier)));
-        dynamic_type.type_object(utils::base64_encode(Serializer::serialize(type_object)));
+        std::string serialized_obj;
+
+        Serializer::serialize(type_identifier, serialized_obj);
+        dynamic_type.type_identifier(utils::base64_encode(serialized_obj));
+
+        serialized_obj.clear();
+        Serializer::serialize(type_object, serialized_obj);
+        dynamic_type.type_object(utils::base64_encode(serialized_obj));
     }
     catch (const utils::InconsistencyException& e)
     {
