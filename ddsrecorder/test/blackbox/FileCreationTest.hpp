@@ -71,7 +71,7 @@ enum class EventKind
 };
 
 class FileCreationTest : public testing::Test,
-                         public fastdds::dds::DataWriterListener
+    public fastdds::dds::DataWriterListener
 {
 public:
 
@@ -187,7 +187,8 @@ protected:
 
         // Send more messages
         const auto sent_messages_after_transition = send_messages_(messages2);
-        sent_messages.insert(sent_messages.end(), sent_messages_after_transition.begin(), sent_messages_after_transition.end());
+        sent_messages.insert(sent_messages.end(),
+                sent_messages_after_transition.begin(), sent_messages_after_transition.end());
 
         if (event != EventKind::NO_EVENT && state2 == DdsRecorderState::PAUSED)
         {
@@ -254,7 +255,8 @@ protected:
             const HelloWorld& message)
     {
         HelloWorldPubSubType pubsubType;
-        const auto payload_size = pubsubType.calculate_serialized_size(&message, fastdds::dds::DEFAULT_DATA_REPRESENTATION);
+        const auto payload_size = pubsubType.calculate_serialized_size(&message,
+                        fastdds::dds::DEFAULT_DATA_REPRESENTATION);
         auto payload = std::make_shared<fastdds::rtps::SerializedPayload_t>(payload_size);
         pubsubType.serialize(&message, *payload, fastdds::dds::DEFAULT_DATA_REPRESENTATION);
 
@@ -267,20 +269,21 @@ protected:
         // Get type object
         fastdds::dds::xtypes::TypeObjectPair type_objects;
         fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().get_type_objects(
-                    type_support_->get_name(),
-                    type_objects);
+            type_support_->get_name(),
+            type_objects);
 
         // Build dynamic type
         fastdds::dds::DynamicType::_ref_type dyn_type =
-            fastdds::dds::DynamicTypeBuilderFactory::get_instance()->create_type_w_type_object(
-                type_objects.complete_type_object)->build();
+                fastdds::dds::DynamicTypeBuilderFactory::get_instance()->create_type_w_type_object(
+            type_objects.complete_type_object)->build();
 
         // Build dynamic data
         fastdds::dds::DynamicData::_ref_type dyn_data =
-            fastdds::dds::DynamicDataFactory::get_instance()->create_data(dyn_type);
+                fastdds::dds::DynamicDataFactory::get_instance()->create_data(dyn_type);
 
         // Transform the message into DynamicData
-        const auto payload_size = type_support_->calculate_serialized_size(&message, fastdds::dds::DEFAULT_DATA_REPRESENTATION);
+        const auto payload_size = type_support_->calculate_serialized_size(&message,
+                        fastdds::dds::DEFAULT_DATA_REPRESENTATION);
         auto payload = std::make_shared<fastdds::rtps::SerializedPayload_t>(payload_size);
         type_support_->serialize(&message, *payload, fastdds::dds::DEFAULT_DATA_REPRESENTATION);
 
@@ -340,10 +343,14 @@ protected:
         }
     }
 
-    void wait_for_matching(std::chrono::seconds timeout = std::chrono::seconds(2))
+    void wait_for_matching(
+            std::chrono::seconds timeout = std::chrono::seconds(2))
     {
         std::unique_lock<std::mutex> lock(mtx_);
-        cv_.wait_for(lock, timeout, [this]() { return matched_; });
+        cv_.wait_for(lock, timeout, [this]()
+                {
+                    return matched_;
+                });
 
         if (!matched_)
         {

@@ -82,7 +82,7 @@ void SqlHandler::add_schema(
     if (configuration_.record_types)
     {
         // Add type to the collection of dynamic types
-        if(store_dynamic_type_(type_name, type_identifier))
+        if (store_dynamic_type_(type_name, type_identifier))
         {
             const auto dynamic_type = dynamic_types_.dynamic_types().back();
             sql_writer_.update_dynamic_types(dynamic_type);
@@ -100,7 +100,7 @@ void SqlHandler::add_data(
     std::unique_lock<std::mutex> lock(mtx_);
 
     process_new_sample_nts_(std::make_shared<const SqlMessage>(
-            data, payload_pool_, topic));
+                data, payload_pool_, topic));
 }
 
 void SqlHandler::write_samples_(
@@ -136,9 +136,9 @@ void SqlHandler::write_samples_(
             if (received_types_.find(sql_sample->topic.type_name) == received_types_.end())
             {
                 EPROSIMA_LOG_WARNING(DDSRECORDER_SQL_HANDLER,
-                          "Message on topic " << sql_sample->topic.m_topic_name <<
-                          " with type " << sql_sample->topic.type_name <<
-                          " cannot be formatted to JSON since the type has not been received.");
+                        "Message on topic " << sql_sample->topic.m_topic_name <<
+                        " with type " << sql_sample->topic.type_name <<
+                        " cannot be formatted to JSON since the type has not been received.");
             }
             else
             {

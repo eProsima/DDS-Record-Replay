@@ -27,106 +27,123 @@ using namespace eprosima::ddsrecorder::yaml;
 
 #include <string>
 
-struct ResourceLimits {
+struct ResourceLimits
+{
     uint64_t max_size = 35 * 1024;        // Default max size
     uint64_t max_file_size = 7 * 1024;    // Default max file size
     uint64_t size_tolerance = 2 * 1024;   // Default size tolerance
     bool log_rotation = true;             // Default log rotation
 };
 
-struct RecorderConfig {
-    struct OutputConfig {
+struct RecorderConfig
+{
+    struct OutputConfig
+    {
         uint64_t safety_margin = 350 * 1024; // Default safety margin
-    } output;
+    }
+    output;
 
-    struct McapConfig {
+    struct McapConfig
+    {
         bool enable = false;                 // Default disabled
         ResourceLimits resource_limits = {}; // Default initialized ResourceLimits
-    } mcap;
+    }
+    mcap;
 
-    struct SqlConfig {
+    struct SqlConfig
+    {
         bool enable = false;                 // Default disabled
         ResourceLimits resource_limits = {}; // Default initialized ResourceLimits
-    } sql;
+    }
+    sql;
 };
 
 void resource_limits_builder(
-    const ResourceLimits &resource_limits, 
-    std::string &yml_str)
+        const ResourceLimits& resource_limits,
+        std::string& yml_str)
+{
+    if (resource_limits.max_size > 0)
     {
-        if(resource_limits.max_size > 0)
-            yml_str += 
-            "      max-size: \"" + std::to_string(resource_limits.max_size) + "KB\"\n";
-        if(resource_limits.max_file_size > 0)
-            yml_str += 
-            "      max-file-size: \"" + std::to_string(resource_limits.max_file_size) + "KB\"\n";
-        if(resource_limits.size_tolerance > 0)
-            yml_str += 
-            "      size-tolerance: \"" + std::to_string(resource_limits.size_tolerance) + "KB\"\n";
-        if(resource_limits.log_rotation)
-            yml_str += 
-            "      log-rotation: true\n";
+        yml_str +=
+                "      max-size: \"" + std::to_string(resource_limits.max_size) + "KB\"\n";
     }
-
+    if (resource_limits.max_file_size > 0)
+    {
+        yml_str +=
+                "      max-file-size: \"" + std::to_string(resource_limits.max_file_size) + "KB\"\n";
+    }
+    if (resource_limits.size_tolerance > 0)
+    {
+        yml_str +=
+                "      size-tolerance: \"" + std::to_string(resource_limits.size_tolerance) + "KB\"\n";
+    }
+    if (resource_limits.log_rotation)
+    {
+        yml_str +=
+                "      log-rotation: true\n";
+    }
+}
 
 std::unique_ptr<RecorderConfiguration> config_builder(
         RecorderConfig config)
-    {
+{
 
-        std::string yml_str = 
+    std::string yml_str =
             "dds:\n"
             "  domain: 1\n"
             "recorder:\n"
             "  output:\n";
-            // "    filename: test\n"
-            // "    path: \"" + std::filesystem::current_path().string() + "\"\n";
-        
-        if(config.output.safety_margin > 0)
-            yml_str += 
-            "    safety-margin: \"" + std::to_string(config.output.safety_margin) + "B\"\n";
+    // "    filename: test\n"
+    // "    path: \"" + std::filesystem::current_path().string() + "\"\n";
 
-        if(config.mcap.enable)
-        {
-            yml_str += 
-            "  mcap:\n"
-            "    enable: true\n"
-            "    resource-limits:\n";
-            resource_limits_builder(config.mcap.resource_limits, yml_str);            
-        }
-        else
-        {
-            yml_str += 
-            "  mcap:\n"
-            "    enable: false\n";
-        }
-
-        if(config.sql.enable)
-        {
-            yml_str += 
-            "  sql:\n"
-            "    enable: true\n"
-            "    resource-limits:\n";
-            resource_limits_builder(config.sql.resource_limits, yml_str);
-        }
-        else
-        {
-            yml_str += 
-            "  sql:\n"
-            "    enable: false\n";
-        }
-
-        std::cout << yml_str << std::endl;
-
-        Yaml yml = YAML::Load(yml_str);
-
-        CommandlineArgsRecorder commandline_args;
-
-        // Setting CommandLine arguments as if configured from CommandLine
-        commandline_args.log_filter[eprosima::utils::VerbosityKind::Warning].set_value("DDSRECORDER|DDSPIPE|DEBUG");
-
-        // Load configuration from YAML
-        return std::make_unique<RecorderConfiguration>(yml, &commandline_args);
+    if (config.output.safety_margin > 0)
+    {
+        yml_str +=
+                "    safety-margin: \"" + std::to_string(config.output.safety_margin) + "B\"\n";
     }
+
+    if (config.mcap.enable)
+    {
+        yml_str +=
+                "  mcap:\n"
+                "    enable: true\n"
+                "    resource-limits:\n";
+        resource_limits_builder(config.mcap.resource_limits, yml_str);
+    }
+    else
+    {
+        yml_str +=
+                "  mcap:\n"
+                "    enable: false\n";
+    }
+
+    if (config.sql.enable)
+    {
+        yml_str +=
+                "  sql:\n"
+                "    enable: true\n"
+                "    resource-limits:\n";
+        resource_limits_builder(config.sql.resource_limits, yml_str);
+    }
+    else
+    {
+        yml_str +=
+                "  sql:\n"
+                "    enable: false\n";
+    }
+
+    std::cout << yml_str << std::endl;
+
+    Yaml yml = YAML::Load(yml_str);
+
+    CommandlineArgsRecorder commandline_args;
+
+    // Setting CommandLine arguments as if configured from CommandLine
+    commandline_args.log_filter[eprosima::utils::VerbosityKind::Warning].set_value("DDSRECORDER|DDSPIPE|DEBUG");
+
+    // Load configuration from YAML
+    return std::make_unique<RecorderConfiguration>(yml, &commandline_args);
+}
 
 /**
  * Check RecorderConfiguration structure creation.
@@ -140,7 +157,7 @@ TEST(YamlResourceLimitsTest, none)
     config.sql.enable = false;
     config.mcap.enable = false;
 
-    
+
     std::unique_ptr<RecorderConfiguration> configuration = config_builder(config);
 
     utils::Formatter error_msg;
@@ -162,7 +179,7 @@ TEST(YamlResourceLimitsTest, full_config)
     config.mcap.enable = true;
     config.sql.resource_limits.max_file_size = 0;
 
-    
+
     std::unique_ptr<RecorderConfiguration> configuration = config_builder(config);
 
     utils::Formatter error_msg;
@@ -186,17 +203,17 @@ TEST(YamlResourceLimitsTest, sql_max_file_size)
     config.sql.enable = true;
     config.sql.resource_limits.max_file_size = 7 * 1024;
 
-    
+
     std::unique_ptr<RecorderConfiguration> configuration = config_builder(config);
 
     utils::Formatter error_msg_A;
 
     ASSERT_FALSE(configuration->is_valid(error_msg_A));
     ASSERT_GE(std::string(error_msg_A).size(), 0);
-    
+
     // B
     config.sql.resource_limits.max_size = 0;
-    
+
     configuration = config_builder(config);
 
     utils::Formatter error_msg_B;
@@ -206,7 +223,7 @@ TEST(YamlResourceLimitsTest, sql_max_file_size)
 
     // C
     config.sql.resource_limits.max_size = config.sql.resource_limits.max_file_size;
-    
+
     configuration = config_builder(config);
 
     utils::Formatter error_msg_C;
@@ -229,7 +246,7 @@ TEST(YamlResourceLimitsTest, sql_log_rotation)
     config.sql.resource_limits.max_file_size = 0;
     config.sql.resource_limits.log_rotation = true;
 
-    
+
     std::unique_ptr<RecorderConfiguration> configuration = config_builder(config);
 
     utils::Formatter error_msg;
@@ -251,7 +268,7 @@ TEST(YamlResourceLimitsTest, mcap_max_size)
     config.sql.enable = true;
     config.sql.resource_limits.max_file_size = 7 * 1024;
 
-    
+
     std::unique_ptr<RecorderConfiguration> configuration = config_builder(config);
 
     utils::Formatter error_msg_A;
@@ -276,7 +293,7 @@ TEST(YamlResourceLimitsTest, mcap_file_rotation)
     config.mcap.resource_limits.max_file_size = 0;
     config.mcap.resource_limits.log_rotation = true;
 
-    
+
     std::unique_ptr<RecorderConfiguration> configuration = config_builder(config);
 
     utils::Formatter error_msg_A;

@@ -53,8 +53,8 @@ SqlWriter::SqlWriter(
     : BaseWriter(configuration, file_tracker, record_types, MIN_SQL_SIZE)
     , ros2_types_(ros2_types)
     , data_format_(data_format)
-    , check_interval_(configuration.resource_limits.size_tolerance_/2)
-    , size_checkpoint_(configuration.resource_limits.size_tolerance_/4)
+    , check_interval_(configuration.resource_limits.size_tolerance_ / 2)
+    , size_checkpoint_(configuration.resource_limits.size_tolerance_ / 4)
 {
 }
 
@@ -76,8 +76,8 @@ void SqlWriter::open_new_file_nts_(
     catch (const std::invalid_argument& e)
     {
         throw FullDiskException(
-                    "The minimum SQL size (" + utils::from_bytes(min_file_size) + ") is greater than the maximum SQL "
-                    "size (" + utils::from_bytes(configuration_.resource_limits.max_file_size_) + ").");
+                  "The minimum SQL size (" + utils::from_bytes(min_file_size) + ") is greater than the maximum SQL "
+                  "size (" + utils::from_bytes(configuration_.resource_limits.max_file_size_) + ").");
     }
 
     const auto filename = file_tracker_->get_current_filename();
@@ -102,12 +102,17 @@ void SqlWriter::open_new_file_nts_(
     sqlite3_stmt* stmt;
     const char* query = "PRAGMA page_size;";
 
-    if (sqlite3_prepare_v2(database_, query, -1, &stmt, nullptr) == SQLITE_OK) {
-        if (sqlite3_step(stmt) == SQLITE_ROW) {
+    if (sqlite3_prepare_v2(database_, query, -1, &stmt, nullptr) == SQLITE_OK)
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
             page_size_ = sqlite3_column_int(stmt, 0);
         }
-    } else {
-        const std::string error_msg = utils::Formatter() << "Failed to calculate SQL page size: " << sqlite3_errmsg(database_);
+    }
+    else
+    {
+        const std::string error_msg = utils::Formatter() << "Failed to calculate SQL page size: " << sqlite3_errmsg(
+            database_);
         sqlite3_close(database_);
 
         EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_OPEN | " << error_msg);
@@ -132,7 +137,7 @@ void SqlWriter::open_new_file_nts_(
     // Create Types table
     // NOTE: These tables creation should never fail since the minimum size accounts for them.
     const std::string create_types_table{
-    R"(
+        R"(
         CREATE TABLE IF NOT EXISTS Types (
             name TEXT PRIMARY KEY NOT NULL,
             information TEXT NOT NULL,
@@ -145,7 +150,7 @@ void SqlWriter::open_new_file_nts_(
 
     // Create Topics table
     const std::string create_topics_table{
-    R"(
+        R"(
         CREATE TABLE IF NOT EXISTS Topics (
             name TEXT NOT NULL,
             type TEXT NOT NULL,
@@ -160,7 +165,7 @@ void SqlWriter::open_new_file_nts_(
 
     // Create Messages table
     const std::string create_messages_table{
-    R"(
+        R"(
         CREATE TABLE IF NOT EXISTS Messages (
             writer_guid TEXT NOT NULL,
             sequence_number INTEGER NOT NULL,
@@ -195,7 +200,8 @@ void SqlWriter::write_nts_(
     EPROSIMA_LOG_INFO(DDSRECORDER_SQL_WRITER, "Writing dynamic type " << dynamic_type.type_name() << ".");
 
     // Define the SQL statement
-    const char* insert_statement = R"(
+    const char* insert_statement =
+            R"(
         INSERT INTO Types (name, information, object, is_ros2_type)
         VALUES (?, ?, ?, ?);
     )";
@@ -215,7 +221,8 @@ void SqlWriter::write_nts_(
     }
 
     // Bind the DynamicType to the SQL statement
-    const auto type_name = ros2_types_ ? utils::demangle_if_ros_type(dynamic_type.type_name()) : dynamic_type.type_name();
+    const auto type_name =
+            ros2_types_ ? utils::demangle_if_ros_type(dynamic_type.type_name()) : dynamic_type.type_name();
     const auto is_type_ros2_type = ros2_types_ && type_name != dynamic_type.type_name();
 
     sqlite3_bind_text(statement, 1, type_name.c_str(), -1, SQLITE_TRANSIENT);
@@ -231,7 +238,8 @@ void SqlWriter::write_nts_(
     entry_size += dynamic_type.type_object().size();
     entry_size += sizeof("false");
 
-    try{
+    try
+    {
         size_control_(entry_size, true);
     }
     catch (const FullFileException& e)
@@ -279,7 +287,8 @@ void SqlWriter::write_nts_(
     EPROSIMA_LOG_INFO(DDSRECORDER_SQL_WRITER, "Writing << " << messages.size() << " messages.");
 
     // Define the SQL statement for batch insert
-    const char* insert_statement = R"(
+    const char* insert_statement =
+            R"(
         INSERT INTO Messages (writer_guid, sequence_number, data_json, data_cdr, data_cdr_size, topic, type, key, log_time, publish_time)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     )";
@@ -365,7 +374,8 @@ void SqlWriter::write_nts_(
         entry_size += to_sql_timestamp(message.log_time).size();
         entry_size += to_sql_timestamp(message.publish_time).size();
 
-        try{
+        try
+        {
             size_control_(entry_size, false);
         }
         catch (const FullFileException& e)
@@ -431,7 +441,8 @@ void SqlWriter::write_nts_(
     EPROSIMA_LOG_INFO(DDSRECORDER_SQL_WRITER, "Writing topic " << topic.topic_name() << ".");
 
     // Define the SQL statement
-    const char* insert_statement = R"(
+    const char* insert_statement =
+            R"(
         INSERT INTO Topics (name, type, qos, is_ros2_topic)
         VALUES (?, ?, ?, ?);
     )";
@@ -443,7 +454,7 @@ void SqlWriter::write_nts_(
     if (prep_ret != SQLITE_OK)
     {
         const std::string error_msg = utils::Formatter() << "Failed to prepare SQL statement to write topic: "
-                                                        << sqlite3_errmsg(database_);
+                                                         << sqlite3_errmsg(database_);
         sqlite3_finalize(statement);
 
         EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
@@ -469,7 +480,8 @@ void SqlWriter::write_nts_(
     entry_size += topic_qos_serialized.size();
     entry_size += sizeof("false");
 
-    try{
+    try
+    {
         size_control_(entry_size, false);
     }
     catch (const FullFileException& e)
@@ -493,7 +505,7 @@ void SqlWriter::write_nts_(
     if (step_ret != SQLITE_DONE)
     {
         const std::string error_msg = utils::Formatter() << "Failed to write topic to SQL database: "
-                                                        << sqlite3_errmsg(database_);
+                                                         << sqlite3_errmsg(database_);
         sqlite3_finalize(statement);
 
         EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
@@ -549,7 +561,8 @@ std::uint64_t SqlWriter::remove_oldest_entries_(
     while (freed_size < size_required)
     {
         // SQL query to select the oldest message based on publish_time
-        const char* select_oldest_statement = R"(
+        const char* select_oldest_statement =
+                R"(
             SELECT rowid, LENGTH(writer_guid), LENGTH(sequence_number), LENGTH(data_json),
                    LENGTH(data_cdr), data_cdr_size, LENGTH(topic), LENGTH(type),
                    LENGTH(key), LENGTH(log_time), LENGTH(publish_time)
@@ -563,7 +576,7 @@ std::uint64_t SqlWriter::remove_oldest_entries_(
         {
             // Failed to prepare select statement
             const std::string error_msg = utils::Formatter() << "Failed to prepare SQL select statement to free space: "
-                                                         << sqlite3_errmsg(database_);
+                                                             << sqlite3_errmsg(database_);
             sqlite3_finalize(select_stmt);
 
             EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_REMOVE | " << error_msg);
@@ -621,48 +634,64 @@ std::uint64_t SqlWriter::remove_oldest_entries_(
 
     // Vacuum as many pages as the freed size in bytes
     int pages_to_reclaim = size_required / page_size_;
-    if (pages_to_reclaim > 0) {
-        sqlite3_exec(database_, ("PRAGMA incremental_vacuum = " + std::to_string(pages_to_reclaim) + ";").c_str(), nullptr, nullptr, nullptr);
+    if (pages_to_reclaim > 0)
+    {
+        sqlite3_exec(database_, ("PRAGMA incremental_vacuum = " + std::to_string(
+                    pages_to_reclaim) + ";").c_str(), nullptr, nullptr, nullptr);
     }
 
     return(freed_size);
 }
 
-size_t SqlWriter::calculate_int_storage_size(std::int64_t value) const noexcept
+size_t SqlWriter::calculate_int_storage_size(
+        std::int64_t value) const noexcept
 {
-    if (value >= 0 && value <= 127) {
+    if (value >= 0 && value <= 127)
+    {
         return 1;
-    } else if (value >= -32768 && value <= 32767) {
+    }
+    else if (value >= -32768 && value <= 32767)
+    {
         return 2;
-    } else if (value >= -8388608 && value <= 8388607) {
+    }
+    else if (value >= -8388608 && value <= 8388607)
+    {
         return 3;
-    } else if (value >= -2147483648LL && value <= 2147483647LL) {
+    }
+    else if (value >= -2147483648LL && value <= 2147483647LL)
+    {
         return 4;
-    } else if (value >= -1099511627776LL && value <= 1099511627775LL) {
+    }
+    else if (value >= -1099511627776LL && value <= 1099511627775LL)
+    {
         return 6;
-    } else {
+    }
+    else
+    {
         return 8;
     }
 }
 
-void SqlWriter::size_control_(size_t entry_size, bool force)
+void SqlWriter::size_control_(
+        size_t entry_size,
+        bool force)
 {
     // Add a fixed overhead per row for SQLite storage (headers, etc.)
     constexpr size_t SQLITE_ROW_OVERHEAD = 67;
     entry_size += SQLITE_ROW_OVERHEAD;
 
     // Check if the entry fits in the current file or it has been forced
-    if(written_sql_size_ + entry_size > configuration_.resource_limits.max_file_size_ && !force)
+    if (written_sql_size_ + entry_size > configuration_.resource_limits.max_file_size_ && !force)
     {
         bool free_space = false;
         // Free space in case of file rotation
-        if(configuration_.resource_limits.file_rotation_)
+        if (configuration_.resource_limits.file_rotation_)
         {
             try
             {
                 // To avoid removing entries in every write, we will try to free space for entities_multiplier*entries, in a range [pages_multiplier pages, file_percentage]
                 constexpr float file_percentage = 0.05;
-                std::uint64_t desired_space = configuration_.resource_limits.max_file_size_*file_percentage;
+                std::uint64_t desired_space = configuration_.resource_limits.max_file_size_ * file_percentage;
 
                 std::uint64_t remove_size = remove_oldest_entries_(desired_space);
                 written_sql_size_ -= remove_size;
@@ -683,14 +712,15 @@ void SqlWriter::size_control_(size_t entry_size, bool force)
         }
 
         // If there is no free space, close the current file
-        if(! free_space)
+        if (!free_space)
         {
             EPROSIMA_LOG_INFO(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << "SQL file is full.");
             throw FullFileException(
-                STR_ENTRY << "Attempted to write " << utils::from_bytes(entry_size) << " on a SQL of "
-                            << utils::from_bytes(written_sql_size_) << " but there is not enough space available: "
-                            << utils::from_bytes(configuration_.resource_limits.max_file_size_ - written_sql_size_) << "."
-                    , entry_size);
+                      STR_ENTRY << "Attempted to write " << utils::from_bytes(entry_size) << " on a SQL of "
+                                << utils::from_bytes(written_sql_size_) << " but there is not enough space available: "
+                                << utils::from_bytes(
+                          configuration_.resource_limits.max_file_size_ - written_sql_size_) << "."
+                          , entry_size);
         }
     }
 
@@ -698,7 +728,8 @@ void SqlWriter::size_control_(size_t entry_size, bool force)
     written_sql_size_ += entry_size;
 
     // Check the actual size of the file if check_interval_ has passed
-    if(written_sql_size_ - checked_written_sql_size_ > check_interval_){
+    if (written_sql_size_ - checked_written_sql_size_ > check_interval_)
+    {
         check_file_size_();
     }
 }
@@ -707,7 +738,8 @@ void SqlWriter::check_file_size_()
 {
     const auto filename = file_tracker_->get_current_filename();
     auto file_size = std::filesystem::file_size(filename);
-    if(checked_actual_sql_size_ != file_size){
+    if (checked_actual_sql_size_ != file_size)
+    {
         checked_actual_sql_size_ = file_size;
         written_sql_size_ = file_size;
     }

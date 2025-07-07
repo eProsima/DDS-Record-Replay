@@ -66,7 +66,8 @@ DdsReplayer::DdsReplayer(
     std::regex ext_regex(R"(.*\.([a-zA-Z0-9]+)$)");
     std::smatch match;
 
-    if (std::regex_match(input_file, match, ext_regex)) {
+    if (std::regex_match(input_file, match, ext_regex))
+    {
         // Capture the extension (e.g., "db", "DB", etc.)
         std::string ext = match[1];
 
@@ -192,7 +193,8 @@ std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair> DdsReplayer::reg
         // Deserialize type identifier
         const auto type_identifier_str = utils::base64_decode(dynamic_type.type_identifier());
         fastdds::dds::xtypes::TypeIdentifier type_identifier;
-        participants::Serializer::deserialize<fastdds::dds::xtypes::TypeIdentifier>(type_identifier_str, type_identifier);
+        participants::Serializer::deserialize<fastdds::dds::xtypes::TypeIdentifier>(type_identifier_str,
+                type_identifier);
 
         // Deserialize type object
         const auto type_object_str = utils::base64_decode(dynamic_type.type_object());
@@ -203,7 +205,7 @@ std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair> DdsReplayer::reg
         fastdds::dds::xtypes::TypeIdentifierPair type_identifiers;
         type_identifiers.type_identifier1(type_identifier);
         fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().register_type_object(
-                type_object, type_identifiers);
+            type_object, type_identifiers);
 
         std::cout << "Registered type: " << dynamic_type.type_name() << std::endl;
 

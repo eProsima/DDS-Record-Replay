@@ -21,7 +21,7 @@ namespace eprosima {
 namespace ddspipe {
 namespace core {
 
-    class PayloadPool;
+class PayloadPool;
 
 } /* namespace core */
 } /* namespace ddspipe */
@@ -46,6 +46,7 @@ public:
     {
 
     }
+
 };
 
 } /* namespace participants */

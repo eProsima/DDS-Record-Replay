@@ -29,15 +29,15 @@ namespace ddsrecorder {
 namespace participants {
 
 BaseMessage::BaseMessage(
-    const ddspipe::core::types::Payload& payload,
-    ddspipe::core::PayloadPool* payload_owner)
+        const ddspipe::core::types::Payload& payload,
+        ddspipe::core::PayloadPool* payload_owner)
     : payload_owner(payload_owner)
 {
     if (payload.length == 0)
     {
         throw utils::InconsistencyException(
-                    STR_ENTRY << "Received sample with no payload."
-                    );
+                  STR_ENTRY << "Received sample with no payload."
+                  );
     }
 
     payload_owner->get_payload(
@@ -46,9 +46,9 @@ BaseMessage::BaseMessage(
 }
 
 BaseMessage::BaseMessage(
-    const ddspipe::core::types::RtpsPayloadData& data,
-    std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
-    const ddspipe::core::types::DdsTopic& topic)
+        const ddspipe::core::types::RtpsPayloadData& data,
+        std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
+        const ddspipe::core::types::DdsTopic& topic)
     : BaseMessage(data.payload, payload_pool.get())
 {
     this->topic = topic;

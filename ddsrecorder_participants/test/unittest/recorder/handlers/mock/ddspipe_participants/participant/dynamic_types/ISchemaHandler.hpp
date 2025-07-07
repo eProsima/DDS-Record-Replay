@@ -54,18 +54,19 @@ class ISchemaHandler
 public:
 
     virtual void add_schema(
-            const fastdds::dds::DynamicType::_ref_type& ,
+            const fastdds::dds::DynamicType::_ref_type&,
             const fastdds::dds::xtypes::TypeIdentifier& )
     {
 
     }
 
     virtual void add_data(
-            const ddspipe::core::types::DdsTopic& ,
+            const ddspipe::core::types::DdsTopic&,
             ddspipe::core::types::RtpsPayloadData& )
     {
 
     }
+
 };
 
 } /* namespace participants */

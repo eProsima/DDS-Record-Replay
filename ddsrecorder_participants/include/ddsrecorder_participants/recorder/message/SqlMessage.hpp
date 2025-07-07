@@ -50,10 +50,10 @@ struct SqlMessage : public BaseMessage
      * @brief Construct a \c SqlMessage.
      */
     SqlMessage(
-        const ddspipe::core::types::RtpsPayloadData& payload,
-        std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
-        const ddspipe::core::types::DdsTopic& topic,
-        const std::string& key = "");
+            const ddspipe::core::types::RtpsPayloadData& payload,
+            std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
+            const ddspipe::core::types::DdsTopic& topic,
+            const std::string& key = "");
 
     /**
      * @brief Deserialize the payload's data into a JSON object.
@@ -107,8 +107,8 @@ protected:
      * @param key_json JSON object containing the key values.
      */
     void remove_nonkey_values_(
-        const fastdds::dds::DynamicType::_ref_type& dynamic_type,
-        nlohmann::json& key_json);
+            const fastdds::dds::DynamicType::_ref_type& dynamic_type,
+            nlohmann::json& key_json);
 };
 
 } /* namespace participants */

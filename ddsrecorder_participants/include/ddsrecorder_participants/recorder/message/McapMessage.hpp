@@ -46,11 +46,11 @@ struct McapMessage : public BaseMessage, public mcap::Message
      * @brief Construct a \c McapMessage.
      */
     McapMessage(
-        const ddspipe::core::types::RtpsPayloadData& data,
-        std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
-        const ddspipe::core::types::DdsTopic& topic,
-        const mcap::ChannelId channel_id,
-        const bool log_publish_time);
+            const ddspipe::core::types::RtpsPayloadData& data,
+            std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
+            const ddspipe::core::types::DdsTopic& topic,
+            const mcap::ChannelId channel_id,
+            const bool log_publish_time);
 
     // Number of McapMessages created
     static std::atomic<std::uint32_t> number_of_msgs;

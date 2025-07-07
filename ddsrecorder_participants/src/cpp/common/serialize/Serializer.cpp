@@ -74,7 +74,8 @@ bool Serializer::serialize(
 
     // Serialize dynamic types collection using CDR
     fastdds::dds::TypeSupport type_support(new DynamicTypesCollectionPubSubType());
-    fastdds::rtps::SerializedPayload_t payload(type_support.calculate_serialized_size(dynamic_types_ptr, fastdds::dds::DEFAULT_DATA_REPRESENTATION));
+    fastdds::rtps::SerializedPayload_t payload(type_support.calculate_serialized_size(dynamic_types_ptr,
+            fastdds::dds::DEFAULT_DATA_REPRESENTATION));
     type_support.serialize(dynamic_types_ptr, payload, fastdds::dds::DEFAULT_DATA_REPRESENTATION);
 
     serialized_str = std::string(reinterpret_cast<char*>(payload.data), payload.length);

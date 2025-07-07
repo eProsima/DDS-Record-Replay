@@ -436,7 +436,7 @@ void BaseHandler::process_new_sample_nts_(
             EPROSIMA_LOG_INFO(
                 DDSRECORDER_BASE_HANDLER,
                 "Dynamic type for topic " << sample->topic << " not yet available, inserting to (paused) pending "
-                "samples queue.");
+                    "samples queue.");
 
             pending_samples_paused_[sample->topic.type_name].push_back(sample);
             break;
@@ -468,8 +468,8 @@ void BaseHandler::add_sample_to_buffer_nts_(
     else
     {
         EPROSIMA_LOG_WARNING(DDSRECORDER_BASE_HANDLER,
-                   "The buffer's size (" << samples_buffer_.size() << ") exceeds its limit (" <<
-                   configuration_.buffer_size << "). Writing to disk...");
+                "The buffer's size (" << samples_buffer_.size() << ") exceeds its limit (" <<
+                configuration_.buffer_size << "). Writing to disk...");
     }
 
     write_samples_(samples_buffer_);
@@ -501,8 +501,8 @@ void BaseHandler::add_sample_to_pending_nts_(
         if (configuration_.only_with_schema)
         {
             EPROSIMA_LOG_WARNING(DDSRECORDER_BASE_HANDLER,
-                      "Dropping pending sample in type " << sample->topic.type_name << ": buffer limit (" <<
-                      configuration_.max_pending_samples << ") reached.");
+                    "Dropping pending sample in type " << sample->topic.type_name << ": buffer limit (" <<
+                    configuration_.max_pending_samples << ") reached.");
         }
         else
         {
@@ -587,7 +587,7 @@ bool BaseHandler::store_dynamic_type_(
 
     fastdds::dds::xtypes::TypeInformation type_information;
     if (fastdds::dds::RETCODE_OK != factory->type_object_registry().get_type_information(
-            type_identifiers, type_information, true))
+                type_identifiers, type_information, true))
     {
         EPROSIMA_LOG_ERROR(DDSRECORDER_MCAP_HANDLER,
                 "MCAP_WRITE | Error getting TypeInformation for type " << type_name);
@@ -605,10 +605,10 @@ bool BaseHandler::store_dynamic_type_(
         fastdds::dds::xtypes::TypeObject dep_type_object;
 
         if (fastdds::dds::RETCODE_OK != factory->type_object_registry().get_type_object(
-                dep_type_identifier, dep_type_object))
+                    dep_type_identifier, dep_type_object))
         {
             EPROSIMA_LOG_ERROR(DDSRECORDER_BASE_HANDLER, "BASE_WRITE | Error getting TypeObject of dependency "
-                        << "for type " << type_name);
+                    << "for type " << type_name);
             return false;
         }
 
@@ -624,10 +624,10 @@ bool BaseHandler::store_dynamic_type_(
     fastdds::dds::xtypes::TypeObject type_object;
 
     if (fastdds::dds::RETCODE_OK != factory->type_object_registry().get_type_object(
-            type_identifier, type_object))
+                type_identifier, type_object))
     {
         EPROSIMA_LOG_ERROR(DDSRECORDER_BASE_HANDLER, "BASE_WRITE | Error getting TypeObject of dependency "
-                    << "for type " << type_name);
+                << "for type " << type_name);
         return false;
     }
 

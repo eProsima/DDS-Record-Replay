@@ -67,8 +67,8 @@ public:
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void process_summary(
-        std::set<utils::Heritable<ddspipe::core::types::DdsTopic>>& topics,
-        DynamicTypesCollection& types) override;
+            std::set<utils::Heritable<ddspipe::core::types::DdsTopic>>& topics,
+            DynamicTypesCollection& types) override;
 
     /**
      * @brief Read and send messages sequentially (according to timestamp).

@@ -50,14 +50,14 @@ struct SqlHandlerConfiguration : public BaseHandlerConfiguration
             const bool ros2_types,
             const DataFormat data_format)
         : BaseHandlerConfiguration(
-                output_settings,
-                max_pending_samples,
-                buffer_size,
-                event_window,
-                cleanup_period,
-                only_with_schema,
-                record_types,
-                ros2_types)
+            output_settings,
+            max_pending_samples,
+            buffer_size,
+            event_window,
+            cleanup_period,
+            only_with_schema,
+            record_types,
+            ros2_types)
         , data_format(data_format)
     {
     }

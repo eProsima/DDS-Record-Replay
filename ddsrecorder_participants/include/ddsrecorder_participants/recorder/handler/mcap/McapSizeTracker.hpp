@@ -184,9 +184,9 @@ protected:
     std::uint64_t written_mcap_size_{MCAP_FILE_OVERHEAD};
 
     /* To have a size checker of the MCAP file, we need to check the size of the file every X bytes but the file may not be written yet
-    * so we need a variable to "time" the check (variation between written_mcap_size_ and checked_written_mcap_size_) and another variable 
-    * to store the size of the file the last time it was checked to know if it has been updated (checked_actual_mcap_size_)
-    */
+     * so we need a variable to "time" the check (variation between written_mcap_size_ and checked_written_mcap_size_) and another variable
+     * to store the size of the file the last time it was checked to know if it has been updated (checked_actual_mcap_size_)
+     */
     // The value written_mcap_size_ had when doing the last check
     std::uint64_t checked_written_mcap_size_{0};
 

@@ -74,8 +74,8 @@ public:
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void process_summary(
-        std::set<utils::Heritable<ddspipe::core::types::DdsTopic>>& topics,
-        DynamicTypesCollection& types) override;
+            std::set<utils::Heritable<ddspipe::core::types::DdsTopic>>& topics,
+            DynamicTypesCollection& types) override;
 
     /**
      * @brief Process the messages stored in the SQLite database.
@@ -105,9 +105,9 @@ protected:
      * @param process_row:   Function to be called for each row of the result.
      */
     void exec_sql_statement_(
-        const std::string& statement,
-        const std::vector<std::string>& bind_values,
-        const std::function<void(sqlite3_stmt*)>& process_row);
+            const std::string& statement,
+            const std::vector<std::string>& bind_values,
+            const std::function<void(sqlite3_stmt*)>& process_row);
 
     // Database
     sqlite3* database_;

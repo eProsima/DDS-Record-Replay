@@ -104,8 +104,8 @@ public:
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     virtual void process_summary(
-        std::set<utils::Heritable<ddspipe::core::types::DdsTopic>>& topics,
-        DynamicTypesCollection& types) = 0;
+            std::set<utils::Heritable<ddspipe::core::types::DdsTopic>>& topics,
+            DynamicTypesCollection& types) = 0;
 
     /**
      * @brief Process the input file's messages
@@ -142,9 +142,9 @@ protected:
      * @return A new \c DdsTopic instance.
      */
     ddspipe::core::types::DdsTopic create_topic_(
-        const std::string& topic_name,
-        const std::string& type_name,
-        const bool is_ros2_topic);
+            const std::string& topic_name,
+            const std::string& type_name,
+            const bool is_ros2_topic);
 
     /**
      * @brief Given a fuzzy timestamp, return the timestamp to start replaying.

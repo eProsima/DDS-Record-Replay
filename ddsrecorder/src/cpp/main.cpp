@@ -407,7 +407,7 @@ int main(
 
                 // Reload YAML configuration file, in case it changed during STOPPED state
                 // NOTE: Changes to all (but controller specific) recorder configuration options are taken into account
-                if(!config_loaded)
+                if (!config_loaded)
                 {
                     configuration = eprosima::ddsrecorder::yaml::RecorderConfiguration(commandline_args.file_path);
                 }
@@ -542,8 +542,10 @@ int main(
                     parse_command(receiver.wait_for_command(), command, args);
                     first_iter = false;
 
-                } while (command != CommandCode::stop && command != CommandCode::close);
-            } while (command != CommandCode::close);
+                }
+                while (command != CommandCode::stop && command != CommandCode::close);
+            }
+            while (command != CommandCode::close);
 
             // Transition to CLOSED state
             receiver.publish_status(CommandCode::close, prev_command);

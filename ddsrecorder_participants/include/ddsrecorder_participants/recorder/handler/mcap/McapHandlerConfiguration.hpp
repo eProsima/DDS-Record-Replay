@@ -44,14 +44,14 @@ struct McapHandlerConfiguration : public BaseHandlerConfiguration
             const bool record_types,
             const bool ros2_types)
         : BaseHandlerConfiguration(
-                output_settings,
-                max_pending_samples,
-                buffer_size,
-                event_window,
-                cleanup_period,
-                only_with_schema,
-                record_types,
-                ros2_types)
+            output_settings,
+            max_pending_samples,
+            buffer_size,
+            event_window,
+            cleanup_period,
+            only_with_schema,
+            record_types,
+            ros2_types)
         , log_publishTime(log_publishTime)
         , mcap_writer_options(mcap_writer_options)
     {

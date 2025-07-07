@@ -73,7 +73,7 @@ protected:
         if (open_ret != SQLITE_OK)
         {
             const std::string error_msg = utils::Formatter() << "Failed to open SQL file " << file_path
-                                                            << " for reading: " << sqlite3_errmsg(database);
+                                                             << " for reading: " << sqlite3_errmsg(database);
             sqlite3_close(database);
 
             throw std::runtime_error(error_msg);
@@ -87,7 +87,7 @@ protected:
         if (ret != SQLITE_OK)
         {
             const std::string error_msg = utils::Formatter() << "Failed to prepare SQL statement: "
-                                                            << sqlite3_errmsg(database);
+                                                             << sqlite3_errmsg(database);
             sqlite3_finalize(stmt);
 
             EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
@@ -97,17 +97,18 @@ protected:
         {
 
             // Guard the statement to ensure it's always finalized
-            std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)> stmt_guard(stmt, sqlite3_finalize);
+            std::unique_ptr<sqlite3_stmt, decltype(& sqlite3_finalize)> stmt_guard(stmt, sqlite3_finalize);
 
             // Bind the values to the statement
             for (int i = 0; i < (int) bind_values.size(); i++)
             {
-                const auto bind_ret = sqlite3_bind_text(stmt, i+1, bind_values[i].c_str(), -1, SQLITE_STATIC);
+                const auto bind_ret = sqlite3_bind_text(stmt, i + 1, bind_values[i].c_str(), -1, SQLITE_STATIC);
 
                 if (bind_ret != SQLITE_OK)
                 {
-                    const std::string error_msg = utils::Formatter() << "Failed to bind SQL statement to read messages: "
-                                                                    << sqlite3_errmsg(database);
+                    const std::string error_msg = utils::Formatter() <<
+                            "Failed to bind SQL statement to read messages: "
+                                                                     << sqlite3_errmsg(database);
 
                     EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
                     throw std::runtime_error(error_msg);
@@ -125,7 +126,7 @@ protected:
             if (step_ret != SQLITE_DONE)
             {
                 const std::string error_msg = utils::Formatter() << "Failed to fetch data: "
-                                                                << sqlite3_errmsg(database);
+                                                                 << sqlite3_errmsg(database);
 
                 EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
                 throw std::runtime_error(error_msg);
@@ -135,6 +136,7 @@ protected:
         // Close the database
         sqlite3_close(database);
     }
+
 };
 
 /**
@@ -170,23 +172,24 @@ TEST_F(SqlFileCreationTest, sql_data_format_cdr)
     exec_sql_statement_(
         OUTPUT_FILE_PATH,
         "SELECT data_cdr_size, data_cdr, data_json FROM Messages ORDER BY log_time;", {}, [&](sqlite3_stmt* stmt)
-    {
-        read_message_count++;
+        {
+            read_message_count++;
 
-        // Verify the data_cdr_size
-        const auto read_data_cdr_size = sqlite3_column_int(stmt, 0);
-        ASSERT_EQ(to_cdr(*sent_message)->length, read_data_cdr_size);
+            // Verify the data_cdr_size
+            const auto read_data_cdr_size = sqlite3_column_int(stmt, 0);
+            ASSERT_EQ(to_cdr(*sent_message)->length, read_data_cdr_size);
 
-        // Verify the data_cdr
-        const auto read_data_cdr = (unsigned char*) reinterpret_cast<unsigned char const*>(sqlite3_column_blob(stmt, 1));
-        ASSERT_EQ(strcmp((char*) to_cdr(*sent_message)->data, (char*) read_data_cdr), 0);
+            // Verify the data_cdr
+            const auto read_data_cdr =
+            (unsigned char*) reinterpret_cast<unsigned char const*>(sqlite3_column_blob(stmt, 1));
+            ASSERT_EQ(strcmp((char*) to_cdr(*sent_message)->data, (char*) read_data_cdr), 0);
 
-        // Verify the data_json
-        const std::string read_data_json = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
-        ASSERT_EQ(read_data_json.size(), 0);
+            // Verify the data_json
+            const std::string read_data_json = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+            ASSERT_EQ(read_data_json.size(), 0);
 
-        sent_message++;
-    });
+            sent_message++;
+        });
 
     // Verify that it read messages
     ASSERT_GT(read_message_count, 0);
@@ -225,23 +228,23 @@ TEST_F(SqlFileCreationTest, sql_data_format_json)
     exec_sql_statement_(
         OUTPUT_FILE_PATH,
         "SELECT data_cdr_size, data_cdr, data_json FROM Messages ORDER BY log_time;", {}, [&](sqlite3_stmt* stmt)
-    {
-        read_message_count++;
+        {
+            read_message_count++;
 
-        // Verify the data_cdr_size
-        const auto read_data_cdr_size = sqlite3_column_int(stmt, 0);
-        ASSERT_EQ(read_data_cdr_size, 0);
+            // Verify the data_cdr_size
+            const auto read_data_cdr_size = sqlite3_column_int(stmt, 0);
+            ASSERT_EQ(read_data_cdr_size, 0);
 
-        // Verify the data_cdr
-        const auto read_data_cdr = sqlite3_column_bytes(stmt, 1);
-        ASSERT_EQ(read_data_cdr, 0);
+            // Verify the data_cdr
+            const auto read_data_cdr = sqlite3_column_bytes(stmt, 1);
+            ASSERT_EQ(read_data_cdr, 0);
 
-        // Verify the data_json
-        const std::string read_data_json = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
-        ASSERT_EQ(to_json(*sent_message), read_data_json);
+            // Verify the data_json
+            const std::string read_data_json = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+            ASSERT_EQ(to_json(*sent_message), read_data_json);
 
-        sent_message++;
-    });
+            sent_message++;
+        });
 
     // Verify that it read messages
     ASSERT_GT(read_message_count, 0);
@@ -280,23 +283,24 @@ TEST_F(SqlFileCreationTest, sql_data_format_both)
     exec_sql_statement_(
         OUTPUT_FILE_PATH,
         "SELECT data_cdr_size, data_cdr, data_json FROM Messages ORDER BY log_time;", {}, [&](sqlite3_stmt* stmt)
-    {
-        read_message_count++;
+        {
+            read_message_count++;
 
-        // Verify the data_cdr_size
-        const auto read_data_cdr_size = sqlite3_column_int(stmt, 0);
-        ASSERT_EQ(to_cdr(*sent_message)->length, read_data_cdr_size);
+            // Verify the data_cdr_size
+            const auto read_data_cdr_size = sqlite3_column_int(stmt, 0);
+            ASSERT_EQ(to_cdr(*sent_message)->length, read_data_cdr_size);
 
-        // Verify the data_cdr
-        const auto read_data_cdr = (unsigned char*) reinterpret_cast<unsigned char const*>(sqlite3_column_blob(stmt, 1));
-        ASSERT_EQ(strcmp((char*) to_cdr(*sent_message)->data, (char*) read_data_cdr), 0);
+            // Verify the data_cdr
+            const auto read_data_cdr =
+            (unsigned char*) reinterpret_cast<unsigned char const*>(sqlite3_column_blob(stmt, 1));
+            ASSERT_EQ(strcmp((char*) to_cdr(*sent_message)->data, (char*) read_data_cdr), 0);
 
-        // Verify the data_json
-        const std::string read_data_json = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
-        ASSERT_EQ(to_json(*sent_message), read_data_json);
+            // Verify the data_json
+            const std::string read_data_json = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+            ASSERT_EQ(to_json(*sent_message), read_data_json);
 
-        sent_message++;
-    });
+            sent_message++;
+        });
 
     // Verify that it read messages
     ASSERT_GT(read_message_count, 0);
@@ -328,17 +332,17 @@ TEST_F(SqlFileCreationTest, sql_dds_topic)
     auto read_topics_count = 0;
 
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT name, type FROM Topics;", {}, [&](sqlite3_stmt* stmt)
-    {
-        read_topics_count++;
+            {
+                read_topics_count++;
 
-        // Verify the topic's name
-        const std::string read_topic_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-        ASSERT_EQ(topic_->get_name(), read_topic_name);
+                // Verify the topic's name
+                const std::string read_topic_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+                ASSERT_EQ(topic_->get_name(), read_topic_name);
 
-        // Verify the topic's type
-        const std::string read_topic_type = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-        ASSERT_EQ(topic_->get_type_name(), read_topic_type);
-    });
+                // Verify the topic's type
+                const std::string read_topic_type = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+                ASSERT_EQ(topic_->get_type_name(), read_topic_type);
+            });
 
     // Verify that it read messages
     ASSERT_GT(read_topics_count, 0);
@@ -374,17 +378,17 @@ TEST_F(SqlFileCreationTest, sql_ros2_topic)
     auto read_topics_count = 0;
 
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT name, type FROM Topics;", {}, [&](sqlite3_stmt* stmt)
-    {
-        read_topics_count++;
+            {
+                read_topics_count++;
 
-        // Verify the topic's name
-        const std::string read_topic_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-        ASSERT_EQ(utils::demangle_if_ros_topic(topic_->get_name()), read_topic_name);
+                // Verify the topic's name
+                const std::string read_topic_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+                ASSERT_EQ(utils::demangle_if_ros_topic(topic_->get_name()), read_topic_name);
 
-        // Verify the topic's type
-        const std::string read_topic_type = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-        ASSERT_EQ(utils::demangle_if_ros_type(topic_->get_type_name()), read_topic_type);
-    });
+                // Verify the topic's type
+                const std::string read_topic_type = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+                ASSERT_EQ(utils::demangle_if_ros_type(topic_->get_type_name()), read_topic_type);
+            });
 
     // Verify that it read topics
     ASSERT_GT(read_topics_count, 0);
@@ -413,11 +417,11 @@ TEST_F(SqlFileCreationTest, sql_data_num_msgs)
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the recorded messages count
-        const auto recorded_messages = sqlite3_column_int(stmt, 0);
-        ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES);
-    });
+            {
+                // Verify the recorded messages count
+                const auto recorded_messages = sqlite3_column_int(stmt, 0);
+                ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES);
+            });
 }
 
 /**
@@ -448,12 +452,13 @@ TEST_F(SqlFileCreationTest, sql_data_num_msgs_downsampling)
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the recorded messages count
-        const auto recorded_messages = sqlite3_column_int(stmt, 0);
-        const auto expected_messages = (NUMBER_OF_MESSAGES / DOWNSAMPLING) + (NUMBER_OF_MESSAGES % DOWNSAMPLING);
-        ASSERT_EQ(recorded_messages, expected_messages);
-    });
+            {
+                // Verify the recorded messages count
+                const auto recorded_messages = sqlite3_column_int(stmt,
+                0);
+                const auto expected_messages = (NUMBER_OF_MESSAGES / DOWNSAMPLING) + (NUMBER_OF_MESSAGES % DOWNSAMPLING);
+                ASSERT_EQ(recorded_messages, expected_messages);
+            });
 }
 
 // //////////////////////
@@ -489,11 +494,11 @@ TEST_F(SqlFileCreationTest, transition_running)
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the recorded messages count
-        const auto recorded_messages = sqlite3_column_int(stmt, 0);
-        ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_1 + NUMBER_OF_MESSAGES_2);
-    });
+            {
+                // Verify the recorded messages count
+                const auto recorded_messages = sqlite3_column_int(stmt, 0);
+                ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_1 + NUMBER_OF_MESSAGES_2);
+            });
 }
 
 /**
@@ -525,11 +530,11 @@ TEST_F(SqlFileCreationTest, transition_paused)
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the recorded messages count
-        const auto recorded_messages = sqlite3_column_int(stmt, 0);
-        ASSERT_EQ(recorded_messages, 0);
-    });
+            {
+                // Verify the recorded messages count
+                const auto recorded_messages = sqlite3_column_int(stmt, 0);
+                ASSERT_EQ(recorded_messages, 0);
+            });
 }
 
 /**
@@ -622,11 +627,11 @@ TEST_F(SqlFileCreationTest, transition_running_paused)
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the recorded messages count
-        const auto recorded_messages = sqlite3_column_int(stmt, 0);
-        ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_1);
-    });
+            {
+                // Verify the recorded messages count
+                const auto recorded_messages = sqlite3_column_int(stmt, 0);
+                ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_1);
+            });
 }
 
 /**
@@ -657,11 +662,11 @@ TEST_F(SqlFileCreationTest, transition_running_suspended)
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the recorded messages count
-        const auto recorded_messages = sqlite3_column_int(stmt, 0);
-        ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_1);
-    });
+            {
+                // Verify the recorded messages count
+                const auto recorded_messages = sqlite3_column_int(stmt, 0);
+                ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_1);
+            });
 }
 
 /**
@@ -692,11 +697,11 @@ TEST_F(SqlFileCreationTest, transition_running_stopped)
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the recorded messages count
-        const auto recorded_messages = sqlite3_column_int(stmt, 0);
-        ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_1);
-    });
+            {
+                // Verify the recorded messages count
+                const auto recorded_messages = sqlite3_column_int(stmt, 0);
+                ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_1);
+            });
 }
 
 /**
@@ -727,11 +732,11 @@ TEST_F(SqlFileCreationTest, transition_paused_running)
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the recorded messages count
-        const auto recorded_messages = sqlite3_column_int(stmt, 0);
-        ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_2);
-    });
+            {
+                // Verify the recorded messages count
+                const auto recorded_messages = sqlite3_column_int(stmt, 0);
+                ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_2);
+            });
 }
 
 /**
@@ -762,11 +767,11 @@ TEST_F(SqlFileCreationTest, transition_paused_suspended)
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the recorded messages count
-        const auto recorded_messages = sqlite3_column_int(stmt, 0);
-        ASSERT_EQ(recorded_messages, 0);
-    });
+            {
+                // Verify the recorded messages count
+                const auto recorded_messages = sqlite3_column_int(stmt, 0);
+                ASSERT_EQ(recorded_messages, 0);
+            });
 }
 
 /**
@@ -797,11 +802,11 @@ TEST_F(SqlFileCreationTest, transition_paused_stopped)
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the recorded messages count
-        const auto recorded_messages = sqlite3_column_int(stmt, 0);
-        ASSERT_EQ(recorded_messages, 0);
-    });
+            {
+                // Verify the recorded messages count
+                const auto recorded_messages = sqlite3_column_int(stmt, 0);
+                ASSERT_EQ(recorded_messages, 0);
+            });
 }
 
 /**
@@ -832,11 +837,11 @@ TEST_F(SqlFileCreationTest, transition_suspended_running)
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the recorded messages count
-        const auto recorded_messages = sqlite3_column_int(stmt, 0);
-        ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_2);
-    });
+            {
+                // Verify the recorded messages count
+                const auto recorded_messages = sqlite3_column_int(stmt, 0);
+                ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_2);
+            });
 }
 
 /**
@@ -867,11 +872,11 @@ TEST_F(SqlFileCreationTest, transition_suspended_paused)
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the recorded messages count
-        const auto recorded_messages = sqlite3_column_int(stmt, 0);
-        ASSERT_EQ(recorded_messages, 0);
-    });
+            {
+                // Verify the recorded messages count
+                const auto recorded_messages = sqlite3_column_int(stmt, 0);
+                ASSERT_EQ(recorded_messages, 0);
+            });
 }
 
 /**
@@ -932,11 +937,11 @@ TEST_F(SqlFileCreationTest, transition_stopped_running)
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the recorded messages count
-        const auto recorded_messages = sqlite3_column_int(stmt, 0);
-        ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_2);
-    });
+            {
+                // Verify the recorded messages count
+                const auto recorded_messages = sqlite3_column_int(stmt, 0);
+                ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_2);
+            });
 }
 
 /**
@@ -967,11 +972,11 @@ TEST_F(SqlFileCreationTest, transition_stopped_paused)
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the recorded messages count
-        const auto recorded_messages = sqlite3_column_int(stmt, 0);
-        ASSERT_EQ(recorded_messages, 0);
-    });
+            {
+                // Verify the recorded messages count
+                const auto recorded_messages = sqlite3_column_int(stmt, 0);
+                ASSERT_EQ(recorded_messages, 0);
+            });
 }
 
 /**
@@ -1045,28 +1050,28 @@ TEST_F(SqlFileCreationTest, transition_paused_event_less_window)
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the recorded messages count
-        const auto recorded_messages = sqlite3_column_int(stmt, 0);
-        ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_1 + NUMBER_OF_MESSAGES_2);
-    });
+            {
+                // Verify the recorded messages count
+                const auto recorded_messages = sqlite3_column_int(stmt, 0);
+                ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_1 + NUMBER_OF_MESSAGES_2);
+            });
 
     const auto now = utils::now();
     const auto now_tks = ddsrecorder::participants::to_ticks(now);
 
     // Find the oldest recorded message
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT MIN(log_time) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the oldest recorded message was recorded in the event window
-        const auto log_time = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-        const auto log_time_ts = ddsrecorder::participants::to_std_timestamp(log_time);
-        const auto log_time_tks = ddsrecorder::participants::to_ticks(log_time_ts);
+            {
+                // Verify the oldest recorded message was recorded in the event window
+                const auto log_time = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+                const auto log_time_ts = ddsrecorder::participants::to_std_timestamp(log_time);
+                const auto log_time_tks = ddsrecorder::participants::to_ticks(log_time_ts);
 
-        const auto NS_TO_SEC = pow(10, -9);
-        const auto max_time_past = (now_tks - log_time_tks) * NS_TO_SEC;
+                const auto NS_TO_SEC = pow(10, -9);
+                const auto max_time_past = (now_tks - log_time_tks) * NS_TO_SEC;
 
-        ASSERT_LE(max_time_past, EVENT_WINDOW);
-    });
+                ASSERT_LE(max_time_past, EVENT_WINDOW);
+            });
 }
 
 /**
@@ -1104,28 +1109,28 @@ TEST_F(SqlFileCreationTest, transition_paused_event_max_window)
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the recorded messages count
-        const auto recorded_messages = sqlite3_column_int(stmt, 0);
-        ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_2);
-    });
+            {
+                // Verify the recorded messages count
+                const auto recorded_messages = sqlite3_column_int(stmt, 0);
+                ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_2);
+            });
 
     const auto now = utils::now();
     const auto now_tks = ddsrecorder::participants::to_ticks(now);
 
     // Find the oldest recorded message
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT MIN(log_time) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the oldest recorded message was recorded in the event window
-        const auto log_time = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-        const auto log_time_ts = ddsrecorder::participants::to_std_timestamp(log_time);
-        const auto log_time_tks = ddsrecorder::participants::to_ticks(log_time_ts);
+            {
+                // Verify the oldest recorded message was recorded in the event window
+                const auto log_time = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+                const auto log_time_ts = ddsrecorder::participants::to_std_timestamp(log_time);
+                const auto log_time_tks = ddsrecorder::participants::to_ticks(log_time_ts);
 
-        const auto NS_TO_SEC = pow(10, -9);
-        const auto max_time_past = (now_tks - log_time_tks) * NS_TO_SEC;
+                const auto NS_TO_SEC = pow(10, -9);
+                const auto max_time_past = (now_tks - log_time_tks) * NS_TO_SEC;
 
-        ASSERT_LE(max_time_past, EVENT_WINDOW);
-    });
+                ASSERT_LE(max_time_past, EVENT_WINDOW);
+            });
 }
 
 // ////////////
@@ -1166,28 +1171,28 @@ TEST_F(SqlFileCreationTest, transition_paused_event_start)
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the recorded messages count
-        const auto recorded_messages = sqlite3_column_int(stmt, 0);
-        ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_2);
-    });
+            {
+                // Verify the recorded messages count
+                const auto recorded_messages = sqlite3_column_int(stmt, 0);
+                ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_2);
+            });
 
     const auto now = utils::now();
     const auto now_tks = ddsrecorder::participants::to_ticks(now);
 
     // Find the oldest recorded message
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT MIN(log_time) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the oldest recorded message was recorded in the event window
-        const auto log_time = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-        const auto log_time_ts = ddsrecorder::participants::to_std_timestamp(log_time);
-        const auto log_time_tks = ddsrecorder::participants::to_ticks(log_time_ts);
+            {
+                // Verify the oldest recorded message was recorded in the event window
+                const auto log_time = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+                const auto log_time_ts = ddsrecorder::participants::to_std_timestamp(log_time);
+                const auto log_time_tks = ddsrecorder::participants::to_ticks(log_time_ts);
 
-        const auto NS_TO_SEC = pow(10, -9);
-        const auto max_time_past = (now_tks - log_time_tks) * NS_TO_SEC;
+                const auto NS_TO_SEC = pow(10, -9);
+                const auto max_time_past = (now_tks - log_time_tks) * NS_TO_SEC;
 
-        ASSERT_LE(max_time_past, EVENT_WINDOW);
-    });
+                ASSERT_LE(max_time_past, EVENT_WINDOW);
+            });
 }
 
 /**
@@ -1224,28 +1229,28 @@ TEST_F(SqlFileCreationTest, transition_paused_event_suspend)
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the recorded messages count
-        const auto recorded_messages = sqlite3_column_int(stmt, 0);
-        ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_2);
-    });
+            {
+                // Verify the recorded messages count
+                const auto recorded_messages = sqlite3_column_int(stmt, 0);
+                ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_2);
+            });
 
     const auto now = utils::now();
     const auto now_tks = ddsrecorder::participants::to_ticks(now);
 
     // Find the oldest recorded message
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT MIN(log_time) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the oldest recorded message was recorded in the event window
-        const auto log_time = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-        const auto log_time_ts = ddsrecorder::participants::to_std_timestamp(log_time);
-        const auto log_time_tks = ddsrecorder::participants::to_ticks(log_time_ts);
+            {
+                // Verify the oldest recorded message was recorded in the event window
+                const auto log_time = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+                const auto log_time_ts = ddsrecorder::participants::to_std_timestamp(log_time);
+                const auto log_time_tks = ddsrecorder::participants::to_ticks(log_time_ts);
 
-        const auto NS_TO_SEC = pow(10, -9);
-        const auto max_time_past = (now_tks - log_time_tks) * NS_TO_SEC;
+                const auto NS_TO_SEC = pow(10, -9);
+                const auto max_time_past = (now_tks - log_time_tks) * NS_TO_SEC;
 
-        ASSERT_LE(max_time_past, EVENT_WINDOW);
-    });
+                ASSERT_LE(max_time_past, EVENT_WINDOW);
+            });
 }
 
 /**
@@ -1282,28 +1287,28 @@ TEST_F(SqlFileCreationTest, transition_paused_event_stop)
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the recorded messages count
-        const auto recorded_messages = sqlite3_column_int(stmt, 0);
-        ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_2);
-    });
+            {
+                // Verify the recorded messages count
+                const auto recorded_messages = sqlite3_column_int(stmt, 0);
+                ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_2);
+            });
 
     const auto now = utils::now();
     const auto now_tks = ddsrecorder::participants::to_ticks(now);
 
     // Find the oldest recorded message
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT MIN(log_time) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
-    {
-        // Verify the oldest recorded message was recorded in the event window
-        const auto log_time = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-        const auto log_time_ts = ddsrecorder::participants::to_std_timestamp(log_time);
-        const auto log_time_tks = ddsrecorder::participants::to_ticks(log_time_ts);
+            {
+                // Verify the oldest recorded message was recorded in the event window
+                const auto log_time = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+                const auto log_time_ts = ddsrecorder::participants::to_std_timestamp(log_time);
+                const auto log_time_tks = ddsrecorder::participants::to_ticks(log_time_ts);
 
-        const auto NS_TO_SEC = pow(10, -9);
-        const auto max_time_past = (now_tks - log_time_tks) * NS_TO_SEC;
+                const auto NS_TO_SEC = pow(10, -9);
+                const auto max_time_past = (now_tks - log_time_tks) * NS_TO_SEC;
 
-        ASSERT_LE(max_time_past, EVENT_WINDOW);
-    });
+                ASSERT_LE(max_time_past, EVENT_WINDOW);
+            });
 }
 
 int main(

@@ -72,20 +72,27 @@ bool RecorderConfiguration::is_valid(
         return false;
     }
 
-    if(mcap_enabled && !mcap_resource_limits.are_limits_valid(error_msg, output_safety_margin > OUTPUT_SAFETY_MARGIN_MIN))
+    if (mcap_enabled &&
+            !mcap_resource_limits.are_limits_valid(error_msg,
+            output_safety_margin > OUTPUT_SAFETY_MARGIN_MIN))
     {
         return false;
     }
 
-    if (sql_enabled && !sql_resource_limits.are_limits_valid(error_msg, output_safety_margin > OUTPUT_SAFETY_MARGIN_MIN))
+    if (sql_enabled &&
+            !sql_resource_limits.are_limits_valid(error_msg, output_safety_margin > OUTPUT_SAFETY_MARGIN_MIN))
     {
         return false;
     }
 
-    if(sql_enabled && sql_resource_limits.resource_limits_struct.max_file_size_ != sql_resource_limits.resource_limits_struct.max_size_)
+    if (sql_enabled &&
+            sql_resource_limits.resource_limits_struct.max_file_size_ !=
+            sql_resource_limits.resource_limits_struct.max_size_)
     {
-        EPROSIMA_LOG_ERROR(DDSRECORDER, "SQL max file size is not used as SQL records everything in just one file. It is only used in MCAP configuration.");
-        error_msg << "SQL max file size is not used as SQL records everything in just one file. It is only used in MCAP configuration.";
+        EPROSIMA_LOG_ERROR(DDSRECORDER,
+                "SQL max file size is not used as SQL records everything in just one file. It is only used in MCAP configuration.");
+        error_msg <<
+            "SQL max file size is not used as SQL records everything in just one file. It is only used in MCAP configuration.";
         return false;
     }
 
@@ -121,7 +128,7 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
         mcap_recorder_configuration->app_metadata = "";
         mcap_recorder_configuration->is_repeater = false;
 
-         /////
+        /////
         // Create SQL Recorder Participant Configuration
         sql_recorder_configuration = std::make_shared<ParticipantConfiguration>();
         sql_recorder_configuration->id = "SQLRecorderRecorderParticipant";
@@ -289,8 +296,10 @@ void RecorderConfiguration::load_recorder_configuration_(
         const auto sql_yml = YamlReader::get_value_in_tag(yml, RECORDER_SQL_TAG);
         load_recorder_sql_configuration_(sql_yml, version);
         // Disable default MCAP if SQL is enabled
-        if(sql_enabled)
+        if (sql_enabled)
+        {
             mcap_enabled = false;
+        }
     }
 
     /////
@@ -343,9 +352,12 @@ void RecorderConfiguration::load_recorder_output_configuration_(
                         RECORDER_OUTPUT_TAG,
                         version);
         output_safety_margin = eprosima::utils::to_bytes(output_safety_margin_tmp);
-        if(output_safety_margin < OUTPUT_SAFETY_MARGIN_MIN){
+        if (output_safety_margin < OUTPUT_SAFETY_MARGIN_MIN)
+        {
             output_safety_margin = OUTPUT_SAFETY_MARGIN_MIN;
-            EPROSIMA_LOG_ERROR(YAML_READER_CONFIGURATION, "NOT VALID VALUE | SQL " << RECORDER_OUTPUT_TAG << " must be greater than the minimum value accepted. Defaulting to (Kb): " << output_safety_margin / 1024);
+            EPROSIMA_LOG_ERROR(YAML_READER_CONFIGURATION,
+                    "NOT VALID VALUE | SQL " << RECORDER_OUTPUT_TAG << " must be greater than the minimum value accepted. Defaulting to (Kb): " << output_safety_margin /
+                    1024);
         }
     }
 }
@@ -358,8 +370,10 @@ void RecorderConfiguration::load_recorder_mcap_configuration_(
     // Get mandatory enable
     mcap_enabled = YamlReader::get<bool>(yml, RECORDER_MCAP_ENABLE_TAG, version);
 
-    if(!mcap_enabled)
+    if (!mcap_enabled)
+    {
         return;
+    }
 
     /////
     // Get optional log publishTime
@@ -372,7 +386,8 @@ void RecorderConfiguration::load_recorder_mcap_configuration_(
     // Get optional compression settings
     if (YamlReader::is_tag_present(yml, RECORDER_MCAP_COMPRESSION_SETTINGS_TAG))
     {
-        mcap_writer_options = YamlReader::get<mcap::McapWriterOptions>(yml, RECORDER_MCAP_COMPRESSION_SETTINGS_TAG, version);
+        mcap_writer_options = YamlReader::get<mcap::McapWriterOptions>(yml, RECORDER_MCAP_COMPRESSION_SETTINGS_TAG,
+                        version);
     }
 
     /////
@@ -393,8 +408,10 @@ void RecorderConfiguration::load_recorder_sql_configuration_(
     // Get mandatory enable
     sql_enabled = YamlReader::get<bool>(yml, RECORDER_SQL_ENABLE_TAG, version);
 
-    if(!sql_enabled)
+    if (!sql_enabled)
+    {
         return;
+    }
 
     /////
     // Get optional log publishTime
@@ -418,12 +435,19 @@ void RecorderConfiguration::load_recorder_sql_configuration_(
         sql_resource_limits = ResourceLimitsConfiguration(sql_resource_limits_yml, version);
         // As max_file_size is not used in SQL configuration, if only any of the two is set, both must coincide.
         // If both are set and different, an error will be thrown in is_valid()
-        if(sql_resource_limits.resource_limits_struct.max_file_size_ == 0 ^ sql_resource_limits.resource_limits_struct.max_size_ == 0)
+        if (sql_resource_limits.resource_limits_struct.max_file_size_ ==
+                0 ^ sql_resource_limits.resource_limits_struct.max_size_ == 0)
         {
-            if(sql_resource_limits.resource_limits_struct.max_file_size_ == 0)
-                sql_resource_limits.resource_limits_struct.max_file_size_ = sql_resource_limits.resource_limits_struct.max_size_;
+            if (sql_resource_limits.resource_limits_struct.max_file_size_ == 0)
+            {
+                sql_resource_limits.resource_limits_struct.max_file_size_ =
+                        sql_resource_limits.resource_limits_struct.max_size_;
+            }
             else
-                sql_resource_limits.resource_limits_struct.max_size_ = sql_resource_limits.resource_limits_struct.max_file_size_;
+            {
+                sql_resource_limits.resource_limits_struct.max_size_ =
+                        sql_resource_limits.resource_limits_struct.max_file_size_;
+            }
         }
     }
 }

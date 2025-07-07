@@ -194,7 +194,7 @@ void McapHandler::add_data(
     if (state_ != BaseHandlerStateCode::STOPPED)
     {
         process_new_sample_nts_(std::make_shared<const McapMessage>(
-                data, payload_pool_, topic, channel_id, configuration_.log_publishTime));
+                    data, payload_pool_, topic, channel_id, configuration_.log_publishTime));
     }
 }
 
@@ -255,7 +255,8 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     mcap::KeyValueMap metadata = {};
     Serializer::serialize(topic.topic_qos, metadata[QOS_SERIALIZATION_QOS]);
 
-    const auto topic_name = configuration_.ros2_types ? utils::demangle_if_ros_topic(topic.m_topic_name) : topic.m_topic_name;
+    const auto topic_name =
+            configuration_.ros2_types ? utils::demangle_if_ros_topic(topic.m_topic_name) : topic.m_topic_name;
     const auto is_topic_ros2_type = configuration_.ros2_types && topic_name != topic.m_topic_name;
 
     metadata[ROS2_TYPES] = is_topic_ros2_type ? "true" : "false";

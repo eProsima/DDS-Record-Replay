@@ -103,8 +103,8 @@ public:
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void init(
-        const BaseHandlerStateCode& init_state = BaseHandlerStateCode::RUNNING,
-        const std::function<void()>& on_disk_full_lambda = nullptr);
+            const BaseHandlerStateCode& init_state = BaseHandlerStateCode::RUNNING,
+            const std::function<void()>& on_disk_full_lambda = nullptr);
 
     /**
      * @brief Enable handler instance

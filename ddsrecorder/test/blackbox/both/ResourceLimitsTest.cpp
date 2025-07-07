@@ -94,52 +94,52 @@ public:
 protected:
 
     void reset_configuration_(
-        test::FileTypes file_type,
-        std::string output_file_name = "output",
-        std::uint32_t max_size = 0,
-        std::uint32_t max_file_size = 0,
-        bool log_rotation = false)
+            test::FileTypes file_type,
+            std::string output_file_name = "output",
+            std::uint32_t max_size = 0,
+            std::uint32_t max_file_size = 0,
+            bool log_rotation = false)
     {
         const std::string maxFileSize = std::to_string(max_file_size) + "B";
         const std::string maxSize = std::to_string(max_size) + "B";
 
         std::string yml_str =
-            "dds:\n"
-            "  domain: " + std::to_string(test::DOMAIN) + "\n"
-            "recorder:\n"
-            "  output:\n"
-            "    filename: " + output_file_name + "\n"
-            "    path: \"" + std::filesystem::current_path().string() + "\"\n";
-        if(file_type == test::FileTypes::MCAP || file_type == test::FileTypes::BOTH)
+                "dds:\n"
+                "  domain: " + std::to_string(test::DOMAIN) + "\n"
+                "recorder:\n"
+                "  output:\n"
+                "    filename: " + output_file_name + "\n"
+                "    path: \"" + std::filesystem::current_path().string() + "\"\n";
+        if (file_type == test::FileTypes::MCAP || file_type == test::FileTypes::BOTH)
         {
             yml_str +=
-            "  mcap:\n"
-            "    enable: true\n"
-            "    resource-limits:\n";
+                    "  mcap:\n"
+                    "    enable: true\n"
+                    "    resource-limits:\n";
         }
 
-        if(file_type == test::FileTypes::SQL || file_type == test::FileTypes::BOTH)
+        if (file_type == test::FileTypes::SQL || file_type == test::FileTypes::BOTH)
         {
             yml_str +=
-            "  sql:\n"
-            "    enable: true\n"
-            "    resource-limits:\n";
+                    "  sql:\n"
+                    "    enable: true\n"
+                    "    resource-limits:\n";
         }
 
-        if(max_file_size > 0)
+        if (max_file_size > 0)
         {
             yml_str +=
-            "      max-file-size: \"" + maxFileSize + "\"\n";
+                    "      max-file-size: \"" + maxFileSize + "\"\n";
         }
-        if(max_size > 0)
+        if (max_size > 0)
         {
             yml_str +=
-            "      max-size: \"" + maxSize + "\"\n";
+                    "      max-size: \"" + maxSize + "\"\n";
         }
-        if(log_rotation)
+        if (log_rotation)
         {
             yml_str +=
-            "      log-rotation: true\n";
+                    "      log-rotation: true\n";
         }
         #if defined(_WIN32) // On windows, the path separator is '\', but the yaml parser expects '/'.
         std::replace(yml_str.begin(), yml_str.end(), '\\', '/');
@@ -209,7 +209,7 @@ protected:
             const test::FileTypes file_type
             )
     {
-        if(file_type == test::FileTypes::SQL)
+        if (file_type == test::FileTypes::SQL)
         {
             return std::filesystem::current_path() / (output_file_name + ".db");
         }
@@ -241,21 +241,27 @@ protected:
                 file_size <= limits_->MAX_ACCEPTABLE_FILE_SIZE;
 
         if (!is_acceptable)
-            std::cout << "is_file_size_acceptable_: File " << file_path << " has an unacceptable size of " << file_size << " bytes, when limits: "
-                      << limits_->MIN_ACCEPTABLE_FILE_SIZE << " <= size <= " << limits_->MAX_ACCEPTABLE_FILE_SIZE << std::endl;
+        {
+            std::cout << "is_file_size_acceptable_: File " << file_path << " has an unacceptable size of " <<
+                file_size << " bytes, when limits: "
+                      << limits_->MIN_ACCEPTABLE_FILE_SIZE << " <= size <= " << limits_->MAX_ACCEPTABLE_FILE_SIZE <<
+                std::endl;
+        }
         return is_acceptable;
     }
 
     void test_max_file_size(
-        const test::FileTypes file_type)
+            const test::FileTypes file_type)
     {
-        const std::string OUTPUT_FILE_NAME = std::string("max_file_size_test") + (file_type == test::FileTypes::MCAP ? "_mcap" : "_sql");
+        const std::string OUTPUT_FILE_NAME = std::string("max_file_size_test") +
+                (file_type == test::FileTypes::MCAP ? "_mcap" : "_sql");
         auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME, file_type);
-        if(file_type == test::FileTypes::MCAP)
+        if (file_type == test::FileTypes::MCAP)
         {
             reset_configuration_(file_type, OUTPUT_FILE_NAME, limits_->MAX_FILE_SIZE, limits_->MAX_FILE_SIZE);
         }
-        else{
+        else
+        {
             reset_configuration_(file_type, OUTPUT_FILE_NAME, limits_->MAX_SIZE, 0);
         }
 
@@ -263,7 +269,8 @@ protected:
         // Delete the output file if it exists
         ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
-        ddsrecorder::recorder::DdsRecorder recorder(*configuration_, ddsrecorder::recorder::DdsRecorderStateCode::RUNNING,
+        ddsrecorder::recorder::DdsRecorder recorder(*configuration_,
+                ddsrecorder::recorder::DdsRecorderStateCode::RUNNING,
                 OUTPUT_FILE_NAME);
 
         // Send many more messages than can be stored in a file with a size of max-file-size
@@ -280,10 +287,11 @@ protected:
     }
 
     void test_max_size(
-        const test::FileTypes file_type)
+            const test::FileTypes file_type)
     {
         std::uint32_t NUMBER_OF_FILES = limits_->MAX_FILES + 1;
-        const std::string OUTPUT_FILE_NAME = std::string("max_size_test") + (file_type == test::FileTypes::MCAP ? "_mcap" : "_sql");
+        const std::string OUTPUT_FILE_NAME = std::string("max_size_test") +
+                (file_type == test::FileTypes::MCAP ? "_mcap" : "_sql");
         const auto OUTPUT_FILE_PATHS = get_output_file_paths_(NUMBER_OF_FILES, OUTPUT_FILE_NAME, file_type);
 
         reset_configuration_(file_type, OUTPUT_FILE_NAME, limits_->MAX_SIZE, limits_->MAX_FILE_SIZE);
@@ -294,18 +302,20 @@ protected:
             ASSERT_TRUE(delete_file_(path));
         }
 
-        if(file_type == test::FileTypes::SQL){
+        if (file_type == test::FileTypes::SQL)
+        {
             const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME, file_type);
             ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
-            reset_configuration_(file_type, OUTPUT_FILE_NAME, limits_->MAX_SIZE, limits_->MAX_SIZE/3);
+            reset_configuration_(file_type, OUTPUT_FILE_NAME, limits_->MAX_SIZE, limits_->MAX_SIZE / 3);
             // Verify that an InitializationException was thrown
             eprosima::utils::Formatter error_msg;
             ASSERT_FALSE(configuration_->is_valid(error_msg));
             return;
         }
 
-        ddsrecorder::recorder::DdsRecorder recorder(*configuration_, ddsrecorder::recorder::DdsRecorderStateCode::RUNNING,
-            OUTPUT_FILE_NAME);
+        ddsrecorder::recorder::DdsRecorder recorder(*configuration_,
+                ddsrecorder::recorder::DdsRecorderStateCode::RUNNING,
+                OUTPUT_FILE_NAME);
 
 
         for (std::uint32_t i = 0; i < limits_->MAX_FILES; i++)
@@ -336,7 +346,7 @@ protected:
         // Verify that the size of the rest of the files hasn't changed and no new files have been created
         for (std::uint32_t i = 0; i < NUMBER_OF_FILES; i++)
         {
-            if(i < limits_->MAX_FILES)
+            if (i < limits_->MAX_FILES)
             {
                 ASSERT_TRUE(is_file_size_acceptable_(OUTPUT_FILE_PATHS[i]));
             }
@@ -348,8 +358,8 @@ protected:
     }
 
     void fill_file(
-        const std::vector<std::filesystem::path>& output_file_paths,
-        const std::uint32_t file_index)
+            const std::vector<std::filesystem::path>& output_file_paths,
+            const std::uint32_t file_index)
     {
         // Send more messages than can be stored in a file with a size of max-file-size
         publish_msgs_(limits_->FILE_OVERFLOW_THRESHOLD);
@@ -359,15 +369,17 @@ protected:
     }
 
     void test_file_rotation(
-        const test::FileTypes file_type)
+            const test::FileTypes file_type)
     {
-        if(file_type == test::FileTypes::SQL){
+        if (file_type == test::FileTypes::SQL)
+        {
             ASSERT_TRUE(false) << "SQL does not support file rotation, only log rotation";
             return;
         }
 
         constexpr std::uint32_t NUMBER_OF_FILES = 6;
-        const std::string OUTPUT_FILE_NAME = std::string("rotation_test") + (file_type == test::FileTypes::MCAP ? "_mcap" : "_sql");
+        const std::string OUTPUT_FILE_NAME = std::string("rotation_test") +
+                (file_type == test::FileTypes::MCAP ? "_mcap" : "_sql");
         const auto OUTPUT_FILE_PATHS = get_output_file_paths_(NUMBER_OF_FILES + 1, OUTPUT_FILE_NAME, file_type);
 
         reset_configuration_(file_type, OUTPUT_FILE_NAME, limits_->MAX_SIZE, limits_->MAX_FILE_SIZE, true);
@@ -378,7 +390,8 @@ protected:
             ASSERT_TRUE(delete_file_(path));
         }
 
-        ddsrecorder::recorder::DdsRecorder recorder(*configuration_, ddsrecorder::recorder::DdsRecorderStateCode::RUNNING,
+        ddsrecorder::recorder::DdsRecorder recorder(*configuration_,
+                ddsrecorder::recorder::DdsRecorderStateCode::RUNNING,
                 OUTPUT_FILE_NAME);
 
         // Verify that the DDS Recorder creates a new file after each batch of messages, before reaching the max-size
@@ -390,7 +403,7 @@ protected:
             // Verify that the DDS Recorder has created the expected number of output files with the expected size
             for (std::int32_t j = 0; j < NUMBER_OF_FILES; j++)
             {
-                if( (i-j) < limits_->MAX_FILES - 1 && (i-j) >= 0)
+                if ((i - j) < limits_->MAX_FILES - 1 && (i - j) >= 0)
                 {
                     ASSERT_TRUE(is_file_size_acceptable_(OUTPUT_FILE_PATHS[j]));
                 }
@@ -403,16 +416,19 @@ protected:
     }
 
     void test_log_rotation(
-        test::FileTypes file_type)
+            test::FileTypes file_type)
     {
-        if(file_type == test::FileTypes::MCAP){
-            ASSERT_TRUE(false) << "This test is not useful. Maybe throw an exception if in MCAP the max_size and log_rotation is set but no max_file_size? It would overwritting the same file over and over";
+        if (file_type == test::FileTypes::MCAP)
+        {
+            ASSERT_TRUE(false) <<
+                "This test is not useful. Maybe throw an exception if in MCAP the max_size and log_rotation is set but no max_file_size? It would overwritting the same file over and over";
             return;
         }
 
         constexpr int NUMBER_OF_FILES = 3;
 
-        const std::string OUTPUT_FILE_NAME = std::string("log_rotation_test") + (file_type == test::FileTypes::MCAP ? "_mcap" : "_sql");
+        const std::string OUTPUT_FILE_NAME = std::string("log_rotation_test") +
+                (file_type == test::FileTypes::MCAP ? "_mcap" : "_sql");
         const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME, file_type);
 
         reset_configuration_(file_type, OUTPUT_FILE_NAME, limits_->MAX_SIZE, 0, true);
@@ -431,7 +447,8 @@ protected:
             ASSERT_TRUE(delete_file_(path));
         }
 
-        ddsrecorder::recorder::DdsRecorder recorder(*configuration_, ddsrecorder::recorder::DdsRecorderStateCode::RUNNING,
+        ddsrecorder::recorder::DdsRecorder recorder(*configuration_,
+                ddsrecorder::recorder::DdsRecorderStateCode::RUNNING,
                 OUTPUT_FILE_NAME);
 
 
@@ -469,7 +486,7 @@ protected:
     test::limits mcap_limits_{35 * 1024, 7 * 1024, 0.2, 70};
     test::limits sql_limits_{300 * 1024,  300 * 1024, 0.2, 273};
 
-    test::limits *limits_;
+    test::limits* limits_;
 
 
 };

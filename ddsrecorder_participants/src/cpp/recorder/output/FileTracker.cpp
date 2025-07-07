@@ -59,7 +59,8 @@ void FileTracker::new_file(
     if (min_file_size > configuration_.resource_limits.max_file_size_)
     {
         EPROSIMA_LOG_ERROR(DDSRECORDER_FILE_TRACKER,
-                "The minimum file size (" << utils::from_bytes(min_file_size) << ") is greater than the maximum file size (" <<
+                "The minimum file size (" << utils::from_bytes(
+                    min_file_size) << ") is greater than the maximum file size (" <<
                 utils::from_bytes(configuration_.resource_limits.max_file_size_) << ").");
         throw utils::InconsistencyException(utils::Formatter() <<
                       "The minimum file size (" <<
@@ -73,7 +74,8 @@ void FileTracker::new_file(
     if (space_to_free > 0 && !configuration_.resource_limits.file_rotation_)
     {
         EPROSIMA_LOG_ERROR(DDSRECORDER_FILE_TRACKER,
-                "The new file's size (" << utils::from_bytes(min_file_size) << ") is greater than the available space (" <<
+                "The new file's size (" << utils::from_bytes(
+                    min_file_size) << ") is greater than the available space (" <<
                 utils::from_bytes(free_space) << ").");
         throw FullDiskException(
                   "Not enough free space (" + utils::from_bytes(free_space) + ") to create a new file with a minimum "

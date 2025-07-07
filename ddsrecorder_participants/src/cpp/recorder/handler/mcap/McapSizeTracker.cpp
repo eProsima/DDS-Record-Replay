@@ -63,7 +63,7 @@ void McapSizeTracker::init(
     written_mcap_size_ = MCAP_FILE_OVERHEAD;
     min_mcap_size_ = MCAP_FILE_OVERHEAD;
 
-    check_interval_ = size_tolerance/2;
+    check_interval_ = size_tolerance / 2;
 
     space_available_ = space_available;
 
@@ -329,17 +329,18 @@ void McapSizeTracker::check_and_increase_written_mcap_size_(
     written_mcap_size_ += size;
 
     // Check the real size of the file every check_interval_ Bytes
-    if(written_mcap_size_ - checked_written_mcap_size_ > check_interval_)
+    if (written_mcap_size_ - checked_written_mcap_size_ > check_interval_)
     {
         auto file_size = std::filesystem::file_size(file_path_);
-        if(file_size != checked_actual_mcap_size_)
+        if (file_size != checked_actual_mcap_size_)
         {
             // The file has been updated
             checked_actual_mcap_size_ = file_size;
             std::int64_t dif_potential_written = potential_mcap_size_ - written_mcap_size_; // Signed to allow negative values in case of decrease (error?)
             written_mcap_size_ = file_size;
             potential_mcap_size_ = written_mcap_size_ + dif_potential_written;
-            std::cout << "UPDATE: written size: " << written_mcap_size_ << " potential size: " << potential_mcap_size_ << std::endl;
+            std::cout << "UPDATE: written size: " << written_mcap_size_ << " potential size: " <<
+                potential_mcap_size_ << std::endl;
         }
         checked_written_mcap_size_ = written_mcap_size_;
     }

@@ -27,11 +27,11 @@ namespace participants {
 std::atomic<std::uint32_t> McapMessage::number_of_msgs = 0;
 
 McapMessage::McapMessage(
-    const ddspipe::core::types::RtpsPayloadData& data,
-    std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
-    const ddspipe::core::types::DdsTopic& topic,
-    const mcap::ChannelId channel_id,
-    const bool log_publish_time)
+        const ddspipe::core::types::RtpsPayloadData& data,
+        std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
+        const ddspipe::core::types::DdsTopic& topic,
+        const mcap::ChannelId channel_id,
+        const bool log_publish_time)
     : BaseMessage(data, payload_pool, topic)
     , mcap::Message()
 {

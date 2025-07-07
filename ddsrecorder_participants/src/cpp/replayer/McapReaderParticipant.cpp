@@ -53,8 +53,8 @@ McapReaderParticipant::McapReaderParticipant(
 }
 
 void McapReaderParticipant::process_summary(
-    std::set<utils::Heritable<ddspipe::core::types::DdsTopic>>& topics,
-    DynamicTypesCollection& types)
+        std::set<utils::Heritable<ddspipe::core::types::DdsTopic>>& topics,
+        DynamicTypesCollection& types)
 {
     open_file_();
 
@@ -71,7 +71,7 @@ void McapReaderParticipant::process_summary(
 
         const bool is_topic_ros2_type = channel->metadata[ROS2_TYPES] == "true";
         const auto topic = utils::Heritable<ddspipe::core::types::DdsTopic>::make_heritable(
-                create_topic_(topic_name, type_name, is_topic_ros2_type));
+            create_topic_(topic_name, type_name, is_topic_ros2_type));
 
         // Apply the QoS stored in the MCAP file as if they were the discovered QoS.
         const auto topic_qos_str = channel->metadata[QOS_SERIALIZATION_QOS];
@@ -91,7 +91,7 @@ void McapReaderParticipant::process_summary(
         const auto dynamic_types_attachment = attachments.at(DYNAMIC_TYPES_ATTACHMENT_NAME);
 
         const std::string dynamic_types_str(
-                reinterpret_cast<const char*>(dynamic_types_attachment.data), dynamic_types_attachment.dataSize);
+            reinterpret_cast<const char*>(dynamic_types_attachment.data), dynamic_types_attachment.dataSize);
 
         Serializer::deserialize<DynamicTypesCollection>(dynamic_types_str, types);
     }
@@ -107,7 +107,8 @@ void McapReaderParticipant::process_messages()
 
     if (messages.begin() == messages.end())
     {
-        EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT, "Provided input file contains no messages in the given range.");
+        EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                "Provided input file contains no messages in the given range.");
         close_file_();
         return;
     }
@@ -141,7 +142,7 @@ void McapReaderParticipant::process_messages()
         auto delay = to_std_timestamp(it.message.logTime) - first_message_timestamp;
         auto scheduled_write_ts =
                 std::chrono::time_point_cast<utils::Timestamp::duration>(initial_timestamp +
-                std::chrono::duration_cast<std::chrono::nanoseconds>(delay / configuration_->rate));
+                        std::chrono::duration_cast<std::chrono::nanoseconds>(delay / configuration_->rate));
 
         // Create RTPS data
         auto data = create_payload_(it.message.data, it.message.dataSize);
@@ -182,10 +183,10 @@ void McapReaderParticipant::read_mcap_summary_()
 {
     // Read mcap summary: ForceScan method required for parsing metadata and attachments
     const auto status = mcap_reader_.readSummary(mcap::ReadSummaryMethod::ForceScan, [](const mcap::Status& status)
-            {
-                EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                    {
+                        EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
                         "An error occurred while reading MCAP summary: " << status.message << ".");
-            });
+                    });
 
     if (status.code != mcap::StatusCode::Success)
     {
@@ -231,10 +232,10 @@ mcap::LinearMessageView McapReaderParticipant::read_mcap_messages_()
 
     // Read messages
     auto messages = mcap_reader_.readMessages([](const mcap::Status& status)
-            {
-                EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                    {
+                        EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
                         "An error occurred while reading MCAP messages: " << status.message << ".");
-            }, read_options);
+                    }, read_options);
 
     return messages;
 }

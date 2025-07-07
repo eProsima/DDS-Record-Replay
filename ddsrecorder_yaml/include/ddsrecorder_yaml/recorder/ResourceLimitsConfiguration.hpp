@@ -35,18 +35,19 @@ using namespace eprosima::ddspipe::yaml;
  */
 class ResourceLimitsConfiguration
 {
-    public:
-        ResourceLimitsConfiguration() = default;
-        
-        ResourceLimitsConfiguration(
+public:
+
+    ResourceLimitsConfiguration() = default;
+
+    ResourceLimitsConfiguration(
             const eprosima::Yaml& yml,
             const YamlReaderVersion& version);
 
-        bool are_limits_valid(
+    bool are_limits_valid(
             utils::Formatter& error_msg,
             bool safety_margin);
 
-        participants::ResourceLimitsStruct resource_limits_struct;
+    participants::ResourceLimitsStruct resource_limits_struct;
 };
 
 } /* namespace yaml */

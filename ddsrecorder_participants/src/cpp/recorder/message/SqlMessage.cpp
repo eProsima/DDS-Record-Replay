@@ -40,10 +40,10 @@ namespace participants {
 std::atomic<std::uint64_t> SqlMessage::number_of_msgs = 0;
 
 SqlMessage::SqlMessage(
-    const ddspipe::core::types::RtpsPayloadData& payload,
-    std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
-    const ddspipe::core::types::DdsTopic& topic,
-    const std::string& key /* = "" */)
+        const ddspipe::core::types::RtpsPayloadData& payload,
+        std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
+        const ddspipe::core::types::DdsTopic& topic,
+        const std::string& key /* = "" */)
     : BaseMessage(payload, payload_pool, topic)
     , writer_guid(payload.source_guid)
     , sequence_number(fastdds::rtps::SequenceNumber_t(number_of_msgs.fetch_add(1)))
@@ -71,7 +71,7 @@ void SqlMessage::deserialize(
     std::stringstream data_json_stream;
 
     const auto ret = fastdds::dds::json_serialize(
-            dynamic_data, fastdds::dds::DynamicDataJsonFormat::EPROSIMA, data_json_stream);
+        dynamic_data, fastdds::dds::DynamicDataJsonFormat::EPROSIMA, data_json_stream);
 
     data_json = data_json_stream.str();
 
@@ -115,7 +115,7 @@ void SqlMessage::remove_nonkey_values_(
         const auto member = member_by_id.second;
 
         fastdds::dds::MemberDescriptor::_ref_type member_descriptor{
-                fastdds::dds::traits<fastdds::dds::MemberDescriptor>::make_shared()};
+            fastdds::dds::traits<fastdds::dds::MemberDescriptor>::make_shared()};
 
         if (member->get_descriptor(member_descriptor) != fastdds::dds::RETCODE_OK)
         {

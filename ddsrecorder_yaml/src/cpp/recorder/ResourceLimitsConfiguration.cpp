@@ -37,8 +37,8 @@ namespace yaml {
 using namespace eprosima::ddspipe::yaml;
 
 ResourceLimitsConfiguration::ResourceLimitsConfiguration(
-            const eprosima::Yaml& yml,
-            const YamlReaderVersion& version)
+        const eprosima::Yaml& yml,
+        const YamlReaderVersion& version)
 {
     /////
     // Get optional file rotation
@@ -79,18 +79,22 @@ ResourceLimitsConfiguration::ResourceLimitsConfiguration(
         const auto& size_tolerance_str = YamlReader::get<std::string>(yml,
                         RECORDER_RESOURCE_LIMITS_SIZE_TOLERANCE_TAG,
                         version);
-        if(eprosima::utils::to_bytes(size_tolerance_str) < resource_limits_struct.size_tolerance_)
-            EPROSIMA_LOG_ERROR(YAML_READER_CONFIGURATION, "NOT VALID VALUE | SIZE TOLERANCE " << RECORDER_RESOURCE_LIMITS_SIZE_TOLERANCE_TAG << " must be greater than the minimum value accepted. Defaulting to (Mb): " << resource_limits_struct.size_tolerance_ / (1024 * 1024));
+        if (eprosima::utils::to_bytes(size_tolerance_str) < resource_limits_struct.size_tolerance_)
+        {
+            EPROSIMA_LOG_ERROR(YAML_READER_CONFIGURATION,
+                    "NOT VALID VALUE | SIZE TOLERANCE " << RECORDER_RESOURCE_LIMITS_SIZE_TOLERANCE_TAG << " must be greater than the minimum value accepted. Defaulting to (Mb): " << resource_limits_struct.size_tolerance_ /
+                    (1024 * 1024));
+        }
         else
+        {
             resource_limits_struct.size_tolerance_ = eprosima::utils::to_bytes(size_tolerance_str);
+        }
     }
 }
 
-
-
 bool ResourceLimitsConfiguration::are_limits_valid(
-    utils::Formatter& error_msg,
-    bool safety_margin)
+        utils::Formatter& error_msg,
+        bool safety_margin)
 {
     if (resource_limits_struct.max_size_ > 0)
     {

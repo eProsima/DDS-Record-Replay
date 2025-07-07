@@ -133,7 +133,7 @@ protected:
      * @returns The size freed.
      */
     size_t calculate_int_storage_size(
-                std::int64_t value) const noexcept;
+            std::int64_t value) const noexcept;
 
     /**
      * @brief Checks for free space remaining in the SQL file, if there is not and file rotation is enabled, it will remove the oldest entries.
@@ -146,7 +146,8 @@ protected:
      * @throws \c InconsistencyException if there is a database error when removing entries.
      */
     void size_control_(
-                size_t entry_size, bool force);
+            size_t entry_size,
+            bool force);
 
     /**
      * @brief Checks the actual file size in memory and updates the written_sql_size_ variable.
@@ -175,9 +176,9 @@ protected:
     std::uint64_t written_sql_size_{MIN_SQL_SIZE};
 
     /* To have a size checker of the SQL file, we need to check the size of the file every X bytes but the file may not be written yet
-    * so we need a variable to "time" the check (variation between written_sql_size_ and checked_written_sql_size_) and another variable
-    * to store the size of the file the last time it was checked to know if it has been updated (checked_actual_sql_size_)
-    */
+     * so we need a variable to "time" the check (variation between written_sql_size_ and checked_written_sql_size_) and another variable
+     * to store the size of the file the last time it was checked to know if it has been updated (checked_actual_sql_size_)
+     */
     // The value written_sql_size_ had when doing the last check (it is signed to allow negative when freeing space)
     std::int64_t checked_written_sql_size_{0};
 

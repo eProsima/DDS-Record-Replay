@@ -28,7 +28,8 @@ namespace participants {
 /**
  * Structure encapsulating all resource limits configuration options
  */
-struct ResourceLimitsStruct{
+struct ResourceLimitsStruct
+{
     std::uint64_t max_size_{0};
     std::uint64_t max_file_size_{0};
     std::uint64_t size_tolerance_{1024 * 1024};     // Force the system to have a minimum tolerance of 1MB

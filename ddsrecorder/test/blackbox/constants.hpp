@@ -56,7 +56,7 @@ constexpr auto RECORD_TYPES = false;
 constexpr auto ROS2_TYPES = false;
 constexpr auto DATA_FORMAT = ddsrecorder::participants::DataFormat::both;
 
-}
+} // namespace handler
 
 enum class FileTypes
 {
@@ -65,7 +65,8 @@ enum class FileTypes
     BOTH
 };
 
-struct limits {
+struct limits
+{
     std::uint32_t MAX_SIZE;
     std::uint32_t MAX_FILE_SIZE;
     double ACCEPTABLE_ERROR;
@@ -77,15 +78,22 @@ struct limits {
     std::uint32_t FILE_OVERFLOW_THRESHOLD;
 
     // Constructor to initialize values and calculate dependent fields
-    limits(std::uint32_t max_size, std::uint32_t max_file_size, double acceptable_error, std::uint32_t bytes_message)
-        : MAX_SIZE(max_size),
-          MAX_FILE_SIZE(max_file_size),
-          ACCEPTABLE_ERROR(acceptable_error),
-          BYTES_MESSAGE(bytes_message),
-          MAX_FILES(max_size / max_file_size),
-          MAX_ACCEPTABLE_FILE_SIZE(max_file_size * (1 + acceptable_error)),
-          MIN_ACCEPTABLE_FILE_SIZE(max_file_size * (1 - acceptable_error)),
-          FILE_OVERFLOW_THRESHOLD(static_cast<std::uint32_t>(max_file_size / bytes_message)) {}
+    limits(
+            std::uint32_t max_size,
+            std::uint32_t max_file_size,
+            double acceptable_error,
+            std::uint32_t bytes_message)
+        : MAX_SIZE(max_size)
+        , MAX_FILE_SIZE(max_file_size)
+        , ACCEPTABLE_ERROR(acceptable_error)
+        , BYTES_MESSAGE(bytes_message)
+        , MAX_FILES(max_size / max_file_size)
+        , MAX_ACCEPTABLE_FILE_SIZE(max_file_size * (1 + acceptable_error))
+        , MIN_ACCEPTABLE_FILE_SIZE(max_file_size * (1 - acceptable_error))
+        , FILE_OVERFLOW_THRESHOLD(static_cast<std::uint32_t>(max_file_size / bytes_message))
+    {
+    }
+
 };
 
 } // namespace test
