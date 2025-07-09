@@ -22,13 +22,13 @@
 #include <ddspipe_core/monitoring/producers/TopicsMonitorProducer.hpp>
 #include <ddspipe_core/types/dynamic_types/types.hpp>
 
+#include <ddsrecorder_participants/recorder/handler/BaseHandler.hpp>
+#include <ddsrecorder_participants/recorder/handler/HandlerContext.hpp>
 #include <ddsrecorder_participants/recorder/handler/mcap/McapHandler.hpp>
 #include <ddsrecorder_participants/recorder/handler/mcap/McapHandlerConfiguration.hpp>
-#include <ddsrecorder_participants/recorder/handler/BaseHandler.hpp>
-#include <ddsrecorder_participants/recorder/output/OutputSettings.hpp>
 #include <ddsrecorder_participants/recorder/handler/sql/SqlHandler.hpp>
 #include <ddsrecorder_participants/recorder/handler/sql/SqlHandlerConfiguration.hpp>
-#include <ddsrecorder_participants/recorder/handler/HandlerContext.hpp>
+#include <ddsrecorder_participants/recorder/output/OutputSettings.hpp>
 
 #include "DdsRecorder.hpp"
 

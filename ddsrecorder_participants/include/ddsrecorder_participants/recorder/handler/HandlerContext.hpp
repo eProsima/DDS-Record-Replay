@@ -17,13 +17,16 @@
 #include <functional>
 #include <memory>
 
+#include <ddspipe_participants/configuration/ParticipantConfiguration.hpp>
+
+#include <ddsrecorder_participants/recorder/handler/BaseHandlerConfiguration.hpp>
+
 #include <ddsrecorder_participants/library/library_dll.h>
 
 namespace eprosima {
 namespace ddspipe {
 namespace participants {
 
-class ParticipantConfiguration;
 class SchemaParticipant;
 
 } /* namespace participants */
@@ -41,7 +44,6 @@ namespace ddsrecorder {
 namespace participants {
 
 class BaseHandler;
-class BaseHandlerConfiguration;
 class FileTracker;
 class HandlerContextCollection;
 enum class BaseHandlerStateCode;

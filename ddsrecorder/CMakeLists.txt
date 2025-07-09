@@ -18,6 +18,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 # Done this to set machine architecture and be able to call cmake_utils
+enable_language(C)
 enable_language(CXX)
 
 ###############################################################################
