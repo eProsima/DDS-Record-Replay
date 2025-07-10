@@ -531,7 +531,7 @@ The relation between ``max-size`` and ``safety-margin`` introduces resource limi
 #### B. If both recorders are enabled:
 1. **No resource limits set**: Available disk space is divided equally between the recorders.
 2. **One recorder with resource limits set**: The other recorder will use the remaining disk space.
-3. **Both recorders with resource limits set**: Ensure the combined limits do not exceed the available disk space, returning an error otherwise. 
+3. **Both recorders with resource limits set**: Ensure the combined limits do not exceed the available disk space, returning an error otherwise.
 
 ### Size Margin
 The **``size-margin``** property is an optional parameter that stablish the margin of error for the size of the output files.
@@ -545,7 +545,7 @@ To keep the |ddsrecorder| recording after reaching the ``max-size``, users can s
 Enabling ``log-rotation`` allows the |ddsrecorder| to overwrite old files to free space for new ones.
 
 ### MCAP Log-Rotation Behavior
-When the mcap ``log-rotation`` is enabled, the |ddsrecorder| will remove the oldest file whenever ``max-size`` is reached.
+When the MCAP ``log-rotation`` is enabled, the |ddsrecorder| will remove the oldest file whenever ``max-size`` is reached.
 
 ### SQL Log-Rotation Behavior
 When the SQL ``log-rotation`` is enabled, the |ddsrecorder| will remove the oldest entries of the database whenever ``max-size`` is reached.
@@ -563,24 +563,24 @@ When the SQL ``log-rotation`` is enabled, the |ddsrecorder| will remove the olde
 
 .. code-block:: yaml
 
-recorder:
-  output:
-    safety-margin: "1GB"
+  recorder:
+    output:
+      safety-margin: "1GB"
 
-  mcap:
-    enable: true
-    resource-limits:
-      max-file-size: 25MB
-      max-size: 200MB
-      log-rotation: true
-      size-margin: 2MB
+    mcap:
+      enable: true
+      resource-limits:
+        max-file-size: 25MB
+        max-size: 200MB
+        log-rotation: true
+        size-margin: 2MB
 
-  sql:
-    enable: true
-    resource-limits:
-      max-size: 20MiB
-      log-rotation: true
-      size-margin: 1MB
+    sql:
+      enable: true
+      resource-limits:
+        max-size: 20MiB
+        log-rotation: true
+        size-margin: 1MB
 
 .. _recorder_usage_configuration_sql:
 
