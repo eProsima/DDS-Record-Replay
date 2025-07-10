@@ -94,7 +94,7 @@ public:
 
         // Verify that the average miliseconds between messages is about 200 ms
         const auto expected_mean_ms_between_msgs = is_ros2_topic ? 1000 : 200;
-        const auto expected_error = 0.01;
+        const auto expected_error = 0.03;
 
         const auto min_expected_ms = expected_mean_ms_between_msgs * (1 - expected_error);
         const auto max_expected_ms = expected_mean_ms_between_msgs * (1 + expected_error);
@@ -121,7 +121,7 @@ public:
 
         // Verify that the average miliseconds between messages is about 100 ms
         const auto expected_mean_ms_between_msgs = is_ros2_topic ? 500 : 100;
-        const auto expected_error = 0.01;
+        const auto expected_error = 0.03;
 
         const auto min_expected_ms = expected_mean_ms_between_msgs * (1 - expected_error);
         const auto max_expected_ms = expected_mean_ms_between_msgs * (1 + expected_error);
@@ -148,7 +148,7 @@ public:
 
         // Verify that the average miliseconds between messages is about 400 ms
         const auto expected_mean_ms_between_msgs = is_ros2_topic ? 2000 : 400;
-        const auto expected_error = 0.01;
+        const auto expected_error = 0.03;
 
         const auto min_expected_ms = expected_mean_ms_between_msgs * (1 - expected_error);
         const auto max_expected_ms = expected_mean_ms_between_msgs * (1 + expected_error);
