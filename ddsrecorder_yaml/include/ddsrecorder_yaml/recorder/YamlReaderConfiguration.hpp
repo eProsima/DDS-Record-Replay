@@ -25,6 +25,7 @@
 
 #include <ddspipe_core/configuration/DdsPipeConfiguration.hpp>
 #include <ddspipe_core/configuration/MonitorConfiguration.hpp>
+#include <ddspipe_core/types/dds/DomainId.hpp>
 #include <ddspipe_core/types/dds/TopicQoS.hpp>
 #include <ddspipe_core/types/topic/dds/DistributedTopic.hpp>
 #include <ddspipe_core/types/topic/filter/IFilterTopic.hpp>
@@ -111,6 +112,10 @@ protected:
             const CommandlineArgsRecorder* args);
 
     void load_recorder_configuration_(
+            const Yaml& yml,
+            const ddspipe::yaml::YamlReaderVersion& version);
+
+    void load_output_configuration_(
             const Yaml& yml,
             const ddspipe::yaml::YamlReaderVersion& version);
 

@@ -32,6 +32,7 @@
 #include <cpp_utils/types/Fuzzy.hpp>
 #include <cpp_utils/utils.hpp>
 
+#include <ddspipe_core/configuration/DdsPipeLogConfiguration.hpp>
 #include <ddspipe_core/logging/DdsLogConsumer.hpp>
 
 #include <ddsrecorder_yaml/replayer/CommandlineArgsReplayer.hpp>
@@ -108,6 +109,34 @@ std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> create_periodic_ha
     return std::make_unique<eprosima::utils::event::PeriodicEventHandler>(periodic_callback, reload_time);
 }
 
+void register_log_consumers(const eprosima::ddspipe::core::DdsPipeLogConfiguration& configuration)
+{
+    eprosima::utils::Log::ClearConsumers();
+    eprosima::utils::Log::SetVerbosity(configuration.verbosity);
+
+    // Stdout Log Consumer
+    if (configuration.stdout_enable)
+    {
+        eprosima::utils::Log::RegisterConsumer(
+            std::make_unique<eprosima::utils::StdLogConsumer>(&configuration));
+    }
+
+    // DDS Log Consumer
+    if (configuration.publish.enable)
+    {
+        eprosima::utils::Log::RegisterConsumer(
+            std::make_unique<eprosima::ddspipe::core::DdsLogConsumer>(&configuration));
+    }
+}
+
+int exit(const ProcessReturnCode& code)
+{
+    // Delete the consumers before closing
+    eprosima::utils::Log::ClearConsumers();
+
+    return static_cast<int>(code);
+}
+
 int main(
         int argc,
         char** argv)
@@ -121,15 +150,15 @@ int main(
 
     if (arg_parse_result == ProcessReturnCode::help_argument)
     {
-        return static_cast<int>(ProcessReturnCode::success);
+        return exit(ProcessReturnCode::success);
     }
     else if (arg_parse_result == ProcessReturnCode::version_argument)
     {
-        return static_cast<int>(ProcessReturnCode::success);
+        return exit(ProcessReturnCode::success);
     }
     else if (arg_parse_result != ProcessReturnCode::success)
     {
-        return static_cast<int>(arg_parse_result);
+        return exit(arg_parse_result);
     }
 
     // Check file is in args, else get the default file
@@ -153,7 +182,7 @@ int main(
             EPROSIMA_LOG_ERROR(
                 DDSREPLAYER_ARGS,
                 "File '" << commandline_args.file_path << "' does not exist or it is not accessible.");
-            return static_cast<int>(ProcessReturnCode::required_argument_failed);
+            return exit(ProcessReturnCode::required_argument_failed);
         }
     }
 
@@ -173,35 +202,19 @@ int main(
                 eprosima::utils::event::Signal>(
             std::make_unique<eprosima::utils::event::SignalEventHandler<eprosima::utils::event::Signal::sigterm>>());    // Add SIGTERM
 
+        // Register the LogConsumers to log the YAML configuration errors.
+        eprosima::ddspipe::core::DdsPipeLogConfiguration log_configuration;
+        log_configuration.set(eprosima::utils::VerbosityKind::Warning);
+
+        register_log_consumers(log_configuration);
+
         /////
         // DDS Replayer Initialization
 
         // Load configuration from YAML
         eprosima::ddsrecorder::yaml::ReplayerConfiguration configuration(commandline_args.file_path, &commandline_args);
 
-        /////
-        // Logging
-        {
-            const auto log_configuration = configuration.ddspipe_configuration.log_configuration;
-
-            eprosima::utils::Log::ClearConsumers();
-            eprosima::utils::Log::SetVerbosity(log_configuration.verbosity);
-
-            // Stdout Log Consumer
-            if (log_configuration.stdout_enable)
-            {
-                eprosima::utils::Log::RegisterConsumer(
-                    std::make_unique<eprosima::utils::StdLogConsumer>(&log_configuration));
-            }
-
-            // DDS Log Consumer
-            if (log_configuration.publish.enable)
-            {
-                eprosima::utils::Log::RegisterConsumer(
-                    std::make_unique<eprosima::ddspipe::core::DdsLogConsumer>(&log_configuration));
-            }
-        }
-
+        register_log_consumers(configuration.ddspipe_configuration.log_configuration);
 
         // Use MCAP input from YAML configuration file if not provided via executable arg
         if (commandline_args.input_file == "")
@@ -215,7 +228,7 @@ int main(
                     EPROSIMA_LOG_ERROR(
                         DDSREPLAYER_ARGS,
                         "File '" << commandline_args.input_file << "' does not exist or it is not accessible.");
-                    return static_cast<int>(ProcessReturnCode::required_argument_failed);
+                    return exit(ProcessReturnCode::required_argument_failed);
                 }
             }
             else
@@ -224,7 +237,7 @@ int main(
                     DDSREPLAYER_ARGS,
                     "An input MCAP file must be provided through argument '-i' / '--input-file' " <<
                         "or under 'input-file' YAML tag.");
-                return static_cast<int>(ProcessReturnCode::required_argument_failed);
+                return exit(ProcessReturnCode::required_argument_failed);
             }
         }
         else
@@ -283,7 +296,7 @@ int main(
         if (!read_success)
         {
             // An exception was captured in the MCAP reading thread
-            return static_cast<int>(ProcessReturnCode::execution_failed);
+            return exit(ProcessReturnCode::execution_failed);
         }
 
         logUser(DDSREPLAYER_EXECUTION, "Stopping DDS Replayer.");
@@ -296,23 +309,17 @@ int main(
                 "Error Loading DDS Replayer Configuration from file " << commandline_args.file_path <<
                 ". Error message:\n " <<
                 e.what());
-        return static_cast<int>(ProcessReturnCode::execution_failed);
+        return exit(ProcessReturnCode::execution_failed);
     }
     catch (const eprosima::utils::InitializationException& e)
     {
         EPROSIMA_LOG_ERROR(DDSREPLAYER_ERROR,
                 "Error Initializing DDS Replayer. Error message:\n " <<
                 e.what());
-        return static_cast<int>(ProcessReturnCode::execution_failed);
+        return exit(ProcessReturnCode::execution_failed);
     }
 
     logUser(DDSREPLAYER_EXECUTION, "Finishing DDS Replayer execution correctly.");
 
-    // Force print every log before closing
-    eprosima::utils::Log::Flush();
-
-    // Delete the consumers before closing
-    eprosima::utils::Log::ClearConsumers();
-
-    return static_cast<int>(ProcessReturnCode::success);
+    return exit(ProcessReturnCode::success);
 }
