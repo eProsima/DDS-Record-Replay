@@ -9,10 +9,6 @@ Usage
 
 |eddsreplayer| is a user application executed from command line.
 
-.. contents::
-    :local:
-    :backlinks: none
-    :depth: 1
 
 Starting Replay Application
 ---------------------------

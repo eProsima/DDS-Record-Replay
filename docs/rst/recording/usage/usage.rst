@@ -9,10 +9,6 @@ Usage
 
 |eddsrecorder| is a user application executed from command line.
 
-.. contents::
-    :local:
-    :backlinks: none
-    :depth: 1
 
 Starting Recording Application
 ------------------------------

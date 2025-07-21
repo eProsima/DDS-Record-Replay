@@ -7,11 +7,6 @@
 Configuration
 #############
 
-.. contents::
-    :local:
-    :backlinks: none
-    :depth: 2
-
 
 DDS Replayer Configuration
 ==========================
