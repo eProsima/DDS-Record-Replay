@@ -8,12 +8,6 @@ Windows installation from sources
 #################################
 
 The instructions for installing the |eddsrecord| application from sources and its required dependencies are provided in this page.
-It is organized as follows:
-
-.. contents::
-    :local:
-    :backlinks: none
-    :depth: 2
 
 
 Dependencies installation

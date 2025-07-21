@@ -6,10 +6,6 @@
 Visualize data with Foxglove
 ############################
 
-.. contents::
-    :local:
-    :backlinks: none
-    :depth: 2
 
 Background
 **********
