@@ -56,7 +56,7 @@ public:
 
 protected:
 
-    fastdds::rtps::RTPSParticipantAttributes add_participant_att_properties_(
+    void add_participant_att_properties_(
             fastdds::rtps::RTPSParticipantAttributes& params) const override;
 
     // Boolean flag that indicates whether the participant should replay previously recorded data types.

@@ -43,7 +43,7 @@ std::shared_ptr<IReader> ReplayerParticipant::create_reader(
     return std::make_shared<BlankReader>();
 }
 
-fastdds::rtps::RTPSParticipantAttributes ReplayerParticipant::add_participant_att_properties_(
+void ReplayerParticipant::add_participant_att_properties_(
         fastdds::rtps::RTPSParticipantAttributes& params) const
 {
     CommonParticipant::add_participant_att_properties_(params);
@@ -60,8 +60,6 @@ fastdds::rtps::RTPSParticipantAttributes ReplayerParticipant::add_participant_at
             "fastdds.type_propagation",
             "disabled");
     }
-
-    return params;
 }
 
 } /* namespace participants */
