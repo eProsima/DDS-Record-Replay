@@ -118,6 +118,7 @@ jobs:
           secret_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Compile and run tests
+        id: compile_and_test
         uses: eProsima/eProsima-CI/multiplatform/colcon_build_test@v0
         with:
           packages_names: ${{ env.code_packages_names }}
@@ -127,6 +128,15 @@ jobs:
           ctest_args: --label-exclude "xfail|xasan"
           test_report_artifact: test_report_asan${{ inputs.dependencies_artifact_postfix }}_${{ inputs.custom_version_build }}
 
+      - name: Test Report
+        uses: eProsima/eProsima-CI/external/test-reporter@v0
+        if: success() || failure()
+        with:
+          name: "Report: ASAN "
+          path: "${{ steps.compile_and_test.outputs.ctest_results_path }}*.xml"
+          working-directory: 'src'
+          list-tests: 'failed'
+          list-suites: 'failed'
 
 #####################################################################
 # TSAN
@@ -151,6 +161,7 @@ jobs:
           secret_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Compile and run tests
+        id: compile_and_test
         uses: eProsima/eProsima-CI/multiplatform/colcon_build_test@v0
         env:
           # GCC 11.3 (Ubuntu Jammy default) produces several false positives regarding timed synchronization protocols
@@ -165,6 +176,15 @@ jobs:
           ctest_args: --label-exclude "xfail|xtsan"
           test_report_artifact: test_report_tsan${{ inputs.dependencies_artifact_postfix }}_${{ inputs.custom_version_build }}
 
+      - name: Test Report
+        uses: eProsima/eProsima-CI/external/test-reporter@v0
+        if: success() || failure()
+        with:
+          name: "Report: TSAN "
+          path: "${{ steps.compile_and_test.outputs.ctest_results_path }}*.xml"
+          working-directory: 'src'
+          list-tests: 'failed'
+          list-suites: 'failed'
 
 #####################################################################
 # CLANG
@@ -252,6 +272,7 @@ jobs:
           secret_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Compile and run tests
+        id: compile_and_test
         uses: eProsima/eProsima-CI/multiplatform/colcon_build_test@v0
         with:
           packages_names: ${{ env.code_packages_names }}
@@ -261,6 +282,15 @@ jobs:
           colcon_meta_file: ./src/.github/workflows/configurations/${{ runner.os }}/colcon.meta
           test_report_artifact: test_report_flaky${{ inputs.dependencies_artifact_postfix }}_${{ inputs.custom_version_build }}
 
+      - name: Test Report
+        uses: eProsima/eProsima-CI/external/test-reporter@v0
+        if: success() || failure()
+        with:
+          name: "Report: Flaky "
+          path: "${{ steps.compile_and_test.outputs.ctest_results_path }}*.xml"
+          working-directory: 'src'
+          list-tests: 'failed'
+          list-suites: 'failed'
 
 #####################################################################
 # DOCUMENTATION TEST
