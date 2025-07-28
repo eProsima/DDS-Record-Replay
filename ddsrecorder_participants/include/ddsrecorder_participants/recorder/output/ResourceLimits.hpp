@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * @file OutputSettings.hpp
+ * @file ResourceLimits.hpp
  */
 
 #pragma once

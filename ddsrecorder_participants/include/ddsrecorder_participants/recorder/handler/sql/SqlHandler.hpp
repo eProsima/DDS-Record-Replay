@@ -45,7 +45,7 @@ namespace ddsrecorder {
 namespace participants {
 
 /**
- * Class that manages the interaction between DDS Pipe (\c SchemaParticipant) and MCAP files through sql library.
+ * Class that manages the interaction between DDS Pipe (\c SchemaParticipant) and SQL files through sql library.
  * Payloads are efficiently passed from DDS Pipe to sql without copying data (only references).
  *
  * @implements BaseHandler
@@ -58,9 +58,9 @@ public:
      * SqlHandler constructor by required values.
      *
      * Creates SqlHandler instance with given configuration, payload pool and initial state.
-     * Opens temporal MCAP file where data is to be written.
+     * Opens temporal SQL file where data is to be written.
      *
-     * @throw InitializationException if creation fails (fail to open MCAP file).
+     * @throw InitializationException if creation fails (fail to open SQL file).
      *
      * @warning Command methods (\c start , \c pause , \c stop , and \c trigger_event) are not thread safe
      * among themselves. This is, they are expected to be executed sequentially and all in the same thread.
@@ -80,7 +80,7 @@ public:
     /**
      * @brief Destructor
      *
-     * Closes temporal MCAP file, and renames it with filename given in configuration.
+     * Closes temporal SQL file, and renames it with filename given in configuration.
      * Before closing file, received dynamic types are serialized and stored as an attachment.
      *
      */

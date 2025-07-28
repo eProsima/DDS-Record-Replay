@@ -39,6 +39,24 @@ ENUMERATION_BUILDER(
  */
 struct SqlHandlerConfiguration : public BaseHandlerConfiguration
 {
+    /**
+     * @brief Constructor for \c SqlHandlerConfiguration.
+     *
+     * @param output_settings:         Configuration settings for the output file where data is to be written.
+     * @param max_pending_samples:     Max number of messages to store in memory when schema
+     *                                 not yet available.
+     * @param buffer_size:             Max number of elements to keep in memory prior to writing
+     *                                 in disk (applies to started state).
+     * @param event_window:            Keep in memory samples received in time frame [s],
+     *                                 to be stored when event triggered (applies to paused state).
+     * @param cleanup_period:          Remove from buffer samples older than *now - event_window*
+     *                                 with this period [s] (applies to paused state).
+     * @param only_with_schema:        Only write messages whose schema is registered
+     *                                 (i.e. discard pending samples when leaving RUNNING state).
+     * @param record_types:            Whether to store received dynamic types in the output file.
+     * @param ros2_types:              Whether to schemas are in OMG IDL or ROS.
+     * @param data_format:             Whether to store data in cdr, in json, or in both.
+     */
     SqlHandlerConfiguration(
             const OutputSettings& output_settings,
             const int max_pending_samples,

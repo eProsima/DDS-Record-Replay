@@ -48,6 +48,11 @@ struct SqlMessage : public BaseMessage
 
     /**
      * @brief Construct a \c SqlMessage.
+     *
+     * @param payload       The received data sample.
+     * @param payload_pool  The \c PayloadPool that owns the payload.
+     * @param topic         The \c DdsTopic in which the payload was published.
+     * @param key           The key of the message, if any.
      */
     SqlMessage(
             const ddspipe::core::types::RtpsPayloadData& payload,

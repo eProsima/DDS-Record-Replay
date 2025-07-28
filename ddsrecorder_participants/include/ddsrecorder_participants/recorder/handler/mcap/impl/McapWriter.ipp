@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * @file McapWriter.cpp
+ * @file McapWriter.ipp
  */
 
 #include <cpp_utils/Log.hpp>

@@ -40,14 +40,23 @@ struct BaseMessage
     BaseMessage() = default;
 
     /**
-     * @brief TODO
+     * @brief Constructs a BaseMessage with a given payload and its owner.
+     *
+     * @param payload       The payload to be used in the message.
+     * @param payload_owner The owner of the payload, which is a \c PayloadPool
+     *                      that created or reserved it.
      */
     BaseMessage(
             const ddspipe::core::types::Payload& payload,
             ddspipe::core::PayloadPool* payload_owner);
 
     /**
-     * @brief TODO
+     * @brief Constructs a BaseMessage with a given \c RtpsPayloadData, \c PayloadPool and \c DdsTopic.
+     * This constructor is used to create a message from a received data sample.
+     *
+     * @param data          The received data sample.
+     * @param payload_pool  The \c PayloadPool that owns the payload.
+     * @param topic         The \c DdsTopic in which the payload was published.
      */
     BaseMessage(
             const ddspipe::core::types::RtpsPayloadData& data,

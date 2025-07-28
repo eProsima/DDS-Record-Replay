@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * @file SqlWriter.cpp
+ * @file SqlWriter.ipp
  */
 
 #include <ddsrecorder_participants/recorder/exceptions/FullDiskException.hpp>
@@ -36,11 +36,12 @@ void SqlWriter::write(
     catch (const FullFileException& e)
     {
         EPROSIMA_LOG_WARNING(DDSRECORDER_SQL_HANDLER,
-                    "FAIL_SQL_WRITE | Disk is full. Error message:\n " << e.what());
-        try{
+                "FAIL_SQL_WRITE | Disk is full. Error message:\n " << e.what());
+        try
+        {
             on_file_full_nts_(e, MIN_SQL_SIZE);
         }
-        catch(const FullDiskException& e)
+        catch (const FullDiskException& e)
         {
             EPROSIMA_LOG_WARNING(DDSRECORDER_SQL_HANDLER,
                     "FAIL_SQL_WRITE | Disk is full. Error message:\n " << e.what());

@@ -64,6 +64,9 @@ struct OutputSettings
     //! Resource limits configuration
     ResourceLimitsStruct resource_limits;
 
+    /**
+     * @brief Sets the resource limits for the OutputSettings.
+     */
     bool set_resource_limits(
             ResourceLimitsStruct& limits,
             std::uint64_t space_available)

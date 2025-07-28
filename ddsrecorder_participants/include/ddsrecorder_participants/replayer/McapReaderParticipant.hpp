@@ -42,13 +42,13 @@ class McapReaderParticipant : public BaseReaderParticipant
 public:
 
     /**
-     * McapReaderParticipant constructor by required values.
+     * @brief McapReaderParticipant constructor by required values.
      *
      * Creates McapReaderParticipant instance with given configuration, payload pool and input file path.
      *
-     * @param config:       Structure encapsulating all configuration options.
-     * @param payload_pool: Owner of every payload contained in sent messages.
-     * @param file_path:    Path to the MCAP file with the messages to be read and sent.
+     * @param configuration:       Structure encapsulating all configuration options.
+     * @param payload_pool:        Owner of every payload contained in sent messages.
+     * @param file_path:           Path to the MCAP file with the messages to be read and sent.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     McapReaderParticipant(

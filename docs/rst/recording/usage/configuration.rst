@@ -504,37 +504,51 @@ The ``resource-limits`` tag allows users to control the size of the *DDS Recorde
 - **``max-file-size``**: Specifies the maximum size of each output file. Applicable only to the MCAP recorder, as the SQL recorder uses a single database file.
 - **``max-size``**: Specifies the maximum aggregate size of all output files. For the SQL recorder, this defines the maximum size of the database file. For the MCAP recorder, this determines the total size of all generated files.
 
-### Safety Margin
-The **``safety-margin``** property is shared between the SQL and MCAP outputs and is configured in the ``output`` section. This parameter reserves a buffer of free disk space, ensuring that at least ``safety-margin`` bytes remain available to prevent the system from running out of memory. This applies regardless of whether one or both recorders are enabled.
+Safety Margin
+"""""""""""""
+
+The ``safety-margin`` property is shared between the SQL and MCAP outputs and is configured in the ``output`` section. This parameter reserves a buffer of free disk space, ensuring that at least ``safety-margin`` bytes remain available to prevent the system from running out of memory. This applies regardless of whether one or both recorders are enabled.
 By default, the safety margin is set to ``10MB``.
 
-### MCAP Recorder Behavior
+MCAP Recorder Behavior
+""""""""""""""""""""""
+
 If the ``max-size`` is greater than the ``max-file-size``, the |ddsrecorder| will create multiple files, each with a size up to the value of ``max-file-size``, until the total size reaches ``max-size``.
 
-### SQL Recorder Behavior
+SQL Recorder Behavior
+"""""""""""""""""""""
+
 For the SQL recorder:
 - The database is always stored in a single file.
 - **Both ``max-file-size`` and ``max-size`` control the same parameter, i.e., total size of the database**. This is why setting just one of them is sufficient as the other will be automatically set to the same value. If both are set to different values, an error will be returned.
 
-### Default Behavior
+Default Behavior
+""""""""""""""""
+
 By default:
 - ``max-file-size`` is unlimited (``0B``).
 - ``max-size`` is equal to ``max-file-size``, which means the |ddsrecorder| creates a single output file of unlimited size.
 
-### Resource Limits Configuration Rules
+Resource Limits Configuration Rules
+"""""""""""""""""""""""""""""""""""
+
 The relation between ``max-size`` and ``safety-margin`` introduces resource limits that dictate memory usage. The behavior depends on the enabled recorders:
 
-#### A. If only one recorder is enabled:
-1. **No resource limits set**: The recorder will use all available disk space.
-2. **Resource limits set**: Ensure the available space is sufficient to meet the specified limits.
+A. If only one recorder is enabled
 
-#### B. If both recorders are enabled:
-1. **No resource limits set**: Available disk space is divided equally between the recorders.
-2. **One recorder with resource limits set**: The other recorder will use the remaining disk space.
-3. **Both recorders with resource limits set**: Ensure the combined limits do not exceed the available disk space, returning an error otherwise.
+   * **No resource limits set**: The recorder will use all available disk space.
+   * **Resource limits set**: Ensure the available space is sufficient to meet the specified limits.
 
-### Size Margin
-The **``size-margin``** property is an optional parameter that stablish the margin of error for the size of the output files.
+B. If both recorders are enabled
+
+   * **No resource limits set**: Available disk space is divided equally between the recorders.
+   * **One recorder with resource limits set**: The other recorder will use the remaining disk space.
+   * **Both recorders with resource limits set**: Ensure the combined limits do not exceed the available disk space, returning an error otherwise.
+
+Size Margin
+"""""""""""
+
+The ``size-margin`` property is an optional parameter that stablish the margin of error for the size of the output files.
 
 
 .. warning::
@@ -544,10 +558,14 @@ The **``size-margin``** property is an optional parameter that stablish the marg
 To keep the |ddsrecorder| recording after reaching the ``max-size``, users can set the ``log-rotation`` tag to ``true``.
 Enabling ``log-rotation`` allows the |ddsrecorder| to overwrite old files to free space for new ones.
 
-### MCAP Log-Rotation Behavior
+MCAP Log-Rotation Behavior
+""""""""""""""""""""""""""
+
 When the MCAP ``log-rotation`` is enabled, the |ddsrecorder| will remove the oldest file whenever ``max-size`` is reached.
 
-### SQL Log-Rotation Behavior
+SQL Log-Rotation Behavior
+"""""""""""""""""""""""""
+
 When the SQL ``log-rotation`` is enabled, the |ddsrecorder| will remove the oldest entries of the database whenever ``max-size`` is reached.
 
 .. note::

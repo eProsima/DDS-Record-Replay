@@ -203,7 +203,7 @@ int main(
         }
 
 
-        // Use MCAP input from YAML configuration file if not provided via executable arg
+        // Use input file from YAML configuration file if not provided via executable arg
         if (commandline_args.input_file == "")
         {
             if (configuration.input_file != "")
@@ -222,7 +222,7 @@ int main(
             {
                 EPROSIMA_LOG_ERROR(
                     DDSREPLAYER_ARGS,
-                    "An input MCAP file must be provided through argument '-i' / '--input-file' " <<
+                    "An input file must be provided through argument '-i' / '--input-file' " <<
                         "or under 'input-file' YAML tag.");
                 return static_cast<int>(ProcessReturnCode::required_argument_failed);
             }
@@ -265,14 +265,14 @@ int main(
                     catch (const eprosima::utils::InconsistencyException& e)
                     {
                         EPROSIMA_LOG_ERROR(DDSREPLAYER_ERROR,
-                        "Error processing MCAP file. Error message:\n " <<
+                        "Error processing input file. Error message:\n " <<
                             e.what());
                         read_success = false;
                     }
                     close_handler->simulate_event_occurred();
                 });
 
-        // Wait until signal arrives (or all messages in MCAP file sent)
+        // Wait until signal arrives (or all messages in input file sent)
         close_handler->wait_for_event();
 
         // Disable inner pipe, which would abort replaying messages in case execution stopped by signal
@@ -282,7 +282,7 @@ int main(
 
         if (!read_success)
         {
-            // An exception was captured in the MCAP reading thread
+            // An exception was captured in the reading thread
             return static_cast<int>(ProcessReturnCode::execution_failed);
         }
 

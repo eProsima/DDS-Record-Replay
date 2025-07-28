@@ -32,10 +32,24 @@ namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
 
+/**
+ * Class that writes data to an MCAP file.
+ *
+ * It uses the MCAP library to write data to a file.
+ * It tracks the size of the file and handles disk full exceptions.
+ */
 class DDSRECORDER_PARTICIPANTS_DllAPI McapWriter : public BaseWriter
 {
 public:
 
+    /**
+     * @brief Constructor
+     *
+     * @param configuration The output settings for the writer.
+     * @param mcap_configuration The MCAP writer options.
+     * @param file_tracker The file tracker to track the files written by the output library.
+     * @param record_types Whether to record the types.
+     */
     McapWriter(
             const OutputSettings& configuration,
             const mcap::McapWriterOptions& mcap_configuration,
@@ -55,7 +69,7 @@ public:
      * After a \c FullFileException :
      * - @throws \c InconsistencyException if the allocated space is not enough to close the current file or to open a
      * new one.
-     * - @throws \c InitializationException if the output library fails to open a new file.
+     * - @throws \c InitializationException if the MCAP library fails to open a new file.
      */
     template <typename T>
     void write(

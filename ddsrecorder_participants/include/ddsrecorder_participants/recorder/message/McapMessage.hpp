@@ -44,6 +44,12 @@ struct McapMessage : public BaseMessage, public mcap::Message
 
     /**
      * @brief Construct a \c McapMessage.
+     *
+     * @param data          The received data sample.
+     * @param payload_pool  The \c PayloadPool that owns the payload.
+     * @param topic         The \c DdsTopic in which the payload was published.
+     * @param channel_id    The \c ChannelId to which the message belongs.
+     * @param log_publish_time Whether to log the publish time of the message.
      */
     McapMessage(
             const ddspipe::core::types::RtpsPayloadData& data,
