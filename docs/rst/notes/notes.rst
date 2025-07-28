@@ -10,20 +10,20 @@ Version v1.3.0
 
 This release includes the following **features**:
 
-* Record and replay data from SQL
+* Record and replay data from SQL.
 
 This release includes the following **improvements and bugfixes**:
 
-* Check retcode value after controller command publication
-* Fix dds recorder compilation
+* Check retcode value after controller command publication.
+* Fix dds recorder compilation.
 
 This release includes the following **CI improvements**:
 
-* Remove deprecated `Windows-2019` runner
-* Use `tsan`binaries for TSAN workflows
-* Bump `setuptools`in docs workflow
-* Update docs to use `furo` theme
-* Add test report to CI
+* Remove deprecated ``Windows-2019`` runner.
+* Use ``tsan`` binaries for TSAN workflows.
+* Bump ``setuptools`` in docs workflow.
+* Update docs to use ``furo`` theme.
+* Add test report to CI.
 
 This release includes the following **Dependencies Update**:
 
