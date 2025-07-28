@@ -261,6 +261,8 @@ int main(
 
         // Load configuration from YAML
         eprosima::ddsrecorder::yaml::RecorderConfiguration configuration(commandline_args.file_path, &commandline_args);
+        // Flag to avoid reloading configuration in the first iteration of enable_remote_controller loop
+        bool config_loaded = true;
 
         /////
         // Logging
@@ -296,8 +298,8 @@ int main(
 
         logUser(DDSRECORDER_EXECUTION, "DDS Recorder running.");
 
-        // The file tracker must be stored outside of the loop since it is shared between instances
-        std::shared_ptr<eprosima::ddsrecorder::participants::FileTracker> file_tracker;
+        // File trackers will be accessed through the recorder handler contexts (if any)
+        std::unique_ptr<DdsRecorder> recorder = nullptr;
 
         if (configuration.enable_remote_controller)
         {
@@ -344,7 +346,10 @@ int main(
                     {
                         // Save the set of output files from being overwritten.
                         // WARNING: If set, the resource-limits won't be consistent after stopping the DDS Recorder.
-                        file_tracker.reset();
+                        if (recorder)
+                        {
+                            recorder->reset_file_trackers();
+                        }
                     }
 
                     prev_command = CommandCode::stop;
@@ -402,11 +407,18 @@ int main(
 
                 // Reload YAML configuration file, in case it changed during STOPPED state
                 // NOTE: Changes to all (but controller specific) recorder configuration options are taken into account
-                configuration = eprosima::ddsrecorder::yaml::RecorderConfiguration(commandline_args.file_path);
+                if (!config_loaded)
+                {
+                    configuration = eprosima::ddsrecorder::yaml::RecorderConfiguration(commandline_args.file_path);
+                }
+                else
+                {
+                    config_loaded = false;
+                }
 
                 // Create DDS Recorder
-                auto recorder = std::make_unique<DdsRecorder>(
-                    configuration, initial_state, close_handler, file_tracker);
+                recorder = std::make_unique<DdsRecorder>(
+                    configuration, initial_state, close_handler);
 
                 // Create File Watcher Handler
                 std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;
@@ -530,8 +542,10 @@ int main(
                     parse_command(receiver.wait_for_command(), command, args);
                     first_iter = false;
 
-                } while (command != CommandCode::stop && command != CommandCode::close);
-            } while (command != CommandCode::close);
+                }
+                while (command != CommandCode::stop && command != CommandCode::close);
+            }
+            while (command != CommandCode::close);
 
             // Transition to CLOSED state
             receiver.publish_status(CommandCode::close, prev_command);
@@ -539,8 +553,8 @@ int main(
         else
         {
             // Start recording right away
-            auto recorder = std::make_unique<DdsRecorder>(
-                configuration, DdsRecorderState::RUNNING, close_handler, file_tracker);
+            recorder = std::make_unique<DdsRecorder>(
+                configuration, DdsRecorderState::RUNNING, close_handler);
 
             // Create File Watcher Handler
             std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;

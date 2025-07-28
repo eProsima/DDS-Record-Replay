@@ -5,3 +5,20 @@ recorder:
   output:
     filename: "output"
     path: "."
+    safety-margin: "1GB"
+  
+  mcap:
+    enable: true
+    resource-limits:
+      max-file-size: "20MB"
+      max-size: "100MB"
+      size-tolerance: "2MB"
+      log-rotation: true
+
+  sql: 
+    enable: true
+    resource-limits:
+      max-size: "40MB"
+      size-tolerance: "4MB"
+      log-rotation: true
+

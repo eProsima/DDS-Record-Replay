@@ -1,0 +1,15 @@
+topics:
+  - name: configuration_topic
+    type: Configuration
+    qos:
+      reliability: true       # Use QoS RELIABLE
+
+replayer:
+  replay-types: true
+  begin-time:
+    local: false
+    format: "%H-%M-%S_%Y-%m-%d"
+    datetime: 10-00-34_2024-11-11
+
+specs:
+  wait-all-acked-timeout: 2000

@@ -18,6 +18,10 @@
 
 #pragma once
 
+#include <cstdint>
+#include <memory>
+#include <string>
+
 #include <mcap/mcap.hpp>
 
 #include <cpp_utils/Formatter.hpp>
@@ -35,8 +39,13 @@
 #include <ddspipe_yaml/Yaml.hpp>
 #include <ddspipe_yaml/YamlReader.hpp>
 
+#include <ddsrecorder_participants/recorder/handler/sql/SqlHandlerConfiguration.hpp>
+
 #include <ddsrecorder_yaml/library/library_dll.h>
 #include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
+#include <ddsrecorder_yaml/recorder/ResourceLimitsConfiguration.hpp>
+
+#define OUTPUT_SAFETY_MARGIN_MIN 10 * 1024 * 1024 // Force the system to have at least 10MB free
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -60,35 +69,46 @@ public:
             const CommandlineArgsRecorder* args = nullptr);
 
     virtual bool is_valid(
-            utils::Formatter& error_msg) const noexcept;
+            utils::Formatter& error_msg) noexcept;
 
     // DDS Pipe Configuration
     ddspipe::core::DdsPipeConfiguration ddspipe_configuration;
 
     // Participants configurations
     std::shared_ptr<ddspipe::participants::SimpleParticipantConfiguration> simple_configuration;
-    std::shared_ptr<ddspipe::participants::ParticipantConfiguration> recorder_configuration;
+    std::shared_ptr<ddspipe::participants::ParticipantConfiguration> sql_recorder_configuration;
+    std::shared_ptr<ddspipe::participants::ParticipantConfiguration> mcap_recorder_configuration;
+
+    // Recording generic params
+    unsigned int buffer_size = 100;
+    unsigned int cleanup_period;
+    unsigned int event_window = 20;
+    int max_pending_samples = 5000;  // -1 <-> no limit || 0 <-> no pending samples
+    bool only_with_type = false;
+    bool record_types = true;
+    bool ros2_types = false;
 
     // Output file params
     std::string output_filepath = ".";
     std::string output_filename = "output";
     std::string output_timestamp_format = "%Y-%m-%d_%H-%M-%S_%Z";
     bool output_local_timestamp = true;
-    uint64_t safety_margin = 0;
+    std::uint64_t output_safety_margin = OUTPUT_SAFETY_MARGIN_MIN; // Force always the system to have at least 10MB free
 
-    // Output resource limits
-    bool output_resource_limits_file_rotation = false;
-    std::uint64_t output_resource_limits_max_size = 0;
-    std::uint64_t output_resource_limits_max_file_size = 0;
-
-    // Recording params
-    unsigned int buffer_size = 100;
-    unsigned int event_window = 20;
-    bool log_publish_time = false;
-    bool only_with_type = false;
+    // Mcap params
+    bool mcap_enabled = true;
+    bool mcap_log_publish_time = false;
     mcap::McapWriterOptions mcap_writer_options{"ros2"};
-    bool record_types = true;
-    bool ros2_types = false;
+
+    // Sql params
+    bool sql_enabled = false;
+    ddsrecorder::participants::DataFormat sql_data_format = ddsrecorder::participants::DataFormat::both;
+
+    // Resource limits params
+    ResourceLimitsConfiguration mcap_resource_limits;
+    ResourceLimitsConfiguration sql_resource_limits;
+    bool mcap_resource_limits_enabled{false};
+    bool sql_resource_limits_enabled{false};
 
     // Remote controller configuration
     bool enable_remote_controller = true;
@@ -99,8 +119,6 @@ public:
 
     // Specs
     unsigned int n_threads = 12;
-    int max_pending_samples = 5000;  // -1 <-> no limit || 0 <-> no pending samples
-    unsigned int cleanup_period;
     ddspipe::core::types::TopicQoS topic_qos{};
     ddspipe::core::MonitorConfiguration monitor_configuration{};
 
@@ -111,6 +129,18 @@ protected:
             const CommandlineArgsRecorder* args);
 
     void load_recorder_configuration_(
+            const Yaml& yml,
+            const ddspipe::yaml::YamlReaderVersion& version);
+
+    void load_recorder_output_configuration_(
+            const Yaml& yml,
+            const ddspipe::yaml::YamlReaderVersion& version);
+
+    void load_recorder_mcap_configuration_(
+            const Yaml& yml,
+            const ddspipe::yaml::YamlReaderVersion& version);
+
+    void load_recorder_sql_configuration_(
             const Yaml& yml,
             const ddspipe::yaml::YamlReaderVersion& version);
 

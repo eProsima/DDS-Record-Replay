@@ -21,6 +21,10 @@
 #include <cstdint>
 #include <string>
 
+#include <cpp_utils/macros/custom_enumeration.hpp>
+
+#include <ddsrecorder_participants/recorder/output/ResourceLimits.hpp>
+
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -57,17 +61,37 @@ struct OutputSettings
     // RESOURCE LIMITS //
     /////////////////////
 
-    //! Safety margin on file's size estimation
-    std::uint64_t safety_margin;
+    //! Resource limits configuration
+    ResourceLimitsStruct resource_limits;
 
-    //! Maximum size of the output file
-    std::uint64_t max_file_size;
+    /**
+     * @brief Sets the resource limits for the OutputSettings.
+     */
+    bool set_resource_limits(
+            ResourceLimitsStruct& limits,
+            std::uint64_t space_available)
+    {
+        // If the max size is not set but resource limits are enabled, set the max size to the available space
+        if (limits.max_size_ == 0)
+        {
+            limits.max_size_ = space_available;
+        }
 
-    //! Maximum aggregate size of the output files
-    std::uint64_t max_size;
+        if (limits.max_file_size_ == 0)
+        {
+            limits.max_file_size_ = limits.max_size_;
+        }
 
-    //! Whether to rotate output files after reaching the max-size
-    bool file_rotation{false};
+        if (limits.max_size_ > space_available)
+        {
+            EPROSIMA_LOG_ERROR(DDSRECORDER, "The max size cannot be greater than the available space");
+            return false;
+        }
+
+        resource_limits = limits;
+        return true;
+    }
+
 };
 
 } /* namespace participants */

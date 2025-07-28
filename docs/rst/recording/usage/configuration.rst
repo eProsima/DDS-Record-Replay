@@ -347,57 +347,9 @@ The recorder output file does support the following configuration settings under
         - ``boolean``
         - ``true``
 
-    *   - Safety margin
-        - ``safety_margin``
-        - Configure safety margin (bytes) used |br|
-          in MCAP file size estimations.
-        - ``unsigned int``
-        - ``0``
-
-    *   - Resource limits
-        - ``resource-limits``
-        - :ref:`recorder_usage_configuration_resource_limits`
-        - ``map``
-        - ``unlimited``
-
 When DDS Recorder application is launched (or when remotely controlled, every time a ``start/pause`` command is received while in ``SUSPENDED/STOPPED`` state), a temporary file with ``filename`` name (+timestamp prefix) and ``.mcap.tmp~`` extension is created in ``path``.
 This file is not readable until the application terminates, receives a ``suspend/stop/close`` command, or the file reaches its maximum size (see :ref:`Resource Limits <recorder_usage_configuration_resource_limits>`).
 On such event, the temporal file is renamed to have ``.mcap`` extension in the same location, and is then ready to be processed.
-
-.. _recorder_usage_configuration_resource_limits:
-
-Resource Limits
-"""""""""""""""
-
-The ``resource-limits`` tag allows users to limit the size of the *DDS Recorder's* output.
-The ``max-file-size`` tag specifies the maximum size of each output file and the ``max-size`` tag specifies the maximum aggregate size of all output files.
-If the ``max-size`` is higher than the ``max-file-size``, the |ddsrecorder| will create multiple files with a maximum size of ``max-file-size``.
-By default, however, the ``max-file-size`` is unlimited (``0B``) and the ``max-size`` is the same as the ``max-file-size``; that is, by default the |ddsrecorder| creates a single file of unlimited size.
-
-.. warning::
-
-    If the ``max-file-size`` or the ``max-size`` are set to a value lower than the available space in the disk, the |ddsrecorder| will replace them with the available space in the disk.
-
-To keep the |ddsrecorder| recording after reaching the ``max-size``, users can set the ``file-rotation`` tag to ``true``.
-Enabling ``file-rotation`` allows the |ddsrecorder| to overwrite old files to free space for new ones.
-
-.. note::
-
-    To keep the |ddsrecorder| from overwriting previous output files, users can set ``{"avoid_overwriting_output": true}`` as the argument (``"args"``) of the ``stop`` command (see :ref:`Control Commands <recorder_remote_controller_data_types>`).
-    If set, the |ddsrecorder| will not overwrite its output files, at the cost of possibly exceeding the ``max-size``.
-
-.. note::
-
-    If an output file is moved, deleted, or renamed, the |ddsrecorder| will keep the size of the file reserved and rotate between the remaining files.
-
-**Example of usage**
-
-.. code-block:: yaml
-
-    resource-limits:
-      max-file-size: 250KB
-      max-size: 2MiB
-      file-rotation: true
 
 Buffer size
 ^^^^^^^^^^^
@@ -405,6 +357,15 @@ Buffer size
 ``buffer-size`` indicates the number of samples to be stored in the process memory before the dump to disk.
 This avoids disk access each time a sample is received.
 By default, its value is set to ``100``.
+
+.. _recorder_usage_configuration_cleanup_period:
+
+Cleanup Period
+^^^^^^^^^^^^^^
+
+As explained in :ref:`Event Window <recorder_usage_configuration_event_window>`, a |ddsrecorder| in paused mode awaits for an event command to write in disk all samples received in the last ``event-window`` seconds.
+To accomplish this, received samples are stored in memory until the aforementioned event is triggered and, in order to limit memory consumption, outdated (received more than ``event-window`` seconds ago) samples are removed from this buffer every ``cleanup-period`` seconds.
+By default, its value is equal to twice the ``event-window``.
 
 .. _recorder_usage_configuration_event_window:
 
@@ -417,14 +378,27 @@ Thus, when an event is triggered from the remote controller, samples received in
 In other words, the ``event-window`` acts as a sliding time window that allows to save the collected samples in this time window only when the remote controller event is received.
 By default, its value is set to ``20`` seconds.
 
-.. _recorder_usage_configuration_logpublishtime:
+.. _recorder_usage_configuration_max_number_pending_samples:
 
-Log Publish Time
-^^^^^^^^^^^^^^^^
+Maximum Number of Pending Samples
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-By default (``log-publish-time: false``) received messages are stored in the MCAP file with ``logTime`` value equals to the reception timestamp.
-Additionally, the timestamp corresponding to when messages were initially published (``publishTime``) is also included in the information dumped to MCAP files.
-In some applications, it may be required to use the ``publishTime`` as ``logTime``, which can be achieved by providing the ``log-publish-time: true`` configuration option.
+It is possible that a |ddsrecorder| starts receiving data from a topic that it has not yet registered, i.e. a topic for which it does not know the data type.
+In this case, messages are kept in an internal circular buffer until their associated type information is received, event on which they are written to disk.
+
+However, the recorder execution might end before this event ever occurs.
+Depending on configuration (see :ref:`recorder_usage_configuration_onlywithtype`), messages kept in the pending samples buffer will be stored or not on closure.
+Hence, note that memory consumption would continuously grow whenever a sample with unknown type information is received.
+
+To avoid the exhaustion of memory resources in such scenarios, a configuration option is provided which lets the user set a limit on memory usage.
+The ``max-pending-samples`` parameter allows to configure the size of the aforementioned circular buffers **for each topic** that is discovered.
+The default value is equal to ``5000`` samples, with ``-1`` meaning no limit, and ``0`` no pending samples.
+
+Depending on the combination of this configuration option and the value of ``only-with-type``, the following situations may arise when a message with unknown type is received:
+
+* If ``max-pending-samples`` is ``-1``, or if it is greater than ``0`` and the circular buffer is not full, the sample is added to the collection.
+* If ``max-pending-samples`` is greater than ``0`` and the circular buffer reaches its maximum capacity, the oldest sample with same type as the received one is popped, and either written without type (``only-with-type: false``) or discarded (``only-with-type: true``).
+* If ``max-pending-samples`` is ``0``, the message is written without type if ``only-with-type: false``, and discarded otherwise.
 
 .. _recorder_usage_configuration_onlywithtype:
 
@@ -434,10 +408,45 @@ Only With Type
 By default, all (allowed) received messages are recorded regardless of whether their associated type information has been received.
 However, a user can enforce that **only** samples whose type is received are recorded by setting ``only-with-type: true``.
 
+.. _recorder_usage_configuration_recordtypes:
+
+Record Types
+^^^^^^^^^^^^
+
+By default, all type information received during execution is stored in a dedicated MCAP file section.
+This information is then leveraged by |ddsreplayer| on playback, publishing recorded types in addition to data samples, which may be required for receiver applications relying on :term:`Dynamic Types<DynamicTypes>` (see :ref:`Replay Types <replayer_replay_configuration_replaytypes>`).
+However, a user may choose to disable this feature by setting ``record-types: false``.
+
+.. _recorder_usage_configuration_topictypeformat:
+
+Topic type format
+^^^^^^^^^^^^^^^^^
+
+The optional ``ros2-types`` tag enables specification of the format for storing schemas.
+When set to ``true``, schemas are stored in ROS 2 message format (.msg).
+If set to ``false``, schemas are stored in OMG IDL format (.idl).
+By default it is set to ``false``.
+
+.. _recorder_usage_configuration_mcap:
+
+MCAP Configuration
+^^^^^^^^^^^^^^^^^^
+
+The ``enable`` tag allows users to enable or disable whether to record data in an MCAP file.
+
+.. _recorder_usage_configuration_logpublishtime:
+
+Log Publish Time
+""""""""""""""""
+
+By default (``log-publish-time: false``) received messages are stored in the MCAP file with ``logTime`` value equals to the reception timestamp.
+Additionally, the timestamp corresponding to when messages were initially published (``publishTime``) is also included in the information dumped to MCAP files.
+In some applications, it may be required to use the ``publishTime`` as ``logTime``, which can be achieved by providing the ``log-publish-time: true`` configuration option.
+
 .. _recorder_usage_configuration_compression:
 
 Compression
-^^^^^^^^^^^
+"""""""""""
 
 Compression settings for writing to an MCAP file can be specified under the ``compression`` configuration tag.
 The supported compression options are:
@@ -485,24 +494,126 @@ The supported compression options are:
         - ``true`` |br|
           ``false``
 
-.. _recorder_usage_configuration_recordtypes:
+.. _recorder_usage_configuration_resource_limits:
 
-Record Types
-^^^^^^^^^^^^
+Resource Limits
+"""""""""""""""
 
-By default, all type information received during execution is stored in a dedicated MCAP file section.
-This information is then leveraged by |ddsreplayer| on playback, publishing recorded types in addition to data samples, which may be required for receiver applications relying on :term:`Dynamic Types<DynamicTypes>` (see :ref:`Replay Types <replayer_replay_configuration_replaytypes>`).
-However, a user may choose to disable this feature by setting ``record-types: false``.
+The ``resource-limits`` tag allows users to control the size of the *DDS Recorder's* output by setting limits on disk usage. This configuration allows distinct limits for the MCAP and SQL outputs while maintaining a shared safety margin to ensure stable memory usage.
 
-.. _recorder_usage_configuration_topictypeformat:
+- **``max-file-size``**: Specifies the maximum size of each output file. Applicable only to the MCAP recorder, as the SQL recorder uses a single database file.
+- **``max-size``**: Specifies the maximum aggregate size of all output files. For the SQL recorder, this defines the maximum size of the database file. For the MCAP recorder, this determines the total size of all generated files.
 
-Topic type format
+Safety Margin
+"""""""""""""
+
+The ``safety-margin`` property is shared between the SQL and MCAP outputs and is configured in the ``output`` section. This parameter reserves a buffer of free disk space, ensuring that at least ``safety-margin`` bytes remain available to prevent the system from running out of memory. This applies regardless of whether one or both recorders are enabled.
+By default, the safety margin is set to ``10MB``.
+
+MCAP Recorder Behavior
+""""""""""""""""""""""
+
+If the ``max-size`` is greater than the ``max-file-size``, the |ddsrecorder| will create multiple files, each with a size up to the value of ``max-file-size``, until the total size reaches ``max-size``.
+
+SQL Recorder Behavior
+"""""""""""""""""""""
+
+For the SQL recorder:
+- The database is always stored in a single file.
+- **Both ``max-file-size`` and ``max-size`` control the same parameter, i.e., total size of the database**. This is why setting just one of them is sufficient as the other will be automatically set to the same value. If both are set to different values, an error will be returned.
+
+Default Behavior
+""""""""""""""""
+
+By default:
+- ``max-file-size`` is unlimited (``0B``).
+- ``max-size`` is equal to ``max-file-size``, which means the |ddsrecorder| creates a single output file of unlimited size.
+
+Resource Limits Configuration Rules
+"""""""""""""""""""""""""""""""""""
+
+The relation between ``max-size`` and ``safety-margin`` introduces resource limits that dictate memory usage. The behavior depends on the enabled recorders:
+
+A. If only one recorder is enabled
+
+   * **No resource limits set**: The recorder will use all available disk space.
+   * **Resource limits set**: Ensure the available space is sufficient to meet the specified limits.
+
+B. If both recorders are enabled
+
+   * **No resource limits set**: Available disk space is divided equally between the recorders.
+   * **One recorder with resource limits set**: The other recorder will use the remaining disk space.
+   * **Both recorders with resource limits set**: Ensure the combined limits do not exceed the available disk space, returning an error otherwise.
+
+Size Margin
+"""""""""""
+
+The ``size-margin`` property is an optional parameter that stablish the margin of error for the size of the output files.
+
+
+.. warning::
+
+    If the ``max-file-size`` or the ``max-size`` are set to a value higher than the available space in the disk (counting for the safety-margin), an error will be returned.
+
+To keep the |ddsrecorder| recording after reaching the ``max-size``, users can set the ``log-rotation`` tag to ``true``.
+Enabling ``log-rotation`` allows the |ddsrecorder| to overwrite old files to free space for new ones.
+
+MCAP Log-Rotation Behavior
+""""""""""""""""""""""""""
+
+When the MCAP ``log-rotation`` is enabled, the |ddsrecorder| will remove the oldest file whenever ``max-size`` is reached.
+
+SQL Log-Rotation Behavior
+"""""""""""""""""""""""""
+
+When the SQL ``log-rotation`` is enabled, the |ddsrecorder| will remove the oldest entries of the database whenever ``max-size`` is reached.
+
+.. note::
+
+    To keep the |ddsrecorder| from overwriting previous output files, users can set ``{"avoid_overwriting_output": true}`` as the argument (``"args"``) of the ``stop`` command (see :ref:`Control Commands <recorder_remote_controller_data_types>`).
+    If set, the |ddsrecorder| will not overwrite its output files, at the cost of possibly exceeding the ``max-size``.
+
+.. note::
+
+    If an output file is moved, deleted, or renamed, the |ddsrecorder| will keep the size of the file reserved and rotate between the remaining files.
+
+**Example of usage**
+
+.. code-block:: yaml
+
+  recorder:
+    output:
+      safety-margin: "1GB"
+
+    mcap:
+      enable: true
+      resource-limits:
+        max-file-size: 25MB
+        max-size: 200MB
+        log-rotation: true
+        size-margin: 2MB
+
+    sql:
+      enable: true
+      resource-limits:
+        max-size: 20MiB
+        log-rotation: true
+        size-margin: 1MB
+
+.. _recorder_usage_configuration_sql:
+
+SQL Configuration
 ^^^^^^^^^^^^^^^^^
 
-The optional ``ros2-types`` tag enables specification of the format for storing schemas.
-When set to ``true``, schemas are stored in ROS 2 message format (.msg).
-If set to ``false``, schemas are stored in OMG IDL format (.idl).
-By default it is set to ``false``.
+The ``enable`` tag allows users to enable or disable whether to record data in an SQL database.
+
+.. _recorder_usage_configuration_sql_data_format:
+
+Data Format
+"""""""""""
+
+The ``data-format`` tag allows users to specify the format in which data is stored in the SQL database.
+The data can be stored in ``cdr`` (which makes the data replayable by the |ddsreplayer|), in ``json`` (which makes the data human-readable), or in ``both`` (default).
 
 .. _recorder_usage_configuration_remote_controller:
 
@@ -584,33 +695,6 @@ This improves the performance of the internal data communications.
 
 This value should be set by each user depending on each system characteristics.
 In case this value is not set, the default number of threads used is :code:`12`.
-
-Maximum Number of Pending Samples
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-It is possible that a |ddsrecorder| starts receiving data from a topic that it has not yet registered, i.e. a topic for which it does not know the data type.
-In this case, messages are kept in an internal circular buffer until their associated type information is received, event on which they are written to disk.
-
-However, the recorder execution might end before this event ever occurs.
-Depending on configuration (see :ref:`recorder_usage_configuration_onlywithtype`), messages kept in the pending samples buffer will be stored or not on closure.
-Hence, note that memory consumption would continuously grow whenever a sample with unknown type information is received.
-
-To avoid the exhaustion of memory resources in such scenarios, a configuration option is provided which lets the user set a limit on memory usage.
-The ``max-pending-samples`` parameter allows to configure the size of the aforementioned circular buffers **for each topic** that is discovered.
-The default value is equal to ``5000`` samples, with ``-1`` meaning no limit, and ``0`` no pending samples.
-
-Depending on the combination of this configuration option and the value of ``only-with-type``, the following situations may arise when a message with unknown type is received:
-
-* If ``max-pending-samples`` is ``-1``, or if it is greater than ``0`` and the circular buffer is not full, the sample is added to the collection.
-* If ``max-pending-samples`` is greater than ``0`` and the circular buffer reaches its maximum capacity, the oldest sample with same type as the received one is popped, and either written without type (``only-with-type: false``) or discarded (``only-with-type: true``).
-* If ``max-pending-samples`` is ``0``, the message is written without type if ``only-with-type: false``, and discarded otherwise.
-
-Cleanup Period
-^^^^^^^^^^^^^^
-
-As explained in :ref:`Event Window <recorder_usage_configuration_event_window>`, a |ddsrecorder| in paused mode awaits for an event command to write in disk all samples received in the last ``event-window`` seconds.
-To accomplish this, received samples are stored in memory until the aforementioned event is triggered and, in order to limit memory consumption, outdated (received more than ``event-window`` seconds ago) samples are removed from this buffer every ``cleanup-period`` seconds.
-By default, its value is equal to twice the ``event-window``.
 
 .. _recorder_specs_topic_qos:
 
@@ -848,28 +932,44 @@ A complete example of all the configurations described on this page can be found
         - "127.0.0.1"
 
     recorder:
+      buffer-size: 50
+      cleanup-period: 90
+      event-window: 60
+      max-pending-samples: 10
+      only-with-type: false
+      record-types: true
+      ros2-types: false
+
       output:
         filename: "output"
         path: "."
         timestamp-format: "%Y-%m-%d_%H-%M-%S_%Z"
         local-timestamp: false
-        safety-margin: 500
+        safety-margin: 10GB
+
+      mcap:
+        enable: true
+        log-publish-time: false
 
         resource-limits:
           max-file-size: 250KB
           max-size: 2MiB
-          file-rotation: true
+          log-rotation: true
+          size-tolerance: 10KB
 
-      buffer-size: 50
-      event-window: 60
-      log-publish-time: false
-      only-with-type: false
-      compression:
-        algorithm: lz4
-        level: slowest
-        force: true
-      record-types: true
-      ros2-types: false
+        compression:
+          algorithm: lz4
+          level: slowest
+          force: true
+
+      sql:
+        enable: false
+        data-format: "json"
+
+        resource-limits:
+          max-size: 2MiB
+          log-rotation: true
+          size-tolerance: 10KB
 
     remote-controller:
       enable: true
@@ -880,8 +980,6 @@ A complete example of all the configurations described on this page can be found
 
     specs:
       threads: 8
-      max-pending-samples: 10
-      cleanup-period: 90
 
       qos:
         max-rx-rate: 20

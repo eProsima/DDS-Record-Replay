@@ -1,0 +1,670 @@
+// Copyright 2024 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @file BaseHandler.cpp
+ */
+
+#include <chrono>
+
+#include <fastdds/dds/core/ReturnCode.hpp>
+#include <fastdds/dds/domain/DomainParticipantFactory.hpp>
+#include <fastdds/dds/xtypes/type_representation/detail/dds_xtypes_typeobject.hpp>
+#include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
+
+#include <cpp_utils/Formatter.hpp>
+#include <cpp_utils/utils.hpp>
+#include <cpp_utils/exception/InconsistencyException.hpp>
+
+#include <ddsrecorder_participants/common/serialize/Serializer.hpp>
+#include <ddsrecorder_participants/recorder/handler/BaseHandler.hpp>
+
+namespace eprosima {
+namespace ddsrecorder {
+namespace participants {
+
+using namespace eprosima::ddspipe::core::types;
+
+BaseHandler::BaseHandler(
+        const BaseHandlerConfiguration& config,
+        const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool)
+    : configuration_(config)
+    , payload_pool_(payload_pool)
+    , state_(BaseHandlerStateCode::STOPPED)
+{
+    EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Creating handler instance.");
+}
+
+BaseHandler::~BaseHandler()
+{
+    EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Destroying handler.");
+}
+
+void BaseHandler::init(
+        const BaseHandlerStateCode& init_state /* = BaseHandlerStateCode::RUNNING */,
+        const std::function<void()>& on_disk_full_lambda /* = nullptr */)
+{
+    if (on_disk_full_lambda != nullptr)
+    {
+        writer_->set_on_disk_full_callback(on_disk_full_lambda);
+    }
+
+    switch (init_state)
+    {
+        case BaseHandlerStateCode::RUNNING:
+            start();
+            break;
+
+        case BaseHandlerStateCode::PAUSED:
+            pause();
+            break;
+
+        default:
+            break;
+    }
+}
+
+void BaseHandler::enable()
+{
+    EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Enabling handler.");
+
+    writer_->enable();
+}
+
+void BaseHandler::disable()
+{
+    EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Disabling handler.");
+
+    writer_->disable();
+}
+
+void BaseHandler::start()
+{
+    // Wait for completion of event routine in case event was triggered
+    std::unique_lock<std::mutex> event_lock(event_cv_mutex_);
+    event_cv_.wait(
+        event_lock,
+        [&]
+        {
+            return event_flag_ != EventCode::triggered;
+        });
+
+    // Protect access to state and data structures (cleared in stop_event_thread_nts)
+    std::lock_guard<std::mutex> lock(mtx_);
+
+    // Store previous state to act differently depending on its value
+    BaseHandlerStateCode prev_state = state_;
+    state_ = BaseHandlerStateCode::RUNNING;
+
+    if (prev_state == BaseHandlerStateCode::RUNNING)
+    {
+        EPROSIMA_LOG_WARNING(
+            DDSRECORDER_BASE_HANDLER,
+            "Ignoring start command, instance already started.");
+    }
+    else
+    {
+        EPROSIMA_LOG_INFO(
+            DDSRECORDER_BASE_HANDLER,
+            "Starting handler.");
+
+        if (prev_state == BaseHandlerStateCode::STOPPED)
+        {
+            enable();
+        }
+        else if (prev_state == BaseHandlerStateCode::PAUSED)
+        {
+            // Stop event routine (cleans buffers)
+            stop_event_thread_nts_(event_lock);
+        }
+    }
+}
+
+void BaseHandler::stop(
+        bool on_destruction /* false */)
+{
+    // Wait for completion of event routine in case event was triggered
+    std::unique_lock<std::mutex> event_lock(event_cv_mutex_);
+    event_cv_.wait(
+        event_lock,
+        [&]
+        {
+            return event_flag_ != EventCode::triggered;
+        });
+
+    // Protect access to state and data structures
+    std::lock_guard<std::mutex> lock(mtx_);
+
+    // Store previous state to act differently depending on its value
+    BaseHandlerStateCode prev_state = state_;
+    state_ = BaseHandlerStateCode::STOPPED;
+
+    switch (prev_state)
+    {
+        case BaseHandlerStateCode::STOPPED:
+
+            if (!on_destruction)
+            {
+                EPROSIMA_LOG_WARNING(
+                    DDSRECORDER_BASE_HANDLER,
+                    "Ignoring stop command, instance already stopped.");
+            }
+
+            break;
+
+        case BaseHandlerStateCode::PAUSED:
+
+            EPROSIMA_LOG_INFO(
+                DDSRECORDER_BASE_HANDLER,
+                "Stopping handler.");
+
+            // Stop event routine (cleans buffers)
+            stop_event_thread_nts_(event_lock);
+
+            [[fallthrough]];
+
+        default:
+
+            if (!configuration_.only_with_schema)
+            {
+                // Adds to buffer samples whose schema was not received while running
+                // NOTE: Loop this way since dump_pending_samples_nts_ removes the entry from the map
+                while (!pending_samples_.empty())
+                {
+                    const auto type_name = pending_samples_.begin()->first;
+                    dump_pending_samples_nts_(type_name);
+                }
+            }
+            else
+            {
+                // Free memory resources
+                pending_samples_.clear();
+            }
+
+            // if prev_state == RUNNING -> writes buffer + added pending samples (if !only_with_schema)
+            // if prev_state == PAUSED  -> writes added pending samples (if !only_with_schema)
+            write_samples_(samples_buffer_);
+
+            disable();
+            break;
+    }
+}
+
+void BaseHandler::pause()
+{
+    // Protect access to state and data structures
+    std::lock_guard<std::mutex> lock(mtx_);
+
+    // NOTE: no need to take event mutex as event thread does not exist at this point
+
+    // Store previous state to act differently depending on its value
+    BaseHandlerStateCode prev_state = state_;
+    state_ = BaseHandlerStateCode::PAUSED;
+
+    if (prev_state == BaseHandlerStateCode::PAUSED)
+    {
+        EPROSIMA_LOG_WARNING(
+            DDSRECORDER_BASE_HANDLER,
+            "Ignoring pause command, instance already paused.");
+    }
+    else
+    {
+        EPROSIMA_LOG_INFO(
+            DDSRECORDER_BASE_HANDLER,
+            "Pausing handler.");
+
+        if (prev_state == BaseHandlerStateCode::STOPPED)
+        {
+            enable();
+        }
+        else if (prev_state == BaseHandlerStateCode::RUNNING)
+        {
+            // Write data stored in buffer
+            write_samples_(samples_buffer_);
+        }
+
+        // Launch event thread routine
+        event_flag_ = EventCode::untriggered;  // No need to take event mutex (protected by mtx_)
+        event_thread_ = std::thread(&BaseHandler::event_thread_routine_, this);
+    }
+}
+
+void BaseHandler::trigger_event()
+{
+    // Wait for completion of event routine in case event was triggered
+    std::unique_lock<std::mutex> event_lock(event_cv_mutex_);
+    event_cv_.wait(
+        event_lock,
+        [&]
+        {
+            return event_flag_ != EventCode::triggered;
+        });
+
+    // Protect access to state
+    std::lock_guard<std::mutex> lock(mtx_);
+
+    if (state_ != BaseHandlerStateCode::PAUSED)
+    {
+        EPROSIMA_LOG_WARNING(
+            DDSRECORDER_BASE_HANDLER,
+            "Ignoring trigger event command, instance is not paused.");
+    }
+    else
+    {
+        EPROSIMA_LOG_INFO(
+            DDSRECORDER_BASE_HANDLER,
+            "Triggering event.");
+
+        // Notify event routine thread an event has been triggered
+        event_flag_ = EventCode::triggered;
+        event_lock.unlock(); // Unlock before notifying for efficiency purposes
+        event_cv_.notify_all(); // Need to notify all as not possible to notify a specific thread
+    }
+}
+
+void BaseHandler::event_thread_routine_()
+{
+    bool keep_going = true;
+    while (keep_going)
+    {
+        bool timeout;
+        auto exit_time = std::chrono::time_point<std::chrono::system_clock>::max();
+        auto cleanup_period_ = std::chrono::seconds(configuration_.cleanup_period);
+        if (cleanup_period_ < std::chrono::seconds::max())
+        {
+            auto now = std::chrono::system_clock::now();
+            exit_time = now + cleanup_period_;
+        }
+
+        std::unique_lock<std::mutex> event_lock(event_cv_mutex_);
+
+        if (event_flag_ != EventCode::untriggered)
+        {
+            // Flag set before taking mutex, no need to wait
+            timeout = false;
+        }
+        else
+        {
+            timeout = !event_cv_.wait_until(
+                event_lock,
+                exit_time,
+                [&]
+                {
+                    return event_flag_ != EventCode::untriggered;
+                });
+        }
+
+        if (event_flag_ == EventCode::stopped)
+        {
+            EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Finishing event thread routine.");
+            keep_going = false;
+        }
+        else
+        {
+            // Protect access to state and data structures
+            std::lock_guard<std::mutex> lock(mtx_);
+
+            // NOTE: event mutex not released until routine completed to avoid other commands (start/stop/trigger) to interfere.
+
+            // Delete outdated samples if timeout, and also before writing the buffer (event triggered case)
+            remove_outdated_samples_nts_();
+
+            if (timeout)
+            {
+                EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Event thread timeout.");
+            }
+            else
+            {
+                EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Event triggered: writing buffered data.");
+
+                if (!(configuration_.max_pending_samples == 0 && configuration_.only_with_schema))
+                {
+                    // Move (paused) pending samples to buffer (or pending samples) before writing the buffer
+                    for (auto& [_, pending] : pending_samples_paused_)
+                    {
+                        while (!pending.empty())
+                        {
+                            const auto& sample = pending.front();
+
+                            if (configuration_.max_pending_samples != 0)
+                            {
+                                add_sample_to_pending_nts_(sample);
+                            }
+                            else if (!configuration_.only_with_schema)
+                            {
+                                // Add to buffer with blank schema
+                                add_sample_to_buffer_nts_(sample);
+                            }
+
+                            pending.pop_front();
+                        }
+                    }
+                }
+
+                write_samples_(samples_buffer_);
+            }
+
+            // Event routine iteration completed: reset and wait for next event
+            event_flag_ = EventCode::untriggered;
+        }
+
+        // Notify threads waiting for this resource
+        event_lock.unlock();
+        event_cv_.notify_all();
+    }
+}
+
+void BaseHandler::stop_event_thread_nts_(
+        std::unique_lock<std::mutex>& event_lock)
+{
+    // NOTE: this method assumes both mtx_ and event_cv_mutex_ (within event_lock) are locked
+
+    // WARNING: state must have been set different to PAUSED before calling this method
+    assert(state_ != BaseHandlerStateCode::PAUSED);
+
+    EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Stopping event thread.");
+
+    if (event_thread_.joinable())
+    {
+        event_flag_ = EventCode::stopped;
+        event_lock.unlock(); // Unlock prior to notification (for efficiency) and join (to avoid deadlock)
+        event_cv_.notify_all(); // Need to notify all as not possible to notify a specific thread
+        event_thread_.join();
+    }
+
+    samples_buffer_.clear();
+    pending_samples_paused_.clear();
+}
+
+void BaseHandler::process_new_sample_nts_(
+        std::shared_ptr<const BaseMessage> sample)
+{
+    if (state_ == BaseHandlerStateCode::STOPPED)
+    {
+        EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Attempting to add sample through a stopped handler, dropping...");
+        return;
+    }
+
+    EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Adding data in topic " << sample->topic);
+
+    if (received_types_.find(sample->topic.type_name) != received_types_.end())
+    {
+        add_sample_to_buffer_nts_(sample);
+        return;
+    }
+
+    switch (state_)
+    {
+        case BaseHandlerStateCode::RUNNING:
+
+            if (configuration_.max_pending_samples != 0)
+            {
+                EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER,
+                        "Dynamic type for topic " << sample->topic << " not yet available, inserting to pending "
+                        "samples queue.");
+
+                add_sample_to_pending_nts_(sample);
+            }
+            else
+            {
+                if (!configuration_.only_with_schema)
+                {
+                    // No schema available + no pending samples -> Add to buffer with blank schema
+                    add_sample_to_buffer_nts_(sample);
+                }
+                else
+                {
+                    // No schema available + no pending samples + only_with_schema -> Discard message
+                    return;
+                }
+            }
+            break;
+
+        case BaseHandlerStateCode::PAUSED:
+
+            EPROSIMA_LOG_INFO(
+                DDSRECORDER_BASE_HANDLER,
+                "Dynamic type for topic " << sample->topic << " not yet available, inserting to (paused) pending "
+                    "samples queue.");
+
+            pending_samples_paused_[sample->topic.type_name].push_back(sample);
+            break;
+
+        default:
+
+            // Should not happen, protected with mutex and state verified at beginning
+            utils::tsnh(utils::Formatter() << "Trying to add sample to a stopped instance.");
+            break;
+    }
+}
+
+void BaseHandler::add_sample_to_buffer_nts_(
+        std::shared_ptr<const BaseMessage> sample)
+{
+    samples_buffer_.push_back(sample);
+
+    if (state_ != BaseHandlerStateCode::RUNNING || samples_buffer_.size() < configuration_.buffer_size)
+    {
+        // Don't write samples to disk
+        return;
+    }
+
+    if (samples_buffer_.size() == configuration_.buffer_size)
+    {
+        EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER,
+                "The buffer is full. Writing to disk...");
+    }
+    else
+    {
+        EPROSIMA_LOG_WARNING(DDSRECORDER_BASE_HANDLER,
+                "The buffer's size (" << samples_buffer_.size() << ") exceeds its limit (" <<
+                configuration_.buffer_size << "). Writing to disk...");
+    }
+
+    write_samples_(samples_buffer_);
+}
+
+void BaseHandler::add_samples_to_buffer_nts_(
+        std::list<std::shared_ptr<const BaseMessage>>& samples)
+{
+    while (!samples.empty())
+    {
+        add_sample_to_buffer_nts_(samples.front());
+        samples.pop_front();
+    }
+}
+
+void BaseHandler::add_sample_to_pending_nts_(
+        std::shared_ptr<const BaseMessage> sample)
+{
+    assert(configuration_.max_pending_samples != 0);
+
+    auto& pending_samples = pending_samples_[sample->topic.type_name];
+
+    while (pending_samples.size() >= configuration_.max_pending_samples)
+    {
+        // The pending samples buffer is full. Discard the oldest sample.
+        const auto oldest_sample = pending_samples.front();
+        pending_samples.pop_front();
+
+        if (configuration_.only_with_schema)
+        {
+            EPROSIMA_LOG_WARNING(DDSRECORDER_BASE_HANDLER,
+                    "Dropping pending sample in type " << sample->topic.type_name << ": buffer limit (" <<
+                    configuration_.max_pending_samples << ") reached.");
+        }
+        else
+        {
+            EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER,
+                    "Buffer limit (" << configuration_.max_pending_samples <<  ") reached for type " <<
+                    sample->topic.type_name << ": writing oldest sample without schema.");
+
+            add_sample_to_buffer_nts_(oldest_sample);
+        }
+    }
+
+    pending_samples.push_back(sample);
+}
+
+void BaseHandler::dump_pending_samples_nts_(
+        const std::string& type_name)
+{
+    EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Adding pending samples for type: " << type_name << ".");
+
+    if (pending_samples_.find(type_name) != pending_samples_.end())
+    {
+        if (state_ == BaseHandlerStateCode::PAUSED)
+        {
+            // The samples were received previously in the RUNNING state.
+            // To avoid them being cleaned by the event thread, we write them directly.
+            write_samples_(pending_samples_[type_name]);
+        }
+        else
+        {
+            // Move samples from pending_samples to buffer
+            add_samples_to_buffer_nts_(pending_samples_[type_name]);
+        }
+
+        pending_samples_.erase(type_name);
+    }
+
+    if (state_ == BaseHandlerStateCode::PAUSED &&
+            (pending_samples_paused_.find(type_name) != pending_samples_paused_.end()))
+    {
+        // Move samples from pending_samples_paused to buffer
+        add_samples_to_buffer_nts_(pending_samples_paused_[type_name]);
+        pending_samples_paused_.erase(type_name);
+    }
+}
+
+void BaseHandler::remove_outdated_samples_nts_()
+{
+    EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Removing outdated samples.");
+
+    ddspipe::core::types::DataTime threshold;
+    ddspipe::core::types::DataTime::now(threshold);
+    threshold = threshold - ddspipe::core::types::DataTime(configuration_.event_window);
+
+    // NOTE: the outdated pending samples are not removed since they must be written as soon as they receive their type.
+
+    // Buffer
+    samples_buffer_.remove_if([&](const auto& sample)
+            {
+                return sample->log_time < threshold;
+            });
+
+    // Pending samples paused
+    for (auto& [_, pending] : pending_samples_paused_)
+    {
+        pending.remove_if([&](const auto sample)
+                {
+                    return sample->log_time < threshold;
+                });
+    }
+}
+
+bool BaseHandler::store_dynamic_type_(
+        const std::string& type_name,
+        const fastdds::dds::xtypes::TypeIdentifier& type_identifier)
+{
+    fastdds::dds::xtypes::TypeIdentifierPair type_identifiers;
+
+    // NOTE: type_identifier is assumed to be complete
+    type_identifiers.type_identifier1(type_identifier);
+
+    auto factory = fastdds::dds::DomainParticipantFactory::get_instance();
+
+    fastdds::dds::xtypes::TypeInformation type_information;
+    if (fastdds::dds::RETCODE_OK != factory->type_object_registry().get_type_information(
+                type_identifiers, type_information, true))
+    {
+        EPROSIMA_LOG_ERROR(DDSRECORDER_MCAP_HANDLER,
+                "MCAP_WRITE | Error getting TypeInformation for type " << type_name);
+        return false;
+    }
+
+    // Store dependencies as dynamic types
+    auto dependencies = type_information.complete().dependent_typeids();
+    unsigned int dependency_index = 0;
+
+    for (auto dependency : dependencies)
+    {
+        const auto dep_type_identifier = dependency.type_id();
+
+        fastdds::dds::xtypes::TypeObject dep_type_object;
+
+        if (fastdds::dds::RETCODE_OK != factory->type_object_registry().get_type_object(
+                    dep_type_identifier, dep_type_object))
+        {
+            EPROSIMA_LOG_ERROR(DDSRECORDER_BASE_HANDLER, "BASE_WRITE | Error getting TypeObject of dependency "
+                    << "for type " << type_name);
+            return false;
+        }
+
+        const auto dep_type_name = type_name + "_" + std::to_string(dependency_index);
+
+        // Store dependency in dynamic_types collection
+        store_dynamic_type_(dep_type_name, dep_type_identifier, dep_type_object);
+
+        // Increment suffix counter
+        dependency_index++;
+    }
+
+    fastdds::dds::xtypes::TypeObject type_object;
+
+    if (fastdds::dds::RETCODE_OK != factory->type_object_registry().get_type_object(
+                type_identifier, type_object))
+    {
+        EPROSIMA_LOG_ERROR(DDSRECORDER_BASE_HANDLER, "BASE_WRITE | Error getting TypeObject of dependency "
+                << "for type " << type_name);
+        return false;
+    }
+
+    // Store dynamic type in dynamic_types collection
+    return store_dynamic_type_(type_name, type_identifier, type_object);
+}
+
+bool BaseHandler::store_dynamic_type_(
+        const std::string& type_name,
+        const fastdds::dds::xtypes::TypeIdentifier& type_identifier,
+        const fastdds::dds::xtypes::TypeObject& type_object)
+{
+    DynamicType dynamic_type;
+    dynamic_type.type_name(type_name);
+
+    try
+    {
+        std::string serialized_obj;
+
+        Serializer::serialize(type_identifier, serialized_obj);
+        dynamic_type.type_identifier(utils::base64_encode(serialized_obj));
+
+        serialized_obj.clear();
+        Serializer::serialize(type_object, serialized_obj);
+        dynamic_type.type_object(utils::base64_encode(serialized_obj));
+    }
+    catch (const utils::InconsistencyException& e)
+    {
+        EPROSIMA_LOG_WARNING(DDSRECORDER_BASE_HANDLER,
+                "BASE_WRITE | Error serializing DynamicType. Error message:\n " << e.what());
+        return false;
+    }
+
+    dynamic_types_.dynamic_types().push_back(dynamic_type);
+    return true;
+}
+
+} /* namespace participants */
+} /* namespace ddsrecorder */
+} /* namespace eprosima */

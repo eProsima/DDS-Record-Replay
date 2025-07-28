@@ -25,8 +25,8 @@
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/utils.hpp>
 
+#include <ddsrecorder_participants/recorder/exceptions/FullDiskException.hpp>
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
-#include <ddsrecorder_participants/recorder/output/FullDiskException.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -56,19 +56,27 @@ void FileTracker::new_file(
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    if (min_file_size > configuration_.max_file_size)
+    if (min_file_size > configuration_.resource_limits.max_file_size_)
     {
+        EPROSIMA_LOG_ERROR(DDSRECORDER_FILE_TRACKER,
+                "The minimum file size (" << utils::from_bytes(
+                    min_file_size) << ") is greater than the maximum file size (" <<
+                utils::from_bytes(configuration_.resource_limits.max_file_size_) << ").");
         throw utils::InconsistencyException(utils::Formatter() <<
                       "The minimum file size (" <<
                       utils::from_bytes(min_file_size) << ") is greater than the maximum file size (" <<
-                      utils::from_bytes(configuration_.max_file_size) << ").");
+                      utils::from_bytes(configuration_.resource_limits.max_file_size_) << ").");
     }
 
-    const std::uint64_t free_space = configuration_.max_size - size_;
+    const std::uint64_t free_space = configuration_.resource_limits.max_size_ - size_;
     std::int64_t space_to_free = min_file_size - free_space;
 
-    if (space_to_free > 0 && !configuration_.file_rotation)
+    if (space_to_free > 0 && !configuration_.resource_limits.file_rotation_)
     {
+        EPROSIMA_LOG_ERROR(DDSRECORDER_FILE_TRACKER,
+                "The new file's size (" << utils::from_bytes(
+                    min_file_size) << ") is greater than the available space (" <<
+                utils::from_bytes(free_space) << ").");
         throw FullDiskException(
                   "Not enough free space (" + utils::from_bytes(free_space) + ") to create a new file with a minimum "
                   "size of " + utils::from_bytes(min_file_size));
@@ -125,11 +133,11 @@ void FileTracker::close_file() noexcept
         return;
     }
 
-    if (current_file_.size > configuration_.max_file_size)
+    if (current_file_.size > configuration_.resource_limits.max_file_size_)
     {
         EPROSIMA_LOG_WARNING(DDSRECORDER_FILE_TRACKER,
                 current_file_.to_str() + " has a greater file size than the maximum (" +
-                utils::from_bytes(configuration_.max_file_size) + ").");
+                utils::from_bytes(configuration_.resource_limits.max_file_size_) + ").");
     }
 
     // Save the current file as closed
@@ -162,21 +170,23 @@ std::string FileTracker::get_current_filename() const noexcept
 void FileTracker::set_current_file_size(
         const std::uint64_t file_size) noexcept
 {
-    if (file_size > configuration_.max_file_size)
+    if (file_size > configuration_.resource_limits.max_file_size_)
     {
         EPROSIMA_LOG_WARNING(DDSRECORDER_FILE_TRACKER,
                 "The file's size (" << utils::from_bytes(file_size) << ") is greater than the maximum file size (" <<
-                utils::from_bytes(configuration_.max_file_size) << ").");
+                utils::from_bytes(configuration_.resource_limits.max_file_size_) << ").");
     }
 
-    const auto size_diff = file_size - current_file_.size;
+    // If there's an overflow, the new size is too big
+    const auto new_size = size_ + file_size;
 
-    if (size_ + size_diff > configuration_.max_size)
+    if (new_size > configuration_.resource_limits.max_size_ || new_size < size_)
     {
         EPROSIMA_LOG_WARNING(DDSRECORDER_FILE_TRACKER,
                 "The aggregate output size (" <<
+                utils::from_bytes(size_) << ") plus the new file size (" <<
                 utils::from_bytes(file_size) << ") is greater than the maximum size (" <<
-                utils::from_bytes(configuration_.max_file_size) << ").");
+                utils::from_bytes(configuration_.resource_limits.max_size_) << ").");
     }
 
     current_file_.size = file_size;
@@ -230,7 +240,7 @@ std::string FileTracker::generate_filename_(
 
     filename += configuration_.filename;
 
-    if (configuration_.max_size > configuration_.max_file_size)
+    if (configuration_.resource_limits.max_size_ > configuration_.resource_limits.max_file_size_)
     {
         // There may be multiple output files. Include the file's id to make the filename unique.
         // NOTE: Appending the timestamp doesn't make the filename unique, since multiple can be created simultaneously.

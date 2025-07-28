@@ -20,15 +20,15 @@ set(TEST_NAME McapFileReadTest)
 
 set(TEST_SOURCES
     McapFileReadTest.cpp
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/configuration/Configuration.hpp
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/configuration/ConfigurationPubSubTypes.cxx
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/configuration/ConfigurationTypeObjectSupport.cxx
-    ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/ConfigurationSubscriber.cpp
+    ${PROJECT_SOURCE_DIR}/test/resources/types/configuration/ConfigurationPubSubTypes.cxx
+    ${PROJECT_SOURCE_DIR}/test/resources/types/configuration/ConfigurationTypeObjectSupport.cxx
+    ${PROJECT_SOURCE_DIR}/test/resources/dds/TestSubscriber.cpp
+    ${PROJECT_SOURCE_DIR}/test/resources/dds/TestDynTypesSubscriber.cpp
 )
 
 set(TEST_LIST
         trivial
-        dds_data_to_check
+        data_to_check
         less_playback_rate
         more_playback_rate
         begin_time
@@ -37,13 +37,13 @@ set(TEST_LIST
     )
 
 set(TEST_NEEDED_SOURCES
-        resources/configuration.mcap
-        resources/config_file_notype.yaml
-        resources/config_file_less_hz_notype.yaml
-        resources/config_file_more_hz_notype.yaml
-        resources/config_file_begin_time_notype.yaml
-        resources/config_file_end_time_notype.yaml
-        resources/config_file_start_replay_time_earlier_notype.yaml
+        ../../resources/config/basic/config_file.yaml
+        ../../resources/config/basic/config_file_less_hz.yaml
+        ../../resources/config/basic/config_file_more_hz.yaml
+        ../../resources/config/basic/config_file_begin_time.yaml
+        ../../resources/config/basic/config_file_end_time.yaml
+        ../../resources/config/basic/config_file_start_replay_time_earlier.yaml
+        ../../resources/recordings/basic/configuration.mcap
     )
 
 set(TEST_EXTRA_HEADERS
@@ -64,32 +64,35 @@ add_blackbox_executable(
 set(TEST_NAME McapFileReadWithTypeTest)
 
 set(TEST_SOURCES
-        McapFileReadWithTypeTest.cpp
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/configuration/Configuration.hpp
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/configuration/ConfigurationPubSubTypes.cxx
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/types/configuration/ConfigurationTypeObjectSupport.cxx
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/ConfigurationSubscriber.cpp
-        ${PROJECT_SOURCE_DIR}/test/blackbox/mcap/dds/ConfigurationDynTypesSubscriber.cpp
-    )
+    McapFileReadWithTypeTest.cpp
+    ${PROJECT_SOURCE_DIR}/test/resources/types/configuration/ConfigurationPubSubTypes.cxx
+    ${PROJECT_SOURCE_DIR}/test/resources/types/configuration/ConfigurationTypeObjectSupport.cxx
+    ${PROJECT_SOURCE_DIR}/test/resources/dds/TestSubscriber.cpp
+    ${PROJECT_SOURCE_DIR}/test/resources/dds/TestDynTypesSubscriber.cpp
+)
 
 set(TEST_LIST
         trivial
         dds_data_to_check
+        ros2_data_to_check
         dds_less_playback_rate
+        ros2_less_playback_rate
         dds_more_playback_rate
+        ros2_more_playback_rate
         begin_time
         end_time
         start_replay_time_earlier
     )
 
 set(TEST_NEEDED_SOURCES
-        resources/configuration.mcap
-        resources/config_file_withtypes.yaml
-        resources/config_file_less_hz_withtypes.yaml
-        resources/config_file_more_hz_withtypes.yaml
-        resources/config_file_begin_time_with_types.yaml
-        resources/config_file_end_time_with_types.yaml
-        resources/config_file_start_replay_time_earlier_with_types.yaml
+        ../../resources/config/type/config_file.yaml
+        ../../resources/config/type/config_file_less_hz.yaml
+        ../../resources/config/type/config_file_more_hz.yaml
+        ../../resources/config/type/config_file_begin_time.yaml
+        ../../resources/config/type/config_file_end_time.yaml
+        ../../resources/config/type/config_file_start_replay_time_earlier.yaml
+        ../../resources/recordings/type/configuration_type.mcap
+        ../../resources/recordings/ros2/ros2_talker.mcap
     )
 
 set(TEST_EXTRA_HEADERS

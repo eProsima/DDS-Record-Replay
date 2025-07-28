@@ -24,7 +24,7 @@ namespace ddsrecorder {
 namespace participants {
 
 /**
- * Participant kind in charge of replaying messages read by a \c McapReaderParticipant.
+ * Participant kind in charge of replaying messages read by a \c BaseReaderParticipant.
  * It is mostly equivalent to a \c rtps::SimpleParticipant without reader, only writer.
  */
 class ReplayerParticipant : public ddspipe::participants::rtps::SimpleParticipant

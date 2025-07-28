@@ -120,6 +120,8 @@ jobs:
       - name: Compile and run tests
         id: compile_and_test
         uses: eProsima/eProsima-CI/multiplatform/colcon_build_test@v0
+        env:
+          ASAN_OPTIONS: detect_odr_violation=0
         with:
           packages_names: ${{ env.code_packages_names }}
           workspace_dependencies: './install'

@@ -5,7 +5,7 @@ module participants {
 struct DynamicType
 {
     string type_name;
-    string type_information;
+    string type_identifier;
     string type_object;
 };
 
