@@ -14,7 +14,7 @@ This release includes the following **features**:
 
 This release includes the following **improvements and bugfixes**:
 
-* Check retcode value after controller command publication.
+* Check ``retcode`` value after controller command publication.
 * Fix dds recorder compilation.
 
 This release includes the following **CI improvements**:
@@ -60,6 +60,7 @@ This release includes the following **Dependencies Update**:
 Previous Versions
 #################
 
+.. include:: previous_versions/v1.2.0.rst
 .. include:: previous_versions/v1.1.0.rst
 .. include:: previous_versions/v1.0.0.rst
 .. include:: previous_versions/v0.4.0.rst
