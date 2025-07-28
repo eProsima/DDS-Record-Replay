@@ -44,7 +44,7 @@ bool Serializer::type_data_to_type_str_(
     fastcdr::CdrSizeCalculator calculator(fastcdr::CdrVersion::XCDRv2);
     size_t current_alignment {0};
     size_t type_data_size = calculator.calculate_serialized_size(type_data, current_alignment) +
-                            fastdds::rtps::SerializedPayload_t::representation_header_size;
+            fastdds::rtps::SerializedPayload_t::representation_header_size;
 
     fastdds::rtps::SerializedPayload_t payload(static_cast<std::uint32_t>(type_data_size));
     fastcdr::FastBuffer fastbuffer((char*) payload.data, payload.max_size);
@@ -141,7 +141,8 @@ bool Serializer::type_str_to_type_data_(
     fastcdr::FastBuffer fastbuffer((char*)payload.data, parameter_length);
 
     // Read data
-    if (cdr_message != nullptr && cdr_message->length >= cdr_message->pos + parameter_length && parameter_length > 0 && payload.data != nullptr)
+    if (cdr_message != nullptr && cdr_message->length >= cdr_message->pos + parameter_length && parameter_length > 0 &&
+            payload.data != nullptr)
     {
         memcpy(payload.data, &cdr_message->buffer[cdr_message->pos], parameter_length);
         cdr_message->pos += parameter_length;
