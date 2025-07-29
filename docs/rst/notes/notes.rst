@@ -23,6 +23,7 @@ This release includes the following **CI improvements**:
 * Use ``tsan`` binaries for TSAN workflows.
 * Bump ``setuptools`` in docs workflow.
 
+
 This release includes the following **Documentation changes**:
 * Update docs to use ``furo`` theme.
 
