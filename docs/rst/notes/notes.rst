@@ -24,6 +24,7 @@ This release includes the following **CI improvements**:
 * Bump ``setuptools`` in docs workflow.
 * Add test report to CI.
 
+
 This release includes the following **Documentation changes**:
 
 * Update docs to use ``furo`` theme.
