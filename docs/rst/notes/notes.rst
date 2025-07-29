@@ -22,6 +22,7 @@ This release includes the following **CI improvements**:
 * Remove deprecated ``Windows-2019`` runner.
 * Use ``tsan`` binaries for TSAN workflows.
 * Bump ``setuptools`` in docs workflow.
+
 This release includes the following **Documentation changes**:
 * Update docs to use ``furo`` theme.
 
