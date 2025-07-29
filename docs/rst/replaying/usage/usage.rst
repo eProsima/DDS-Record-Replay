@@ -72,11 +72,6 @@ SIGTERM
 Write command ``kill <pid>`` in a different terminal, where ``<pid>`` is the id of the process running the |ddsreplayer|.
 Use ``ps`` or ``top`` programs to check the process ids.
 
-TIMEOUT
-^^^^^^^
-
-Setting a maximum amount of seconds that the application will work using argument ``--timeout`` will close the application once the time has expired.
-
 .. _replayer_usage_usage_application_arguments:
 
 Replay Service Command-Line Parameters
@@ -132,17 +127,6 @@ The |ddsreplayer| application supports several input arguments:
           time period.
         - ``-r`` |br|
           ``--reload-time``
-        - Unsigned Integer
-        - ``0``
-
-    *   - Timeout
-        - Set a maximum time while the |br|
-          application will be running. |br|
-          ``0`` means that the application |br|
-          will run forever (until kill |br|
-          via signal).
-        - ``-t`` |br|
-          ``--timeout``
         - Unsigned Integer
         - ``0``
 
