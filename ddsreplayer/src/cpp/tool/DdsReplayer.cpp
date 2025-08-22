@@ -36,6 +36,7 @@
 #include <ddspipe_core/core/DdsPipe.hpp>
 #include <ddspipe_core/dynamic/DiscoveryDatabase.hpp>
 #include <ddspipe_core/dynamic/ParticipantsDatabase.hpp>
+#include <ddspipe_core/interface/IParticipant.hpp>
 
 #include <cpp_utils/exception/InconsistencyException.hpp>
 #include <ddspipe_core/efficiency/payload/FastPayloadPool.hpp>
@@ -45,6 +46,7 @@
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
 #include <ddsrecorder_participants/replayer/ReplayerParticipant.hpp>
+#include <ddsrecorder_participants/replayer/XmlReplayerParticipant.hpp>
 #include <ddsrecorder_participants/replayer/SqlReaderParticipant.hpp>
 
 #include "DdsReplayer.hpp"
@@ -97,13 +99,28 @@ DdsReplayer::DdsReplayer(
     auto discovery_database = std::make_shared<ddspipe::core::DiscoveryDatabase>();
 
     // Create Replayer Participant
-    auto replayer_participant = std::make_shared<participants::ReplayerParticipant>(
-        configuration.replayer_configuration,
-        payload_pool_,
-        discovery_database,
-        configuration.replay_types);
+    std::shared_ptr<ddspipe::core::IParticipant> replayer_participant;
 
-    replayer_participant->init();
+    if(configuration.xml_enabled)
+    {
+        replayer_participant = std::make_shared<participants::XmlReplayerParticipant>(
+            configuration.replayer_configuration,
+            payload_pool_,
+            discovery_database,
+            configuration.replay_types);
+
+        std::dynamic_pointer_cast<participants::XmlReplayerParticipant>(replayer_participant)->init();
+    }
+    else
+    {
+        replayer_participant = std::make_shared<participants::ReplayerParticipant>(
+            std::dynamic_pointer_cast<ddspipe::participants::SimpleParticipantConfiguration>(configuration.replayer_configuration),
+            payload_pool_,
+            discovery_database,
+            configuration.replay_types);
+
+        std::dynamic_pointer_cast<participants::ReplayerParticipant>(replayer_participant)->init();
+    }
 
     // Create and populate Participants Database
     auto participants_database = std::make_shared<ddspipe::core::ParticipantsDatabase>();
