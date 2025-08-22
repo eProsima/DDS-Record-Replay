@@ -27,11 +27,14 @@
 #include <ddspipe_core/types/dynamic_types/types.hpp>
 #include <ddspipe_core/types/topic/filter/ManualTopic.hpp>
 #include <ddspipe_core/types/topic/filter/WildcardDdsFilterTopic.hpp>
+
+#include <ddspipe_participants/xml/XmlHandlerConfiguration.hpp>
 #include <ddspipe_participants/types/address/Address.hpp>
 
 #include <ddspipe_yaml/yaml_configuration_tags.hpp>
 #include <ddspipe_yaml/Yaml.hpp>
 #include <ddspipe_yaml/YamlManager.hpp>
+#include <ddspipe_yaml/YamlReader.hpp>
 
 #include <ddsrecorder_participants/recorder/output/OutputSettings.hpp>
 #include <ddsrecorder_participants/recorder/handler/sql/SqlHandlerConfiguration.hpp>
@@ -113,7 +116,7 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
 
         /////
         // Create Simple Participant Configuration
-        simple_configuration = std::make_shared<SimpleParticipantConfiguration>();
+        simple_configuration = std::make_shared<XmlParticipantConfiguration>();
         simple_configuration->id = "SimpleRecorderParticipant";
         simple_configuration->app_id = "DDS_RECORDER";
         simple_configuration->app_metadata = "";
@@ -531,6 +534,22 @@ void RecorderConfiguration::load_dds_configuration_(
         const Yaml& yml,
         const YamlReaderVersion& version)
 {
+    // Get optional xml configuration
+    if (YamlReader::is_tag_present(yml, XML_TAG))
+    {
+        YamlReader::fill<XmlHandlerConfiguration>(
+            xml_configuration,
+            YamlReader::get_value_in_tag(yml, XML_TAG),
+            version);
+    }
+
+    // Check if RECORDER_PROFILE_TAG exists
+    if (YamlReader::is_tag_present(yml, RECORDER_PROFILE_TAG))
+    {
+        simple_configuration->participant_profile = YamlReader::get<std::string>(yml, RECORDER_PROFILE_TAG, version);
+        xml_enabled = true;
+    }
+
     // Get optional DDS domain
     if (YamlReader::is_tag_present(yml, DOMAIN_ID_TAG))
     {

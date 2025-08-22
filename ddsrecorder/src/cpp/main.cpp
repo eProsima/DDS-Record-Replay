@@ -32,6 +32,8 @@
 #include <cpp_utils/types/Fuzzy.hpp>
 #include <cpp_utils/utils.hpp>
 
+#include <ddspipe_participants/xml/XmlHandler.hpp>
+
 #include <ddsrecorder_participants/recorder/logging/DdsRecorderLogConsumer.hpp>
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 #include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
@@ -298,12 +300,15 @@ int main(
 
         logUser(DDSRECORDER_EXECUTION, "DDS Recorder running.");
 
+        // Load XML profiles
+        participants::XmlHandler::load_xml(configuration.xml_configuration);
+
         // File trackers will be accessed through the recorder handler contexts (if any)
         std::unique_ptr<DdsRecorder> recorder = nullptr;
 
         if (configuration.enable_remote_controller)
         {
-            logUser(DDSRECORDER_EXECUTION, "Waiting for instructions...");
+            logUser(DDSRECORDER_EXECUTION, "Remote control enabled and waiting for instructions...");
             receiver::CommandReceiver receiver(configuration.controller_domain,
                     configuration.command_topic_name,
                     configuration.status_topic_name, close_handler, configuration.simple_configuration);
