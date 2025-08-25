@@ -262,6 +262,17 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     metadata[ROS2_TYPES] = is_topic_ros2_type ? "true" : "false";
     mcap::Channel new_channel(topic_name, "cdr", schema_id, metadata);
 
+    // -- mcap --
+    // nuevo metadata con la lista de particiones
+
+    // metadata global de mcap
+    // para cada topico las particiones
+
+        // en el mensaje hay que guardar que particion
+        // (diccionario/set/etc) metadatos con el topico y la particion (para modificar, las particiones no son fijas)
+
+    // -- sql --
+
     mcap_writer_.write(new_channel);
 
     auto channel_id = new_channel.id;

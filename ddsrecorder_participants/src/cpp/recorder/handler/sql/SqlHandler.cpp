@@ -131,6 +131,17 @@ void SqlHandler::write_samples_(
             written_topics_.insert(topic);
         }
 
+        /*
+        // Write the partition if it hasn't been written before
+        const auto topic = sql_sample->topic;
+
+        if (written_topics_.find(topic) == written_topics_.end())
+        {
+            sql_writer_.write(topic);
+            written_topics_.insert(topic);
+        }
+        */
+
         if (configuration_.data_format == DataFormat::json || configuration_.data_format == DataFormat::both)
         {
             if (received_types_.find(sql_sample->topic.type_name) == received_types_.end())

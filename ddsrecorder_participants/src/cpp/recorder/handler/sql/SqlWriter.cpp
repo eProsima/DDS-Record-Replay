@@ -184,6 +184,35 @@ void SqlWriter::open_new_file_nts_(
 
     create_sql_table_("Messages", create_messages_table);
 
+    // Create "Index" Partitions table
+    const std::string create_partitions_table{
+        R"(
+        CREATE TABLE IF NOT EXISTS Partitions (
+            name TEXT NOT NULL,
+            partition TEXT NOT NULL,
+            PRIMARY KEY(name),
+            FOREIGN KEY(name) REFERENCES Topics(name)
+        );
+    )"};
+
+    create_sql_table_("Partitions", create_partitions_table);
+
+    // Create Partition Index
+    /*const std::string create_partitions_index{
+        R"(
+        CREATE INDEX IF NOT EXISTS idx_users_email
+            ON Topics(name);
+        )"
+    };
+
+
+    char* errMsg;
+    if (sqlite3_exec(database_, create_partitions_index.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK) {
+        std::cerr << "SQL error, Partition index: " << errMsg << std::endl;
+        sqlite3_free(errMsg);
+    }*/
+
+
     written_sql_size_ = MIN_SQL_SIZE;
 }
 

@@ -70,6 +70,12 @@ ddspipe::core::types::TopicQoS BaseReaderParticipant::topic_qos() const noexcept
     return configuration_->topic_qos;
 }
 
+std::vector<std::string> BaseReaderParticipant::topic_partitions() const noexcept
+{
+    // TODO. danip
+    return {};
+}
+
 std::shared_ptr<ddspipe::core::IWriter> BaseReaderParticipant::create_writer(
         const ddspipe::core::ITopic& /* topic */)
 {
