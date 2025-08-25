@@ -29,6 +29,7 @@ namespace yaml {
 // DDS related tags //
 //////////////////////
 constexpr const char* RECORDER_DDS_TAG("dds");
+constexpr const char* RECORDER_PROFILE_TAG("recorder-profile");
 
 ///////////////////////////
 // Recorder related tags //

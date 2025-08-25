@@ -32,6 +32,8 @@
 #include <cpp_utils/types/Fuzzy.hpp>
 #include <cpp_utils/utils.hpp>
 
+#include <ddspipe_participants/xml/XmlHandler.hpp>
+
 #include <ddspipe_core/logging/DdsLogConsumer.hpp>
 
 #include <ddsrecorder_yaml/replayer/CommandlineArgsReplayer.hpp>
@@ -234,6 +236,8 @@ int main(
 
         logUser(DDSREPLAYER_EXECUTION, "DDS Replayer running.");
 
+        // Load XML profiles
+        participants::XmlHandler::load_xml(configuration.xml_configuration);
 
         // Create replayer instance
         auto replayer = std::make_unique<DdsReplayer>(configuration, commandline_args.input_file);

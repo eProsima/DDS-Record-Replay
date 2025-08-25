@@ -35,6 +35,8 @@
 
 #include <ddspipe_participants/configuration/ParticipantConfiguration.hpp>
 #include <ddspipe_participants/configuration/SimpleParticipantConfiguration.hpp>
+#include <ddspipe_participants/configuration/XmlParticipantConfiguration.hpp>
+#include <ddspipe_participants/xml/XmlHandlerConfiguration.hpp>
 
 #include <ddspipe_yaml/Yaml.hpp>
 #include <ddspipe_yaml/YamlReader.hpp>
@@ -74,8 +76,12 @@ public:
     // DDS Pipe Configuration
     ddspipe::core::DdsPipeConfiguration ddspipe_configuration;
 
+    // XML configuration
+    ddspipe::participants::XmlHandlerConfiguration xml_configuration;
+    bool xml_enabled = false;
+
     // Participants configurations
-    std::shared_ptr<ddspipe::participants::SimpleParticipantConfiguration> simple_configuration;
+    std::shared_ptr<ddspipe::participants::XmlParticipantConfiguration> simple_configuration;
     std::shared_ptr<ddspipe::participants::ParticipantConfiguration> sql_recorder_configuration;
     std::shared_ptr<ddspipe::participants::ParticipantConfiguration> mcap_recorder_configuration;
 

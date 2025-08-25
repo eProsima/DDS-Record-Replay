@@ -29,6 +29,7 @@ namespace yaml {
 // DDS related tags //
 //////////////////////
 constexpr const char* REPLAYER_DDS_TAG("dds");
+constexpr const char* REPLAYER_PROFILE_TAG("replayer-profile");
 
 /////////////////////////
 // Replay related tags //
