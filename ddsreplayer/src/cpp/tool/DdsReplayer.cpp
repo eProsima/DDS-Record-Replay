@@ -101,7 +101,7 @@ DdsReplayer::DdsReplayer(
     // Create Replayer Participant
     std::shared_ptr<ddspipe::core::IParticipant> replayer_participant;
 
-    if(configuration.xml_enabled)
+    if (configuration.xml_enabled)
     {
         replayer_participant = std::make_shared<participants::XmlReplayerParticipant>(
             configuration.replayer_configuration,
@@ -114,7 +114,8 @@ DdsReplayer::DdsReplayer(
     else
     {
         replayer_participant = std::make_shared<participants::ReplayerParticipant>(
-            std::dynamic_pointer_cast<ddspipe::participants::SimpleParticipantConfiguration>(configuration.replayer_configuration),
+            std::dynamic_pointer_cast<ddspipe::participants::SimpleParticipantConfiguration>(configuration.
+                    replayer_configuration),
             payload_pool_,
             discovery_database,
             configuration.replay_types);

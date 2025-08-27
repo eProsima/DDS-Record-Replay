@@ -36,11 +36,11 @@ public:
      *
      * Creates XmlReplayerParticipant instance with given configuration, payload pool and discovery database.
      *
-     * @param participant_configuration:  Structure encapsulating all configuration options.
-     * @param payload_pool:               Owner of every payload contained in messages to be sent.
-     * @param discovery_database:         Reference to a \c DiscoveryDatabase instance.
-     * @param replay_types:               Boolean flag in the Replayer configuration that determines whether
-     *                                    previously recorded types are transmitted.
+     * @param participant_configuration Structure encapsulating all configuration options.
+     * @param payload_pool Owner of every payload contained in messages to be sent.
+     * @param discovery_database Reference to a \c DiscoveryDatabase instance.
+     * @param replay_types Boolean flag in the Replayer configuration that determines whether
+     *        previously recorded types are transmitted.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     XmlReplayerParticipant(
@@ -49,17 +49,27 @@ public:
             const std::shared_ptr<ddspipe::core::DiscoveryDatabase>& discovery_database,
             const bool& replay_types);
 
-    //! Override create_reader_() IParticipant method
+    /**
+     * Override create_reader_() IParticipant method.
+     *
+     * @param topic The topic for which the reader is created.
+     * @return A shared pointer to the created reader.
+     */
     DDSRECORDER_PARTICIPANTS_DllAPI
     std::shared_ptr<ddspipe::core::IReader> create_reader(
             const ddspipe::core::ITopic& topic) override;
 
 protected:
 
+    /**
+     * Add QoS properties to the DomainParticipantQos.
+     *
+     * @param qos Reference to the DomainParticipantQos to modify.
+     */
     void add_qos_properties_(
             fastdds::dds::DomainParticipantQos& qos) const override;
 
-    // Boolean flag that indicates whether the participant should replay previously recorded data types.
+    /// Boolean flag that indicates whether the participant should replay previously recorded data types.
     bool replay_types_ = true;
 };
 

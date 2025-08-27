@@ -312,7 +312,7 @@ int main(
             logUser(DDSRECORDER_EXECUTION, "Remote control enabled and waiting for instructions...");
             receiver::CommandReceiver receiver(configuration.controller_domain,
                     configuration.command_topic_name,
-                    configuration.status_topic_name, close_handler, configuration.simple_configuration);
+                    configuration.status_topic_name, close_handler, configuration.dds_configuration);
             receiver.init();
 
             CommandCode prev_command;

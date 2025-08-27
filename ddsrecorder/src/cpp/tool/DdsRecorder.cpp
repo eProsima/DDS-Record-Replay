@@ -112,7 +112,7 @@ DdsRecorder::DdsRecorder(
     if (configuration.xml_enabled)
     {
         dyn_participant_ = std::make_shared<XmlDynTypesParticipant>(
-            configuration.simple_configuration,
+            configuration.dds_configuration,
             payload_pool_,
             discovery_database_);
 
@@ -121,7 +121,7 @@ DdsRecorder::DdsRecorder(
     else
     {
         dyn_participant_ = std::make_shared<DynTypesParticipant>(
-            std::dynamic_pointer_cast<SimpleParticipantConfiguration>(configuration.simple_configuration),
+            std::dynamic_pointer_cast<SimpleParticipantConfiguration>(configuration.dds_configuration),
             payload_pool_,
             discovery_database_);
 

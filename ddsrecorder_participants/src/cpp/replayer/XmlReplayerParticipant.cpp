@@ -45,7 +45,7 @@ std::shared_ptr<IReader> XmlReplayerParticipant::create_reader(
 }
 
 void XmlReplayerParticipant::add_qos_properties_(
-            fastdds::dds::DomainParticipantQos& qos) const
+        fastdds::dds::DomainParticipantQos& qos) const
 {
     CommonParticipant::add_qos_properties_(qos);
 

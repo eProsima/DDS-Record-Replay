@@ -81,7 +81,7 @@ public:
     bool xml_enabled = false;
 
     // Participants configurations
-    std::shared_ptr<ddspipe::participants::XmlParticipantConfiguration> simple_configuration;
+    std::shared_ptr<ddspipe::participants::XmlParticipantConfiguration> dds_configuration;
     std::shared_ptr<ddspipe::participants::ParticipantConfiguration> sql_recorder_configuration;
     std::shared_ptr<ddspipe::participants::ParticipantConfiguration> mcap_recorder_configuration;
 
