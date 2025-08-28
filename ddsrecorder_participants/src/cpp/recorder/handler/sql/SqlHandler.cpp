@@ -131,16 +131,40 @@ void SqlHandler::write_samples_(
             written_topics_.insert(topic);
         }
 
-        /*
-        // Write the partition if it hasn't been written before
-        const auto topic = sql_sample->topic;
+        // Write the partition set
 
-        if (written_topics_.find(topic) == written_topics_.end())
+        std::string topic_partitions = "";
+        std::vector<std::string> topic_partitions_vector(topic.partition_name.begin(), topic.partition_name.end());
+        int topic_partitions_vector_n = topic_partitions_vector.size();
+
+        if(topic_partitions_vector_n > 0)
         {
-            sql_writer_.write(topic);
-            written_topics_.insert(topic);
+            topic_partitions += topic_partitions_vector[0];
         }
-        */
+
+        for(int i = 1; i < topic_partitions_vector_n; i++)
+        {
+            topic_partitions += " | " + topic_partitions_vector[i];
+        }
+
+        if (written_partitions_.find(topic_partitions) == written_partitions_.end())
+        {
+            sql_writer_.write(topic_partitions);
+            written_partitions_.insert(topic_partitions);
+        }
+
+        // Write the Partition of the topic if it hasn't been written before
+        for(std::string topic_partition_name: topic.partition_name)
+        {
+            if(written_topic_partitions_[topic.m_topic_name+topic.type_name].find(topic_partition_name) != written_topic_partitions_[topic.m_topic_name+topic.type_name].end())
+            {
+                continue;
+            }
+            sql_writer_.write_partition(topic.m_topic_name, topic.type_name, topic_partition_name);
+            written_topic_partitions_[topic.m_topic_name+topic.type_name].insert(topic_partition_name);
+            //written_topic_partitions_[topic.m_topic_name].insert(topic_partition_name);
+        }
+
 
         if (configuration_.data_format == DataFormat::json || configuration_.data_format == DataFormat::both)
         {

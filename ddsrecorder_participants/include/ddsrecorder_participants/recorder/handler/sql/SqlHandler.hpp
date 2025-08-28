@@ -157,6 +157,12 @@ protected:
 
     //! Map instance handles (hashed/serialized keys) to JSON-serialized keys
     std::map<ddspipe::core::types::InstanceHandle, std::string> keys_;
+
+    //! Partitions of a writer_guid and sequence_number that the SQL writer has written
+    std::map<std::string, std::set<std::string>> written_topic_partitions_;
+
+    //! Set of Partitions that the SQL writer has written
+    std::set<std::string> written_partitions_;
 };
 
 } /* namespace participants */

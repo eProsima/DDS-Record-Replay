@@ -189,28 +189,41 @@ void SqlWriter::open_new_file_nts_(
         R"(
         CREATE TABLE IF NOT EXISTS Partitions (
             name TEXT NOT NULL,
-            partition TEXT NOT NULL,
-            PRIMARY KEY(name),
-            FOREIGN KEY(name) REFERENCES Topics(name)
+            PRIMARY KEY(name)
         );
     )"};
 
     create_sql_table_("Partitions", create_partitions_table);
 
-    // Create Partition Index
-    /*const std::string create_partitions_index{
+    // Create "Index" Partitions table
+    const std::string create_topic_partitions_table{
         R"(
-        CREATE INDEX IF NOT EXISTS idx_users_email
-            ON Topics(name);
-        )"
-    };
+        CREATE TABLE IF NOT EXISTS TopicPartitions (
+            topic TEXT NOT NULL,
+            type TEXT NOT NULL,
+            partition TEXT NOT NULL,
+            PRIMARY KEY(topic, type, partition),
+            FOREIGN KEY (topic, type) REFERENCES Topics(name, type) ON DELETE CASCADE,
+            FOREIGN KEY (partition)   REFERENCES Partitions(name)  ON DELETE CASCADE
+        );
+    )"};
 
+    create_sql_table_("Partitions", create_topic_partitions_table);
 
-    char* errMsg;
-    if (sqlite3_exec(database_, create_partitions_index.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK) {
-        std::cerr << "SQL error, Partition index: " << errMsg << std::endl;
-        sqlite3_free(errMsg);
-    }*/
+    // Create "Index" Partitions table
+    const std::string create_message_partitions_table{
+        R"(
+        CREATE TABLE IF NOT EXISTS MessagePartitions (
+            writer_guid TEXT NOT NULL,
+            sequence_number INTEGER NOT NULL,
+            partition TEXT NOT NULL,
+            PRIMARY KEY (writer_guid, sequence_number, partition),
+            FOREIGN KEY (writer_guid, sequence_number) REFERENCES Messages(writer_guid, sequence_number) ON DELETE CASCADE,
+            FOREIGN KEY (partition) REFERENCES Partitions(name)   ON DELETE CASCADE
+        );
+    )"};
+
+    create_sql_table_("Partitions", create_message_partitions_table);
 
 
     written_sql_size_ = MIN_SQL_SIZE;
@@ -305,6 +318,82 @@ void SqlWriter::write_nts_(
 
 template <>
 void SqlWriter::write_nts_(
+        const std::string& partition_set)
+{
+    if (!enabled_)
+    {
+        EPROSIMA_LOG_WARNING(DDSRECORDER_SQL_WRITER, "Attempting to write a dynamic type in a disabled writer.");
+        return;
+    }
+
+    EPROSIMA_LOG_INFO(DDSRECORDER_SQL_WRITER, "Writing Partition set \"" << partition_set << "\".");
+
+    // Define the SQL statement
+    const char* insert_statement =
+            R"(
+        INSERT INTO Partitions (name)
+        VALUES (?);
+    )";
+
+    // Prepare the SQL statement
+    sqlite3_stmt* statement;
+    const auto prep_ret = sqlite3_prepare_v2(database_, insert_statement, -1, &statement, nullptr);
+
+    if (prep_ret != SQLITE_OK)
+    {
+        const std::string error_msg = utils::Formatter() << "Failed to prepare SQL statement to write Partition set: "
+                                                         << sqlite3_errmsg(database_);
+        sqlite3_finalize(statement);
+
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
+        throw utils::InconsistencyException(error_msg);
+    }
+
+    sqlite3_bind_text(statement, 1, partition_set.c_str(), -1, SQLITE_TRANSIENT);
+
+    // Calculate the estimated size of this entry
+    size_t entry_size = 0;
+
+    entry_size += partition_set.size();
+
+    try
+    {
+        size_control_(entry_size, true);
+    }
+    catch (const FullFileException& e)
+    {
+        sqlite3_finalize(statement);
+
+        EPROSIMA_LOG_INFO(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << e.what());
+        throw e;
+    }
+    catch (const utils::InconsistencyException& e)
+    {
+        sqlite3_finalize(statement);
+
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << e.what());
+        throw e;
+    }
+
+    // Execute the SQL statement
+    const auto step_ret = sqlite3_step(statement);
+
+    if (step_ret != SQLITE_DONE)
+    {
+        const std::string error_msg = utils::Formatter() << "Failed to write Partition set to SQL database: "
+                                                         << sqlite3_errmsg(database_);
+        sqlite3_finalize(statement);
+
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
+        throw utils::InconsistencyException(error_msg);
+    }
+
+    // Finalize the SQL statement
+    sqlite3_finalize(statement);
+}
+
+template <>
+void SqlWriter::write_nts_(
         const std::vector<SqlMessage>& messages)
 {
     if (!enabled_)
@@ -322,6 +411,13 @@ void SqlWriter::write_nts_(
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     )";
 
+    // Define the SQL statement for batch insert
+    const char* insert_statement_partition =
+            R"(
+        INSERT INTO MessagePartitions (writer_guid, sequence_number, partition)
+        VALUES (?, ?, ?);
+    )";
+
     // Prepare the SQL statement
     sqlite3_stmt* statement;
     const auto prep_ret = sqlite3_prepare_v2(database_, insert_statement, -1, &statement, nullptr);
@@ -336,12 +432,27 @@ void SqlWriter::write_nts_(
         throw utils::InconsistencyException(error_msg);
     }
 
+    sqlite3_stmt* statement_partition;
+    const auto prep_ret_partition = sqlite3_prepare_v2(database_, insert_statement_partition, -1, &statement_partition, nullptr);
+
+    if (prep_ret_partition != SQLITE_OK)
+    {
+        const std::string error_msg = utils::Formatter() << "Failed to prepare SQL statement to write Partition messages: "
+                                                         << sqlite3_errmsg(database_);
+        sqlite3_finalize(statement);
+        sqlite3_finalize(statement_partition);
+
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
+        throw utils::InconsistencyException(error_msg);
+    }
+
     // Begin transaction
     if (sqlite3_exec(database_, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr) != SQLITE_OK)
     {
         const std::string error_msg = utils::Formatter() << "Failed to begin transaction: "
                                                          << sqlite3_errmsg(database_);
         sqlite3_finalize(statement);
+        sqlite3_finalize(statement_partition);
 
         EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
         throw utils::InconsistencyException(error_msg);
@@ -389,8 +500,33 @@ void SqlWriter::write_nts_(
         sqlite3_bind_text(statement, 9, to_sql_timestamp(message.log_time).c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(statement, 10, to_sql_timestamp(message.publish_time).c_str(), -1, SQLITE_TRANSIENT);
 
+
+        // -- Partition --
+        sqlite3_bind_text(statement_partition, 1, writer_guid_ss.str().c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int64(statement_partition, 2, message.sequence_number.to64long());
+
+        std::string topic_partitions = "";
+        std::vector<std::string> topic_partitions_vector(message.topic.partition_name.begin(), message.topic.partition_name.end());
+        int topic_partitions_vector_n = topic_partitions_vector.size();
+
+        if(topic_partitions_vector_n > 0)
+        {
+            topic_partitions += topic_partitions_vector[0];
+        }
+
+        for(int i = 1; i < topic_partitions_vector_n; i++)
+        //for(std::string partition_name: message.topic.partition_name)
+        {
+            //topic_partitions += partition_name + " ";
+            topic_partitions += " | " + topic_partitions_vector[i];
+        }
+
+        //sqlite3_bind_text(statement_partition, 3, message.topic.topic_name().c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(statement_partition, 3, topic_partitions.c_str(), -1, SQLITE_TRANSIENT);
+
         // Calculate the estimated size of this entry
         size_t entry_size = 0;
+        size_t entry_size_partition = 0;
 
         entry_size += writer_guid_ss.str().size();
         entry_size += calculate_int_storage_size(message.sequence_number.to64long());
@@ -403,13 +539,21 @@ void SqlWriter::write_nts_(
         entry_size += to_sql_timestamp(message.log_time).size();
         entry_size += to_sql_timestamp(message.publish_time).size();
 
+        // -- Partition --
+        entry_size_partition += writer_guid_ss.str().size();
+        entry_size_partition += calculate_int_storage_size(message.sequence_number.to64long());
+        //entry_size_partition += message.topic.topic_name().size();
+        entry_size_partition += topic_partitions.size();
+
         try
         {
             size_control_(entry_size, false);
+            size_control_(entry_size_partition, false);
         }
         catch (const FullFileException& e)
         {
             sqlite3_finalize(statement);
+            sqlite3_finalize(statement_partition);
 
             EPROSIMA_LOG_INFO(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << e.what());
             throw e;
@@ -417,6 +561,7 @@ void SqlWriter::write_nts_(
         catch (const utils::InconsistencyException& e)
         {
             sqlite3_finalize(statement);
+            sqlite3_finalize(statement_partition);
 
             EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << e.what());
             throw e;
@@ -431,6 +576,23 @@ void SqlWriter::write_nts_(
             const std::string error_msg = utils::Formatter() << "Failed to write message to SQL database: "
                                                              << sqlite3_errmsg(database_);
             sqlite3_finalize(statement);
+            sqlite3_finalize(statement_partition);
+            sqlite3_exec(database_, "ROLLBACK;", nullptr, nullptr, nullptr);
+
+            EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
+            throw utils::InconsistencyException(error_msg);
+        }
+
+
+        // -- Partition --
+        const auto step_ret_partition = sqlite3_step(statement_partition);
+
+        if (step_ret_partition != SQLITE_DONE)
+        {
+            const std::string error_msg = utils::Formatter() << "Failed to write Parttion message to SQL database: "
+                                                             << sqlite3_errmsg(database_);
+            sqlite3_finalize(statement);
+            sqlite3_finalize(statement_partition);
             sqlite3_exec(database_, "ROLLBACK;", nullptr, nullptr, nullptr);
 
             EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
@@ -439,6 +601,7 @@ void SqlWriter::write_nts_(
 
         // Reset the statement for the next execution
         sqlite3_reset(statement);
+        sqlite3_reset(statement_partition);
     }
 
     // Commit transaction
@@ -447,6 +610,7 @@ void SqlWriter::write_nts_(
         const std::string error_msg = utils::Formatter() << "Failed to commit transaction: "
                                                          << sqlite3_errmsg(database_);
         sqlite3_finalize(statement);
+        sqlite3_finalize(statement_partition);
 
         EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
         throw utils::InconsistencyException(error_msg);
@@ -455,6 +619,119 @@ void SqlWriter::write_nts_(
 
     // Finalize the SQL statement
     sqlite3_finalize(statement);
+    sqlite3_finalize(statement_partition);
+}
+
+
+void SqlWriter::write_partition(
+        const std::string& topic_name,
+        const std::string& topic_type,
+        const std::string& topic_partition)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    try
+    {
+        write_nts_(topic_name, topic_type, topic_partition);
+    }
+    catch (const FullFileException& e)
+    {
+        EPROSIMA_LOG_WARNING(DDSRECORDER_SQL_HANDLER,
+                "FAIL_SQL_WRITE | Disk is full. Error message:\n " << e.what());
+        try
+        {
+            on_file_full_nts_(e, MIN_SQL_SIZE);
+        }
+        catch (const FullDiskException& e)
+        {
+            EPROSIMA_LOG_WARNING(DDSRECORDER_SQL_HANDLER,
+                    "FAIL_SQL_WRITE | Disk is full. Error message:\n " << e.what());
+            on_disk_full_();
+        }
+    }
+}
+
+void SqlWriter::write_nts_(
+        const std::string& topic_name,
+        const std::string& topic_type,
+        const std::string& topic_partition)
+{
+    if (!enabled_)
+    {
+        EPROSIMA_LOG_WARNING(DDSRECORDER_SQL_WRITER, "Attempting to write a topic in a disabled writer.");
+        return;
+    }
+
+    EPROSIMA_LOG_INFO(DDSRECORDER_SQL_WRITER, "Writing Partitions of topic: " << topic_name
+        << ", with type: " << topic_type << ".");
+
+    // Define the SQL statement
+    const char* insert_statement =
+            R"(
+        INSERT INTO TopicPartitions (topic, type, partition)
+        VALUES (?, ?, ?);
+    )";
+
+    // Prepare the SQL statement
+    sqlite3_stmt* statement;
+    const auto prep_ret = sqlite3_prepare_v2(database_, insert_statement, -1, &statement, nullptr);
+
+    if (prep_ret != SQLITE_OK)
+    {
+        const std::string error_msg = utils::Formatter() << "Failed to prepare SQL statement to write topic: "
+                                                         << sqlite3_errmsg(database_);
+        sqlite3_finalize(statement);
+
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
+        throw utils::InconsistencyException(error_msg);
+    }
+
+
+    sqlite3_bind_text(statement, 1, topic_name.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 2, topic_type.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 3, topic_partition.c_str(), -1, SQLITE_TRANSIENT);
+
+    // Calculate the estimated size of this entry
+    size_t entry_size = 0;
+
+    entry_size += topic_name.size();
+    entry_size += topic_type.size();
+    entry_size += topic_partition.size();
+
+    try
+    {
+        size_control_(entry_size, false);
+    }
+    catch (const FullFileException& e)
+    {
+        sqlite3_finalize(statement);
+
+        EPROSIMA_LOG_INFO(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << e.what());
+        throw e;
+    }
+    catch (const utils::InconsistencyException& e)
+    {
+        sqlite3_finalize(statement);
+
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << e.what());
+        throw e;
+    }
+
+    // Execute the SQL statement
+    const auto step_ret = sqlite3_step(statement);
+
+    if (step_ret != SQLITE_DONE)
+    {
+        const std::string error_msg = utils::Formatter() << "Failed to write parition topic to SQL database: "
+                                                         << sqlite3_errmsg(database_);
+        sqlite3_finalize(statement);
+
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
+        throw utils::InconsistencyException(error_msg);
+    }
+    // Finalize the SQL statement
+    sqlite3_finalize(statement);
+
 }
 
 template <>

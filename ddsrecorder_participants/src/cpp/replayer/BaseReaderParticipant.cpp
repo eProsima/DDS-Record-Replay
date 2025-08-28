@@ -70,10 +70,10 @@ ddspipe::core::types::TopicQoS BaseReaderParticipant::topic_qos() const noexcept
     return configuration_->topic_qos;
 }
 
-std::vector<std::string> BaseReaderParticipant::topic_partitions() const noexcept
+std::map<std::string, std::set<std::string>> BaseReaderParticipant::topic_partitions() const noexcept
 {
     // TODO. danip
-    return {};
+    return partition_names;
 }
 
 std::shared_ptr<ddspipe::core::IWriter> BaseReaderParticipant::create_writer(
@@ -188,6 +188,52 @@ void BaseReaderParticipant::wait_until_timestamp_(
         {
             return stop_ || (utils::now() >= timepoint);
         });
+}
+
+bool BaseReaderParticipant::add_topic_partition(
+        const std::string& topic_name,
+        const std::string& partition)
+{
+    if (partition_names.find(topic_name) != partition_names.end())
+    {
+        if (partition_names[topic_name].find(partition) != partition_names[topic_name].end())
+        {
+            // the partition is already in the set
+            return false;
+        }
+    }
+    else
+    {
+        partition_names[topic_name] = std::set<std::string>();
+    }
+
+    partition_names[topic_name].insert(partition);
+
+    return true;
+}
+
+bool BaseReaderParticipant::delete_topic_partition(
+        const std::string& topic_name,
+        const std::string& partition)
+{
+    if (partition_names.find(topic_name) == partition_names.end())
+    {
+        // the topic is not in the dictionary
+        return false;
+    }
+    if (partition_names[topic_name].find(partition) == partition_names[topic_name].end())
+    {
+        // the partition is not in the set
+        return false;
+    }
+
+    partition_names.erase(partition);
+    return true;
+}
+
+void BaseReaderParticipant::clear_topic_partitions()
+{
+    partition_names.clear();
 }
 
 } /* namespace participants */

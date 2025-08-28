@@ -55,6 +55,19 @@ public:
             const T& data);
 
     /**
+     * TODO. danip. MCAP
+     * @brief Writes partition to the output file.
+     *
+     * @param data Pointer to the data to be written.
+     *
+     * @throws \c InconsistencyException if there is a database error
+     */
+    void write_partition(
+            const std::string& topic_name,
+            const std::string& topic_type,
+            const std::string& topic_partition);
+
+    /**
      * @brief Updates the dynamic types.
      *
      * The dynamic types are written down when the MCAP file is being closed.
@@ -98,6 +111,21 @@ protected:
     template <typename T>
     void write_nts_(
             const T& data);
+
+    /**
+     * @brief Writes partition data to the SQL file.
+     *
+     * @param topic_name The name of the topic.
+     * @param topic_type The type of the topic.
+     * @param topic_partition The type of the partition.
+     * @throws \c FullFileException if the SQL file is full.
+     *
+     * @throws \c InconsistencyException if there is a database error
+     */
+    void write_nts_(
+            const std::string& topic_name,
+            const std::string& topic_type,
+            const std::string& topic_partition);
 
     /**
      * @brief Creates a new SQL table.
