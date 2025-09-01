@@ -518,7 +518,7 @@ void SqlWriter::write_nts_(
         //for(std::string partition_name: message.topic.partition_name)
         {
             //topic_partitions += partition_name + " ";
-            topic_partitions += " | " + topic_partitions_vector[i];
+            topic_partitions += "|" + topic_partitions_vector[i]; // TODO. check delimiter
         }
 
         //sqlite3_bind_text(statement_partition, 3, message.topic.topic_name().c_str(), -1, SQLITE_TRANSIENT);

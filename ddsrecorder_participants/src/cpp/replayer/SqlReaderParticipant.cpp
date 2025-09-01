@@ -59,7 +59,15 @@ void SqlReaderParticipant::process_summary(
 {
     open_file_();
 
-    exec_sql_statement_("SELECT name, type, qos, is_ros2_topic FROM Topics;", {}, [&](sqlite3_stmt* stmt)
+    //exec_sql_statement_("SELECT name, type, qos, is_ros2_topic FROM Topics;", {}, [&](sqlite3_stmt* stmt)
+    exec_sql_statement_(R"SQL(
+                            SELECT t.name, t.type, t.qos, t.is_ros2_topic,
+                                COALESCE(GROUP_CONCAT(DISTINCT tp.partition), '') AS partitions_csv
+                            FROM Topics t
+                            LEFT JOIN TopicPartitions tp
+                            ON tp.topic = t.name AND tp.type = t.type
+                            GROUP BY t.name, t.type, t.qos, t.is_ros2_topic;
+                        )SQL", {}, [&](sqlite3_stmt* stmt)
             {
                 // Create a DdsTopic to publish the message
                 const std::string topic_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
@@ -76,6 +84,31 @@ void SqlReaderParticipant::process_summary(
                 Serializer::deserialize<ddspipe::core::types::TopicQoS>(topic_qos_str, topic_qos);
 
                 topic->topic_qos.set_qos(topic_qos, utils::FuzzyLevelValues::fuzzy_level_fuzzy);
+
+                const std::string topic_partitions = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+                int i = 0,n = topic_partitions.size();
+                std::string tmp = "";
+                while(i < n)
+                {
+                    if(topic_partitions[i] == '|')
+                    {
+                        topic->partition_name.insert(tmp);
+                        tmp = "";
+
+                        std::cout << "PRUEBA: \t: " << tmp << "\n";
+                    }
+                    else
+                    {
+                        tmp += topic_partitions[i];
+                    }
+
+                    i++;
+                }
+
+                if(tmp != "")
+                {
+                    topic->partition_name.insert(tmp);
+                }
 
                 // Store the topic in the cache
                 const auto topic_id = std::make_pair(topic->m_topic_name, type_name);

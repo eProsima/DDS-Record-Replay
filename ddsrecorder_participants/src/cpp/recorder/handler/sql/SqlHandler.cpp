@@ -144,7 +144,7 @@ void SqlHandler::write_samples_(
 
         for(int i = 1; i < topic_partitions_vector_n; i++)
         {
-            topic_partitions += " | " + topic_partitions_vector[i];
+            topic_partitions += "|" + topic_partitions_vector[i]; // TODO. check delimiter
         }
 
         if (written_partitions_.find(topic_partitions) == written_partitions_.end())
@@ -154,15 +154,11 @@ void SqlHandler::write_samples_(
         }
 
         // Write the Partition of the topic if it hasn't been written before
-        for(std::string topic_partition_name: topic.partition_name)
+
+        if(written_topic_partitions_.find(topic.m_topic_name+topic.type_name) == written_topic_partitions_.end())
         {
-            if(written_topic_partitions_[topic.m_topic_name+topic.type_name].find(topic_partition_name) != written_topic_partitions_[topic.m_topic_name+topic.type_name].end())
-            {
-                continue;
-            }
-            sql_writer_.write_partition(topic.m_topic_name, topic.type_name, topic_partition_name);
-            written_topic_partitions_[topic.m_topic_name+topic.type_name].insert(topic_partition_name);
-            //written_topic_partitions_[topic.m_topic_name].insert(topic_partition_name);
+            sql_writer_.write_partition(topic.m_topic_name, topic.type_name, topic_partitions);
+            written_topic_partitions_.insert(topic.m_topic_name+topic.type_name);
         }
 
 
