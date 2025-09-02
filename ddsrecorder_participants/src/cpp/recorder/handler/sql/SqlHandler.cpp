@@ -122,7 +122,7 @@ void SqlHandler::write_samples_(
             continue;
         }
 
-        // Write the topic if it hasn't been written before
+        // Write the topic if it hasn't been written before (Table: Topics)
         const auto topic = sql_sample->topic;
 
         if (written_topics_.find(topic) == written_topics_.end())
@@ -131,20 +131,16 @@ void SqlHandler::write_samples_(
             written_topics_.insert(topic);
         }
 
-        // Write the partition set
+        // Write the partition set (Table: Partitions)
 
-        std::string topic_partitions = "";
-        std::vector<std::string> topic_partitions_vector(topic.partition_name.begin(), topic.partition_name.end());
-        int topic_partitions_vector_n = topic_partitions_vector.size();
+        std::ostringstream guid_ss;
+        guid_ss << sql_sample->writer_guid;
 
-        if(topic_partitions_vector_n > 0)
+        std::string topic_partitions;
+        auto it = topic.partition_name.find(guid_ss.str());
+        if (it != topic.partition_name.end())
         {
-            topic_partitions += topic_partitions_vector[0];
-        }
-
-        for(int i = 1; i < topic_partitions_vector_n; i++)
-        {
-            topic_partitions += "|" + topic_partitions_vector[i]; // TODO. check delimiter
+            topic_partitions = it->second;
         }
 
         if (written_partitions_.find(topic_partitions) == written_partitions_.end())
@@ -153,12 +149,12 @@ void SqlHandler::write_samples_(
             written_partitions_.insert(topic_partitions);
         }
 
-        // Write the Partition of the topic if it hasn't been written before
+        // Write the Partition of the topic if it hasn't been written before (Table: TopicPartitions)
 
-        if(written_topic_partitions_.find(topic.m_topic_name+topic.type_name) == written_topic_partitions_.end())
+        if(written_topic_partitions_.find(topic.m_topic_name + topic.type_name + topic_partitions) == written_topic_partitions_.end())
         {
             sql_writer_.write_partition(topic.m_topic_name, topic.type_name, topic_partitions);
-            written_topic_partitions_.insert(topic.m_topic_name+topic.type_name);
+            written_topic_partitions_.insert(topic.m_topic_name + topic.type_name + topic_partitions);
         }
 
 

@@ -60,13 +60,36 @@ void SqlReaderParticipant::process_summary(
     open_file_();
 
     //exec_sql_statement_("SELECT name, type, qos, is_ros2_topic FROM Topics;", {}, [&](sqlite3_stmt* stmt)
-    exec_sql_statement_(R"SQL(
+    /*exec_sql_statement_(R"SQL(
                             SELECT t.name, t.type, t.qos, t.is_ros2_topic,
                                 COALESCE(GROUP_CONCAT(DISTINCT tp.partition), '') AS partitions_csv
                             FROM Topics t
                             LEFT JOIN TopicPartitions tp
                             ON tp.topic = t.name AND tp.type = t.type
                             GROUP BY t.name, t.type, t.qos, t.is_ros2_topic;
+                        )SQL", {}, [&](sqlite3_stmt* stmt)*/
+    exec_sql_statement_(R"SQL(
+                            SELECT
+                                t.name          AS topic_name,
+                                t.type          AS topic_type,
+                                t.qos           AS qos,
+                                t.is_ros2_topic AS is_ros2_topic,
+                                GROUP_CONCAT(DISTINCT tp.partition)     AS partitions,
+                                GROUP_CONCAT(DISTINCT m.writer_guid)    AS writer_guids
+                            FROM Topics t
+                            LEFT JOIN TopicPartitions tp
+                                ON t.name = tp.topic AND t.type = tp.type
+                            LEFT JOIN MessagePartitions mp
+                                ON tp.partition = mp.partition
+                            LEFT JOIN Messages m
+                                ON mp.writer_guid = m.writer_guid
+                                AND mp.sequence_number = m.sequence_number
+                                AND t.name = m.topic
+                                AND t.type = m.type
+                            GROUP BY
+                                t.name, t.type, tp.partition;
+
+
                         )SQL", {}, [&](sqlite3_stmt* stmt)
             {
                 // Create a DdsTopic to publish the message
@@ -86,28 +109,11 @@ void SqlReaderParticipant::process_summary(
                 topic->topic_qos.set_qos(topic_qos, utils::FuzzyLevelValues::fuzzy_level_fuzzy);
 
                 const std::string topic_partitions = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
-                int i = 0,n = topic_partitions.size();
-                std::string tmp = "";
-                while(i < n)
+                const std::string writer_guid = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+
+                if(topic_partitions != "")
                 {
-                    if(topic_partitions[i] == '|')
-                    {
-                        topic->partition_name.insert(tmp);
-                        tmp = "";
-
-                        std::cout << "PRUEBA: \t: " << tmp << "\n";
-                    }
-                    else
-                    {
-                        tmp += topic_partitions[i];
-                    }
-
-                    i++;
-                }
-
-                if(tmp != "")
-                {
-                    topic->partition_name.insert(tmp);
+                    topic->partition_name[writer_guid] = topic_partitions;
                 }
 
                 // Store the topic in the cache
@@ -115,6 +121,27 @@ void SqlReaderParticipant::process_summary(
 
                 if (topics_.find(topic_id) != topics_.end())
                 {
+                    for(const auto& t: topics)
+                    {
+                        if(t->type_name == type_name && t->m_topic_name == topic_name)
+                        {
+                            t->partition_name[writer_guid] = topic_partitions;
+                            topics_[topic_id].partition_name[writer_guid] = topic_partitions;
+                            return;
+                        }
+                    }
+                    /*auto it = topics.find(topic);
+                    if (topic_set == nullptr)
+                    {
+                        std::cout << "Element not found\n";
+                    }*/
+
+                    /*if(topics_[topic_id].partition_name.find(writer_guid) == topics_[topic_id].partition_name.end())
+                    {
+                        // the topic exists, but the writer_guid with a different partition not.
+                        topics_[topic_id].partition_name[writer_guid] = topic_partitions;
+                    }*/
+
                     EPROSIMA_LOG_WARNING(DDSREPLAYER_SQL_READER_PARTICIPANT,
                     "Topic " << topic_name << " with type " << type_name << " already exists. Skipping...");
                     return;
@@ -167,7 +194,7 @@ void SqlReaderParticipant::process_messages()
         utils::the_end_of_time());
 
     exec_sql_statement_(
-        "SELECT log_time, topic, type, data_cdr, data_cdr_size FROM Messages "
+        "SELECT log_time, topic, type, data_cdr, data_cdr_size, writer_guid FROM Messages "
         "WHERE log_time >= ? AND log_time <= ? AND data_cdr_size > 0 "
         "ORDER BY log_time;",
         {begin_time, end_time},
@@ -220,6 +247,59 @@ void SqlReaderParticipant::process_messages()
             // Set source timestamp
             // NOTE: this is important for QoS such as LifespanQosPolicy
             data->source_timestamp = fastdds::dds::Time_t(to_ticks(time_to_write) / 1e9);
+
+            // add the topic partitions, in the writer_qos
+            const std::string writer_guid = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+
+            std::string partition_name = "";
+            auto it = topic.partition_name.find(writer_guid);
+
+            /*if(topic_name == "Square")
+            {
+                std::cout << "\tSquare. Partition: ";
+            }*/
+
+            if (it != topic.partition_name.end())
+            {
+                partition_name = it->second;
+                if(partition_name.size() > 0)
+                {
+                    int i = 0, partition_name_n = partition_name.size();
+                    std::string tmp = "";
+                    while(i < partition_name_n)
+                    {
+                        if(partition_name[i] == '|')
+                        {
+                            data->writer_qos.partitions.push_back(tmp.c_str());
+                            tmp = "";
+                        }
+                        else
+                        {
+                            tmp += partition_name[i];
+                        }
+
+                        i++;
+                    }
+                    // add the last partition in the set of partitions.
+                    // e.g.: "A|B" adds the "B" partition
+                    if(tmp != "")
+                    {
+                        data->writer_qos.partitions.push_back(tmp.c_str());
+                    }
+
+                }
+                /*
+                else
+                {
+                    data->writer_qos.partitions.push_back("");
+                }*/
+                //std::cout << partition_name << "\n";
+                data->writer_qos.partitions.push_back(partition_name.c_str());
+            }
+            /*else
+            {
+                std::cout << "\n";
+            }*/
 
             // Wait until it's time to write the message
             wait_until_timestamp_(time_to_write);

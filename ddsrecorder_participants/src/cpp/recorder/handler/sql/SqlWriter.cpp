@@ -505,7 +505,7 @@ void SqlWriter::write_nts_(
         sqlite3_bind_text(statement_partition, 1, writer_guid_ss.str().c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int64(statement_partition, 2, message.sequence_number.to64long());
 
-        std::string topic_partitions = "";
+        /*std::string topic_partitions = "";
         std::vector<std::string> topic_partitions_vector(message.topic.partition_name.begin(), message.topic.partition_name.end());
         int topic_partitions_vector_n = topic_partitions_vector.size();
 
@@ -521,8 +521,16 @@ void SqlWriter::write_nts_(
             topic_partitions += "|" + topic_partitions_vector[i]; // TODO. check delimiter
         }
 
-        //sqlite3_bind_text(statement_partition, 3, message.topic.topic_name().c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(statement_partition, 3, topic_partitions.c_str(), -1, SQLITE_TRANSIENT);
+        //sqlite3_bind_text(statement_partition, 3, topic_partitions.c_str(), -1, SQLITE_TRANSIENT);*/
+
+        std::string partition_name = "";
+        auto it = message.topic.partition_name.find(writer_guid_ss.str());
+        if (it != message.topic.partition_name.end())
+        {
+            partition_name = it->second;
+        }
+
+        sqlite3_bind_text(statement_partition, 3, partition_name.c_str(), -1, SQLITE_TRANSIENT);
 
         // Calculate the estimated size of this entry
         size_t entry_size = 0;
@@ -542,9 +550,9 @@ void SqlWriter::write_nts_(
         // -- Partition --
         entry_size_partition += writer_guid_ss.str().size();
         entry_size_partition += calculate_int_storage_size(message.sequence_number.to64long());
-        //entry_size_partition += message.topic.topic_name().size();
-        entry_size_partition += topic_partitions.size();
 
+        //entry_size_partition += topic_partitions.size();
+        entry_size_partition += partition_name.size();
         try
         {
             size_control_(entry_size, false);
