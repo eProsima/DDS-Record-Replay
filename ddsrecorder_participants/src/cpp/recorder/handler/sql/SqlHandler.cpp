@@ -125,6 +125,7 @@ void SqlHandler::write_samples_(
         // Write the topic if it hasn't been written before (Table: Topics)
         const auto topic = sql_sample->topic;
 
+        // check if the topic is already added in the table.
         if (written_topics_.find(topic) == written_topics_.end())
         {
             sql_writer_.write(topic);
@@ -134,15 +135,19 @@ void SqlHandler::write_samples_(
         // Write the partition set (Table: Partitions)
 
         std::ostringstream guid_ss;
+        std::string topic_partitions;
+
+        // get the writer guid
         guid_ss << sql_sample->writer_guid;
 
-        std::string topic_partitions;
+        // search for the partitions
         auto it = topic.partition_name.find(guid_ss.str());
         if (it != topic.partition_name.end())
         {
             topic_partitions = it->second;
         }
 
+        // check if the partitions set is already added in the table.
         if (written_partitions_.find(topic_partitions) == written_partitions_.end())
         {
             sql_writer_.write(topic_partitions);
@@ -151,6 +156,7 @@ void SqlHandler::write_samples_(
 
         // Write the Partition of the topic if it hasn't been written before (Table: TopicPartitions)
 
+        // check if the topic/type partitions set is already added in the table.
         if(written_topic_partitions_.find(topic.m_topic_name + topic.type_name + topic_partitions) == written_topic_partitions_.end())
         {
             sql_writer_.write_partition(topic.m_topic_name, topic.type_name, topic_partitions);

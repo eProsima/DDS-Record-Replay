@@ -59,15 +59,8 @@ void SqlReaderParticipant::process_summary(
 {
     open_file_();
 
-    //exec_sql_statement_("SELECT name, type, qos, is_ros2_topic FROM Topics;", {}, [&](sqlite3_stmt* stmt)
-    /*exec_sql_statement_(R"SQL(
-                            SELECT t.name, t.type, t.qos, t.is_ros2_topic,
-                                COALESCE(GROUP_CONCAT(DISTINCT tp.partition), '') AS partitions_csv
-                            FROM Topics t
-                            LEFT JOIN TopicPartitions tp
-                            ON tp.topic = t.name AND tp.type = t.type
-                            GROUP BY t.name, t.type, t.qos, t.is_ros2_topic;
-                        )SQL", {}, [&](sqlite3_stmt* stmt)*/
+    // SQL query. Gets the Topic, Type, Qos, ROS2_Topic, Partitions and WriterGuid
+    // using Topic, Type and Partitions as primary keys
     exec_sql_statement_(R"SQL(
                             SELECT
                                 t.name          AS topic_name,
@@ -108,9 +101,12 @@ void SqlReaderParticipant::process_summary(
 
                 topic->topic_qos.set_qos(topic_qos, utils::FuzzyLevelValues::fuzzy_level_fuzzy);
 
+                // get the partitions set string from the querys row
                 const std::string topic_partitions = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+                // get the writer guid string from the querys row
                 const std::string writer_guid = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
 
+                // (empty partition list) adds the partitions set if is not empty
                 if(topic_partitions != "")
                 {
                     topic->partition_name[writer_guid] = topic_partitions;
@@ -119,31 +115,25 @@ void SqlReaderParticipant::process_summary(
                 // Store the topic in the cache
                 const auto topic_id = std::make_pair(topic->m_topic_name, type_name);
 
+                // checks if the topic is already added (more than one writer in the same topic + type)
+                // e.g.: ShapesDemo (Square: A and Square: A|B)
                 if (topics_.find(topic_id) != topics_.end())
                 {
+                    // iterate throw the added topics
                     for(const auto& t: topics)
                     {
+                        // search for the same topic and type
                         if(t->type_name == type_name && t->m_topic_name == topic_name)
                         {
+                            // adds in the map the writer_guid and the partitions set
                             t->partition_name[writer_guid] = topic_partitions;
                             topics_[topic_id].partition_name[writer_guid] = topic_partitions;
                             return;
                         }
                     }
-                    /*auto it = topics.find(topic);
-                    if (topic_set == nullptr)
-                    {
-                        std::cout << "Element not found\n";
-                    }*/
-
-                    /*if(topics_[topic_id].partition_name.find(writer_guid) == topics_[topic_id].partition_name.end())
-                    {
-                        // the topic exists, but the writer_guid with a different partition not.
-                        topics_[topic_id].partition_name[writer_guid] = topic_partitions;
-                    }*/
 
                     EPROSIMA_LOG_WARNING(DDSREPLAYER_SQL_READER_PARTICIPANT,
-                    "Topic " << topic_name << " with type " << type_name << " already exists. Skipping...");
+                    "Topic " << topic_name << " with type " << type_name << "and partitions set already exists. Skipping...");
                     return;
                 }
 
@@ -254,52 +244,55 @@ void SqlReaderParticipant::process_messages()
             std::string partition_name = "";
             auto it = topic.partition_name.find(writer_guid);
 
-            /*if(topic_name == "Square")
-            {
-                std::cout << "\tSquare. Partition: ";
-            }*/
-
+            // check if the message (using the writer_guid) has partitions
             if (it != topic.partition_name.end())
             {
-                partition_name = it->second;
-                if(partition_name.size() > 0)
+
+                // check if the message is already added in the dictionary of PartitionsQos
+                // (optimize the search of partitions in the message by storing the PartitionQos of the writer_guid)
+                if(partitions_qos_dict_.find(writer_guid) != partitions_qos_dict_.end())
                 {
-                    int i = 0, partition_name_n = partition_name.size();
-                    std::string tmp = "";
-                    while(i < partition_name_n)
-                    {
-                        if(partition_name[i] == '|')
-                        {
-                            data->writer_qos.partitions.push_back(tmp.c_str());
-                            tmp = "";
-                        }
-                        else
-                        {
-                            tmp += partition_name[i];
-                        }
-
-                        i++;
-                    }
-                    // add the last partition in the set of partitions.
-                    // e.g.: "A|B" adds the "B" partition
-                    if(tmp != "")
-                    {
-                        data->writer_qos.partitions.push_back(tmp.c_str());
-                    }
-
+                    data->writer_qos.partitions = partitions_qos_dict_[writer_guid];
                 }
-                /*
                 else
                 {
-                    data->writer_qos.partitions.push_back("");
-                }*/
-                //std::cout << partition_name << "\n";
-                data->writer_qos.partitions.push_back(partition_name.c_str());
+                    partition_name = it->second;
+                    if(partition_name.size() > 0)
+                    {
+                        int i = 0, partition_name_n = partition_name.size();
+                        std::string tmp = "";
+                        while(i < partition_name_n)
+                        {
+                            if(partition_name[i] == '|')
+                            {
+                                data->writer_qos.partitions.push_back(tmp.c_str());
+                                tmp = "";
+                            }
+                            else
+                            {
+                                tmp += partition_name[i];
+                            }
+
+                            i++;
+                        }
+                        // add the last partition in the set of partitions.
+                        // e.g.: "A|B" adds the "B" partition
+                        if(tmp != "")
+                        {
+                            data->writer_qos.partitions.push_back(tmp.c_str());
+                        }
+
+                    }
+                    /*
+                    else
+                    {
+                        data->writer_qos.partitions.push_back("");
+                    }*/
+                    data->writer_qos.partitions.push_back(partition_name.c_str());
+                    partitions_qos_dict_[writer_guid] = data->writer_qos.partitions;
+                }
+                
             }
-            /*else
-            {
-                std::cout << "\n";
-            }*/
 
             // Wait until it's time to write the message
             wait_until_timestamp_(time_to_write);

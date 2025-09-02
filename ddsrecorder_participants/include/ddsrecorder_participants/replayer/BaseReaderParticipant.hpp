@@ -207,7 +207,7 @@ protected:
     //! Scheduling condition variable mutex
     std::mutex scheduling_cv_mtx_;
 
-    //std::map<std::string, std::set<std::string>> partition_names;
+    //! <Topics <Writer_guid, Partitions set >>
     std::map<std::string, std::map<std::string, std::string>> partition_names;
 };
 

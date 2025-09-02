@@ -100,7 +100,6 @@ void McapWriter::update_dynamic_types(
     file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
 }
 
-// entered when executed the program
 void McapWriter::open_new_file_nts_(
         const std::uint64_t min_file_size)
 {

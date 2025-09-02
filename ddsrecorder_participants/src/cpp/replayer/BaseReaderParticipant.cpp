@@ -190,7 +190,8 @@ void BaseReaderParticipant::wait_until_timestamp_(
 }
 
 bool BaseReaderParticipant::add_topic_partition(
-        const std::string& topic_name, const std::string& writer_name,
+        const std::string& topic_name,
+        const std::string& writer_name,
         const std::string& partition)
 {
     if(partition_names.find(topic_name) != partition_names.end())
@@ -215,7 +216,8 @@ bool BaseReaderParticipant::add_topic_partition(
 }
 
 bool BaseReaderParticipant::delete_topic_partition(
-        const std::string& topic_name, const std::string& writer_name,
+        const std::string& topic_name,
+        const std::string& writer_name,
         const std::string& partition)
 {
     if(partition_names.find(topic_name) == partition_names.end())
