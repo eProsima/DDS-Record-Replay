@@ -52,6 +52,11 @@ McapReaderParticipant::McapReaderParticipant(
 {
 }
 
+void McapReaderParticipant::add_partitionlist(std::set<std::string> allowed_partition_list)
+{
+    allowed_partition_list_ = allowed_partition_list;
+}
+
 void McapReaderParticipant::process_summary(
         std::set<utils::Heritable<ddspipe::core::types::DdsTopic>>& topics,
         DynamicTypesCollection& types)

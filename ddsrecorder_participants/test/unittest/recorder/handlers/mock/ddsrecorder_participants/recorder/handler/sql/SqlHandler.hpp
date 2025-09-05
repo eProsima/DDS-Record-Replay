@@ -42,7 +42,8 @@ public:
             const std::shared_ptr<ddspipe::core::PayloadPool>&,
             std::shared_ptr<FileTracker>,
             const BaseHandlerStateCode& init_state = BaseHandlerStateCode::RUNNING,
-            const std::function<void()>& on_disk_full_lambda = nullptr)
+            const std::function<void()>& on_disk_full_lambda = nullptr,
+            const std::set<std::string> partitionlist = {})
     {
 
     }

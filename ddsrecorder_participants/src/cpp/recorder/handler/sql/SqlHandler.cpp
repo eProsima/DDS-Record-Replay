@@ -33,9 +33,11 @@ SqlHandler::SqlHandler(
         const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
         std::shared_ptr<ddsrecorder::participants::FileTracker> file_tracker,
         const BaseHandlerStateCode& init_state /* = BaseHandlerStateCode::RUNNING */,
-        const std::function<void()>& on_disk_full_lambda /* = nullptr */)
+        const std::function<void()>& on_disk_full_lambda /* = nullptr */,
+        const std::set<std::string> parttionlist)
     : BaseHandler(config, payload_pool)
     , configuration_(config)
+    , allowed_partitionlist_(parttionlist)
     , sql_writer_(config.output_settings, file_tracker, config.record_types, config.ros2_types, config.data_format)
 {
     EPROSIMA_LOG_INFO(DDSRECORDER_SQL_HANDLER, "Creating SQL handler instance.");
@@ -125,15 +127,6 @@ void SqlHandler::write_samples_(
         // Write the topic if it hasn't been written before (Table: Topics)
         const auto topic = sql_sample->topic;
 
-        // check if the topic is already added in the table.
-        if (written_topics_.find(topic) == written_topics_.end())
-        {
-            sql_writer_.write(topic);
-            written_topics_.insert(topic);
-        }
-
-        // Write the partition set (Table: Partitions)
-
         std::ostringstream guid_ss;
         std::string topic_partitions;
 
@@ -146,6 +139,37 @@ void SqlHandler::write_samples_(
         {
             topic_partitions = it->second;
         }
+        else
+        {
+            // the dictionary does not contains the partition for
+            // the current data. empty partitions do not enters
+            // this condition check
+            samples.pop_front();
+            continue;
+        }
+
+        // check the partitions filter
+        // TODO. danip FILTRO
+        /*bool partition_filter_pass = allowed_partitionlist_.empty();
+        if(!partition_filter_pass)
+        {
+            if(allowed_partitionlist_.find(topic_partitions) == allowed_partitionlist_.end())
+            {
+                samples.pop_front();
+                continue;
+            }
+        }*/
+
+        // Write the topic if it hasn't been written before (Table: Topics)
+
+        // check if the topic is already added in the table.
+        if (written_topics_.find(topic) == written_topics_.end())
+        {
+            sql_writer_.write(topic);
+            written_topics_.insert(topic);
+        }
+
+        // Write the partition set (Table: Partitions)
 
         // check if the partitions set is already added in the table.
         if (written_partitions_.find(topic_partitions) == written_partitions_.end())

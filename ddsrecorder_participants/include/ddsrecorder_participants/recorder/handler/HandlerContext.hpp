@@ -102,7 +102,8 @@ public:
             std::shared_ptr<eprosima::ddspipe::core::ParticipantsDatabase> participants_database,
             std::shared_ptr<eprosima::ddspipe::core::DiscoveryDatabase> discovery_database,
             const participants::BaseHandlerStateCode& init_state,
-            const std::function<void()>& on_disk_full_callback);
+            const std::function<void()>& on_disk_full_callback,
+            const std::set<std::string> partitionlist);
 
 protected:
 

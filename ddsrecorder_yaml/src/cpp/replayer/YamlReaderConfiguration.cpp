@@ -278,6 +278,32 @@ void ReplayerConfiguration::load_dds_configuration_(
                         version);
     }
 
+    /////
+    // Get optional partitions
+    if (YamlReader::is_tag_present(yml, PARTITIONLIST_TAG))
+    {
+        replayer_configuration->partitionlist = YamlReader::get_set<std::string>(yml, PARTITIONLIST_TAG,
+                        version);
+
+        // check if the wildcard partition is in the partitionlist
+        bool wildcard = false;
+        for(std::string partition: replayer_configuration->partitionlist)
+        {
+            if(partition == "*")
+            {
+                wildcard = true;
+                break;
+            }
+        }
+
+        if(wildcard)
+        {
+            // the partitionslist contains "*" -> clear the list,
+            // all the partitions are allowed in the filter
+            replayer_configuration->partitionlist.clear();
+        }
+    }
+
     // Optional get Transport protocol
     if (YamlReader::is_tag_present(yml, TRANSPORT_DESCRIPTORS_TRANSPORT_TAG))
     {

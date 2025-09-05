@@ -37,6 +37,9 @@
 #include <ddsrecorder_participants/common/time_utils.hpp>
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/replayer/SqlReaderParticipant.hpp>
+
+#include <cpp_utils/utils.hpp>
+
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
@@ -51,6 +54,11 @@ SqlReaderParticipant::SqlReaderParticipant(
 
 SqlReaderParticipant::~SqlReaderParticipant()
 {
+}
+
+void SqlReaderParticipant::add_partitionlist(std::set<std::string> allowed_partition_list)
+{
+    allowed_partition_list_ = allowed_partition_list;
 }
 
 void SqlReaderParticipant::process_summary(
@@ -105,6 +113,79 @@ void SqlReaderParticipant::process_summary(
                 const std::string topic_partitions = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
                 // get the writer guid string from the querys row
                 const std::string writer_guid = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+
+                // check the partitions filter
+                bool pass_partition_filter = allowed_partition_list_.empty();
+                
+
+                // TODO. danip check filter VIERNES
+                // PARA PONER EL FILTRO EN EL REPLAYER HAY QUE QUITAR LA INFORMACION LEIDA
+                // DE LA BASE DE DATOS PARA QUE NO LLAME A LAS FUNCIONES DE "MULTIWRITER" Y ASI
+                // NO SE CREEN LA WRITERS CON LAS PARTICIONES BLOQUEDAS POR EL FILTRO
+                std::string curr_partition = "";
+                int i = 0, curr_partition_n = topic_partitions.size();
+                while(i < curr_partition_n)
+                {
+                    // gets a partition from the string of partitions
+                    while(i < curr_partition_n && topic_partitions[i]!='|')
+                    {
+                        curr_partition += topic_partitions[i++];
+                    }
+
+                    if(curr_partition == "*")
+                    {
+                        pass_partition_filter = true;
+                        break;
+                    }
+
+                    // check if that partition is in the filter of partitions
+                    for(std::string allowed_partition: allowed_partition_list_)
+                    {
+                        if (utils::match_pattern(allowed_partition, curr_partition))
+                        {
+                            pass_partition_filter = true;
+                            break;
+                        }
+                    }
+
+                    curr_partition = "";
+                    i++;
+                }
+
+                if(!pass_partition_filter)
+                {
+                    // check if the sql query has more than one writer_guid in the row
+                    if(writer_guid.size() < 50)
+                    {
+                        writersguid_filtered_.insert(writer_guid);
+                    }
+                    else
+                    {
+                        std::string tmp = "";
+                        int i = 0, n = writer_guid.size();
+                        while(i < n)
+                        {
+                            if(writer_guid[i] == ',')
+                            {
+                                writersguid_filtered_.insert(tmp);
+                                tmp = "";
+                            }
+                            else
+                            {
+                                tmp += writer_guid[i];
+                            }
+
+                            i++;
+                        }
+                        if(tmp != "")
+                        {
+                            writersguid_filtered_.insert(tmp);
+                        }
+                    }
+
+                    return;
+                }
+
 
                 // (empty partition list) adds the partitions set if is not empty
                 if(topic_partitions != "")
@@ -199,7 +280,15 @@ void SqlReaderParticipant::process_messages()
             const std::string topic_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
             const std::string type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
 
+            const std::string writer_guid = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+
             const auto topic_id = std::make_pair(topic_name, type_name);
+
+            if(writersguid_filtered_.find(writer_guid) != writersguid_filtered_.end())
+            {
+                // topic filtered
+                return;
+            }
 
             // Find the topic
             if (topics_.find(topic_id) == topics_.end())
@@ -239,8 +328,6 @@ void SqlReaderParticipant::process_messages()
             data->source_timestamp = fastdds::dds::Time_t(to_ticks(time_to_write) / 1e9);
 
             // add the topic partitions, in the writer_qos
-            const std::string writer_guid = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
-
             std::string partition_name = "";
             auto it = topic.partition_name.find(writer_guid);
 
@@ -291,7 +378,6 @@ void SqlReaderParticipant::process_messages()
                     data->writer_qos.partitions.push_back(partition_name.c_str());
                     partitions_qos_dict_[writer_guid] = data->writer_qos.partitions;
                 }
-                
             }
 
             // Wait until it's time to write the message

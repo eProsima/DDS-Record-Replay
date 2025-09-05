@@ -144,6 +144,9 @@ DdsReplayer::DdsReplayer(
     std::set<utils::Heritable<ddspipe::core::types::DdsTopic>> topics;
     participants::DynamicTypesCollection types;
 
+    // TODO. danip add filter in the reader to not add the blocked data
+    reader_participant_->add_partitionlist(configuration.replayer_configuration->partitionlist);
+
     reader_participant_->process_summary(topics, types);
 
     std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair> registered_types;
@@ -172,7 +175,8 @@ DdsReplayer::DdsReplayer(
         discovery_database,
         payload_pool_,
         participants_database,
-        thread_pool_);
+        thread_pool_,
+        configuration.replayer_configuration->partitionlist);
 }
 
 utils::ReturnCode DdsReplayer::reload_configuration(

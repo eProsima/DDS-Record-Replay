@@ -57,6 +57,15 @@ public:
             const std::string& file_path);
 
     /**
+     * @brief Add the filter partition list
+     *
+     * @param topics: Set of allowed partitions added by the filter.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    void add_partitionlist(
+            std::set<std::string> allowed_partition_list) override;
+
+    /**
      * @brief Process the MCAP file summary.
      *
      * Fills the topics with the MCAP file's channels and schemas.
@@ -109,6 +118,8 @@ protected:
 
     //! MCAP reader instance.
     mcap::McapReader mcap_reader_;
+
+    std::set<std::string> allowed_partition_list_;
 };
 
 } /* namespace participants */

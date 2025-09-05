@@ -67,6 +67,15 @@ public:
     ~SqlReaderParticipant();
 
     /**
+     * @brief Add the filter partition list
+     *
+     * @param topics: Set of allowed partitions added by the filter.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    void add_partitionlist(
+            std::set<std::string> allowed_partition_list) override;
+
+    /**
      * @brief Process the topics and the types stored in the SQLite database.
      *
      * @param topics: Set of topics to be filled with the information from the SQLite database.
@@ -116,6 +125,10 @@ protected:
     std::map<std::pair<std::string, std::string>, ddspipe::core::types::DdsTopic> topics_;
 
     std::map<std::string, eprosima::fastdds::dds::PartitionQosPolicy> partitions_qos_dict_;
+
+    std::set<std::string> allowed_partition_list_;
+
+    std::set<std::string> writersguid_filtered_;
 };
 
 } /* namespace participants */

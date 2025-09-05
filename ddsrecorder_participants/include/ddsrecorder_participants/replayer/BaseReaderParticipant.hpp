@@ -116,6 +116,17 @@ public:
     DDSPIPE_PARTICIPANTS_DllAPI
     void clear_topic_partitions() override;
 
+
+    /**
+     * @brief Process the input file's summary.
+     *
+     * @param topics: Set of topics to be filled with the information from the input file.
+     * @param types:  DynamicTypesCollection instance to be filled with the types information from the input file.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    virtual void add_partitionlist(
+            std::set<std::string> allowed_partition_list) = 0;
+
     /**
      * @brief Process the input file's summary.
      *

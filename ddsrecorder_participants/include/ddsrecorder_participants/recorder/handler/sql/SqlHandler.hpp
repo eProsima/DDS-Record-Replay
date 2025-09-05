@@ -75,7 +75,8 @@ public:
             const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
             std::shared_ptr<ddsrecorder::participants::FileTracker> file_tracker,
             const BaseHandlerStateCode& init_state = BaseHandlerStateCode::RUNNING,
-            const std::function<void()>& on_disk_full_lambda = nullptr);
+            const std::function<void()>& on_disk_full_lambda = nullptr,
+            const std::set<std::string> partitionlist = {});
 
     /**
      * @brief Destructor
@@ -151,6 +152,9 @@ protected:
 
     //! SQL writer
     SqlWriter sql_writer_;
+
+    //! Allowed partitions added by the filter
+    std::set<std::string> allowed_partitionlist_;
 
     //! (Table: Topics) Topics that the SQL writer has written
     std::set<ddspipe::core::types::DdsTopic> written_topics_;
