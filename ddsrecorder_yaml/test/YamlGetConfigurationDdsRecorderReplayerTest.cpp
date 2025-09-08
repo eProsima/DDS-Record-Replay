@@ -130,14 +130,14 @@ TEST(YamlGetConfigurationDdsRecorderReplayerTest, get_simple_participant_configu
 
     // Check that it is valid
     utils::Formatter error_msg;
-    ASSERT_TRUE(recorder_config.simple_configuration->is_valid(error_msg));
+    ASSERT_TRUE(recorder_config.dds_configuration->is_valid(error_msg));
     ASSERT_TRUE(replayer_config.replayer_configuration->is_valid(error_msg));
 
-    ASSERT_EQ(recorder_config.simple_configuration->domain, 0);
-    ASSERT_EQ(recorder_config.simple_configuration->whitelist, std::set<std::string>{"127.0.0.1"});
-    ASSERT_EQ(recorder_config.simple_configuration->transport, ddspipe::core::types::TransportDescriptors::builtin);
-    ASSERT_EQ(recorder_config.simple_configuration->easy_mode_ip, "2.2.2.2");
-    ASSERT_EQ(recorder_config.simple_configuration->ignore_participant_flags,
+    ASSERT_EQ(recorder_config.dds_configuration->domain, 0);
+    ASSERT_EQ(recorder_config.dds_configuration->whitelist, std::set<std::string>{"127.0.0.1"});
+    ASSERT_EQ(recorder_config.dds_configuration->transport, ddspipe::core::types::TransportDescriptors::builtin);
+    ASSERT_EQ(recorder_config.dds_configuration->easy_mode_ip, "2.2.2.2");
+    ASSERT_EQ(recorder_config.dds_configuration->ignore_participant_flags,
             ddspipe::core::types::IgnoreParticipantFlags::no_filter);
 
     ASSERT_EQ(replayer_config.replayer_configuration->domain, 0);

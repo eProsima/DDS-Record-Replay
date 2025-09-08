@@ -102,7 +102,7 @@ void ReplayerConfiguration::load_ddsreplayer_configuration_(
 
         /////
         // Create Replayer Participant Configuration
-        replayer_configuration = std::make_shared<SimpleParticipantConfiguration>();
+        replayer_configuration = std::make_shared<XmlParticipantConfiguration>();
         replayer_configuration->id = "ReplayerParticipant";
         replayer_configuration->app_id = "DDS_REPLAYER";
         // TODO: fill metadata field once its content has been defined.
@@ -248,6 +248,22 @@ void ReplayerConfiguration::load_dds_configuration_(
         const Yaml& yml,
         const YamlReaderVersion& version)
 {
+    // Get optional xml configuration
+    if (YamlReader::is_tag_present(yml, XML_TAG))
+    {
+        YamlReader::fill<XmlHandlerConfiguration>(
+            xml_configuration,
+            YamlReader::get_value_in_tag(yml, XML_TAG),
+            version);
+    }
+
+    // Check if REPLAYER_PROFILE_TAG exists
+    if (YamlReader::is_tag_present(yml, REPLAYER_PROFILE_TAG))
+    {
+        replayer_configuration->participant_profile = YamlReader::get<std::string>(yml, REPLAYER_PROFILE_TAG, version);
+        xml_enabled = true;
+    }
+
     // Get optional DDS domain
     if (YamlReader::is_tag_present(yml, DOMAIN_ID_TAG))
     {

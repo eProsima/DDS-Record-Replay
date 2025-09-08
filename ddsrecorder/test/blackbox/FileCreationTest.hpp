@@ -97,7 +97,7 @@ public:
         // Create the RecorderConfiguration
         Yaml yml;
         configuration_ = std::make_unique<ddsrecorder::yaml::RecorderConfiguration>(yml);
-        configuration_->simple_configuration->domain = test::DOMAIN;
+        configuration_->dds_configuration->domain = test::DOMAIN;
 
         // Create the topic
         create_topic_();

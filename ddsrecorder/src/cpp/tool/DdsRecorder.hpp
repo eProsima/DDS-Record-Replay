@@ -27,8 +27,10 @@
 #include <ddspipe_core/dynamic/ParticipantsDatabase.hpp>
 #include <ddspipe_core/efficiency/payload/FastPayloadPool.hpp>
 #include <ddspipe_core/types/topic/dds/DistributedTopic.hpp>
+#include <ddspipe_core/interface/IParticipant.hpp>
 
 #include <ddspipe_participants/participant/dynamic_types/DynTypesParticipant.hpp>
+#include <ddspipe_participants/participant/dynamic_types/XmlDynTypesParticipant.hpp>
 #include <ddspipe_participants/participant/dynamic_types/SchemaParticipant.hpp>
 
 #include <ddsrecorder_participants/recorder/handler/HandlerContextCollection.hpp>
@@ -173,7 +175,7 @@ protected:
     std::shared_ptr<ddspipe::core::ParticipantsDatabase> participants_database_;
 
     //! Dynamic Types Participant
-    std::shared_ptr<ddspipe::participants::DynTypesParticipant> dyn_participant_;
+    std::shared_ptr<ddspipe::core::IParticipant> dyn_participant_;
 
     //! DDS Pipe
     std::unique_ptr<ddspipe::core::DdsPipe> pipe_;

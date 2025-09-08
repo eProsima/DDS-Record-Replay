@@ -27,11 +27,14 @@
 #include <ddspipe_core/types/dynamic_types/types.hpp>
 #include <ddspipe_core/types/topic/filter/ManualTopic.hpp>
 #include <ddspipe_core/types/topic/filter/WildcardDdsFilterTopic.hpp>
+
+#include <ddspipe_participants/xml/XmlHandlerConfiguration.hpp>
 #include <ddspipe_participants/types/address/Address.hpp>
 
 #include <ddspipe_yaml/yaml_configuration_tags.hpp>
 #include <ddspipe_yaml/Yaml.hpp>
 #include <ddspipe_yaml/YamlManager.hpp>
+#include <ddspipe_yaml/YamlReader.hpp>
 
 #include <ddsrecorder_participants/recorder/output/OutputSettings.hpp>
 #include <ddsrecorder_participants/recorder/handler/sql/SqlHandlerConfiguration.hpp>
@@ -113,11 +116,11 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
 
         /////
         // Create Simple Participant Configuration
-        simple_configuration = std::make_shared<SimpleParticipantConfiguration>();
-        simple_configuration->id = "SimpleRecorderParticipant";
-        simple_configuration->app_id = "DDS_RECORDER";
-        simple_configuration->app_metadata = "";
-        simple_configuration->is_repeater = false;
+        dds_configuration = std::make_shared<XmlParticipantConfiguration>();
+        dds_configuration->id = "SimpleRecorderParticipant";
+        dds_configuration->app_id = "DDS_RECORDER";
+        dds_configuration->app_metadata = "";
+        dds_configuration->is_repeater = false;
 
         /////
         // Create MCAP Recorder Participant Configuration
@@ -193,7 +196,7 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
 
         // Initialize controller domain with the same as the one being recorded
         // WARNING: dds tag must have been parsed beforehand
-        controller_domain = simple_configuration->domain;
+        controller_domain = dds_configuration->domain;
 
         /////
         // Get optional remote controller configuration
@@ -531,48 +534,64 @@ void RecorderConfiguration::load_dds_configuration_(
         const Yaml& yml,
         const YamlReaderVersion& version)
 {
+    // Get optional xml configuration
+    if (YamlReader::is_tag_present(yml, XML_TAG))
+    {
+        YamlReader::fill<XmlHandlerConfiguration>(
+            xml_configuration,
+            YamlReader::get_value_in_tag(yml, XML_TAG),
+            version);
+    }
+
+    // Check if RECORDER_PROFILE_TAG exists
+    if (YamlReader::is_tag_present(yml, RECORDER_PROFILE_TAG))
+    {
+        dds_configuration->participant_profile = YamlReader::get<std::string>(yml, RECORDER_PROFILE_TAG, version);
+        xml_enabled = true;
+    }
+
     // Get optional DDS domain
     if (YamlReader::is_tag_present(yml, DOMAIN_ID_TAG))
     {
-        simple_configuration->domain = YamlReader::get<DomainId>(yml, DOMAIN_ID_TAG, version);
+        dds_configuration->domain = YamlReader::get<DomainId>(yml, DOMAIN_ID_TAG, version);
     }
 
     /////
     // Get optional whitelist interfaces
     if (YamlReader::is_tag_present(yml, WHITELIST_INTERFACES_TAG))
     {
-        simple_configuration->whitelist = YamlReader::get_set<WhitelistType>(yml, WHITELIST_INTERFACES_TAG,
+        dds_configuration->whitelist = YamlReader::get_set<WhitelistType>(yml, WHITELIST_INTERFACES_TAG,
                         version);
     }
 
     // Optional get Transport protocol
     if (YamlReader::is_tag_present(yml, TRANSPORT_DESCRIPTORS_TRANSPORT_TAG))
     {
-        simple_configuration->transport = YamlReader::get<TransportDescriptors>(yml,
+        dds_configuration->transport = YamlReader::get<TransportDescriptors>(yml,
                         TRANSPORT_DESCRIPTORS_TRANSPORT_TAG,
                         version);
     }
     else
     {
-        simple_configuration->transport = TransportDescriptors::builtin;
+        dds_configuration->transport = TransportDescriptors::builtin;
     }
 
     // Optional get ROS 2 easy mode IP
     if (YamlReader::is_tag_present(yml, EASY_MODE_TAG))
     {
-        simple_configuration->easy_mode_ip = YamlReader::get<IpType>(yml, EASY_MODE_TAG, version);
+        dds_configuration->easy_mode_ip = YamlReader::get<IpType>(yml, EASY_MODE_TAG, version);
     }
 
     // Optional get ignore participant flags
     if (YamlReader::is_tag_present(yml, IGNORE_PARTICIPANT_FLAGS_TAG))
     {
-        simple_configuration->ignore_participant_flags = YamlReader::get<IgnoreParticipantFlags>(yml,
+        dds_configuration->ignore_participant_flags = YamlReader::get<IgnoreParticipantFlags>(yml,
                         IGNORE_PARTICIPANT_FLAGS_TAG,
                         version);
     }
     else
     {
-        simple_configuration->ignore_participant_flags = IgnoreParticipantFlags::no_filter;
+        dds_configuration->ignore_participant_flags = IgnoreParticipantFlags::no_filter;
     }
 
     /////

@@ -28,6 +28,47 @@ DDS Configuration
 
 Configuration related to DDS communication.
 
+Load XML Configuration
+----------------------
+
+Fast DDS supports configuration of its internal entities (DomainParticipant, DataWriter, etc.) via XML Profiles.
+These XML files contain different profiles that set specific QoS, and entities can be created following such profiles.
+
+The way to load these XML configurations is using the *DDS Recorder* YAML configuration.
+The YAML Configuration supports an ``xml`` optional tag that contains certain options to load Fast DDS XML configurations.
+XML configurations are then used to configure the internal DomainParticipant.
+
+To specify which profile to use, the ``dds-profile`` tag should be set with the name of the desired profile.
+
+Load XML Files
+^^^^^^^^^^^^^^
+
+The ``files`` optional tag allows specifying a list of file paths from which XML configurations can be loaded.
+
+Raw XML
+^^^^^^^
+
+The ``raw`` optional tag allows specifying an XML configuration directly as a string.
+The XML content must follow the same format as an XML file and will be loaded as part of the configuration.
+
+.. code-block:: yaml
+
+    xml:
+
+      files:
+          - "./xml_configuration.xml"
+
+      raw: |
+          <?xml version="1.0" encoding="UTF-8" ?>
+          <profiles xmlns="http://www.eprosima.com">
+              <participant profile_name="custom_participant_configuration">
+                  <domainId>1</domainId>
+                  <rtps></rtps>
+              </participant>
+          </profiles>
+
+    recorder-profile: "participant_profile"
+
 .. _recorder_usage_configuration_domain_id:
 
 DDS Domain
@@ -904,6 +945,23 @@ A complete example of all the configurations described on this page can be found
 .. code-block:: yaml
 
     dds:
+
+      xml:
+
+        files:
+            - "./xml_configuration.xml"
+
+        raw: |
+            <?xml version="1.0" encoding="UTF-8" ?>
+            <profiles xmlns="http://www.eprosima.com">
+                <participant profile_name="custom_participant_configuration">
+                    <domainId>1</domainId>
+                    <rtps></rtps>
+                </participant>
+            </profiles>
+
+      recorder-profile: "participant_profile"
+
       domain: 0
 
       allowlist:

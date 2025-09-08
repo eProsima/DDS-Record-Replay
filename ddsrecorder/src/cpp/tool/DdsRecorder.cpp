@@ -39,7 +39,7 @@ namespace recorder {
 using namespace eprosima::ddspipe::core;
 using namespace eprosima::ddspipe::core::types;
 using namespace eprosima::ddspipe::participants;
-using namespace eprosima::ddspipe::participants::rtps;
+using namespace eprosima::ddspipe::participants::dds;
 using namespace eprosima::ddsrecorder::participants;
 using namespace eprosima::utils;
 
@@ -105,15 +105,29 @@ DdsRecorder::DdsRecorder(
     const auto handler_state = recorder_to_handler_state_(init_state);
     const auto on_disk_full_lambda = std::bind(&DdsRecorder::on_disk_full, this);
 
-    // Create DynTypes Participant
-    dyn_participant_ = std::make_shared<DynTypesParticipant>(
-        configuration_.simple_configuration,
-        payload_pool_,
-        discovery_database_);
-    dyn_participant_->init();
-
     // Create Participant Database
     participants_database_ = std::make_shared<ParticipantsDatabase>();
+
+    // Create DynTypes Participant
+    if (configuration.xml_enabled)
+    {
+        dyn_participant_ = std::make_shared<XmlDynTypesParticipant>(
+            configuration.dds_configuration,
+            payload_pool_,
+            discovery_database_);
+
+        std::dynamic_pointer_cast<XmlDynTypesParticipant>(dyn_participant_)->init();
+    }
+    else
+    {
+        dyn_participant_ = std::make_shared<DynTypesParticipant>(
+            std::dynamic_pointer_cast<SimpleParticipantConfiguration>(configuration.dds_configuration),
+            payload_pool_,
+            discovery_database_);
+
+        std::dynamic_pointer_cast<DynTypesParticipant>(dyn_participant_)->init();
+    }
+
 
     // Populate Participant Database
     participants_database_->add_participant(
