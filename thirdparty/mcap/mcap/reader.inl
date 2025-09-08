@@ -861,8 +861,13 @@ Status McapReader::ParseChannel(const Record& record, Channel* channel) {
 }
 
 Status McapReader::ParseMessage(const Record& record, Message* message) {
-  constexpr uint64_t MessagePreambleSize = 2 + 4 + 8 + 8;
-  //constexpr uint64_t MessagePreambleSize = 2 + 4 + 8 + 8 +2;
+
+  uint32_t offset = 2 + 4 + 8 + 8;
+  uint32_t guid_size = internal::ParseUint64(record.data + offset);
+  offset += 4;
+
+  //constexpr uint64_t MessagePreambleSize = 2 + 4 + 8 + 8 + 4; // + 2; // 4 del size y 2 del string
+  uint64_t MessagePreambleSize = offset + guid_size;
 
   assert(record.opcode == OpCode::Message);
   if (record.dataSize < MessagePreambleSize) {
@@ -880,9 +885,8 @@ Status McapReader::ParseMessage(const Record& record, Message* message) {
   // in total 43 chars without counting the end of the string (\0)
   // 22 bytes in total (with the end of string)
 
-  size_t offset = 2 + 4 + 8 + 8;
-
-  /*auto guid_str = std::string(reinterpret_cast<const char*>(record.data + offset), 22);*/
+  //auto guid_str = std::string(reinterpret_cast<const char*>(record.data + offset), guid_size);
+  message->source_guid = std::string(reinterpret_cast<const char*>(record.data + offset), guid_size);
 
   const char* ptr_1 = reinterpret_cast<const char*>(record.data);
   const char* ptr_2 = reinterpret_cast<const char*>(record.data + 2);

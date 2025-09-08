@@ -59,8 +59,8 @@ McapMessage::McapMessage(
     // source guid of the message
     std::ostringstream guid_ss;
     guid_ss << data.source_guid;
-    //source_guid = guid_ss.str();
-    //dataSize += source_gui.size()
+    source_guid = guid_ss.str();
+    //source_guid = "a";
 
     //uint_val_32 = sequence + 1;
 

@@ -122,6 +122,8 @@ protected:
     // Link a topic name and a type name to a DdsTopic instance
     std::map<std::pair<std::string, std::string>, ddspipe::core::types::DdsTopic> topics_;
 
+    std::map<std::string, eprosima::fastdds::dds::PartitionQosPolicy> partitions_qos_dict_;
+
     std::set<std::string> allowed_partition_list_;
 
     std::set<std::string> writersguid_filtered_;

@@ -831,8 +831,8 @@ uint64_t McapWriter::write(IWritable& output, const Channel& channel) {
 }
 
 uint64_t McapWriter::write(IWritable& output, const Message& message) {
-  const uint64_t recordSize = 2 + 4 + 8 + 8 + message.dataSize;
-  //const uint64_t recordSize = 2 + 4 + 8 + 8 + 4 + message.dataSize;
+  //const uint64_t recordSize = 2 + 4 + 8 + 8 + message.dataSize;
+  const uint64_t recordSize = 2 + 4 + 8 + 8 + 4 + message.source_guid.size() + message.dataSize;
 
   write(output, OpCode::Message);
   write(output, recordSize);
@@ -842,6 +842,7 @@ uint64_t McapWriter::write(IWritable& output, const Message& message) {
   write(output, message.publishTime);
   // TODO. danip (GUID)
   //write(output, message.uint_val_32);
+  write(output, message.source_guid);
 
   write(output, message.data, message.dataSize);
 
