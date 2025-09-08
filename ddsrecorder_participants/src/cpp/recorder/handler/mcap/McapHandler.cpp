@@ -260,6 +260,14 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     const auto is_topic_ros2_type = configuration_.ros2_types && topic_name != topic.m_topic_name;
 
     metadata[ROS2_TYPES] = is_topic_ros2_type ? "true" : "false";
+
+    std::string topic_partitions = "";
+    for(const auto& pair: topic.partition_name)
+    {
+        topic_partitions += pair.first + ":" + pair.second + ";";
+    }
+
+    metadata[PARTITIONS] = topic_partitions;
     mcap::Channel new_channel(topic_name, "cdr", schema_id, metadata);
 
     // -- mcap --

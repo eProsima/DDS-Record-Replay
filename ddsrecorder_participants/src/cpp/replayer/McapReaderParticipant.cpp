@@ -78,12 +78,54 @@ void McapReaderParticipant::process_summary(
         const auto topic = utils::Heritable<ddspipe::core::types::DdsTopic>::make_heritable(
             create_topic_(topic_name, type_name, is_topic_ros2_type));
 
+        const auto topic_id = std::make_pair(topic_name, type_name);
+
+
+        // TODO. danip add filter
+
         // Apply the QoS stored in the MCAP file as if they were the discovered QoS.
         const auto topic_qos_str = channel->metadata[QOS_SERIALIZATION_QOS];
         ddspipe::core::types::TopicQoS topic_qos;
         Serializer::deserialize<ddspipe::core::types::TopicQoS>(topic_qos_str, topic_qos);
 
         topic->topic_qos.set_qos(topic_qos, utils::FuzzyLevelValues::fuzzy_level_fuzzy);
+
+        // extra check
+        // <topic<writer,partition>>
+        auto a = partition_names;
+
+        std::string channel_partitions = channel->metadata[PARTITIONS];
+        std::string writer = "";
+        std::string writer_partition = "";
+
+        // adds the partitions of the topic using the stored channel
+        // metadata[partitions] = <writer_1>:<partition_1>;...;<writer_n>:<partition_n>
+        // using: n >= 1
+        int i = 0, partitions_n = channel_partitions.size();
+        while(i < partitions_n)
+        {
+            // get writer
+            while(i < partitions_n && channel_partitions[i] != ':')
+            {
+                writer += channel_partitions[i++];
+            }
+            i++;
+            // get partition
+            while(i < partitions_n && channel_partitions[i] != ';')
+            {
+                writer_partition += channel_partitions[i++];
+            }
+
+            topic->partition_name[writer] = writer_partition;
+
+            i++;
+
+            writer = "";
+            writer_partition = "";
+        }
+
+        // new. same dictionary in SqlReaderParticipant
+        topics_[topic_id] = *topic;
 
         topics.insert(topic);
     }
@@ -128,8 +170,34 @@ void McapReaderParticipant::process_messages()
     for (const auto& it : messages)
     {
         // Create topic on which this message should be published
-        const bool is_topic_ros2_type = it.channel->metadata[ROS2_TYPES] == "true";
-        const auto topic = create_topic_(it.channel->topic, it.schema->name, is_topic_ros2_type);
+
+        //const bool is_topic_ros2_type = it.channel->metadata[ROS2_TYPES] == "true";
+        //const auto topic = create_topic_(it.channel->topic, it.schema->name, is_topic_ros2_type);
+
+        // new. same dictionary in SqlReaderParticipant
+        const auto topic_id = std::make_pair(it.channel->topic, it.schema->name);
+        const auto topic = topics_[topic_id];
+
+        // TODO. danip ADD FILTER
+        // ...
+        /*
+        if(writersguid_filtered_.find(writer_guid) != writersguid_filtered_.end())
+        {
+            // topic filtered
+            return;
+        }
+        */
+
+
+        int x = 0;
+        if(topic.topic_name() == "Square")
+        {
+            x++;
+        }
+        else if(topic.topic_name() == "Triangle")
+        {
+            x++;
+        }
 
         const auto readers_it = readers_.find(topic);
 
@@ -155,6 +223,58 @@ void McapReaderParticipant::process_messages()
         // Set source timestamp
         // NOTE: this is important for QoS such as LifespanQosPolicy
         data->source_timestamp = fastdds::dds::Time_t(to_ticks(scheduled_write_ts) / 1e9);
+
+        //data->writer_qos.partitions.push_back("A");
+
+        const std::string writer_guid = "";
+
+        // add the topic partitions, in the writer_qos
+        /*std::string partition_name = "";
+        auto it = topic.partition_name.find(writer_guid);
+
+        // check if the message (using the writer_guid) has partitions
+        if (it != topic.partition_name.end())
+        {
+
+            // check if the message is already added in the dictionary of PartitionsQos
+            // (optimize the search of partitions in the message by storing the PartitionQos of the writer_guid)
+            if(partitions_qos_dict_.find(writer_guid) != partitions_qos_dict_.end())
+            {
+                data->writer_qos.partitions = partitions_qos_dict_[writer_guid];
+            }
+            else
+            {
+                partition_name = it->second;
+                if(partition_name.size() > 0)
+                {
+                    int i = 0, partition_name_n = partition_name.size();
+                    std::string tmp = "";
+                    while(i < partition_name_n)
+                    {
+                        if(partition_name[i] == '|')
+                        {
+                            data->writer_qos.partitions.push_back(tmp.c_str());
+                            tmp = "";
+                        }
+                        else
+                        {
+                            tmp += partition_name[i];
+                        }
+
+                        i++;
+                    }
+                    // add the last partition in the set of partitions.
+                    // e.g.: "A|B" adds the "B" partition
+                    if(tmp != "")
+                    {
+                        data->writer_qos.partitions.push_back(tmp.c_str());
+                    }
+
+                }
+                data->writer_qos.partitions.push_back(partition_name.c_str());
+                partitions_qos_dict_[writer_guid] = data->writer_qos.partitions;
+            }
+        }*/
 
         // Wait until it's time to write the message
         wait_until_timestamp_(scheduled_write_ts);

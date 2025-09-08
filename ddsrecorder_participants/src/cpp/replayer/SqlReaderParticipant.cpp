@@ -116,12 +116,7 @@ void SqlReaderParticipant::process_summary(
 
                 // check the partitions filter
                 bool pass_partition_filter = allowed_partition_list_.empty();
-                
 
-                // TODO. danip check filter VIERNES
-                // PARA PONER EL FILTRO EN EL REPLAYER HAY QUE QUITAR LA INFORMACION LEIDA
-                // DE LA BASE DE DATOS PARA QUE NO LLAME A LAS FUNCIONES DE "MULTIWRITER" Y ASI
-                // NO SE CREEN LA WRITERS CON LAS PARTICIONES BLOQUEDAS POR EL FILTRO
                 std::string curr_partition = "";
                 int i = 0, curr_partition_n = topic_partitions.size();
                 while(i < curr_partition_n)

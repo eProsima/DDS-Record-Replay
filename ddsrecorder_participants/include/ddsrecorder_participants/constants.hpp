@@ -35,6 +35,8 @@ constexpr const char* DYNAMIC_TYPES_ATTACHMENT_NAME("dynamic_types");
 // ROS 2 Types metadata
 constexpr const char* ROS2_TYPES("ros2-types");
 
+constexpr const char* PARTITIONS("partitions");
+
 // Version metadata
 constexpr const char* VERSION_METADATA_NAME("version");
 constexpr const char* VERSION_METADATA_RELEASE("release");

@@ -119,7 +119,12 @@ protected:
     //! MCAP reader instance.
     mcap::McapReader mcap_reader_;
 
+    // Link a topic name and a type name to a DdsTopic instance
+    std::map<std::pair<std::string, std::string>, ddspipe::core::types::DdsTopic> topics_;
+
     std::set<std::string> allowed_partition_list_;
+
+    std::set<std::string> writersguid_filtered_;
 };
 
 } /* namespace participants */
