@@ -30,6 +30,7 @@
 #include <cpp_utils/memory/Heritable.hpp>
 #include <cpp_utils/ros2_mangling.hpp>
 #include <cpp_utils/time/time_utils.hpp>
+#include <cpp_utils/utils.hpp>
 
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
@@ -38,7 +39,7 @@
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/replayer/SqlReaderParticipant.hpp>
 
-#include <cpp_utils/utils.hpp>
+
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -58,6 +59,7 @@ SqlReaderParticipant::~SqlReaderParticipant()
 
 void SqlReaderParticipant::add_partitionlist(std::set<std::string> allowed_partition_list)
 {
+    // adds the allowed partitions list to the class
     allowed_partition_list_ = allowed_partition_list;
 }
 
@@ -92,152 +94,164 @@ void SqlReaderParticipant::process_summary(
 
 
                         )SQL", {}, [&](sqlite3_stmt* stmt)
+    {
+        // Create a DdsTopic to publish the message
+        const std::string topic_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        const std::string type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const bool is_topic_ros2_type =
+        strcmp(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)), "true") == 0;
+
+        const auto topic = utils::Heritable<ddspipe::core::types::DdsTopic>::make_heritable(
+            create_topic_(topic_name, type_name, is_topic_ros2_type));
+
+        // Apply the QoS stored in the SQL file as if they were the discovered QoS.
+        const auto topic_qos_str = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        ddspipe::core::types::TopicQoS topic_qos;
+        Serializer::deserialize<ddspipe::core::types::TopicQoS>(topic_qos_str, topic_qos);
+
+        topic->topic_qos.set_qos(topic_qos, utils::FuzzyLevelValues::fuzzy_level_fuzzy);
+
+        // get the partitions set string from the querys row
+        const std::string topic_partitions = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+        // get the writer guid string from the querys row
+        const std::string writer_guid = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+
+        // check the partitions filter
+        bool pass_partition_filter = allowed_partition_list_.empty();
+
+
+        // -- Search all the partitions of the current sql row ----------------
+
+        std::string curr_partition = "";
+        int i = 0, curr_partition_n = topic_partitions.size();
+        while(i < curr_partition_n)
+        {
+            // gets a partition from the string of partitions set
+            while(i < curr_partition_n && topic_partitions[i]!='|')
             {
-                // Create a DdsTopic to publish the message
-                const std::string topic_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-                const std::string type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-                const bool is_topic_ros2_type =
-                strcmp(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)), "true") == 0;
+                curr_partition += topic_partitions[i++];
+            }
 
-                const auto topic = utils::Heritable<ddspipe::core::types::DdsTopic>::make_heritable(
-                    create_topic_(topic_name, type_name, is_topic_ros2_type));
+            // -- Partitions filter -------------------------------------------
 
-                // Apply the QoS stored in the SQL file as if they were the discovered QoS.
-                const auto topic_qos_str = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
-                ddspipe::core::types::TopicQoS topic_qos;
-                Serializer::deserialize<ddspipe::core::types::TopicQoS>(topic_qos_str, topic_qos);
+            // checks if the writer partition is the wildcard or the
+            // allowed partition list is empty
+            if(curr_partition == "*" || pass_partition_filter)
+            {
+                pass_partition_filter = true;
+                break;
+            }
 
-                topic->topic_qos.set_qos(topic_qos, utils::FuzzyLevelValues::fuzzy_level_fuzzy);
-
-                // get the partitions set string from the querys row
-                const std::string topic_partitions = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
-                // get the writer guid string from the querys row
-                const std::string writer_guid = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
-
-                // check the partitions filter
-                bool pass_partition_filter = allowed_partition_list_.empty();
-
-                std::string curr_partition = "";
-                int i = 0, curr_partition_n = topic_partitions.size();
-                while(i < curr_partition_n)
+            // check if the current partition is in the filter of partitions
+            for(std::string allowed_partition: allowed_partition_list_)
+            {
+                if (utils::match_pattern(allowed_partition, curr_partition))
                 {
-                    // gets a partition from the string of partitions
-                    while(i < curr_partition_n && topic_partitions[i]!='|')
-                    {
-                        curr_partition += topic_partitions[i++];
-                    }
-
-                    if(curr_partition == "*")
-                    {
-                        pass_partition_filter = true;
-                        break;
-                    }
-
-                    // check if that partition is in the filter of partitions
-                    for(std::string allowed_partition: allowed_partition_list_)
-                    {
-                        if (utils::match_pattern(allowed_partition, curr_partition))
-                        {
-                            pass_partition_filter = true;
-                            break;
-                        }
-                    }
-
-                    curr_partition = "";
-                    i++;
+                    pass_partition_filter = true;
+                    break;
                 }
+            }
 
-                if(!pass_partition_filter)
+            i++;
+            curr_partition = "";
+        }
+
+        if(!pass_partition_filter)
+        {
+            // the sql row did not pass the filter
+
+            // check if the sql query has more than one writer_guid in the row
+            if(writer_guid.size() < 50)
+            {
+                filtered_writersguid_list_.insert(writer_guid);
+            }
+            else
+            {
+                // more than one writer guid in the same row
+                // adds all the writer guids in the filtered list
+                std::string tmp = "";
+                int i = 0, n = writer_guid.size();
+                while(i < n)
                 {
-                    // check if the sql query has more than one writer_guid in the row
-                    if(writer_guid.size() < 50)
+                    if(writer_guid[i] == ',')
                     {
-                        writersguid_filtered_.insert(writer_guid);
+                        filtered_writersguid_list_.insert(tmp);
+                        tmp = "";
                     }
                     else
                     {
-                        std::string tmp = "";
-                        int i = 0, n = writer_guid.size();
-                        while(i < n)
-                        {
-                            if(writer_guid[i] == ',')
-                            {
-                                writersguid_filtered_.insert(tmp);
-                                tmp = "";
-                            }
-                            else
-                            {
-                                tmp += writer_guid[i];
-                            }
-
-                            i++;
-                        }
-                        if(tmp != "")
-                        {
-                            writersguid_filtered_.insert(tmp);
-                        }
+                        tmp += writer_guid[i];
                     }
 
+                    i++;
+                }
+
+                if(tmp != "")
+                {
+                    filtered_writersguid_list_.insert(tmp);
+                }
+            }
+
+            return;
+        }
+
+
+        // (empty partition list) adds the partitions set if is not empty
+        if(topic_partitions != "")
+        {
+            topic->partition_name[writer_guid] = topic_partitions;
+        }
+
+        // Store the topic in the cache
+        const auto topic_id = std::make_pair(topic->m_topic_name, type_name);
+
+        // checks if the topic is already added (more than one writer in the same topic + type)
+        // e.g.: ShapesDemo (Square: A and Square: A|B)
+        if (topics_.find(topic_id) != topics_.end())
+        {
+            // iterate throw the added topics
+            for(const auto& t: topics)
+            {
+                // search for the same topic and type
+                if(t->type_name == type_name && t->m_topic_name == topic_name)
+                {
+                    // adds in the map the writer_guid and the partitions set
+                    t->partition_name[writer_guid] = topic_partitions;
+                    topics_[topic_id].partition_name[writer_guid] = topic_partitions;
                     return;
                 }
+            }
 
+            EPROSIMA_LOG_WARNING(DDSREPLAYER_SQL_READER_PARTICIPANT,
+            "Topic " << topic_name << " with type " << type_name << "and partitions set already exists. Skipping...");
+            return;
+        }
 
-                // (empty partition list) adds the partitions set if is not empty
-                if(topic_partitions != "")
-                {
-                    topic->partition_name[writer_guid] = topic_partitions;
-                }
+        topics_[topic_id] = *topic;
 
-                // Store the topic in the cache
-                const auto topic_id = std::make_pair(topic->m_topic_name, type_name);
-
-                // checks if the topic is already added (more than one writer in the same topic + type)
-                // e.g.: ShapesDemo (Square: A and Square: A|B)
-                if (topics_.find(topic_id) != topics_.end())
-                {
-                    // iterate throw the added topics
-                    for(const auto& t: topics)
-                    {
-                        // search for the same topic and type
-                        if(t->type_name == type_name && t->m_topic_name == topic_name)
-                        {
-                            // adds in the map the writer_guid and the partitions set
-                            t->partition_name[writer_guid] = topic_partitions;
-                            topics_[topic_id].partition_name[writer_guid] = topic_partitions;
-                            return;
-                        }
-                    }
-
-                    EPROSIMA_LOG_WARNING(DDSREPLAYER_SQL_READER_PARTICIPANT,
-                    "Topic " << topic_name << " with type " << type_name << "and partitions set already exists. Skipping...");
-                    return;
-                }
-
-                topics_[topic_id] = *topic;
-
-                // Store the topic in the set
-                topics.insert(topic);
-            });
+        // Store the topic in the set
+        topics.insert(topic);
+    });
 
     exec_sql_statement_("SELECT name, information, object, is_ros2_type FROM Types;", {}, [&](sqlite3_stmt* stmt)
-            {
-                // Read the type data from the database
-                const std::string type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-                const std::string type_information = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-                const std::string type_object = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
-                const bool is_type_ros2_type =
-                strcmp(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)), "true") == 0;
+    {
+        // Read the type data from the database
+        const std::string type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        const std::string type_information = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const std::string type_object = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        const bool is_type_ros2_type =
+        strcmp(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)), "true") == 0;
 
-                // Create a DynamicType to store the type data
-                DynamicType type;
+        // Create a DynamicType to store the type data
+        DynamicType type;
 
-                type.type_name(is_type_ros2_type ? utils::mangle_if_ros_type(type_name) : type_name);
-                type.type_identifier(type_information);
-                type.type_object(type_object);
+        type.type_name(is_type_ros2_type ? utils::mangle_if_ros_type(type_name) : type_name);
+        type.type_identifier(type_information);
+        type.type_object(type_object);
 
-                // Store the DynamicType in the DynamicTypesCollection
-                types.dynamic_types().push_back(type);
-            });
+        // Store the DynamicType in the DynamicTypesCollection
+        types.dynamic_types().push_back(type);
+    });
 
     close_file_();
 }
@@ -265,125 +279,122 @@ void SqlReaderParticipant::process_messages()
         "ORDER BY log_time;",
         {begin_time, end_time},
         [&](sqlite3_stmt* stmt)
+    {
+        const auto log_time = to_std_timestamp(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
+
+        // Store the timestamp of the first recorded message
+        static utils::Timestamp first_message_timestamp = log_time;
+
+        // Create a DdsTopic to publish the message
+        const std::string topic_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const std::string type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+
+        const std::string writer_guid = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+
+        const auto topic_id = std::make_pair(topic_name, type_name);
+
+        if(filtered_writersguid_list_.find(writer_guid) != filtered_writersguid_list_.end())
         {
-            const auto log_time = to_std_timestamp(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
+            // current row do not pass the filter
+            return;
+        }
 
-            // Store the timestamp of the first recorded message
-            static utils::Timestamp first_message_timestamp = log_time;
+        // Find the topic
+        if (topics_.find(topic_id) == topics_.end())
+        {
+            EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT,
+            "Failed to find topic " << topic_name << " with type " << type_name << ". "
+                "Did you process the summary before the messages? Skipping...");
+            return;
+        }
 
-            // Create a DdsTopic to publish the message
-            const std::string topic_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-            const std::string type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        const auto topic = topics_[topic_id];
 
-            const std::string writer_guid = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+        // Find the reader for the topic
+        if (readers_.find(topic) == readers_.end())
+        {
+            EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT,
+            "Failed to replay message in topic " << topic << ": topic not found, skipping...");
+            return;
+        }
 
-            const auto topic_id = std::make_pair(topic_name, type_name);
+        EPROSIMA_LOG_INFO(DDSREPLAYER_SQL_READER_PARTICIPANT,
+        "Scheduling message to be replayed in topic " << topic << ".");
 
-            if(writersguid_filtered_.find(writer_guid) != writersguid_filtered_.end())
+        // Set publication delay from original log time and configured playback rate
+        const auto delay = (log_time - first_message_timestamp) / configuration_->rate;
+        const auto delay_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(delay);
+        const auto time_to_write =
+        std::chrono::time_point_cast<utils::Timestamp::duration>(initial_timestamp + delay_ns);
+
+        // Create a RtpsPayloadData from the raw data
+        const auto raw_data = sqlite3_column_blob(stmt, 3);
+        const auto raw_data_size = sqlite3_column_int(stmt, 4);
+        auto data = create_payload_(raw_data, raw_data_size);
+
+        // Set source timestamp
+        // NOTE: this is important for QoS such as LifespanQosPolicy
+        data->source_timestamp = fastdds::dds::Time_t(to_ticks(time_to_write) / 1e9);
+
+        // add the topic partitions, in the writer_qos
+        std::string partition_name = "";
+        auto it = topic.partition_name.find(writer_guid);
+
+        // check if the message (using the writer_guid) has partitions
+        if (it != topic.partition_name.end())
+        {
+
+            // check if the message is already added in the dictionary of PartitionsQos
+            // (optimize the search of partitions in the message by storing the PartitionQos of the writer_guid)
+            if(partitions_qos_dict_.find(writer_guid) != partitions_qos_dict_.end())
             {
-                // topic filtered
-                return;
+                data->writer_qos.partitions = partitions_qos_dict_[writer_guid];
             }
-
-            // Find the topic
-            if (topics_.find(topic_id) == topics_.end())
+            else
             {
-                EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT,
-                "Failed to find topic " << topic_name << " with type " << type_name << ". "
-                    "Did you process the summary before the messages? Skipping...");
-                return;
-            }
-
-            const auto topic = topics_[topic_id];
-
-            // Find the reader for the topic
-            if (readers_.find(topic) == readers_.end())
-            {
-                EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT,
-                "Failed to replay message in topic " << topic << ": topic not found, skipping...");
-                return;
-            }
-
-            EPROSIMA_LOG_INFO(DDSREPLAYER_SQL_READER_PARTICIPANT,
-            "Scheduling message to be replayed in topic " << topic << ".");
-
-            // Set publication delay from original log time and configured playback rate
-            const auto delay = (log_time - first_message_timestamp) / configuration_->rate;
-            const auto delay_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(delay);
-            const auto time_to_write =
-            std::chrono::time_point_cast<utils::Timestamp::duration>(initial_timestamp + delay_ns);
-
-            // Create a RtpsPayloadData from the raw data
-            const auto raw_data = sqlite3_column_blob(stmt, 3);
-            const auto raw_data_size = sqlite3_column_int(stmt, 4);
-            auto data = create_payload_(raw_data, raw_data_size);
-
-            // Set source timestamp
-            // NOTE: this is important for QoS such as LifespanQosPolicy
-            data->source_timestamp = fastdds::dds::Time_t(to_ticks(time_to_write) / 1e9);
-
-            // add the topic partitions, in the writer_qos
-            std::string partition_name = "";
-            auto it = topic.partition_name.find(writer_guid);
-
-            // check if the message (using the writer_guid) has partitions
-            if (it != topic.partition_name.end())
-            {
-
-                // check if the message is already added in the dictionary of PartitionsQos
-                // (optimize the search of partitions in the message by storing the PartitionQos of the writer_guid)
-                if(partitions_qos_dict_.find(writer_guid) != partitions_qos_dict_.end())
+                partition_name = it->second;
+                if(partition_name.size() > 0)
                 {
-                    data->writer_qos.partitions = partitions_qos_dict_[writer_guid];
-                }
-                else
-                {
-                    partition_name = it->second;
-                    if(partition_name.size() > 0)
+                    int i = 0, partition_name_n = partition_name.size();
+                    std::string tmp = "";
+                    while(i < partition_name_n)
                     {
-                        int i = 0, partition_name_n = partition_name.size();
-                        std::string tmp = "";
-                        while(i < partition_name_n)
-                        {
-                            if(partition_name[i] == '|')
-                            {
-                                data->writer_qos.partitions.push_back(tmp.c_str());
-                                tmp = "";
-                            }
-                            else
-                            {
-                                tmp += partition_name[i];
-                            }
-
-                            i++;
-                        }
-                        // add the last partition in the set of partitions.
-                        // e.g.: "A|B" adds the "B" partition
-                        if(tmp != "")
+                        if(partition_name[i] == '|')
                         {
                             data->writer_qos.partitions.push_back(tmp.c_str());
+                            tmp = "";
+                        }
+                        else
+                        {
+                            tmp += partition_name[i];
                         }
 
+                        i++;
                     }
-                    /*
-                    else
+                    // add the last partition in the set of partitions.
+                    // e.g.: "A|B" adds the "B" partition
+                    if(tmp != "")
                     {
-                        data->writer_qos.partitions.push_back("");
-                    }*/
-                    data->writer_qos.partitions.push_back(partition_name.c_str());
-                    partitions_qos_dict_[writer_guid] = data->writer_qos.partitions;
+                        data->writer_qos.partitions.push_back(tmp.c_str());
+                    }
+
                 }
+
+                // adds the partitions in the writer guid PartitionsQos
+                data->writer_qos.partitions.push_back(partition_name.c_str());
+                partitions_qos_dict_[writer_guid] = data->writer_qos.partitions;
             }
+        }
 
-            // Wait until it's time to write the message
-            wait_until_timestamp_(time_to_write);
+        // Wait until it's time to write the message
+        wait_until_timestamp_(time_to_write);
 
-            EPROSIMA_LOG_INFO(DDSREPLAYER_SQL_READER_PARTICIPANT,
-            "Replaying message in topic " << topic << ".");
+        EPROSIMA_LOG_INFO(DDSREPLAYER_SQL_READER_PARTICIPANT,
+        "Replaying message in topic " << topic << ".");
 
-            // Insert new data in internal reader queue
-            readers_[topic]->simulate_data_reception(std::move(data));
-        });
+        // Insert new data in internal reader queue
+        readers_[topic]->simulate_data_reception(std::move(data));
+    });
 
     close_file_();
 }

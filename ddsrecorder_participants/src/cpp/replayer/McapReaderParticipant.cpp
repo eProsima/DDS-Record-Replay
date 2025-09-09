@@ -30,6 +30,7 @@
 #include <cpp_utils/memory/Heritable.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/types/Fuzzy.hpp>
+#include <cpp_utils/utils.hpp>
 
 #include <ddspipe_core/types/dds/TopicQoS.hpp>
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
@@ -39,8 +40,6 @@
 #include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
-
-#include <cpp_utils/utils.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -56,6 +55,7 @@ McapReaderParticipant::McapReaderParticipant(
 
 void McapReaderParticipant::add_partitionlist(std::set<std::string> allowed_partition_list)
 {
+    // adds the allowed partitions list to the class
     allowed_partition_list_ = allowed_partition_list;
 }
 
@@ -82,9 +82,6 @@ void McapReaderParticipant::process_summary(
 
         const auto topic_id = std::make_pair(topic_name, type_name);
 
-
-        // TODO. danip add filter
-
         // Apply the QoS stored in the MCAP file as if they were the discovered QoS.
         const auto topic_qos_str = channel->metadata[QOS_SERIALIZATION_QOS];
         ddspipe::core::types::TopicQoS topic_qos;
@@ -92,15 +89,11 @@ void McapReaderParticipant::process_summary(
 
         topic->topic_qos.set_qos(topic_qos, utils::FuzzyLevelValues::fuzzy_level_fuzzy);
 
-        // extra check
-        // <topic<writer,partition>>
-        auto a = partition_names;
-
-        std::string channel_partitions = channel->metadata[PARTITIONS];
         std::string writer = "";
         std::string writer_partition = "";
-
         bool pass_partition_filter;
+
+        std::string channel_partitions = channel->metadata[PARTITIONS];
 
         // adds the partitions of the topic using the stored channel
         // metadata[partitions] = <writer_1>:<partition_1>;...;<writer_n>:<partition_n>
@@ -111,29 +104,33 @@ void McapReaderParticipant::process_summary(
             // resets the filter condition
             pass_partition_filter = allowed_partition_list_.empty();
 
-            // get writer
+            // -- Writer (get one of the possible writers) --------------------
             while(i < partitions_n && channel_partitions[i] != ':')
             {
                 writer += channel_partitions[i++];
             }
             i++;
-            // get partition
+
+            // -- Partition (get the partitions set) --------------------------
             while(i < partitions_n && channel_partitions[i] != ';')
             {
                 writer_partition += channel_partitions[i++];
             }
 
+            // add to the topic, the pair (writer_guid, partitions)
             topic->partition_name[writer] = writer_partition;
 
-            // filter
+            // -- Partitions filter -------------------------------------------
 
-            // checks if the writer partition is the wildcard
-            if(writer_partition == "*")
+            // checks if the writer partition is the wildcard or the
+            // allowed partition list is empty
+            if(writer_partition == "*" || pass_partition_filter)
             {
                 pass_partition_filter = true;
             }
             else
             {
+                // get all the partitions
                 std::string curr_partition = "";
                 std::vector<std::string> partition_vector;
                 int j=0, writer_partition_n = writer_partition.size();
@@ -141,6 +138,7 @@ void McapReaderParticipant::process_summary(
                 {
                     if(writer_partition[j] == '|')
                     {
+                        // adds the partitions and continue the search
                         partition_vector.push_back(curr_partition);
                         curr_partition = "";
                     }
@@ -152,11 +150,13 @@ void McapReaderParticipant::process_summary(
                     j++;
                 }
 
+                // adds the last partition
                 if(curr_partition != "")
                 {
                     partition_vector.push_back(curr_partition);
                 }
 
+                // check if the partitions of the writer match with an allowed partition
                 for(std::string partition: partition_vector)
                 {
                     // check if the current partition is in the filter of partitions
@@ -171,10 +171,10 @@ void McapReaderParticipant::process_summary(
                 }
             }
 
-            // the writer did not pass the partition filter
             if(!pass_partition_filter)
             {
-                writersguid_filtered_.insert(writer);
+                // the writer did not pass the partition filter
+                filtered_writersguid_list_.insert(writer);
             }
 
             i++;
@@ -183,7 +183,6 @@ void McapReaderParticipant::process_summary(
             writer_partition = "";
         }
 
-        // new. same dictionary in SqlReaderParticipant
         topics_[topic_id] = *topic;
 
         topics.insert(topic);
@@ -230,33 +229,14 @@ void McapReaderParticipant::process_messages()
     {
         // Create topic on which this message should be published
 
-        //const bool is_topic_ros2_type = it.channel->metadata[ROS2_TYPES] == "true";
-        //const auto topic = create_topic_(it.channel->topic, it.schema->name, is_topic_ros2_type);
-
-        // new. same dictionary in SqlReaderParticipant
         const auto topic_id = std::make_pair(it.channel->topic, it.schema->name);
         const auto topic = topics_[topic_id];
         const std::string writer_guid = it.message.source_guid;
 
-        // TODO. danip ADD FILTER
-        // ...
-        
-        if(writersguid_filtered_.find(writer_guid) != writersguid_filtered_.end())
+        if(filtered_writersguid_list_.find(writer_guid) != filtered_writersguid_list_.end())
         {
-            // topic filtered
+            // current message do not pass the filter
             continue;
-        }
-        
-
-
-        int x = 0;
-        if(topic.topic_name() == "Square")
-        {
-            x++;
-        }
-        else if(topic.topic_name() == "Triangle")
-        {
-            x++;
         }
 
         const auto readers_it = readers_.find(topic);

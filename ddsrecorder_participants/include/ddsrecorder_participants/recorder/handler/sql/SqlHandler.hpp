@@ -75,8 +75,7 @@ public:
             const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
             std::shared_ptr<ddsrecorder::participants::FileTracker> file_tracker,
             const BaseHandlerStateCode& init_state = BaseHandlerStateCode::RUNNING,
-            const std::function<void()>& on_disk_full_lambda = nullptr,
-            const std::set<std::string> partitionlist = {});
+            const std::function<void()>& on_disk_full_lambda = nullptr);
 
     /**
      * @brief Destructor
@@ -153,20 +152,17 @@ protected:
     //! SQL writer
     SqlWriter sql_writer_;
 
-    //! Allowed partitions added by the filter
-    std::set<std::string> allowed_partitionlist_;
-
     //! (Table: Topics) Topics that the SQL writer has written
     std::set<ddspipe::core::types::DdsTopic> written_topics_;
 
-    //! Map instance handles (hashed/serialized keys) to JSON-serialized keys
-    std::map<ddspipe::core::types::InstanceHandle, std::string> keys_;
+    //! (Table: Partitions) Set of Partitions that the SQL writer has written
+    std::set<std::string> written_partitions_;
 
     //! (Table: TopicPartitions) Partitions of a writer_guid and sequence_number that the SQL writer has written
     std::set<std::string> written_topic_partitions_;
 
-    //! (Table: Partitions) Set of Partitions that the SQL writer has written
-    std::set<std::string> written_partitions_;
+    //! Map instance handles (hashed/serialized keys) to JSON-serialized keys
+    std::map<ddspipe::core::types::InstanceHandle, std::string> keys_;
 };
 
 } /* namespace participants */

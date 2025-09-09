@@ -52,8 +52,7 @@ std::shared_ptr<HandlerContext> HandlerContext::create_context(
         std::shared_ptr<eprosima::ddspipe::core::ParticipantsDatabase> participants_database,
         std::shared_ptr<eprosima::ddspipe::core::DiscoveryDatabase> discovery_database,
         const participants::BaseHandlerStateCode& init_state,
-        const std::function<void()>& on_disk_full_callback,
-        const std::set<std::string> partitionlist)
+        const std::function<void()>& on_disk_full_callback)
 {
     std::shared_ptr<HandlerContext> handler_context;
     std::shared_ptr<BaseHandler> handler;
@@ -79,8 +78,7 @@ std::shared_ptr<HandlerContext> HandlerContext::create_context(
                 payload_pool,
                 file_tracker,
                 init_state,
-                on_disk_full_callback,
-                partitionlist);
+                on_disk_full_callback);
             break;
 
         default:

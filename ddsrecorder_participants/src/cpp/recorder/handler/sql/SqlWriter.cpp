@@ -509,13 +509,12 @@ void SqlWriter::write_nts_(
             throw utils::InconsistencyException(error_msg);
         }
 
-
         // (Table: MessagePartitions) Execute the SQL statement
         const auto step_ret_partition = sqlite3_step(statement_partition);
 
         if (step_ret_partition != SQLITE_DONE)
         {
-            const std::string error_msg = utils::Formatter() << "Failed to write parttion message to SQL database: "
+            const std::string error_msg = utils::Formatter() << "Failed to write partition message to SQL database: "
                                                              << sqlite3_errmsg(database_);
             sqlite3_finalize(statement_message);
             sqlite3_finalize(statement_partition);
@@ -787,7 +786,7 @@ void SqlWriter::write_nts_(
 
     if (step_ret != SQLITE_DONE)
     {
-        const std::string error_msg = utils::Formatter() << "Failed to write parition topic to SQL database: "
+        const std::string error_msg = utils::Formatter() << "Failed to write partition topic to SQL database: "
                                                          << sqlite3_errmsg(database_);
         sqlite3_finalize(statement);
 

@@ -636,15 +636,6 @@ void RecorderConfiguration::load_dds_configuration_(
                         version);
     }
 
-    /*/////
-    // Get optional partitionlist
-    if (YamlReader::is_tag_present(yml, PARTITIONLIST_TAG))
-    {
-        // TODO. danip
-        ddspipe_configuration.blocklist = YamlReader::get_set<utils::Heritable<IFilterTopic>>(yml, BLOCKLIST_TAG,
-                        version);
-    }*/
-
     /////
     // Get optional topics
     if (YamlReader::is_tag_present(yml, TOPICS_TAG))

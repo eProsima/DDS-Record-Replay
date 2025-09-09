@@ -116,7 +116,6 @@ public:
     DDSPIPE_PARTICIPANTS_DllAPI
     void clear_topic_partitions() override;
 
-
     /**
      * @brief Process the input file's summary.
      *
@@ -218,7 +217,7 @@ protected:
     //! Scheduling condition variable mutex
     std::mutex scheduling_cv_mtx_;
 
-    //! <Topics <Writer_guid, Partitions set >>
+    //! <Topics <Writer_guid, Partitions set>>
     std::map<std::string, std::map<std::string, std::string>> partition_names;
 };
 

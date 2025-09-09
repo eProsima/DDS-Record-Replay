@@ -50,20 +50,11 @@ McapMessage::McapMessage(
     {
         logTime = to_mcap_timestamp(log_time);
     }
-    int x=0;
-    if(topic.topic_name() == "Square")
-    {
-        x++;
-    }
 
     // source guid of the message
     std::ostringstream guid_ss;
     guid_ss << data.source_guid;
     source_guid = guid_ss.str();
-    //source_guid = "a";
-
-    //uint_val_32 = sequence + 1;
-
 }
 
 } /* namespace participants */

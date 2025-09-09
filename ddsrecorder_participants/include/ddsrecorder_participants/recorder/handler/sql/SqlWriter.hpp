@@ -55,10 +55,12 @@ public:
             const T& data);
 
     /**
-     * TODO. danip. MCAP
-     * @brief Writes partition to the output file.
      *
-     * @param data Pointer to the data to be written.
+     * @brief Writes TopicPartition data to the output file.
+     *
+     * @param topic_name Name of the topic.
+     * @param topic_type Type of the topic.
+     * @param topic_partition Partition set of the topic.
      *
      * @throws \c InconsistencyException if there is a database error
      */
@@ -113,11 +115,11 @@ protected:
             const T& data);
 
     /**
-     * @brief Writes partition data to the SQL file.
+     * @brief Writes TopicPartition data to the SQL file.
      *
      * @param topic_name The name of the topic.
      * @param topic_type The type of the topic.
-     * @param topic_partition The type of the partition.
+     * @param topic_partition Partition set of the topic.
      * @throws \c FullFileException if the SQL file is full.
      *
      * @throws \c InconsistencyException if there is a database error

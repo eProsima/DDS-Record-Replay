@@ -435,7 +435,6 @@ public:
   static void write(IWritable& output, uint16_t value);
   static void write(IWritable& output, uint32_t value);
   static void write(IWritable& output, uint64_t value);
-  //static void write(IWritable& output, std::string value);
   static void write(IWritable& output, const std::byte* data, uint64_t size);
   static void write(IWritable& output, const KeyValueMap& map, uint32_t size = 0);
 

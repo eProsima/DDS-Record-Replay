@@ -57,9 +57,9 @@ public:
             const std::string& file_path);
 
     /**
-     * @brief Add the filter partition list
+     * @brief Add the partition list used in the filter.
      *
-     * @param topics: Set of allowed partitions added by the filter.
+     * @param allowed_partition_list: Set of allowed partitions added by the .yaml configuration.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void add_partitionlist(
@@ -119,14 +119,17 @@ protected:
     //! MCAP reader instance.
     mcap::McapReader mcap_reader_;
 
-    // Link a topic name and a type name to a DdsTopic instance
+    //! Link a topic name and a type name to a DdsTopic instance
     std::map<std::pair<std::string, std::string>, ddspipe::core::types::DdsTopic> topics_;
 
+    //! Dictionary of PartitionsQos to reduce time complexity <writer_guid, partitions>
     std::map<std::string, eprosima::fastdds::dds::PartitionQosPolicy> partitions_qos_dict_;
 
+    //! Set of allowed partitions, used to filter the writer guids.
     std::set<std::string> allowed_partition_list_;
 
-    std::set<std::string> writersguid_filtered_;
+    //! Set of writers guid that do not pass the partitions filter.
+    std::set<std::string> filtered_writersguid_list_;
 };
 
 } /* namespace participants */

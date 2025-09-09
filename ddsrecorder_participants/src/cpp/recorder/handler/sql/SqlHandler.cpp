@@ -33,11 +33,9 @@ SqlHandler::SqlHandler(
         const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
         std::shared_ptr<ddsrecorder::participants::FileTracker> file_tracker,
         const BaseHandlerStateCode& init_state /* = BaseHandlerStateCode::RUNNING */,
-        const std::function<void()>& on_disk_full_lambda /* = nullptr */,
-        const std::set<std::string> parttionlist)
+        const std::function<void()>& on_disk_full_lambda /* = nullptr */)
     : BaseHandler(config, payload_pool)
     , configuration_(config)
-    , allowed_partitionlist_(parttionlist)
     , sql_writer_(config.output_settings, file_tracker, config.record_types, config.ros2_types, config.data_format)
 {
     EPROSIMA_LOG_INFO(DDSRECORDER_SQL_HANDLER, "Creating SQL handler instance.");
@@ -124,43 +122,12 @@ void SqlHandler::write_samples_(
             continue;
         }
 
-        // Write the topic if it hasn't been written before (Table: Topics)
         const auto topic = sql_sample->topic;
 
         std::ostringstream guid_ss;
-        std::string topic_partitions;
+        std::string writer_partitions;
 
-        // get the writer guid
-        guid_ss << sql_sample->writer_guid;
-
-        // search for the partitions
-        auto it = topic.partition_name.find(guid_ss.str());
-        if (it != topic.partition_name.end())
-        {
-            topic_partitions = it->second;
-        }
-        else
-        {
-            // the dictionary does not contains the partition for
-            // the current data. empty partitions do not enters
-            // this condition check
-            samples.pop_front();
-            continue;
-        }
-
-        // check the partitions filter
-        // TODO. danip FILTRO
-        /*bool partition_filter_pass = allowed_partitionlist_.empty();
-        if(!partition_filter_pass)
-        {
-            if(allowed_partitionlist_.find(topic_partitions) == allowed_partitionlist_.end())
-            {
-                samples.pop_front();
-                continue;
-            }
-        }*/
-
-        // Write the topic if it hasn't been written before (Table: Topics)
+        // - (Table: Topics) Write the topic if it hasn't been written before -
 
         // check if the topic is already added in the table.
         if (written_topics_.find(topic) == written_topics_.end())
@@ -169,22 +136,45 @@ void SqlHandler::write_samples_(
             written_topics_.insert(topic);
         }
 
-        // Write the partition set (Table: Partitions)
+        // - (Table: Topics) Write the topic if it hasn't been written before -
+
+        // get the writer guid
+        guid_ss << sql_sample->writer_guid;
+
+        // search for the partitions of the current writer guid
+        auto it = topic.partition_name.find(guid_ss.str());
+        if (it != topic.partition_name.end())
+        {
+            writer_partitions = it->second;
+        }
+        else
+        {
+            // Imposible to reach.
+
+            // (writers with the empty partition do not enters here,
+            // the topic partition would be "")
+            samples.pop_front();
+            continue;
+        }
+
+        // -- (Table: Partitions) Write the partition set ---------------------
 
         // check if the partitions set is already added in the table.
-        if (written_partitions_.find(topic_partitions) == written_partitions_.end())
+        if (written_partitions_.find(writer_partitions) == written_partitions_.end())
         {
-            sql_writer_.write(topic_partitions);
-            written_partitions_.insert(topic_partitions);
+            sql_writer_.write(writer_partitions);
+            written_partitions_.insert(writer_partitions);
         }
 
         // Write the Partition of the topic if it hasn't been written before (Table: TopicPartitions)
 
         // check if the topic/type partitions set is already added in the table.
-        if(written_topic_partitions_.find(topic.m_topic_name + topic.type_name + topic_partitions) == written_topic_partitions_.end())
+        std::string primarykey_TopicPartition = topic.m_topic_name + topic.type_name + writer_partitions;
+
+        if(written_topic_partitions_.find(primarykey_TopicPartition) == written_topic_partitions_.end())
         {
-            sql_writer_.write_partition(topic.m_topic_name, topic.type_name, topic_partitions);
-            written_topic_partitions_.insert(topic.m_topic_name + topic.type_name + topic_partitions);
+            sql_writer_.write_partition(topic.m_topic_name, topic.type_name, writer_partitions);
+            written_topic_partitions_.insert(primarykey_TopicPartition);
         }
 
 

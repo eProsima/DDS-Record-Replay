@@ -128,7 +128,7 @@ protected:
 
     std::set<std::string> allowed_partition_list_;
 
-    std::set<std::string> writersguid_filtered_;
+    std::set<std::string> filtered_writersguid_list_;
 };
 
 } /* namespace participants */

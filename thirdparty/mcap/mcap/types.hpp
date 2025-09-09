@@ -199,7 +199,6 @@ struct MCAP_PUBLIC Message {
    * @brief An optional source guid.
    */
   std::string source_guid;
-  //uint32_t uint_val_32;
   /**
    * @brief Size of the message payload in bytes, pointed to via `data`.
    */

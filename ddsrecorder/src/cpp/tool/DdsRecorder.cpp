@@ -158,8 +158,7 @@ DdsRecorder::DdsRecorder(
             participants_database_,
             discovery_database_,
             handler_state,
-            on_disk_full_lambda,
-            configuration_.simple_configuration->partitionlist);
+            on_disk_full_lambda);
 
         handler_contexts_.init_handler_context(mcap_handler_context);
     }
@@ -187,10 +186,9 @@ DdsRecorder::DdsRecorder(
             participants_database_,
             discovery_database_,
             handler_state,
-            on_disk_full_lambda,
-            configuration_.simple_configuration->partitionlist);
+            on_disk_full_lambda);
 
-        handler_contexts_.init_handler_context(sql_handler_context); // TODO. hear add "configuration_.simple_configuration->partitionlist"
+        handler_contexts_.init_handler_context(sql_handler_context);
     }
 
     // Create DDS Pipe

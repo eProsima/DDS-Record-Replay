@@ -144,7 +144,7 @@ DdsReplayer::DdsReplayer(
     std::set<utils::Heritable<ddspipe::core::types::DdsTopic>> topics;
     participants::DynamicTypesCollection types;
 
-    // TODO. danip add filter in the reader to not add the blocked data
+    // adds the allowed partitions list (this will ensure to not add the blocked data)
     reader_participant_->add_partitionlist(configuration.replayer_configuration->partitionlist);
 
     reader_participant_->process_summary(topics, types);
