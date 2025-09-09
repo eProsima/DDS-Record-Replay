@@ -156,6 +156,21 @@ void SqlReaderParticipant::process_summary(
             curr_partition = "";
         }
 
+        // check if the writer has the empty partition
+        if(topic_partitions == "")
+        {
+            // check if the empty partition is in the allowed partitions
+            for(std::string allowed_partition: allowed_partition_list_)
+            {
+                if (utils::match_pattern(allowed_partition, ""))
+                {
+                    // the empty partition is allowed
+                    pass_partition_filter = true;
+                    break;
+                }
+            }
+        }
+
         if(!pass_partition_filter)
         {
             // the sql row did not pass the filter
@@ -194,7 +209,6 @@ void SqlReaderParticipant::process_summary(
 
             return;
         }
-
 
         // (empty partition list) adds the partitions set if is not empty
         if(topic_partitions != "")

@@ -155,6 +155,14 @@ void McapReaderParticipant::process_summary(
                 {
                     partition_vector.push_back(curr_partition);
                 }
+                // check if have the empty partition.
+                else if(writer_partition_n == 0 ||
+                        writer_partition[writer_partition_n-1] == '|')
+                {
+                    // e.g.:    Partitions: "" only have the empty partition
+                    //          Partitions: "A|" have two partitions "A" and "".
+                    partition_vector.push_back("");
+                }
 
                 // check if the partitions of the writer match with an allowed partition
                 for(std::string partition: partition_vector)
@@ -199,6 +207,9 @@ void McapReaderParticipant::process_summary(
             reinterpret_cast<const char*>(dynamic_types_attachment.data), dynamic_types_attachment.dataSize);
 
         Serializer::deserialize<DynamicTypesCollection>(dynamic_types_str, types);
+
+        // source_gui of each message, used in the partition filter.
+        sourceguid_by_sequence_ = dynamic_types_attachment.sourceguid_by_sequence;
     }
 
     close_file_();
@@ -231,7 +242,7 @@ void McapReaderParticipant::process_messages()
 
         const auto topic_id = std::make_pair(it.channel->topic, it.schema->name);
         const auto topic = topics_[topic_id];
-        const std::string writer_guid = it.message.source_guid;
+        const std::string writer_guid = sourceguid_by_sequence_[std::to_string(it.message.sequence)];
 
         if(filtered_writersguid_list_.find(writer_guid) != filtered_writersguid_list_.end())
         {

@@ -200,6 +200,9 @@ protected:
 
     //! Channels map
     std::map<ddspipe::core::types::DdsTopic, mcap::Channel> channels_;
+
+    //! Channels map by id
+    std::map<mcap::ChannelId, mcap::Channel> channels_by_id_;
 };
 
 } /* namespace participants */

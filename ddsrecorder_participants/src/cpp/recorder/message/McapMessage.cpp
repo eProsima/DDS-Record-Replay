@@ -50,11 +50,6 @@ McapMessage::McapMessage(
     {
         logTime = to_mcap_timestamp(log_time);
     }
-
-    // source guid of the message
-    std::ostringstream guid_ss;
-    guid_ss << data.source_guid;
-    source_guid = guid_ss.str();
 }
 
 } /* namespace participants */

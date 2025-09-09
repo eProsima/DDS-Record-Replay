@@ -861,12 +861,7 @@ Status McapReader::ParseChannel(const Record& record, Channel* channel) {
 }
 
 Status McapReader::ParseMessage(const Record& record, Message* message) {
-
-  uint32_t offset = 2 + 4 + 8 + 8;
-  uint32_t guid_size = internal::ParseUint64(record.data + offset);
-  offset += 4;
-
-  uint64_t MessagePreambleSize = offset + guid_size;
+  constexpr uint64_t MessagePreambleSize = 2 + 4 + 8 + 8;
 
   assert(record.opcode == OpCode::Message);
   if (record.dataSize < MessagePreambleSize) {
@@ -878,8 +873,6 @@ Status McapReader::ParseMessage(const Record& record, Message* message) {
   message->sequence = internal::ParseUint32(record.data + 2);
   message->logTime = internal::ParseUint64(record.data + 2 + 4);
   message->publishTime = internal::ParseUint64(record.data + 2 + 4 + 8);
-  message->source_guid = std::string(reinterpret_cast<const char*>(record.data + offset), guid_size);
-
   message->dataSize = record.dataSize - MessagePreambleSize;
   message->data = record.data + MessagePreambleSize;
   return StatusCode::Success;
@@ -1020,7 +1013,8 @@ Status McapReader::ParseAttachment(const Record& record, Attachment* attachment)
                                /* name */ 4 +
                                /* media_type */ 4 +
                                /* data_size */ 8 +
-                               /* crc */ 4;
+                               /* crc */ 4 +
+                               /* sourceguid_by_sequence */ 4;
 
   assert(record.opcode == OpCode::Attachment);
   if (record.dataSize < MinSize) {
@@ -1074,6 +1068,13 @@ Status McapReader::ParseAttachment(const Record& record, Attachment* attachment)
   // crc
   if (auto status =
         internal::ParseUint32(record.data + offset, record.dataSize - offset, &attachment->crc);
+      !status.ok()) {
+    return status;
+  }
+  offset += 4;
+  // sourceguid_by_sequence
+  if (auto status = internal::ParseKeyValueMap(record.data + offset, record.dataSize - offset,
+                                               &attachment->sourceguid_by_sequence);
       !status.ok()) {
     return status;
   }

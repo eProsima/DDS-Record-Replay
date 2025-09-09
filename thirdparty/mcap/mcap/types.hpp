@@ -196,10 +196,6 @@ struct MCAP_PUBLIC Message {
    */
   Timestamp publishTime;
   /**
-   * @brief An optional source guid.
-   */
-  std::string source_guid;
-  /**
    * @brief Size of the message payload in bytes, pointed to via `data`.
    */
   uint64_t dataSize;
@@ -264,6 +260,7 @@ struct MCAP_PUBLIC Attachment {
   uint64_t dataSize;
   const std::byte* data = nullptr;
   uint32_t crc;
+  KeyValueMap sourceguid_by_sequence;
 };
 
 /**

@@ -90,6 +90,21 @@ public:
     void update_dynamic_types(
             const std::string& dynamic_types_payload);
 
+    /**
+     * @brief Adds the pair sequence_number, source guid in the dictionary.
+     *
+     *
+     * @param sequence_number The sequence number associated with a message.
+     * @param source_guid The guid associated with a message.
+     *
+     * After a \c FullFileException :
+     * - @throws \c InconsistencyException if the allocated space is not enough to close the current file or to open a
+     * new one.
+     * - @throws \c InitializationException if the MCAP library fails to open a new file.
+     */
+    void add_message_sourceguid(
+        uint32_t sequence_number, const std::string source_guid);
+
 protected:
 
     /**
@@ -163,6 +178,9 @@ protected:
 
     // The dynamic types payload to be written as an attachment
     std::string dynamic_types_;
+
+    // The dictionary of sourceguids by sequence numbers as an attachment
+    mcap::KeyValueMap sourceguid_by_sequence_;
 
     // The channels that have been written
     std::map<mcap::ChannelId, mcap::Channel> channels_;

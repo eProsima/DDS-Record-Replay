@@ -51,6 +51,45 @@ void McapWriter::disable()
     channels_.clear();
 }
 
+void McapWriter::add_message_sourceguid(
+    uint32_t sequence_number, const std::string source_guid)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    const auto& add_sourceguid_pair = [&]()
+            {
+                uint32_t pair_length = sequence_number + source_guid.length();
+
+                EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,
+                        "MCAP_WRITE | Adding a pair (sequence number, guid) payload " <<
+                        utils::from_bytes(pair_length) << ".");
+
+                size_tracker_.attachment_to_write(pair_length);
+            };
+
+    try
+    {
+        add_sourceguid_pair();
+    }
+    catch (const FullFileException& e)
+    {
+        try
+        {
+            on_file_full_nts_(e, size_tracker_.get_min_mcap_size());
+            add_sourceguid_pair();
+        }
+        catch (const FullDiskException& e)
+        {
+            EPROSIMA_LOG_ERROR(DDSRECORDER_MCAP_HANDLER,
+                    "FAIL_MCAP_WRITE | Disk is full. Error message:\n " << e.what());
+            on_disk_full_();
+        }
+    }
+
+    sourceguid_by_sequence_[std::to_string(sequence_number)] = source_guid;
+    file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
+}
+
 void McapWriter::update_dynamic_types(
         const std::string& dynamic_types)
 {
@@ -274,11 +313,12 @@ void McapWriter::write_attachment_nts_()
 {
     mcap::Attachment attachment;
 
-    // Write down the attachment with the dynamic types
+    // Write down the attachment with the dynamic types and guids dictionary
     attachment.name = DYNAMIC_TYPES_ATTACHMENT_NAME;
     attachment.data = reinterpret_cast<std::byte*>(const_cast<char*>(dynamic_types_.c_str()));
     attachment.dataSize = dynamic_types_.length();
     attachment.createTime = to_mcap_timestamp(utils::now());
+    attachment.sourceguid_by_sequence = sourceguid_by_sequence_;
 
     write_nts_(attachment);
 }
