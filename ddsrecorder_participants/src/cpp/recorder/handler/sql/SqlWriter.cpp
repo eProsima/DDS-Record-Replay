@@ -198,7 +198,7 @@ void SqlWriter::open_new_file_nts_(
     // Create Partitions table
     const std::string create_topic_partitions_table{
         R"(
-        CREATE TABLE IF NOT EXISTS TopicPartitions (
+        CREATE TABLE IF NOT EXISTS TopicsPartitions (
             topic TEXT NOT NULL,
             type TEXT NOT NULL,
             partition TEXT NOT NULL,
@@ -208,12 +208,12 @@ void SqlWriter::open_new_file_nts_(
         );
     )"};
 
-    create_sql_table_("Partitions", create_topic_partitions_table);
+    create_sql_table_("TopicsPartitions", create_topic_partitions_table);
 
     // Create Partitions table
     const std::string create_message_partitions_table{
         R"(
-        CREATE TABLE IF NOT EXISTS MessagePartitions (
+        CREATE TABLE IF NOT EXISTS MessagesPartitions (
             writer_guid TEXT NOT NULL,
             sequence_number INTEGER NOT NULL,
             partition TEXT NOT NULL,
@@ -223,7 +223,7 @@ void SqlWriter::open_new_file_nts_(
         );
     )"};
 
-    create_sql_table_("Partitions", create_message_partitions_table);
+    create_sql_table_("MessagesPartitions", create_message_partitions_table);
 
 
     written_sql_size_ = MIN_SQL_SIZE;
@@ -317,7 +317,7 @@ void SqlWriter::write_nts_(
     sqlite3_finalize(statement);
 }
 
-// (Tables: Messages and MessagePartitions)
+// (Tables: Messages and MessagesPartitions)
 template <>
 void SqlWriter::write_nts_(
         const std::vector<SqlMessage>& messages)
@@ -337,10 +337,10 @@ void SqlWriter::write_nts_(
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     )";
 
-    // (Table: MessagePartitions) Define the SQL statement for batch insert
+    // (Table: MessagesPartitions) Define the SQL statement for batch insert
     const char* insert_statement_partition =
             R"(
-        INSERT INTO MessagePartitions (writer_guid, sequence_number, partition)
+        INSERT INTO MessagesPartitions (writer_guid, sequence_number, partition)
         VALUES (?, ?, ?);
     )";
 
@@ -358,13 +358,13 @@ void SqlWriter::write_nts_(
         throw utils::InconsistencyException(error_msg);
     }
 
-    // (Table: MessagePartitions) Prepare the SQL statement
+    // (Table: MessagesPartitions) Prepare the SQL statement
     sqlite3_stmt* statement_partition;
     const auto prep_ret_partition = sqlite3_prepare_v2(database_, insert_statement_partition, -1, &statement_partition, nullptr);
 
     if (prep_ret_partition != SQLITE_OK)
     {
-        const std::string error_msg = utils::Formatter() << "Failed to prepare SQL statement to write in MessagePartitions table: "
+        const std::string error_msg = utils::Formatter() << "Failed to prepare SQL statement to write in MessagesPartitions table: "
                                                          << sqlite3_errmsg(database_);
         sqlite3_finalize(statement_message);
         sqlite3_finalize(statement_partition);
@@ -430,7 +430,7 @@ void SqlWriter::write_nts_(
         sqlite3_bind_text(statement_message, 10, to_sql_timestamp(message.publish_time).c_str(), -1, SQLITE_TRANSIENT);
 
 
-        // (Table: MessagePartitions)
+        // (Table: MessagesPartitions)
 
         sqlite3_bind_text(statement_partition, 1, writer_guid_str.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int64(statement_partition, 2, message.sequence_number.to64long());
@@ -466,7 +466,7 @@ void SqlWriter::write_nts_(
         entry_size_message += to_sql_timestamp(message.log_time).size();
         entry_size_message += to_sql_timestamp(message.publish_time).size();
 
-        // (Table: MessagePartitions) Entry size
+        // (Table: MessagesPartitions) Entry size
         entry_size_partition += entry_size_writer_guid;
         entry_size_partition += entry_size_sequence_number;
         entry_size_partition += partitions_set_string.size();
@@ -509,7 +509,7 @@ void SqlWriter::write_nts_(
             throw utils::InconsistencyException(error_msg);
         }
 
-        // (Table: MessagePartitions) Execute the SQL statement
+        // (Table: MessagesPartitions) Execute the SQL statement
         const auto step_ret_partition = sqlite3_step(statement_partition);
 
         if (step_ret_partition != SQLITE_DONE)
@@ -714,7 +714,7 @@ void SqlWriter::write_nts_(
 }
 
 
-// (Tables: TopicPartitions)
+// (Tables: TopicsPartitions)
 void SqlWriter::write_nts_(
         const std::string& topic_name,
         const std::string& topic_type,
@@ -732,7 +732,7 @@ void SqlWriter::write_nts_(
     // Define the SQL statement
     const char* insert_statement =
             R"(
-        INSERT INTO TopicPartitions (topic, type, partition)
+        INSERT INTO TopicsPartitions (topic, type, partition)
         VALUES (?, ?, ?);
     )";
 
@@ -798,7 +798,7 @@ void SqlWriter::write_nts_(
 
 }
 
-// (Tables: TopicPartitions) Function Call
+// (Tables: TopicsPartitions) Function Call
 void SqlWriter::write_partition(
         const std::string& topic_name,
         const std::string& topic_type,

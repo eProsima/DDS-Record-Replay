@@ -80,9 +80,9 @@ void SqlReaderParticipant::process_summary(
                                 GROUP_CONCAT(DISTINCT tp.partition)     AS partitions,
                                 GROUP_CONCAT(DISTINCT m.writer_guid)    AS writer_guids
                             FROM Topics t
-                            LEFT JOIN TopicPartitions tp
+                            LEFT JOIN TopicsPartitions tp
                                 ON t.name = tp.topic AND t.type = tp.type
-                            LEFT JOIN MessagePartitions mp
+                            LEFT JOIN MessagesPartitions mp
                                 ON tp.partition = mp.partition
                             LEFT JOIN Messages m
                                 ON mp.writer_guid = m.writer_guid

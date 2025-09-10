@@ -158,7 +158,7 @@ protected:
     //! (Table: Partitions) Set of Partitions that the SQL writer has written
     std::set<std::string> written_partitions_;
 
-    //! (Table: TopicPartitions) Partitions of a writer_guid and sequence_number that the SQL writer has written
+    //! (Table: TopicsPartitions) Partitions of a writer_guid and sequence_number that the SQL writer has written
     std::set<std::string> written_topic_partitions_;
 
     //! Map instance handles (hashed/serialized keys) to JSON-serialized keys

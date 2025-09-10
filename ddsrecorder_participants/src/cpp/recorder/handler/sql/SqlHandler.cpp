@@ -166,7 +166,7 @@ void SqlHandler::write_samples_(
             written_partitions_.insert(writer_partitions);
         }
 
-        // Write the Partition of the topic if it hasn't been written before (Table: TopicPartitions)
+        // Write the Partition of the topic if it hasn't been written before (Table: TopicsPartitions)
 
         // check if the topic/type partitions set is already added in the table.
         std::string primarykey_TopicPartition = topic.m_topic_name + topic.type_name + writer_partitions;
