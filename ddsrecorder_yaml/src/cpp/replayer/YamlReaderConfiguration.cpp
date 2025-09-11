@@ -282,12 +282,12 @@ void ReplayerConfiguration::load_dds_configuration_(
     // Get optional partitions
     if (YamlReader::is_tag_present(yml, PARTITIONLIST_TAG))
     {
-        replayer_configuration->partitionlist = YamlReader::get_set<std::string>(yml, PARTITIONLIST_TAG,
+        replayer_configuration->allowed_partition_list = YamlReader::get_set<std::string>(yml, PARTITIONLIST_TAG,
                         version);
 
         // check if the wildcard partition is in the partitionlist
         bool wildcard = false;
-        for(std::string partition: replayer_configuration->partitionlist)
+        for(std::string partition: replayer_configuration->allowed_partition_list)
         {
             if(partition == "*")
             {
@@ -300,7 +300,7 @@ void ReplayerConfiguration::load_dds_configuration_(
         {
             // the partitionslist contains "*" -> clear the list,
             // all the partitions are allowed in the filter
-            replayer_configuration->partitionlist.clear();
+            replayer_configuration->allowed_partition_list.clear();
         }
     }
 

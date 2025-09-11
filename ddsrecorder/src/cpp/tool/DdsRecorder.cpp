@@ -197,8 +197,7 @@ DdsRecorder::DdsRecorder(
         discovery_database_,
         payload_pool_,
         participants_database_,
-        thread_pool_,
-        configuration_.simple_configuration->partitionlist);
+        thread_pool_);
 
     // Create a Monitor
     auto monitor_configuration = configuration.monitor_configuration;

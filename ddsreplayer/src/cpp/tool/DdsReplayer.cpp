@@ -145,7 +145,7 @@ DdsReplayer::DdsReplayer(
     participants::DynamicTypesCollection types;
 
     // adds the allowed partitions list (this will ensure to not add the blocked data)
-    reader_participant_->add_partitionlist(configuration.replayer_configuration->partitionlist);
+    reader_participant_->add_partitionlist(configuration.replayer_configuration->allowed_partition_list);
 
     reader_participant_->process_summary(topics, types);
 
@@ -175,8 +175,7 @@ DdsReplayer::DdsReplayer(
         discovery_database,
         payload_pool_,
         participants_database,
-        thread_pool_,
-        configuration.replayer_configuration->partitionlist);
+        thread_pool_);
 }
 
 utils::ReturnCode DdsReplayer::reload_configuration(
