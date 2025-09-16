@@ -100,6 +100,13 @@ std::shared_ptr<ddspipe::core::IReader> BaseReaderParticipant::create_reader(
     return reader;
 }
 
+std::shared_ptr<ddspipe::core::IReader> BaseReaderParticipant::create_reader_with_filter(
+        const ddspipe::core::ITopic& topic,
+        const std::set<std::string> partitions)
+{
+    return std::make_shared<ddspipe::participants::InternalReader>(id());
+}
+
 void BaseReaderParticipant::stop() noexcept
 {
     {

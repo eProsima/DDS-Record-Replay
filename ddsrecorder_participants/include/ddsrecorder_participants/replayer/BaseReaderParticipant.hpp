@@ -100,6 +100,11 @@ public:
     std::shared_ptr<ddspipe::core::IReader> create_reader(
             const ddspipe::core::ITopic& topic) override;
 
+    DDSPIPE_PARTICIPANTS_DllAPI
+    std::shared_ptr<ddspipe::core::IReader> create_reader_with_filter(
+            const ddspipe::core::ITopic& topic,
+            const std::set<std::string> partitions) override;
+
     //! Override add_topic_partition() IParticipant method
     DDSPIPE_PARTICIPANTS_DllAPI
     bool add_topic_partition(
