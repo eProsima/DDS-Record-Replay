@@ -78,7 +78,7 @@ DDS nomenclature
         for further information.
 
     Partition
-        Logical namespace that helps organize communication between publishers and subscribers.
+        Logical domain that helps organize communication between publishers and subscribers.
         Each Partition is uniquely identified by a name.
 
         See `Fast DDS documentation <https://fast-dds.docs.eprosima.com/en/v2.10.1/fastdds/dds_layer/domain/domainParticipant/partition.html>`__

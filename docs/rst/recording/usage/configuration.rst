@@ -612,7 +612,7 @@ B. If both recorders are enabled
 Size Margin
 """""""""""
 
-The ``size-margin`` property is an optional parameter that stablish the margin of error for the size of the output files.
+The ``size-margin`` property is an optional parameter that establish the margin of error for the size of the output files.
 
 
 .. warning::

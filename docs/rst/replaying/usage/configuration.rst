@@ -118,7 +118,7 @@ Consider the following example:
 In this example, the data published in the topic ``AllowedTopic1`` with type ``Allowed`` and in the topic ``AllowedTopic2`` with any type will be replayed by the |ddsreplayer|.
 The data published in the topic ``HelloWorldTopic`` with type ``HelloWorld`` will be blocked, since the ``blocklist`` is blocking all topics with any name and with type ``HelloWorld``.
 
-.. _recorder_partition_filtering:
+.. _replayer_partition_filtering:
 
 Partition Filtering
 ^^^^^^^^^^^^^^^^^^^
