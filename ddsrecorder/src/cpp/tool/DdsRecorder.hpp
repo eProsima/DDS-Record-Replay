@@ -188,6 +188,9 @@ protected:
 
     //! Handler context collection
     participants::HandlerContextCollection handler_contexts_;
+
+    //! Number of times the .yaml configuration is reload
+    int reload_conf_count_;
 };
 
 } /* namespace recorder */
