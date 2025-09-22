@@ -42,7 +42,8 @@
 
 using namespace eprosima;
 
-class SqlFileCreationTest : public FileCreationTest
+class SqlFileCreationTest : public FileCreationTest,
+    public ::testing::WithParamInterface<std::string>
 {
 public:
 

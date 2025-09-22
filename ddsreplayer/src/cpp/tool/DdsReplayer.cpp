@@ -145,6 +145,7 @@ DdsReplayer::DdsReplayer(
     participants::DynamicTypesCollection types;
 
     // adds the allowed partitions list (this will ensure to not add the blocked data)
+    configuration.replayer_configuration->allowed_partition_list.insert("*"); // TODO. danip
     reader_participant_->add_partitionlist(configuration.replayer_configuration->allowed_partition_list);
 
     reader_participant_->process_summary(topics, types);

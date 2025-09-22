@@ -70,40 +70,17 @@ enum class EventKind
     EVENT_SUSPEND,
 };
 
-class FileCreationTest : public testing::Test,
+class FileCreationPartitionTest : public testing::Test,
     public fastdds::dds::DataWriterListener
 {
 public:
 
     void SetUp() override
     {
-        // Create the participant
-        fastdds::dds::DomainParticipantQos pqos;
-        pqos.name(test::PARTICIPANT_ID);
-
-        participant_ = fastdds::dds::DomainParticipantFactory::get_instance()->create_participant(test::DOMAIN, pqos);
-
-        ASSERT_NE(participant_, nullptr);
-
-        // Register the type
-        type_support_ = fastdds::dds::TypeSupport(new HelloWorldPubSubType());
-        participant_->register_type(type_support_);
-
-        // Create the publisher
-        publisher_ = participant_->create_publisher(fastdds::dds::PUBLISHER_QOS_DEFAULT, nullptr);
-
-        ASSERT_NE(publisher_, nullptr);
-
-        // Create the RecorderConfiguration
-        Yaml yml;
-        configuration_ = std::make_unique<ddsrecorder::yaml::RecorderConfiguration>(yml);
-        configuration_->dds_configuration->domain = test::DOMAIN;
-
-        // Create the topic
-        create_topic_();
-
-        // Create the DataWriter
-        create_datawriter_();
+        // empty
+        // initialize in other function
+        // so the partitions can be established
+        partition_wildcard_active_ = true;
     }
 
     void TearDown() override
@@ -143,6 +120,53 @@ public:
         }
     }
 
+    void init_dds_data(std::vector<std::string> partitions, bool sql)
+    {
+        // Create the participant
+        fastdds::dds::DomainParticipantQos pqos;
+        pqos.name(test::PARTICIPANT_ID);
+
+        participant_ = fastdds::dds::DomainParticipantFactory::get_instance()->create_participant(test::DOMAIN, pqos);
+
+        ASSERT_NE(participant_, nullptr);
+
+        // Register the type
+        type_support_ = fastdds::dds::TypeSupport(new HelloWorldPubSubType());
+        participant_->register_type(type_support_);
+
+
+        fastdds::dds::PublisherQos pub_qos = fastdds::dds::PUBLISHER_QOS_DEFAULT;
+        for(std::string p: partitions)
+        {
+            pub_qos.partition().push_back(p.c_str());
+        }
+
+        // Create the publisher
+        publisher_ = participant_->create_publisher(pub_qos, nullptr);
+
+        ASSERT_NE(publisher_, nullptr);
+
+        // Create the RecorderConfiguration
+        Yaml yml;
+        configuration_ = std::make_unique<ddsrecorder::yaml::RecorderConfiguration>(yml);
+        configuration_->dds_configuration->domain = test::DOMAIN;
+
+        // Create the topic
+        create_topic_();
+
+        // Create the DataWriter
+        create_datawriter_();
+
+
+
+        // Set the output library to SQL or MCAP
+        configuration_->sql_enabled = sql;
+        configuration_->mcap_enabled = !sql;
+
+        // If MCAP were enabled the event thread raises a false positive TSAN race condition
+        // when destroying the releasing the last reference to a payload
+    }
+
 protected:
 
     std::vector<HelloWorld> record_messages_(
@@ -160,7 +184,10 @@ protected:
 
         recorder->update_filter(std::set<std::string>{partition_filter});
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        if(partition_filter != "*")
+        {
+            partition_wildcard_active_ = false;
+        }
 
         // Send messages
         auto sent_messages = send_messages_(messages1);
@@ -227,8 +254,11 @@ protected:
         // Create the DataWriter
         create_datawriter_();
 
-        // Wait for the DataWriter to match the DataReader
-        wait_for_matching();
+        if(partition_wildcard_active_)
+        {
+            // Wait for the DataWriter to match the DataReader
+            wait_for_matching();
+        }
 
         // Send the messages
         std::vector<HelloWorld> sent_messages;
@@ -239,8 +269,6 @@ protected:
             HelloWorld hello;
             hello.index(i);
             hello.message("Hello World!");
-
-            std::cout << "MENSAJE ENVIADO: " << i + 1 << "\n";
 
             // Send the message
             writer_->write(&hello);
@@ -406,4 +434,6 @@ protected:
     bool matched_{false};
     std::mutex mtx_;
     std::condition_variable cv_;
+
+    bool partition_wildcard_active_;
 };

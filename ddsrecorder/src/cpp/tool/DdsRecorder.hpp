@@ -123,6 +123,10 @@ public:
     //! Resets all active file trackers.
     void reset_file_trackers();
 
+    //! update the filter partition
+    void update_filter(
+        const std::set<std::string> filter_partition);
+
 protected:
 
     /**

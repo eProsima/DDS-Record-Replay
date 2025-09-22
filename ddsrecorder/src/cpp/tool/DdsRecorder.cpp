@@ -200,7 +200,7 @@ DdsRecorder::DdsRecorder(
         payload_pool_,
         participants_database_,
         thread_pool_);
-
+    //configuration.dds_configuration->allowed_partition_list.insert("*");
     pipe_->update_filter(configuration.dds_configuration->allowed_partition_list);
 
     // Create a Monitor
@@ -238,6 +238,12 @@ utils::ReturnCode DdsRecorder::reload_configuration(
     }
 
     return pipe_->reload_configuration(new_configuration.ddspipe_configuration);
+}
+
+void DdsRecorder::update_filter(const std::set<std::string> new_filter)
+{
+    // function used primary for the tests
+    pipe_->update_filter(new_filter);
 }
 
 void DdsRecorder::start()

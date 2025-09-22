@@ -417,6 +417,8 @@ void SqlReaderParticipant::open_file_()
 {
     const auto ret = sqlite3_open(file_path_.c_str(), &database_);
 
+    std::cout << "\t\tDB FILE: " << file_path_ << "\n";
+
     if (ret != SQLITE_OK)
     {
         const std::string error_msg = utils::Formatter() << "Failed to open SQL file " << file_path_
