@@ -28,7 +28,7 @@ set(TEST_LIBRARY_SOURCES
     )
 
 set(TEST_LIST
-#[==[
+
         mcap_data_msgs
         mcap_dds_topic
         mcap_ros2_topic
@@ -63,7 +63,7 @@ set(TEST_LIST
         transition_paused_event_start
         transition_paused_event_stop
         transition_paused_event_suspend
-#]==]
+
     )
 
 

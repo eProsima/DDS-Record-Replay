@@ -29,7 +29,7 @@ set(TEST_LIBRARY_SOURCES
     )
 
 set(TEST_LIST
-        sql_dds_topic # TODO. danip
+        sql_dds_topic
         sql_ros2_topic
         sql_data_num_msgs
         sql_data_num_msgs_partition
@@ -143,7 +143,7 @@ set(TEST_LIST
         transition_paused_event_suspend_partition
         transition_paused_event_stop_partition
 
-        sql_dds_topic_partition_no_record # TODO. danip
+        sql_dds_topic_partition_no_record
         sql_ros2_topic_partition_no_record
         sql_data_num_msgs_partition_no_record
         sql_data_num_msgs_partition_no_record_partition_no_record

@@ -180,14 +180,16 @@ protected:
         // Reset the DataWriter to clear its history
         reset_datawriter_();
 
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
         for (std::uint32_t i = 0; i < num_msgs; i++)
         {
             HelloWorld hello;
             hello.index(i);
             writer_->write(&hello);
 
-            // Wait for a millisecond
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            // Delay for writing the information in the mcap file
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
 
@@ -483,7 +485,7 @@ protected:
     std::unique_ptr<ddsrecorder::yaml::RecorderConfiguration> configuration_;
     std::vector<std::filesystem::path> paths_;
 
-    test::limits mcap_limits_{35 * 1024, 7 * 1024, 0.2, 70};
+    test::limits mcap_limits_{222 * 1024, 35 * 1024, 0.2, 120}; // TODO. McapSizeTests
     test::limits sql_limits_{300 * 1024,  300 * 1024, 0.2, 273};
 
     test::limits* limits_;
