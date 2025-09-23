@@ -435,6 +435,8 @@ TEST_F(McapFileCreationTest, transition_stopped)
  */
 TEST_F(McapFileCreationTest, transition_running_paused)
 {
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
     const std::string OUTPUT_FILE_NAME = "transition_running_paused";
     const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
 

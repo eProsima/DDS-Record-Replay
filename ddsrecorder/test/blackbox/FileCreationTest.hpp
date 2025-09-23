@@ -160,8 +160,6 @@ protected:
 
         recorder->update_filter(std::set<std::string>{partition_filter});
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
         // Send messages
         auto sent_messages = send_messages_(messages1);
 
@@ -233,6 +231,8 @@ protected:
         // Send the messages
         std::vector<HelloWorld> sent_messages;
 
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
         for (std::uint32_t i = 0; i < number_of_messages; i++)
         {
             // Create the message
@@ -251,6 +251,7 @@ protected:
             // Wait for the message to be sent
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
+        //std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
         // Delete the DataWriter
         delete_datawriter_();

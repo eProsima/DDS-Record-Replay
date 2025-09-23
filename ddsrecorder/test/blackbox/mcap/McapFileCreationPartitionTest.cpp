@@ -124,7 +124,7 @@ protected:
 /**
  * Verify that the DDS Recorder records properly in an MCAP file.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * CASES:
  *  - Verify that the messages' data matches the recorded data.
@@ -151,7 +151,7 @@ TEST_F(McapFileCreationPartitionTest, mcap_data_msgs_partition)
 
     auto read_message_count = 0;
 
-    ASSERT_EQ(sent_messages.size(), 0);
+    ASSERT_EQ(sent_messages.size(), NUMBER_OF_MESSAGES);
 
     for (const auto& it : read_messages)
     {
@@ -176,7 +176,7 @@ TEST_F(McapFileCreationPartitionTest, mcap_data_msgs_partition)
 /**
  * Verify that the DDS Recorder records topics properly in an MCAP file.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * CASES:
  *  - Verify that the topic's name matches the recorded topic's name.
@@ -222,7 +222,7 @@ TEST_F(McapFileCreationPartitionTest, mcap_dds_topic_partition)
 /**
  * Verify that the DDS Recorder records ROS 2 topics properly in an MCAP file.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * CASES:
  *  - Verify that the topic's name matches the recorded topic's name.
@@ -328,7 +328,7 @@ TEST_F(McapFileCreationPartitionTest, mcap_data_num_msgs_downsampling_partition)
 /**
  * @brief Verify that the DDS Recorder records properly in an MCAP file in RUNNING state.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * Since the recorder is in RUNNING state, it should record all messages.
  * NOTE: The recorder won't change states since both \c STATE_1 and \c STATE_2 are RUNNING.
@@ -365,7 +365,7 @@ TEST_F(McapFileCreationPartitionTest, transition_running_partition)
 /**
  * @brief Verify that the DDS Recorder records properly in an MCAP file in PAUSED state.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * Since the recorder is in PAUSED state, it should not record any messages.
  * NOTE: The recorder won't change states since both \c STATE_1 and \c STATE_2 are PAUSED.
@@ -402,7 +402,7 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_partition)
 /**
  * @brief Verify that the DDS Recorder records properly in an MCAP file in SUSPENDED state.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * Since the recorder is in SUSPENDED state, it should not record any messages.
  * NOTE: The recorder won't change states since both \c STATE_1 and \c STATE_2 are SUSPENDED.
@@ -435,7 +435,7 @@ TEST_F(McapFileCreationPartitionTest, transition_suspended_partition)
 /**
  * @brief Verify that the DDS Recorder records properly in an MCAP file in STOPPED state.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * Since the recorder is in STOPPED state, it should not record any messages.
  * NOTE: The recorder won't change states since both \c STATE_1 and \c STATE_2 are STOPPED.
@@ -468,7 +468,7 @@ TEST_F(McapFileCreationPartitionTest, transition_stopped_partition)
 /**
  * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from RUNNING to PAUSED.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * The recorder should record all messages while in RUNNING state and none while in PAUSED state.
  *
@@ -504,7 +504,7 @@ TEST_F(McapFileCreationPartitionTest, transition_running_paused_partition)
 /**
  * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from RUNNING to SUSPENDED.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * The recorder should record all messages while in RUNNING state and none while in SUSPENDED state.
  *
@@ -540,7 +540,7 @@ TEST_F(McapFileCreationPartitionTest, transition_running_suspended_partition)
 /**
  * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from RUNNING to STOPPED.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * The recorder should record all messages while in RUNNING state and none while in STOPPED state.
  *
@@ -576,7 +576,7 @@ TEST_F(McapFileCreationPartitionTest, transition_running_stopped_partition)
 /**
  * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from PAUSED to RUNNING.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * The recorder should not record any messages while in PAUSED state and all messages while in RUNNING state.
  *
@@ -612,7 +612,7 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_running_partition)
 /**
  * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from PAUSED to SUSPENDED.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * The recorder should not record any messages while in PAUSED state or while in SUSPENDED state.
  *
@@ -648,7 +648,7 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_suspended_partition)
 /**
  * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from PAUSED to STOPPED.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * The recorder should not record any messages while in PAUSED state or while in STOPPED state.
  *
@@ -684,7 +684,7 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_stopped_partition)
 /**
  * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from SUSPENDED to RUNNING.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * The recorder should not record any messages while in SUSPENDED state and all messages while in RUNNING state.
  *
@@ -720,7 +720,7 @@ TEST_F(McapFileCreationPartitionTest, transition_suspended_running_partition)
 /**
  * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from SUSPENDED to PAUSED.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * The recorder should not record any messages while in SUSPENDED state or while in PAUSED state.
  *
@@ -756,7 +756,7 @@ TEST_F(McapFileCreationPartitionTest, transition_suspended_paused_partition)
 /**
  * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from SUSPENDED to STOPPED.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * The recorder should not record any messages while in SUSPENDED state or while in STOPPED state.
  *
@@ -788,7 +788,7 @@ TEST_F(McapFileCreationPartitionTest, transition_suspended_stopped_partition)
 /**
  * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from STOPPED to RUNNING.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * The recorder should not record any messages while in STOPPED state and all messages while in RUNNING state.
  *
@@ -824,7 +824,7 @@ TEST_F(McapFileCreationPartitionTest, transition_stopped_running_partition)
 /**
  * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from STOPPED to PAUSED.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * The recorder should not record any messages while in STOPPED state or while in PAUSED state.
  *
@@ -860,7 +860,7 @@ TEST_F(McapFileCreationPartitionTest, transition_stopped_paused_partition)
 /**
  * @brief Verify that the DDS Recorder records properly in an MCAP file after transitioning from STOPPED to SUSPENDED.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * The recorder should not record any messages while in STOPPED state or while in SUSPENDED state.
  *
@@ -897,7 +897,7 @@ TEST_F(McapFileCreationPartitionTest, transition_stopped_suspended_partition)
 /**
  * @brief Verify that the DDS Recorder in PAUSED state records properly in an MCAP file with an \c EVENT_WINDOW and a
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  * small \c WAIT between the two batches of messages being sent.
  *
  * The recorder should record all messages.
@@ -945,7 +945,7 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_event_less_window_partit
 /**
  * @brief Verify that the DDS Recorder in PAUSED state records properly in an MCAP file with an \c EVENT_WINDOW and a
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  * \c WAIT as long as the \c EVENT_WINDOW between the two batches of messages being sent.
  *
  * The recorder should record the second batch of messages.
@@ -996,7 +996,7 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_event_max_window_partiti
 /**
  * @brief Verify that the DDS Recorder in PAUSED state records properly in an MCAP file with an \c EVENT_START.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * The recorder should record all messages.
  *
@@ -1042,7 +1042,7 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_event_start_partition)
 /**
  * @brief Verify that the DDS Recorder in PAUSED state records properly in an MCAP file with an \c EVENT_SUSPEND.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * The recorder should record all messages.
  *
@@ -1088,7 +1088,7 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_event_suspend_partition)
 /**
  * @brief Verify that the DDS Recorder in PAUSED state records properly in an MCAP file with an \c EVENT_STOP.
  *
- *  * Writer publish with partition = "A"
+ *  Writer publish with partition = "A"
  *
  * The recorder should record all messages.
  *

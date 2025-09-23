@@ -263,6 +263,8 @@ protected:
         // Send the messages
         std::vector<HelloWorld> sent_messages;
 
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
         for (std::uint32_t i = 0; i < number_of_messages; i++)
         {
             // Create the message

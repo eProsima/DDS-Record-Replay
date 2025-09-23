@@ -44,6 +44,7 @@ BaseHandler::BaseHandler(
     , state_(BaseHandlerStateCode::STOPPED)
 {
     EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER, "Creating handler instance.");
+    count_msg = 0;
 }
 
 BaseHandler::~BaseHandler()
@@ -343,6 +344,8 @@ void BaseHandler::event_thread_routine_()
                             }
                             else if (!configuration_.only_with_schema)
                             {
+                                //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
                                 // Add to buffer with blank schema
                                 add_sample_to_buffer_nts_(sample);
                             }
@@ -400,6 +403,8 @@ void BaseHandler::process_new_sample_nts_(
 
     if (received_types_.find(sample->topic.type_name) != received_types_.end())
     {
+        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
         add_sample_to_buffer_nts_(sample);
         return;
     }
@@ -421,6 +426,8 @@ void BaseHandler::process_new_sample_nts_(
                 if (!configuration_.only_with_schema)
                 {
                     // No schema available + no pending samples -> Add to buffer with blank schema
+                    //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
                     add_sample_to_buffer_nts_(sample);
                 }
                 else
@@ -452,7 +459,11 @@ void BaseHandler::process_new_sample_nts_(
 void BaseHandler::add_sample_to_buffer_nts_(
         std::shared_ptr<const BaseMessage> sample)
 {
+    // delay to avoid posible duplication of samples
+    //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
     samples_buffer_.push_back(sample);
+    std::cout << "\tCount: " << count_msg++ << "\n";
 
     if (state_ != BaseHandlerStateCode::RUNNING || samples_buffer_.size() < configuration_.buffer_size)
     {
@@ -480,6 +491,8 @@ void BaseHandler::add_samples_to_buffer_nts_(
 {
     while (!samples.empty())
     {
+        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
         add_sample_to_buffer_nts_(samples.front());
         samples.pop_front();
     }
@@ -510,6 +523,8 @@ void BaseHandler::add_sample_to_pending_nts_(
                     "Buffer limit (" << configuration_.max_pending_samples <<  ") reached for type " <<
                     sample->topic.type_name << ": writing oldest sample without schema.");
 
+            //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
             add_sample_to_buffer_nts_(oldest_sample);
         }
     }
@@ -532,6 +547,8 @@ void BaseHandler::dump_pending_samples_nts_(
         }
         else
         {
+            //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
             // Move samples from pending_samples to buffer
             add_samples_to_buffer_nts_(pending_samples_[type_name]);
         }
@@ -542,6 +559,8 @@ void BaseHandler::dump_pending_samples_nts_(
     if (state_ == BaseHandlerStateCode::PAUSED &&
             (pending_samples_paused_.find(type_name) != pending_samples_paused_.end()))
     {
+        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
         // Move samples from pending_samples_paused to buffer
         add_samples_to_buffer_nts_(pending_samples_paused_[type_name]);
         pending_samples_paused_.erase(type_name);

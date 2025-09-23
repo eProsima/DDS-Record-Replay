@@ -13,5 +13,5 @@
 # limitations under the License.
 
 add_subdirectory(mcap) # TODO. danip
-#add_subdirectory(sql)
+add_subdirectory(sql)
 #add_subdirectory(both)

@@ -200,7 +200,7 @@ DdsRecorder::DdsRecorder(
         payload_pool_,
         participants_database_,
         thread_pool_);
-    //configuration.dds_configuration->allowed_partition_list.insert("*");
+
     pipe_->update_filter(configuration.dds_configuration->allowed_partition_list);
 
     // Create a Monitor

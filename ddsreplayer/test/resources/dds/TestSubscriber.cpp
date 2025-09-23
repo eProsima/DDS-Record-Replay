@@ -76,8 +76,8 @@ TestSubscriber::TestSubscriber(
     // Create the Subscriber
 
     SubscriberQos subs_qos = SUBSCRIBER_QOS_DEFAULT;
-    //subs_qos.partition().push_back("*");
-    
+    subs_qos.partition().push_back("*");
+
     subscriber_ = participant_->create_subscriber(subs_qos, nullptr);
 
     if (subscriber_ == nullptr)
