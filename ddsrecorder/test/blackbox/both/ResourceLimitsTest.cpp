@@ -485,7 +485,7 @@ protected:
     std::unique_ptr<ddsrecorder::yaml::RecorderConfiguration> configuration_;
     std::vector<std::filesystem::path> paths_;
 
-    test::limits mcap_limits_{222 * 1024, 35 * 1024, 0.2, 120}; // TODO. McapSizeTests
+    test::limits mcap_limits_{60 * 1024, 12 * 1024, 0.2, /*120*/283}; // TODO. McapSizeTests
     test::limits sql_limits_{300 * 1024,  300 * 1024, 0.2, 273};
 
     test::limits* limits_;
