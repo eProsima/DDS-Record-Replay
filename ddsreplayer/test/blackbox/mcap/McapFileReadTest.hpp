@@ -25,5 +25,6 @@ class McapFileReadTest : public FileReadTest
 {
 protected:
 
-    const std::string input_file_{"../../resources/recordings/basic/configuration.mcap"};
+    //const std::string input_file_{"../../resources/recordings/basic/configuration.mcap"};
+    const std::string input_file_{"/home/danny/eProsima/DDS-Record-Replay-DEBUG/src/ddsrecordreplay/ddsreplayer/test/resources/recordings/basic/configuration.mcap"}; // TODO. danip
 };

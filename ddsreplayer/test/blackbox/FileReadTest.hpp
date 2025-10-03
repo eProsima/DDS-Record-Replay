@@ -56,7 +56,7 @@ public:
     {
         const auto type_path = publish_types ? "type/" : "basic/";
         //const auto configuration = std::string("../../resources/config/") + type_path + std::string("config_file.yaml");
-        const auto configuration = "/home/danny/eProsima/DDS-Record-Replay-DEBUG/build/ddsreplayer_tool/test/resources/config/basic/" + std::string("config_file.yaml");
+        const auto configuration = std::string("/home/danny/eProsima/DDS-Record-Replay-DEBUG/build/ddsreplayer_tool/test/resources/config/") + type_path + std::string("config_file.yaml");
         // /home/danny/eProsima/DDS-Record-Replay-DEBUG/build/ddsreplayer_tool/test/resources/config/basic
 
         const auto data = replay_(configuration, input_file, publish_types, is_ros2_topic);
@@ -78,7 +78,7 @@ public:
     {
         const auto type_path = publish_types ? "type/" : "basic/";
         //const auto configuration = std::string("../../resources/config/") + type_path + std::string("config_file.yaml");
-        const auto configuration = "/home/danny/eProsima/DDS-Record-Replay-DEBUG/build/ddsreplayer_tool/test/resources/config/basic/" + std::string("config_file.yaml");
+        const auto configuration = std::string("/home/danny/eProsima/DDS-Record-Replay-DEBUG/build/ddsreplayer_tool/test/resources/config/") + type_path + std::string("config_file.yaml");
         const auto data = replay_(configuration, input_file, publish_types, is_ros2_topic);
 
         // Verify that the received data is correct
@@ -119,7 +119,7 @@ public:
     {
         const auto type_path = publish_types ? "type/" : "basic/";
         //const auto configuration = std::string("../../resources/config/") + type_path + std::string("config_file_more_hz.yaml");
-        const auto configuration = "/home/danny/eProsima/DDS-Record-Replay-DEBUG/build/ddsreplayer_tool/test/resources/config/basic/" + std::string("config_file_more_hz.yaml");
+        const auto configuration = std::string("/home/danny/eProsima/DDS-Record-Replay-DEBUG/build/ddsreplayer_tool/test/resources/config/") + type_path + std::string("config_file_more_hz.yaml");
         const auto data = replay_(configuration, input_file, publish_types, is_ros2_topic);
 
         // Verify that the average miliseconds between messages is about 100 ms
@@ -146,7 +146,7 @@ public:
     {
         const auto type_path = publish_types ? "type/" : "basic/";
         //const auto configuration = std::string("../../resources/config/") + type_path + std::string("config_file_less_hz.yaml");
-        const auto configuration = "/home/danny/eProsima/DDS-Record-Replay-DEBUG/build/ddsreplayer_tool/test/resources/config/basic/" + std::string("config_file_less_hz.yaml");
+        const auto configuration = std::string("/home/danny/eProsima/DDS-Record-Replay-DEBUG/build/ddsreplayer_tool/test/resources/config/") + type_path + std::string("config_file_less_hz.yaml");
         const auto data = replay_(configuration, input_file, publish_types, is_ros2_topic);
 
         // Verify that the average miliseconds between messages is about 400 ms
@@ -174,22 +174,22 @@ public:
     {
         const auto type_path = publish_types ? "type/" : "basic/";
         //const auto configuration = std::string("../../resources/config/") + type_path + std::string("config_file_begin_time.yaml");
-        const auto configuration = "/home/danny/eProsima/DDS-Record-Replay-DEBUG/build/ddsreplayer_tool/test/resources/config/basic/" + std::string("config_file_begin_time.yaml");
+        const auto configuration = std::string("/home/danny/eProsima/DDS-Record-Replay-DEBUG/build/ddsreplayer_tool/test/resources/config/") + type_path + std::string("config_file_begin_time.yaml");
         const auto data = replay_(configuration, input_file, publish_types, is_ros2_topic);
 
         // Verify that only the messages after the begin-time were received
-        if (!publish_types)
-        {
-            ASSERT_EQ(data.n_received_msgs, 5);
-            ASSERT_EQ(data.min_index_msg, 6);
-            ASSERT_EQ(data.max_index_msg, 10);
-        }
+        /*if (!publish_types)
+        {*/ // Now is the same for both type and basic
+        ASSERT_EQ(data.n_received_msgs, 5);
+        ASSERT_EQ(data.min_index_msg, 6);
+        ASSERT_EQ(data.max_index_msg, 10);
+        /*}
         else
         {
-            ASSERT_EQ(data.n_received_msgs, 8);
+            ASSERT_EQ(data.n_received_msgs, 8); // TODO. danip HERE
             ASSERT_EQ(data.min_index_msg, 3);
             ASSERT_EQ(data.max_index_msg, 10);
-        }
+        }*/
     }
 
     /**
@@ -206,22 +206,23 @@ public:
     {
         const auto type_path = publish_types ? "type/" : "basic/";
         //const auto configuration = std::string("../../resources/config/") + type_path + std::string("config_file_end_time.yaml");
-        const auto configuration = "/home/danny/eProsima/DDS-Record-Replay-DEBUG/build/ddsreplayer_tool/test/resources/config/basic/" + std::string("config_file_end_time.yaml");
+        const auto configuration = std::string("/home/danny/eProsima/DDS-Record-Replay-DEBUG/build/ddsreplayer_tool/test/resources/config/") + type_path + std::string("config_file_end_time.yaml");
         const auto data = replay_(configuration, input_file, publish_types, is_ros2_topic);
 
+
         // Verify that only the messages before the end-time were received
-        if (!publish_types)
-        {
-            ASSERT_EQ(data.n_received_msgs, 5);
-            ASSERT_EQ(data.min_index_msg, 1);
-            ASSERT_EQ(data.max_index_msg, 5);
-        }
+        /*if (!publish_types)
+        {*/// Now is the same for both type and basic
+        ASSERT_EQ(data.n_received_msgs, 5);
+        ASSERT_EQ(data.min_index_msg, 1);
+        ASSERT_EQ(data.max_index_msg, 5);
+        /*}
         else
         {
             ASSERT_EQ(data.n_received_msgs, 2);
             ASSERT_EQ(data.min_index_msg, 1);
             ASSERT_EQ(data.max_index_msg, 2);
-        }
+        }*/
     }
 
     /**
@@ -238,7 +239,7 @@ public:
     {
         const auto type_path = publish_types ? "type/" : "basic/";
         //const auto configuration = std::string("../../resources/config/") + type_path + std::string("config_file_start_replay_time_earlier.yaml");
-        const auto configuration = "/home/danny/eProsima/DDS-Record-Replay-DEBUG/build/ddsreplayer_tool/test/resources/config/basic/" + std::string("config_file_start_replay_time_earlier.yaml");
+        const auto configuration = std::string("/home/danny/eProsima/DDS-Record-Replay-DEBUG/build/ddsreplayer_tool/test/resources/config/") + type_path + std::string("config_file_start_replay_time_earlier.yaml");
         const auto data = replay_(configuration, input_file, publish_types, is_ros2_topic);
 
         // Verify that all the messages were received
