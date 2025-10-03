@@ -25,12 +25,5 @@ class SqlFileReadTest : public FileReadTest
 {
 protected:
 
-    //const std::string input_file_{"../../resources/recordings/basic/configuration.db"}; // TODO. danip
-    //const std::string input_file_{"../../resources/recordings/basic/complete_A.db"};
-    //const std::string input_file_{"/home/danny/eProsima/DDS-Record-Replay-DEBUG/build/ddsreplayer_tool/test/resources/recordings/basic/configuration.db"};
-    //const std::string input_file_{"/home/danny/eProsima/DDS-Record-Replay-DEBUG/build/ddsreplayer_tool/test/resources/recordings/basic/complete_A.db"};
-    //const std::string input_file_{"/home/danny/eProsima/DDS-Record-Replay-DEBUG/build/ddsreplayer_tool/test/resources/recordings/basic/unique.db"};
-    //const std::string input_file_{"/home/danny/eProsima/DDS-Record-Replay-DEBUG/build/ddsreplayer_tool/test/resources/recordings/basic/hello_world.db"};
-    const std::string input_file_{"/home/danny/eProsima/DDS-Record-Replay-DEBUG/src/ddsrecordreplay/ddsreplayer/test/resources/recordings/basic/configuration.db"};
-
+    const std::string input_file_{"../../resources/recordings/basic/configuration.db"};
 };

@@ -1,15 +1,76 @@
-# RECORDING
+# RECORDING TEST
 
-## Run Configuration example [publisher]
+## Commands
 
-```
+### Run Configuration example [publisher]
+
+```bash
+# basic and types
 ./configuration publisher --domain 0 --samples 10 --interval 200 --wait 1 -r
+# ros2 (publication manual stop with 10 samples)
+docker run --rm -it eprosima/vulcanexus:jazzy-desktop bash
+ros2 run demo_nodes_cpp talker
 ```
 
-## Run DDS Recorder
+### Run DDS Recorder
 
+```bash
+# basic
+ddsrecorder -c configuration_basic.yaml
+# types
+ddsrecorder -c configuration_basic.yaml
+# ros2
+ddsrecorder -c configuration_basic.yaml
 ```
-ddsrecorder
+
+## Configurations files
+
+### configuration_basic.yaml
+```yaml
+dds:
+
+  domain: 0
+  
+  recorder:
+    record-types: false
+
+  mcap:
+    enable: true
+
+  sql:
+    enable: true
+```
+
+### configuration_types.yaml
+```yaml
+dds:
+
+  domain: 0
+  
+  recorder:
+    record-types: true
+
+  mcap:
+    enable: true
+
+  sql:
+    enable: true
+```
+
+### configuration_ros2.yaml
+```yaml
+dds:
+
+  domain: 0
+  
+  recorder:
+    ros2-types: true
+
+  mcap:
+    enable: true
+
+  sql:
+    enable: true
 ```
 
 # INFORMATION
