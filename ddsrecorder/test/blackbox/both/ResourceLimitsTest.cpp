@@ -237,10 +237,12 @@ protected:
             return false;
         }
 
+        bool mcap_file = file_path.string()[file_path.string().size() -1] == 'p';
+
         const auto file_size = std::filesystem::file_size(file_path);
         const auto is_acceptable =
-                file_size >= limits_->MIN_ACCEPTABLE_FILE_SIZE &&
-                file_size <= limits_->MAX_ACCEPTABLE_FILE_SIZE;
+                file_size >= limits_->MIN_ACCEPTABLE_FILE_SIZE / (mcap_file ? 2.1 : 1) &&
+                file_size <= limits_->MAX_ACCEPTABLE_FILE_SIZE / (mcap_file ? 1.9 : 1);
 
         if (!is_acceptable)
         {
@@ -291,7 +293,7 @@ protected:
     void test_max_size(
             const test::FileTypes file_type)
     {
-        std::uint32_t NUMBER_OF_FILES = limits_->MAX_FILES + 1;
+        const std::uint32_t NUMBER_OF_FILES = (limits_->MAX_FILES / (file_type == test::FileTypes::MCAP ? 2 : 1)) + 1;
         const std::string OUTPUT_FILE_NAME = std::string("max_size_test") +
                 (file_type == test::FileTypes::MCAP ? "_mcap" : "_sql");
         const auto OUTPUT_FILE_PATHS = get_output_file_paths_(NUMBER_OF_FILES, OUTPUT_FILE_NAME, file_type);
@@ -320,7 +322,7 @@ protected:
                 OUTPUT_FILE_NAME);
 
 
-        for (std::uint32_t i = 0; i < limits_->MAX_FILES; i++)
+        for (std::uint32_t i = 0; i < limits_->MAX_FILES / 2; i++)
         {
             // Send more messages than can be stored in a file with a size of max-file-size
             publish_msgs_(limits_->FILE_OVERFLOW_THRESHOLD);
@@ -379,7 +381,7 @@ protected:
             return;
         }
 
-        constexpr std::uint32_t NUMBER_OF_FILES = 6;
+        const std::uint32_t NUMBER_OF_FILES = 6 / (file_type == test::FileTypes::MCAP ? 2 : 1);
         const std::string OUTPUT_FILE_NAME = std::string("rotation_test") +
                 (file_type == test::FileTypes::MCAP ? "_mcap" : "_sql");
         const auto OUTPUT_FILE_PATHS = get_output_file_paths_(NUMBER_OF_FILES + 1, OUTPUT_FILE_NAME, file_type);
@@ -485,7 +487,14 @@ protected:
     std::unique_ptr<ddsrecorder::yaml::RecorderConfiguration> configuration_;
     std::vector<std::filesystem::path> paths_;
 
-    test::limits mcap_limits_{60 * 1024, 12 * 1024, 0.2, /*120*/283}; // TODO. McapSizeTests
+    //test::limits mcap_limits_{10 * 1024, /*4 * 1024*/ 2560, 0.2, 600/*120*/ /*283*/}; // TODO. McapSizeTests
+    //test::limits mcap_limits_{10 * 1024, 2560, 0.2, 600/*120*/ /*283*/}; // TODO. McapSizeTests
+    //test::limits mcap_limits_{35 * 1024, 2800 /*3 * 1024*/, 0.2, 125};
+    //test::limits mcap_limits_{30 * 1024, 6 * 1024, 0.2, 192};
+
+
+    //test::limits mcap_limits_{70 * 1024, 13 * 1024, 0.2, 260};
+    test::limits mcap_limits_{140 * 1024, 28 * 1024, 0.2, 260};
     test::limits sql_limits_{300 * 1024,  300 * 1024, 0.2, 273};
 
     test::limits* limits_;

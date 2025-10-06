@@ -39,6 +39,9 @@ class McapSizeTracker
 {
 public:
 
+    int potencial_count;
+    int written_count;
+
     /**
      * @brief Constructor
      *
