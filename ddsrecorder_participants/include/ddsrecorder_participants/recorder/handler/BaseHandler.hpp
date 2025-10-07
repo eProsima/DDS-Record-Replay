@@ -182,8 +182,6 @@ public:
 
 protected:
 
-    int count_msg;
-
     //! Flag code controlling the event thread routine
     enum class EventCode
     {

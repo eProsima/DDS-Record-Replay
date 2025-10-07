@@ -188,8 +188,8 @@ protected:
             hello.index(i);
             writer_->write(&hello);
 
-            // Delay for writing the information in the mcap file
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            // Wait for a millisecond
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     }
 
@@ -487,13 +487,12 @@ protected:
     std::unique_ptr<ddsrecorder::yaml::RecorderConfiguration> configuration_;
     std::vector<std::filesystem::path> paths_;
 
-    //test::limits mcap_limits_{10 * 1024, /*4 * 1024*/ 2560, 0.2, 600/*120*/ /*283*/}; // TODO. McapSizeTests
-    //test::limits mcap_limits_{10 * 1024, 2560, 0.2, 600/*120*/ /*283*/}; // TODO. McapSizeTests
-    //test::limits mcap_limits_{35 * 1024, 2800 /*3 * 1024*/, 0.2, 125};
-    //test::limits mcap_limits_{30 * 1024, 6 * 1024, 0.2, 192};
 
-
-    //test::limits mcap_limits_{70 * 1024, 13 * 1024, 0.2, 260};
+    // mcap:
+    // 140KB for max size in all files
+    // 28KB for each file, in which the attachment information
+    // is stored in the potential_mcap_size_, and in reality
+    // the size of the files is the half
     test::limits mcap_limits_{140 * 1024, 28 * 1024, 0.2, 260};
     test::limits sql_limits_{300 * 1024,  300 * 1024, 0.2, 273};
 

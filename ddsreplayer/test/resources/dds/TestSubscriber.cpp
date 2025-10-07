@@ -87,7 +87,6 @@ TestSubscriber::TestSubscriber(
 
     ////////////////////////
     // CREATE THE TOPIC
-    std::cout << "\t\tNAME: "<< topic_name << "\tTYPE: " << type_name << "\n";
 
     topic_ = participant_->create_topic(
         topic_name,
@@ -160,8 +159,6 @@ void TestSubscriber::on_data_available(
         DataReader* reader)
 {
     SampleInfo info;
-
-    std::cout << "------------------ WAITING FOR A MESSAGE\n";
 
     while ((reader->take_next_sample(&configuration_,
             &info) == RETCODE_OK))

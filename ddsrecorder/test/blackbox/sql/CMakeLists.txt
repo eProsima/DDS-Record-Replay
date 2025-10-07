@@ -86,7 +86,6 @@ add_blackbox_executable(
     "${TEST_LIBRARY_SOURCES}"
 )
 
-
 #################################
 # SqlFileCreationPartitionTest #
 #################################
@@ -190,8 +189,6 @@ add_blackbox_executable(
     "${TEST_EXTRA_HEADERS}"
     "${TEST_LIBRARY_SOURCES}"
 )
-
-
 
 ###################
 # SqlLogErrorTest #

@@ -240,8 +240,6 @@ protected:
             hello.index(i);
             hello.message("Hello World!");
 
-            std::cout << "MENSAJE ENVIADO: " << i + 1 << "\n";
-
             // Send the message
             writer_->write(&hello);
 
@@ -251,7 +249,6 @@ protected:
             // Wait for the message to be sent
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
-        //std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
         // Delete the DataWriter
         delete_datawriter_();

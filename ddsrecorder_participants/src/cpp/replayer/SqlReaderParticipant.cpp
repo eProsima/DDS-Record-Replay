@@ -411,7 +411,6 @@ void SqlReaderParticipant::process_messages()
 
         // Insert new data in internal reader queue
         readers_[topic]->simulate_data_reception(std::move(data));
-        std::cout << "\tENTERS: " << i++ << std::endl;
     });
 
     close_file_();
@@ -420,8 +419,6 @@ void SqlReaderParticipant::process_messages()
 void SqlReaderParticipant::open_file_()
 {
     const auto ret = sqlite3_open(file_path_.c_str(), &database_);
-
-    std::cout << "\t\tDB FILE: " << file_path_ << "\n";
 
     if (ret != SQLITE_OK)
     {

@@ -196,10 +196,7 @@ void McapHandler::add_data(
         const auto mcap_sample = std::make_shared<const McapMessage>(
             data, payload_pool_, topic, channel_id, configuration_.log_publishTime);
 
-        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
         process_new_sample_nts_(mcap_sample);
-
 
         const auto it_channel = channels_by_id_.find(channel_id);
         if(it_channel != channels_by_id_.end())
