@@ -52,7 +52,8 @@ void McapWriter::disable()
 }
 
 void McapWriter::add_message_sourceguid(
-    uint32_t sequence_number, const std::string source_guid)
+        uint32_t sequence_number,
+        const std::string source_guid)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 

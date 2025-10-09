@@ -120,7 +120,9 @@ public:
         }
     }
 
-    void init_dds_data(std::vector<std::string> partitions, bool sql)
+    void init_dds_data(
+            std::vector<std::string> partitions,
+            bool sql)
     {
         // Create the participant
         fastdds::dds::DomainParticipantQos pqos;
@@ -136,7 +138,7 @@ public:
 
 
         fastdds::dds::PublisherQos pub_qos = fastdds::dds::PUBLISHER_QOS_DEFAULT;
-        for(std::string p: partitions)
+        for (std::string p: partitions)
         {
             pub_qos.partition().push_back(p.c_str());
         }
@@ -184,7 +186,7 @@ protected:
 
         recorder->update_filter(std::set<std::string>{partition_filter});
 
-        if(partition_filter != "*")
+        if (partition_filter != "*")
         {
             partition_wildcard_active_ = false;
         }
@@ -254,7 +256,7 @@ protected:
         // Create the DataWriter
         create_datawriter_();
 
-        if(partition_wildcard_active_)
+        if (partition_wildcard_active_)
         {
             // Wait for the DataWriter to match the DataReader
             wait_for_matching();

@@ -164,12 +164,12 @@ void TestDynTypesSubscriber::on_data_available(
             if (dynamic_type_->get_name() == type_name_)
             {
                 uint32_t index;
-                if(hello_world_) //If value makes no sense probably is ros2 hello world message
+                if (hello_world_) //If value makes no sense probably is ros2 hello world message
                 {
                     std::string message;
                     new_data->get_string_value(message, new_data->get_member_id_by_name("data"));
                     index = extractInteger(message);
-                    if(index == -1)
+                    if (index == -1)
                     {
                         std::cout << "Message does not fit in the expected helloworld format" << std::endl;
                         continue;

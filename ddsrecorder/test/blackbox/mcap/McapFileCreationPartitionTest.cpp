@@ -1156,14 +1156,14 @@ TEST_F(McapFileCreationPartitionTest, mcap_data_msgs_partition_no_record)
 
     // Record messages
     const auto sent_messages = record_messages_(
-            OUTPUT_FILE_NAME,
-            NUMBER_OF_MESSAGES,
-            DdsRecorderState::RUNNING,
-            0,
-            DdsRecorderState::RUNNING,
-            0,
-            EventKind::NO_EVENT,
-            "B");
+        OUTPUT_FILE_NAME,
+        NUMBER_OF_MESSAGES,
+        DdsRecorderState::RUNNING,
+        0,
+        DdsRecorderState::RUNNING,
+        0,
+        EventKind::NO_EVENT,
+        "B");
     auto sent_message = sent_messages.begin();
 
     // Read the recorded messages
@@ -1216,14 +1216,14 @@ TEST_F(McapFileCreationPartitionTest, mcap_dds_topic_partition_no_record)
 
     // Record messages
     record_messages_(
-            OUTPUT_FILE_NAME,
-            NUMBER_OF_MESSAGES,
-            DdsRecorderState::RUNNING,
-            0,
-            DdsRecorderState::RUNNING,
-            0,
-            EventKind::NO_EVENT,
-            "B");
+        OUTPUT_FILE_NAME,
+        NUMBER_OF_MESSAGES,
+        DdsRecorderState::RUNNING,
+        0,
+        DdsRecorderState::RUNNING,
+        0,
+        EventKind::NO_EVENT,
+        "B");
 
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
@@ -1276,14 +1276,14 @@ TEST_F(McapFileCreationPartitionTest, mcap_ros2_topic_partition_no_record)
 
     // Record messages
     record_messages_(
-            OUTPUT_FILE_NAME,
-            NUMBER_OF_MESSAGES,
-            DdsRecorderState::RUNNING,
-            0,
-            DdsRecorderState::RUNNING,
-            0,
-            EventKind::NO_EVENT,
-            "B");
+        OUTPUT_FILE_NAME,
+        NUMBER_OF_MESSAGES,
+        DdsRecorderState::RUNNING,
+        0,
+        DdsRecorderState::RUNNING,
+        0,
+        EventKind::NO_EVENT,
+        "B");
 
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
@@ -1321,14 +1321,14 @@ TEST_F(McapFileCreationPartitionTest, mcap_data_num_msgs_partition_no_record)
 
     // Record messages
     record_messages_(
-            OUTPUT_FILE_NAME,
-            NUMBER_OF_MESSAGES,
-            DdsRecorderState::RUNNING,
-            0,
-            DdsRecorderState::RUNNING,
-            0,
-            EventKind::NO_EVENT,
-            "B");
+        OUTPUT_FILE_NAME,
+        NUMBER_OF_MESSAGES,
+        DdsRecorderState::RUNNING,
+        0,
+        DdsRecorderState::RUNNING,
+        0,
+        EventKind::NO_EVENT,
+        "B");
 
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
@@ -1357,14 +1357,14 @@ TEST_F(McapFileCreationPartitionTest, mcap_data_num_msgs_downsampling_partition_
 
     // Record messages
     record_messages_(
-            OUTPUT_FILE_NAME,
-            NUMBER_OF_MESSAGES,
-            DdsRecorderState::RUNNING,
-            0,
-            DdsRecorderState::RUNNING,
-            0,
-            EventKind::NO_EVENT,
-            "B");
+        OUTPUT_FILE_NAME,
+        NUMBER_OF_MESSAGES,
+        DdsRecorderState::RUNNING,
+        0,
+        DdsRecorderState::RUNNING,
+        0,
+        EventKind::NO_EVENT,
+        "B");
 
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
@@ -1408,7 +1408,8 @@ TEST_F(McapFileCreationPartitionTest, transition_running_partition_no_record)
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0,
+            EventKind::NO_EVENT, "B");
 
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
@@ -1447,7 +1448,8 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_partition_no_record)
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0,
+            EventKind::NO_EVENT, "B");
 
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
@@ -1486,7 +1488,8 @@ TEST_F(McapFileCreationPartitionTest, transition_suspended_partition_no_record)
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0,
+            EventKind::NO_EVENT, "B");
 
     // Verify that the MCAP file wasn't created
     ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATH));
@@ -1521,7 +1524,8 @@ TEST_F(McapFileCreationPartitionTest, transition_stopped_partition_no_record)
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0,
+            EventKind::NO_EVENT, "B");
 
     // Verify that the MCAP file wasn't created
     ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATH));
@@ -1555,7 +1559,8 @@ TEST_F(McapFileCreationPartitionTest, transition_running_paused_partition_no_rec
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0,
+            EventKind::NO_EVENT, "B");
 
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
@@ -1593,7 +1598,8 @@ TEST_F(McapFileCreationPartitionTest, transition_running_suspended_partition_no_
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0,
+            EventKind::NO_EVENT, "B");
 
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
@@ -1631,7 +1637,8 @@ TEST_F(McapFileCreationPartitionTest, transition_running_stopped_partition_no_re
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0,
+            EventKind::NO_EVENT, "B");
 
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
@@ -1669,7 +1676,8 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_running_partition_no_rec
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0,
+            EventKind::NO_EVENT, "B");
 
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
@@ -1707,7 +1715,8 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_suspended_partition_no_r
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0,
+            EventKind::NO_EVENT, "B");
 
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
@@ -1745,7 +1754,8 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_stopped_partition_no_rec
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0,
+            EventKind::NO_EVENT, "B");
 
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
@@ -1783,7 +1793,8 @@ TEST_F(McapFileCreationPartitionTest, transition_suspended_running_partition_no_
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0,
+            EventKind::NO_EVENT, "B");
 
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
@@ -1821,7 +1832,8 @@ TEST_F(McapFileCreationPartitionTest, transition_suspended_paused_partition_no_r
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0,
+            EventKind::NO_EVENT, "B");
 
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
@@ -1859,7 +1871,8 @@ TEST_F(McapFileCreationPartitionTest, transition_suspended_stopped_partition_no_
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0,
+            EventKind::NO_EVENT, "B");
 
     // Verify that the MCAP file wasn't created
     ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATH));
@@ -1893,7 +1906,8 @@ TEST_F(McapFileCreationPartitionTest, transition_stopped_running_partition_no_re
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0,
+            EventKind::NO_EVENT, "B");
 
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
@@ -1931,7 +1945,8 @@ TEST_F(McapFileCreationPartitionTest, transition_stopped_paused_partition_no_rec
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0,
+            EventKind::NO_EVENT, "B");
 
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
@@ -1969,7 +1984,8 @@ TEST_F(McapFileCreationPartitionTest, transition_stopped_suspended_partition_no_
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0,
+            EventKind::NO_EVENT, "B");
 
     // Verify that the MCAP file wasn't created
     ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATH));

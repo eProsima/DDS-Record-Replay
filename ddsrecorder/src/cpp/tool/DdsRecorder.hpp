@@ -125,7 +125,7 @@ public:
 
     //! update the filter partition
     void update_filter(
-        const std::set<std::string> filter_partition);
+            const std::set<std::string> filter_partition);
 
 protected:
 

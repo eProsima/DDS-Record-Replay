@@ -573,16 +573,16 @@ void RecorderConfiguration::load_dds_configuration_(
 
         // check if the wildcard partition is in the partitionlist
         bool wildcard = false;
-        for(std::string partition: dds_configuration->allowed_partition_list)
+        for (std::string partition: dds_configuration->allowed_partition_list)
         {
-            if(partition == "*")
+            if (partition == "*")
             {
                 wildcard = true;
                 break;
             }
         }
 
-        if(wildcard)
+        if (wildcard)
         {
             // the partitionslist contains "*" -> clear the list,
             // all the partitions are allowed in the filter

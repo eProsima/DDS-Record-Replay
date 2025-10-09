@@ -171,7 +171,7 @@ void SqlHandler::write_samples_(
         // check if the topic/type partitions set is already added in the table.
         std::string primarykey_TopicPartition = topic.m_topic_name + topic.type_name + writer_partitions;
 
-        if(written_topic_partitions_.find(primarykey_TopicPartition) == written_topic_partitions_.end())
+        if (written_topic_partitions_.find(primarykey_TopicPartition) == written_topic_partitions_.end())
         {
             sql_writer_.write_partition(topic.m_topic_name, topic.type_name, writer_partitions);
             written_topic_partitions_.insert(primarykey_TopicPartition);

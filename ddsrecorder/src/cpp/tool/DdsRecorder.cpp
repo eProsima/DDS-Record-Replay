@@ -231,7 +231,7 @@ utils::ReturnCode DdsRecorder::reload_configuration(
     // reload_configuration() is called two times when the .yaml file
     // is updated, and sometimes, the first call set
     // the allowed_partition_list to empty, allowing all partitions.
-    if(reload_conf_count_ % 2 == 0)
+    if (reload_conf_count_ % 2 == 0)
     {
         // update the filter partition set
         pipe_->reload_filter_partition(new_configuration.dds_configuration->allowed_partition_list);
@@ -240,7 +240,8 @@ utils::ReturnCode DdsRecorder::reload_configuration(
     return pipe_->reload_configuration(new_configuration.ddspipe_configuration);
 }
 
-void DdsRecorder::update_filter(const std::set<std::string> new_filter)
+void DdsRecorder::update_filter(
+        const std::set<std::string> new_filter)
 {
     // function used primary for the tests
     pipe_->update_filter(new_filter);

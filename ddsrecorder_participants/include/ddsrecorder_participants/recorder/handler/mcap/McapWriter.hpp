@@ -103,7 +103,8 @@ public:
      * - @throws \c InitializationException if the MCAP library fails to open a new file.
      */
     void add_message_sourceguid(
-        uint32_t sequence_number, const std::string source_guid);
+            uint32_t sequence_number,
+            const std::string source_guid);
 
 protected:
 

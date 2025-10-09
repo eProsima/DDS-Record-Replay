@@ -124,10 +124,10 @@ void SqlReaderParticipant::process_summary(
 
         std::string curr_partition = "";
         int i = 0, curr_partition_n = topic_partitions.size();
-        while(i < curr_partition_n)
+        while (i < curr_partition_n)
         {
             // gets a partition from the string of partitions set
-            while(i < curr_partition_n && topic_partitions[i]!='|')
+            while (i < curr_partition_n && topic_partitions[i]!='|')
             {
                 curr_partition += topic_partitions[i++];
             }
@@ -136,14 +136,14 @@ void SqlReaderParticipant::process_summary(
 
             // checks if the writer partition is the wildcard or the
             // allowed partition list is empty
-            if(curr_partition == "*" || pass_partition_filter)
+            if (curr_partition == "*" || pass_partition_filter)
             {
                 pass_partition_filter = true;
                 break;
             }
 
             // check if the current partition is in the filter of partitions
-            for(std::string allowed_partition: allowed_partition_list_)
+            for (std::string allowed_partition: allowed_partition_list_)
             {
                 if (utils::match_pattern(allowed_partition, curr_partition))
                 {
@@ -157,10 +157,10 @@ void SqlReaderParticipant::process_summary(
         }
 
         // check if the writer has the empty partition
-        if(topic_partitions == "")
+        if (topic_partitions == "")
         {
             // check if the empty partition is in the allowed partitions
-            for(std::string allowed_partition: allowed_partition_list_)
+            for (std::string allowed_partition: allowed_partition_list_)
             {
                 if (utils::match_pattern(allowed_partition, ""))
                 {
@@ -171,12 +171,12 @@ void SqlReaderParticipant::process_summary(
             }
         }
 
-        if(!pass_partition_filter)
+        if (!pass_partition_filter)
         {
             // the sql row did not pass the filter
 
             // check if the sql query has more than one writer_guid in the row
-            if(writer_guid.size() < 50)
+            if (writer_guid.size() < 50)
             {
                 filtered_writersguid_list_.insert(writer_guid);
             }
@@ -186,9 +186,9 @@ void SqlReaderParticipant::process_summary(
                 // adds all the writer guids in the filtered list
                 std::string tmp = "";
                 int i = 0, n = writer_guid.size();
-                while(i < n)
+                while (i < n)
                 {
-                    if(writer_guid[i] == ',')
+                    if (writer_guid[i] == ',')
                     {
                         filtered_writersguid_list_.insert(tmp);
                         tmp = "";
@@ -201,7 +201,7 @@ void SqlReaderParticipant::process_summary(
                     i++;
                 }
 
-                if(tmp != "")
+                if (tmp != "")
                 {
                     filtered_writersguid_list_.insert(tmp);
                 }
@@ -211,7 +211,7 @@ void SqlReaderParticipant::process_summary(
         }
 
         // (empty partition list) adds the partitions set if is not empty
-        if(topic_partitions != "")
+        if (topic_partitions != "")
         {
             topic->partition_name[writer_guid] = topic_partitions;
         }
@@ -224,10 +224,10 @@ void SqlReaderParticipant::process_summary(
         if (topics_.find(topic_id) != topics_.end())
         {
             // iterate throw the added topics
-            for(const auto& t: topics)
+            for (const auto& t: topics)
             {
                 // search for the same topic and type
-                if(t->type_name == type_name && t->m_topic_name == topic_name)
+                if (t->type_name == type_name && t->m_topic_name == topic_name)
                 {
                     // adds in the map the writer_guid and the partitions set
                     t->partition_name[writer_guid] = topic_partitions;
@@ -310,7 +310,7 @@ void SqlReaderParticipant::process_messages()
 
         const auto topic_id = std::make_pair(topic_name, type_name);
 
-        if(filtered_writersguid_list_.find(writer_guid) != filtered_writersguid_list_.end())
+        if (filtered_writersguid_list_.find(writer_guid) != filtered_writersguid_list_.end())
         {
             // current row do not pass the filter
             return;
@@ -363,20 +363,20 @@ void SqlReaderParticipant::process_messages()
 
             // check if the message is already added in the dictionary of PartitionsQos
             // (optimize the search of partitions in the message by storing the PartitionQos of the writer_guid)
-            if(partitions_qos_dict_.find(writer_guid) != partitions_qos_dict_.end())
+            if (partitions_qos_dict_.find(writer_guid) != partitions_qos_dict_.end())
             {
                 data->writer_qos.partitions = partitions_qos_dict_[writer_guid];
             }
             else
             {
                 partition_name = it->second;
-                if(partition_name.size() > 0)
+                if (partition_name.size() > 0)
                 {
                     int i = 0, partition_name_n = partition_name.size();
                     std::string tmp = "";
-                    while(i < partition_name_n)
+                    while (i < partition_name_n)
                     {
-                        if(partition_name[i] == '|')
+                        if (partition_name[i] == '|')
                         {
                             data->writer_qos.partitions.push_back(tmp.c_str());
                             tmp = "";
@@ -390,7 +390,7 @@ void SqlReaderParticipant::process_messages()
                     }
                     // add the last partition in the set of partitions.
                     // e.g.: "A|B" adds the "B" partition
-                    if(tmp != "")
+                    if (tmp != "")
                     {
                         data->writer_qos.partitions.push_back(tmp.c_str());
                     }

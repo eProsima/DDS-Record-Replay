@@ -350,8 +350,9 @@ void SqlWriter::write_nts_(
 
     if (prep_ret != SQLITE_OK)
     {
-        const std::string error_msg = utils::Formatter() << "Failed to prepare SQL statement to write in Messages table: "
-                                                         << sqlite3_errmsg(database_);
+        const std::string error_msg = utils::Formatter() <<
+                "Failed to prepare SQL statement to write in Messages table: " <<
+                sqlite3_errmsg(database_);
         sqlite3_finalize(statement_message);
 
         EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
@@ -360,12 +361,14 @@ void SqlWriter::write_nts_(
 
     // (Table: MessagesPartitions) Prepare the SQL statement
     sqlite3_stmt* statement_partition;
-    const auto prep_ret_partition = sqlite3_prepare_v2(database_, insert_statement_partition, -1, &statement_partition, nullptr);
+    const auto prep_ret_partition = sqlite3_prepare_v2(database_, insert_statement_partition, -1, &statement_partition,
+                    nullptr);
 
     if (prep_ret_partition != SQLITE_OK)
     {
-        const std::string error_msg = utils::Formatter() << "Failed to prepare SQL statement to write in MessagesPartitions table: "
-                                                         << sqlite3_errmsg(database_);
+        const std::string error_msg = utils::Formatter() <<
+                "Failed to prepare SQL statement to write in MessagesPartitions table: " <<
+                sqlite3_errmsg(database_);
         sqlite3_finalize(statement_message);
         sqlite3_finalize(statement_partition);
 
@@ -452,7 +455,7 @@ void SqlWriter::write_nts_(
 
         size_t entry_size_writer_guid = writer_guid_str.size();
         size_t entry_size_sequence_number =
-            calculate_int_storage_size(message.sequence_number.to64long());;
+                calculate_int_storage_size(message.sequence_number.to64long());
 
         // (Table: Messages) Entry size
         entry_size_message += entry_size_writer_guid;
@@ -727,7 +730,7 @@ void SqlWriter::write_nts_(
     }
 
     EPROSIMA_LOG_INFO(DDSRECORDER_SQL_WRITER, "Writing Partitions of topic: " << topic_name
-        << ", with type: " << topic_type << ".");
+                                                    << ", with type: " << topic_type << ".");
 
     // Define the SQL statement
     const char* insert_statement =

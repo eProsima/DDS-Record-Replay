@@ -99,20 +99,20 @@ void McapReaderParticipant::process_summary(
         // metadata[partitions] = <writer_1>:<partition_1>;...;<writer_n>:<partition_n>
         // using: n >= 1
         int i = 0, partitions_n = channel_partitions.size();
-        while(i < partitions_n)
+        while (i < partitions_n)
         {
             // resets the filter condition
             pass_partition_filter = allowed_partition_list_.empty();
 
             // -- Writer (get one of the possible writers) --------------------
-            while(i < partitions_n && channel_partitions[i] != ':')
+            while (i < partitions_n && channel_partitions[i] != ':')
             {
                 writer += channel_partitions[i++];
             }
             i++;
 
             // -- Partition (get the partitions set) --------------------------
-            while(i < partitions_n && channel_partitions[i] != ';')
+            while (i < partitions_n && channel_partitions[i] != ';')
             {
                 writer_partition += channel_partitions[i++];
             }
@@ -124,7 +124,7 @@ void McapReaderParticipant::process_summary(
 
             // checks if the writer partition is the wildcard or the
             // allowed partition list is empty
-            if(writer_partition == "*" || pass_partition_filter)
+            if (writer_partition == "*" || pass_partition_filter)
             {
                 pass_partition_filter = true;
             }
@@ -133,10 +133,10 @@ void McapReaderParticipant::process_summary(
                 // get all the partitions
                 std::string curr_partition = "";
                 std::vector<std::string> partition_vector;
-                int j=0, writer_partition_n = writer_partition.size();
-                while(j < writer_partition_n)
+                int j = 0, writer_partition_n = writer_partition.size();
+                while (j < writer_partition_n)
                 {
-                    if(writer_partition[j] == '|')
+                    if (writer_partition[j] == '|')
                     {
                         // adds the partitions and continue the search
                         partition_vector.push_back(curr_partition);
@@ -151,12 +151,12 @@ void McapReaderParticipant::process_summary(
                 }
 
                 // adds the last partition
-                if(curr_partition != "")
+                if (curr_partition != "")
                 {
                     partition_vector.push_back(curr_partition);
                 }
                 // check if have the empty partition.
-                else if(writer_partition_n == 0 ||
+                else if (writer_partition_n == 0 ||
                         writer_partition[writer_partition_n-1] == '|')
                 {
                     // e.g.:    Partitions: "" only have the empty partition
@@ -165,10 +165,10 @@ void McapReaderParticipant::process_summary(
                 }
 
                 // check if the partitions of the writer match with an allowed partition
-                for(std::string partition: partition_vector)
+                for (std::string partition: partition_vector)
                 {
                     // check if the current partition is in the filter of partitions
-                    for(std::string allowed_partition: allowed_partition_list_)
+                    for (std::string allowed_partition: allowed_partition_list_)
                     {
                         if (utils::match_pattern(allowed_partition, partition))
                         {
@@ -179,7 +179,7 @@ void McapReaderParticipant::process_summary(
                 }
             }
 
-            if(!pass_partition_filter)
+            if (!pass_partition_filter)
             {
                 // the writer did not pass the partition filter
                 filtered_writersguid_list_.insert(writer);
@@ -244,7 +244,7 @@ void McapReaderParticipant::process_messages()
         const auto topic = topics_[topic_id];
         const std::string writer_guid = sourceguid_by_sequence_[std::to_string(it.message.sequence)];
 
-        if(filtered_writersguid_list_.find(writer_guid) != filtered_writersguid_list_.end())
+        if (filtered_writersguid_list_.find(writer_guid) != filtered_writersguid_list_.end())
         {
             // current message do not pass the filter
             continue;
@@ -285,20 +285,20 @@ void McapReaderParticipant::process_messages()
 
             // check if the message is already added in the dictionary of PartitionsQos
             // (optimize the search of partitions in the message by storing the PartitionQos of the writer_guid)
-            if(partitions_qos_dict_.find(writer_guid) != partitions_qos_dict_.end())
+            if (partitions_qos_dict_.find(writer_guid) != partitions_qos_dict_.end())
             {
                 data->writer_qos.partitions = partitions_qos_dict_[writer_guid];
             }
             else
             {
                 partition_name = it_partition->second;
-                if(partition_name.size() > 0)
+                if (partition_name.size() > 0)
                 {
                     int i = 0, partition_name_n = partition_name.size();
                     std::string tmp = "";
-                    while(i < partition_name_n)
+                    while (i < partition_name_n)
                     {
-                        if(partition_name[i] == '|')
+                        if (partition_name[i] == '|')
                         {
                             data->writer_qos.partitions.push_back(tmp.c_str());
                             tmp = "";
@@ -312,7 +312,7 @@ void McapReaderParticipant::process_messages()
                     }
                     // add the last partition in the set of partitions.
                     // e.g.: "A|B" adds the "B" partition
-                    if(tmp != "")
+                    if (tmp != "")
                     {
                         data->writer_qos.partitions.push_back(tmp.c_str());
                     }

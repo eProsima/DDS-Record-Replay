@@ -1478,14 +1478,14 @@ TEST_F(SqlFileCreationPartitionTest, sql_data_format_cdr_partition_no_record)
 
     // Record messages
     auto sent_messages = record_messages_(
-            OUTPUT_FILE_NAME,
-            NUMBER_OF_MESSAGES,
-            DdsRecorderState::RUNNING,
-            0,
-            DdsRecorderState::RUNNING,
-            0,
-            EventKind::NO_EVENT,
-            "B");
+        OUTPUT_FILE_NAME,
+        NUMBER_OF_MESSAGES,
+        DdsRecorderState::RUNNING,
+        0,
+        DdsRecorderState::RUNNING,
+        0,
+        EventKind::NO_EVENT,
+        "B");
 
     auto sent_message = sent_messages.begin();
 
@@ -1549,14 +1549,14 @@ TEST_F(SqlFileCreationPartitionTest, sql_data_format_json_partition_no_record)
 
     // Record messages
     auto sent_messages = record_messages_(
-            OUTPUT_FILE_NAME,
-            NUMBER_OF_MESSAGES,
-            DdsRecorderState::RUNNING,
-            0,
-            DdsRecorderState::RUNNING,
-            0,
-            EventKind::NO_EVENT,
-            "B");
+        OUTPUT_FILE_NAME,
+        NUMBER_OF_MESSAGES,
+        DdsRecorderState::RUNNING,
+        0,
+        DdsRecorderState::RUNNING,
+        0,
+        EventKind::NO_EVENT,
+        "B");
 
     auto sent_message = sent_messages.begin();
 
@@ -1619,14 +1619,14 @@ TEST_F(SqlFileCreationPartitionTest, sql_data_format_both_partition_no_record)
 
     // Record messages
     auto sent_messages = record_messages_(
-            OUTPUT_FILE_NAME,
-            NUMBER_OF_MESSAGES,
-            DdsRecorderState::RUNNING,
-            0,
-            DdsRecorderState::RUNNING,
-            0,
-            EventKind::NO_EVENT,
-            "B");
+        OUTPUT_FILE_NAME,
+        NUMBER_OF_MESSAGES,
+        DdsRecorderState::RUNNING,
+        0,
+        DdsRecorderState::RUNNING,
+        0,
+        EventKind::NO_EVENT,
+        "B");
 
     auto sent_message = sent_messages.begin();
 
@@ -1687,14 +1687,14 @@ TEST_F(SqlFileCreationPartitionTest, sql_dds_topic_partition_no_record)
 
     // Record messages
     record_messages_(
-            OUTPUT_FILE_NAME,
-            NUMBER_OF_MESSAGES,
-            DdsRecorderState::RUNNING,
-            0,
-            DdsRecorderState::RUNNING,
-            0,
-            EventKind::NO_EVENT,
-            "B");
+        OUTPUT_FILE_NAME,
+        NUMBER_OF_MESSAGES,
+        DdsRecorderState::RUNNING,
+        0,
+        DdsRecorderState::RUNNING,
+        0,
+        EventKind::NO_EVENT,
+        "B");
 
     // Read the recorded topics
     auto read_topics_count = 0;
@@ -1748,14 +1748,14 @@ TEST_F(SqlFileCreationPartitionTest, sql_ros2_topic_partition_no_record)
 
     // Record messages
     record_messages_(
-            OUTPUT_FILE_NAME,
-            NUMBER_OF_MESSAGES,
-            DdsRecorderState::RUNNING,
-            0,
-            DdsRecorderState::RUNNING,
-            0,
-            EventKind::NO_EVENT,
-            "B");
+        OUTPUT_FILE_NAME,
+        NUMBER_OF_MESSAGES,
+        DdsRecorderState::RUNNING,
+        0,
+        DdsRecorderState::RUNNING,
+        0,
+        EventKind::NO_EVENT,
+        "B");
 
     // Read the recorded topics
     auto read_topics_count = 0;
@@ -1804,14 +1804,14 @@ TEST_F(SqlFileCreationPartitionTest, sql_data_num_msgs_partition_no_record)
 
     // Record messages
     record_messages_(
-            OUTPUT_FILE_NAME,
-            NUMBER_OF_MESSAGES,
-            DdsRecorderState::RUNNING,
-            0,
-            DdsRecorderState::RUNNING,
-            0,
-            EventKind::NO_EVENT,
-            "B");
+        OUTPUT_FILE_NAME,
+        NUMBER_OF_MESSAGES,
+        DdsRecorderState::RUNNING,
+        0,
+        DdsRecorderState::RUNNING,
+        0,
+        EventKind::NO_EVENT,
+        "B");
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
@@ -1854,14 +1854,14 @@ TEST_F(SqlFileCreationPartitionTest, sql_data_num_msgs_downsampling_partition_no
 
     // Record messages
     record_messages_(
-            OUTPUT_FILE_NAME,
-            NUMBER_OF_MESSAGES,
-            DdsRecorderState::RUNNING,
-            0,
-            DdsRecorderState::RUNNING,
-            0,
-            EventKind::NO_EVENT,
-            "B");
+        OUTPUT_FILE_NAME,
+        NUMBER_OF_MESSAGES,
+        DdsRecorderState::RUNNING,
+        0,
+        DdsRecorderState::RUNNING,
+        0,
+        EventKind::NO_EVENT,
+        "B");
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
@@ -1910,7 +1910,8 @@ TEST_F(SqlFileCreationPartitionTest, transition_running_partition_no_record)
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2,
+            0, EventKind::NO_EVENT, "B");
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
@@ -1953,7 +1954,8 @@ TEST_F(SqlFileCreationPartitionTest, transition_paused_partition_no_record)
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2,
+            0, EventKind::NO_EVENT, "B");
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
@@ -1996,7 +1998,8 @@ TEST_F(SqlFileCreationPartitionTest, transition_suspended_partition_no_record)
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2,
+            0, EventKind::NO_EVENT, "B");
 
     // Verify that the SQL file wasn't created
     ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATH));
@@ -2034,7 +2037,8 @@ TEST_F(SqlFileCreationPartitionTest, transition_stopped_partition_no_record)
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2,
+            0, EventKind::NO_EVENT, "B");
 
     // Verify that the SQL file wasn't created
     ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATH));
@@ -2071,7 +2075,8 @@ TEST_F(SqlFileCreationPartitionTest, transition_running_paused_partition_no_reco
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2,
+            0, EventKind::NO_EVENT, "B");
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
@@ -2113,7 +2118,8 @@ TEST_F(SqlFileCreationPartitionTest, transition_running_suspended_partition_no_r
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2,
+            0, EventKind::NO_EVENT, "B");
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
@@ -2155,7 +2161,8 @@ TEST_F(SqlFileCreationPartitionTest, transition_running_stopped_partition_no_rec
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2,
+            0, EventKind::NO_EVENT, "B");
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
@@ -2197,7 +2204,8 @@ TEST_F(SqlFileCreationPartitionTest, transition_paused_running_partition_no_reco
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2,
+            0, EventKind::NO_EVENT, "B");
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
@@ -2239,7 +2247,8 @@ TEST_F(SqlFileCreationPartitionTest, transition_paused_suspended_partition_no_re
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2,
+            0, EventKind::NO_EVENT, "B");
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
@@ -2281,7 +2290,8 @@ TEST_F(SqlFileCreationPartitionTest, transition_paused_stopped_partition_no_reco
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2,
+            0, EventKind::NO_EVENT, "B");
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
@@ -2323,7 +2333,8 @@ TEST_F(SqlFileCreationPartitionTest, transition_suspended_running_partition_no_r
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2,
+            0, EventKind::NO_EVENT, "B");
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
@@ -2365,7 +2376,8 @@ TEST_F(SqlFileCreationPartitionTest, transition_suspended_paused_partition_no_re
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2,
+            0, EventKind::NO_EVENT, "B");
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
@@ -2407,7 +2419,8 @@ TEST_F(SqlFileCreationPartitionTest, transition_suspended_stopped_partition_no_r
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2,
+            0, EventKind::NO_EVENT, "B");
 
     // Verify that the SQL file wasn't created
     ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATH));
@@ -2444,7 +2457,8 @@ TEST_F(SqlFileCreationPartitionTest, transition_stopped_running_partition_no_rec
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2,
+            0, EventKind::NO_EVENT, "B");
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
@@ -2486,7 +2500,8 @@ TEST_F(SqlFileCreationPartitionTest, transition_stopped_paused_partition_no_reco
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2,
+            0, EventKind::NO_EVENT, "B");
 
     // Count the recorded messages
     exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
@@ -2528,7 +2543,8 @@ TEST_F(SqlFileCreationPartitionTest, transition_stopped_suspended_partition_no_r
     ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
 
     // Record messages
-    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2, 0, EventKind::NO_EVENT, "B");
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES_1, STATE_1, NUMBER_OF_MESSAGES_2, STATE_2,
+            0, EventKind::NO_EVENT, "B");
 
     // Verify that the SQL file wasn't created
     ASSERT_FALSE(std::filesystem::exists(OUTPUT_FILE_PATH));

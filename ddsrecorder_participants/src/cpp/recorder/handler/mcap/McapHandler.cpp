@@ -199,7 +199,7 @@ void McapHandler::add_data(
         process_new_sample_nts_(mcap_sample);
 
         const auto it_channel = channels_by_id_.find(channel_id);
-        if(it_channel != channels_by_id_.end())
+        if (it_channel != channels_by_id_.end())
         {
             mcap::Channel channel = channels_by_id_[channel_id];
 
@@ -278,7 +278,7 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     metadata[ROS2_TYPES] = is_topic_ros2_type ? "true" : "false";
 
     std::string topic_partitions = "";
-    for(const auto& pair: topic.partition_name)
+    for (const auto& pair: topic.partition_name)
     {
         topic_partitions += pair.first + ":" + pair.second + ";";
     }

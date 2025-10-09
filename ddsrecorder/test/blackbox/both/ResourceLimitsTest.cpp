@@ -237,7 +237,7 @@ protected:
             return false;
         }
 
-        bool mcap_file = file_path.string()[file_path.string().size() -1] == 'p';
+        bool mcap_file = file_path.string()[file_path.string().size() - 1] == 'p';
 
         const auto file_size = std::filesystem::file_size(file_path);
         const auto is_acceptable =
