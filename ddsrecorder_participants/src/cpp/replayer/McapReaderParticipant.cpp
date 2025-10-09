@@ -53,7 +53,8 @@ McapReaderParticipant::McapReaderParticipant(
 {
 }
 
-void McapReaderParticipant::add_partitionlist(std::set<std::string> allowed_partition_list)
+void McapReaderParticipant::add_partitionlist(
+        std::set<std::string> allowed_partition_list)
 {
     // adds the allowed partitions list to the class
     allowed_partition_list_ = allowed_partition_list;
@@ -157,7 +158,7 @@ void McapReaderParticipant::process_summary(
                 }
                 // check if have the empty partition.
                 else if (writer_partition_n == 0 ||
-                        writer_partition[writer_partition_n-1] == '|')
+                        writer_partition[writer_partition_n - 1] == '|')
                 {
                     // e.g.:    Partitions: "" only have the empty partition
                     //          Partitions: "A|" have two partitions "A" and "".

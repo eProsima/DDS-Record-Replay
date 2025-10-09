@@ -638,7 +638,6 @@ void SqlWriter::write_nts_(
     sqlite3_finalize(statement);
 }
 
-
 // (Tables: Partitions)
 template <>
 void SqlWriter::write_nts_(
@@ -716,7 +715,6 @@ void SqlWriter::write_nts_(
     sqlite3_finalize(statement);
 }
 
-
 // (Tables: TopicsPartitions)
 void SqlWriter::write_nts_(
         const std::string& topic_name,
@@ -730,7 +728,7 @@ void SqlWriter::write_nts_(
     }
 
     EPROSIMA_LOG_INFO(DDSRECORDER_SQL_WRITER, "Writing Partitions of topic: " << topic_name
-                                                    << ", with type: " << topic_type << ".");
+                                                                              << ", with type: " << topic_type << ".");
 
     // Define the SQL statement
     const char* insert_statement =
@@ -829,7 +827,6 @@ void SqlWriter::write_partition(
         }
     }
 }
-
 
 // NOTE: The method has to be defined after the definition of write_nts_ for DynamicType
 void SqlWriter::close_current_file_nts_()
