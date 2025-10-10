@@ -128,12 +128,14 @@ void TestDynTypesSubscriber::on_subscription_matched(
 }
 
 // Extracts the integer from a string that matches the pattern "Hello World: <integer>"
-int extractInteger(const std::string& input) {
+int extractInteger(
+        const std::string& input) {
     // Define the regular expression pattern
     std::regex pattern(R"(Hello World: (-?\d+))");
 
     std::smatch match;
-    if (std::regex_match(input, match, pattern)) {
+    if (std::regex_match(input, match, pattern))
+    {
         // If a match is found, convert the captured group to an integer and return it
         return std::stoi(match[1].str());
     }
