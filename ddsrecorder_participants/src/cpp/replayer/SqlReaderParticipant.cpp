@@ -96,7 +96,7 @@ void SqlReaderParticipant::process_summary(
 
                         )SQL", {}, [&](
                 sqlite3_stmt* stmt)
-    {
+            {
                 // Create a DdsTopic to publish the message
                 const std::string topic_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
                 const std::string type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
