@@ -53,7 +53,7 @@ McapReaderParticipant::McapReaderParticipant(
 {
 }
 
-void McapReaderParticipant::add_partitionlist(
+void McapReaderParticipant::add_partition_list(
         std::set<std::string> allowed_partition_list)
 {
     // adds the allowed partitions list to the class

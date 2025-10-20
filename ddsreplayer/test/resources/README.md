@@ -5,9 +5,9 @@
 ### Run Configuration example [publisher]
 
 ```bash
-# basic and types
+# basic and types (the publisher stops when 10 messages are sent)
 ./configuration publisher --domain 0 --samples 10 --interval 200 --wait 1 -r
-# ros2 (publication manual stop with 10 samples)
+# ros2 (publication of messages with manual stop [Ctrl + C] when 10 messages are sent)
 docker run --rm -it eprosima/vulcanexus:jazzy-desktop bash
 ros2 run demo_nodes_cpp talker
 ```
@@ -18,9 +18,9 @@ ros2 run demo_nodes_cpp talker
 # basic
 ddsrecorder -c configuration_basic.yaml
 # types
-ddsrecorder -c configuration_basic.yaml
+ddsrecorder -c configuration_types.yaml
 # ros2
-ddsrecorder -c configuration_basic.yaml
+ddsrecorder -c configuration_ros2.yaml
 ```
 
 ## Configurations files
@@ -30,7 +30,7 @@ ddsrecorder -c configuration_basic.yaml
 dds:
 
   domain: 0
-  
+
   recorder:
     record-types: false
 
@@ -46,7 +46,7 @@ dds:
 dds:
 
   domain: 0
-  
+
   recorder:
     record-types: true
 
@@ -62,7 +62,7 @@ dds:
 dds:
 
   domain: 0
-  
+
   recorder:
     ros2-types: true
 

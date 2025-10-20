@@ -137,7 +137,7 @@ public:
      * @param types:  DynamicTypesCollection instance to be filled with the types information from the input file.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    virtual void add_partitionlist(
+    virtual void add_partition_list(
             std::set<std::string> allowed_partition_list) = 0;
 
     /**

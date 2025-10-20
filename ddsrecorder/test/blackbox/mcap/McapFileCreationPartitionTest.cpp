@@ -1188,7 +1188,7 @@ TEST_F(McapFileCreationPartitionTest, mcap_data_msgs_partition_no_record)
     }
 
     // Verify that it read messages
-    ASSERT_GT(read_message_count, 0);
+    ASSERT_EQ(read_message_count, 0);
 }
 
 /**
@@ -1243,8 +1243,8 @@ TEST_F(McapFileCreationPartitionTest, mcap_dds_topic_partition_no_record)
         ASSERT_EQ(topic_->get_type_name(), read_topic_type);
     }
 
-    // Verify that it read messages
-    ASSERT_GT(read_message_count, 0);
+    // Verify that it does not read messages
+    ASSERT_EQ(read_message_count, 0);
 }
 
 /**
@@ -1303,8 +1303,8 @@ TEST_F(McapFileCreationPartitionTest, mcap_ros2_topic_partition_no_record)
         ASSERT_EQ(utils::demangle_if_ros_topic(topic_->get_type_name()), read_topic_type);
     }
 
-    // Verify that it read messages
-    ASSERT_GT(read_message_count, 0);
+    // Verify that it does not read messages
+    ASSERT_EQ(read_message_count, 0);
 }
 
 TEST_F(McapFileCreationPartitionTest, mcap_data_num_msgs_partition_no_record)
@@ -1333,9 +1333,9 @@ TEST_F(McapFileCreationPartitionTest, mcap_data_num_msgs_partition_no_record)
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Verify the recorded messages count
+    // Verify that it does not read messages
     const auto read_messages_count = count_messages_(read_messages);
-    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES);
+    ASSERT_EQ(read_messages_count, 0);
 }
 
 TEST_F(McapFileCreationPartitionTest, mcap_data_num_msgs_downsampling_partition_no_record)
@@ -1369,10 +1369,9 @@ TEST_F(McapFileCreationPartitionTest, mcap_data_num_msgs_downsampling_partition_
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Verify the recorded messages count
+    // Verify that it does not read messages
     const auto read_messages_count = count_messages_(read_messages);
-    const auto expected_messages = (NUMBER_OF_MESSAGES / DOWNSAMPLING) + (NUMBER_OF_MESSAGES % DOWNSAMPLING);
-    ASSERT_EQ(read_messages_count, expected_messages);
+    ASSERT_EQ(read_messages_count, 0);
 }
 
 // //////////////////////
@@ -1414,9 +1413,9 @@ TEST_F(McapFileCreationPartitionTest, transition_running_partition_no_record)
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Verify the recorded messages count
+    // Verify that it does not read messages
     const auto read_messages_count = count_messages_(read_messages);
-    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_1 + NUMBER_OF_MESSAGES_2);
+    ASSERT_EQ(read_messages_count, 0);
 }
 
 /**
@@ -1454,7 +1453,7 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_partition_no_record)
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Verify the recorded messages count
+    // Verify that it does not read messages
     const auto read_messages_count = count_messages_(read_messages);
     ASSERT_EQ(read_messages_count, 0);
 }
@@ -1565,9 +1564,9 @@ TEST_F(McapFileCreationPartitionTest, transition_running_paused_partition_no_rec
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Verify the recorded messages count
+    // Verify that it does not read messages
     const auto read_messages_count = count_messages_(read_messages);
-    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_1);
+    ASSERT_EQ(read_messages_count, 0);
 }
 
 /**
@@ -1604,9 +1603,9 @@ TEST_F(McapFileCreationPartitionTest, transition_running_suspended_partition_no_
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Verify the recorded messages count
+    // Verify that it does not read messages
     const auto read_messages_count = count_messages_(read_messages);
-    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_1);
+    ASSERT_EQ(read_messages_count, 0);
 }
 
 /**
@@ -1643,9 +1642,9 @@ TEST_F(McapFileCreationPartitionTest, transition_running_stopped_partition_no_re
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Verify the recorded messages count
+    // Verify that it does not read messages
     const auto read_messages_count = count_messages_(read_messages);
-    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_1);
+    ASSERT_EQ(read_messages_count, 0);
 }
 
 /**
@@ -1682,9 +1681,9 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_running_partition_no_rec
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Verify the recorded messages count
+    // Verify that it does not read messages
     const auto read_messages_count = count_messages_(read_messages);
-    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_2);
+    ASSERT_EQ(read_messages_count, 0);
 }
 
 /**
@@ -1721,7 +1720,7 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_suspended_partition_no_r
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Verify the recorded messages count
+    // Verify that it does not read messages
     const auto read_messages_count = count_messages_(read_messages);
     ASSERT_EQ(read_messages_count, 0);
 }
@@ -1760,7 +1759,7 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_stopped_partition_no_rec
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Verify the recorded messages count
+    // Verify that it does not read messages
     const auto read_messages_count = count_messages_(read_messages);
     ASSERT_EQ(read_messages_count, 0);
 }
@@ -1799,9 +1798,9 @@ TEST_F(McapFileCreationPartitionTest, transition_suspended_running_partition_no_
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Verify the recorded messages count
+    // Verify that it does not read messages
     const auto read_messages_count = count_messages_(read_messages);
-    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_2);
+    ASSERT_EQ(read_messages_count, 0);
 }
 
 /**
@@ -1838,7 +1837,7 @@ TEST_F(McapFileCreationPartitionTest, transition_suspended_paused_partition_no_r
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Verify the recorded messages count
+    // Verify that it does not read messages
     const auto read_messages_count = count_messages_(read_messages);
     ASSERT_EQ(read_messages_count, 0);
 }
@@ -1912,9 +1911,9 @@ TEST_F(McapFileCreationPartitionTest, transition_stopped_running_partition_no_re
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Verify the recorded messages count
+    // Verify that it does not read messages
     const auto read_messages_count = count_messages_(read_messages);
-    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_2);
+    ASSERT_EQ(read_messages_count, 0);
 }
 
 /**
@@ -1951,7 +1950,7 @@ TEST_F(McapFileCreationPartitionTest, transition_stopped_paused_partition_no_rec
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Verify the recorded messages count
+    // Verify that it does not read messages
     const auto read_messages_count = count_messages_(read_messages);
     ASSERT_EQ(read_messages_count, 0);
 }
@@ -2037,9 +2036,9 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_event_less_window_partit
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Verify the recorded messages count
+    // Verify that it does not read messages
     const auto read_messages_count = count_messages_(read_messages);
-    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_1 + NUMBER_OF_MESSAGES_2);
+    ASSERT_EQ(read_messages_count, 0);
 
     // Verify the oldest recorded message was recorded in the event window
     const auto max_time_past = find_max_time_past_(read_messages);
@@ -2086,9 +2085,9 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_event_max_window_partiti
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Verify the recorded messages count
+    // Verify that it does not read messages
     const auto read_messages_count = count_messages_(read_messages);
-    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_2);
+    ASSERT_EQ(read_messages_count, 0);
 
     // Verify the oldest recorded message was recorded in the event window
     const auto max_time_past = find_max_time_past_(read_messages);
@@ -2138,9 +2137,9 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_event_start_partition_no
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Verify the recorded messages count
+    // Verify that it does not read messages
     const auto read_messages_count = count_messages_(read_messages);
-    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_2);
+    ASSERT_EQ(read_messages_count, 0);
 
     // Verify the oldest recorded message was recorded in the event window
     const auto max_time_past = find_max_time_past_(read_messages);
@@ -2186,9 +2185,9 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_event_suspend_partition_
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Verify the recorded messages count
+    // Verify that it does not read messages
     const auto read_messages_count = count_messages_(read_messages);
-    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_2);
+    ASSERT_EQ(read_messages_count, 0);
 
     // Verify the oldest recorded message was recorded in the event window
     const auto max_time_past = find_max_time_past_(read_messages);
@@ -2234,9 +2233,9 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_event_stop_partition_no_
     // Read the recorded messages
     auto read_messages = read_messages_(OUTPUT_FILE_PATH);
 
-    // Verify the recorded messages count
+    // Verify that it does not read messages
     const auto read_messages_count = count_messages_(read_messages);
-    ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES_2);
+    ASSERT_EQ(read_messages_count, 0);
 
     // Verify the oldest recorded message was recorded in the event window
     const auto max_time_past = find_max_time_past_(read_messages);

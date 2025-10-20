@@ -93,7 +93,6 @@ public:
     /**
      * @brief Adds the pair sequence_number, source guid in the dictionary.
      *
-     *
      * @param sequence_number The sequence number associated with a message.
      * @param source_guid The guid associated with a message.
      *

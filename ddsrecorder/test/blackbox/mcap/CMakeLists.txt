@@ -126,8 +126,8 @@ set(TEST_LIST
         transition_stopped_suspended_partition
 
         # Event window
-        transition_paused_event_less_wi_partitionndow
-        transition_paused_event_max_win_partitiondow
+        transition_paused_event_less_window_partition
+        transition_paused_event_max_window_partition
 
         # Events
         transition_paused_event_start_partition
@@ -135,40 +135,40 @@ set(TEST_LIST
         transition_paused_event_suspend_partition
 
 
-        mcap_data_msgs_partition_mp_record
-        mcap_dds_topic_partition_mp_record
-        mcap_ros2_topic_partition_mp_record
-        mcap_data_num_msgs_partition_mp_record
-        mcap_data_num_msgs_downsampling_partition_mp_record
+        mcap_data_msgs_partition_no_record
+        mcap_dds_topic_partition_no_record
+        mcap_ros2_topic_partition_no_record
+        mcap_data_num_msgs_partition_no_record
+        mcap_data_num_msgs_downsampling_partition_no_record
 
         # State
-        transition_running_partition_mp_record
-        transition_paused_partition_mp_record
-        transition_stopped_partition_mp_record
-        transition_suspended_partition_mp_record
+        transition_running_partition_no_record
+        transition_paused_partition_no_record
+        transition_stopped_partition_no_record
+        transition_suspended_partition_no_record
 
         # Transitions
-        transition_running_paused_partition_mp_record
-        transition_running_suspended_partition_mp_record
-        transition_running_stopped_partition_mp_record
-        transition_paused_running_partition_mp_record
-        transition_paused_suspended_partition_mp_record
-        transition_paused_stopped_partition_mp_record
-        transition_suspended_running_partition_mp_record
-        transition_suspended_paused_partition_mp_record
-        transition_suspended_stopped_partition_mp_record
-        transition_stopped_running_partition_mp_record
-        transition_stopped_paused_partition_mp_record
-        transition_stopped_suspended_partition_mp_record
+        transition_running_paused_partition_no_record
+        transition_running_suspended_partition_no_record
+        transition_running_stopped_partition_no_record
+        transition_paused_running_partition_no_record
+        transition_paused_suspended_partition_no_record
+        transition_paused_stopped_partition_no_record
+        transition_suspended_running_partition_no_record
+        transition_suspended_paused_partition_no_record
+        transition_suspended_stopped_partition_no_record
+        transition_stopped_running_partition_no_record
+        transition_stopped_paused_partition_no_record
+        transition_stopped_suspended_partition_no_record
 
         # Event window
-        transition_paused_event_less_wi_partitionndow_mp_record
-        transition_paused_event_max_win_partitiondow_mp_record
+        transition_paused_event_less_wi_partitionndow_no_record
+        transition_paused_event_max_win_partitiondow_no_record
 
         # Events
-        transition_paused_event_start_partition_mp_record
-        transition_paused_event_stop_partition_mp_record
-        transition_paused_event_suspend_partition_mp_record
+        transition_paused_event_start_partition_no_record
+        transition_paused_event_stop_partition_no_record
+        transition_paused_event_suspend_partition_no_record
     )
 
 set(TEST_NEEDED_SOURCES

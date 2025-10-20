@@ -136,8 +136,6 @@ void SqlHandler::write_samples_(
             written_topics_.insert(topic);
         }
 
-        // - (Table: Topics) Write the topic if it hasn't been written before -
-
         // get the writer guid
         guid_ss << sql_sample->writer_guid;
 
@@ -149,8 +147,6 @@ void SqlHandler::write_samples_(
         }
         else
         {
-            // Imposible to reach.
-
             // (writers with the empty partition do not enters here,
             // the topic partition would be "")
             samples.pop_front();

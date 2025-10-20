@@ -195,7 +195,7 @@ void SqlWriter::open_new_file_nts_(
 
     create_sql_table_("Partitions", create_partitions_table);
 
-    // Create Partitions table
+    // Create TopicPartitions table
     const std::string create_topic_partitions_table{
         R"(
         CREATE TABLE IF NOT EXISTS TopicsPartitions (
@@ -210,7 +210,7 @@ void SqlWriter::open_new_file_nts_(
 
     create_sql_table_("TopicsPartitions", create_topic_partitions_table);
 
-    // Create Partitions table
+    // Create MessagePartitions table
     const std::string create_message_partitions_table{
         R"(
         CREATE TABLE IF NOT EXISTS MessagesPartitions (

@@ -62,7 +62,7 @@ public:
      * @param allowed_partition_list: Set of allowed partitions added by the .yaml configuration.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
-    void add_partitionlist(
+    void add_partition_list(
             std::set<std::string> allowed_partition_list) override;
 
     /**
@@ -122,7 +122,7 @@ protected:
     //! Link a topic name and a type name to a DdsTopic instance
     std::map<std::pair<std::string, std::string>, ddspipe::core::types::DdsTopic> topics_;
 
-    //! Dictionary of (sequence, source_gui), used in the partition filter.
+    //! Dictionary of (sequence, source_guid), used in the partition filter.
     mcap::KeyValueMap sourceguid_by_sequence_;
 
     //! Dictionary of PartitionsQos to reduce time complexity <writer_guid, partitions>
