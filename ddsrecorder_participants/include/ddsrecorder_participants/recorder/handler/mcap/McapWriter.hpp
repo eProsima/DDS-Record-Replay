@@ -154,11 +154,18 @@ protected:
     void write_channels_nts_();
 
     /**
-     * @brief Writes the metadata to the MCAP file.
+     * @brief Writes the version metadata to the MCAP file.
      *
      * @throws \c FullFileException if the MCAP file is full.
      */
-    void write_metadata_nts_();
+    void write_metadata_version_nts_();
+
+    /**
+     * @brief Writes the messages metadata to the MCAP file.
+     *
+     * @throws \c FullFileException if the MCAP file is full.
+     */
+    void write_metadata_messages_nts_();
 
     /**
      * @brief Writes the schemas to the MCAP file.

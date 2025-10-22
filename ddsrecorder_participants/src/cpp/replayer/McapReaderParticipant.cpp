@@ -208,9 +208,6 @@ void McapReaderParticipant::process_summary(
             reinterpret_cast<const char*>(dynamic_types_attachment.data), dynamic_types_attachment.dataSize);
 
         Serializer::deserialize<DynamicTypesCollection>(dynamic_types_str, types);
-
-        // source_gui of each message, used in the partition filter.
-        sourceguid_by_sequence_ = dynamic_types_attachment.sourceguid_by_sequence;
     }
 
     close_file_();
@@ -381,6 +378,11 @@ void McapReaderParticipant::read_mcap_summary_()
         EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
                 "MCAP file generated with a different DDS Record & Replay version (" << recording_version <<
                 ", current is " << DDSRECORDER_PARTICIPANTS_VERSION_STRING << "), incompatibilities might arise...");
+    }
+
+    if(metadata.find(VERSION_METADATA_MESSAGE_NAME) != metadata.end())
+    {
+        sourceguid_by_sequence_ = metadata.at(VERSION_METADATA_MESSAGE_NAME).metadata;
     }
 }
 

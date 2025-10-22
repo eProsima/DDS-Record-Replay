@@ -175,7 +175,7 @@ void McapWriter::open_new_file_nts_(
             file_tracker_->get_current_filename());
 
     // NOTE: These writes should never fail since the minimum size accounts for them.
-    write_metadata_nts_();
+    write_metadata_version_nts_();
     write_schemas_nts_();
     write_channels_nts_();
 
@@ -193,6 +193,7 @@ void McapWriter::close_current_file_nts_()
     {
         // NOTE: This write should never fail since the minimum size accounts for it.
         write_attachment_nts_();
+        write_metadata_messages_nts_();
     }
 
     file_tracker_->set_current_file_size(size_tracker_.get_written_mcap_size());
@@ -319,7 +320,6 @@ void McapWriter::write_attachment_nts_()
     attachment.data = reinterpret_cast<std::byte*>(const_cast<char*>(dynamic_types_.c_str()));
     attachment.dataSize = dynamic_types_.length();
     attachment.createTime = to_mcap_timestamp(utils::now());
-    attachment.sourceguid_by_sequence = sourceguid_by_sequence_;
 
     write_nts_(attachment);
 }
@@ -341,7 +341,7 @@ void McapWriter::write_channels_nts_()
     }
 }
 
-void McapWriter::write_metadata_nts_()
+void McapWriter::write_metadata_version_nts_()
 {
     mcap::Metadata metadata;
 
@@ -352,6 +352,21 @@ void McapWriter::write_metadata_nts_()
 
     write_nts_(metadata);
 }
+
+void McapWriter::write_metadata_messages_nts_()
+{
+    mcap::Metadata metadata;
+
+    // Write down the metadata with the version
+    metadata.name = VERSION_METADATA_MESSAGE_NAME;
+    for (const auto& pair_message: sourceguid_by_sequence_)
+    {
+        metadata.metadata[pair_message.first] = pair_message.second;
+    }
+
+    write_nts_(metadata);
+}
+
 
 void McapWriter::write_schemas_nts_()
 {

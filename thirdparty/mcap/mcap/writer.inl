@@ -831,7 +831,6 @@ uint64_t McapWriter::write(IWritable& output, const Channel& channel) {
 }
 
 uint64_t McapWriter::write(IWritable& output, const Message& message) {
-  // channelId + sequence + logTime + publishTime + source_guid size (4) + source_guid + data
   const uint64_t recordSize = 2 + 4 + 8 + 8 + message.dataSize;
 
   write(output, OpCode::Message);
@@ -840,21 +839,14 @@ uint64_t McapWriter::write(IWritable& output, const Message& message) {
   write(output, message.sequence);
   write(output, message.logTime);
   write(output, message.publishTime);
-
   write(output, message.data, message.dataSize);
 
   return 9 + recordSize;
 }
 
 uint64_t McapWriter::write(IWritable& output, const Attachment& attachment) {
-  const uint32_t sourceguid_by_sequenceSize = internal::KeyValueMapSize(attachment.sourceguid_by_sequence);
-  const uint64_t recordSize = /* logTime */ 8 +
-                              /* createTime */ 8 +
-                              /* name */ 4 + attachment.name.size() +
-                              /* mediaType */ 4 + attachment.mediaType.size() +
-                              /* datasize + data */ 8 + attachment.dataSize +
-                              /* crc */ 4 +
-                              /* sourceguid_by_sequence */ 4 + sourceguid_by_sequenceSize;
+  const uint64_t recordSize = 4 + attachment.name.size() + 8 + 8 + 4 + attachment.mediaType.size() +
+                              8 + attachment.dataSize + 4;
 
   write(output, OpCode::Attachment);
   write(output, recordSize);
@@ -865,7 +857,6 @@ uint64_t McapWriter::write(IWritable& output, const Attachment& attachment) {
   write(output, attachment.dataSize);
   write(output, attachment.data, attachment.dataSize);
   write(output, attachment.crc);
-  write(output, attachment.sourceguid_by_sequence);
 
   return 9 + recordSize;
 }

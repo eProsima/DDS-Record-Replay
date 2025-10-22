@@ -1013,8 +1013,7 @@ Status McapReader::ParseAttachment(const Record& record, Attachment* attachment)
                                /* name */ 4 +
                                /* media_type */ 4 +
                                /* data_size */ 8 +
-                               /* crc */ 4 +
-                               /* sourceguid_by_sequence */ 4;
+                               /* crc */ 4;
 
   assert(record.opcode == OpCode::Attachment);
   if (record.dataSize < MinSize) {
@@ -1068,13 +1067,6 @@ Status McapReader::ParseAttachment(const Record& record, Attachment* attachment)
   // crc
   if (auto status =
         internal::ParseUint32(record.data + offset, record.dataSize - offset, &attachment->crc);
-      !status.ok()) {
-    return status;
-  }
-  offset += 4;
-  // sourceguid_by_sequence
-  if (auto status = internal::ParseKeyValueMap(record.data + offset, record.dataSize - offset,
-                                               &attachment->sourceguid_by_sequence);
       !status.ok()) {
     return status;
   }

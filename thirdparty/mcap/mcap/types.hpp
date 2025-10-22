@@ -260,7 +260,6 @@ struct MCAP_PUBLIC Attachment {
   uint64_t dataSize;
   const std::byte* data = nullptr;
   uint32_t crc;
-  KeyValueMap sourceguid_by_sequence;
 };
 
 /**

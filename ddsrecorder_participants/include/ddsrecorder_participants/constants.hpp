@@ -35,12 +35,15 @@ constexpr const char* DYNAMIC_TYPES_ATTACHMENT_NAME("dynamic_types");
 // ROS 2 Types metadata
 constexpr const char* ROS2_TYPES("ros2-types");
 
-constexpr const char* PARTITIONS("partitions");
+
 
 // Version metadata
 constexpr const char* VERSION_METADATA_NAME("version");
 constexpr const char* VERSION_METADATA_RELEASE("release");
 constexpr const char* VERSION_METADATA_COMMIT("commit");
+// Partitions metadata
+constexpr const char* PARTITIONS("partitions"); // partitions of the channel
+constexpr const char* VERSION_METADATA_MESSAGE_NAME("messages_guid"); // the guid associated with a message
 
 } /* namespace participants */
 } /* namespace ddsrecorder */
