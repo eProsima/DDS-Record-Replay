@@ -86,7 +86,8 @@ void BaseWriter::disable()
 
     EPROSIMA_LOG_INFO(DDSRECORDER_BASE_WRITER,
             "WRITE | Disabling writer.");
-
+    
+    std::cout << "\tdisable()\n";
     close_current_file_nts_();
 
     enabled_ = false;
@@ -98,10 +99,13 @@ void BaseWriter::set_on_disk_full_callback(
     on_disk_full_lambda_ = on_disk_full_lambda;
 }
 
+int count_msg = 0;
+
 void BaseWriter::on_file_full_nts_(
         const FullFileException& e,
         const std::uint64_t min_file_size)
 {
+    std::cout << "\ton_file_full_nts_()\tcount_msg: " << count_msg++ << "\n";
     close_current_file_nts_();
 
     // Disable the writer in case opening a new file fails

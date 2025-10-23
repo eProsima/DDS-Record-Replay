@@ -70,6 +70,9 @@ void McapSizeTracker::init(
     file_path_ = file_path;
 
     enabled_ = true;
+
+    potencial_count = 0;
+    written_count = 0;
 }
 
 void McapSizeTracker::reset()
@@ -266,6 +269,9 @@ void McapSizeTracker::check_and_increase_potential_mcap_size_(
 
     potential_mcap_size_ += size;
 
+    potencial_count++;
+    std::cout << "\t\tPotencial: " << potencial_count << ".\n";
+
     if (increase_min_mcap_size)
     {
         // NOTE: The minimum size must increase even if the potential size can't.
@@ -327,6 +333,9 @@ void McapSizeTracker::check_and_increase_written_mcap_size_(
     }
 
     written_mcap_size_ += size;
+
+    written_count++;
+    std::cout << "\t\tWritten: " << written_count << ".\n";
 
     // Check the real size of the file every check_interval_ Bytes
     if (written_mcap_size_ - checked_written_mcap_size_ > check_interval_)

@@ -57,38 +57,7 @@ void McapWriter::add_message_sourceguid(
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    const auto& add_sourceguid_pair = [&]()
-            {
-                uint32_t pair_length = sequence_number + source_guid.length();
-
-                EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,
-                        "MCAP_WRITE | Adding a pair (sequence number, guid) payload " <<
-                        utils::from_bytes(pair_length) << ".");
-
-                size_tracker_.attachment_to_write(pair_length);
-            };
-
-    try
-    {
-        add_sourceguid_pair();
-    }
-    catch (const FullFileException& e)
-    {
-        try
-        {
-            on_file_full_nts_(e, size_tracker_.get_min_mcap_size());
-            add_sourceguid_pair();
-        }
-        catch (const FullDiskException& e)
-        {
-            EPROSIMA_LOG_ERROR(DDSRECORDER_MCAP_HANDLER,
-                    "FAIL_MCAP_WRITE | Disk is full. Error message:\n " << e.what());
-            on_disk_full_();
-        }
-    }
-
     sourceguid_by_sequence_[std::to_string(sequence_number)] = source_guid;
-    file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
 }
 
 void McapWriter::update_dynamic_types(
@@ -191,6 +160,7 @@ void McapWriter::close_current_file_nts_()
 {
     if (record_types_ && dynamic_types_.length() > 0)
     {
+        std::cout << "\t\tclose_current_file_nts_()\n";
         // NOTE: This write should never fail since the minimum size accounts for it.
         write_attachment_nts_();
         write_metadata_messages_nts_();
