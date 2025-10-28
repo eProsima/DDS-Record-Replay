@@ -498,7 +498,7 @@ protected:
     // 28KB for each file, in which the attachment information
     // is stored in the potential_mcap_size_, and in reality
     // the size of the files is the half
-    test::limits mcap_limits_{21 * 1024, 3 * 1024, 0.2, /*120*/460};
+    test::limits mcap_limits_{21 * 1024, 3 * 1024, 0.2, /*120*/ 460};
     //test::limits mcap_limits_{35 * 1024,  5 * 1024, 0.2, 750};
     //test::limits mcap_limits_{60 * 1024, 12 * 1024, 0.2, 460};
     test::limits sql_limits_{300 * 1024,  300 * 1024, 0.2, 273};

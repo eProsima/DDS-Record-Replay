@@ -337,7 +337,6 @@ void McapWriter::write_metadata_messages_nts_()
     write_nts_(metadata);
 }
 
-
 void McapWriter::write_schemas_nts_()
 {
     if (schemas_.empty())

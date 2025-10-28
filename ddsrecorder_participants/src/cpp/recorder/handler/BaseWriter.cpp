@@ -86,7 +86,7 @@ void BaseWriter::disable()
 
     EPROSIMA_LOG_INFO(DDSRECORDER_BASE_WRITER,
             "WRITE | Disabling writer.");
-    
+
     std::cout << "\tdisable()\n";
     close_current_file_nts_();
 

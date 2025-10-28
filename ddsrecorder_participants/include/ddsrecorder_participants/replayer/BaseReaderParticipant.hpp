@@ -100,34 +100,35 @@ public:
     std::shared_ptr<ddspipe::core::IReader> create_reader(
             const ddspipe::core::ITopic& topic) override;
 
-    DDSPIPE_PARTICIPANTS_DllAPI
+    //! Override create_reader_() IParticipant method
+    DDSRECORDER_PARTICIPANTS_DllAPI
     std::shared_ptr<ddspipe::core::IReader> create_reader_with_filter(
             const ddspipe::core::ITopic& topic,
             const std::set<std::string> partitions) override;
 
     //! Override add_topic_partition() IParticipant method
-    DDSPIPE_PARTICIPANTS_DllAPI
+    DDSRECORDER_PARTICIPANTS_DllAPI
     bool add_topic_partition(
             const std::string& topic_name,
             const std::string& writer_guid,
             const std::string& partition) override;
 
     //! Override update_topic_partition() IParticipant method
-    DDSPIPE_PARTICIPANTS_DllAPI
+    DDSRECORDER_PARTICIPANTS_DllAPI
     bool update_topic_partition(
             const std::string& topic_name,
             const std::string& writer_guid,
             const std::string& partition) override;
 
     //! Override delete_topic_partition() IParticipant method
-    DDSPIPE_PARTICIPANTS_DllAPI
+    DDSRECORDER_PARTICIPANTS_DllAPI
     bool delete_topic_partition(
             const std::string& topic_name,
             const std::string& writer_guid,
             const std::string& partition) override;
 
     //! Override clear_topic_partitions() IParticipant method
-    DDSPIPE_PARTICIPANTS_DllAPI
+    DDSRECORDER_PARTICIPANTS_DllAPI
     void clear_topic_partitions() override;
 
     /**

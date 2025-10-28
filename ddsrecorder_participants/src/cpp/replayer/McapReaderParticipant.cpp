@@ -380,7 +380,7 @@ void McapReaderParticipant::read_mcap_summary_()
                 ", current is " << DDSRECORDER_PARTICIPANTS_VERSION_STRING << "), incompatibilities might arise...");
     }
 
-    if(metadata.find(VERSION_METADATA_MESSAGE_NAME) != metadata.end())
+    if (metadata.find(VERSION_METADATA_MESSAGE_NAME) != metadata.end())
     {
         sourceguid_by_sequence_ = metadata.at(VERSION_METADATA_MESSAGE_NAME).metadata;
     }
