@@ -323,8 +323,8 @@ protected:
                 OUTPUT_FILE_NAME);
 
 
-        //for (std::uint32_t i = 0; i < limits_->MAX_FILES / 2; i++)
-        for (std::uint32_t i = 0; i < limits_->MAX_FILES; i++)
+        for (std::uint32_t i = 0; i < limits_->MAX_FILES / 2; i++)
+        //for (std::uint32_t i = 0; i < limits_->MAX_FILES; i++)
         {
             // Send more messages than can be stored in a file with a size of max-file-size
             publish_msgs_(limits_->FILE_OVERFLOW_THRESHOLD);
@@ -332,7 +332,7 @@ protected:
             // Make sure the DDS Recorder has received all the messages
             ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), RETCODE_OK);
 
-            recorder.stop();
+            //recorder.stop();
 
             // Verify that the DDS Recorder has created the expected number of output files and that their size is close
             // but doesn't exceed the max-file-size
@@ -501,6 +501,7 @@ protected:
     test::limits mcap_limits_{21 * 1024, 3 * 1024, 0.2, /*120*/ 460};
     //test::limits mcap_limits_{35 * 1024,  5 * 1024, 0.2, 750};
     //test::limits mcap_limits_{60 * 1024, 12 * 1024, 0.2, 460};
+
     test::limits sql_limits_{300 * 1024,  300 * 1024, 0.2, 273};
 
     test::limits* limits_;

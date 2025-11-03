@@ -124,6 +124,7 @@ protected:
 
     //! Dictionary of (sequence, source_guid), used in the partition filter.
     mcap::KeyValueMap sourceguid_by_sequence_;
+    //std::vector<std::string> sourceguid_by_sequence_;
 
     //! Dictionary of PartitionsQos to reduce time complexity <writer_guid, partitions>
     std::map<std::string, eprosima::fastdds::dds::PartitionQosPolicy> partitions_qos_dict_;

@@ -188,6 +188,7 @@ protected:
 
     // The dictionary of sourceguids by sequence numbers as an attachment
     mcap::KeyValueMap sourceguid_by_sequence_;
+    //std::vector<std::string> sourceguid_by_sequence_;
 
     // The channels that have been written
     std::map<mcap::ChannelId, mcap::Channel> channels_;

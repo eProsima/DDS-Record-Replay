@@ -105,7 +105,7 @@ void BaseWriter::on_file_full_nts_(
         const FullFileException& e,
         const std::uint64_t min_file_size)
 {
-    std::cout << "\ton_file_full_nts_()\tcount_msg: " << count_msg++ << "\n";
+    //std::cout << "\ton_file_full_nts_()\tcount_msg: " << count_msg++ << "\n";
     close_current_file_nts_();
 
     // Disable the writer in case opening a new file fails

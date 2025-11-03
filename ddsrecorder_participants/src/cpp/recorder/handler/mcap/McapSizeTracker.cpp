@@ -191,13 +191,13 @@ void McapSizeTracker::metadata_to_write(
         const mcap::Metadata& metadata)
 {
     static constexpr bool INCREASE_MIN_MCAP_SIZE = true;
-    check_and_increase_potential_mcap_size_(get_metadata_size_(metadata), INCREASE_MIN_MCAP_SIZE);
+    check_and_increase_potential_mcap_size_(get_metadata_size_(metadata), INCREASE_MIN_MCAP_SIZE, true);
 }
 
 void McapSizeTracker::metadata_written(
         const mcap::Metadata& metadata)
 {
-    check_and_increase_written_mcap_size_(get_metadata_size_(metadata));
+    check_and_increase_written_mcap_size_(get_metadata_size_(metadata), true);
 }
 
 std::uint64_t McapSizeTracker::get_potential_mcap_size() const
@@ -248,29 +248,51 @@ bool McapSizeTracker::can_increase_potential_mcap_size_(
 
 void McapSizeTracker::check_and_increase_potential_mcap_size_(
         const std::uint64_t& size,
-        const bool increase_min_mcap_size /* = false */)
+        const bool increase_min_mcap_size /* = false */,
+        const bool metadata)
 {
-    if (!enabled_)
+    if(!metadata)
     {
-        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
-                "MCAP_WRITE | Attempting to increase potential size in disabled tracker.");
-        return;
-    }
 
-    if (disk_full_ || !can_increase_potential_mcap_size_(size))
+    
+        if (!enabled_)
+        {
+            EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
+                    "MCAP_WRITE | Attempting to increase potential size in disabled tracker.");
+            return;
+        }
+
+        if (disk_full_ || !can_increase_potential_mcap_size_(size))
+        {
+            disk_full_ = true;
+            throw FullFileException(
+                    STR_ENTRY << "Attempted to write " << utils::from_bytes(size) << " on an MCAP of "
+                                << utils::from_bytes(potential_mcap_size_) << " but there is not enough space available: "
+                                << utils::from_bytes(space_available_ - potential_mcap_size_) << "."
+                        , size);
+        }
+
+        mcap::Metadata metadata_example;
+        //get_metadata_size_(metadata_example);
+
+        std::string guid_example = "01.0f.6f.ae.f9.b5.e4.a5.00.00.00.00|0.0.2.3";
+        std::string sequence_number_example = "1000";
+        potential_mcap_size_ += size;
+
+        metadata_example.metadata.insert({std::to_string(potencial_count), guid_example});
+        //potential_mcap_size_ += mcap::internal::KeyValueMapSize(metadata_example.metadata);
+        potential_mcap_size_ += std::to_string(potencial_count).size() + guid_example.size();
+        
+        //potential_mcap_size_ += guid_example.size();
+        //potential_mcap_size_ += sequence_number_example.size();
+
+        potencial_count++;
+        std::cout << "\t\tPotencial: " << potencial_count << ".\n";
+    }
+    else
     {
-        disk_full_ = true;
-        throw FullFileException(
-                  STR_ENTRY << "Attempted to write " << utils::from_bytes(size) << " on an MCAP of "
-                            << utils::from_bytes(potential_mcap_size_) << " but there is not enough space available: "
-                            << utils::from_bytes(space_available_ - potential_mcap_size_) << "."
-                      , size);
+        std::cout << "\t\tLAST METADATA ADDED\tPOTENTIAL\n";
     }
-
-    potential_mcap_size_ += size;
-
-    potencial_count++;
-    std::cout << "\t\tPotencial: " << potencial_count << ".\n";
 
     if (increase_min_mcap_size)
     {
@@ -307,35 +329,57 @@ void McapSizeTracker::decrease_potential_mcap_size_(
 }
 
 void McapSizeTracker::check_and_increase_written_mcap_size_(
-        const std::uint64_t& size)
+        const std::uint64_t& size,
+        const bool metadata /* = false */)
 {
-    if (!enabled_)
+    if(!metadata)
     {
-        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
-                "MCAP_WRITE | Attempting to increase written size in disabled tracker.");
-        return;
-    }
 
-    if ((written_mcap_size_ + size) > space_available_)
+    
+        if (!enabled_)
+        {
+            EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
+                    "MCAP_WRITE | Attempting to increase written size in disabled tracker.");
+            return;
+        }
+
+        if ((written_mcap_size_ + size) > space_available_)
+        {
+            EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
+                    "MCAP_WRITE | Written size exceeds available space in disk.");
+            // assert(false); // TODO: uncomment when estimation is exact
+            return;
+        }
+
+        if ((written_mcap_size_ + size) > potential_mcap_size_)
+        {
+            EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
+                    "MCAP_WRITE | Written size exceeds potential one.");
+            // assert(false); // TODO: uncomment when estimation is exact
+            return;
+        }
+
+        mcap::Metadata metadata_example;
+        //get_metadata_size_(metadata_example);
+
+        std::string guid_example = "01.0f.6f.ae.f9.b5.e4.a5.00.00.00.00|0.0.2.3";
+        std::string sequence_number_example = "1000";
+        written_mcap_size_ += size;
+
+        metadata_example.metadata.insert({std::to_string(written_count), guid_example});
+        //written_mcap_size_ += mcap::internal::KeyValueMapSize(metadata_example.metadata);
+        written_mcap_size_ += std::to_string(written_count).size() + guid_example.size();
+        
+        //written_mcap_size_ += guid_example.size();
+        //written_mcap_size_ += sequence_number_example.size();
+
+        written_count++;
+        std::cout << "\t\tWritten: " << written_count << ".\n";
+    }
+    else
     {
-        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
-                "MCAP_WRITE | Written size exceeds available space in disk.");
-        // assert(false); // TODO: uncomment when estimation is exact
-        return;
+        std::cout << "\t\tLAST METADATA ADDED\tWRITTEN\n";
     }
-
-    if ((written_mcap_size_ + size) > potential_mcap_size_)
-    {
-        EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
-                "MCAP_WRITE | Written size exceeds potential one.");
-        // assert(false); // TODO: uncomment when estimation is exact
-        return;
-    }
-
-    written_mcap_size_ += size;
-
-    written_count++;
-    std::cout << "\t\tWritten: " << written_count << ".\n";
 
     // Check the real size of the file every check_interval_ Bytes
     if (written_mcap_size_ - checked_written_mcap_size_ > check_interval_)

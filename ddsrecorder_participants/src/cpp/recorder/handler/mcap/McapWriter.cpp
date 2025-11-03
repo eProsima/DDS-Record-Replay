@@ -58,6 +58,7 @@ void McapWriter::add_message_sourceguid(
     std::lock_guard<std::mutex> lock(mutex_);
 
     sourceguid_by_sequence_[std::to_string(sequence_number)] = source_guid;
+    //sourceguid_by_sequence_.push_back(source_guid);
 }
 
 void McapWriter::update_dynamic_types(
@@ -160,10 +161,11 @@ void McapWriter::close_current_file_nts_()
 {
     if (record_types_ && dynamic_types_.length() > 0)
     {
-        std::cout << "\t\tclose_current_file_nts_()\n";
         // NOTE: This write should never fail since the minimum size accounts for it.
         write_attachment_nts_();
+
         write_metadata_messages_nts_();
+        sourceguid_by_sequence_.clear();
     }
 
     file_tracker_->set_current_file_size(size_tracker_.get_written_mcap_size());
