@@ -240,7 +240,9 @@ void McapReaderParticipant::process_messages()
 
         const auto topic_id = std::make_pair(it.channel->topic, it.schema->name);
         const auto topic = topics_[topic_id];
-        const std::string writer_guid = sourceguid_by_sequence_[std::to_string(it.message.sequence)];
+        std::string seq_num_str = std::to_string(it.message.sequence);
+        std::string source_guid_indx = source_guid_by_sequence_[seq_num_str];
+        const std::string writer_guid = sequence_by_source_guid_indx_[source_guid_indx];
 
         if (filtered_writersguid_list_.find(writer_guid) != filtered_writersguid_list_.end())
         {
@@ -382,7 +384,8 @@ void McapReaderParticipant::read_mcap_summary_()
 
     if (metadata.find(VERSION_METADATA_MESSAGE_NAME) != metadata.end())
     {
-        sourceguid_by_sequence_ = metadata.at(VERSION_METADATA_MESSAGE_NAME).metadata;
+        source_guid_by_sequence_ = metadata.at(VERSION_METADATA_MESSAGE_NAME).metadata;
+        sequence_by_source_guid_indx_ = metadata.at(VERSION_METADATA_MESSAGE_INDX_NAME).metadata;
     }
 }
 

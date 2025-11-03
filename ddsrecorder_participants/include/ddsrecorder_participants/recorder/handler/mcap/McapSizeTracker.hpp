@@ -39,11 +39,6 @@ class McapSizeTracker
 {
 public:
 
-    int potencial_count;
-    int written_count;
-
-
-
     /**
      * @brief Constructor
      *
@@ -213,6 +208,11 @@ protected:
     bool disk_full_;
 
     bool enabled_ = false;
+
+    // Number of potential messages
+    int potential_count;
+    // Number of written messages
+    int written_count;
 
     //! MCAP file overhead
     /**

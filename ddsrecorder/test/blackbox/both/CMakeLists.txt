@@ -29,11 +29,11 @@ set(TEST_LIBRARY_SOURCES
 
 set(TEST_LIST
         mcap_max_file_size
-        #sql_max_file_size
+        sql_max_file_size
         mcap_max_size
-        #sql_max_size
+        sql_max_size
         mcap_file_rotation
-        #sql_log_rotation
+        sql_log_rotation
     )
 
 set(TEST_NEEDED_SOURCES

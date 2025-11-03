@@ -122,9 +122,10 @@ protected:
     //! Link a topic name and a type name to a DdsTopic instance
     std::map<std::pair<std::string, std::string>, ddspipe::core::types::DdsTopic> topics_;
 
-    //! Dictionary of (sequence, source_guid), used in the partition filter.
-    mcap::KeyValueMap sourceguid_by_sequence_;
-    //std::vector<std::string> sourceguid_by_sequence_;
+    // The dictionary of sequence-source_guid
+    mcap::KeyValueMap source_guid_by_sequence_;
+    // The indexation dictionary for the source_guid_indx-sequence
+    mcap::KeyValueMap sequence_by_source_guid_indx_;
 
     //! Dictionary of PartitionsQos to reduce time complexity <writer_guid, partitions>
     std::map<std::string, eprosima::fastdds::dds::PartitionQosPolicy> partitions_qos_dict_;

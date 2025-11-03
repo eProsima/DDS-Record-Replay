@@ -163,9 +163,14 @@ protected:
     /**
      * @brief Writes the messages metadata to the MCAP file.
      *
+     * @param metadata_name The name of the map in the metadata.
+     * @param map The map that is going to be writed in the metadata.
+     *
      * @throws \c FullFileException if the MCAP file is full.
      */
-    void write_metadata_messages_nts_();
+    void write_metadata_messages_nts_(
+            const std::string metadata_name,
+            const mcap::KeyValueMap map);
 
     /**
      * @brief Writes the schemas to the MCAP file.
@@ -186,9 +191,13 @@ protected:
     // The dynamic types payload to be written as an attachment
     std::string dynamic_types_;
 
-    // The dictionary of sourceguids by sequence numbers as an attachment
-    mcap::KeyValueMap sourceguid_by_sequence_;
-    //std::vector<std::string> sourceguid_by_sequence_;
+    // The dictionary of sequence-guid
+    mcap::KeyValueMap source_guid_by_sequence_;
+    // The indexation dictionary for the source_guids
+    mcap::KeyValueMap source_guid_by_sequence_indx_;
+
+    // The (Auxiliar) dictionary of guid-sequence
+    mcap::KeyValueMap sequence_by_source_guid_indx_;
 
     // The channels that have been written
     std::map<mcap::ChannelId, mcap::Channel> channels_;

@@ -71,7 +71,7 @@ void McapSizeTracker::init(
 
     enabled_ = true;
 
-    potencial_count = 0;
+    potential_count = 0;
     written_count = 0;
 }
 
@@ -272,26 +272,11 @@ void McapSizeTracker::check_and_increase_potential_mcap_size_(
                         , size);
         }
 
-        mcap::Metadata metadata_example;
-        //get_metadata_size_(metadata_example);
-
-        std::string guid_example = "01.0f.6f.ae.f9.b5.e4.a5.00.00.00.00|0.0.2.3";
-        std::string sequence_number_example = "1000";
+        std::string guid_example = "10";
         potential_mcap_size_ += size;
+        potential_mcap_size_ += std::to_string(potential_count).size() + guid_example.size();
 
-        metadata_example.metadata.insert({std::to_string(potencial_count), guid_example});
-        //potential_mcap_size_ += mcap::internal::KeyValueMapSize(metadata_example.metadata);
-        potential_mcap_size_ += std::to_string(potencial_count).size() + guid_example.size();
-        
-        //potential_mcap_size_ += guid_example.size();
-        //potential_mcap_size_ += sequence_number_example.size();
-
-        potencial_count++;
-        std::cout << "\t\tPotencial: " << potencial_count << ".\n";
-    }
-    else
-    {
-        std::cout << "\t\tLAST METADATA ADDED\tPOTENTIAL\n";
+        potential_count++;
     }
 
     if (increase_min_mcap_size)
@@ -334,8 +319,6 @@ void McapSizeTracker::check_and_increase_written_mcap_size_(
 {
     if(!metadata)
     {
-
-    
         if (!enabled_)
         {
             EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
@@ -359,26 +342,10 @@ void McapSizeTracker::check_and_increase_written_mcap_size_(
             return;
         }
 
-        mcap::Metadata metadata_example;
-        //get_metadata_size_(metadata_example);
-
-        std::string guid_example = "01.0f.6f.ae.f9.b5.e4.a5.00.00.00.00|0.0.2.3";
-        std::string sequence_number_example = "1000";
+        std::string guid_example = "10";
         written_mcap_size_ += size;
-
-        metadata_example.metadata.insert({std::to_string(written_count), guid_example});
-        //written_mcap_size_ += mcap::internal::KeyValueMapSize(metadata_example.metadata);
         written_mcap_size_ += std::to_string(written_count).size() + guid_example.size();
-        
-        //written_mcap_size_ += guid_example.size();
-        //written_mcap_size_ += sequence_number_example.size();
-
         written_count++;
-        std::cout << "\t\tWritten: " << written_count << ".\n";
-    }
-    else
-    {
-        std::cout << "\t\tLAST METADATA ADDED\tWRITTEN\n";
     }
 
     // Check the real size of the file every check_interval_ Bytes

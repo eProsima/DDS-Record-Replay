@@ -44,6 +44,7 @@ constexpr const char* VERSION_METADATA_COMMIT("commit");
 // Partitions metadata
 constexpr const char* PARTITIONS("partitions"); // partitions of the channel
 constexpr const char* VERSION_METADATA_MESSAGE_NAME("messages_guid"); // the guid associated with a message
+constexpr const char* VERSION_METADATA_MESSAGE_INDX_NAME("messages_guid_indx"); // the guid associated with a message
 
 } /* namespace participants */
 } /* namespace ddsrecorder */

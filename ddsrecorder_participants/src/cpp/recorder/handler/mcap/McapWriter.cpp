@@ -28,6 +28,7 @@
 #include <ddsrecorder_participants/recorder/exceptions/FullFileException.hpp>
 #include <ddsrecorder_participants/recorder/message/McapMessage.hpp>
 #include <ddsrecorder_participants/recorder/handler/mcap/McapWriter.hpp>
+#include <ddsrecorder_participants/constants.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -57,8 +58,22 @@ void McapWriter::add_message_sourceguid(
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    sourceguid_by_sequence_[std::to_string(sequence_number)] = source_guid;
-    //sourceguid_by_sequence_.push_back(source_guid);
+    std::string indx;
+
+    auto source_guid_it = sequence_by_source_guid_indx_.find(source_guid);
+    if(source_guid_it == sequence_by_source_guid_indx_.end())
+    {
+        indx = std::to_string(sequence_by_source_guid_indx_.size());
+
+        source_guid_by_sequence_indx_[indx] = source_guid;
+        sequence_by_source_guid_indx_[source_guid] = indx;
+    }
+    else
+    {
+        indx = source_guid_it->second;
+    }
+
+    source_guid_by_sequence_[std::to_string(sequence_number)] = indx;
 }
 
 void McapWriter::update_dynamic_types(
@@ -163,9 +178,12 @@ void McapWriter::close_current_file_nts_()
     {
         // NOTE: This write should never fail since the minimum size accounts for it.
         write_attachment_nts_();
-
-        write_metadata_messages_nts_();
-        sourceguid_by_sequence_.clear();
+        // Add the metadata dictionaries of source_guid messages
+        write_metadata_messages_nts_(VERSION_METADATA_MESSAGE_NAME, source_guid_by_sequence_);
+        write_metadata_messages_nts_(VERSION_METADATA_MESSAGE_INDX_NAME, source_guid_by_sequence_indx_);
+        // Clear the dictionaries (resource-limits)
+        source_guid_by_sequence_.clear();
+        sequence_by_source_guid_indx_.clear();
     }
 
     file_tracker_->set_current_file_size(size_tracker_.get_written_mcap_size());
@@ -325,13 +343,15 @@ void McapWriter::write_metadata_version_nts_()
     write_nts_(metadata);
 }
 
-void McapWriter::write_metadata_messages_nts_()
+void McapWriter::write_metadata_messages_nts_(
+        const std::string metadata_name,
+        const mcap::KeyValueMap map)
 {
     mcap::Metadata metadata;
 
     // Write down the metadata with the version
-    metadata.name = VERSION_METADATA_MESSAGE_NAME;
-    for (const auto& pair_message: sourceguid_by_sequence_)
+    metadata.name = metadata_name;
+    for (const auto& pair_message: map)
     {
         metadata.metadata[pair_message.first] = pair_message.second;
     }
