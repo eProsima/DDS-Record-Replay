@@ -486,7 +486,8 @@ TEST_F(SqlFileCreationPartitionTest, sql_data_num_msgs_downsampling_partition)
                 // Verify the recorded messages count
                 const auto recorded_messages = sqlite3_column_int(stmt,
                 0);
-                const auto expected_messages = (NUMBER_OF_MESSAGES / DOWNSAMPLING) + (NUMBER_OF_MESSAGES % DOWNSAMPLING);
+                const auto expected_messages = (NUMBER_OF_MESSAGES / DOWNSAMPLING) +
+                (NUMBER_OF_MESSAGES % DOWNSAMPLING);
                 ASSERT_EQ(recorded_messages, expected_messages);
             });
 }
@@ -1869,7 +1870,8 @@ TEST_F(SqlFileCreationPartitionTest, sql_data_num_msgs_downsampling_partition_no
                 // Verify the recorded messages count
                 const auto recorded_messages = sqlite3_column_int(stmt,
                 0);
-                const auto expected_messages = (NUMBER_OF_MESSAGES / DOWNSAMPLING) + (NUMBER_OF_MESSAGES % DOWNSAMPLING);
+                const auto expected_messages = (NUMBER_OF_MESSAGES / DOWNSAMPLING) +
+                (NUMBER_OF_MESSAGES % DOWNSAMPLING);
                 ASSERT_EQ(recorded_messages, 0); // the recorder has a filter in "B" and do no store information.
             });
 }

@@ -362,8 +362,9 @@ bool DdsRecorder::load_resource_limits(
             // Subcase 2
             if (mcap_size_limited)
             {
-                if (!mcap_output_settings.set_resource_limits(configuration_.mcap_resource_limits.resource_limits_struct,
-                        space_available))
+                if (!mcap_output_settings.set_resource_limits(
+                            configuration_.mcap_resource_limits.resource_limits_struct,
+                            space_available))
                 {
                     error_msg << "The available space given the MCAP conditions is lower than the safety margin.";
                     return false;
@@ -420,8 +421,9 @@ bool DdsRecorder::load_resource_limits(
                             "MCAP resource limits are set but no max size is set. Defaulting to half of the available space for MCAP and SQL.");
                     mcap_output_settings.resource_limits.max_size_ = space_available / 2;
                 }
-                if (!mcap_output_settings.set_resource_limits(configuration_.mcap_resource_limits.resource_limits_struct,
-                        space_available))
+                if (!mcap_output_settings.set_resource_limits(
+                            configuration_.mcap_resource_limits.resource_limits_struct,
+                            space_available))
                 {
                     error_msg << "The available space given the MCAP conditions is lower than the safety margin.";
                     return false;

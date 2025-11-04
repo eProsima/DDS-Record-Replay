@@ -264,11 +264,11 @@ void McapSizeTracker::check_and_increase_potential_mcap_size_(
         {
             disk_full_ = true;
             throw FullFileException(
-                    STR_ENTRY << "Attempted to write " << utils::from_bytes(size) << " on an MCAP of "
+                      STR_ENTRY << "Attempted to write " << utils::from_bytes(size) << " on an MCAP of "
                                 << utils::from_bytes(
-                        potential_mcap_size_) << " but there is not enough space available: "
+                          potential_mcap_size_) << " but there is not enough space available: "
                                 << utils::from_bytes(space_available_ - potential_mcap_size_) << "."
-                        , size);
+                          , size);
         }
 
         potential_mcap_size_ += size;

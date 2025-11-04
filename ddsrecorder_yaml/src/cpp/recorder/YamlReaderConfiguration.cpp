@@ -359,7 +359,9 @@ void RecorderConfiguration::load_recorder_output_configuration_(
         {
             output_safety_margin = OUTPUT_SAFETY_MARGIN_MIN;
             EPROSIMA_LOG_ERROR(YAML_READER_CONFIGURATION,
-                    "NOT VALID VALUE | SQL " << RECORDER_OUTPUT_TAG << " must be greater than the minimum value accepted. Defaulting to (Kb): " << output_safety_margin /
+                    "NOT VALID VALUE | SQL " << RECORDER_OUTPUT_TAG <<
+                                " must be greater than the minimum value accepted. Defaulting to (Kb): " <<
+                                output_safety_margin /
                     1024);
         }
     }
