@@ -241,8 +241,8 @@ protected:
 
         const auto file_size = std::filesystem::file_size(file_path);
         const auto is_acceptable =
-                file_size >= limits_->MIN_ACCEPTABLE_FILE_SIZE / (mcap_file ? 2.1 : 1) &&
-                file_size <= limits_->MAX_ACCEPTABLE_FILE_SIZE;// / (mcap_file ? 1.9 : 1);
+                file_size >= limits_->MIN_ACCEPTABLE_FILE_SIZE &&
+                file_size <= limits_->MAX_ACCEPTABLE_FILE_SIZE;
 
         if (!is_acceptable)
         {
@@ -294,7 +294,6 @@ protected:
             const test::FileTypes file_type)
     {
         std::uint32_t NUMBER_OF_FILES = limits_->MAX_FILES + 1;
-        //const std::uint32_t NUMBER_OF_FILES = (limits_->MAX_FILES / (file_type == test::FileTypes::MCAP ? 2 : 1)) + 1;
         const std::string OUTPUT_FILE_NAME = std::string("max_size_test") +
                 (file_type == test::FileTypes::MCAP ? "_mcap" : "_sql");
         const auto OUTPUT_FILE_PATHS = get_output_file_paths_(NUMBER_OF_FILES, OUTPUT_FILE_NAME, file_type);
@@ -323,16 +322,13 @@ protected:
                 OUTPUT_FILE_NAME);
 
 
-        for (std::uint32_t i = 0; i < limits_->MAX_FILES / 2; i++)
-        //for (std::uint32_t i = 0; i < limits_->MAX_FILES; i++)
+        for (std::uint32_t i = 0; i < limits_->MAX_FILES; i++)
         {
             // Send more messages than can be stored in a file with a size of max-file-size
             publish_msgs_(limits_->FILE_OVERFLOW_THRESHOLD);
 
             // Make sure the DDS Recorder has received all the messages
             ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), RETCODE_OK);
-
-            //recorder.stop();
 
             // Verify that the DDS Recorder has created the expected number of output files and that their size is close
             // but doesn't exceed the max-file-size
@@ -386,7 +382,6 @@ protected:
         }
 
         constexpr std::uint32_t NUMBER_OF_FILES = 6;
-        //const std::uint32_t NUMBER_OF_FILES = 6 / (file_type == test::FileTypes::MCAP ? 2 : 1);
         const std::string OUTPUT_FILE_NAME = std::string("rotation_test") +
                 (file_type == test::FileTypes::MCAP ? "_mcap" : "_sql");
         const auto OUTPUT_FILE_PATHS = get_output_file_paths_(NUMBER_OF_FILES + 1, OUTPUT_FILE_NAME, file_type);
@@ -492,16 +487,7 @@ protected:
     std::unique_ptr<ddsrecorder::yaml::RecorderConfiguration> configuration_;
     std::vector<std::filesystem::path> paths_;
 
-
-    // mcap:
-    // 140KB for max size in all files
-    // 28KB for each file, in which the attachment information
-    // is stored in the potential_mcap_size_, and in reality
-    // the size of the files is the half
-    test::limits mcap_limits_{21 * 1024, 3 * 1024, 0.2, /*120*/ 460};
-    //test::limits mcap_limits_{35 * 1024,  5 * 1024, 0.2, 750};
-    //test::limits mcap_limits_{60 * 1024, 12 * 1024, 0.2, 460};
-
+    test::limits mcap_limits_{35 * 1024, 7 * 1024, 0.2, 71};
     test::limits sql_limits_{300 * 1024,  300 * 1024, 0.2, 273};
 
     test::limits* limits_;
