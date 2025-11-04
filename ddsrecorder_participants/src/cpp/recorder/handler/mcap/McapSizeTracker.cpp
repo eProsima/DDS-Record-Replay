@@ -251,10 +251,8 @@ void McapSizeTracker::check_and_increase_potential_mcap_size_(
         const bool increase_min_mcap_size /* = false */,
         const bool metadata)
 {
-    if(!metadata)
+    if (!metadata)
     {
-
-    
         if (!enabled_)
         {
             EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_SIZE_TRACKER,
@@ -266,15 +264,21 @@ void McapSizeTracker::check_and_increase_potential_mcap_size_(
         {
             disk_full_ = true;
             throw FullFileException(
-                    STR_ENTRY << "Attempted to write " << utils::from_bytes(size) << " on an MCAP of "
-                                << utils::from_bytes(potential_mcap_size_) << " but there is not enough space available: "
+                        STR_ENTRY << "Attempted to write " << utils::from_bytes(size) << " on an MCAP of "
+                                << utils::from_bytes(
+                            potential_mcap_size_) << " but there is not enough space available: "
                                 << utils::from_bytes(space_available_ - potential_mcap_size_) << "."
-                        , size);
+                            , size);
         }
 
-        std::string guid_example = "10";
         potential_mcap_size_ += size;
-        potential_mcap_size_ += std::to_string(potential_count).size() + guid_example.size();
+
+        // Translation between the index with the source_guid in the dictionary
+        std::string indexation_example = "10";
+        // Add the size of the message in the dictionary of source_guid by sequence
+        // (the source_guid is an index instead of the full string to reduce the space)
+        potential_mcap_size_ += std::to_string(potential_count).size();
+        potential_mcap_size_ += indexation_example.size();
 
         potential_count++;
     }
@@ -317,7 +321,7 @@ void McapSizeTracker::check_and_increase_written_mcap_size_(
         const std::uint64_t& size,
         const bool metadata /* = false */)
 {
-    if(!metadata)
+    if (!metadata)
     {
         if (!enabled_)
         {
@@ -342,9 +346,16 @@ void McapSizeTracker::check_and_increase_written_mcap_size_(
             return;
         }
 
-        std::string guid_example = "10";
+
         written_mcap_size_ += size;
-        written_mcap_size_ += std::to_string(written_count).size() + guid_example.size();
+
+        // Translation between the index with the source_guid in the dictionary
+        std::string indexation_example = "10";
+        // Add the size of the message in the dictionary of source_guid by sequence
+        // (the source_guid is an index instead of the full string to reduce the space)
+        written_mcap_size_ += std::to_string(potential_count).size();
+        written_mcap_size_ += indexation_example.size();
+
         written_count++;
     }
 

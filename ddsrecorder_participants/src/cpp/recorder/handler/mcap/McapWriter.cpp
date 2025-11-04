@@ -61,7 +61,7 @@ void McapWriter::add_message_sourceguid(
     std::string indx;
 
     auto source_guid_it = sequence_by_source_guid_indx_.find(source_guid);
-    if(source_guid_it == sequence_by_source_guid_indx_.end())
+    if (source_guid_it == sequence_by_source_guid_indx_.end())
     {
         indx = std::to_string(sequence_by_source_guid_indx_.size());
 
