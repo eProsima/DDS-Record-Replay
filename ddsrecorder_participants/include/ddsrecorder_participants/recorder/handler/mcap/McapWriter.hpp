@@ -194,10 +194,10 @@ protected:
     // The dictionary of sequence-guid
     mcap::KeyValueMap source_guid_by_sequence_;
     // The indexation dictionary for the source_guids
-    mcap::KeyValueMap source_guid_by_sequence_indx_;
+    mcap::KeyValueMap source_guid_by_sequence_index_;
 
     // The (Auxiliar) dictionary of guid-sequence
-    mcap::KeyValueMap sequence_by_source_guid_indx_;
+    mcap::KeyValueMap sequence_by_source_guid_index_;
 
     // The channels that have been written
     std::map<mcap::ChannelId, mcap::Channel> channels_;

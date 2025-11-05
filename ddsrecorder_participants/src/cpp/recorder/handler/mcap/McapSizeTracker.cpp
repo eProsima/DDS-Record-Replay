@@ -273,12 +273,11 @@ void McapSizeTracker::check_and_increase_potential_mcap_size_(
 
         potential_mcap_size_ += size;
 
-        // Translation between the index with the source_guid in the dictionary
-        std::string indexation_example = "10";
         // Add the size of the message in the dictionary of source_guid by sequence
         // (the source_guid is an index instead of the full string to reduce the space)
         potential_mcap_size_ += std::to_string(potential_count).size();
-        potential_mcap_size_ += indexation_example.size();
+        // Translation between the index with the source_guid in the dictionary
+        potential_mcap_size_ += 2;
 
         potential_count++;
     }
@@ -346,15 +345,13 @@ void McapSizeTracker::check_and_increase_written_mcap_size_(
             return;
         }
 
-
         written_mcap_size_ += size;
 
-        // Translation between the index with the source_guid in the dictionary
-        std::string indexation_example = "10";
         // Add the size of the message in the dictionary of source_guid by sequence
         // (the source_guid is an index instead of the full string to reduce the space)
         written_mcap_size_ += std::to_string(potential_count).size();
-        written_mcap_size_ += indexation_example.size();
+        // Translation between the index with the source_guid in the dictionary
+        written_mcap_size_ += 2;
 
         written_count++;
     }

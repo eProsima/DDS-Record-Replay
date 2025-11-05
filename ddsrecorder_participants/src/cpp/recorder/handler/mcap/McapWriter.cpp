@@ -60,13 +60,13 @@ void McapWriter::add_message_sourceguid(
 
     std::string indx;
 
-    auto source_guid_it = sequence_by_source_guid_indx_.find(source_guid);
-    if (source_guid_it == sequence_by_source_guid_indx_.end())
+    auto source_guid_it = sequence_by_source_guid_index_.find(source_guid);
+    if (source_guid_it == sequence_by_source_guid_index_.end())
     {
-        indx = std::to_string(sequence_by_source_guid_indx_.size());
+        indx = std::to_string(sequence_by_source_guid_index_.size());
 
-        source_guid_by_sequence_indx_[indx] = source_guid;
-        sequence_by_source_guid_indx_[source_guid] = indx;
+        source_guid_by_sequence_index_[indx] = source_guid;
+        sequence_by_source_guid_index_[source_guid] = indx;
     }
     else
     {
@@ -180,10 +180,10 @@ void McapWriter::close_current_file_nts_()
         write_attachment_nts_();
         // Add the metadata dictionaries of source_guid messages
         write_metadata_messages_nts_(VERSION_METADATA_MESSAGE_NAME, source_guid_by_sequence_);
-        write_metadata_messages_nts_(VERSION_METADATA_MESSAGE_INDX_NAME, source_guid_by_sequence_indx_);
+        write_metadata_messages_nts_(VERSION_METADATA_MESSAGE_INDEX_NAME, source_guid_by_sequence_index_);
         // Clear the dictionaries (resource-limits)
         source_guid_by_sequence_.clear();
-        sequence_by_source_guid_indx_.clear();
+        sequence_by_source_guid_index_.clear();
     }
 
     file_tracker_->set_current_file_size(size_tracker_.get_written_mcap_size());

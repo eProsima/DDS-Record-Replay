@@ -98,8 +98,6 @@ void BaseWriter::set_on_disk_full_callback(
     on_disk_full_lambda_ = on_disk_full_lambda;
 }
 
-int count_msg = 0;
-
 void BaseWriter::on_file_full_nts_(
         const FullFileException& e,
         const std::uint64_t min_file_size)
