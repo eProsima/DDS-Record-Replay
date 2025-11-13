@@ -122,14 +122,57 @@ void SqlHandler::write_samples_(
             continue;
         }
 
-        // Write the topic if it hasn't been written before
         const auto topic = sql_sample->topic;
 
+        std::ostringstream guid_ss;
+        std::string writer_partitions;
+
+        // - (Table: Topics) Write the topic if it hasn't been written before -
+
+        // check if the topic is already added in the table.
         if (written_topics_.find(topic) == written_topics_.end())
         {
             sql_writer_.write(topic);
             written_topics_.insert(topic);
         }
+
+        // get the writer guid
+        guid_ss << sql_sample->writer_guid;
+
+        // search for the partitions of the current writer guid
+        auto it = topic.partition_name.find(guid_ss.str());
+        if (it != topic.partition_name.end())
+        {
+            writer_partitions = it->second;
+        }
+        else
+        {
+            // (writers with the empty partition do not enters here,
+            // the topic partition would be "")
+            samples.pop_front();
+            continue;
+        }
+
+        // -- (Table: Partitions) Write the partition set ---------------------
+
+        // check if the partitions set is already added in the table.
+        if (written_partitions_.find(writer_partitions) == written_partitions_.end())
+        {
+            sql_writer_.write(writer_partitions);
+            written_partitions_.insert(writer_partitions);
+        }
+
+        // Write the Partition of the topic if it hasn't been written before (Table: TopicsPartitions)
+
+        // check if the topic/type partitions set is already added in the table.
+        std::string primarykey_TopicPartition = topic.m_topic_name + topic.type_name + writer_partitions;
+
+        if (written_topic_partitions_.find(primarykey_TopicPartition) == written_topic_partitions_.end())
+        {
+            sql_writer_.write_partition(topic.m_topic_name, topic.type_name, writer_partitions);
+            written_topic_partitions_.insert(primarykey_TopicPartition);
+        }
+
 
         if (configuration_.data_format == DataFormat::json || configuration_.data_format == DataFormat::both)
         {

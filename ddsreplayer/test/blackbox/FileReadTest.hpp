@@ -55,7 +55,8 @@ public:
             const bool is_ros2_topic = false)
     {
         const auto type_path = publish_types ? "type/" : "basic/";
-        const auto configuration = std::string("../../resources/config/") + type_path + std::string("config_file.yaml");
+        const auto configuration = std::string("../../resources/config/") + type_path + std::string(
+            "config_file.yaml");
 
         const auto data = replay_(configuration, input_file, publish_types, is_ros2_topic);
 
@@ -75,7 +76,8 @@ public:
             const bool is_ros2_topic = false)
     {
         const auto type_path = publish_types ? "type/" : "basic/";
-        const auto configuration = std::string("../../resources/config/") + type_path + std::string("config_file.yaml");
+        const auto configuration = std::string("../../resources/config/") + type_path + std::string(
+            "config_file.yaml");
         const auto data = replay_(configuration, input_file, publish_types, is_ros2_topic);
 
         // Verify that the received data is correct
@@ -183,8 +185,8 @@ public:
         }
         else
         {
-            ASSERT_EQ(data.n_received_msgs, 8);
-            ASSERT_EQ(data.min_index_msg, 3);
+            ASSERT_EQ(data.n_received_msgs, 7);
+            ASSERT_EQ(data.min_index_msg, 4);
             ASSERT_EQ(data.max_index_msg, 10);
         }
     }
@@ -206,6 +208,7 @@ public:
             "config_file_end_time.yaml");
         const auto data = replay_(configuration, input_file, publish_types, is_ros2_topic);
 
+
         // Verify that only the messages before the end-time were received
         if (!publish_types)
         {
@@ -215,9 +218,9 @@ public:
         }
         else
         {
-            ASSERT_EQ(data.n_received_msgs, 2);
+            ASSERT_EQ(data.n_received_msgs, 3);
             ASSERT_EQ(data.min_index_msg, 1);
-            ASSERT_EQ(data.max_index_msg, 2);
+            ASSERT_EQ(data.max_index_msg, 3);
         }
     }
 

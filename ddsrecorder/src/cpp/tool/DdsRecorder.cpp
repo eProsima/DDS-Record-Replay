@@ -60,6 +60,8 @@ DdsRecorder::DdsRecorder(
     , event_handler_(event_handler)
 {
 
+    reload_conf_count_ = 0;
+
     load_internal_topics_(configuration_);
 
     // Create Discovery Database
@@ -199,6 +201,8 @@ DdsRecorder::DdsRecorder(
         participants_database_,
         thread_pool_);
 
+    pipe_->update_filter(configuration.dds_configuration->allowed_partition_list);
+
     // Create a Monitor
     auto monitor_configuration = configuration.monitor_configuration;
     monitor_ = std::make_unique<Monitor>(monitor_configuration);
@@ -217,12 +221,30 @@ DdsRecorder::DdsRecorder(
 utils::ReturnCode DdsRecorder::reload_configuration(
         yaml::RecorderConfiguration& new_configuration)
 {
+    reload_conf_count_++;
+
     load_internal_topics_(new_configuration);
 
     // Update the Recorder's configuration
     configuration_ = new_configuration;
 
+    // reload_configuration() is called two times when the .yaml file
+    // is updated, and sometimes, the first call set
+    // the allowed_partition_list to empty, allowing all partitions.
+    if (reload_conf_count_ % 2 == 0)
+    {
+        // update the filter partition set
+        pipe_->reload_filter_partition(new_configuration.dds_configuration->allowed_partition_list);
+    }
+
     return pipe_->reload_configuration(new_configuration.ddspipe_configuration);
+}
+
+void DdsRecorder::update_filter(
+        const std::set<std::string> new_filter)
+{
+    // function used primary for the tests
+    pipe_->update_filter(new_filter);
 }
 
 void DdsRecorder::start()
@@ -340,8 +362,9 @@ bool DdsRecorder::load_resource_limits(
             // Subcase 2
             if (mcap_size_limited)
             {
-                if (!mcap_output_settings.set_resource_limits(configuration_.mcap_resource_limits.resource_limits_struct,
-                        space_available))
+                if (!mcap_output_settings.set_resource_limits(
+                            configuration_.mcap_resource_limits.resource_limits_struct,
+                            space_available))
                 {
                     error_msg << "The available space given the MCAP conditions is lower than the safety margin.";
                     return false;
@@ -398,8 +421,9 @@ bool DdsRecorder::load_resource_limits(
                             "MCAP resource limits are set but no max size is set. Defaulting to half of the available space for MCAP and SQL.");
                     mcap_output_settings.resource_limits.max_size_ = space_available / 2;
                 }
-                if (!mcap_output_settings.set_resource_limits(configuration_.mcap_resource_limits.resource_limits_struct,
-                        space_available))
+                if (!mcap_output_settings.set_resource_limits(
+                            configuration_.mcap_resource_limits.resource_limits_struct,
+                            space_available))
                 {
                     error_msg << "The available space given the MCAP conditions is lower than the safety margin.";
                     return false;

@@ -144,6 +144,9 @@ DdsReplayer::DdsReplayer(
     std::set<utils::Heritable<ddspipe::core::types::DdsTopic>> topics;
     participants::DynamicTypesCollection types;
 
+    // adds the allowed partitions list (this will ensure to not add the blocked data)
+    reader_participant_->add_partition_list(configuration.replayer_configuration->allowed_partition_list);
+
     reader_participant_->process_summary(topics, types);
 
     std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair> registered_types;

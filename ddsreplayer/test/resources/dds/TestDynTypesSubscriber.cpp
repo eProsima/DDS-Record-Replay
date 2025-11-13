@@ -128,12 +128,15 @@ void TestDynTypesSubscriber::on_subscription_matched(
 }
 
 // Extracts the integer from a string that matches the pattern "Hello World: <integer>"
-int extractInteger(const std::string& input) {
+int extractInteger(
+        const std::string& input)
+{
     // Define the regular expression pattern
     std::regex pattern(R"(Hello World: (-?\d+))");
 
     std::smatch match;
-    if (std::regex_match(input, match, pattern)) {
+    if (std::regex_match(input, match, pattern))
+    {
         // If a match is found, convert the captured group to an integer and return it
         return std::stoi(match[1].str());
     }
@@ -164,12 +167,12 @@ void TestDynTypesSubscriber::on_data_available(
             if (dynamic_type_->get_name() == type_name_)
             {
                 uint32_t index;
-                if(hello_world_) //If value makes no sense probably is ros2 hello world message
+                if (hello_world_) //If value makes no sense probably is ros2 hello world message
                 {
                     std::string message;
                     new_data->get_string_value(message, new_data->get_member_id_by_name("data"));
                     index = extractInteger(message);
-                    if(index == -1)
+                    if (index == -1)
                     {
                         std::cout << "Message does not fit in the expected helloworld format" << std::endl;
                         continue;

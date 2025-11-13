@@ -193,8 +193,24 @@ void McapHandler::add_data(
 
     if (state_ != BaseHandlerStateCode::STOPPED)
     {
-        process_new_sample_nts_(std::make_shared<const McapMessage>(
-                    data, payload_pool_, topic, channel_id, configuration_.log_publishTime));
+        const auto mcap_sample = std::make_shared<const McapMessage>(
+            data, payload_pool_, topic, channel_id, configuration_.log_publishTime);
+
+        process_new_sample_nts_(mcap_sample);
+
+        const auto it_channel = channels_by_id_.find(channel_id);
+        if (it_channel != channels_by_id_.end())
+        {
+            mcap::Channel channel = channels_by_id_[channel_id];
+
+            std::ostringstream guid_ss;
+            guid_ss << data.source_guid;
+
+            std::string source_guid = guid_ss.str();
+            uint32_t sequence_number = mcap_sample->number_of_msgs - 1;
+
+            mcap_writer_.add_message_sourceguid(sequence_number, guid_ss.str());
+        }
     }
 }
 
@@ -260,12 +276,21 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     const auto is_topic_ros2_type = configuration_.ros2_types && topic_name != topic.m_topic_name;
 
     metadata[ROS2_TYPES] = is_topic_ros2_type ? "true" : "false";
+
+    std::string topic_partitions = "";
+    for (const auto& pair: topic.partition_name)
+    {
+        topic_partitions += pair.first + ":" + pair.second + ";";
+    }
+
+    metadata[PARTITIONS] = topic_partitions;
     mcap::Channel new_channel(topic_name, "cdr", schema_id, metadata);
 
     mcap_writer_.write(new_channel);
 
     auto channel_id = new_channel.id;
     channels_.insert({topic, std::move(new_channel)});
+    channels_by_id_.insert({channel_id, std::move(new_channel)});
     EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
             "MCAP_WRITE | Channel created: " << topic << ".");
 

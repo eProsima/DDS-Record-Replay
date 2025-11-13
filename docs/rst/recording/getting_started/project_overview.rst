@@ -9,7 +9,7 @@ Project Overview
 |eddsrecord| is a cross-platform application developed by eProsima and powered by *Fast DDS* that contains a set of tools for debugging DDS networks.
 Among these tools is a recording application, called |ddsrecorder|, which allows a user to capture data published in a DDS environment for later analysis or playback.
 
-The |ddsrecorder| application automatically discovers all topics in the DDS network and saves the data published in each topic with the publication timestamp of the data.
+The |ddsrecorder| application automatically discovers all topics in the DDS network and saves the data published in each topic with the partitions and publication timestamp of the data.
 Furthermore, by using the `DynamicTypes <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dynamic_types/dynamic_types.html>`_ feature of *Fast DDS*, it is possible to record the type of the data in the MCAP file.
 The benefit of this comes from the fact that the data is saved serialized according to the CDR format.
 

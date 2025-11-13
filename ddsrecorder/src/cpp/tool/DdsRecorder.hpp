@@ -123,6 +123,10 @@ public:
     //! Resets all active file trackers.
     void reset_file_trackers();
 
+    //! update the filter partition
+    void update_filter(
+            const std::set<std::string> filter_partition);
+
 protected:
 
     /**
@@ -188,6 +192,9 @@ protected:
 
     //! Handler context collection
     participants::HandlerContextCollection handler_contexts_;
+
+    //! Number of times the .yaml configuration is reload
+    int reload_conf_count_;
 };
 
 } /* namespace recorder */

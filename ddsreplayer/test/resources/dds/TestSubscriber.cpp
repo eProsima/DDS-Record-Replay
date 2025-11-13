@@ -51,7 +51,7 @@ TestSubscriber::TestSubscriber(
 {
     //TODO Change this to the desired type (ROS2 or DDS)
     eprosima::fastdds::dds::TypeSupport type(new ConfigurationPubSubType());
-    
+
     ///////////////////////////////
     // Create the DomainParticipant
     DomainParticipantQos pqos;
@@ -74,7 +74,11 @@ TestSubscriber::TestSubscriber(
 
     ////////////////////////
     // Create the Subscriber
-    subscriber_ = participant_->create_subscriber(SUBSCRIBER_QOS_DEFAULT, nullptr);
+
+    SubscriberQos subs_qos = SUBSCRIBER_QOS_DEFAULT;
+    subs_qos.partition().push_back("*");
+
+    subscriber_ = participant_->create_subscriber(subs_qos, nullptr);
 
     if (subscriber_ == nullptr)
     {
@@ -83,6 +87,7 @@ TestSubscriber::TestSubscriber(
 
     ////////////////////////
     // CREATE THE TOPIC
+
     topic_ = participant_->create_topic(
         topic_name,
         type.get_type_name(),

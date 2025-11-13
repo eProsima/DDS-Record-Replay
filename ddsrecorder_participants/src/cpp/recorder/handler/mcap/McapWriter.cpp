@@ -28,6 +28,7 @@
 #include <ddsrecorder_participants/recorder/exceptions/FullFileException.hpp>
 #include <ddsrecorder_participants/recorder/message/McapMessage.hpp>
 #include <ddsrecorder_participants/recorder/handler/mcap/McapWriter.hpp>
+#include <ddsrecorder_participants/constants.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -49,6 +50,30 @@ void McapWriter::disable()
 
     // Clear the channels when disabling the writer so the old channels are not rewritten in every new file
     channels_.clear();
+}
+
+void McapWriter::add_message_sourceguid(
+        uint32_t sequence_number,
+        const std::string source_guid)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    std::string indx;
+
+    auto source_guid_it = sequence_by_source_guid_index_.find(source_guid);
+    if (source_guid_it == sequence_by_source_guid_index_.end())
+    {
+        indx = std::to_string(sequence_by_source_guid_index_.size());
+
+        source_guid_by_sequence_index_[indx] = source_guid;
+        sequence_by_source_guid_index_[source_guid] = indx;
+    }
+    else
+    {
+        indx = source_guid_it->second;
+    }
+
+    source_guid_by_sequence_[std::to_string(sequence_number)] = indx;
 }
 
 void McapWriter::update_dynamic_types(
@@ -135,7 +160,7 @@ void McapWriter::open_new_file_nts_(
             file_tracker_->get_current_filename());
 
     // NOTE: These writes should never fail since the minimum size accounts for them.
-    write_metadata_nts_();
+    write_metadata_version_nts_();
     write_schemas_nts_();
     write_channels_nts_();
 
@@ -153,6 +178,12 @@ void McapWriter::close_current_file_nts_()
     {
         // NOTE: This write should never fail since the minimum size accounts for it.
         write_attachment_nts_();
+        // Add the metadata dictionaries of source_guid messages
+        write_metadata_messages_nts_(VERSION_METADATA_MESSAGE_NAME, source_guid_by_sequence_);
+        write_metadata_messages_nts_(VERSION_METADATA_MESSAGE_INDEX_NAME, source_guid_by_sequence_index_);
+        // Clear the dictionaries (resource-limits)
+        source_guid_by_sequence_.clear();
+        sequence_by_source_guid_index_.clear();
     }
 
     file_tracker_->set_current_file_size(size_tracker_.get_written_mcap_size());
@@ -274,7 +305,7 @@ void McapWriter::write_attachment_nts_()
 {
     mcap::Attachment attachment;
 
-    // Write down the attachment with the dynamic types
+    // Write down the attachment with the dynamic types and guids dictionary
     attachment.name = DYNAMIC_TYPES_ATTACHMENT_NAME;
     attachment.data = reinterpret_cast<std::byte*>(const_cast<char*>(dynamic_types_.c_str()));
     attachment.dataSize = dynamic_types_.length();
@@ -300,7 +331,7 @@ void McapWriter::write_channels_nts_()
     }
 }
 
-void McapWriter::write_metadata_nts_()
+void McapWriter::write_metadata_version_nts_()
 {
     mcap::Metadata metadata;
 
@@ -308,6 +339,22 @@ void McapWriter::write_metadata_nts_()
     metadata.name = VERSION_METADATA_NAME;
     metadata.metadata[VERSION_METADATA_RELEASE] = DDSRECORDER_PARTICIPANTS_VERSION_STRING;
     metadata.metadata[VERSION_METADATA_COMMIT] = DDSRECORDER_PARTICIPANTS_COMMIT_HASH;
+
+    write_nts_(metadata);
+}
+
+void McapWriter::write_metadata_messages_nts_(
+        const std::string metadata_name,
+        const mcap::KeyValueMap map)
+{
+    mcap::Metadata metadata;
+
+    // Write down the metadata with the version
+    metadata.name = metadata_name;
+    for (const auto& pair_message: map)
+    {
+        metadata.metadata[pair_message.first] = pair_message.second;
+    }
 
     write_nts_(metadata);
 }

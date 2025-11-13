@@ -152,6 +152,7 @@ TEST_F(McapFileCreationTest, mcap_data_msgs)
     for (const auto& it : read_messages)
     {
         read_message_count++;
+        ASSERT_FALSE(read_message_count > sent_messages.size());
 
         // Verify the data size
         const auto read_data_size = it.message.dataSize;

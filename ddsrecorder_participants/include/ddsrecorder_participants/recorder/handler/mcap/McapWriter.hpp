@@ -90,6 +90,21 @@ public:
     void update_dynamic_types(
             const std::string& dynamic_types_payload);
 
+    /**
+     * @brief Adds the pair sequence_number, source guid in the dictionary.
+     *
+     * @param sequence_number The sequence number associated with a message.
+     * @param source_guid The guid associated with a message.
+     *
+     * After a \c FullFileException :
+     * - @throws \c InconsistencyException if the allocated space is not enough to close the current file or to open a
+     * new one.
+     * - @throws \c InitializationException if the MCAP library fails to open a new file.
+     */
+    void add_message_sourceguid(
+            uint32_t sequence_number,
+            const std::string source_guid);
+
 protected:
 
     /**
@@ -139,11 +154,23 @@ protected:
     void write_channels_nts_();
 
     /**
-     * @brief Writes the metadata to the MCAP file.
+     * @brief Writes the version metadata to the MCAP file.
      *
      * @throws \c FullFileException if the MCAP file is full.
      */
-    void write_metadata_nts_();
+    void write_metadata_version_nts_();
+
+    /**
+     * @brief Writes the messages metadata to the MCAP file.
+     *
+     * @param metadata_name The name of the map in the metadata.
+     * @param map The map that is going to be writed in the metadata.
+     *
+     * @throws \c FullFileException if the MCAP file is full.
+     */
+    void write_metadata_messages_nts_(
+            const std::string metadata_name,
+            const mcap::KeyValueMap map);
 
     /**
      * @brief Writes the schemas to the MCAP file.
@@ -163,6 +190,14 @@ protected:
 
     // The dynamic types payload to be written as an attachment
     std::string dynamic_types_;
+
+    // The dictionary of sequence-guid
+    mcap::KeyValueMap source_guid_by_sequence_;
+    // The indexation dictionary for the source_guids
+    mcap::KeyValueMap source_guid_by_sequence_index_;
+
+    // The (Auxiliar) dictionary of guid-sequence
+    mcap::KeyValueMap sequence_by_source_guid_index_;
 
     // The channels that have been written
     std::map<mcap::ChannelId, mcap::Channel> channels_;

@@ -359,7 +359,9 @@ void RecorderConfiguration::load_recorder_output_configuration_(
         {
             output_safety_margin = OUTPUT_SAFETY_MARGIN_MIN;
             EPROSIMA_LOG_ERROR(YAML_READER_CONFIGURATION,
-                    "NOT VALID VALUE | SQL " << RECORDER_OUTPUT_TAG << " must be greater than the minimum value accepted. Defaulting to (Kb): " << output_safety_margin /
+                    "NOT VALID VALUE | SQL " << RECORDER_OUTPUT_TAG <<
+                    " must be greater than the minimum value accepted. Defaulting to (Kb): " <<
+                    output_safety_margin /
                     1024);
         }
     }
@@ -562,6 +564,32 @@ void RecorderConfiguration::load_dds_configuration_(
     {
         dds_configuration->whitelist = YamlReader::get_set<WhitelistType>(yml, WHITELIST_INTERFACES_TAG,
                         version);
+    }
+
+    /////
+    // Get optional partitions
+    if (YamlReader::is_tag_present(yml, PARTITIONLIST_TAG))
+    {
+        dds_configuration->allowed_partition_list = YamlReader::get_set<std::string>(yml, PARTITIONLIST_TAG,
+                        version);
+
+        // check if the wildcard partition is in the partitionlist
+        bool wildcard = false;
+        for (std::string partition: dds_configuration->allowed_partition_list)
+        {
+            if (partition == "*")
+            {
+                wildcard = true;
+                break;
+            }
+        }
+
+        if (wildcard)
+        {
+            // the partitionslist contains "*" -> clear the list,
+            // all the partitions are allowed in the filter
+            dds_configuration->allowed_partition_list.clear();
+        }
     }
 
     // Optional get Transport protocol

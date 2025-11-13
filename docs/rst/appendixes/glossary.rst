@@ -77,6 +77,13 @@ DDS nomenclature
         See `Fast DDS documentation <https://fast-dds.docs.eprosima.com/en/v2.10.1/fastdds/dds_layer/topic/topic.html>`__
         for further information.
 
+    Partition
+        Logical domain that helps organize communication between publishers and subscribers.
+        Each Partition is uniquely identified by a name.
+
+        See `Fast DDS documentation <https://fast-dds.docs.eprosima.com/en/v2.10.1/fastdds/dds_layer/domain/domainParticipant/partition.html>`__
+        for further information.
+
     DynamicTypes
         The dynamic topic types offer the possibility to work over DDS without the restrictions related to the IDLs.
         Using them, the users can declare the different types that they need and manage the information directly, avoiding the additional step of updating the IDL file and the generation of C++ classes.

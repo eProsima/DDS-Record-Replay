@@ -1,5 +1,7 @@
 dds:
   domain: 0
+  partitions:
+    - "*"
   ignore-participant-flags: no_filter
   transport: builtin
   ros2-easy-mode: "2.2.2.2"

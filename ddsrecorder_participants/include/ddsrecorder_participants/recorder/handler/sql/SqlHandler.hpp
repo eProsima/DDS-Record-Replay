@@ -152,8 +152,14 @@ protected:
     //! SQL writer
     SqlWriter sql_writer_;
 
-    //! Topics that the SQL writer has written
+    //! (Table: Topics) Topics that the SQL writer has written
     std::set<ddspipe::core::types::DdsTopic> written_topics_;
+
+    //! (Table: Partitions) Set of Partitions that the SQL writer has written
+    std::set<std::string> written_partitions_;
+
+    //! (Table: TopicsPartitions) Partitions of a writer_guid and sequence_number that the SQL writer has written
+    std::set<std::string> written_topic_partitions_;
 
     //! Map instance handles (hashed/serialized keys) to JSON-serialized keys
     std::map<ddspipe::core::types::InstanceHandle, std::string> keys_;

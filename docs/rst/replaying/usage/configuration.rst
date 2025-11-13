@@ -118,6 +118,30 @@ Consider the following example:
 In this example, the data published in the topic ``AllowedTopic1`` with type ``Allowed`` and in the topic ``AllowedTopic2`` with any type will be replayed by the |ddsreplayer|.
 The data published in the topic ``HelloWorldTopic`` with type ``HelloWorld`` will be blocked, since the ``blocklist`` is blocking all topics with any name and with type ``HelloWorld``.
 
+.. _replayer_partition_filtering:
+
+Partition Filtering
+^^^^^^^^^^^^^^^^^^^
+
+The |ddsreplayer| automatically detects the partitions that are being used in a DDS Network.
+The |ddsreplayer| then creates internal DDS :term:`Writers<DataWriter>` with the stored partitions
+to replay the data published on each topic.
+The |ddsreplayer| allows filtering DDS :term:`Partitions<Partition>` to allow users to configure
+the DDS :term:`Partitions<Partition>` that must be replayed.
+
+These data filtering rules can be configured under the ``partitions`` tag.
+
+Consider the following example:
+
+.. code-block:: yaml
+
+    partitions:
+      - "A"
+      - "B"
+
+In this example, the data published by DataWriters that use partitions ``A`` or ``B`` will be replayed by the |ddsreplayer|.
+Any data published by DataWriters without these partitions will be ignored.
+
 .. _replayer_topic_qos:
 
 Topic QoS
@@ -585,6 +609,9 @@ A complete example of all the configurations described on this page can be found
       blocklist:
         - name: "topic_name"
           type: "topic_type"
+
+      partitions:
+        - "*"
 
       topics:
         - name: "temperature/*"

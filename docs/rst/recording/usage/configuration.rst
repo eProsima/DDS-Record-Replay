@@ -138,6 +138,29 @@ Consider the following example:
 In this example, the data published in the topic ``AllowedTopic1`` with type ``Allowed`` and in the topic ``AllowedTopic2`` with any type will be recorded by the |ddsrecorder|.
 The data published in the topic ``HelloWorldTopic`` with type ``HelloWorld`` will be blocked, since the ``blocklist`` is blocking all topics with any name and with type ``HelloWorld``.
 
+.. _recorder_partition_filtering:
+
+Partition Filtering
+^^^^^^^^^^^^^^^^^^^
+
+The |ddsrecorder| automatically detects the partitions of all DataWriters in a DDS Network.
+The |ddsrecorder| then creates internal DDS :term:`Readers<DataReader>` to record the data published on each topic.
+The |ddsrecorder| allows filtering DDS :term:`Partitions<Partition>` to allow users to configure
+the DDS :term:`Partitions<Partition>` that must be recorded.
+These data filtering rules can be configured under the ``partitions`` tag.
+
+Consider the following example:
+
+.. code-block:: yaml
+
+    partitions:
+      - "A"
+      - "B"
+
+
+In this example, the data published by DataWriters that use partitions ``A`` or ``B`` will be recorded by the |ddsrecorder|.
+Any data published by DataWriters without these partitions will be ignored.
+
 .. _recorder_topic_qos:
 
 Topic QoS
@@ -589,7 +612,7 @@ B. If both recorders are enabled
 Size Margin
 """""""""""
 
-The ``size-margin`` property is an optional parameter that stablish the margin of error for the size of the output files.
+The ``size-margin`` property is an optional parameter that establish the margin of error for the size of the output files.
 
 
 .. warning::
@@ -971,6 +994,9 @@ A complete example of all the configurations described on this page can be found
       blocklist:
         - name: "topic_name"
           type: "topic_type"
+
+      partitions:
+        - "*"
 
       builtin-topics:
         - name: "HelloWorldTopic"

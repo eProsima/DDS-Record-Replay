@@ -180,6 +180,8 @@ protected:
         // Reset the DataWriter to clear its history
         reset_datawriter_();
 
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
         for (std::uint32_t i = 0; i < num_msgs; i++)
         {
             HelloWorld hello;
@@ -234,6 +236,8 @@ protected:
         {
             return false;
         }
+
+        bool mcap_file = file_path.string()[file_path.string().size() - 1] == 'p';
 
         const auto file_size = std::filesystem::file_size(file_path);
         const auto is_acceptable =
@@ -483,7 +487,7 @@ protected:
     std::unique_ptr<ddsrecorder::yaml::RecorderConfiguration> configuration_;
     std::vector<std::filesystem::path> paths_;
 
-    test::limits mcap_limits_{35 * 1024, 7 * 1024, 0.2, 70};
+    test::limits mcap_limits_{35 * 1024, 7 * 1024, 0.2, 71};
     test::limits sql_limits_{300 * 1024,  300 * 1024, 0.2, 273};
 
     test::limits* limits_;

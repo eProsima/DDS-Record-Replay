@@ -30,6 +30,7 @@
 #include <cpp_utils/memory/Heritable.hpp>
 #include <cpp_utils/time/time_utils.hpp>
 #include <cpp_utils/types/Fuzzy.hpp>
+#include <cpp_utils/utils.hpp>
 
 #include <ddspipe_core/types/dds/TopicQoS.hpp>
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
@@ -50,6 +51,13 @@ McapReaderParticipant::McapReaderParticipant(
         const std::string& file_path)
     : BaseReaderParticipant(configuration, payload_pool, file_path)
 {
+}
+
+void McapReaderParticipant::add_partition_list(
+        std::set<std::string> allowed_partition_list)
+{
+    // adds the allowed partitions list to the class
+    allowed_partition_list_ = allowed_partition_list;
 }
 
 void McapReaderParticipant::process_summary(
@@ -73,12 +81,118 @@ void McapReaderParticipant::process_summary(
         const auto topic = utils::Heritable<ddspipe::core::types::DdsTopic>::make_heritable(
             create_topic_(topic_name, type_name, is_topic_ros2_type));
 
+        const auto topic_id = std::make_pair(topic_name, type_name);
+
         // Apply the QoS stored in the MCAP file as if they were the discovered QoS.
         const auto topic_qos_str = channel->metadata[QOS_SERIALIZATION_QOS];
         ddspipe::core::types::TopicQoS topic_qos;
         Serializer::deserialize<ddspipe::core::types::TopicQoS>(topic_qos_str, topic_qos);
 
         topic->topic_qos.set_qos(topic_qos, utils::FuzzyLevelValues::fuzzy_level_fuzzy);
+
+        std::string writer = "";
+        std::string writer_partition = "";
+        bool pass_partition_filter;
+
+        std::string channel_partitions = channel->metadata[PARTITIONS];
+
+        // adds the partitions of the topic using the stored channel
+        // metadata[partitions] = <writer_1>:<partition_1>;...;<writer_n>:<partition_n>
+        // using: n >= 1
+        int i = 0, partitions_n = channel_partitions.size();
+        while (i < partitions_n)
+        {
+            // resets the filter condition
+            pass_partition_filter = allowed_partition_list_.empty();
+
+            // -- Writer (get one of the possible writers) --------------------
+            while (i < partitions_n && channel_partitions[i] != ':')
+            {
+                writer += channel_partitions[i++];
+            }
+            i++;
+
+            // -- Partition (get the partitions set) --------------------------
+            while (i < partitions_n && channel_partitions[i] != ';')
+            {
+                writer_partition += channel_partitions[i++];
+            }
+
+            // add to the topic, the pair (writer_guid, partitions)
+            topic->partition_name[writer] = writer_partition;
+
+            // -- Partitions filter -------------------------------------------
+
+            // checks if the writer partition is the wildcard or the
+            // allowed partition list is empty
+            if (writer_partition == "*" || pass_partition_filter)
+            {
+                pass_partition_filter = true;
+            }
+            else
+            {
+                // get all the partitions
+                std::string curr_partition = "";
+                std::vector<std::string> partition_vector;
+                int j = 0, writer_partition_n = writer_partition.size();
+                while (j < writer_partition_n)
+                {
+                    if (writer_partition[j] == '|')
+                    {
+                        // adds the partitions and continue the search
+                        partition_vector.push_back(curr_partition);
+                        curr_partition = "";
+                    }
+                    else
+                    {
+                        curr_partition += writer_partition[j];
+                    }
+
+                    j++;
+                }
+
+                // adds the last partition
+                if (curr_partition != "")
+                {
+                    partition_vector.push_back(curr_partition);
+                }
+                // check if have the empty partition.
+                else if (writer_partition_n == 0 ||
+                        writer_partition[writer_partition_n - 1] == '|')
+                {
+                    // e.g.:    Partitions: "" only have the empty partition
+                    //          Partitions: "A|" have two partitions "A" and "".
+                    partition_vector.push_back("");
+                }
+
+                // check if the partitions of the writer match with an allowed partition
+                for (std::string partition: partition_vector)
+                {
+                    // check if the current partition is in the filter of partitions
+                    for (std::string allowed_partition: allowed_partition_list_)
+                    {
+                        if (utils::match_pattern(allowed_partition, partition))
+                        {
+                            pass_partition_filter = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!pass_partition_filter)
+            {
+                // the writer did not pass the partition filter
+                filtered_writersguid_list_.insert(writer);
+            }
+
+            i++;
+
+            writer = "";
+            writer_partition = "";
+        }
+
+        topics_[topic_id] = *topic;
 
         topics.insert(topic);
     }
@@ -123,8 +237,18 @@ void McapReaderParticipant::process_messages()
     for (const auto& it : messages)
     {
         // Create topic on which this message should be published
-        const bool is_topic_ros2_type = it.channel->metadata[ROS2_TYPES] == "true";
-        const auto topic = create_topic_(it.channel->topic, it.schema->name, is_topic_ros2_type);
+
+        const auto topic_id = std::make_pair(it.channel->topic, it.schema->name);
+        const auto topic = topics_[topic_id];
+        const std::string seq_num_str = std::to_string(it.message.sequence);
+        const std::string source_guid_indx = source_guid_by_sequence_[seq_num_str];
+        const std::string writer_guid = sequence_by_source_guid_index_[source_guid_indx];
+
+        if (filtered_writersguid_list_.find(writer_guid) != filtered_writersguid_list_.end())
+        {
+            // current message do not pass the filter
+            continue;
+        }
 
         const auto readers_it = readers_.find(topic);
 
@@ -150,6 +274,54 @@ void McapReaderParticipant::process_messages()
         // Set source timestamp
         // NOTE: this is important for QoS such as LifespanQosPolicy
         data->source_timestamp = fastdds::dds::Time_t(to_ticks(scheduled_write_ts) / 1e9);
+
+        // add the topic partitions, in the writer_qos
+        std::string partition_name = "";
+        auto it_partition = topic.partition_name.find(writer_guid);
+
+        // check if the message (using the writer_guid) has partitions
+        if (it_partition != topic.partition_name.end())
+        {
+
+            // check if the message is already added in the dictionary of PartitionsQos
+            // (optimize the search of partitions in the message by storing the PartitionQos of the writer_guid)
+            if (partitions_qos_dict_.find(writer_guid) != partitions_qos_dict_.end())
+            {
+                data->writer_qos.partitions = partitions_qos_dict_[writer_guid];
+            }
+            else
+            {
+                partition_name = it_partition->second;
+                if (partition_name.size() > 0)
+                {
+                    int i = 0, partition_name_n = partition_name.size();
+                    std::string tmp = "";
+                    while (i < partition_name_n)
+                    {
+                        if (partition_name[i] == '|')
+                        {
+                            data->writer_qos.partitions.push_back(tmp.c_str());
+                            tmp = "";
+                        }
+                        else
+                        {
+                            tmp += partition_name[i];
+                        }
+
+                        i++;
+                    }
+                    // add the last partition in the set of partitions.
+                    // e.g.: "A|B" adds the "B" partition
+                    if (tmp != "")
+                    {
+                        data->writer_qos.partitions.push_back(tmp.c_str());
+                    }
+
+                }
+                data->writer_qos.partitions.push_back(partition_name.c_str());
+                partitions_qos_dict_[writer_guid] = data->writer_qos.partitions;
+            }
+        }
 
         // Wait until it's time to write the message
         wait_until_timestamp_(scheduled_write_ts);
@@ -208,6 +380,12 @@ void McapReaderParticipant::read_mcap_summary_()
         EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
                 "MCAP file generated with a different DDS Record & Replay version (" << recording_version <<
                 ", current is " << DDSRECORDER_PARTICIPANTS_VERSION_STRING << "), incompatibilities might arise...");
+    }
+
+    if (metadata.find(VERSION_METADATA_MESSAGE_NAME) != metadata.end())
+    {
+        source_guid_by_sequence_ = metadata.at(VERSION_METADATA_MESSAGE_NAME).metadata;
+        sequence_by_source_guid_index_ = metadata.at(VERSION_METADATA_MESSAGE_INDEX_NAME).metadata;
     }
 }
 

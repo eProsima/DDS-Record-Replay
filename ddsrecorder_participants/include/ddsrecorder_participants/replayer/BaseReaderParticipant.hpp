@@ -86,6 +86,10 @@ public:
     DDSRECORDER_PARTICIPANTS_DllAPI
     ddspipe::core::types::TopicQoS topic_qos() const noexcept override;
 
+    //! Override topic_partitions() IParticipant method
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    std::map<std::string, std::map<std::string, std::string>> topic_partitions() const noexcept override;
+
     //! Override create_writer_() IParticipant method
     DDSRECORDER_PARTICIPANTS_DllAPI
     std::shared_ptr<ddspipe::core::IWriter> create_writer(
@@ -95,6 +99,47 @@ public:
     DDSRECORDER_PARTICIPANTS_DllAPI
     std::shared_ptr<ddspipe::core::IReader> create_reader(
             const ddspipe::core::ITopic& topic) override;
+
+    //! Override create_reader_() IParticipant method
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    std::shared_ptr<ddspipe::core::IReader> create_reader_with_filter(
+            const ddspipe::core::ITopic& topic,
+            const std::set<std::string> partitions) override;
+
+    //! Override add_topic_partition() IParticipant method
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    bool add_topic_partition(
+            const std::string& topic_name,
+            const std::string& writer_guid,
+            const std::string& partition) override;
+
+    //! Override update_topic_partition() IParticipant method
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    bool update_topic_partition(
+            const std::string& topic_name,
+            const std::string& writer_guid,
+            const std::string& partition) override;
+
+    //! Override delete_topic_partition() IParticipant method
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    bool delete_topic_partition(
+            const std::string& topic_name,
+            const std::string& writer_guid,
+            const std::string& partition) override;
+
+    //! Override clear_topic_partitions() IParticipant method
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    void clear_topic_partitions() override;
+
+    /**
+     * @brief Process the input file's summary.
+     *
+     * @param topics: Set of topics to be filled with the information from the input file.
+     * @param types:  DynamicTypesCollection instance to be filled with the types information from the input file.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    virtual void add_partition_list(
+            std::set<std::string> allowed_partition_list) = 0;
 
     /**
      * @brief Process the input file's summary.
@@ -186,6 +231,9 @@ protected:
 
     //! Scheduling condition variable mutex
     std::mutex scheduling_cv_mtx_;
+
+    //! <Topics <Writer_guid, Partitions set>>
+    std::map<std::string, std::map<std::string, std::string>> partition_names;
 };
 
 } /* namespace participants */
