@@ -21,7 +21,7 @@ set(MODULE_NAME
 )
 
 set(MODULE_SUMMARY
-    "eprosima DDS Pipe C++ Std Participant implementations."
+    "eprosima DDS Record & Replay Controller tool."
 )
 
 set(MODULE_FIND_PACKAGES
