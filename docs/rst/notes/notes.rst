@@ -13,6 +13,10 @@ This release includes the following **features**:
 * Support configuration from XML files
 * Support `partitions`
 
+This release includes the following **improvements and bugfixes**:
+
+* Fix installation with latest Fast DDS Python bindings
+
 
 This release includes the following **Dependencies Update**:
 
