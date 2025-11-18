@@ -78,7 +78,7 @@ Fast DDS Python
 ^^^^^^^^^^^^^^^
 
 `eProsima Fast DDS Python <https://github.com/eProsima/Fast-DDS-python/>`_ is a Python binding for the eProsima Fast DDS C++ library.
-It is only required for the :ref:`remote controller application <recorder_remote_controller>`.
+It is **only required** for the :ref:`remote controller application <recorder_remote_controller>`.
 
 Clone the Github repository into the |eddsrecord| workspace and compile it with colcon_ as a dependency package.
 Use the following command to download the code:
@@ -87,6 +87,9 @@ Use the following command to download the code:
 
     git clone https://github.com/eProsima/Fast-DDS-python.git src/Fast-DDS-python
 
+.. warning::
+
+    Note that Fast DDS Python requires CMake_ 3.24 or higher.
 
 .. _gtest_sl:
 
@@ -173,9 +176,20 @@ SWIG is only a requirement for the :ref:`remote controller application <recorder
 It can be installed using the package manager of the appropriate Linux distribution.
 For example, on Ubuntu use the command:
 
-.. code-block:: bash
+.. tab-set::
+  .. tab-item:: Ubuntu 22.04 (Jammy)
+    :sync: ubuntu_22
 
-   sudo apt install swig libpython3-dev
+    .. code-block:: bash
+
+        sudo apt install swig libpython3-dev
+
+  .. tab-item:: Ubuntu 24.04 (Noble)
+    :sync: ubuntu_24
+
+    .. code-block:: bash
+
+        sudo apt install swig4.1 libpython3-dev
 
 .. _pyqt6_linux_dependencies:
 
