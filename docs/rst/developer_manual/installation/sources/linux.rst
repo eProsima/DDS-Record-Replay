@@ -89,7 +89,7 @@ Use the following command to download the code:
 
 .. warning::
 
-    Note that Fast DDS Python requires cmake-3.24 or higher.
+    Note that Fast DDS Python requires CMake_ 3.24 or higher.
 
 .. _gtest_sl:
 
