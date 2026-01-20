@@ -39,7 +39,7 @@
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/replayer/SqlReaderParticipant.hpp>
 
-
+#include <thread>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -64,11 +64,24 @@ void SqlReaderParticipant::add_partition_list(
     allowed_partition_list_ = allowed_partition_list;
 }
 
+// TODO. danip
+void SqlReaderParticipant::update_partition_list(
+        std::set<std::string> allowed_partition_list)
+{
+    std::set<utils::Heritable<ddspipe::core::types::DdsTopic>> topics;
+    participants::DynamicTypesCollection types;
+
+    allowed_partition_list_ = allowed_partition_list;
+    process_summary(topics, types);
+}
+
 void SqlReaderParticipant::process_summary(
         std::set<utils::Heritable<ddspipe::core::types::DdsTopic>>& topics,
         DynamicTypesCollection& types)
 {
     open_file_();
+
+    processing_summary2_ = true;
 
     // SQL query. Gets the Topic, Type, Qos, ROS2_Topic, Partitions and WriterGuid
     // using Topic, Type and Partitions as primary keys
@@ -273,6 +286,8 @@ void SqlReaderParticipant::process_summary(
             });
 
     close_file_();
+
+    processing_summary2_ = false;
 }
 
 void SqlReaderParticipant::process_messages()
@@ -311,6 +326,11 @@ void SqlReaderParticipant::process_messages()
             const std::string writer_guid = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
 
             const auto topic_id = std::make_pair(topic_name, type_name);
+
+            while(processing_summary2_ == true) // TODO. danip
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
 
             if (filtered_writersguid_list_.find(writer_guid) != filtered_writersguid_list_.end())
             {

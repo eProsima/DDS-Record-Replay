@@ -367,8 +367,6 @@ void McapSizeTracker::check_and_increase_written_mcap_size_(
             std::int64_t dif_potential_written = potential_mcap_size_ - written_mcap_size_; // Signed to allow negative values in case of decrease (error?)
             written_mcap_size_ = file_size;
             potential_mcap_size_ = written_mcap_size_ + dif_potential_written;
-            std::cout << "UPDATE: written size: " << written_mcap_size_ << " potential size: " <<
-                potential_mcap_size_ << std::endl;
         }
         checked_written_mcap_size_ = written_mcap_size_;
     }

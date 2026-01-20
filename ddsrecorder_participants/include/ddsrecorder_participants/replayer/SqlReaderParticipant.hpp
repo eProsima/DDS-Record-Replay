@@ -76,6 +76,15 @@ public:
             std::set<std::string> allowed_partition_list) override;
 
     /**
+     * @brief Add the filter partition list
+     *
+     * @param topics: Set of allowed partitions added by the filter.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    void update_partition_list(
+            std::set<std::string> allowed_partition_list);
+
+    /**
      * @brief Process the topics and the types stored in the SQLite database.
      *
      * @param topics: Set of topics to be filled with the information from the SQLite database.
@@ -132,6 +141,8 @@ protected:
 
     //! Set of writers guid that do not pass the partitions filter.
     std::set<std::string> filtered_writersguid_list_;
+
+    std::atomic<bool> processing_summary2_;
 };
 
 } /* namespace participants */

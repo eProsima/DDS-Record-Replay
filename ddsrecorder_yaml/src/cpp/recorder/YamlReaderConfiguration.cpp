@@ -589,6 +589,7 @@ void RecorderConfiguration::load_dds_configuration_(
             // the partitionslist contains "*" -> clear the list,
             // all the partitions are allowed in the filter
             dds_configuration->allowed_partition_list.clear();
+            dds_configuration->allowed_partition_list.insert("*");
         }
     }
 

@@ -100,36 +100,19 @@ public:
     std::shared_ptr<ddspipe::core::IReader> create_reader(
             const ddspipe::core::ITopic& topic) override;
 
-    //! Override create_reader_() IParticipant method
+    //! Override create_contentfilteredtopic() IParticipant method
     DDSRECORDER_PARTICIPANTS_DllAPI
-    std::shared_ptr<ddspipe::core::IReader> create_reader_with_filter(
-            const ddspipe::core::ITopic& topic,
-            const std::set<std::string> partitions) override;
+    eprosima::fastdds::dds::ContentFilteredTopic* create_contentfilteredtopic(
+            const std::string& name,
+            eprosima::fastdds::dds::Topic* related_topic,
+            const std::string& filter_expression,
+            const std::vector<std::string>& expression_parameters) override;
 
-    //! Override add_topic_partition() IParticipant method
+    //! Override find_topic() IParticipant method
     DDSRECORDER_PARTICIPANTS_DllAPI
-    bool add_topic_partition(
+    virtual eprosima::fastdds::dds::Topic* find_topic(
             const std::string& topic_name,
-            const std::string& writer_guid,
-            const std::string& partition) override;
-
-    //! Override update_topic_partition() IParticipant method
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    bool update_topic_partition(
-            const std::string& topic_name,
-            const std::string& writer_guid,
-            const std::string& partition) override;
-
-    //! Override delete_topic_partition() IParticipant method
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    bool delete_topic_partition(
-            const std::string& topic_name,
-            const std::string& writer_guid,
-            const std::string& partition) override;
-
-    //! Override clear_topic_partitions() IParticipant method
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    void clear_topic_partitions() override;
+            const fastdds::dds::Duration_t& timeout) override;
 
     /**
      * @brief Process the input file's summary.

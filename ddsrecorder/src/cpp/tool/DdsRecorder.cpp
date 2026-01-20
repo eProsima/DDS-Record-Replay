@@ -110,25 +110,29 @@ DdsRecorder::DdsRecorder(
     // Create Participant Database
     participants_database_ = std::make_shared<ParticipantsDatabase>();
 
+
+    // TODO. danip check
+
     // Create DynTypes Participant
-    if (configuration.xml_enabled)
-    {
+    // if (configuration.xml_enabled)
+    // {
         dyn_participant_ = std::make_shared<XmlDynTypesParticipant>(
             configuration.dds_configuration,
             payload_pool_,
-            discovery_database_);
+            discovery_database_,
+            true);
 
         std::dynamic_pointer_cast<XmlDynTypesParticipant>(dyn_participant_)->init();
-    }
-    else
-    {
-        dyn_participant_ = std::make_shared<DynTypesParticipant>(
-            std::dynamic_pointer_cast<SimpleParticipantConfiguration>(configuration.dds_configuration),
-            payload_pool_,
-            discovery_database_);
+    // }
+    // else
+    // {
+    //     dyn_participant_ = std::make_shared<DynTypesParticipant>(
+    //         std::dynamic_pointer_cast<SimpleParticipantConfiguration>(configuration.dds_configuration),
+    //         payload_pool_,
+    //         discovery_database_);
 
-        std::dynamic_pointer_cast<DynTypesParticipant>(dyn_participant_)->init();
-    }
+    //     std::dynamic_pointer_cast<DynTypesParticipant>(dyn_participant_)->init();
+    // }
 
 
     // Populate Participant Database
@@ -201,7 +205,10 @@ DdsRecorder::DdsRecorder(
         participants_database_,
         thread_pool_);
 
-    pipe_->update_filter(configuration.dds_configuration->allowed_partition_list);
+    //pipe_->update_filter(configuration.dds_configuration->allowed_partition_list);
+    // TODO. danip HEREEE
+    std::dynamic_pointer_cast<XmlDynTypesParticipant>(dyn_participant_)->update_filters(0, configuration.dds_configuration->allowed_partition_list);
+    //pipe_->update_partitions(configuration.dds_configuration->allowed_partition_list);
 
     // Create a Monitor
     auto monitor_configuration = configuration.monitor_configuration;
@@ -234,7 +241,9 @@ utils::ReturnCode DdsRecorder::reload_configuration(
     if (reload_conf_count_ % 2 == 0)
     {
         // update the filter partition set
-        pipe_->reload_filter_partition(new_configuration.dds_configuration->allowed_partition_list);
+        // TODO. danip remove
+        //pipe_->reload_filter_partition(new_configuration.dds_configuration->allowed_partition_list);
+        pipe_->update_partitions(new_configuration.dds_configuration->allowed_partition_list);
     }
 
     return pipe_->reload_configuration(new_configuration.ddspipe_configuration);
@@ -244,7 +253,8 @@ void DdsRecorder::update_filter(
         const std::set<std::string> new_filter)
 {
     // function used primary for the tests
-    pipe_->update_filter(new_filter);
+    //pipe_->update_filter(new_filter); // TODO. danip remove
+    pipe_->update_partitions(new_filter);
 }
 
 void DdsRecorder::start()

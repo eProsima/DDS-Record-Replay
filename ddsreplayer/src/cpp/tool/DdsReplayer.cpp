@@ -181,6 +181,11 @@ DdsReplayer::DdsReplayer(
 utils::ReturnCode DdsReplayer::reload_configuration(
         const yaml::ReplayerConfiguration& new_configuration)
 {
+    //pipe_->update_partitions(new_configuration.replayer_configuration->allowed_partition_list);
+    // Update the partitions
+    std::dynamic_pointer_cast<participants::SqlReaderParticipant>(reader_participant_)->
+        update_partition_list(new_configuration.replayer_configuration->allowed_partition_list);
+    //reader_participant_->update_partition_list(new_configuration.replayer_configuration->allowed_partition_list);
     return pipe_->reload_configuration(new_configuration.ddspipe_configuration);
 }
 

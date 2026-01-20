@@ -301,6 +301,7 @@ void ReplayerConfiguration::load_dds_configuration_(
             // the partitionslist contains "*" -> clear the list,
             // all the partitions are allowed in the filter
             replayer_configuration->allowed_partition_list.clear();
+            replayer_configuration->allowed_partition_list.insert("*");
         }
     }
 
