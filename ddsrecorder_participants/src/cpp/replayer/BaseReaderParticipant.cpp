@@ -189,20 +189,13 @@ void BaseReaderParticipant::wait_until_timestamp_(
         });
 }
 
-eprosima::fastdds::dds::ContentFilteredTopic* BaseReaderParticipant::create_contentfilteredtopic(
-        const std::string& name,
-        eprosima::fastdds::dds::Topic* related_topic,
-        const std::string& filter_expression,
-        const std::vector<std::string>& expression_parameters)
-{
-    return nullptr;
-}
-
-eprosima::fastdds::dds::Topic* BaseReaderParticipant::find_topic(
+void BaseReaderParticipant::update_filters(
+        const int flag,
+        std::set<std::string> partitions,
         const std::string& topic_name,
-        const fastdds::dds::Duration_t& timeout)
+        const std::string& expression)
 {
-    return nullptr;
+    // Nothing
 }
 
 } /* namespace participants */

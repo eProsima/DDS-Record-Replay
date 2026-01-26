@@ -100,19 +100,13 @@ public:
     std::shared_ptr<ddspipe::core::IReader> create_reader(
             const ddspipe::core::ITopic& topic) override;
 
-    //! Override create_contentfilteredtopic() IParticipant method
+    //! Override update_filters() IParticipant method
     DDSRECORDER_PARTICIPANTS_DllAPI
-    eprosima::fastdds::dds::ContentFilteredTopic* create_contentfilteredtopic(
-            const std::string& name,
-            eprosima::fastdds::dds::Topic* related_topic,
-            const std::string& filter_expression,
-            const std::vector<std::string>& expression_parameters) override;
-
-    //! Override find_topic() IParticipant method
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    virtual eprosima::fastdds::dds::Topic* find_topic(
+    virtual void update_filters(
+            const int flag,
+            std::set<std::string> partitions,
             const std::string& topic_name,
-            const fastdds::dds::Duration_t& timeout) override;
+            const std::string& expression) override;
 
     /**
      * @brief Process the input file's summary.

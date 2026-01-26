@@ -101,7 +101,7 @@ DdsReplayer::DdsReplayer(
     // Create Replayer Participant
     std::shared_ptr<ddspipe::core::IParticipant> replayer_participant;
 
-    if (configuration.xml_enabled)
+    if (configuration.dds_enabled)
     {
         replayer_participant = std::make_shared<participants::XmlReplayerParticipant>(
             configuration.replayer_configuration,

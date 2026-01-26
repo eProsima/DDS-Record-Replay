@@ -228,6 +228,12 @@ void ReplayerConfiguration::load_specs_configuration_(
         TopicQoS::default_topic_qos.set_value(topic_qos);
     }
 
+    // Get optional rtps enabled
+    if (YamlReader::is_tag_present(yml, RTPS_ENABLED_TAG))
+    {
+        dds_enabled = !YamlReader::get<bool>(yml, RTPS_ENABLED_TAG, version);
+    }
+
     // Get wait all acknowledged timeout
     if (YamlReader::is_tag_present(yml, WAIT_ALL_ACKED_TIMEOUT_TAG))
     {
@@ -261,7 +267,6 @@ void ReplayerConfiguration::load_dds_configuration_(
     if (YamlReader::is_tag_present(yml, REPLAYER_PROFILE_TAG))
     {
         replayer_configuration->participant_profile = YamlReader::get<std::string>(yml, REPLAYER_PROFILE_TAG, version);
-        xml_enabled = true;
     }
 
     // Get optional DDS domain
@@ -284,25 +289,6 @@ void ReplayerConfiguration::load_dds_configuration_(
     {
         replayer_configuration->allowed_partition_list = YamlReader::get_set<std::string>(yml, PARTITIONLIST_TAG,
                         version);
-
-        // check if the wildcard partition is in the partitionlist
-        bool wildcard = false;
-        for (std::string partition: replayer_configuration->allowed_partition_list)
-        {
-            if (partition == "*")
-            {
-                wildcard = true;
-                break;
-            }
-        }
-
-        if (wildcard)
-        {
-            // the partitionslist contains "*" -> clear the list,
-            // all the partitions are allowed in the filter
-            replayer_configuration->allowed_partition_list.clear();
-            replayer_configuration->allowed_partition_list.insert("*");
-        }
     }
 
     // Optional get Transport protocol

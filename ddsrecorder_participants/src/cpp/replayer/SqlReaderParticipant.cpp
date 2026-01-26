@@ -400,6 +400,7 @@ void SqlReaderParticipant::process_messages()
                         {
                             if (partition_name[i] == '|')
                             {
+                                //tmp = "abc";
                                 data->writer_qos.partitions.push_back(tmp.c_str());
                                 tmp = "";
                             }
@@ -414,13 +415,14 @@ void SqlReaderParticipant::process_messages()
                         // e.g.: "A|B" adds the "B" partition
                         if (tmp != "")
                         {
+                            //tmp = "abc";
                             data->writer_qos.partitions.push_back(tmp.c_str());
                         }
 
                     }
 
                     // adds the partitions in the writer guid PartitionsQos
-                    data->writer_qos.partitions.push_back(partition_name.c_str());
+                    //data->writer_qos.partitions.push_back(partition_name.c_str());
                     partitions_qos_dict_[writer_guid] = data->writer_qos.partitions;
                 }
             }
