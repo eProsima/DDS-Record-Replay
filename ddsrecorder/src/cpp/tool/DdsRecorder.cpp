@@ -110,9 +110,6 @@ DdsRecorder::DdsRecorder(
     // Create Participant Database
     participants_database_ = std::make_shared<ParticipantsDatabase>();
 
-
-    // TODO. danip check
-
     // Create DynTypes Participant
     if (configuration.dds_enabled)
     {
@@ -204,11 +201,7 @@ DdsRecorder::DdsRecorder(
         participants_database_,
         thread_pool_);
 
-    //pipe_->update_filter(configuration.dds_configuration->allowed_partition_list);
-    // TODO. danip HEREEE
-    //std::dynamic_pointer_cast<CommonParticipant>(dyn_participant_)->update_filters(0, configuration.dds_configuration->allowed_partition_list);
     dyn_participant_->update_filters(0, configuration.dds_configuration->allowed_partition_list, "", "");
-    //pipe_->update_partitions(configuration.dds_configuration->allowed_partition_list);
 
     // Create a Monitor
     auto monitor_configuration = configuration.monitor_configuration;
@@ -253,7 +246,7 @@ void DdsRecorder::update_filter(
         const std::set<std::string> new_filter)
 {
     // function used primary for the tests
-    //pipe_->update_filter(new_filter); // TODO. danip remove
+    dyn_participant_->update_filters(0, new_filter, "", "");
     pipe_->update_partitions(new_filter);
 }
 

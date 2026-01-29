@@ -424,11 +424,11 @@ void RecorderConfiguration::load_recorder_sql_configuration_(
     {
         const auto data_format_yml = YamlReader::get_value_in_tag(yml, RECORDER_SQL_DATA_FORMAT_TAG);
         sql_data_format = YamlReader::get_enumeration<ddsrecorder::participants::DataFormat>(data_format_yml,
-                    {
-                        {RECORDER_SQL_DATA_FORMAT_CDR_TAG,  ddsrecorder::participants::DataFormat::cdr},
-                        {RECORDER_SQL_DATA_FORMAT_JSON_TAG, ddsrecorder::participants::DataFormat::json},
-                        {RECORDER_SQL_DATA_FORMAT_BOTH_TAG, ddsrecorder::participants::DataFormat::both}
-                    });
+                        {
+                            {RECORDER_SQL_DATA_FORMAT_CDR_TAG,  ddsrecorder::participants::DataFormat::cdr},
+                            {RECORDER_SQL_DATA_FORMAT_JSON_TAG, ddsrecorder::participants::DataFormat::json},
+                            {RECORDER_SQL_DATA_FORMAT_BOTH_TAG, ddsrecorder::participants::DataFormat::both}
+                        });
     }
 
     /////

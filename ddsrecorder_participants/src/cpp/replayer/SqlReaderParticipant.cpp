@@ -327,7 +327,7 @@ void SqlReaderParticipant::process_messages()
 
             const auto topic_id = std::make_pair(topic_name, type_name);
 
-            while(processing_summary2_ == true) // TODO. danip
+            while (processing_summary2_ == true) // TODO. danip
             {
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
