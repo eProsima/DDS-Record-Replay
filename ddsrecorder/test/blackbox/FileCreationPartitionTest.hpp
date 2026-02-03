@@ -181,10 +181,12 @@ protected:
             const EventKind event = EventKind::NO_EVENT,
             const std::string partition_filter = "*")
     {
+        configuration_->dds_configuration->allowed_partition_list.clear();
+        configuration_->dds_configuration->allowed_partition_list.insert(partition_filter);
         // Create the Recorder
         auto recorder = std::make_unique<ddsrecorder::recorder::DdsRecorder>(*configuration_, state1, file_name);
 
-        //recorder->update_filter(std::set<std::string>{partition_filter});
+        recorder->update_filter(std::set<std::string>{partition_filter});
 
         if (partition_filter != "*")
         {
@@ -246,6 +248,8 @@ protected:
                     break;
             }
         }
+
+        //configuration_->dds_configuration->allowed_partition_list.erase(partition_filter);
 
         return sent_messages;
     }

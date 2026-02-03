@@ -246,8 +246,9 @@ void DdsRecorder::update_filter(
         const std::set<std::string> new_filter)
 {
     // function used primary for the tests
-    dyn_participant_->update_filters(0, new_filter, "", "");
-    pipe_->update_partitions(new_filter);
+    pipe_->update_filter(new_filter); // TODO. DANIP
+    // dyn_participant_->update_filters(0, new_filter, "", "");
+    // pipe_->update_partitions(new_filter);
 }
 
 void DdsRecorder::start()

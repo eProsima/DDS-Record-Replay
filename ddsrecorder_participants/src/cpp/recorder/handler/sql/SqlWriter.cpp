@@ -329,7 +329,6 @@ void SqlWriter::write_nts_(
     }
 
     EPROSIMA_LOG_INFO(DDSRECORDER_SQL_WRITER, "Writing << " << messages.size() << " messages.");
-    std::cout << "Writing << " << messages.size() << " messages.\n";
 
     // (Table: Messages) Define the SQL statement for batch insert
     const char* insert_statement_message =
