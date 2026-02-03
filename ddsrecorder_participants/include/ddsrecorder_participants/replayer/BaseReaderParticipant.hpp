@@ -100,6 +100,31 @@ public:
     std::shared_ptr<ddspipe::core::IReader> create_reader(
             const ddspipe::core::ITopic& topic) override;
 
+    //! Override add_topic_partition() IParticipant method
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    bool add_topic_partition(
+            const std::string& topic_name,
+            const std::string& writer_guid,
+            const std::string& partition) override;
+
+    //! Override update_topic_partition() IParticipant method
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    bool update_topic_partition(
+            const std::string& topic_name,
+            const std::string& writer_guid,
+            const std::string& partition) override;
+
+    //! Override delete_topic_partition() IParticipant method
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    bool delete_topic_partition(
+            const std::string& topic_name,
+            const std::string& writer_guid,
+            const std::string& partition) override;
+
+    //! Override clear_topic_partitions() IParticipant method
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    void clear_topic_partitions() override;
+
     //! Override update_filters() IParticipant method
     DDSRECORDER_PARTICIPANTS_DllAPI
     virtual void update_filters(

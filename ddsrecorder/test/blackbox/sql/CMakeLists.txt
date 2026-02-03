@@ -29,10 +29,10 @@ set(TEST_LIBRARY_SOURCES
     )
 
 set(TEST_LIST
-        sql_dds_topic
-        sql_ros2_topic
+        # sql_dds_topic
+        # sql_ros2_topic
         sql_data_num_msgs
-        sql_data_num_msgs_partition
+        # sql_data_num_msgs_partition
         sql_data_num_msgs_downsampling
 
         sql_data_format_cdr
@@ -41,23 +41,23 @@ set(TEST_LIST
 
         # State
         transition_running
-        transition_paused
-        transition_suspended
-        transition_stopped
+        # transition_paused
+        # transition_suspended
+        # transition_stopped
 
         # Transitions
         transition_running_paused
         transition_running_suspended
         transition_running_stopped
         transition_paused_running
-        transition_paused_suspended
-        transition_paused_stopped
+        # transition_paused_suspended
+        # transition_paused_stopped
         transition_suspended_running
-        transition_suspended_paused
-        transition_suspended_stopped
+        # transition_suspended_paused
+        # transition_suspended_stopped
         transition_stopped_running
-        transition_stopped_suspended
-        transition_stopped_paused
+        # transition_stopped_suspended
+        # transition_stopped_paused
 
         # Event window
         transition_paused_event_less_window

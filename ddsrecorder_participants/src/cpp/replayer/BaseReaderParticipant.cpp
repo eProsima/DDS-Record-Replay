@@ -189,6 +189,82 @@ void BaseReaderParticipant::wait_until_timestamp_(
         });
 }
 
+bool BaseReaderParticipant::add_topic_partition(
+        const std::string& topic_name,
+        const std::string& writer_guid,
+        const std::string& partition)
+{
+    if (partition_names.find(topic_name) != partition_names.end())
+    {
+        // the topic exists
+        if (partition_names[topic_name].find(writer_guid) != partition_names[topic_name].end())
+        {
+            // the writer is already added in the topic
+            return false;
+        }
+    }
+    else
+    {
+        // there is no topic in the dictionary
+        partition_names[topic_name] = std::map<std::string, std::string>();
+    }
+
+    // adds [writer, partition] in the topic
+    partition_names[topic_name][writer_guid] = partition;
+
+    return true;
+}
+
+bool BaseReaderParticipant::update_topic_partition(
+        const std::string& topic_name,
+        const std::string& writer_guid,
+        const std::string& partition)
+{
+    if (partition_names.find(topic_name) == partition_names.end())
+    {
+        // the topic dont exists
+        return false;
+    }
+    if (partition_names[topic_name].find(writer_guid) == partition_names[topic_name].end())
+    {
+        // the writer dont exist in the topic
+
+        return false;
+    }
+
+    // update [writer, partition] in the topic
+    partition_names[topic_name][writer_guid] = partition;
+
+    return true;
+}
+
+bool BaseReaderParticipant::delete_topic_partition(
+        const std::string& topic_name,
+        const std::string& writer_guid,
+        const std::string& partition)
+{
+    if (partition_names.find(topic_name) == partition_names.end())
+    {
+        // the topic dont exists
+        return false;
+    }
+    if (partition_names[topic_name].find(writer_guid) == partition_names[topic_name].end())
+    {
+        // the writer dont exist in the topic
+        return false;
+    }
+
+    // delete [writer, partition] in the topic
+    partition_names.erase(writer_guid);
+
+    return true;
+}
+
+void BaseReaderParticipant::clear_topic_partitions()
+{
+    partition_names.clear();
+}
+
 void BaseReaderParticipant::update_filters(
         const int flag,
         std::set<std::string> partitions,

@@ -52,6 +52,7 @@ public:
 
         // Set the output library to SQL
         configuration_->sql_enabled = true;
+        //configuration_->dds_enabled = false;
         // If MCAP were enabled the event thread raises a false positive TSAN race condition
         // when destroying the releasing the last reference to a payload
         configuration_->mcap_enabled = false;

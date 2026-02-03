@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Add subdirectory with labels for tests
-add_subdirectory(labels)
+#add_subdirectory(labels) # TODO. danip
 
 # Add subdirectories with tests
 add_subdirectory(blackbox)

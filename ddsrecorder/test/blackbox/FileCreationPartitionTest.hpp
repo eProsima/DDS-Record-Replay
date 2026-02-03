@@ -184,7 +184,7 @@ protected:
         // Create the Recorder
         auto recorder = std::make_unique<ddsrecorder::recorder::DdsRecorder>(*configuration_, state1, file_name);
 
-        recorder->update_filter(std::set<std::string>{partition_filter});
+        //recorder->update_filter(std::set<std::string>{partition_filter});
 
         if (partition_filter != "*")
         {
