@@ -201,7 +201,7 @@ DdsRecorder::DdsRecorder(
         participants_database_,
         thread_pool_);
 
-    dyn_participant_->update_filters(0, configuration.dds_configuration->allowed_partition_list, "", "");
+    dyn_participant_->update_partitions(configuration.dds_configuration->allowed_partition_list);
 
     // Create a Monitor
     auto monitor_configuration = configuration.monitor_configuration;

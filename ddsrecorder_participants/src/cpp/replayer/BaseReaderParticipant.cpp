@@ -265,9 +265,13 @@ void BaseReaderParticipant::clear_topic_partitions()
     partition_names.clear();
 }
 
-void BaseReaderParticipant::update_filters(
-        const int flag,
-        std::set<std::string> partitions,
+void BaseReaderParticipant::update_partitions(
+        std::set<std::string> partitions)
+{
+    // Nothing
+}
+
+void BaseReaderParticipant::update_content_topicfilter(
         const std::string& topic_name,
         const std::string& expression)
 {
