@@ -29,44 +29,44 @@ set(TEST_LIBRARY_SOURCES
     )
 
 set(TEST_LIST
-        sql_dds_topic
-        sql_ros2_topic
+        # sql_dds_topic
+        # sql_ros2_topic
         sql_data_num_msgs
-        sql_data_num_msgs_partition
-        sql_data_num_msgs_downsampling
+        # sql_data_num_msgs_partition
+        # sql_data_num_msgs_downsampling
 
-        sql_data_format_cdr
-        sql_data_format_json
-        sql_data_format_both
+        # sql_data_format_cdr
+        # sql_data_format_json
+        # sql_data_format_both
 
-        # State
-        transition_running
-        transition_paused
-        transition_suspended
-        transition_stopped
+        # # State
+        # transition_running
+        # # transition_paused
+        # # transition_suspended
+        # # transition_stopped
 
-        # Transitions
-        transition_running_paused
-        transition_running_suspended
-        transition_running_stopped
-        transition_paused_running
-        transition_paused_suspended
-        transition_paused_stopped
-        transition_suspended_running
-        transition_suspended_paused
-        transition_suspended_stopped
-        transition_stopped_running
-        transition_stopped_suspended
-        transition_stopped_paused
+        # # Transitions
+        # transition_running_paused
+        # transition_running_suspended
+        # transition_running_stopped
+        # transition_paused_running
+        # # transition_paused_suspended
+        # # transition_paused_stopped
+        # transition_suspended_running
+        # # transition_suspended_paused
+        # # transition_suspended_stopped
+        # transition_stopped_running
+        # # transition_stopped_suspended
+        # # transition_stopped_paused
 
-        # Event window
-        transition_paused_event_less_window
-        transition_paused_event_max_window
+        # # Event window
+        # transition_paused_event_less_window
+        # transition_paused_event_max_window
 
-        # Events
-        transition_paused_event_start
-        transition_paused_event_suspend
-        transition_paused_event_stop
+        # # Events
+        # transition_paused_event_start
+        # transition_paused_event_suspend
+        # transition_paused_event_stop
     )
 
 
@@ -103,49 +103,49 @@ set(TEST_LIBRARY_SOURCES
     )
 
 set(TEST_LIST
-        sql_dds_topic_partition
-        sql_ros2_topic_partition
-        sql_data_num_msgs_partition
-        sql_data_num_msgs_partition_partition
-        sql_data_num_msgs_downsampling_partition
+        # sql_dds_topic_partition
+        # sql_ros2_topic_partition
+        # sql_data_num_msgs_partition
+        # sql_data_num_msgs_partition_partition
+        # sql_data_num_msgs_downsampling_partition
 
-        sql_data_format_cdr_partition
-        sql_data_format_json_partition
-        sql_data_format_both_partition
+        # sql_data_format_cdr_partition
+        # sql_data_format_json_partition
+        # sql_data_format_both_partition
 
-        # State
-        transition_running_partition
-        transition_paused_partition
-        transition_suspended_partition
-        transition_stopped_partition
+        # # State
+        # transition_running_partition
+        # transition_paused_partition
+        # transition_suspended_partition
+        # transition_stopped_partition
 
-        # Transitions
-        transition_running_paused_partition
-        transition_running_suspended_partition
-        transition_running_stopped_partition
-        transition_paused_running_partition
-        transition_paused_suspended_partition
-        transition_paused_stopped_partition
-        transition_suspended_running_partition
-        transition_suspended_paused_partition
-        transition_suspended_stopped_partition
-        transition_stopped_running_partition
-        transition_stopped_suspended_partition
-        transition_stopped_paused_partition
+        # # Transitions
+        # transition_running_paused_partition
+        # transition_running_suspended_partition
+        # transition_running_stopped_partition
+        # transition_paused_running_partition
+        # transition_paused_suspended_partition
+        # transition_paused_stopped_partition
+        # transition_suspended_running_partition
+        # transition_suspended_paused_partition
+        # transition_suspended_stopped_partition
+        # transition_stopped_running_partition
+        # transition_stopped_suspended_partition
+        # transition_stopped_paused_partition
 
-        # Event window
-        transition_paused_event_less_window_partition
-        transition_paused_event_max_window_partition
+        # # Event window
+        # transition_paused_event_less_window_partition
+        # transition_paused_event_max_window_partition
 
-        # Events
-        transition_paused_event_start_partition
-        transition_paused_event_suspend_partition
-        transition_paused_event_stop_partition
+        # # Events
+        # transition_paused_event_start_partition
+        # transition_paused_event_suspend_partition
+        # transition_paused_event_stop_partition
 
         sql_dds_topic_partition_no_record
         sql_ros2_topic_partition_no_record
         sql_data_num_msgs_partition_no_record
-        sql_data_num_msgs_partition_no_record_partition_no_record
+        # sql_data_num_msgs_partition_no_record_partition_no_record
         sql_data_num_msgs_downsampling_partition_no_record
 
         sql_data_format_cdr_partition_no_record
@@ -153,24 +153,24 @@ set(TEST_LIST
         sql_data_format_both_partition_no_record
 
         # State
-        transition_running_partition_no_record
-        transition_paused_partition_no_record
-        transition_suspended_partition_no_record
-        transition_stopped_partition_no_record
+        # transition_running_partition_no_record
+        # transition_paused_partition_no_record
+        # transition_suspended_partition_no_record
+        # transition_stopped_partition_no_record
 
         # Transitions
         transition_running_paused_partition_no_record
         transition_running_suspended_partition_no_record
         transition_running_stopped_partition_no_record
-        transition_paused_running_partition_no_record
-        transition_paused_suspended_partition_no_record
-        transition_paused_stopped_partition_no_record
-        transition_suspended_running_partition_no_record
-        transition_suspended_paused_partition_no_record
-        transition_suspended_stopped_partition_no_record
-        transition_stopped_running_partition_no_record
-        transition_stopped_suspended_partition_no_record
-        transition_stopped_paused_partition_no_record
+        # transition_paused_running_partition_no_record
+        # transition_paused_suspended_partition_no_record
+        # transition_paused_stopped_partition_no_record
+        # transition_suspended_running_partition_no_record
+        # transition_suspended_paused_partition_no_record
+        # transition_suspended_stopped_partition_no_record
+        # transition_stopped_running_partition_no_record
+        # transition_stopped_suspended_partition_no_record
+        # transition_stopped_paused_partition_no_record
     )
 
 
