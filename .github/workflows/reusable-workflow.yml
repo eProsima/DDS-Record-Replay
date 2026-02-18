@@ -75,7 +75,7 @@ jobs:
           dependencies_artifact_postfix: ${{ inputs.dependencies_artifact_postfix }}
           secret_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Ensure colcon is available after VS shell setup
+      - name: Prepare Windows colcon and VS fallback
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
@@ -83,46 +83,25 @@ jobs:
           New-Item -Path $shim_dir -ItemType Directory -Force | Out-Null
 
           $python_exe = (Get-Command python).Source
-          $python_scripts = Join-Path (Split-Path $python_exe -Parent) 'Scripts'
-          $shim_content = @(
-            '@echo off'
-            "`"$python_exe`" -m colcon %*"
-          )
-
-          # Keep a shim in RUNNER_TEMP and in the workspace root, as Enter-VsDevShell can
-          # rebuild PATH and drop the temporary shim location.
-          $shim_content | Set-Content -Path (Join-Path $shim_dir 'colcon.cmd') -Encoding ascii
-          $shim_content | Set-Content -Path (Join-Path $env:GITHUB_WORKSPACE 'colcon.cmd') -Encoding ascii
-
-          # Make colcon shim available in subsequent steps.
+          "@echo off`n`"$python_exe`" -m colcon %*" | Set-Content -Path (Join-Path $shim_dir 'colcon.cmd') -Encoding ascii
           $shim_dir | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          $env:GITHUB_WORKSPACE | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          if (Test-Path $python_scripts) {
-            $python_scripts | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+          $tool_dirs = @()
+          foreach ($tool in @('cmake', 'ninja', 'git')) {
+            $tool_cmd = Get-Command $tool -ErrorAction SilentlyContinue
+            if ($null -ne $tool_cmd) {
+              $tool_dirs += (Split-Path $tool_cmd.Source -Parent)
+            }
           }
 
-          # Build a minimal preinit PATH for Enter-VsDevShell.
-          # Do not inherit the full runner PATH, as VsDevShell appends many entries and can
-          # exceed cmd.exe command-length limits.
           $path_candidates = @(
             "$env:WINDIR\System32",
             "$env:WINDIR",
             "$env:WINDIR\System32\Wbem",
             "$env:WINDIR\System32\WindowsPowerShell\v1.0",
             "$env:WINDIR\System32\OpenSSH",
-            $shim_dir,
-            $env:GITHUB_WORKSPACE,
-            (Split-Path $python_exe -Parent)
-          )
-          if (Test-Path $python_scripts) {
-            $path_candidates += $python_scripts
-          }
-          foreach ($tool in @('cmake', 'ninja', 'git')) {
-            $tool_cmd = Get-Command $tool -ErrorAction SilentlyContinue
-            if ($null -ne $tool_cmd) {
-              $path_candidates += (Split-Path $tool_cmd.Source -Parent)
-            }
-          }
+            $shim_dir
+          ) + $tool_dirs
           if (-not [string]::IsNullOrWhiteSpace($env:vcpkg_install_path)) {
             $path_candidates += (Join-Path $env:vcpkg_install_path 'bin')
             $vcpkg_debug_bin = Join-Path $env:vcpkg_install_path 'debug\bin'
@@ -134,152 +113,16 @@ jobs:
             $path_candidates += $env:RUNVCPKG_VCPKG_ROOT
           }
 
-          $seen_paths = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-          $compact_paths = @()
-          foreach ($entry in $path_candidates) {
-            if (-not [string]::IsNullOrWhiteSpace($entry)) {
-              $clean_entry = $entry.Trim()
-              if ($seen_paths.Add($clean_entry)) {
-                $compact_paths += $clean_entry
-              }
-            }
-          }
+          $compact_paths = $path_candidates |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+            ForEach-Object { $_.Trim() } |
+            Select-Object -Unique
+          "__VSCMD_PREINIT_PATH=$($compact_paths -join ';')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-          $max_preinit_length = 1024
-          $short_paths = @()
-          $current_length = 0
-          foreach ($entry in $compact_paths) {
-            $entry_length = $entry.Length
-            if ($short_paths.Count -gt 0) {
-              $entry_length += 1
-            }
-            if (($current_length + $entry_length) -gt $max_preinit_length) {
-              break
-            }
-            $short_paths += $entry
-            $current_length += $entry_length
-          }
-
-          "__VSCMD_PREINIT_PATH=$($short_paths -join ';')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          Write-Host "Using compact __VSCMD_PREINIT_PATH length: $current_length"
-
-          # Keep using the workspace vcpkg instance after msvc-dev-cmd.
           if (-not [string]::IsNullOrWhiteSpace($env:RUNVCPKG_VCPKG_ROOT)) {
             "VCPKG_ROOT=$env:RUNVCPKG_VCPKG_ROOT" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           }
-
-      - name: Set Windows Visual Studio fallback environment
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
           "VisualStudioVersion=17.0" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          $vswhere = Join-Path ${Env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
-          if (Test-Path $vswhere) {
-            $vs_install = & $vswhere -latest -products * -requires Microsoft.Component.MSBuild -property installationPath
-            if (-not [string]::IsNullOrWhiteSpace($vs_install)) {
-              "VSINSTALLDIR=$vs_install\" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-            }
-          }
-
-      - name: Diagnose Windows build environment
-        if: runner.os == 'Windows'
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Continue'
-
-          function Show-PathStats([string]$label, [string]$pathValue) {
-            $safePath = [string]$pathValue
-            $entries = @(
-              $safePath -split ';' |
-              ForEach-Object { $_.Trim() } |
-              Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
-            )
-            Write-Host "$label length: $($safePath.Length)"
-            Write-Host "$label entries: $($entries.Count)"
-            $longest = $entries | Sort-Object { $_.Length } -Descending | Select-Object -First 8
-            if ($longest.Count -gt 0) {
-              Write-Host "$label longest entries:"
-              $index = 1
-              foreach ($entry in $longest) {
-                Write-Host ("  [{0}] {1} chars :: {2}" -f $index, $entry.Length, $entry)
-                $index += 1
-              }
-            }
-          }
-
-          function Show-EnvSize {
-            $size = 0
-            Get-ChildItem Env: | ForEach-Object {
-              $size += $_.Name.Length + ([string]$_.Value).Length + 2
-            }
-            Write-Host "Environment block size (approx chars): $size"
-          }
-
-          Write-Host "::group::Windows env before setup.ps1"
-          Write-Host "Build type matrix value: ${{ matrix.cmake_build_type }}"
-          Show-EnvSize
-          Show-PathStats "PATH(before setup.ps1)" ([Environment]::GetEnvironmentVariable('PATH', 'Process'))
-          Show-PathStats "__VSCMD_PREINIT_PATH" $env:__VSCMD_PREINIT_PATH
-          Write-Host "RUNVCPKG_VCPKG_ROOT: $env:RUNVCPKG_VCPKG_ROOT"
-          Write-Host "VCPKG_ROOT: $env:VCPKG_ROOT"
-          $colcon = Get-Command colcon -ErrorAction SilentlyContinue
-          if ($null -ne $colcon) {
-            Write-Host "colcon resolves to: $($colcon.Source)"
-          } else {
-            Write-Host "colcon is not currently resolved in PATH."
-          }
-          Write-Host "::endgroup::"
-
-          Write-Host "::group::Windows env after install/setup.ps1"
-          if (Test-Path './install/setup.ps1') {
-            . ./install/setup.ps1
-            Write-Host "Sourced ./install/setup.ps1"
-          } else {
-            Write-Host "setup script not found at ./install/setup.ps1"
-          }
-          Show-EnvSize
-          Show-PathStats "PATH(after setup.ps1)" ([Environment]::GetEnvironmentVariable('PATH', 'Process'))
-          Write-Host "::endgroup::"
-
-          Write-Host "::group::Enter-VsDevShell diagnostics"
-          $devShellModule = Get-ChildItem -Path @(${Env:ProgramFiles}, ${Env:ProgramFiles(x86)}) -Filter '*Visual Studio*' -Directory -ErrorAction SilentlyContinue |
-            Get-ChildItem -Recurse -Filter 'Microsoft.VisualStudio.DevShell.dll' -ErrorAction SilentlyContinue |
-            Select-Object -First 1
-
-          if ($null -eq $devShellModule) {
-            Write-Host "Microsoft.VisualStudio.DevShell.dll was not found."
-            Write-Host "::endgroup::"
-            exit 0
-          }
-
-          Write-Host "DevShell module: $($devShellModule.FullName)"
-          $vsInstallPath = $devShellModule.Directory.Parent.Parent.FullName
-          Write-Host "VS install path: $vsInstallPath"
-          Import-Module $devShellModule.FullName -ErrorAction Stop
-
-          try {
-            Enter-VsDevShell -SetDefaultWindowTitle -VsInstallPath $vsInstallPath -StartInPath (Get-Location) -DevCmdArguments '/arch=x64 /host_arch=x64' -ErrorAction Stop
-            Write-Host "Enter-VsDevShell completed."
-          } catch {
-            Write-Host "Enter-VsDevShell exception type: $($_.Exception.GetType().FullName)"
-            Write-Host "Enter-VsDevShell exception message: $($_.Exception.Message)"
-          }
-
-          if ($LASTEXITCODE) {
-            Write-Host "LASTEXITCODE after Enter-VsDevShell: $LASTEXITCODE"
-          }
-
-          Write-Host "VisualStudioVersion=$env:VisualStudioVersion"
-          Write-Host "VSCMD_VER=$env:VSCMD_VER"
-          Write-Host "VSINSTALLDIR=$env:VSINSTALLDIR"
-          Write-Host "VCINSTALLDIR=$env:VCINSTALLDIR"
-          Write-Host "WindowsSdkDir=$env:WindowsSdkDir"
-          Write-Host "INCLUDE length: $(([string]$env:INCLUDE).Length)"
-          Write-Host "LIB length: $(([string]$env:LIB).Length)"
-          Write-Host "LIBPATH length: $(([string]$env:LIBPATH).Length)"
-          Show-PathStats "PATH(after Enter-VsDevShell)" ([Environment]::GetEnvironmentVariable('PATH', 'Process'))
-          Write-Host "::endgroup::"
 
       - name: Compile and run tests
         id: compile_and_test
