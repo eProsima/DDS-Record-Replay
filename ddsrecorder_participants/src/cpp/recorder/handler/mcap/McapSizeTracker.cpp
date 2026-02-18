@@ -170,8 +170,8 @@ void McapSizeTracker::attachment_to_write(
                 get_attachment_size_(payload_size_to_remove)))
     {
         throw FullFileException(
-                  STR_ENTRY << "Attempted attachment write of size: " << utils::from_bytes(payload_size_to_write) <<
-                      ", but there is not enough space allowed disk: " << utils::from_bytes(space_available_),
+                  STR_ENTRY << "Attempted attachment write of size: " << utils::from_bytes(payload_size_to_write)
+                            << ", but there is not enough space allowed disk: " << utils::from_bytes(space_available_),
                       payload_size_to_write);
     }
 

@@ -254,8 +254,8 @@ void SqlReaderParticipant::process_summary(
                 }
 
                 EPROSIMA_LOG_WARNING(DDSREPLAYER_SQL_READER_PARTICIPANT,
-                "Topic " << topic_name << " with type " << type_name <<
-                    "and partitions set already exists. Skipping...");
+                "Topic " << topic_name << " with type " << type_name
+                         << "and partitions set already exists. Skipping...");
                 return;
             }
 

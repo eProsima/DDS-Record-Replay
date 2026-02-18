@@ -370,8 +370,8 @@ void ReplayerConfiguration::load_ddsreplayer_configuration_from_file_(
     catch (const std::exception& e)
     {
         throw eprosima::utils::ConfigurationException(
-                  utils::Formatter() << "Error loading DDS Replayer configuration from file: <" << file_path <<
-                      "> :\n " << e.what());
+                  utils::Formatter() << "Error loading DDS Replayer configuration from file: <" << file_path
+                                     << "> :\n " << e.what());
     }
 
     ReplayerConfiguration::load_ddsreplayer_configuration_(yml, args);

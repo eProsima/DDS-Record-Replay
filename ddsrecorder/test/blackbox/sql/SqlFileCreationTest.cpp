@@ -107,9 +107,9 @@ protected:
 
                 if (bind_ret != SQLITE_OK)
                 {
-                    const std::string error_msg = utils::Formatter() <<
-                            "Failed to bind SQL statement to read messages: "
-                                                                     << sqlite3_errmsg(database);
+                    const std::string error_msg = utils::Formatter()
+                            << "Failed to bind SQL statement to read messages: "
+                            << sqlite3_errmsg(database);
 
                     EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
                     throw std::runtime_error(error_msg);
@@ -457,7 +457,8 @@ TEST_F(SqlFileCreationTest, sql_data_num_msgs_downsampling)
                 // Verify the recorded messages count
                 const auto recorded_messages = sqlite3_column_int(stmt,
                 0);
-                const auto expected_messages = (NUMBER_OF_MESSAGES / DOWNSAMPLING) + (NUMBER_OF_MESSAGES % DOWNSAMPLING);
+                const auto expected_messages = (NUMBER_OF_MESSAGES / DOWNSAMPLING) +
+                (NUMBER_OF_MESSAGES % DOWNSAMPLING);
                 ASSERT_EQ(recorded_messages, expected_messages);
             });
 }

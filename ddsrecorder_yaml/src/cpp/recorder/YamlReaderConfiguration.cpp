@@ -94,7 +94,8 @@ bool RecorderConfiguration::is_valid(
     {
         EPROSIMA_LOG_ERROR(DDSRECORDER,
                 "SQL max file size is not used as SQL records everything in just one file. It is only used in MCAP configuration.");
-        error_msg <<
+        error_msg
+            <<
             "SQL max file size is not used as SQL records everything in just one file. It is only used in MCAP configuration.";
         return false;
     }
@@ -258,8 +259,8 @@ void RecorderConfiguration::load_recorder_configuration_(
         if (max_pending_samples < -1)
         {
             throw eprosima::utils::ConfigurationException(
-                      utils::Formatter() << "Error reading value under tag <" << RECORDER_MAX_PENDING_SAMPLES_TAG <<
-                          "> : value cannot be lower than -1.");
+                      utils::Formatter() << "Error reading value under tag <" << RECORDER_MAX_PENDING_SAMPLES_TAG
+                                         << "> : value cannot be lower than -1.");
         }
     }
 
@@ -359,9 +360,9 @@ void RecorderConfiguration::load_recorder_output_configuration_(
         {
             output_safety_margin = OUTPUT_SAFETY_MARGIN_MIN;
             EPROSIMA_LOG_ERROR(YAML_READER_CONFIGURATION,
-                    "NOT VALID VALUE | SQL " << RECORDER_OUTPUT_TAG <<
-                    " must be greater than the minimum value accepted. Defaulting to (Kb): " <<
-                    output_safety_margin /
+                    "NOT VALID VALUE | SQL " << RECORDER_OUTPUT_TAG
+                                             << " must be greater than the minimum value accepted. Defaulting to (Kb): "
+                                             << output_safety_margin /
                     1024);
         }
     }
@@ -661,8 +662,8 @@ void RecorderConfiguration::load_ddsrecorder_configuration_from_file_(
     catch (const std::exception& e)
     {
         throw eprosima::utils::ConfigurationException(
-                  utils::Formatter() << "Error loading DDS Recorder configuration from file: <" << file_path <<
-                      "> :\n " << e.what());
+                  utils::Formatter() << "Error loading DDS Recorder configuration from file: <" << file_path
+                                     << "> :\n " << e.what());
     }
 
     RecorderConfiguration::load_ddsrecorder_configuration_(yml, args);
