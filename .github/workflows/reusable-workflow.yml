@@ -122,7 +122,23 @@ jobs:
           if (-not [string]::IsNullOrWhiteSpace($env:RUNVCPKG_VCPKG_ROOT)) {
             "VCPKG_ROOT=$env:RUNVCPKG_VCPKG_ROOT" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           }
-          "VisualStudioVersion=17.0" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $vs_version = $env:VisualStudioVersion
+          if ([string]::IsNullOrWhiteSpace($vs_version)) {
+            $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+            if (Test-Path $vswhere) {
+              $installation_version = & $vswhere -latest -products * -property installationVersion
+              if (-not [string]::IsNullOrWhiteSpace($installation_version)) {
+                $major_version = ($installation_version.Trim().Split('.'))[0]
+                if ($major_version -match '^\d+$') {
+                  $vs_version = "$major_version.0"
+                }
+              }
+            }
+          }
+          if ([string]::IsNullOrWhiteSpace($vs_version)) {
+            throw 'Unable to determine VisualStudioVersion from environment or vswhere.'
+          }
+          "VisualStudioVersion=$vs_version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Compile and run tests
         id: compile_and_test
