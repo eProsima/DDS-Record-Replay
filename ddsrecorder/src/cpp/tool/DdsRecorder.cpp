@@ -234,8 +234,6 @@ utils::ReturnCode DdsRecorder::reload_configuration(
     if (reload_conf_count_ % 2 == 0)
     {
         // update the filter partition set
-        // TODO. danip remove
-        //pipe_->reload_filter_partition(new_configuration.dds_configuration->allowed_partition_list);
         pipe_->update_partitions(new_configuration.dds_configuration->allowed_partition_list);
     }
 
@@ -245,10 +243,8 @@ utils::ReturnCode DdsRecorder::reload_configuration(
 void DdsRecorder::update_filter(
         const std::set<std::string> new_filter)
 {
-    // function used primary for the tests
-    pipe_->update_filter(new_filter); // TODO. DANIP
-    // dyn_participant_->update_filters(0, new_filter, "", "");
-    // pipe_->update_partitions(new_filter);
+    // function used in the tests
+    pipe_->update_filter(new_filter);
 }
 
 void DdsRecorder::start()

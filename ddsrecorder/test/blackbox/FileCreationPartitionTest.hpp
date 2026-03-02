@@ -249,8 +249,6 @@ protected:
             }
         }
 
-        //configuration_->dds_configuration->allowed_partition_list.erase(partition_filter);
-
         return sent_messages;
     }
 

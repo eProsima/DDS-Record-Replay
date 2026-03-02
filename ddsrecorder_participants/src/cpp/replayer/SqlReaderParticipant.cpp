@@ -64,7 +64,6 @@ void SqlReaderParticipant::add_partition_list(
     allowed_partition_list_ = allowed_partition_list;
 }
 
-// TODO. danip
 void SqlReaderParticipant::update_partition_list(
         std::set<std::string> allowed_partition_list)
 {
@@ -81,7 +80,10 @@ void SqlReaderParticipant::process_summary(
 {
     open_file_();
 
-    processing_summary2_ = true;
+    {
+        std::lock_guard<std::mutex> lock(filter_mutex_);
+        filter_updating_ = true;
+    }
 
     // SQL query. Gets the Topic, Type, Qos, ROS2_Topic, Partitions and WriterGuid
     // using Topic, Type and Partitions as primary keys
@@ -287,7 +289,11 @@ void SqlReaderParticipant::process_summary(
 
     close_file_();
 
-    processing_summary2_ = false;
+    {
+        std::lock_guard<std::mutex> lock(filter_mutex_);
+        filter_updating_ = false;
+    }
+    filter_cv_.notify_all();
 }
 
 void SqlReaderParticipant::process_messages()
@@ -320,6 +326,7 @@ void SqlReaderParticipant::process_messages()
             static utils::Timestamp first_message_timestamp = log_time;
 
             // Create a DdsTopic to publish the message
+            ddspipe::core::types::DdsTopic topic;
             const std::string topic_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
             const std::string type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
 
@@ -327,27 +334,30 @@ void SqlReaderParticipant::process_messages()
 
             const auto topic_id = std::make_pair(topic_name, type_name);
 
-            while (processing_summary2_ == true) // TODO. danip
             {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            }
+                std::unique_lock<std::mutex> lock(filter_mutex_);
+                // Waits if the filter_updating_ == true
+                filter_cv_.wait(lock, [this]
+                {
+                    return !filter_updating_;
+                });
 
-            if (filtered_writersguid_list_.find(writer_guid) != filtered_writersguid_list_.end())
-            {
-                // current row do not pass the filter
-                return;
-            }
+                if (filtered_writersguid_list_.find(writer_guid) != filtered_writersguid_list_.end())
+                {
+                    // current row do not pass the filter
+                    return;
+                }
 
-            // Find the topic
-            if (topics_.find(topic_id) == topics_.end())
-            {
-                EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT,
-                "Failed to find topic " << topic_name << " with type " << type_name << ". "
-                    "Did you process the summary before the messages? Skipping...");
-                return;
+                // Find the topic
+                if (topics_.find(topic_id) == topics_.end())
+                {
+                    EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT,
+                    "Failed to find topic " << topic_name << " with type " << type_name << ". "
+                        "Did you process the summary before the messages? Skipping...");
+                    return;
+                }
+                topic = topics_[topic_id];
             }
-
-            const auto topic = topics_[topic_id];
 
             // Find the reader for the topic
             if (readers_.find(topic) == readers_.end())
@@ -400,7 +410,6 @@ void SqlReaderParticipant::process_messages()
                         {
                             if (partition_name[i] == '|')
                             {
-                                //tmp = "abc";
                                 data->writer_qos.partitions.push_back(tmp.c_str());
                                 tmp = "";
                             }
@@ -415,14 +424,13 @@ void SqlReaderParticipant::process_messages()
                         // e.g.: "A|B" adds the "B" partition
                         if (tmp != "")
                         {
-                            //tmp = "abc";
                             data->writer_qos.partitions.push_back(tmp.c_str());
                         }
 
                     }
 
                     // adds the partitions in the writer guid PartitionsQos
-                    //data->writer_qos.partitions.push_back(partition_name.c_str());
+                    data->writer_qos.partitions.push_back(partition_name.c_str());
                     partitions_qos_dict_[writer_guid] = data->writer_qos.partitions;
                 }
             }

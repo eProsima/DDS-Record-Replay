@@ -142,7 +142,11 @@ protected:
     //! Set of writers guid that do not pass the partitions filter.
     std::set<std::string> filtered_writersguid_list_;
 
-    std::atomic<bool> processing_summary2_;
+    //! Mutex used to update the filtered_writersguid_list_ (when the configuration.yml is modified during runtime)
+    std::mutex filter_mutex_;
+    //! Condition variable used to wait if the filtered_writersguid_list_ is updating
+    std::condition_variable filter_cv_;
+    bool filter_updating_ = false;
 };
 
 } /* namespace participants */
