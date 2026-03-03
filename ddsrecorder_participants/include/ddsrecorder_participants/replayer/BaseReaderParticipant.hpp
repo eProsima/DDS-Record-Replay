@@ -147,6 +147,17 @@ public:
             std::set<std::string> allowed_partition_list) = 0;
 
     /**
+     * @brief Update the partition filter list at runtime.
+     *
+     * Replaces the current allowed partitions list and rebuilds the partition filter.
+     *
+     * @param allowed_partition_list: New set of allowed partitions.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    virtual void update_partition_list(
+            std::set<std::string> allowed_partition_list) = 0;
+
+    /**
      * @brief Process the input file's summary.
      *
      * @param topics: Set of topics to be filled with the information from the input file.

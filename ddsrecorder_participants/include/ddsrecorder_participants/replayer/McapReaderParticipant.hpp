@@ -66,6 +66,18 @@ public:
             std::set<std::string> allowed_partition_list) override;
 
     /**
+     * @brief Update the partition list used in the filter at runtime.
+     *
+     * Replaces the current allowed partitions list and rebuilds the partition filter
+     * from the cached topic data without re-opening the MCAP file.
+     *
+     * @param allowed_partition_list: New set of allowed partitions.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    void update_partition_list(
+            std::set<std::string> allowed_partition_list) override;
+
+    /**
      * @brief Process the MCAP file summary.
      *
      * Fills the topics with the MCAP file's channels and schemas.

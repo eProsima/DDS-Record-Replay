@@ -82,7 +82,7 @@ public:
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     void update_partition_list(
-            std::set<std::string> allowed_partition_list);
+            std::set<std::string> allowed_partition_list) override;
 
     /**
      * @brief Process the topics and the types stored in the SQLite database.

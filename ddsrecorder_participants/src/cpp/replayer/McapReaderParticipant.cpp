@@ -60,6 +60,76 @@ void McapReaderParticipant::add_partition_list(
     allowed_partition_list_ = allowed_partition_list;
 }
 
+void McapReaderParticipant::update_partition_list(
+        std::set<std::string> allowed_partition_list)
+{
+    allowed_partition_list_ = allowed_partition_list;
+    filtered_writersguid_list_.clear();
+
+    for (const auto& [topic_id, topic] : topics_)
+    {
+        for (const auto& [writer, writer_partition] : topic.partition_name)
+        {
+            bool pass_partition_filter = allowed_partition_list_.empty();
+
+            if (writer_partition == "*" || pass_partition_filter)
+            {
+                pass_partition_filter = true;
+            }
+            else
+            {
+                std::string curr_partition;
+                std::vector<std::string> partition_vector;
+                int j = 0, writer_partition_n = writer_partition.size();
+                while (j < writer_partition_n)
+                {
+                    if (writer_partition[j] == '|')
+                    {
+                        partition_vector.push_back(curr_partition);
+                        curr_partition.clear();
+                    }
+                    else
+                    {
+                        curr_partition += writer_partition[j];
+                    }
+                    j++;
+                }
+
+                if (!curr_partition.empty())
+                {
+                    partition_vector.push_back(curr_partition);
+                }
+                else if (writer_partition_n == 0 ||
+                        writer_partition[writer_partition_n - 1] == '|')
+                {
+                    partition_vector.push_back("");
+                }
+
+                for (const std::string& partition : partition_vector)
+                {
+                    for (const std::string& allowed_partition : allowed_partition_list_)
+                    {
+                        if (utils::match_pattern(allowed_partition, partition))
+                        {
+                            pass_partition_filter = true;
+                            break;
+                        }
+                    }
+                    if (pass_partition_filter)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if (!pass_partition_filter)
+            {
+                filtered_writersguid_list_.insert(writer);
+            }
+        }
+    }
+}
+
 void McapReaderParticipant::process_summary(
         std::set<utils::Heritable<ddspipe::core::types::DdsTopic>>& topics,
         DynamicTypesCollection& types)

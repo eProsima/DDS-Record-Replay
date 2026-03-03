@@ -255,7 +255,7 @@ bool BaseReaderParticipant::delete_topic_partition(
     }
 
     // delete [writer, partition] in the topic
-    partition_names.erase(writer_guid);
+    partition_names[topic_name].erase(writer_guid);
 
     return true;
 }

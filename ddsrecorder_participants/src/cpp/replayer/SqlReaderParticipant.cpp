@@ -39,7 +39,6 @@
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/replayer/SqlReaderParticipant.hpp>
 
-#include <thread>
 
 namespace eprosima {
 namespace ddsrecorder {
