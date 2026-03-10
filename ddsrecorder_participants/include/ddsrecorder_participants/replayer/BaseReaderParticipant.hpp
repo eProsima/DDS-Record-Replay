@@ -128,7 +128,7 @@ public:
     //! Override update_partitions() IParticipant method
     DDSRECORDER_PARTICIPANTS_DllAPI
     virtual void update_partitions(
-            std::set<std::string> partitions) override;
+            const std::set<std::string>& partitions) override;
 
     //! Override update_content_topicfilter() IParticipant method
     DDSRECORDER_PARTICIPANTS_DllAPI

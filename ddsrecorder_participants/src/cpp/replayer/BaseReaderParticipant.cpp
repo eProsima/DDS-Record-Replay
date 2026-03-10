@@ -124,6 +124,7 @@ std::unique_ptr<ddspipe::core::types::RtpsPayloadData> BaseReaderParticipant::cr
     // Reserve and copy the payload into the payload pool
     payload_pool_->get_payload(payload, data->payload);
     data->payload_owner = payload_pool_.get();
+    data->kind = ddspipe::core::types::ChangeKind::ALIVE;
 
     // Remove the raw data pointer to avoid freeing it on destruction
     payload.data = nullptr;
@@ -266,7 +267,7 @@ void BaseReaderParticipant::clear_topic_partitions()
 }
 
 void BaseReaderParticipant::update_partitions(
-        std::set<std::string> partitions)
+        const std::set<std::string>& partitions)
 {
     // Nothing
 }
