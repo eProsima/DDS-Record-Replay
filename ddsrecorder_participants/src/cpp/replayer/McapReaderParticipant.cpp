@@ -448,8 +448,10 @@ void McapReaderParticipant::read_mcap_summary_()
     if (recording_version != DDSRECORDER_PARTICIPANTS_VERSION_STRING)
     {
         EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
-                "MCAP file generated with a different DDS Record & Replay version (" << recording_version <<
-                ", current is " << DDSRECORDER_PARTICIPANTS_VERSION_STRING << "), incompatibilities might arise...");
+                "MCAP file generated with a different DDS Record & Replay version ("
+                << recording_version << ", current is "
+                << DDSRECORDER_PARTICIPANTS_VERSION_STRING
+                << "), incompatibilities might arise...");
     }
 
     if (metadata.find(VERSION_METADATA_MESSAGE_NAME) != metadata.end())

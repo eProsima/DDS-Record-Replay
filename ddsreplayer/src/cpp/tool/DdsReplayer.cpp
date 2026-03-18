@@ -224,11 +224,17 @@ std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair> DdsReplayer::reg
         fastdds::dds::xtypes::TypeObject type_object;
         participants::Serializer::deserialize<fastdds::dds::xtypes::TypeObject>(type_object_str, type_object);
 
-        // Register in factory
+        // Register in factory - let 'register_type_object' compute the TypeIdentifier
+        // from the TypeObject itself, rather than using the pre-stored identifier
+        // This avoids hash mismatches caused by serialization round-tripping
         fastdds::dds::xtypes::TypeIdentifierPair type_identifiers;
-        type_identifiers.type_identifier1(type_identifier);
-        fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().register_type_object(
+        auto ret = fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().register_type_object(
             type_object, type_identifiers);
+
+        if (ret != fastdds::dds::RETCODE_OK)
+        {
+            EPROSIMA_LOG_WARNING(DDSREPLAYER, "Failed to register type: " << dynamic_type.type_name());
+        }
 
         std::cout << "Registered type: " << dynamic_type.type_name() << std::endl;
 
