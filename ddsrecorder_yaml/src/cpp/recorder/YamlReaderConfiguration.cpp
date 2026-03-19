@@ -218,6 +218,12 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
         {
             ddspipe_configuration.log_configuration.set(args->log_verbosity);
             ddspipe_configuration.log_configuration.set(args->log_filter);
+
+            if (args->domain.is_set())
+            {
+                dds_configuration->domain = args->domain.get_value();
+                controller_domain = dds_configuration->domain;
+            }
         }
     }
     catch (const std::exception& e)

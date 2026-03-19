@@ -114,6 +114,17 @@ const option::Descriptor usage[] = {
         "Value 0 does not set maximum. [Default: 0]."
     },
 
+    {
+        optionIndex::DOMAIN,
+        0,
+        "",
+        "domain",
+        Arg::Numeric,
+        "  \t--domain\t  \t" \
+        "Set the domain (0-255) to record on. " \
+        "[Default = 0]."
+    },
+
     ////////////////////
     // Debug options
     {
@@ -258,6 +269,10 @@ ProcessReturnCode parse_arguments(
 
                 case optionIndex::TIMEOUT:
                     commandline_args.timeout = std::stol(opt.arg) * 1000; // pass to milliseconds
+                    break;
+
+                case optionIndex::DOMAIN:
+                    commandline_args.domain.set_value(std::stoi(opt.arg));
                     break;
 
                 case optionIndex::LOG_FILTER:

@@ -130,6 +130,12 @@ The |ddsreplayer| application supports several input arguments:
         - Unsigned Integer
         - ``0``
 
+    *   - Domain
+        - Set the domain to replay on
+        - ``--domain``
+        - Unsigned Integer [0-255]
+        - 0
+
     *   - Debug
         - Enables the |ddsreplayer| |br|
           logs so the execution can be |br|

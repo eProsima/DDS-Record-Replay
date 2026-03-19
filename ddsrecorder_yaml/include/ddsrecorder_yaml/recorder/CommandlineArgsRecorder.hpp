@@ -14,7 +14,10 @@
 
 #pragma once
 
+#include <cpp_utils/types/Fuzzy.hpp>
+
 #include <ddspipe_core/configuration/CommandlineArgs.hpp>
+#include <ddspipe_core/types/dds/DomainId.hpp>
 
 #include <ddsrecorder_yaml/library/library_dll.h>
 
@@ -50,6 +53,9 @@ struct DDSRECORDER_YAML_DllAPI CommandlineArgsRecorder : public ddspipe::core::C
 
     // Maximum timeout
     utils::Duration_ms timeout{0};
+
+    // Domain
+    utils::Fuzzy<ddspipe::core::types::DomainId> domain{0, utils::FuzzyLevelValues::fuzzy_level_default};
 };
 
 } /* namespace yaml */
