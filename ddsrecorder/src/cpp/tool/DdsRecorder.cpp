@@ -43,6 +43,18 @@ using namespace eprosima::ddspipe::participants::dds;
 using namespace eprosima::ddsrecorder::participants;
 using namespace eprosima::utils;
 
+static std::set<std::string> effective_partitions_(
+        const std::set<std::string>& partitions)
+{
+    // Empty filter means "no filter", so subscribe to all partitions
+    if (partitions.empty())
+    {
+        return {"*"};
+    }
+
+    return partitions;
+}
+
 DdsRecorder::DdsRecorder(
         const yaml::RecorderConfiguration& configuration,
         const DdsRecorderStateCode& init_state,
@@ -137,6 +149,9 @@ DdsRecorder::DdsRecorder(
         dyn_participant_
         );
 
+    const auto effective_partitions = effective_partitions_(configuration_.dds_configuration->allowed_partition_list);
+    dyn_participant_->update_partitions(effective_partitions);
+
     if (configuration_.mcap_enabled)
     {
         // Create MCAP Handler configuration
@@ -201,7 +216,8 @@ DdsRecorder::DdsRecorder(
         participants_database_,
         thread_pool_);
 
-    dyn_participant_->update_partitions(configuration.dds_configuration->allowed_partition_list);
+    // Apply partition configuration to active readers/tracks as well
+    pipe_->update_partitions(effective_partitions);
 
     // Create a Monitor
     auto monitor_configuration = configuration.monitor_configuration;
@@ -234,7 +250,10 @@ utils::ReturnCode DdsRecorder::reload_configuration(
     if (reload_conf_count_ % 2 == 0)
     {
         // update the filter partition set
-        pipe_->update_partitions(new_configuration.dds_configuration->allowed_partition_list);
+        const auto effective_partitions = effective_partitions_(
+            new_configuration.dds_configuration->allowed_partition_list);
+        dyn_participant_->update_partitions(effective_partitions);
+        pipe_->update_partitions(effective_partitions);
     }
 
     return pipe_->reload_configuration(new_configuration.ddspipe_configuration);
