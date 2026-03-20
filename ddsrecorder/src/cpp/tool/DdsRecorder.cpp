@@ -55,6 +55,38 @@ static std::set<std::string> effective_partitions_(
     return partitions;
 }
 
+static void apply_content_filters_(
+        const std::map<std::string, std::string>& new_content_filters,
+        const std::map<std::string, std::string>& old_content_filters,
+        const std::shared_ptr<ddspipe::core::IParticipant>& participant,
+        ddspipe::core::DdsPipe* pipe = nullptr)
+{
+    // Apply/refresh configured topic filters.
+    for (const auto& topic_filter : new_content_filters)
+    {
+        participant->update_content_topicfilter(topic_filter.first, topic_filter.second);
+
+        if (pipe != nullptr)
+        {
+            pipe->update_content_filter(topic_filter.first, topic_filter.second);
+        }
+    }
+
+    // Clear filters removed from the configuration.
+    for (const auto& previous_topic_filter : old_content_filters)
+    {
+        if (new_content_filters.find(previous_topic_filter.first) == new_content_filters.end())
+        {
+            participant->update_content_topicfilter(previous_topic_filter.first, "");
+
+            if (pipe != nullptr)
+            {
+                pipe->update_content_filter(previous_topic_filter.first, "");
+            }
+        }
+    }
+}
+
 DdsRecorder::DdsRecorder(
         const yaml::RecorderConfiguration& configuration,
         const DdsRecorderStateCode& init_state,
@@ -151,6 +183,8 @@ DdsRecorder::DdsRecorder(
 
     const auto effective_partitions = effective_partitions_(configuration_.dds_configuration->allowed_partition_list);
     dyn_participant_->update_partitions(effective_partitions);
+    apply_content_filters_(configuration_.dds_configuration->content_topic_filter_dict, {}, dyn_participant_);
+    applied_content_filters_ = configuration_.dds_configuration->content_topic_filter_dict;
 
     if (configuration_.mcap_enabled)
     {
@@ -218,6 +252,11 @@ DdsRecorder::DdsRecorder(
 
     // Apply partition configuration to active readers/tracks as well
     pipe_->update_partitions(effective_partitions);
+    apply_content_filters_(
+        configuration_.dds_configuration->content_topic_filter_dict,
+        {},
+        dyn_participant_,
+        pipe_.get());
 
     // Create a Monitor
     auto monitor_configuration = configuration.monitor_configuration;
@@ -254,6 +293,14 @@ utils::ReturnCode DdsRecorder::reload_configuration(
             new_configuration.dds_configuration->allowed_partition_list);
         dyn_participant_->update_partitions(effective_partitions);
         pipe_->update_partitions(effective_partitions);
+
+        // Update topic content filters in both future and active readers
+        apply_content_filters_(
+            new_configuration.dds_configuration->content_topic_filter_dict,
+            applied_content_filters_,
+            dyn_participant_,
+            pipe_.get());
+        applied_content_filters_ = new_configuration.dds_configuration->content_topic_filter_dict;
     }
 
     return pipe_->reload_configuration(new_configuration.ddspipe_configuration);
