@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <memory>
+#include <set>
 #include <string>
 #include <thread>
 #include <vector>
@@ -171,6 +172,18 @@ public:
 
 protected:
 
+    struct PublisherMessagesConfig
+    {
+        std::vector<std::string> partitions;
+        unsigned int number_of_messages = 0;
+        std::uint32_t initial_index = 0;
+        std::string message_text = "Hello World!";
+    };
+
+    static constexpr std::uint32_t PUBLISHER_INDEX_STEP = 100;
+    static constexpr std::uint32_t NO_PARTITION_INDEX_BASE = 0;
+    static constexpr std::uint32_t A_PARTITION_INDEX_BASE = PUBLISHER_INDEX_STEP;
+
     std::vector<HelloWorld> record_messages_(
             const std::string& file_name,
             const unsigned int messages1,
@@ -252,6 +265,46 @@ protected:
         return sent_messages;
     }
 
+    std::vector<HelloWorld> record_messages_publishers_(
+            const std::string& file_name,
+            const std::vector<PublisherMessagesConfig>& publisher_configs,
+            const std::string partition_filter = "*")
+    {
+        configuration_->dds_configuration->allowed_partition_list.clear();
+        configuration_->dds_configuration->allowed_partition_list.insert(partition_filter);
+
+        auto recorder = std::make_unique<ddsrecorder::recorder::DdsRecorder>(
+            *configuration_, DdsRecorderState::RUNNING, file_name);
+
+        recorder->update_filter(std::set<std::string>{partition_filter});
+
+        partition_wildcard_active_ = partition_filter == "*";
+
+        return send_messages_publishers_(publisher_configs);
+    }
+
+    std::vector<HelloWorld> record_messages_two_publishers_(
+            const std::string& file_name,
+            const unsigned int no_partition_messages,
+            const unsigned int a_partition_messages,
+            const std::string partition_filter = "*")
+    {
+        return record_messages_publishers_(
+            file_name,
+            std::vector<PublisherMessagesConfig>{
+                PublisherMessagesConfig{
+                    {""},
+                    no_partition_messages,
+                    NO_PARTITION_INDEX_BASE,
+                    "Hello World! default partition"},
+                PublisherMessagesConfig{
+                    {"A"},
+                    a_partition_messages,
+                    A_PARTITION_INDEX_BASE,
+                    "Hello World! partition A"}},
+            partition_filter);
+    }
+
     std::vector<HelloWorld> send_messages_(
             const unsigned int number_of_messages)
     {
@@ -266,30 +319,125 @@ protected:
 
         // Send the messages
         std::vector<HelloWorld> sent_messages;
+        sent_messages.reserve(number_of_messages);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-        for (std::uint32_t i = 0; i < number_of_messages; i++)
-        {
-            // Create the message
-            HelloWorld hello;
-            hello.index(i);
-            hello.message("Hello World!");
-
-            // Send the message
-            writer_->write(&hello);
-
-            // Store the message
-            sent_messages.push_back(hello);
-
-            // Wait for the message to be sent
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
+        send_messages_from_writer_(writer_, number_of_messages, NO_PARTITION_INDEX_BASE,
+                "Hello World!", sent_messages);
 
         // Delete the DataWriter
         delete_datawriter_();
 
         return sent_messages;
+    }
+
+    std::vector<HelloWorld> send_messages_publishers_(
+            const std::vector<PublisherMessagesConfig>& publisher_configs)
+    {
+        std::vector<HelloWorld> sent_messages;
+        if (publisher_configs.empty())
+        {
+            return sent_messages;
+        }
+
+        std::vector<fastdds::dds::Publisher*> publishers;
+        publishers.reserve(publisher_configs.size());
+
+        std::vector<fastdds::dds::DataWriter*> writers;
+        writers.reserve(publisher_configs.size());
+
+        auto cleanup_publishers = [&]()
+                {
+                    for (std::size_t i = 0; i < publishers.size(); ++i)
+                    {
+                        if (i < writers.size())
+                        {
+                            delete_datawriter_(publishers[i], writers[i]);
+                        }
+
+                        if (publishers[i] != nullptr)
+                        {
+                            participant_->delete_publisher(publishers[i]);
+                        }
+                    }
+                };
+
+        for (std::size_t i = 0; i < publisher_configs.size(); ++i)
+        {
+            const auto& publisher_config = publisher_configs[i];
+
+            auto publisher = create_publisher_(publisher_config.partitions);
+            if (publisher == nullptr)
+            {
+                ADD_FAILURE() << "Failed to create publisher " << i << ".";
+                cleanup_publishers();
+                return {};
+            }
+
+            publishers.push_back(publisher);
+
+            auto writer = create_datawriter_(publisher);
+            if (writer == nullptr)
+            {
+                ADD_FAILURE() << "Failed to create writer for publisher " << i << ".";
+                cleanup_publishers();
+                return {};
+            }
+
+            writers.push_back(writer);
+        }
+
+        if (partition_wildcard_active_)
+        {
+            // Wait for all publishers to match to avoid losing first samples in wildcard mode.
+            for (const auto& writer : writers)
+            {
+                wait_for_matching(writer);
+            }
+        }
+
+        std::size_t total_messages = 0;
+        for (const auto& publisher_config : publisher_configs)
+        {
+            total_messages += publisher_config.number_of_messages;
+        }
+        sent_messages.reserve(total_messages);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+        for (std::size_t i = 0; i < publisher_configs.size(); ++i)
+        {
+            const auto& publisher_config = publisher_configs[i];
+            send_messages_from_writer_(
+                writers[i],
+                publisher_config.number_of_messages,
+                publisher_config.initial_index,
+                publisher_config.message_text,
+                sent_messages);
+        }
+
+        cleanup_publishers();
+
+        return sent_messages;
+    }
+
+    std::vector<HelloWorld> send_messages_two_publishers_(
+            const unsigned int no_partition_messages,
+            const unsigned int a_partition_messages)
+    {
+        return send_messages_publishers_(
+            std::vector<PublisherMessagesConfig>{
+                PublisherMessagesConfig{
+                    {""},
+                    no_partition_messages,
+                    NO_PARTITION_INDEX_BASE,
+                    "Hello World! default partition"},
+                PublisherMessagesConfig{
+                    {"A"},
+                    a_partition_messages,
+                    A_PARTITION_INDEX_BASE,
+                    "Hello World! partition A"}});
     }
 
     std::shared_ptr<fastdds::rtps::SerializedPayload_t> to_cdr(
@@ -362,7 +510,26 @@ protected:
         topic_ = participant_->create_topic(topic_name, "HelloWorld", fastdds::dds::TOPIC_QOS_DEFAULT);
     }
 
+    fastdds::dds::Publisher* create_publisher_(
+            const std::vector<std::string>& partitions)
+    {
+        fastdds::dds::PublisherQos pub_qos = fastdds::dds::PUBLISHER_QOS_DEFAULT;
+        for (const auto& partition : partitions)
+        {
+            pub_qos.partition().push_back(partition.c_str());
+        }
+
+        return participant_->create_publisher(pub_qos, nullptr);
+    }
+
     void create_datawriter_()
+    {
+        writer_ = create_datawriter_(publisher_);
+        ASSERT_NE(writer_, nullptr);
+    }
+
+    fastdds::dds::DataWriter* create_datawriter_(
+            fastdds::dds::Publisher* publisher)
     {
         // Configure the DataWriter's QoS to ensure that the DDS Recorder receives all the msgs
         fastdds::dds::DataWriterQos wqos = fastdds::dds::DATAWRITER_QOS_DEFAULT;
@@ -370,17 +537,22 @@ protected:
         wqos.durability().kind = fastdds::dds::TRANSIENT_LOCAL_DURABILITY_QOS;
         wqos.history().kind = fastdds::dds::KEEP_ALL_HISTORY_QOS;
 
-        // Create the writer
-        writer_ = publisher_->create_datawriter(topic_, wqos, this);
-
-        ASSERT_NE(writer_, nullptr);
+        return publisher->create_datawriter(topic_, wqos, this);
     }
 
     void delete_datawriter_()
     {
-        if (writer_ != nullptr)
+        delete_datawriter_(publisher_, writer_);
+    }
+
+    void delete_datawriter_(
+            fastdds::dds::Publisher* publisher,
+            fastdds::dds::DataWriter*& writer)
+    {
+        if (writer != nullptr)
         {
-            publisher_->delete_datawriter(writer_);
+            publisher->delete_datawriter(writer);
+            writer = nullptr;
         }
     }
 
@@ -396,6 +568,47 @@ protected:
         if (!matched_)
         {
             FAIL() << "DataWriter did not match any DataReader within the timeout.";
+        }
+    }
+
+    void wait_for_matching(
+            fastdds::dds::DataWriter* writer,
+            std::chrono::seconds timeout = std::chrono::seconds(2))
+    {
+        const auto initial_time = std::chrono::steady_clock::now();
+        fastdds::dds::PublicationMatchedStatus status;
+
+        while (std::chrono::steady_clock::now() - initial_time < timeout)
+        {
+            writer->get_publication_matched_status(status);
+            if (status.current_count > 0)
+            {
+                return;
+            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+
+        FAIL() << "DataWriter did not match any DataReader within the timeout.";
+    }
+
+    void send_messages_from_writer_(
+            fastdds::dds::DataWriter* writer,
+            const unsigned int number_of_messages,
+            const std::uint32_t initial_index,
+            const std::string& message_text,
+            std::vector<HelloWorld>& sent_messages)
+    {
+        for (std::uint32_t i = 0; i < number_of_messages; i++)
+        {
+            HelloWorld hello;
+            hello.index(initial_index + i);
+            hello.message(message_text);
+
+            writer->write(&hello);
+            sent_messages.push_back(hello);
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
 

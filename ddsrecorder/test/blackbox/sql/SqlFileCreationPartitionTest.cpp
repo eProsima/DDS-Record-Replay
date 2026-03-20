@@ -2553,6 +2553,278 @@ TEST_F(SqlFileCreationPartitionTest, transition_stopped_suspended_partition_no_r
 }
 
 
+/**
+ * @brief Verify that the DDS Recorder stores partition information for two writers in one topic.
+ *
+ * Writers publish in the same topic:
+ *  - writer 1: default partition ("")
+ *  - writer 2: partition "A"
+ *
+ * CASES:
+ *  - Publish 5 samples per writer.
+ *  - Verify total recorded samples is 10.
+ *  - Verify 5 samples are stored for each partition in MessagesPartitions.
+ *  - Verify TopicsPartitions stores both partition entries.
+ */
+TEST_F(SqlFileCreationPartitionTest, sql_data_num_msgs_two_publishers_partition_split)
+{
+    init_dds_data(std::vector<std::string>{""}, true);
+
+    const std::string OUTPUT_FILE_NAME = "sql_data_num_msgs_two_publishers_partition_split";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".db");
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+
+    constexpr auto MESSAGES_PER_WRITER = 5;
+    constexpr auto TOTAL_MESSAGES = MESSAGES_PER_WRITER * 2;
+
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
+
+    // Publishing is done by the shared helper:
+    // record_messages_publishers_ -> send_messages_publishers_ -> send_messages_from_writer_.
+    // Each entry below creates one writer with its partition set and publishes 5 samples.
+    // `initial_index` gives each publisher a disjoint index range.
+    const std::vector<PublisherMessagesConfig> publisher_configs{
+        PublisherMessagesConfig{
+            {""},
+            MESSAGES_PER_WRITER,
+            NO_PARTITION_INDEX_BASE,
+            "Hello World! default partition"},
+        PublisherMessagesConfig{
+            {"A"},
+            MESSAGES_PER_WRITER,
+            A_PARTITION_INDEX_BASE,
+            "Hello World! partition A"}};
+
+    const auto sent_messages = record_messages_publishers_(
+        OUTPUT_FILE_NAME,
+        publisher_configs);
+    ASSERT_EQ(sent_messages.size(), TOTAL_MESSAGES);
+
+    int recorded_messages = -1;
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+            {
+                recorded_messages = sqlite3_column_int(stmt, 0);
+            });
+    ASSERT_EQ(recorded_messages, TOTAL_MESSAGES);
+
+    int default_partition_messages = -1;
+    exec_sql_statement_(
+        OUTPUT_FILE_PATH,
+        "SELECT COUNT(*) FROM MessagesPartitions WHERE partition = ?;",
+        {""},
+        [&](sqlite3_stmt* stmt)
+        {
+            default_partition_messages = sqlite3_column_int(stmt, 0);
+        });
+    ASSERT_EQ(default_partition_messages, MESSAGES_PER_WRITER);
+
+    int a_partition_messages = -1;
+    exec_sql_statement_(
+        OUTPUT_FILE_PATH,
+        "SELECT COUNT(*) FROM MessagesPartitions WHERE partition = ?;",
+        {"A"},
+        [&](sqlite3_stmt* stmt)
+        {
+            a_partition_messages = sqlite3_column_int(stmt, 0);
+        });
+    ASSERT_EQ(a_partition_messages, MESSAGES_PER_WRITER);
+
+    int unexpected_partition_messages = -1;
+    exec_sql_statement_(
+        OUTPUT_FILE_PATH,
+        "SELECT COUNT(*) FROM MessagesPartitions WHERE partition NOT IN (?, ?);",
+        {"", "A"},
+        [&](sqlite3_stmt* stmt)
+        {
+            unexpected_partition_messages = sqlite3_column_int(stmt, 0);
+        });
+    ASSERT_EQ(unexpected_partition_messages, 0);
+
+    int topic_default_partition_entries = -1;
+    exec_sql_statement_(
+        OUTPUT_FILE_PATH,
+        "SELECT COUNT(*) FROM TopicsPartitions WHERE topic = ? AND type = ? AND partition = ?;",
+        {topic_->get_name(), topic_->get_type_name(), ""},
+        [&](sqlite3_stmt* stmt)
+        {
+            topic_default_partition_entries = sqlite3_column_int(stmt, 0);
+        });
+    ASSERT_EQ(topic_default_partition_entries, 1);
+
+    int topic_a_partition_entries = -1;
+    exec_sql_statement_(
+        OUTPUT_FILE_PATH,
+        "SELECT COUNT(*) FROM TopicsPartitions WHERE topic = ? AND type = ? AND partition = ?;",
+        {topic_->get_name(), topic_->get_type_name(), "A"},
+        [&](sqlite3_stmt* stmt)
+        {
+            topic_a_partition_entries = sqlite3_column_int(stmt, 0);
+        });
+    ASSERT_EQ(topic_a_partition_entries, 1);
+}
+
+TEST_F(SqlFileCreationPartitionTest, sql_data_num_msgs_four_publishers_partition_split)
+{
+    init_dds_data(std::vector<std::string>{""}, true);
+
+    const std::string OUTPUT_FILE_NAME = "sql_data_num_msgs_four_publishers_partition_split";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".db");
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+
+    constexpr auto MESSAGES_PER_WRITER = 5;
+    constexpr auto TOTAL_MESSAGES = MESSAGES_PER_WRITER * 4;
+
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
+
+    // -- Publishing ----------------------------------------------------------
+    // Each entry below creates one writer
+    // with its partition set and publishes 5 samples.
+    // `initial_index` gives each publisher a disjoint index range.
+    const std::vector<PublisherMessagesConfig> publisher_configs{
+        PublisherMessagesConfig{
+            {""},
+            MESSAGES_PER_WRITER,
+            NO_PARTITION_INDEX_BASE,
+            "Hello World! partition empty"},
+        PublisherMessagesConfig{
+            {"*"},
+            MESSAGES_PER_WRITER,
+            NO_PARTITION_INDEX_BASE + PUBLISHER_INDEX_STEP,
+            "Hello World! partition star"},
+        PublisherMessagesConfig{
+            {"A"},
+            MESSAGES_PER_WRITER,
+            NO_PARTITION_INDEX_BASE + (2 * PUBLISHER_INDEX_STEP),
+            "Hello World! partition A"},
+        PublisherMessagesConfig{
+            {"A|B"},
+            MESSAGES_PER_WRITER,
+            NO_PARTITION_INDEX_BASE + (3 * PUBLISHER_INDEX_STEP),
+            "Hello World! partition A|B"}};
+
+    const auto sent_messages = record_messages_publishers_(
+        OUTPUT_FILE_NAME,
+        publisher_configs);
+    ASSERT_EQ(sent_messages.size(), TOTAL_MESSAGES);
+
+    // Verify that all samples from all 4 publishers were recorded
+    int recorded_messages = -1;
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+            {
+                recorded_messages = sqlite3_column_int(stmt, 0);
+            });
+    ASSERT_EQ(recorded_messages, TOTAL_MESSAGES);
+
+    // -- Verify per-partition counts -----------------------------------------
+
+    // -- MessagesPartitions --
+    // each publisher contributes exactly 5 samples
+    int empty_partition_messages = -1;
+    exec_sql_statement_(
+        OUTPUT_FILE_PATH,
+        "SELECT COUNT(*) FROM MessagesPartitions WHERE partition = ?;",
+        {""},
+        [&](sqlite3_stmt* stmt)
+        {
+            empty_partition_messages = sqlite3_column_int(stmt, 0);
+        });
+    ASSERT_EQ(empty_partition_messages, MESSAGES_PER_WRITER);
+
+    int star_partition_messages = -1;
+    exec_sql_statement_(
+        OUTPUT_FILE_PATH,
+        "SELECT COUNT(*) FROM MessagesPartitions WHERE partition = ?;",
+        {"*"},
+        [&](sqlite3_stmt* stmt)
+        {
+            star_partition_messages = sqlite3_column_int(stmt, 0);
+        });
+    ASSERT_EQ(star_partition_messages, MESSAGES_PER_WRITER);
+
+    int a_partition_messages = -1;
+    exec_sql_statement_(
+        OUTPUT_FILE_PATH,
+        "SELECT COUNT(*) FROM MessagesPartitions WHERE partition = ?;",
+        {"A"},
+        [&](sqlite3_stmt* stmt)
+        {
+            a_partition_messages = sqlite3_column_int(stmt, 0);
+        });
+    ASSERT_EQ(a_partition_messages, MESSAGES_PER_WRITER);
+
+    int a_or_b_partition_messages = -1;
+    exec_sql_statement_(
+        OUTPUT_FILE_PATH,
+        "SELECT COUNT(*) FROM MessagesPartitions WHERE partition = ?;",
+        {"A|B"},
+        [&](sqlite3_stmt* stmt)
+        {
+            a_or_b_partition_messages = sqlite3_column_int(stmt, 0);
+        });
+    ASSERT_EQ(a_or_b_partition_messages, MESSAGES_PER_WRITER);
+
+    // Ensure recorder did not store samples tagged with any unexpected partition.
+    int unexpected_partition_messages = -1;
+    exec_sql_statement_(
+        OUTPUT_FILE_PATH,
+        "SELECT COUNT(*) FROM MessagesPartitions WHERE partition NOT IN (?, ?, ?, ?);",
+        {"", "*", "A", "A|B"},
+        [&](sqlite3_stmt* stmt)
+        {
+            unexpected_partition_messages = sqlite3_column_int(stmt, 0);
+        });
+    ASSERT_EQ(unexpected_partition_messages, 0);
+
+    // -- TopicsPartitions --
+    // Verify topic/partition discovery table has one entry for each configured partition.
+    int topic_empty_partition_entries = -1;
+    exec_sql_statement_(
+        OUTPUT_FILE_PATH,
+        "SELECT COUNT(*) FROM TopicsPartitions WHERE topic = ? AND type = ? AND partition = ?;",
+        {topic_->get_name(), topic_->get_type_name(), ""},
+        [&](sqlite3_stmt* stmt)
+        {
+            topic_empty_partition_entries = sqlite3_column_int(stmt, 0);
+        });
+    ASSERT_EQ(topic_empty_partition_entries, 1);
+
+    int topic_star_partition_entries = -1;
+    exec_sql_statement_(
+        OUTPUT_FILE_PATH,
+        "SELECT COUNT(*) FROM TopicsPartitions WHERE topic = ? AND type = ? AND partition = ?;",
+        {topic_->get_name(), topic_->get_type_name(), "*"},
+        [&](sqlite3_stmt* stmt)
+        {
+            topic_star_partition_entries = sqlite3_column_int(stmt, 0);
+        });
+    ASSERT_EQ(topic_star_partition_entries, 1);
+
+    int topic_a_partition_entries = -1;
+    exec_sql_statement_(
+        OUTPUT_FILE_PATH,
+        "SELECT COUNT(*) FROM TopicsPartitions WHERE topic = ? AND type = ? AND partition = ?;",
+        {topic_->get_name(), topic_->get_type_name(), "A"},
+        [&](sqlite3_stmt* stmt)
+        {
+            topic_a_partition_entries = sqlite3_column_int(stmt, 0);
+        });
+    ASSERT_EQ(topic_a_partition_entries, 1);
+
+    int topic_a_or_b_partition_entries = -1;
+    exec_sql_statement_(
+        OUTPUT_FILE_PATH,
+        "SELECT COUNT(*) FROM TopicsPartitions WHERE topic = ? AND type = ? AND partition = ?;",
+        {topic_->get_name(), topic_->get_type_name(), "A|B"},
+        [&](sqlite3_stmt* stmt)
+        {
+            topic_a_or_b_partition_entries = sqlite3_column_int(stmt, 0);
+        });
+    ASSERT_EQ(topic_a_or_b_partition_entries, 1);
+}
+
+
 int main(
         int argc,
         char** argv)

@@ -103,6 +103,8 @@ set(TEST_LIST
         mcap_dds_topic_partition
         mcap_ros2_topic_partition
         mcap_data_num_msgs_partition
+        mcap_data_num_msgs_two_publishers_partition_split
+        mcap_data_num_msgs_four_publishers_partition_split
         mcap_data_num_msgs_downsampling_partition
 
         # State

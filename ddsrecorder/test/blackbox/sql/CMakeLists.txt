@@ -32,6 +32,7 @@ set(TEST_LIST
         sql_dds_topic
         sql_ros2_topic
         sql_data_num_msgs
+        sql_data_num_msgs_content_filter
         sql_data_num_msgs_partition
         sql_data_num_msgs_downsampling
 
@@ -106,6 +107,8 @@ set(TEST_LIST
         sql_dds_topic_partition
         sql_ros2_topic_partition
         sql_data_num_msgs_partition
+        sql_data_num_msgs_two_publishers_partition_split
+        sql_data_num_msgs_four_publishers_partition_split
         sql_data_num_msgs_partition_partition
         sql_data_num_msgs_downsampling_partition
 
