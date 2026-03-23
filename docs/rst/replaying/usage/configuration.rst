@@ -92,6 +92,9 @@ If the ``allowlist`` and ``blocklist`` are not configured, the |ddsreplayer| wil
 If both the ``allowlist`` and ``blocklist`` are configured and a topic appears in both of them, the ``blocklist`` has priority and the topic will be blocked.
 
 Topics are determined by the tags ``name`` (required) and ``type``, both of which accept wildcard characters.
+For payload-based topic filtering, use the ``filter`` tag in :ref:`Manual Topics <replayer_manual_topics>`, which
+supports `ContentFilteredTopic <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dds_layer/topic/contentFilteredTopic/contentFilteredTopic.html>`__
+expressions.
 
 .. note::
 
@@ -230,9 +233,11 @@ By default it is set to ``0``; it sends samples at an unlimited transmission rat
 Manual Topics
 ^^^^^^^^^^^^^
 
-A subset of QoS can be manually configured for a specific topic under the tag ``topics``.
+A subset of :ref:`Topic QoS <replayer_topic_qos>` can be manually configured for a specific topic under the tag ``topics``.
 The tag ``topics`` has a required ``name`` tag that accepts wildcard characters.
-It also has two optional tags: a ``type`` tag that accepts wildcard characters, and a ``qos`` tag with the QoS that the user wants to manually configure.
+It also has three optional tags: a ``type`` tag that accepts wildcard characters, a ``filter`` tag that accepts
+`ContentFilteredTopic <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dds_layer/topic/contentFilteredTopic/contentFilteredTopic.html>`__
+to filter a topic, and a ``qos`` tag with the :ref:`Topic QoS <replayer_topic_qos>` that the user wants to manually configure.
 If a ``qos`` is not manually configured, it will get its value by discovery.
 
 **Example of usage**
@@ -242,6 +247,7 @@ If a ``qos`` is not manually configured, it will get its value by discovery.
     topics:
       - name: "temperature/*"
         type: "temperature/types/*"
+        filter: "x > 100 OR (y > 100 AND z != 30) AND color = 'RED'"
         qos:
           max-tx-rate: 15
 

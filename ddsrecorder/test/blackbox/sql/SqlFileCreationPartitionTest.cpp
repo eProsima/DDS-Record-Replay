@@ -101,9 +101,9 @@ protected:
 
                 if (bind_ret != SQLITE_OK)
                 {
-                    const std::string error_msg = utils::Formatter() <<
-                            "Failed to bind SQL statement to read messages: "
-                                                                     << sqlite3_errmsg(database);
+                    const std::string error_msg = utils::Formatter()
+                            << "Failed to bind SQL statement to read messages: "
+                            << sqlite3_errmsg(database);
 
                     EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
                     throw std::runtime_error(error_msg);
