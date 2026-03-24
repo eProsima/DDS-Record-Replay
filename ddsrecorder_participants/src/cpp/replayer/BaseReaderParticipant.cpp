@@ -100,13 +100,6 @@ std::shared_ptr<ddspipe::core::IReader> BaseReaderParticipant::create_reader(
     return reader;
 }
 
-std::shared_ptr<ddspipe::core::IReader> BaseReaderParticipant::create_reader_with_filter(
-        const ddspipe::core::ITopic& topic,
-        const std::set<std::string> partitions)
-{
-    return std::make_shared<ddspipe::participants::InternalReader>(id());
-}
-
 void BaseReaderParticipant::stop() noexcept
 {
     {
@@ -131,6 +124,7 @@ std::unique_ptr<ddspipe::core::types::RtpsPayloadData> BaseReaderParticipant::cr
     // Reserve and copy the payload into the payload pool
     payload_pool_->get_payload(payload, data->payload);
     data->payload_owner = payload_pool_.get();
+    data->kind = ddspipe::core::types::ChangeKind::ALIVE;
 
     // Remove the raw data pointer to avoid freeing it on destruction
     payload.data = nullptr;
@@ -198,13 +192,13 @@ void BaseReaderParticipant::wait_until_timestamp_(
 
 bool BaseReaderParticipant::add_topic_partition(
         const std::string& topic_name,
-        const std::string& writer_name,
+        const std::string& writer_guid,
         const std::string& partition)
 {
     if (partition_names.find(topic_name) != partition_names.end())
     {
         // the topic exists
-        if (partition_names[topic_name].find(writer_name) != partition_names[topic_name].end())
+        if (partition_names[topic_name].find(writer_guid) != partition_names[topic_name].end())
         {
             // the writer is already added in the topic
             return false;
@@ -217,7 +211,7 @@ bool BaseReaderParticipant::add_topic_partition(
     }
 
     // adds [writer, partition] in the topic
-    partition_names[topic_name][writer_name] = partition;
+    partition_names[topic_name][writer_guid] = partition;
 
     return true;
 }
@@ -235,6 +229,7 @@ bool BaseReaderParticipant::update_topic_partition(
     if (partition_names[topic_name].find(writer_guid) == partition_names[topic_name].end())
     {
         // the writer dont exist in the topic
+
         return false;
     }
 
@@ -246,7 +241,7 @@ bool BaseReaderParticipant::update_topic_partition(
 
 bool BaseReaderParticipant::delete_topic_partition(
         const std::string& topic_name,
-        const std::string& writer_name,
+        const std::string& writer_guid,
         const std::string& partition)
 {
     if (partition_names.find(topic_name) == partition_names.end())
@@ -254,14 +249,14 @@ bool BaseReaderParticipant::delete_topic_partition(
         // the topic dont exists
         return false;
     }
-    if (partition_names[topic_name].find(writer_name) == partition_names[topic_name].end())
+    if (partition_names[topic_name].find(writer_guid) == partition_names[topic_name].end())
     {
         // the writer dont exist in the topic
         return false;
     }
 
     // delete [writer, partition] in the topic
-    partition_names.erase(writer_name);
+    partition_names[topic_name].erase(writer_guid);
 
     return true;
 }
@@ -269,6 +264,19 @@ bool BaseReaderParticipant::delete_topic_partition(
 void BaseReaderParticipant::clear_topic_partitions()
 {
     partition_names.clear();
+}
+
+void BaseReaderParticipant::update_partitions(
+        const std::set<std::string>& partitions)
+{
+    // Nothing
+}
+
+void BaseReaderParticipant::update_content_topicfilter(
+        const std::string& topic_name,
+        const std::string& expression)
+{
+    // Nothing
 }
 
 } /* namespace participants */

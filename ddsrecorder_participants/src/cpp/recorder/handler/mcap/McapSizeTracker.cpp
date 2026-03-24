@@ -170,8 +170,8 @@ void McapSizeTracker::attachment_to_write(
                 get_attachment_size_(payload_size_to_remove)))
     {
         throw FullFileException(
-                  STR_ENTRY << "Attempted attachment write of size: " << utils::from_bytes(payload_size_to_write) <<
-                      ", but there is not enough space allowed disk: " << utils::from_bytes(space_available_),
+                  STR_ENTRY << "Attempted attachment write of size: " << utils::from_bytes(payload_size_to_write)
+                            << ", but there is not enough space allowed disk: " << utils::from_bytes(space_available_),
                       payload_size_to_write);
     }
 
@@ -367,8 +367,6 @@ void McapSizeTracker::check_and_increase_written_mcap_size_(
             std::int64_t dif_potential_written = potential_mcap_size_ - written_mcap_size_; // Signed to allow negative values in case of decrease (error?)
             written_mcap_size_ = file_size;
             potential_mcap_size_ = written_mcap_size_ + dif_potential_written;
-            std::cout << "UPDATE: written size: " << written_mcap_size_ << " potential size: " <<
-                potential_mcap_size_ << std::endl;
         }
         checked_written_mcap_size_ = written_mcap_size_;
     }

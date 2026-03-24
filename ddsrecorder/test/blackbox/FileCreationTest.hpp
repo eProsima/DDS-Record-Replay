@@ -98,6 +98,7 @@ public:
         Yaml yml;
         configuration_ = std::make_unique<ddsrecorder::yaml::RecorderConfiguration>(yml);
         configuration_->dds_configuration->domain = test::DOMAIN;
+        configuration_->dds_configuration->allowed_partition_list.insert("*");
 
         // Create the topic
         create_topic_();

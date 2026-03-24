@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <map>
 #include <memory>
 #include <set>
 
@@ -195,6 +196,9 @@ protected:
 
     //! Number of times the .yaml configuration is reload
     int reload_conf_count_;
+
+    //! Last content filters effectively applied to participants/readers.
+    std::map<std::string, std::string> applied_content_filters_;
 };
 
 } /* namespace recorder */

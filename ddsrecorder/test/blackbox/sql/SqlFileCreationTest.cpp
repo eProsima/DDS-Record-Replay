@@ -52,6 +52,7 @@ public:
 
         // Set the output library to SQL
         configuration_->sql_enabled = true;
+        configuration_->dds_enabled = false;
         // If MCAP were enabled the event thread raises a false positive TSAN race condition
         // when destroying the releasing the last reference to a payload
         configuration_->mcap_enabled = false;
@@ -106,9 +107,9 @@ protected:
 
                 if (bind_ret != SQLITE_OK)
                 {
-                    const std::string error_msg = utils::Formatter() <<
-                            "Failed to bind SQL statement to read messages: "
-                                                                     << sqlite3_errmsg(database);
+                    const std::string error_msg = utils::Formatter()
+                            << "Failed to bind SQL statement to read messages: "
+                            << sqlite3_errmsg(database);
 
                     EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT, "FAIL_SQL_READ | " << error_msg);
                     throw std::runtime_error(error_msg);
@@ -425,6 +426,42 @@ TEST_F(SqlFileCreationTest, sql_data_num_msgs)
 }
 
 /**
+ * Verify that DDS Recorder applies topic content filters configured in DDS settings.
+ *
+ * CASES:
+ *  - Configure content filter `index < 5` for the test topic.
+ *  - Publish 10 samples.
+ *  - Verify only 5 samples are stored.
+ */
+TEST_F(SqlFileCreationTest, sql_data_num_msgs_content_filter)
+{
+    const std::string OUTPUT_FILE_NAME = "sql_data_num_msgs_content_filter";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".db");
+
+    constexpr auto NUMBER_OF_MESSAGES = 10;
+    constexpr auto EXPECTED_RECORDED_MESSAGES = 5;
+
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    const auto OUTPUT_FILE_PATH_MCAP = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH_MCAP));
+
+    // ContentFilteredTopic is only supported in DDS mode.
+    configuration_->dds_enabled = true;
+    configuration_->dds_configuration->content_topic_filter_dict[topic_->get_name()] = "index < 5";
+
+    // Record messages
+    record_messages_(OUTPUT_FILE_NAME, NUMBER_OF_MESSAGES);
+
+    // Count the recorded messages
+    exec_sql_statement_(OUTPUT_FILE_PATH, "SELECT COUNT(*) FROM Messages;", {}, [&](sqlite3_stmt* stmt)
+            {
+                const auto recorded_messages = sqlite3_column_int(stmt, 0);
+                ASSERT_EQ(recorded_messages, EXPECTED_RECORDED_MESSAGES);
+            });
+}
+
+/**
  * Verify that the DDS Recorder records every message in an SQL file with DOWNSAMPLING.
  *
  * CASES:
@@ -456,7 +493,8 @@ TEST_F(SqlFileCreationTest, sql_data_num_msgs_downsampling)
                 // Verify the recorded messages count
                 const auto recorded_messages = sqlite3_column_int(stmt,
                 0);
-                const auto expected_messages = (NUMBER_OF_MESSAGES / DOWNSAMPLING) + (NUMBER_OF_MESSAGES % DOWNSAMPLING);
+                const auto expected_messages = (NUMBER_OF_MESSAGES / DOWNSAMPLING) +
+                (NUMBER_OF_MESSAGES % DOWNSAMPLING);
                 ASSERT_EQ(recorded_messages, expected_messages);
             });
 }

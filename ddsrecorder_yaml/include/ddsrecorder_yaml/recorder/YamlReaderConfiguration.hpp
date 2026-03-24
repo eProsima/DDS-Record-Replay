@@ -78,7 +78,8 @@ public:
 
     // XML configuration
     ddspipe::participants::XmlHandlerConfiguration xml_configuration;
-    bool xml_enabled = false;
+    // DDS by default (RTPS with 'specs' yaml configuration)
+    bool dds_enabled = true;
 
     // Participants configurations
     std::shared_ptr<ddspipe::participants::XmlParticipantConfiguration> dds_configuration;

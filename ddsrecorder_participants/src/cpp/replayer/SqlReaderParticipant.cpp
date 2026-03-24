@@ -40,7 +40,6 @@
 #include <ddsrecorder_participants/replayer/SqlReaderParticipant.hpp>
 
 
-
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
@@ -64,11 +63,26 @@ void SqlReaderParticipant::add_partition_list(
     allowed_partition_list_ = allowed_partition_list;
 }
 
+void SqlReaderParticipant::update_partition_list(
+        std::set<std::string> allowed_partition_list)
+{
+    std::set<utils::Heritable<ddspipe::core::types::DdsTopic>> topics;
+    participants::DynamicTypesCollection types;
+
+    allowed_partition_list_ = allowed_partition_list;
+    process_summary(topics, types);
+}
+
 void SqlReaderParticipant::process_summary(
         std::set<utils::Heritable<ddspipe::core::types::DdsTopic>>& topics,
         DynamicTypesCollection& types)
 {
     open_file_();
+
+    {
+        std::lock_guard<std::mutex> lock(filter_mutex_);
+        filter_updating_ = true;
+    }
 
     // SQL query. Gets the Topic, Type, Qos, ROS2_Topic, Partitions and WriterGuid
     // using Topic, Type and Partitions as primary keys
@@ -241,8 +255,8 @@ void SqlReaderParticipant::process_summary(
                 }
 
                 EPROSIMA_LOG_WARNING(DDSREPLAYER_SQL_READER_PARTICIPANT,
-                "Topic " << topic_name << " with type " << type_name <<
-                    "and partitions set already exists. Skipping...");
+                "Topic " << topic_name << " with type " << type_name
+                         << "and partitions set already exists. Skipping...");
                 return;
             }
 
@@ -273,6 +287,12 @@ void SqlReaderParticipant::process_summary(
             });
 
     close_file_();
+
+    {
+        std::lock_guard<std::mutex> lock(filter_mutex_);
+        filter_updating_ = false;
+    }
+    filter_cv_.notify_all();
 }
 
 void SqlReaderParticipant::process_messages()
@@ -305,6 +325,7 @@ void SqlReaderParticipant::process_messages()
             static utils::Timestamp first_message_timestamp = log_time;
 
             // Create a DdsTopic to publish the message
+            ddspipe::core::types::DdsTopic topic;
             const std::string topic_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
             const std::string type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
 
@@ -312,22 +333,30 @@ void SqlReaderParticipant::process_messages()
 
             const auto topic_id = std::make_pair(topic_name, type_name);
 
-            if (filtered_writersguid_list_.find(writer_guid) != filtered_writersguid_list_.end())
             {
-                // current row do not pass the filter
-                return;
-            }
+                std::unique_lock<std::mutex> lock(filter_mutex_);
+                // Waits if the filter_updating_ == true
+                filter_cv_.wait(lock, [this]
+                {
+                    return !filter_updating_;
+                });
 
-            // Find the topic
-            if (topics_.find(topic_id) == topics_.end())
-            {
-                EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT,
-                "Failed to find topic " << topic_name << " with type " << type_name << ". "
-                    "Did you process the summary before the messages? Skipping...");
-                return;
-            }
+                if (filtered_writersguid_list_.find(writer_guid) != filtered_writersguid_list_.end())
+                {
+                    // current row do not pass the filter
+                    return;
+                }
 
-            const auto topic = topics_[topic_id];
+                // Find the topic
+                if (topics_.find(topic_id) == topics_.end())
+                {
+                    EPROSIMA_LOG_ERROR(DDSREPLAYER_SQL_READER_PARTICIPANT,
+                    "Failed to find topic " << topic_name << " with type " << type_name << ". "
+                        "Did you process the summary before the messages? Skipping...");
+                    return;
+                }
+                topic = topics_[topic_id];
+            }
 
             // Find the reader for the topic
             if (readers_.find(topic) == readers_.end())

@@ -94,7 +94,8 @@ bool RecorderConfiguration::is_valid(
     {
         EPROSIMA_LOG_ERROR(DDSRECORDER,
                 "SQL max file size is not used as SQL records everything in just one file. It is only used in MCAP configuration.");
-        error_msg <<
+        error_msg
+            <<
             "SQL max file size is not used as SQL records everything in just one file. It is only used in MCAP configuration.";
         return false;
     }
@@ -258,8 +259,8 @@ void RecorderConfiguration::load_recorder_configuration_(
         if (max_pending_samples < -1)
         {
             throw eprosima::utils::ConfigurationException(
-                      utils::Formatter() << "Error reading value under tag <" << RECORDER_MAX_PENDING_SAMPLES_TAG <<
-                          "> : value cannot be lower than -1.");
+                      utils::Formatter() << "Error reading value under tag <" << RECORDER_MAX_PENDING_SAMPLES_TAG
+                                         << "> : value cannot be lower than -1.");
         }
     }
 
@@ -359,9 +360,9 @@ void RecorderConfiguration::load_recorder_output_configuration_(
         {
             output_safety_margin = OUTPUT_SAFETY_MARGIN_MIN;
             EPROSIMA_LOG_ERROR(YAML_READER_CONFIGURATION,
-                    "NOT VALID VALUE | SQL " << RECORDER_OUTPUT_TAG <<
-                    " must be greater than the minimum value accepted. Defaulting to (Kb): " <<
-                    output_safety_margin /
+                    "NOT VALID VALUE | SQL " << RECORDER_OUTPUT_TAG
+                                             << " must be greater than the minimum value accepted. Defaulting to (Kb): "
+                                             << output_safety_margin /
                     1024);
         }
     }
@@ -424,11 +425,11 @@ void RecorderConfiguration::load_recorder_sql_configuration_(
     {
         const auto data_format_yml = YamlReader::get_value_in_tag(yml, RECORDER_SQL_DATA_FORMAT_TAG);
         sql_data_format = YamlReader::get_enumeration<ddsrecorder::participants::DataFormat>(data_format_yml,
-                    {
-                        {RECORDER_SQL_DATA_FORMAT_CDR_TAG,  ddsrecorder::participants::DataFormat::cdr},
-                        {RECORDER_SQL_DATA_FORMAT_JSON_TAG, ddsrecorder::participants::DataFormat::json},
-                        {RECORDER_SQL_DATA_FORMAT_BOTH_TAG, ddsrecorder::participants::DataFormat::both}
-                    });
+                        {
+                            {RECORDER_SQL_DATA_FORMAT_CDR_TAG,  ddsrecorder::participants::DataFormat::cdr},
+                            {RECORDER_SQL_DATA_FORMAT_JSON_TAG, ddsrecorder::participants::DataFormat::json},
+                            {RECORDER_SQL_DATA_FORMAT_BOTH_TAG, ddsrecorder::participants::DataFormat::both}
+                        });
     }
 
     /////
@@ -517,6 +518,12 @@ void RecorderConfiguration::load_specs_configuration_(
         TopicQoS::default_topic_qos.set_value(topic_qos);
     }
 
+    // Get optional rtps enabled
+    if (YamlReader::is_tag_present(yml, RTPS_ENABLED_TAG))
+    {
+        dds_enabled = !YamlReader::get<bool>(yml, RTPS_ENABLED_TAG, version);
+    }
+
     /////
     // Get optional Log Configuration
     if (YamlReader::is_tag_present(yml, LOG_CONFIGURATION_TAG))
@@ -549,7 +556,6 @@ void RecorderConfiguration::load_dds_configuration_(
     if (YamlReader::is_tag_present(yml, RECORDER_PROFILE_TAG))
     {
         dds_configuration->participant_profile = YamlReader::get<std::string>(yml, RECORDER_PROFILE_TAG, version);
-        xml_enabled = true;
     }
 
     // Get optional DDS domain
@@ -572,24 +578,6 @@ void RecorderConfiguration::load_dds_configuration_(
     {
         dds_configuration->allowed_partition_list = YamlReader::get_set<std::string>(yml, PARTITIONLIST_TAG,
                         version);
-
-        // check if the wildcard partition is in the partitionlist
-        bool wildcard = false;
-        for (std::string partition: dds_configuration->allowed_partition_list)
-        {
-            if (partition == "*")
-            {
-                wildcard = true;
-                break;
-            }
-        }
-
-        if (wildcard)
-        {
-            // the partitionslist contains "*" -> clear the list,
-            // all the partitions are allowed in the filter
-            dds_configuration->allowed_partition_list.clear();
-        }
     }
 
     // Optional get Transport protocol
@@ -640,11 +628,42 @@ void RecorderConfiguration::load_dds_configuration_(
 
     /////
     // Get optional topics
+    const char* topics_tag = nullptr;
     if (YamlReader::is_tag_present(yml, TOPICS_TAG))
     {
-        const auto& manual_topics = YamlReader::get_list<ManualTopic>(yml, TOPICS_TAG, version);
+        topics_tag = TOPICS_TAG;
+    }
+    else if (YamlReader::is_tag_present(yml, "topic"))
+    {
+        // Backward compatibility: accept legacy singular tag.
+        topics_tag = "topic";
+        EPROSIMA_LOG_WARNING(
+            YAML_READER_CONFIGURATION,
+            "Detected deprecated <topic> tag in DDS configuration. Please migrate to <topics>.");
+    }
+
+    if (topics_tag != nullptr)
+    {
+        const auto& manual_topics = YamlReader::get_list<ManualTopic>(yml, topics_tag, version);
         ddspipe_configuration.manual_topics =
                 std::vector<ManualTopic>(manual_topics.begin(), manual_topics.end());
+
+        for (const auto& topic : manual_topics)
+        {
+            const std::string key(topic.first->topic_name);
+
+            // Force an unambiguous std::string
+            const std::string filter =
+                    static_cast<std::string>(topic.first->content_topic_filter);
+
+            auto ret = dds_configuration->content_topic_filter_dict.insert(
+                std::make_pair(key, filter));
+
+            if (!ret.second)
+            {
+                ret.first->second = filter;
+            }
+        }
     }
 
     /////
@@ -674,8 +693,8 @@ void RecorderConfiguration::load_ddsrecorder_configuration_from_file_(
     catch (const std::exception& e)
     {
         throw eprosima::utils::ConfigurationException(
-                  utils::Formatter() << "Error loading DDS Recorder configuration from file: <" << file_path <<
-                      "> :\n " << e.what());
+                  utils::Formatter() << "Error loading DDS Recorder configuration from file: <" << file_path
+                                     << "> :\n " << e.what());
     }
 
     RecorderConfiguration::load_ddsrecorder_configuration_(yml, args);

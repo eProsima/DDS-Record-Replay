@@ -100,12 +100,6 @@ public:
     std::shared_ptr<ddspipe::core::IReader> create_reader(
             const ddspipe::core::ITopic& topic) override;
 
-    //! Override create_reader_() IParticipant method
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    std::shared_ptr<ddspipe::core::IReader> create_reader_with_filter(
-            const ddspipe::core::ITopic& topic,
-            const std::set<std::string> partitions) override;
-
     //! Override add_topic_partition() IParticipant method
     DDSRECORDER_PARTICIPANTS_DllAPI
     bool add_topic_partition(
@@ -131,6 +125,17 @@ public:
     DDSRECORDER_PARTICIPANTS_DllAPI
     void clear_topic_partitions() override;
 
+    //! Override update_partitions() IParticipant method
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    virtual void update_partitions(
+            const std::set<std::string>& partitions) override;
+
+    //! Override update_content_topicfilter() IParticipant method
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    virtual void update_content_topicfilter(
+            const std::string& topic_name,
+            const std::string& expression) override;
+
     /**
      * @brief Process the input file's summary.
      *
@@ -139,6 +144,17 @@ public:
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     virtual void add_partition_list(
+            std::set<std::string> allowed_partition_list) = 0;
+
+    /**
+     * @brief Update the partition filter list at runtime.
+     *
+     * Replaces the current allowed partitions list and rebuilds the partition filter.
+     *
+     * @param allowed_partition_list: New set of allowed partitions.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    virtual void update_partition_list(
             std::set<std::string> allowed_partition_list) = 0;
 
     /**

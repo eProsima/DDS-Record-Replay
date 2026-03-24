@@ -13,7 +13,9 @@
 // limitations under the License.
 
 #include <cstdint>
+#include <cstring>
 #include <filesystem>
+#include <map>
 #include <string>
 
 #include <mcap/reader.hpp>
@@ -36,8 +38,11 @@
 #include <ddspipe_core/types/dds/TopicQoS.hpp>
 
 #include <ddsrecorder_participants/common/time_utils.hpp>
+#include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/recorder/output/OutputSettings.hpp>
 #include <ddsrecorder_yaml/recorder/yaml_configuration_tags.hpp>
+
+#include <fastdds/rtps/common/SerializedPayload.hpp>
 
 #include <tool/DdsRecorder.hpp>
 
@@ -116,6 +121,56 @@ protected:
         const auto max_time_past_sec = max_time_past * NS_TO_SEC;
 
         return max_time_past_sec;
+    }
+
+    std::map<std::string, std::string> parse_partitions_metadata_(
+            const std::string& partitions_metadata)
+    {
+        std::map<std::string, std::string> writer_partitions;
+        std::size_t begin = 0;
+
+        while (begin < partitions_metadata.size())
+        {
+            const auto separator = partitions_metadata.find(':', begin);
+            if (separator == std::string::npos)
+            {
+                break;
+            }
+
+            auto end = partitions_metadata.find(';', separator + 1);
+            if (end == std::string::npos)
+            {
+                end = partitions_metadata.size();
+            }
+
+            const auto writer_guid = partitions_metadata.substr(begin, separator - begin);
+            const auto partition = partitions_metadata.substr(separator + 1, end - separator - 1);
+
+            writer_partitions[writer_guid] = partition;
+
+            begin = end + 1;
+        }
+
+        return writer_partitions;
+    }
+
+    HelloWorld deserialize_hello_world_(
+            const mcap::Message& message)
+    {
+        fastdds::rtps::SerializedPayload_t payload(static_cast<uint32_t>(message.dataSize));
+        payload.length = static_cast<uint32_t>(message.dataSize);
+
+        std::memcpy(
+            payload.data,
+            reinterpret_cast<const unsigned char*>(message.data),
+            payload.length);
+
+        HelloWorld data;
+        HelloWorldPubSubType pubsub_type;
+        const auto deserialized = pubsub_type.deserialize(payload, &data);
+        EXPECT_TRUE(deserialized);
+
+        return data;
     }
 
     mcap::McapReader mcap_reader_;
@@ -2240,6 +2295,208 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_event_stop_partition_no_
     // Verify the oldest recorded message was recorded in the event window
     const auto max_time_past = find_max_time_past_(read_messages);
     ASSERT_LE(max_time_past, EVENT_WINDOW);
+}
+
+
+TEST_F(McapFileCreationPartitionTest, mcap_data_num_msgs_two_publishers_partition_split)
+{
+    init_dds_data(std::vector<std::string>{""}, false);
+
+    const std::string OUTPUT_FILE_NAME = "mcap_data_num_msgs_two_publishers_partition_split";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+
+    constexpr auto MESSAGES_PER_WRITER = 5;
+    constexpr auto TOTAL_MESSAGES = MESSAGES_PER_WRITER * 2;
+
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    const std::vector<PublisherMessagesConfig> publisher_configs{
+        PublisherMessagesConfig{
+            {""},
+            MESSAGES_PER_WRITER,
+            NO_PARTITION_INDEX_BASE,
+            "Hello World! default partition"},
+        PublisherMessagesConfig{
+            {"A"},
+            MESSAGES_PER_WRITER,
+            A_PARTITION_INDEX_BASE,
+            "Hello World! partition A"}};
+
+    const auto sent_messages = record_messages_publishers_(
+        OUTPUT_FILE_NAME,
+        publisher_configs);
+    ASSERT_EQ(sent_messages.size(), TOTAL_MESSAGES);
+
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
+
+    int received_no_partition_messages = 0;
+    int received_a_partition_messages = 0;
+    int read_messages_count = 0;
+    bool metadata_has_no_partition = false;
+    bool metadata_has_a_partition = false;
+
+    for (const auto& read_message : read_messages)
+    {
+        read_messages_count++;
+
+        const auto partitions_it = read_message.channel->metadata.find(eprosima::ddsrecorder::participants::PARTITIONS);
+        ASSERT_NE(partitions_it, read_message.channel->metadata.end());
+
+        const auto writer_partitions = parse_partitions_metadata_(partitions_it->second);
+        for (const auto& writer_partition : writer_partitions)
+        {
+            if (writer_partition.second.empty())
+            {
+                metadata_has_no_partition = true;
+            }
+            else if (writer_partition.second == "A")
+            {
+                metadata_has_a_partition = true;
+            }
+        }
+
+        const auto hello_world = deserialize_hello_world_(read_message.message);
+        if (hello_world.index() >= NO_PARTITION_INDEX_BASE && hello_world.index() < A_PARTITION_INDEX_BASE)
+        {
+            received_no_partition_messages++;
+        }
+        else if (hello_world.index() >= A_PARTITION_INDEX_BASE &&
+                hello_world.index() < A_PARTITION_INDEX_BASE + MESSAGES_PER_WRITER)
+        {
+            received_a_partition_messages++;
+        }
+    }
+
+    ASSERT_EQ(read_messages_count, TOTAL_MESSAGES);
+    ASSERT_EQ(received_no_partition_messages, MESSAGES_PER_WRITER);
+    ASSERT_EQ(received_a_partition_messages, MESSAGES_PER_WRITER);
+    ASSERT_TRUE(metadata_has_no_partition);
+    ASSERT_TRUE(metadata_has_a_partition);
+}
+
+TEST_F(McapFileCreationPartitionTest, mcap_data_num_msgs_four_publishers_partition_split)
+{
+    init_dds_data(std::vector<std::string>{""}, false);
+
+    const std::string OUTPUT_FILE_NAME = "mcap_data_num_msgs_four_publishers_partition_split";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+
+    constexpr auto MESSAGES_PER_WRITER = 5;
+    constexpr auto TOTAL_MESSAGES = MESSAGES_PER_WRITER * 4;
+
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    // -- Publishing ----------------------------------------------------------
+    // Each entry below creates one writer
+    // with its partition set and publishes 5 samples.
+    // `initial_index` gives each publisher a disjoint index range.
+    const std::vector<PublisherMessagesConfig> publisher_configs{
+        PublisherMessagesConfig{
+            {""},
+            MESSAGES_PER_WRITER,
+            NO_PARTITION_INDEX_BASE,
+            "Hello World! partition empty"},
+        PublisherMessagesConfig{
+            {"*"},
+            MESSAGES_PER_WRITER,
+            NO_PARTITION_INDEX_BASE + PUBLISHER_INDEX_STEP,
+            "Hello World! partition star"},
+        PublisherMessagesConfig{
+            {"A"},
+            MESSAGES_PER_WRITER,
+            NO_PARTITION_INDEX_BASE + (2 * PUBLISHER_INDEX_STEP),
+            "Hello World! partition A"},
+        PublisherMessagesConfig{
+            {"A|B"},
+            MESSAGES_PER_WRITER,
+            NO_PARTITION_INDEX_BASE + (3 * PUBLISHER_INDEX_STEP),
+            "Hello World! partition A|B"}};
+
+    const auto sent_messages = record_messages_publishers_(
+        OUTPUT_FILE_NAME,
+        publisher_configs);
+    ASSERT_EQ(sent_messages.size(), TOTAL_MESSAGES);
+
+    // Read recorded MCAP messages and validate publisher contribution in two ways:
+    // 1. Writer partition metadata is present for "", "*", "A", and "A|B"
+    // 2. Deserialized sample index falls in each publisher's assigned index range
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
+
+    int read_messages_count = 0;
+    int received_empty_partition_messages = 0;
+    int received_star_partition_messages = 0;
+    int received_a_partition_messages = 0;
+    int received_a_or_b_partition_messages = 0;
+    bool metadata_has_empty_partition = false;
+    bool metadata_has_star_partition = false;
+    bool metadata_has_a_partition = false;
+    bool metadata_has_a_or_b_partition = false;
+
+    for (const auto& read_message : read_messages)
+    {
+        read_messages_count++;
+
+        // Metadata contains writer_guid:partition entries
+        // for the writers that contributed to this channel
+        const auto partitions_it = read_message.channel->metadata.find(eprosima::ddsrecorder::participants::PARTITIONS);
+        ASSERT_NE(partitions_it, read_message.channel->metadata.end());
+
+        const auto writer_partitions = parse_partitions_metadata_(partitions_it->second);
+        for (const auto& writer_partition : writer_partitions)
+        {
+            if (writer_partition.second.empty())
+            {
+                metadata_has_empty_partition = true;
+            }
+            else if (writer_partition.second == "*")
+            {
+                metadata_has_star_partition = true;
+            }
+            else if (writer_partition.second == "A")
+            {
+                metadata_has_a_partition = true;
+            }
+            else if (writer_partition.second == "A|B")
+            {
+                metadata_has_a_or_b_partition = true;
+            }
+        }
+
+        // Map each sample to its publisher by the configured index ranges
+        const auto hello_world = deserialize_hello_world_(read_message.message);
+        if (hello_world.index() >= NO_PARTITION_INDEX_BASE &&
+                hello_world.index() < NO_PARTITION_INDEX_BASE + MESSAGES_PER_WRITER)
+        {
+            received_empty_partition_messages++;
+        }
+        else if (hello_world.index() >= NO_PARTITION_INDEX_BASE + PUBLISHER_INDEX_STEP &&
+                hello_world.index() < NO_PARTITION_INDEX_BASE + PUBLISHER_INDEX_STEP + MESSAGES_PER_WRITER)
+        {
+            received_star_partition_messages++;
+        }
+        else if (hello_world.index() >= NO_PARTITION_INDEX_BASE + (2 * PUBLISHER_INDEX_STEP) &&
+                hello_world.index() < NO_PARTITION_INDEX_BASE + (2 * PUBLISHER_INDEX_STEP) + MESSAGES_PER_WRITER)
+        {
+            received_a_partition_messages++;
+        }
+        else if (hello_world.index() >= NO_PARTITION_INDEX_BASE + (3 * PUBLISHER_INDEX_STEP) &&
+                hello_world.index() < NO_PARTITION_INDEX_BASE + (3 * PUBLISHER_INDEX_STEP) + MESSAGES_PER_WRITER)
+        {
+            received_a_or_b_partition_messages++;
+        }
+    }
+
+    // Final checks
+    // exactly 5 samples per publisher and all partition metadata detected.
+    ASSERT_EQ(read_messages_count, TOTAL_MESSAGES);
+    ASSERT_EQ(received_empty_partition_messages, MESSAGES_PER_WRITER);
+    ASSERT_EQ(received_star_partition_messages, MESSAGES_PER_WRITER);
+    ASSERT_EQ(received_a_partition_messages, MESSAGES_PER_WRITER);
+    ASSERT_EQ(received_a_or_b_partition_messages, MESSAGES_PER_WRITER);
+    ASSERT_TRUE(metadata_has_empty_partition);
+    ASSERT_TRUE(metadata_has_star_partition);
+    ASSERT_TRUE(metadata_has_a_partition);
+    ASSERT_TRUE(metadata_has_a_or_b_partition);
 }
 
 int main(

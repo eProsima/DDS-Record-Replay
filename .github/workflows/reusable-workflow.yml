@@ -75,6 +75,71 @@ jobs:
           dependencies_artifact_postfix: ${{ inputs.dependencies_artifact_postfix }}
           secret_token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Prepare Windows colcon and VS fallback
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $shim_dir = Join-Path $env:RUNNER_TEMP 'colcon-shim'
+          New-Item -Path $shim_dir -ItemType Directory -Force | Out-Null
+
+          $python_exe = (Get-Command python).Source
+          "@echo off`n`"$python_exe`" -m colcon %*" | Set-Content -Path (Join-Path $shim_dir 'colcon.cmd') -Encoding ascii
+          $shim_dir | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+          $tool_dirs = @()
+          foreach ($tool in @('cmake', 'ninja', 'git')) {
+            $tool_cmd = Get-Command $tool -ErrorAction SilentlyContinue
+            if ($null -ne $tool_cmd) {
+              $tool_dirs += (Split-Path $tool_cmd.Source -Parent)
+            }
+          }
+
+          $path_candidates = @(
+            "$env:WINDIR\System32",
+            "$env:WINDIR",
+            "$env:WINDIR\System32\Wbem",
+            "$env:WINDIR\System32\WindowsPowerShell\v1.0",
+            "$env:WINDIR\System32\OpenSSH",
+            $shim_dir
+          ) + $tool_dirs
+          if (-not [string]::IsNullOrWhiteSpace($env:vcpkg_install_path)) {
+            $path_candidates += (Join-Path $env:vcpkg_install_path 'bin')
+            $vcpkg_debug_bin = Join-Path $env:vcpkg_install_path 'debug\bin'
+            if (Test-Path $vcpkg_debug_bin) {
+              $path_candidates += $vcpkg_debug_bin
+            }
+          }
+          if (-not [string]::IsNullOrWhiteSpace($env:RUNVCPKG_VCPKG_ROOT)) {
+            $path_candidates += $env:RUNVCPKG_VCPKG_ROOT
+          }
+
+          $compact_paths = $path_candidates |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+            ForEach-Object { $_.Trim() } |
+            Select-Object -Unique
+          "__VSCMD_PREINIT_PATH=$($compact_paths -join ';')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+          if (-not [string]::IsNullOrWhiteSpace($env:RUNVCPKG_VCPKG_ROOT)) {
+            "VCPKG_ROOT=$env:RUNVCPKG_VCPKG_ROOT" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          }
+          $vs_version = $env:VisualStudioVersion
+          if ([string]::IsNullOrWhiteSpace($vs_version)) {
+            $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+            if (Test-Path $vswhere) {
+              $installation_version = & $vswhere -latest -products * -property installationVersion
+              if (-not [string]::IsNullOrWhiteSpace($installation_version)) {
+                $major_version = ($installation_version.Trim().Split('.'))[0]
+                if ($major_version -match '^\d+$') {
+                  $vs_version = "$major_version.0"
+                }
+              }
+            }
+          }
+          if ([string]::IsNullOrWhiteSpace($vs_version)) {
+            throw 'Unable to determine VisualStudioVersion from environment or vswhere.'
+          }
+          "VisualStudioVersion=$vs_version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
       - name: Compile and run tests
         id: compile_and_test
         uses: eProsima/eProsima-CI/multiplatform/colcon_build_test@v0
