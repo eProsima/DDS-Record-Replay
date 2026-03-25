@@ -133,7 +133,7 @@ The |ddsreplayer| application supports several input arguments:
     *   - Domain
         - Set the domain to replay on
         - ``--domain``
-        - Unsigned Integer [0-255]
+        - Unsigned Integer [0-232]
         - 0
 
     *   - Debug

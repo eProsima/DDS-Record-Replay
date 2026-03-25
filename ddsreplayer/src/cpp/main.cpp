@@ -56,7 +56,7 @@ std::unique_ptr<eprosima::utils::event::FileWatcherHandler> create_filewatcher(
     // WARNING: it is needed to pass file_path, as FileWatcher only retrieves file_name
     std::function<void(std::string)> filewatcher_callback =
             [&replayer, &file_path]
-                (std::string file_name)
+            (std::string file_name)
             {
                 logUser(
                     DDSREPLAYER_EXECUTION,
@@ -70,8 +70,8 @@ std::unique_ptr<eprosima::utils::event::FileWatcherHandler> create_filewatcher(
                 catch (const std::exception& e)
                 {
                     EPROSIMA_LOG_WARNING(DDSREPLAYER_EXECUTION,
-                            "Error reloading configuration file " << file_name << " with error: " <<
-                            e.what());
+                            "Error reloading configuration file " << file_name << " with error: "
+                                                                  << e.what());
                 }
             };
 
@@ -87,7 +87,7 @@ std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> create_periodic_ha
     // Callback will reload configuration and pass it to DdsPipe
     std::function<void()> periodic_callback =
             [&replayer, &file_path]
-                ()
+            ()
             {
                 logUser(
                     DDSREPLAYER_EXECUTION,
@@ -101,8 +101,8 @@ std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> create_periodic_ha
                 catch (const std::exception& e)
                 {
                     EPROSIMA_LOG_WARNING(DDSREPLAYER_EXECUTION,
-                            "Error reloading configuration file " << file_path << " with error: " <<
-                            e.what());
+                            "Error reloading configuration file " << file_path << " with error: "
+                                                                  << e.what());
                 }
             };
 
@@ -181,6 +181,22 @@ int main(
         // Load configuration from YAML
         eprosima::ddsrecorder::yaml::ReplayerConfiguration configuration(commandline_args.file_path, &commandline_args);
 
+        // Validate YAML domain bounds before creating DDS entities
+        if (!configuration.replayer_configuration)
+        {
+            throw eprosima::utils::ConfigurationException(
+                      eprosima::utils::Formatter()
+                          << "Invalid configuration: Replayer participant configuration is not initialized.");
+        }
+
+        if (configuration.replayer_configuration->domain.domain_id > eprosima::ddspipe::core::types::DomainId::
+                        MAX_DOMAIN_ID)
+        {
+            throw eprosima::utils::ConfigurationException(
+                      eprosima::utils::Formatter() << "Invalid configuration: Domain ID must be between 0 and "
+                                                   << eprosima::ddspipe::core::types::DomainId::MAX_DOMAIN_ID << ".");
+        }
+
         /////
         // Logging
         {
@@ -224,8 +240,8 @@ int main(
             {
                 EPROSIMA_LOG_ERROR(
                     DDSREPLAYER_ARGS,
-                    "An input file must be provided through argument '-i' / '--input-file' " <<
-                        "or under 'input-file' YAML tag.");
+                    "An input file must be provided through argument '-i' / '--input-file' "
+                        << "or under 'input-file' YAML tag.");
                 return static_cast<int>(ProcessReturnCode::required_argument_failed);
             }
         }
@@ -269,8 +285,8 @@ int main(
                     catch (const eprosima::utils::InconsistencyException& e)
                     {
                         EPROSIMA_LOG_ERROR(DDSREPLAYER_ERROR,
-                        "Error processing input file. Error message:\n " <<
-                            e.what());
+                        "Error processing input file. Error message:\n "
+                            << e.what());
                         read_success = false;
                     }
                     close_handler->simulate_event_occurred();
@@ -297,16 +313,16 @@ int main(
     catch (const eprosima::utils::ConfigurationException& e)
     {
         EPROSIMA_LOG_ERROR(DDSREPLAYER_ERROR,
-                "Error Loading DDS Replayer Configuration from file " << commandline_args.file_path <<
-                ". Error message:\n " <<
-                e.what());
+                "Error Loading DDS Replayer Configuration from file " << commandline_args.file_path
+                                                                      << ". Error message:\n "
+                                                                      << e.what());
         return static_cast<int>(ProcessReturnCode::execution_failed);
     }
     catch (const eprosima::utils::InitializationException& e)
     {
         EPROSIMA_LOG_ERROR(DDSREPLAYER_ERROR,
-                "Error Initializing DDS Replayer. Error message:\n " <<
-                e.what());
+                "Error Initializing DDS Replayer. Error message:\n "
+                << e.what());
         return static_cast<int>(ProcessReturnCode::execution_failed);
     }
 

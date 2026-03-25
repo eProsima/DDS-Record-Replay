@@ -69,6 +69,24 @@ RecorderConfiguration::RecorderConfiguration(
 bool RecorderConfiguration::is_valid(
         utils::Formatter& error_msg) noexcept
 {
+    if (!dds_configuration)
+    {
+        error_msg << "DDS participant configuration is not initialized.";
+        return false;
+    }
+
+    if (dds_configuration->domain.domain_id > DomainId::MAX_DOMAIN_ID)
+    {
+        error_msg << "Domain ID must be between 0 and " << DomainId::MAX_DOMAIN_ID << ".";
+        return false;
+    }
+
+    if (enable_remote_controller && controller_domain.domain_id > DomainId::MAX_DOMAIN_ID)
+    {
+        error_msg << "Remote controller domain ID must be between 0 and " << DomainId::MAX_DOMAIN_ID << ".";
+        return false;
+    }
+
     if (!mcap_enabled && !sql_enabled)
     {
         error_msg << "At least one of MCAP or SQL libraries must be enabled.";
