@@ -18,6 +18,7 @@
  */
 
 #include <iostream>
+#include <exception>
 #include <string>
 #include <vector>
 
@@ -112,6 +113,17 @@ const option::Descriptor usage[] = {
         "  -t \t--timeout\t  \t" \
         "Set a maximum time in seconds for the recorder to run. " \
         "Value 0 does not set maximum. [Default: 0]."
+    },
+
+    {
+        optionIndex::DOMAIN,
+        0,
+        "",
+        "domain",
+        Arg::Numeric,
+        "  \t--domain\t  \t" \
+        "Set the domain (0-232) to record on. " \
+        "[Default = 0]."
     },
 
     ////////////////////
@@ -259,6 +271,36 @@ ProcessReturnCode parse_arguments(
                 case optionIndex::TIMEOUT:
                     commandline_args.timeout = std::stol(opt.arg) * 1000; // pass to milliseconds
                     break;
+
+                case optionIndex::DOMAIN:
+                {
+                    const auto max_domain_id = static_cast<long>(ddspipe::core::types::DomainId::MAX_DOMAIN_ID);
+                    long domain_value = 0;
+
+                    try
+                    {
+                        domain_value = std::stol(opt.arg);
+                    }
+                    catch (const std::exception&)
+                    {
+                        EPROSIMA_LOG_ERROR(
+                            DDSRECORDER_ARGS,
+                            "Domain ID must be between 0 and " << max_domain_id << ".");
+                        return ProcessReturnCode::incorrect_argument;
+                    }
+
+                    if (domain_value < 0 || domain_value > max_domain_id)
+                    {
+                        EPROSIMA_LOG_ERROR(
+                            DDSRECORDER_ARGS,
+                            "Domain ID must be between 0 and " << max_domain_id << ".");
+                        return ProcessReturnCode::incorrect_argument;
+                    }
+
+                    commandline_args.domain.set_value(
+                        static_cast<ddspipe::core::types::DomainIdType>(domain_value));
+                }
+                break;
 
                 case optionIndex::LOG_FILTER:
                     commandline_args.log_filter[utils::VerbosityKind::Error].set_value(opt.arg);

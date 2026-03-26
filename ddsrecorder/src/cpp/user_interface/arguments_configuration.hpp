@@ -100,6 +100,7 @@ enum optionIndex
     TIMEOUT,
     LOG_FILTER,
     LOG_VERBOSITY,
+    DOMAIN,
 };
 
 /**

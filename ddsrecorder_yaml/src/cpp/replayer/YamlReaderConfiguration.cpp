@@ -151,6 +151,11 @@ void ReplayerConfiguration::load_ddsreplayer_configuration_(
         {
             ddspipe_configuration.log_configuration.set(args->log_verbosity);
             ddspipe_configuration.log_configuration.set(args->log_filter);
+
+            if (args->domain.is_set())
+            {
+                replayer_configuration->domain = args->domain.get_value();
+            }
         }
     }
     catch (const std::exception& e)
