@@ -17,6 +17,8 @@
  */
 
 #include <chrono>
+#include <exception>
+#include <stdexcept>
 #include <string>
 
 #include <mcap/errors.hpp>
@@ -145,26 +147,49 @@ void McapReaderParticipant::process_summary(
     for (const auto& [_, channel]: channels)
     {
         const auto topic_name = channel->topic;
-        const auto type_name = schemas.at(channel->schemaId)->name;
+        const auto schema_it = schemas.find(channel->schemaId);
+        if (schema_it == schemas.end() || !schema_it->second)
+        {
+            EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                    "Skipping topic " << topic_name
+                                      << ": schema with id " << channel->schemaId << " not found.");
+            continue;
+        }
+        const auto type_name = schema_it->second->name;
 
-        const bool is_topic_ros2_type = channel->metadata[ROS2_TYPES] == "true";
+        const auto ros2_types_it = channel->metadata.find(ROS2_TYPES);
+        const bool is_topic_ros2_type =
+                ros2_types_it != channel->metadata.end() && ros2_types_it->second == "true";
         const auto topic = utils::Heritable<ddspipe::core::types::DdsTopic>::make_heritable(
             create_topic_(topic_name, type_name, is_topic_ros2_type));
 
         const auto topic_id = std::make_pair(topic_name, type_name);
 
         // Apply the QoS stored in the MCAP file as if they were the discovered QoS.
-        const auto topic_qos_str = channel->metadata[QOS_SERIALIZATION_QOS];
-        ddspipe::core::types::TopicQoS topic_qos;
-        Serializer::deserialize<ddspipe::core::types::TopicQoS>(topic_qos_str, topic_qos);
-
-        topic->topic_qos.set_qos(topic_qos, utils::FuzzyLevelValues::fuzzy_level_fuzzy);
+        const auto topic_qos_it = channel->metadata.find(QOS_SERIALIZATION_QOS);
+        if (topic_qos_it != channel->metadata.end())
+        {
+            ddspipe::core::types::TopicQoS topic_qos;
+            Serializer::deserialize<ddspipe::core::types::TopicQoS>(topic_qos_it->second, topic_qos);
+            topic->topic_qos.set_qos(topic_qos, utils::FuzzyLevelValues::fuzzy_level_fuzzy);
+        }
+        else
+        {
+            EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                    "Topic " << topic_name
+                             << " has no serialized QoS metadata. Using default QoS.");
+        }
 
         std::string writer = "";
         std::string writer_partition = "";
         bool pass_partition_filter;
 
-        std::string channel_partitions = channel->metadata[PARTITIONS];
+        std::string channel_partitions;
+        const auto partitions_it = channel->metadata.find(PARTITIONS);
+        if (partitions_it != channel->metadata.end())
+        {
+            channel_partitions = partitions_it->second;
+        }
 
         // adds the partitions of the topic using the stored channel
         // metadata[partitions] = <writer_1>:<partition_1>;...;<writer_n>:<partition_n>
@@ -270,9 +295,10 @@ void McapReaderParticipant::process_summary(
     // Get the dynamic types from the attachment
     const auto attachments = mcap_reader_.attachments();
 
-    if (attachments.find(DYNAMIC_TYPES_ATTACHMENT_NAME) != attachments.end())
+    const auto dynamic_types_attachment_it = attachments.find(DYNAMIC_TYPES_ATTACHMENT_NAME);
+    if (dynamic_types_attachment_it != attachments.end())
     {
-        const auto dynamic_types_attachment = attachments.at(DYNAMIC_TYPES_ATTACHMENT_NAME);
+        const auto& dynamic_types_attachment = dynamic_types_attachment_it->second;
 
         const std::string dynamic_types_str(
             reinterpret_cast<const char*>(dynamic_types_attachment.data), dynamic_types_attachment.dataSize);
@@ -309,10 +335,26 @@ void McapReaderParticipant::process_messages()
         // Create topic on which this message should be published
 
         const auto topic_id = std::make_pair(it.channel->topic, it.schema->name);
-        const auto topic = topics_[topic_id];
+        const auto topic_it = topics_.find(topic_id);
+        if (topic_it == topics_.end())
+        {
+            EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                    "Skipping message for unknown topic "
+                    << it.channel->topic << " with type " << it.schema->name << ".");
+            continue;
+        }
+        const auto& topic = topic_it->second;
         const std::string seq_num_str = std::to_string(it.message.sequence);
-        const std::string source_guid_indx = source_guid_by_sequence_[seq_num_str];
-        const std::string writer_guid = sequence_by_source_guid_index_[source_guid_indx];
+        std::string writer_guid = "";
+        const auto source_guid_it = source_guid_by_sequence_.find(seq_num_str);
+        if (source_guid_it != source_guid_by_sequence_.end())
+        {
+            const auto writer_guid_it = sequence_by_source_guid_index_.find(source_guid_it->second);
+            if (writer_guid_it != sequence_by_source_guid_index_.end())
+            {
+                writer_guid = writer_guid_it->second;
+            }
+        }
 
         if (filtered_writersguid_list_.find(writer_guid) != filtered_writersguid_list_.end())
         {
@@ -399,8 +441,17 @@ void McapReaderParticipant::process_messages()
         EPROSIMA_LOG_INFO(DDSREPLAYER_MCAP_READER_PARTICIPANT,
                 "Replaying message in topic " << topic << ".");
 
-        // Insert new data in internal reader queue
-        readers_it->second->simulate_data_reception(std::move(data));
+        // Insert new data in internal reader queue, with a try catch
+        try
+        {
+            readers_it->second->simulate_data_reception(std::move(data));
+        }
+        catch (const std::exception& e)
+        {
+            EPROSIMA_LOG_ERROR(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                    "Failed to replay message in topic " << topic
+                                                         << ": " << e.what() << ". Skipping...");
+        }
     }
 
     close_file_();
@@ -439,10 +490,22 @@ void McapReaderParticipant::read_mcap_summary_()
     const auto metadata = mcap_reader_.metadata();
     std::string recording_version;
 
-    if (metadata.find(VERSION_METADATA_NAME) != metadata.end())
+    // Version metadata, not guaranteed in all files, if absent replay the file
+    // without failures, just log a warning message
+    const auto version_metadata_it = metadata.find(VERSION_METADATA_NAME);
+    if (version_metadata_it != metadata.end())
     {
-        const auto version_metadata = metadata.at(VERSION_METADATA_NAME).metadata;
-        recording_version = version_metadata.at(VERSION_METADATA_RELEASE);
+        const auto& version_metadata = version_metadata_it->second.metadata;
+        const auto release_it = version_metadata.find(VERSION_METADATA_RELEASE);
+        if (release_it != version_metadata.end())
+        {
+            recording_version = release_it->second;
+        }
+        else
+        {
+            EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                    "MCAP metadata does not include recording release information.");
+        }
     }
 
     if (recording_version != DDSRECORDER_PARTICIPANTS_VERSION_STRING)
@@ -454,10 +517,27 @@ void McapReaderParticipant::read_mcap_summary_()
                 << "), incompatibilities might arise...");
     }
 
-    if (metadata.find(VERSION_METADATA_MESSAGE_NAME) != metadata.end())
+    const auto sequence_metadata_it = metadata.find(VERSION_METADATA_MESSAGE_NAME);
+    if (sequence_metadata_it != metadata.end())
     {
-        source_guid_by_sequence_ = metadata.at(VERSION_METADATA_MESSAGE_NAME).metadata;
-        sequence_by_source_guid_index_ = metadata.at(VERSION_METADATA_MESSAGE_INDEX_NAME).metadata;
+        source_guid_by_sequence_ = sequence_metadata_it->second.metadata;
+
+        const auto source_guid_index_metadata_it = metadata.find(VERSION_METADATA_MESSAGE_INDEX_NAME);
+        if (source_guid_index_metadata_it != metadata.end())
+        {
+            sequence_by_source_guid_index_ = source_guid_index_metadata_it->second.metadata;
+        }
+        else
+        {
+            EPROSIMA_LOG_WARNING(DDSREPLAYER_MCAP_READER_PARTICIPANT,
+                    "MCAP metadata does not include source-guid index map.");
+            sequence_by_source_guid_index_.clear();
+        }
+    }
+    else
+    {
+        source_guid_by_sequence_.clear();
+        sequence_by_source_guid_index_.clear();
     }
 }
 
