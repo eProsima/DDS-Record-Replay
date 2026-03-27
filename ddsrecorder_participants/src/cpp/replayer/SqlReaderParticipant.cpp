@@ -459,7 +459,7 @@ void SqlReaderParticipant::process_messages()
                 else
                 {
                     partition_name = it->second;
-                    if (partition_name.size() > 0)
+                    if (!partition_name.empty())
                     {
                         int i = 0, partition_name_n = partition_name.size();
                         std::string tmp = "";
@@ -479,15 +479,18 @@ void SqlReaderParticipant::process_messages()
                         }
                         // add the last partition in the set of partitions.
                         // e.g.: "A|B" adds the "B" partition
-                        if (tmp != "")
+                        if (!tmp.empty() || partition_name[partition_name_n - 1] == '|')
                         {
                             data->writer_qos.partitions.push_back(tmp.c_str());
                         }
 
                     }
+                    // Empty partition ("")
+                    else
+                    {
+                        data->writer_qos.partitions.push_back("");
+                    }
 
-                    // adds the partitions in the writer guid PartitionsQos
-                    data->writer_qos.partitions.push_back(partition_name.c_str());
                     partitions_qos_dict_[writer_guid] = data->writer_qos.partitions;
                 }
             }
