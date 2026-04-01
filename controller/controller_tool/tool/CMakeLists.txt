@@ -30,9 +30,15 @@ install(
 if (MSVC)
 
     # Windows
+    find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    configure_file(
+        executable/ddsrecorder_controller.bat.in
+        ${CMAKE_CURRENT_BINARY_DIR}/ddsrecorder_controller.bat
+        @ONLY
+    )
     install(
         FILES
-            executable/ddsrecorder_controller.bat
+            ${CMAKE_CURRENT_BINARY_DIR}/ddsrecorder_controller.bat
         DESTINATION
             ${BIN_INSTALL_DIR}
     )
