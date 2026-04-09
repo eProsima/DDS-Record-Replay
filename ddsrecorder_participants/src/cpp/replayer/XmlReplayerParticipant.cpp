@@ -29,13 +29,17 @@ XmlReplayerParticipant::XmlReplayerParticipant(
         const std::shared_ptr<XmlParticipantConfiguration>& participant_configuration,
         const std::shared_ptr<PayloadPool>& payload_pool,
         const std::shared_ptr<DiscoveryDatabase>& discovery_database,
-        const bool& replay_types)
+        const bool& replay_types,
+        ddspipe::core::types::DomainId forced_domain)
     : XmlParticipant(
         participant_configuration,
         payload_pool,
         discovery_database)
     , replay_types_(replay_types)
 {
+    // XmlParticipant may overwrite configuration domain from profile metadata
+    // Reapply the configured domain so CLI/YAML precedence is respected
+    configuration_->domain = forced_domain;
 }
 
 std::shared_ptr<IReader> XmlReplayerParticipant::create_reader(

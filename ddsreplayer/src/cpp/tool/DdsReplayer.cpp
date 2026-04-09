@@ -107,7 +107,8 @@ DdsReplayer::DdsReplayer(
             configuration.replayer_configuration,
             payload_pool_,
             discovery_database,
-            configuration.replay_types);
+            configuration.replay_types,
+            configuration.replayer_configuration->domain);
 
         std::dynamic_pointer_cast<participants::XmlReplayerParticipant>(replayer_participant)->init();
     }

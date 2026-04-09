@@ -27,7 +27,6 @@
 #include <sqlite/sqlite3.h>
 
 #include <fastdds/dds/core/Time_t.hpp>
-#include <fastdds/utils/md5.hpp>
 
 #include <cpp_utils/exception/InconsistencyException.hpp>
 #include <cpp_utils/Log.hpp>
@@ -38,6 +37,7 @@
 
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
+#include <ddsrecorder_participants/common/instance_handle_utils.hpp>
 #include <ddsrecorder_participants/common/serialize/Serializer.hpp>
 #include <ddsrecorder_participants/common/time_utils.hpp>
 #include <ddsrecorder_participants/constants.hpp>
@@ -47,32 +47,6 @@
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
-
-static fastdds::rtps::InstanceHandle_t compute_instance_handle_from_seed_(
-        const std::string& seed)
-{
-    fastdds::rtps::InstanceHandle_t handle;
-    eprosima::fastdds::MD5 md5;
-
-    md5.init();
-    md5.update(
-        reinterpret_cast<const unsigned char*>(seed.data()),
-        static_cast<unsigned int>(seed.size()));
-    md5.finalize();
-
-    for (std::size_t i = 0; i < 16; ++i)
-    {
-        handle.value[i] = md5.digest[i];
-    }
-
-    // Keep Fast DDS from considering this instance handle undefined
-    if (!handle.isDefined())
-    {
-        handle.value[0] = 1;
-    }
-
-    return handle;
-}
 
 SqlReaderParticipant::SqlReaderParticipant(
         const std::shared_ptr<BaseReaderParticipantConfiguration>& configuration,
@@ -435,7 +409,7 @@ void SqlReaderParticipant::process_messages()
                     key_seed << writer_guid << '|' << sequence_number;
                 }
 
-                data->instanceHandle = compute_instance_handle_from_seed_(key_seed.str());
+                data->instanceHandle = detail::compute_instance_handle_from_seed(key_seed.str());
             }
 
             // Set source timestamp

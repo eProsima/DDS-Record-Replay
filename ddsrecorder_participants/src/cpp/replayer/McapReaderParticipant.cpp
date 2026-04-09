@@ -18,6 +18,7 @@
 
 #include <chrono>
 #include <exception>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 
@@ -37,6 +38,7 @@
 #include <ddspipe_core/types/dds/TopicQoS.hpp>
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
+#include <ddsrecorder_participants/common/instance_handle_utils.hpp>
 #include <ddsrecorder_participants/common/serialize/Serializer.hpp>
 #include <ddsrecorder_participants/common/time_utils.hpp>
 #include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
@@ -382,6 +384,15 @@ void McapReaderParticipant::process_messages()
 
         // Create RTPS data
         auto data = create_payload_(it.message.data, it.message.dataSize);
+
+        // Rebuild a deterministic instance handle for keyed topics
+        if (topic.topic_qos.keyed)
+        {
+            std::ostringstream key_seed;
+            key_seed << it.channel->topic << '|' << it.schema->name << '|' << writer_guid << '|'
+                     << it.message.sequence;
+            data->instanceHandle = detail::compute_instance_handle_from_seed(key_seed.str());
+        }
 
         // Set source timestamp
         // NOTE: this is important for QoS such as LifespanQosPolicy
