@@ -17,7 +17,10 @@
  */
 
 #include <cstring>
+#include <exception>
 #include <map>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -34,6 +37,7 @@
 
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
+#include <ddsrecorder_participants/common/instance_handle_utils.hpp>
 #include <ddsrecorder_participants/common/serialize/Serializer.hpp>
 #include <ddsrecorder_participants/common/time_utils.hpp>
 #include <ddsrecorder_participants/constants.hpp>
@@ -312,17 +316,24 @@ void SqlReaderParticipant::process_messages()
         configuration_->end_time.get_reference() :
         utils::the_end_of_time());
 
+    bool first_message_timestamp_set = false;
+    utils::Timestamp first_message_timestamp{};
+
     exec_sql_statement_(
-        "SELECT log_time, topic, type, data_cdr, data_cdr_size, writer_guid FROM Messages "
+        "SELECT log_time, topic, type, data_cdr, data_cdr_size, writer_guid, key, sequence_number FROM Messages "
         "WHERE log_time >= ? AND log_time <= ? AND data_cdr_size > 0 "
-        "ORDER BY log_time;",
+        "ORDER BY log_time, writer_guid, sequence_number;",
         {begin_time, end_time},
         [&](sqlite3_stmt* stmt)
         {
             const auto log_time = to_std_timestamp(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
 
-            // Store the timestamp of the first recorded message
-            static utils::Timestamp first_message_timestamp = log_time;
+            // Store the timestamp of the first recorded message in this replay execution.
+            if (!first_message_timestamp_set)
+            {
+                first_message_timestamp = log_time;
+                first_message_timestamp_set = true;
+            }
 
             // Create a DdsTopic to publish the message
             ddspipe::core::types::DdsTopic topic;
@@ -330,6 +341,9 @@ void SqlReaderParticipant::process_messages()
             const std::string type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
 
             const std::string writer_guid = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+            const auto* key_col = sqlite3_column_text(stmt, 6);
+            const std::string key = key_col ? reinterpret_cast<const char*>(key_col) : "";
+            const auto sequence_number = sqlite3_column_int64(stmt, 7);
 
             const auto topic_id = std::make_pair(topic_name, type_name);
 
@@ -380,6 +394,24 @@ void SqlReaderParticipant::process_messages()
             const auto raw_data_size = sqlite3_column_int(stmt, 4);
             auto data = create_payload_(raw_data, raw_data_size);
 
+            // Rebuild a deterministic instance handle for keyed topics from recorded SQL key data
+            // This avoids dropping keyed samples when dynamic type dependencies are not resolvable
+            if (topic.topic_qos.keyed)
+            {
+                std::ostringstream key_seed;
+                key_seed << topic_name << '|' << type_name << '|';
+                if (!key.empty())
+                {
+                    key_seed << key;
+                }
+                else
+                {
+                    key_seed << writer_guid << '|' << sequence_number;
+                }
+
+                data->instanceHandle = detail::compute_instance_handle_from_seed(key_seed.str());
+            }
+
             // Set source timestamp
             // NOTE: this is important for QoS such as LifespanQosPolicy
             data->source_timestamp = fastdds::dds::Time_t(to_ticks(time_to_write) / 1e9);
@@ -401,7 +433,7 @@ void SqlReaderParticipant::process_messages()
                 else
                 {
                     partition_name = it->second;
-                    if (partition_name.size() > 0)
+                    if (!partition_name.empty())
                     {
                         int i = 0, partition_name_n = partition_name.size();
                         std::string tmp = "";
@@ -421,15 +453,18 @@ void SqlReaderParticipant::process_messages()
                         }
                         // add the last partition in the set of partitions.
                         // e.g.: "A|B" adds the "B" partition
-                        if (tmp != "")
+                        if (!tmp.empty() || partition_name[partition_name_n - 1] == '|')
                         {
                             data->writer_qos.partitions.push_back(tmp.c_str());
                         }
 
                     }
+                    // Empty partition ("")
+                    else
+                    {
+                        data->writer_qos.partitions.push_back("");
+                    }
 
-                    // adds the partitions in the writer guid PartitionsQos
-                    data->writer_qos.partitions.push_back(partition_name.c_str());
                     partitions_qos_dict_[writer_guid] = data->writer_qos.partitions;
                 }
             }
@@ -440,8 +475,17 @@ void SqlReaderParticipant::process_messages()
             EPROSIMA_LOG_INFO(DDSREPLAYER_SQL_READER_PARTICIPANT,
             "Replaying message in topic " << topic << ".");
 
-            // Insert new data in internal reader queue
-            readers_[topic]->simulate_data_reception(std::move(data));
+            // Insert new data in internal reader queue, with a try catch
+            try
+            {
+                readers_[topic]->simulate_data_reception(std::move(data));
+            }
+            catch (const std::exception& e)
+            {
+                EPROSIMA_LOG_ERROR(
+                    DDSREPLAYER_SQL_READER_PARTICIPANT,
+                    "Failed to replay message in topic " << topic << ": " << e.what() << ". Skipping...");
+            }
         });
 
     close_file_();

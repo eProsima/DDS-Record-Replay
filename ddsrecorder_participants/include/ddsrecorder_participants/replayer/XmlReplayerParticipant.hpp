@@ -41,13 +41,16 @@ public:
      * @param discovery_database Reference to a \c DiscoveryDatabase instance.
      * @param replay_types Boolean flag in the Replayer configuration that determines whether
      *        previously recorded types are transmitted.
+     * @param forced_domain Domain configured by DDS Replayer (YAML / CLI). This is reapplied so it keeps
+     *        precedence over XML profile domain defaults.
      */
     DDSRECORDER_PARTICIPANTS_DllAPI
     XmlReplayerParticipant(
             const std::shared_ptr<ddspipe::participants::XmlParticipantConfiguration>& participant_configuration,
             const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
             const std::shared_ptr<ddspipe::core::DiscoveryDatabase>& discovery_database,
-            const bool& replay_types);
+            const bool& replay_types,
+            ddspipe::core::types::DomainId forced_domain);
 
     /**
      * Override create_reader_() IParticipant method.
