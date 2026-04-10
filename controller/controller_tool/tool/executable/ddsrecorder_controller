@@ -1,2 +1,21 @@
-dir="`dirname \"$0\"`"
-python3 "$dir/../src/ddsrecorder_controller.py" ${@}
+dir="$(dirname "$0")"
+
+# Prioritize the Qt runtime distributed with PyQt6 to avoid ABI mismatches with
+# Qt libraries that may be injected from the environment (e.g. /opt/qt/*).
+pyqt6_lib="$(python3 - <<'PY'
+import importlib.util
+from pathlib import Path
+
+spec = importlib.util.find_spec("PyQt6")
+if spec and spec.origin:
+    qt6_lib = Path(spec.origin).resolve().parent / "Qt6" / "lib"
+    if qt6_lib.is_dir():
+        print(qt6_lib)
+PY
+)"
+
+if [ -n "$pyqt6_lib" ]; then
+    export LD_LIBRARY_PATH="$pyqt6_lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+fi
+
+python3 "$dir/../src/ddsrecorder_controller.py" "$@"

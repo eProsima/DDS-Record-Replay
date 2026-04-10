@@ -170,7 +170,7 @@ Thus the user can control a |ddsrecorder| instance using this application withou
 
 .. note::
 
-    If installing |eddsrecord| from sources, compilation flag ``-DBUILD_DDSRECORDER_CONTROLLER=ON`` is required to build this application.
+    If installing |eddsrecord| from sources, compilation flag ``-DBUILD_DDSRECORDER_CONTROLLER=ON`` is required to build this application. And a python environment with ``PyQt6`` installed.
 
 Its interface is quite simple and intuitive.
 Once the application is launched, a layout as the following one should be visible:

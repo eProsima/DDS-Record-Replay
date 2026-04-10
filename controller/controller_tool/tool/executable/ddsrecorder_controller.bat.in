@@ -1,0 +1,26 @@
+@echo off
+setlocal
+
+set "dir=%~dp0"
+set "script=%dir%\..\src\ddsrecorder_controller.py"
+set "configured_python=@Python3_EXECUTABLE@"
+
+if not exist "%script%" (
+    echo ddsrecorder_controller.py not found at "%script%".
+    exit /B 66
+)
+
+if exist "%configured_python%" (
+    "%configured_python%" "%script%" %*
+    exit /B %ERRORLEVEL%
+)
+
+:: Fallback to launcher if configured interpreter is unavailable.
+py --list > NUL 2>&1
+if %ERRORLEVEL%==0 (
+    py "%script%" %*
+    exit /B %ERRORLEVEL%
+)
+
+echo python interpreter not found. Please, make sure its location is in the PATH environment variable.
+exit /B 65

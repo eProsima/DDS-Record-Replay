@@ -62,6 +62,33 @@ set(PYTHON_INCLUDE_PATH ${Python3_INCLUDE_DIRS})
 set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE})
 set(PYTHON_LIBRARIES ${Python3_LIBRARIES})
 
+if (WIN32)
+    # Detect stale CMake cache cases where interpreter and development library
+    # point to different Python ABIs (e.g. python312.lib, python311.lib, cp312 ...)
+    set(_python3_library_to_check "${Python3_LIBRARY_RELEASE}")
+    if (NOT _python3_library_to_check)
+        list(GET Python3_LIBRARIES 0 _python3_library_to_check)
+    endif()
+
+    if (_python3_library_to_check)
+        get_filename_component(_python3_library_name "${_python3_library_to_check}" NAME)
+        string(REGEX MATCH "python([0-9]+)(_d)?\\.lib" _python3_library_match "${_python3_library_name}")
+        if (_python3_library_match)
+            set(_python3_abi_expected "${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}")
+            set(_python3_abi_from_library "${CMAKE_MATCH_1}")
+            if (NOT _python3_abi_expected STREQUAL _python3_abi_from_library)
+                message(FATAL_ERROR
+                    "Python interpreter/development mismatch detected.\n"
+                    "Interpreter: ${Python3_EXECUTABLE} (cp${_python3_abi_expected})\n"
+                    "Development library: ${_python3_library_to_check} (cp${_python3_abi_from_library})\n"
+                    "Clean the build directory (or use --cmake-clean-cache) and reconfigure with "
+                    "-DPython3_EXECUTABLE=<path-to-python.exe>."
+                )
+            endif()
+        endif()
+    endif()
+endif()
+
 include_directories(${PYTHON_INCLUDE_PATH})
 
 set(${PROJECT_NAME}_MODULE
