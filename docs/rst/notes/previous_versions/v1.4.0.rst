@@ -1,28 +1,14 @@
-.. include:: ../exports/alias.include
-
-.. _notes:
-
-.. include:: forthcoming_version.rst
-
-##############
-Version v1.5.0
-##############
+Version v1.3.0
+==============
 
 This release includes the following **features**:
 
-* Change default participant **RTPS** to **DDS**
-* Add new filter in topics, `ContentFiltered Topics`
+* Support configuration from XML files
+* Support `partitions`
 
-This release includes the following **documentation updates**:
+This release includes the following **improvements and bugfixes**:
 
-* Update filters documentation
-* Update Windows documentation (new **Asio** version + `vcs` command)
-
-This release includes the following **CI improvements & bugfixes**:
-
-* Update `uncrustify`` to `0.78.1` (**ubuntu24** version)
-* Add `topics <name> idl` command in **DDS**
-* Fix invalid `domain-id`` core-dump
+* Fix installation with latest Fast DDS Python bindings
 
 
 This release includes the following **Dependencies Update**:
@@ -54,18 +40,3 @@ This release includes the following **Dependencies Update**:
         - `eProsima/DDS-Pipe <https://github.com/eProsima/DDS-Pipe.git>`_
         - `v1.3.0 <https://github.com/eProsima/DDS-Pipe/releases/tag/v1.3.0>`__
         - `v1.4.0 <https://github.com/eProsima/DDS-Pipe/releases/tag/v1.4.0>`__
-
-
-#################
-Previous Versions
-#################
-
-.. include:: previous_versions/v1.4.0.rst
-.. include:: previous_versions/v1.3.0.rst
-.. include:: previous_versions/v1.2.0.rst
-.. include:: previous_versions/v1.1.0.rst
-.. include:: previous_versions/v1.0.0.rst
-.. include:: previous_versions/v0.4.0.rst
-.. include:: previous_versions/v0.3.0.rst
-.. include:: previous_versions/v0.2.0.rst
-.. include:: previous_versions/v0.1.0.rst
