@@ -21,11 +21,12 @@ This release includes the following **documentation updates**:
 This release includes the following **bugfixes**:
 
 * Fix replay behavior to avoid runtime aborts and keyed-topic issues
+* Fix ddsrecorder controller compilation in both OS
 
 This release includes the following **CI improvements**:
 
-* Upgrade Linters CI runner image to `ubuntu-24.04`
-* Update foonathan version to 1.4.1
+* Upgrade `Linters CI` runner image to `ubuntu-24.04`
+* Update `foonathan` version to 1.4.1
 
 
 This release includes the following **Dependencies Update**:
