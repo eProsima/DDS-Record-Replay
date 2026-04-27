@@ -298,6 +298,14 @@ void CommandReceiver::publish_status(
         CommandCode previous,
         std::string info)
 {
+    if (status_writer_ == nullptr)
+    {
+        EPROSIMA_LOG_ERROR(
+            DDSRECORDER_COMMAND_RECEIVER,
+            "Cannot publish recorder status because the remote controller was not initialized correctly.");
+        return;
+    }
+
     DdsRecorderStatus status;
     status.current(command_to_status_string_(current));
     status.previous(command_to_status_string_(previous));

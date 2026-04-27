@@ -313,7 +313,11 @@ int main(
             receiver::CommandReceiver receiver(configuration.controller_domain,
                     configuration.command_topic_name,
                     configuration.status_topic_name, close_handler, configuration.dds_configuration);
-            receiver.init();
+            if (!receiver.init())
+            {
+                throw eprosima::utils::InitializationException(
+                        "Could not initialize the receiver.");
+            }
 
             CommandCode prev_command;
             CommandCode command;
@@ -596,8 +600,7 @@ int main(
     catch (const eprosima::utils::InitializationException& e)
     {
         EPROSIMA_LOG_ERROR(DDSRECORDER_ERROR,
-                "Error Initializing DDS Recorder. Error message:\n " <<
-                e.what());
+                "Error Initializing DDS Recorder. Error message: " << e.what());
         return static_cast<int>(ProcessReturnCode::execution_failed);
     }
 
