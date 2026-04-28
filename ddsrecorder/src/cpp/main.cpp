@@ -68,7 +68,7 @@ std::unique_ptr<eprosima::utils::event::FileWatcherHandler> create_filewatcher(
     // WARNING: it is needed to pass file_path, as FileWatcher only retrieves file_name
     std::function<void(std::string)> filewatcher_callback =
             [&recorder, &file_path]
-                (std::string file_name)
+            (std::string file_name)
             {
                 logUser(
                     DDSRECORDER_EXECUTION,
@@ -82,8 +82,8 @@ std::unique_ptr<eprosima::utils::event::FileWatcherHandler> create_filewatcher(
                 catch (const std::exception& e)
                 {
                     EPROSIMA_LOG_WARNING(DDSRECORDER_EXECUTION,
-                            "Error reloading configuration file " << file_name << " with error: " <<
-                            e.what());
+                            "Error reloading configuration file " << file_name << " with error: "
+                                                                  << e.what());
                 }
             };
 
@@ -99,7 +99,7 @@ std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> create_periodic_ha
     // Callback will reload configuration and pass it to DdsPipe
     std::function<void()> periodic_callback =
             [&recorder, &file_path]
-                ()
+            ()
             {
                 logUser(
                     DDSRECORDER_EXECUTION,
@@ -113,8 +113,8 @@ std::unique_ptr<eprosima::utils::event::PeriodicEventHandler> create_periodic_ha
                 catch (const std::exception& e)
                 {
                     EPROSIMA_LOG_WARNING(DDSRECORDER_EXECUTION,
-                            "Error reloading configuration file " << file_path << " with error: " <<
-                            e.what());
+                            "Error reloading configuration file " << file_path << " with error: "
+                                                                  << e.what());
                 }
             };
 
@@ -139,8 +139,8 @@ void parse_command(
     if (!found)
     {
         EPROSIMA_LOG_WARNING(DDSRECORDER_EXECUTION,
-                "Command " << command_str <<
-                " is not a valid command (only start/pause/suspend/stop/close).");
+                "Command " << command_str
+                           << " is not a valid command (only start/pause/suspend/stop/close).");
     }
 
     if (args_str != "")
@@ -295,8 +295,8 @@ int main(
         if (!configuration.is_valid(error_msg))
         {
             throw eprosima::utils::ConfigurationException(
-                      eprosima::utils::Formatter() <<
-                          "Invalid configuration: " << error_msg);
+                      eprosima::utils::Formatter()
+                          << "Invalid configuration: " << error_msg);
         }
 
         logUser(DDSRECORDER_EXECUTION, "DDS Recorder running.");
@@ -316,7 +316,7 @@ int main(
             if (!receiver.init())
             {
                 throw eprosima::utils::InitializationException(
-                        "Could not initialize the receiver.");
+                          "Could not initialize the receiver.");
             }
 
             CommandCode prev_command;
@@ -330,7 +330,8 @@ int main(
             if (!found)
             {
                 EPROSIMA_LOG_WARNING(DDSRECORDER_EXECUTION,
-                        "Initial state " << configuration.initial_state <<
+                        "Initial state " << configuration.initial_state
+                                         <<
                         " is not a valid one (only RUNNING/PAUSED/SUSPENDED/STOPPED). Using instead default RUNNING initial state...");
                 initial_state = DdsRecorderState::RUNNING;
             }
@@ -411,8 +412,8 @@ int main(
                 {
                     // Unreachable
                     eprosima::utils::tsnh(
-                        eprosima::utils::Formatter() << "Trying to initiate DDS Recorder with invalid " << command <<
-                            " command.");
+                        eprosima::utils::Formatter() << "Trying to initiate DDS Recorder with invalid " << command
+                                                     << " command.");
                 }
 
                 // Reload YAML configuration file, in case it changed during STOPPED state
@@ -516,7 +517,8 @@ int main(
                                                 next_state != DdsRecorderState::STOPPED))
                                         {
                                             EPROSIMA_LOG_WARNING(DDSRECORDER_EXECUTION,
-                                                    "Value " << next_state_str <<
+                                                    "Value " << next_state_str
+                                                             <<
                                                     " is not a valid event next_state argument (only RUNNING/SUSPENDED/STOPPED). Ignoring...");
 
                                             // Stay in current state if provided next_state is not valid
@@ -592,9 +594,9 @@ int main(
     catch (const eprosima::utils::ConfigurationException& e)
     {
         EPROSIMA_LOG_ERROR(DDSRECORDER_ERROR,
-                "Error Loading DDS Recorder Configuration from file " << commandline_args.file_path <<
-                ". Error message:\n " <<
-                e.what());
+                "Error Loading DDS Recorder Configuration from file " << commandline_args.file_path
+                                                                      << ". Error message:\n "
+                                                                      << e.what());
         return static_cast<int>(ProcessReturnCode::execution_failed);
     }
     catch (const eprosima::utils::InitializationException& e)

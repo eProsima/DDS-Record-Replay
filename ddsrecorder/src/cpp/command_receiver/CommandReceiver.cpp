@@ -315,8 +315,8 @@ void CommandReceiver::publish_status(
     }
     EPROSIMA_LOG_INFO(
         DDSRECORDER_COMMAND_RECEIVER,
-        "Publishing status: " << status.previous() << " ---> " << status.current() <<  " with info [" << status.info() <<
-            " ].");
+        "Publishing status: " << status.previous() << " ---> " << status.current() <<  " with info [" << status.info()
+                              << " ].");
     status_writer_->write(&status);
 }
 
