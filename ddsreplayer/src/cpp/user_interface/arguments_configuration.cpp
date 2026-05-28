@@ -114,7 +114,7 @@ const option::Descriptor usage[] = {
     },
 
     {
-        optionIndex::DOMAIN,
+        optionIndex::DOMAIN_ID,
         0,
         "",
         "domain",
@@ -263,7 +263,7 @@ ProcessReturnCode parse_arguments(
                     commandline_args.reload_time = std::stol(opt.arg) * 1000; // pass to milliseconds
                     break;
 
-                case optionIndex::DOMAIN:
+                case optionIndex::DOMAIN_ID:
                 {
                     const auto max_domain_id = static_cast<long>(ddspipe::core::types::DomainId::MAX_DOMAIN_ID);
                     long domain_value = 0;
