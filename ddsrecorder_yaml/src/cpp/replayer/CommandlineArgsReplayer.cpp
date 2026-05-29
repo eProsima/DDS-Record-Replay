@@ -35,6 +35,20 @@ bool CommandlineArgsReplayer::is_valid(
         return false;
     }
 
+    // The converter to SQL needs an input file
+    if (sql_convert && input_file.empty())
+    {
+        error_msg << "Option '--sql-convert' requires '-i' / '--input-file'.";
+        return false;
+    }
+
+    // The converter output path needs the converter argument
+    if (!sql_convert && !sql_output.empty())
+    {
+        error_msg << "Option '--sql-output' requires '--sql-convert'.";
+        return false;
+    }
+
     return ddspipe::core::CommandlineArgs::is_valid(error_msg);
 }
 

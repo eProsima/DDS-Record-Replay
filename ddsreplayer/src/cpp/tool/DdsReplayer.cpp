@@ -41,7 +41,6 @@
 #include <cpp_utils/exception/InconsistencyException.hpp>
 #include <ddspipe_core/efficiency/payload/FastPayloadPool.hpp>
 
-#include <ddsrecorder_participants/common/serialize/Serializer.hpp>
 #include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
 #include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/replayer/McapReaderParticipant.hpp>
@@ -50,6 +49,7 @@
 #include <ddsrecorder_participants/replayer/SqlReaderParticipant.hpp>
 
 #include "DdsReplayer.hpp"
+#include "DynamicTypesSupport.hpp"
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -208,41 +208,7 @@ void DdsReplayer::stop()
 std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair> DdsReplayer::register_dynamic_types_(
         const participants::DynamicTypesCollection& dynamic_types)
 {
-    std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair> registered_types{};
-
-    std::cout << "Registering dynamic types..." << dynamic_types.dynamic_types().size() << std::endl;
-
-    for (const auto& dynamic_type : dynamic_types.dynamic_types())
-    {
-        // Deserialize type identifier
-        const auto type_identifier_str = utils::base64_decode(dynamic_type.type_identifier());
-        fastdds::dds::xtypes::TypeIdentifier type_identifier;
-        participants::Serializer::deserialize<fastdds::dds::xtypes::TypeIdentifier>(type_identifier_str,
-                type_identifier);
-
-        // Deserialize type object
-        const auto type_object_str = utils::base64_decode(dynamic_type.type_object());
-        fastdds::dds::xtypes::TypeObject type_object;
-        participants::Serializer::deserialize<fastdds::dds::xtypes::TypeObject>(type_object_str, type_object);
-
-        // Register in factory - let 'register_type_object' compute the TypeIdentifier
-        // from the TypeObject itself, rather than using the pre-stored identifier
-        // This avoids hash mismatches caused by serialization round-tripping
-        fastdds::dds::xtypes::TypeIdentifierPair type_identifiers;
-        auto ret = fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().register_type_object(
-            type_object, type_identifiers);
-
-        if (ret != fastdds::dds::RETCODE_OK)
-        {
-            EPROSIMA_LOG_WARNING(DDSREPLAYER, "Failed to register type: " << dynamic_type.type_name());
-        }
-
-        std::cout << "Registered type: " << dynamic_type.type_name() << std::endl;
-
-        registered_types.insert({dynamic_type.type_name(), type_identifiers});
-    }
-
-    return registered_types;
+    return detail::type_identifiers_from(detail::register_dynamic_types(dynamic_types));
 }
 
 } /* namespace replayer */

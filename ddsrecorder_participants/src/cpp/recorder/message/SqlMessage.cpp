@@ -18,6 +18,7 @@
 
 
 #include <map>
+#include <sstream>
 #include <string>
 
 #include <nlohmann/json.hpp>
@@ -65,7 +66,11 @@ void SqlMessage::deserialize(
     fastdds::dds::DynamicPubSubType pub_sub_type(dynamic_type);
     auto dynamic_data = fastdds::dds::DynamicDataFactory::get_instance()->create_data(dynamic_type);
 
-    pub_sub_type.deserialize(payload, &dynamic_data);
+    if (!pub_sub_type.deserialize(payload, &dynamic_data))
+    {
+        EPROSIMA_LOG_WARNING(SQL_MESSAGE, "Failed to deserialize payload into DynamicData.");
+        return;
+    }
 
     // Serialize the payload into a JSON
     std::stringstream data_json_stream;
@@ -73,12 +78,13 @@ void SqlMessage::deserialize(
     const auto ret = fastdds::dds::json_serialize(
         dynamic_data, fastdds::dds::DynamicDataJsonFormat::EPROSIMA, data_json_stream);
 
-    data_json = data_json_stream.str();
-
     if (ret != fastdds::dds::RETCODE_OK)
     {
         EPROSIMA_LOG_WARNING(SQL_MESSAGE, "Failed to serialize payload into JSON");
+        return;
     }
+
+    data_json = data_json_stream.str();
 }
 
 void SqlMessage::set_key(
@@ -89,13 +95,25 @@ void SqlMessage::set_key(
         deserialize(dynamic_type);
     }
 
-    nlohmann::json key_json = nlohmann::json::parse(data_json);
+    if (data_json.empty())
+    {
+        return;
+    }
 
-    // Remove non-key values
-    remove_nonkey_values_(dynamic_type, key_json);
+    try
+    {
+        nlohmann::json key_json = nlohmann::json::parse(data_json);
 
-    // Serialize the JSON back into a string
-    key = key_json.dump();
+        // Remove non-key values
+        remove_nonkey_values_(dynamic_type, key_json);
+
+        // Serialize the JSON back into a string
+        key = key_json.dump();
+    }
+    catch (const std::exception& e)
+    {
+        EPROSIMA_LOG_WARNING(SQL_MESSAGE, "Failed to calculate message key from JSON payload: " << e.what());
+    }
 }
 
 void SqlMessage::remove_nonkey_values_(

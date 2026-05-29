@@ -101,6 +101,8 @@ enum optionIndex
     LOG_FILTER,
     LOG_VERBOSITY,
     DOMAIN,
+    SQL_CONVERT,
+    SQL_OUTPUT,
 };
 
 /**

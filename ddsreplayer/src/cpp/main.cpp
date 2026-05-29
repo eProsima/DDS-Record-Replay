@@ -17,6 +17,8 @@
  *
  */
 
+#include <exception>
+#include <memory>
 #include <thread>
 
 #include <cpp_utils/event/FileWatcherHandler.hpp>
@@ -24,6 +26,7 @@
 #include <cpp_utils/event/PeriodicEventHandler.hpp>
 #include <cpp_utils/event/SignalEventHandler.hpp>
 #include <cpp_utils/exception/ConfigurationException.hpp>
+#include <cpp_utils/exception/InconsistencyException.hpp>
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/logging/BaseLogConfiguration.hpp>
 #include <cpp_utils/logging/StdLogConsumer.hpp>
@@ -44,6 +47,7 @@
 #include "user_interface/ProcessReturnCode.hpp"
 
 #include "tool/DdsReplayer.hpp"
+#include "tool/McapToSqlConverter.hpp"
 
 using namespace eprosima::ddspipe;
 using namespace eprosima::ddsrecorder::replayer;
@@ -164,6 +168,60 @@ int main(
     // Encapsulating execution in block to erase all memory correctly before closing process
     try
     {
+        // -- Convert MCAP to SQL ---------------------------------------------
+        if (commandline_args.sql_convert)
+        {
+            std::unique_ptr<eprosima::ddsrecorder::yaml::ReplayerConfiguration> configuration;
+
+            // Conversion mode can run without a YAML file
+            // in that case we still build a ReplayerConfiguration 
+            // so command-line logging and reader-side settings are applied
+            if (commandline_args.file_path.empty())
+            {
+                configuration = std::make_unique<eprosima::ddsrecorder::yaml::ReplayerConfiguration>(
+                    eprosima::Yaml(), &commandline_args);
+            }
+            else
+            {
+                configuration = std::make_unique<eprosima::ddsrecorder::yaml::ReplayerConfiguration>(
+                    commandline_args.file_path, &commandline_args);
+            }
+
+            {
+                const auto log_configuration = configuration->ddspipe_configuration.log_configuration;
+
+                // Conversion mode is a one-shot local operation, so only stdout logging is initialized here
+                eprosima::utils::Log::ClearConsumers();
+                eprosima::utils::Log::SetVerbosity(log_configuration.verbosity);
+
+                if (log_configuration.stdout_enable)
+                {
+                    eprosima::utils::Log::RegisterConsumer(
+                        std::make_unique<eprosima::utils::StdLogConsumer>(&log_configuration));
+                    }
+            }
+
+            // Resolve the output database path from '--sql-output' or fall back to '<input>.db'
+            const auto output_file =
+                    McapToSqlConverter::resolve_output_file(commandline_args.input_file, commandline_args.sql_output);
+
+            logUser(DDSREPLAYER_EXECUTION, "DDS Replayer running in MCAP-to-SQL conversion mode.");
+
+            // Run conversion directly and exit before DDS replay participants, XML profiles, or event loops are created
+            McapToSqlConverter converter(*configuration, commandline_args.input_file, output_file);
+            converter.convert();
+
+            logUser(DDSREPLAYER_EXECUTION, "MCAP-to-SQL conversion finished correctly.");
+            logUser(DDSREPLAYER_EXECUTION, "Finishing DDS Replayer execution correctly.");
+
+            eprosima::utils::Log::Flush();
+            eprosima::utils::Log::ClearConsumers();
+
+            return static_cast<int>(ProcessReturnCode::success);
+        }
+
+        //  -------------------------------------------------------------------
+
         // Create a multiple event handler that handles all events that make the replayer stop
         auto close_handler = std::make_shared<eprosima::utils::event::MultipleEventHandler>();
 
@@ -179,28 +237,12 @@ int main(
         // DDS Replayer Initialization
 
         // Load configuration from YAML
-        eprosima::ddsrecorder::yaml::ReplayerConfiguration configuration(commandline_args.file_path, &commandline_args);
+        auto configuration = std::make_unique<eprosima::ddsrecorder::yaml::ReplayerConfiguration>(
+            commandline_args.file_path,
+            &commandline_args);
 
-        // Validate YAML domain bounds before creating DDS entities
-        if (!configuration.replayer_configuration)
         {
-            throw eprosima::utils::ConfigurationException(
-                      eprosima::utils::Formatter()
-                          << "Invalid configuration: Replayer participant configuration is not initialized.");
-        }
-
-        if (configuration.replayer_configuration->domain.domain_id > eprosima::ddspipe::core::types::DomainId::
-                        MAX_DOMAIN_ID)
-        {
-            throw eprosima::utils::ConfigurationException(
-                      eprosima::utils::Formatter() << "Invalid configuration: Domain ID must be between 0 and "
-                                                   << eprosima::ddspipe::core::types::DomainId::MAX_DOMAIN_ID << ".");
-        }
-
-        /////
-        // Logging
-        {
-            const auto log_configuration = configuration.ddspipe_configuration.log_configuration;
+            const auto log_configuration = configuration->ddspipe_configuration.log_configuration;
 
             eprosima::utils::Log::ClearConsumers();
             eprosima::utils::Log::SetVerbosity(log_configuration.verbosity);
@@ -220,13 +262,29 @@ int main(
             }
         }
 
+        // Validate YAML domain bounds before creating DDS entities
+        if (!configuration->replayer_configuration)
+        {
+            throw eprosima::utils::ConfigurationException(
+                      eprosima::utils::Formatter()
+                          << "Invalid configuration: Replayer participant configuration is not initialized.");
+        }
+
+        if (configuration->replayer_configuration->domain.domain_id > eprosima::ddspipe::core::types::DomainId::
+                        MAX_DOMAIN_ID)
+        {
+            throw eprosima::utils::ConfigurationException(
+                      eprosima::utils::Formatter() << "Invalid configuration: Domain ID must be between 0 and "
+                                                   << eprosima::ddspipe::core::types::DomainId::MAX_DOMAIN_ID << ".");
+        }
+
 
         // Use input file from YAML configuration file if not provided via executable arg
         if (commandline_args.input_file == "")
         {
-            if (configuration.input_file != "")
+            if (configuration->input_file != "")
             {
-                commandline_args.input_file = configuration.input_file;
+                commandline_args.input_file = configuration->input_file;
                 // Check file exists and it is readable
                 if (!is_file_accessible(commandline_args.input_file.c_str(), eprosima::utils::FileAccessMode::read))
                 {
@@ -253,10 +311,10 @@ int main(
         logUser(DDSREPLAYER_EXECUTION, "DDS Replayer running.");
 
         // Load XML profiles
-        participants::XmlHandler::load_xml(configuration.xml_configuration);
+        participants::XmlHandler::load_xml(configuration->xml_configuration);
 
         // Create replayer instance
-        auto replayer = std::make_unique<DdsReplayer>(configuration, commandline_args.input_file);
+        auto replayer = std::make_unique<DdsReplayer>(*configuration, commandline_args.input_file);
 
         // Create File Watcher Handler
         std::unique_ptr<eprosima::utils::event::FileWatcherHandler> file_watcher_handler;
@@ -323,6 +381,18 @@ int main(
         EPROSIMA_LOG_ERROR(DDSREPLAYER_ERROR,
                 "Error Initializing DDS Replayer. Error message:\n "
                 << e.what());
+        return static_cast<int>(ProcessReturnCode::execution_failed);
+    }
+    catch (const eprosima::utils::InconsistencyException& e)
+    {
+        EPROSIMA_LOG_ERROR(DDSREPLAYER_ERROR,
+                "Error Processing DDS Replayer data. Error message:\n " << e.what());
+        return static_cast<int>(ProcessReturnCode::execution_failed);
+    }
+    catch (const std::exception& e)
+    {
+        EPROSIMA_LOG_ERROR(DDSREPLAYER_ERROR,
+                "Unexpected error running DDS Replayer. Error message:\n "<< e.what());
         return static_cast<int>(ProcessReturnCode::execution_failed);
     }
 

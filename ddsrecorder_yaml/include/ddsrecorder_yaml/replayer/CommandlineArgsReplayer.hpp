@@ -54,6 +54,12 @@ struct DDSRECORDER_YAML_DllAPI CommandlineArgsReplayer : public ddspipe::core::C
     // Input file path
     std::string input_file{""};
 
+    // Convert the input MCAP file into the SQL output format
+    bool sql_convert{false};
+
+    // Output SQL file path
+    std::string sql_output{""};
+
     // Domain
     utils::Fuzzy<ddspipe::core::types::DomainId> domain{0, utils::FuzzyLevelValues::fuzzy_level_default};
 };

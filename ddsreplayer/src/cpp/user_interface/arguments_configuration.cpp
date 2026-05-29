@@ -124,6 +124,27 @@ const option::Descriptor usage[] = {
         "[Default = 0]."
     },
 
+    {
+        optionIndex::SQL_CONVERT,
+        0,
+        "",
+        "sql-convert",
+        Arg::None,
+        "  \t--sql-convert\t  \t" \
+        "Convert the input MCAP file into the existing SQLite SQL schema instead of replaying DDS traffic."
+    },
+
+    {
+        optionIndex::SQL_OUTPUT,
+        0,
+        "",
+        "sql-output",
+        Arg::String,
+        "  \t--sql-output\t  \t" \
+        "Output SQLite file path used by '--sql-convert'. " \
+        "[Default: <input_file_stem>.db]."
+    },
+
     ////////////////////
     // Debug options
     {
@@ -208,6 +229,9 @@ ProcessReturnCode parse_arguments(
 
     // Parse arguments
     // No required arguments
+    bool reload_time_option_given = false;
+    bool domain_option_given = false;
+
     if (argc > 0)
     {
         argc -= (argc > 0); // reduce arg count of program name if present
@@ -261,6 +285,7 @@ ProcessReturnCode parse_arguments(
 
                 case optionIndex::RELOAD_TIME:
                     commandline_args.reload_time = std::stol(opt.arg) * 1000; // pass to milliseconds
+                    reload_time_option_given = true;
                     break;
 
                 case optionIndex::DOMAIN:
@@ -290,8 +315,17 @@ ProcessReturnCode parse_arguments(
 
                     commandline_args.domain.set_value(
                         static_cast<ddspipe::core::types::DomainIdType>(domain_value));
+                    domain_option_given = true;
                 }
                 break;
+
+                case optionIndex::SQL_CONVERT:
+                    commandline_args.sql_convert = true;
+                    break;
+
+                case optionIndex::SQL_OUTPUT:
+                    commandline_args.sql_output = opt.arg;
+                    break;
 
                 case optionIndex::ACTIVATE_DEBUG:
                     commandline_args.log_filter[utils::VerbosityKind::Error].set_value("");
@@ -324,6 +358,30 @@ ProcessReturnCode parse_arguments(
     }
     else
     {
+        option::printUsage(fwrite, stdout, usage, columns);
+        return ProcessReturnCode::incorrect_argument;
+    }
+
+    if (commandline_args.sql_convert && reload_time_option_given)
+    {
+        EPROSIMA_LOG_ERROR(DDSREPLAYER_ARGS,
+            "Option '--sql-convert' cannot be used together with '--reload-time'.");
+        option::printUsage(fwrite, stdout, usage, columns);
+        return ProcessReturnCode::incorrect_argument;
+    }
+
+    if (commandline_args.sql_convert && domain_option_given)
+    {
+        EPROSIMA_LOG_ERROR(DDSREPLAYER_ARGS,
+            "Option '--sql-convert' cannot be used together with '--domain'.");
+        option::printUsage(fwrite, stdout, usage, columns);
+        return ProcessReturnCode::incorrect_argument;
+    }
+
+    utils::Formatter error_msg;
+    if (!commandline_args.is_valid(error_msg))
+    {
+        EPROSIMA_LOG_ERROR(DDSREPLAYER_ARGS, error_msg);
         option::printUsage(fwrite, stdout, usage, columns);
         return ProcessReturnCode::incorrect_argument;
     }
