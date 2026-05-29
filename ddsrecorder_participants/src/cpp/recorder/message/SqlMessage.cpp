@@ -38,6 +38,50 @@ namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
 
+namespace {
+
+void remove_nonkey_values_(
+        const fastdds::dds::DynamicType::_ref_type& dynamic_type,
+        nlohmann::json& key_json)
+{
+    fastdds::dds::DynamicTypeMembersById members_by_id;
+
+    if (dynamic_type->get_all_members(members_by_id) != fastdds::dds::RETCODE_OK)
+    {
+        EPROSIMA_LOG_WARNING(DDSRECORDER_DYNTYPES_KEY, "Failed to get all members");
+        return;
+    }
+
+    for (const auto& member_by_id : members_by_id)
+    {
+        const auto member = member_by_id.second;
+
+        fastdds::dds::MemberDescriptor::_ref_type member_descriptor{
+            fastdds::dds::traits<fastdds::dds::MemberDescriptor>::make_shared()};
+
+        if (member->get_descriptor(member_descriptor) != fastdds::dds::RETCODE_OK)
+        {
+            EPROSIMA_LOG_WARNING(DDSRECORDER_DYNTYPES_KEY, "Failed to get member descriptor");
+            continue;
+        }
+
+        const auto member_name = static_cast<std::string>(member_descriptor->name());
+
+        if (member_descriptor->is_key())
+        {
+            // Recursively remove non-key values from nested types
+            remove_nonkey_values_(member_descriptor->type(), key_json[member_name]);
+        }
+        else
+        {
+            // Remove non-key value
+            key_json.erase(member_name);
+        }
+    }
+}
+
+} // namespace
+
 std::atomic<std::uint64_t> SqlMessage::number_of_msgs = 0;
 
 SqlMessage::SqlMessage(
@@ -113,46 +157,6 @@ void SqlMessage::set_key(
     catch (const std::exception& e)
     {
         EPROSIMA_LOG_WARNING(SQL_MESSAGE, "Failed to calculate message key from JSON payload: " << e.what());
-    }
-}
-
-void SqlMessage::remove_nonkey_values_(
-        const fastdds::dds::DynamicType::_ref_type& dynamic_type,
-        nlohmann::json& key_json)
-{
-    fastdds::dds::DynamicTypeMembersById members_by_id;
-
-    if (dynamic_type->get_all_members(members_by_id) != fastdds::dds::RETCODE_OK)
-    {
-        EPROSIMA_LOG_WARNING(DDSRECORDER_DYNTYPES_KEY, "Failed to get all members");
-        return;
-    }
-
-    for (const auto& member_by_id : members_by_id)
-    {
-        const auto member = member_by_id.second;
-
-        fastdds::dds::MemberDescriptor::_ref_type member_descriptor{
-            fastdds::dds::traits<fastdds::dds::MemberDescriptor>::make_shared()};
-
-        if (member->get_descriptor(member_descriptor) != fastdds::dds::RETCODE_OK)
-        {
-            EPROSIMA_LOG_WARNING(DDSRECORDER_DYNTYPES_KEY, "Failed to get member descriptor");
-            continue;
-        }
-
-        const auto member_name = static_cast<std::string>(member_descriptor->name());
-
-        if (member_descriptor->is_key())
-        {
-            // Recursively remove non-key values from nested types
-            remove_nonkey_values_(member_descriptor->type(), key_json[member_name]);
-        }
-        else
-        {
-            // Remove non-key value
-            key_json.erase(member_name);
-        }
     }
 }
 
