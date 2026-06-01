@@ -7,8 +7,8 @@
     *eProsima DDS Recorder* Application to execute a DDS Recorder from a YAML configuration file.
   </description>
   <maintainer email="RaulSanchezMateos@eprosima.com">Raul Sánchez-Mateos</maintainer>
-  <maintainer email="javierparis@eprosima.com">Javier París</maintainer>
   <maintainer email="juanlopez@eprosima.com">Juan López</maintainer>
+  <maintainer email="danielpizarro@eprosima.com">Daniel Pizarro</maintainer>
   <license file="LICENSE">Apache 2.0</license>
 
   <url type="website">https://www.eprosima.com/</url>

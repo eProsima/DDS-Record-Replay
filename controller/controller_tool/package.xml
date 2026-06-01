@@ -5,8 +5,8 @@
   <version>1.5.1</version>
   <description>Tool used for externally controlling a running DDS Recorder</description>
   <maintainer email="raul@eprosima.com">Raúl Sánchez-Mateos</maintainer>
-  <maintainer email="javierparis@eprosima.com">Javier París</maintainer>
   <maintainer email="juanlopez@eprosima.com">Juan López</maintainer>
+  <maintainer email="danielpizarro@eprosima.com">Daniel Pizarro</maintainer>
   <license>Apache License, Version 2.0</license>
 
   <depend>cmake_utils</depend>

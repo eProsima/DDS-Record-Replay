@@ -18,10 +18,10 @@
 
 #pragma once
 
+#include <atomic>
+#include <cstdint>
 #include <memory>
 #include <string>
-
-#include <nlohmann/json.hpp>
 
 #include <fastdds/rtps/common/SequenceNumber.hpp>
 #include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
@@ -102,18 +102,6 @@ struct SqlMessage : public BaseMessage
 
     // String containing the JSON-serialized instance key
     std::string key;
-
-protected:
-
-    /**
-     * @brief Remove non-key values from the JSON.
-     *
-     * @param dynamic_type DynamicType of the message.
-     * @param key_json JSON object containing the key values.
-     */
-    void remove_nonkey_values_(
-            const fastdds::dds::DynamicType::_ref_type& dynamic_type,
-            nlohmann::json& key_json);
 };
 
 } /* namespace participants */

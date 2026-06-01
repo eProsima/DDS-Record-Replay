@@ -1,15 +1,13 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>ddsrecorder_docs</name>
+  <name>mcap_convert_tool</name>
   <version>1.5.1</version>
-  <description>
-     *eprosima DDS Record and Replay* Documentation built with sphinx and deployed in ReadTheDocs.
-  </description>
-  <maintainer email="RaulSanchezMateos@eprosima.com">Raul Sánchez-Mateos</maintainer>
+  <description>Tool used to convert MCAP recordings into DDS Record &amp; Replay SQL output</description>  
+  <maintainer email="raul@eprosima.com">Raúl Sánchez-Mateos</maintainer>
   <maintainer email="juanlopez@eprosima.com">Juan López</maintainer>
   <maintainer email="danielpizarro@eprosima.com">Daniel Pizarro</maintainer>
-  <license file="LICENSE">Apache 2.0</license>
+  <license>Apache License, Version 2.0</license>
 
   <url type="website">https://www.eprosima.com/</url>
   <url type="bugtracker">https://github.com/eProsima/DDS-Record-Replay/issues</url>
@@ -17,8 +15,14 @@
 
   <buildtool_depend>cmake</buildtool_depend>
 
-  <depend>cmake_utils</depend>
-  <depend>Sphinx</depend>
+  <depend>cpp_utils</depend>
+  <depend>ddspipe_core</depend>
+  <depend>ddsrecorder_participants</depend>
+  <depend>ddsrecorder_yaml</depend>
+
+  <doc_depend>doxygen</doc_depend>
+
+  <test_depend>googletest-distribution</test_depend>
 
   <export>
     <build_type>cmake</build_type>

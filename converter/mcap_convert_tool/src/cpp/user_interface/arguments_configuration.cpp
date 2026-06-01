@@ -1,4 +1,4 @@
-// Copyright 2023 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+// Copyright 2026 Proyectos y Sistemas de Mantenimiento SL (eProsima).
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,13 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file arguments_configuration.cpp
- *
- */
+#include "arguments_configuration.hpp"
 
-#include <iostream>
+#include <algorithm>
+#include <cstdlib>
 #include <exception>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -27,11 +26,9 @@
 
 #include <ddsrecorder_participants/library/config.h>
 
-#include "arguments_configuration.hpp"
-
 namespace eprosima {
 namespace ddsrecorder {
-namespace replayer {
+namespace converter {
 
 const option::Descriptor usage[] = {
     {
@@ -40,14 +37,11 @@ const option::Descriptor usage[] = {
         "",
         "",
         Arg::None,
-        "Usage: DDS Replayer \n" \
-        "Playback traffic recorded by eProsima DDS Recorder.\n" \
-        "To stop the execution gracefully use SIGINT (C^) or SIGTERM (kill) signals.\n" \
+        "Usage: MCAP Convert \n" \
+        "Convert an MCAP recording into the DDS Record & Replay SQLite schema.\n" \
         "General options:"
     },
 
-    ////////////////////
-    // Help options
     {
         optionIndex::UNKNOWN_OPT, 0, "", "", Arg::None,
         "\nApplication help and information."
@@ -70,11 +64,9 @@ const option::Descriptor usage[] = {
         "version",
         Arg::None,
         "  -v \t--version\t  \t" \
-        "Print version, branch and commit hash." \
+        "Print version, branch and commit hash."
     },
 
-    ////////////////////
-    // Application options
     {
         optionIndex::UNKNOWN_OPT, 0, "", "", Arg::None,
         "\nApplication parameters"
@@ -84,10 +76,10 @@ const option::Descriptor usage[] = {
         optionIndex::INPUT_FILE,
         0,
         "i",
-        "input",
+        "input-file",
         Arg::Readable_File,
         "  -i \t--input-file\t  \t" \
-        "Path to the input MCAP File."
+        "Path to the input MCAP file."
     },
 
     {
@@ -97,35 +89,19 @@ const option::Descriptor usage[] = {
         "config-path",
         Arg::Readable_File,
         "  -c \t--config-path\t  \t" \
-        "Path to the Configuration File (yaml format) [Default: ./DDS_REPLAYER_CONFIGURATION.yaml]."
+        "Path to the optional configuration file (yaml format)."
     },
 
     {
-        optionIndex::RELOAD_TIME,
-        0,
-        "r",
-        "reload-time",
-        Arg::Numeric,
-        "  -r \t--reload-time\t  \t" \
-        "Time period in seconds to reload configuration file. " \
-        "This is needed when FileWatcher functionality is not available (e.g. config file is a symbolic link). " \
-        "Value 0 does not reload file. [Default: 0]."
-
-    },
-
-    {
-        optionIndex::DOMAIN,
+        optionIndex::SQL_OUTPUT,
         0,
         "",
-        "domain",
-        Arg::Numeric,
-        "  \t--domain\t  \t" \
-        "Set the domain (0-232) to replay on. " \
-        "[Default = 0]."
+        "sql-output",
+        Arg::String,
+        "  \t--sql-output\t  \t" \
+        "Output SQLite file path. [Default: <input_file_stem>.db]."
     },
 
-    ////////////////////
-    // Debug options
     {
         optionIndex::UNKNOWN_OPT, 0, "", "", Arg::None,
         "\nDebug parameters"
@@ -186,9 +162,8 @@ void print_version()
 ProcessReturnCode parse_arguments(
         int argc,
         char** argv,
-        yaml::CommandlineArgsReplayer& commandline_args)
+        CommandlineArgsMcapConvert& commandline_args)
 {
-    // Variable to pretty print usage help
     int columns;
 #if defined(_WIN32)
     char* buf = nullptr;
@@ -206,34 +181,29 @@ ProcessReturnCode parse_arguments(
     columns = getenv("COLUMNS") ? atoi(getenv("COLUMNS")) : 180;
 #endif // if defined(_WIN32)
 
-    // Parse arguments
-    // No required arguments
     if (argc > 0)
     {
-        argc -= (argc > 0); // reduce arg count of program name if present
-        argv += (argc > 0); // skip program name argv[0] if present
+        argc -= (argc > 0);
+        argv += (argc > 0);
 
         option::Stats stats(usage, argc, argv);
         std::vector<option::Option> options(stats.options_max);
         std::vector<option::Option> buffer(stats.buffer_max);
         option::Parser parse(usage, argc, argv, &options[0], &buffer[0]);
 
-        // Parsing error
         if (parse.error())
         {
             option::printUsage(fwrite, stdout, usage, columns);
             return ProcessReturnCode::incorrect_argument;
         }
 
-        // Unknown args provided
         if (parse.nonOptionsCount())
         {
-            EPROSIMA_LOG_ERROR(DDSREPLAYER_ARGS, "ERROR: Unknown argument: <" << parse.nonOption(0) << ">." );
+            EPROSIMA_LOG_ERROR(DDSREPLAYER_ARGS, "ERROR: Unknown argument: <" << parse.nonOption(0) << ">.");
             option::printUsage(fwrite, stdout, usage, columns);
             return ProcessReturnCode::incorrect_argument;
         }
 
-        // Adding Help before every other check to show help in case an argument is incorrect
         if (options[optionIndex::HELP])
         {
             option::printUsage(fwrite, stdout, usage, columns);
@@ -259,39 +229,9 @@ ProcessReturnCode parse_arguments(
                     commandline_args.file_path = opt.arg;
                     break;
 
-                case optionIndex::RELOAD_TIME:
-                    commandline_args.reload_time = std::stol(opt.arg) * 1000; // pass to milliseconds
+                case optionIndex::SQL_OUTPUT:
+                    commandline_args.sql_output = opt.arg;
                     break;
-
-                case optionIndex::DOMAIN:
-                {
-                    const auto max_domain_id = static_cast<long>(ddspipe::core::types::DomainId::MAX_DOMAIN_ID);
-                    long domain_value = 0;
-
-                    try
-                    {
-                        domain_value = std::stol(opt.arg);
-                    }
-                    catch (const std::exception&)
-                    {
-                        EPROSIMA_LOG_ERROR(
-                            DDSREPLAYER_ARGS,
-                            "Domain ID must be between 0 and " << max_domain_id << ".");
-                        return ProcessReturnCode::incorrect_argument;
-                    }
-
-                    if (domain_value < 0 || domain_value > max_domain_id)
-                    {
-                        EPROSIMA_LOG_ERROR(
-                            DDSREPLAYER_ARGS,
-                            "Domain ID must be between 0 and " << max_domain_id << ".");
-                        return ProcessReturnCode::incorrect_argument;
-                    }
-
-                    commandline_args.domain.set_value(
-                        static_cast<ddspipe::core::types::DomainIdType>(domain_value));
-                }
-                break;
 
                 case optionIndex::ACTIVATE_DEBUG:
                     commandline_args.log_filter[utils::VerbosityKind::Error].set_value("");
@@ -315,7 +255,6 @@ ProcessReturnCode parse_arguments(
                     EPROSIMA_LOG_ERROR(DDSREPLAYER_ARGS, opt << " is not a valid argument.");
                     option::printUsage(fwrite, stdout, usage, columns);
                     return ProcessReturnCode::incorrect_argument;
-                    break;
 
                 default:
                     break;
@@ -368,54 +307,15 @@ option::ArgStatus Arg::Required(
     return option::ARG_ILLEGAL;
 }
 
-option::ArgStatus Arg::Numeric(
-        const option::Option& option,
-        bool msg)
-{
-    char* endptr = 0;
-    if (option.arg != 0 && std::strtol(option.arg, &endptr, 10))
-    {
-    }
-    if (endptr != option.arg && *endptr == 0)
-    {
-        return option::ARG_OK;
-    }
-
-    if (msg)
-    {
-        EPROSIMA_LOG_ERROR(DDSREPLAYER_ARGS, "Option '" << option << "' requires a numeric argument.");
-    }
-    return option::ARG_ILLEGAL;
-}
-
-option::ArgStatus Arg::Float(
-        const option::Option& option,
-        bool msg)
-{
-    char* endptr = 0;
-    if (option.arg != 0 && std::strtof(option.arg, &endptr))
-    {
-    }
-    if (endptr != option.arg && *endptr == 0)
-    {
-        return option::ARG_OK;
-    }
-
-    if (msg)
-    {
-        EPROSIMA_LOG_ERROR(DDSREPLAYER_ARGS, "Option '" << option << "' requires a float argument.");
-    }
-    return option::ARG_ILLEGAL;
-}
-
 option::ArgStatus Arg::String(
         const option::Option& option,
         bool msg)
 {
-    if (option.arg != 0)
+    if (option.arg != 0 && option.arg[0] != 0)
     {
         return option::ARG_OK;
     }
+
     if (msg)
     {
         EPROSIMA_LOG_ERROR(DDSREPLAYER_ARGS, "Option '" << option << "' requires a text argument.");
@@ -427,27 +327,17 @@ option::ArgStatus Arg::Readable_File(
         const option::Option& option,
         bool msg)
 {
-    if (option.arg != 0)
+    if (option.arg != 0 && is_file_accessible(option.arg, eprosima::utils::FileAccessMode::read))
     {
-        // Windows has not unistd library, so to check if file is readable use a _access method (definition on top)
-        if (is_file_accessible(option.arg, utils::FileAccessMode::read))
-        {
-            return option::ARG_OK;
-        }
+        return option::ARG_OK;
     }
+
     if (msg)
     {
         EPROSIMA_LOG_ERROR(DDSREPLAYER_ARGS,
-                "Option '" << option << "' requires an existing readable file as argument.");
+                "Option '" << option << "' requires a readable file as argument.");
     }
     return option::ARG_ILLEGAL;
-}
-
-option::ArgStatus Arg::Log_Kind_Correct_Argument(
-        const option::Option& option,
-        bool msg)
-{
-    return Arg::Valid_Options(string_vector_LogKind(), option, msg);
 }
 
 option::ArgStatus Arg::Valid_Options(
@@ -455,7 +345,7 @@ option::ArgStatus Arg::Valid_Options(
         const option::Option& option,
         bool msg)
 {
-    if (nullptr == option.arg)
+    if (option.arg == nullptr || option.arg[0] == 0)
     {
         if (msg)
         {
@@ -464,34 +354,56 @@ option::ArgStatus Arg::Valid_Options(
         return option::ARG_ILLEGAL;
     }
 
-    if (std::find(valid_options.begin(), valid_options.end(), std::string(option.arg)) != valid_options.end())
+    const std::string arg(option.arg);
+
+    if (std::find(valid_options.begin(), valid_options.end(), arg) != valid_options.end())
     {
         return option::ARG_OK;
     }
-    else if (msg)
+
+    if (msg)
     {
         utils::Formatter error_msg;
-        error_msg << "Option '" << option.name << "' requires a one of this values: {";
+        error_msg << "Option '" << option.name << "' requires one of the following values: ";
         for (const auto& valid_option : valid_options)
         {
-            error_msg << "\"" << valid_option << "\";";
+            error_msg << "'" << valid_option << "' ";
         }
-        error_msg << "}.";
-
         EPROSIMA_LOG_ERROR(DDSREPLAYER_ARGS, error_msg);
     }
 
     return option::ARG_ILLEGAL;
 }
 
+option::ArgStatus Arg::Log_Kind_Correct_Argument(
+        const option::Option& option,
+        bool msg)
+{
+    static const std::vector<std::string> VALID_OPTIONS = {
+        "error",
+        "warning",
+        "info"
+    };
+
+    return Valid_Options(VALID_OPTIONS, option, msg);
+}
+
 std::ostream& operator <<(
         std::ostream& output,
         const option::Option& option)
 {
-    output << std::string(option.name, option.name + option.namelen);
+    output << option.name;
     return output;
 }
 
-} /* namespace replayer */
+void Arg::print_error(
+        const char* msg1,
+        const option::Option& opt,
+        const char* msg2)
+{
+    std::cerr << msg1 << opt.name << msg2;
+}
+
+} /* namespace converter */
 } /* namespace ddsrecorder */
 } /* namespace eprosima */
