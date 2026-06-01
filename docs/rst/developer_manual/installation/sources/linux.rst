@@ -469,7 +469,7 @@ Likewise, to run the |ddsreplay|, source the installation path and execute the e
     source install/setup.bash
     ./<install-path>/ddsreplayer_tool/bin/ddsreplayer
 
-To run the standalone MCAP conversion tool, source the installation path and execute the executable file 
+To run the standalone MCAP conversion tool, source the installation path and execute the executable file
 that has been installed in :code:`<install-path>/mcap_convert_tool/bin/mcap-convert`:
 
 .. code-block:: bash

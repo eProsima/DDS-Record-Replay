@@ -471,7 +471,7 @@ To install |eddsrecord| system-wide instead of locally, remove all the flags tha
 Run an application
 ==================
 
-If |eddsrecord| was compiled using colcon, when running an instance of |ddsrecorder|, |ddsreplayer|, 
+If |eddsrecord| was compiled using colcon, when running an instance of |ddsrecorder|, |ddsreplayer|,
 or :code:`mcap-convert`, the colcon overlay built in the dedicated :code:`DDS-Record-Replay` directory must be sourced.
 There are two possibilities:
 
@@ -485,7 +485,7 @@ There are two possibilities:
 
 However, when running a |ddsrecorder|, |ddsreplayer|, or :code:`mcap-convert` compiled using CMake,
 it must be linked with its dependencies where the packages have been installed.
-This can be done by opening the *Edit system environment variables* control panel and adding 
+This can be done by opening the *Edit system environment variables* control panel and adding
 to the ``PATH`` |eddsrecord| installation directory: ``<path\to\user\workspace>\DDS-Record-Replay\install``.
 
 
