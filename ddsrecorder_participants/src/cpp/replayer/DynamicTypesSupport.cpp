@@ -16,7 +16,7 @@
  * @file DynamicTypesSupport.cpp
  */
 
-#include "DynamicTypesSupport.hpp"
+#include <ddsrecorder_participants/replayer/DynamicTypesSupport.hpp>
 
 #include <exception>
 
@@ -30,24 +30,11 @@
 
 namespace eprosima {
 namespace ddsrecorder {
-namespace replayer {
+namespace participants {
 namespace detail {
 
-/**
- * @brief Shared dynamic-type support for replay and conversion modes
- *
- * This file centralizes the logic that used to live only in
- * \c DdsReplayer::register_dynamic_types_:
- * - decode the base64-serialized type data stored in the MCAP attachment
- * - deserialize Fast DDS \c TypeObject data
- * - register it in the Fast DDS TypeObjectRegistry
- *
- * The MCAP-to-SQL converter additionally uses the registered \c TypeObject data to
- * build \c DynamicType instances and deserialize samples into JSON
- */
-
 RegisteredDynamicTypes register_dynamic_types(
-        const participants::DynamicTypesCollection& dynamic_types)
+        const DynamicTypesCollection& dynamic_types)
 {
     RegisteredDynamicTypes registered_types;
     auto& registry = fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry();
@@ -58,12 +45,12 @@ RegisteredDynamicTypes register_dynamic_types(
         {
             const auto type_identifier_str = utils::base64_decode(dynamic_type.type_identifier());
             fastdds::dds::xtypes::TypeIdentifier type_identifier;
-            participants::Serializer::deserialize(type_identifier_str, type_identifier);
+            Serializer::deserialize(type_identifier_str, type_identifier);
             (void)type_identifier;
 
             const auto type_object_str = utils::base64_decode(dynamic_type.type_object());
             RegisteredDynamicType registered_dynamic_type;
-            participants::Serializer::deserialize(type_object_str, registered_dynamic_type.type_object);
+            Serializer::deserialize(type_object_str, registered_dynamic_type.type_object);
 
             const auto ret = registry.register_type_object(
                 registered_dynamic_type.type_object,
@@ -147,6 +134,6 @@ std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair> type_identifiers
 }
 
 } // namespace detail
-} /* namespace replayer */
+} /* namespace participants */
 } /* namespace ddsrecorder */
 } /* namespace eprosima */

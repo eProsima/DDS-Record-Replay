@@ -49,7 +49,8 @@
 #include <ddsrecorder_participants/replayer/SqlReaderParticipant.hpp>
 
 #include "DdsReplayer.hpp"
-#include "DynamicTypesSupport.hpp"
+
+#include <ddsrecorder_participants/replayer/DynamicTypesSupport.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -208,7 +209,7 @@ void DdsReplayer::stop()
 std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair> DdsReplayer::register_dynamic_types_(
         const participants::DynamicTypesCollection& dynamic_types)
 {
-    return detail::type_identifiers_from(detail::register_dynamic_types(dynamic_types));
+    return participants::detail::type_identifiers_from(participants::detail::register_dynamic_types(dynamic_types));
 }
 
 } /* namespace replayer */
