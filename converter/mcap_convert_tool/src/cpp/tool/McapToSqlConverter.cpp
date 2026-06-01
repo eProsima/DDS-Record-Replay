@@ -95,6 +95,7 @@ public:
     {
         return topics_;
     }
+
 };
 
 std::string get_writer_guid_string_(
@@ -201,7 +202,8 @@ participants::OutputSettings create_output_settings_(
 {
     participants::OutputSettings output_settings;
     const auto output_path = std::filesystem::path(output_file);
-    const auto output_directory = output_path.has_parent_path() ? output_path.parent_path() : std::filesystem::path(".");
+    const auto output_directory =
+            output_path.has_parent_path() ? output_path.parent_path() : std::filesystem::path(".");
 
     output_settings.filepath = output_directory.string();
     output_settings.filename = output_path.stem().string();

@@ -102,8 +102,8 @@ protected:
 
     eprosima::ddsrecorder::converter::CommandlineArgsMcapConvert commandline_args_;
     eprosima::ddsrecorder::yaml::ReplayerConfiguration configuration_{
-            eprosima::Yaml(),
-            &commandline_args_};
+        eprosima::Yaml(),
+        &commandline_args_};
     std::filesystem::path output_directory_;
 };
 
@@ -182,7 +182,8 @@ TEST_F(McapConvertTest, explicit_output)
 
     ASSERT_TRUE(std::filesystem::exists(output_file));
     ASSERT_GT(count_query_(output_file, "SELECT COUNT(*) FROM Messages;"), 0);
-    ASSERT_GT(count_query_(output_file, "SELECT COUNT(*) FROM Messages WHERE data_json IS NOT NULL AND data_json != '';"), 0);
+    ASSERT_GT(count_query_(output_file,
+            "SELECT COUNT(*) FROM Messages WHERE data_json IS NOT NULL AND data_json != '';"), 0);
     ASSERT_GT(count_query_(output_file, "SELECT COUNT(*) FROM Messages WHERE key != '';"), 0);
 }
 

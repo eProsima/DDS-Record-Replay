@@ -37,6 +37,7 @@ struct CommandlineArgsMcapConvert : public yaml::CommandlineArgsReplayer
 
         return yaml::CommandlineArgsReplayer::is_valid(error_msg);
     }
+
 };
 
 } /* namespace converter */

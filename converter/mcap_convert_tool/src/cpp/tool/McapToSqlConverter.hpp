@@ -38,6 +38,7 @@ public:
             const std::string& output_file = "");
 
 protected:
+
     const yaml::ReplayerConfiguration& configuration_;
     const std::string input_file_;
     const std::string output_file_;
