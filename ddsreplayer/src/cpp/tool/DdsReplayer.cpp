@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstring>
+
 #include <mcap/reader.hpp>
 #include <yaml-cpp/yaml.h>
 
@@ -497,8 +499,8 @@ fastrtps::types::TypeIdentifier DdsReplayer::deserialize_type_identifier_(
     fastrtps::rtps::SerializedPayload_t payload(parameter_length);
     fastcdr::FastBuffer fastbuffer((char*)payload.data, parameter_length);
 
-    // Read data
-    fastrtps::rtps::CDRMessage::readData(cdr_message, payload.data, parameter_length);
+    // Copy the CDR-encoded bytes from cdr_message into payload.
+    std::memcpy(payload.data, cdr_message->buffer, parameter_length);
 
     // Create CDR deserializer
     #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13
@@ -539,8 +541,8 @@ fastrtps::types::TypeObject DdsReplayer::deserialize_type_object_(
     fastrtps::rtps::SerializedPayload_t payload(parameter_length);
     fastcdr::FastBuffer fastbuffer((char*)payload.data, parameter_length);
 
-    // Read data
-    fastrtps::rtps::CDRMessage::readData(cdr_message, payload.data, parameter_length);
+    // Copy the CDR-encoded bytes from cdr_message into payload.
+    std::memcpy(payload.data, cdr_message->buffer, parameter_length);
 
     // Create CDR deserializer
     #if FASTRTPS_VERSION_MAJOR <= 2 && FASTRTPS_VERSION_MINOR < 13

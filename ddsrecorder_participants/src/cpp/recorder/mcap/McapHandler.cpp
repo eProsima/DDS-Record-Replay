@@ -1048,11 +1048,13 @@ std::string McapHandler::serialize_type_identifier_(
     cdr_message->msg_endian = eprosima::fastrtps::rtps::LITTLEEND;
 #endif // if __BIG_ENDIAN__
 
-    // Add data
-    bool valid = fastrtps::rtps::CDRMessage::addData(cdr_message, payload.data, payload.length);
+    // Zero-pad the buffer up to `size` (CDR 4-byte alignment).
+    // NOTE: cdr_message->buffer aliases payload.data, so the payload bytes
+    // [0, payload.length) are already in place; only the trailing padding
+    // needs to be written.
     for (uint32_t count = payload.length; count < size; ++count)
     {
-        valid &= fastrtps::rtps::CDRMessage::addOctet(cdr_message, 0);
+        cdr_message->buffer[count] = 0;
     }
     // Copy buffer to string
     std::string typeid_str(reinterpret_cast<char const*>(cdr_message->buffer), size);
@@ -1105,11 +1107,13 @@ std::string McapHandler::serialize_type_object_(
     cdr_message->msg_endian = eprosima::fastrtps::rtps::LITTLEEND;
 #endif // if __BIG_ENDIAN__
 
-    // Add data
-    bool valid = fastrtps::rtps::CDRMessage::addData(cdr_message, payload.data, payload.length);
+    // Zero-pad the buffer up to `size` (CDR 4-byte alignment).
+    // NOTE: cdr_message->buffer aliases payload.data, so the payload bytes
+    // [0, payload.length) are already in place; only the trailing padding
+    // needs to be written.
     for (uint32_t count = payload.length; count < size; ++count)
     {
-        valid &= fastrtps::rtps::CDRMessage::addOctet(cdr_message, 0);
+        cdr_message->buffer[count] = 0;
     }
     // Copy buffer to string
     std::string typeobj_str(reinterpret_cast<char const*>(cdr_message->buffer), size);
