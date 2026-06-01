@@ -15,7 +15,7 @@ jobs:
     with:
       custom_version_build: 'v2'
       dependencies_artifact_postfix: '_nightly'
-      ref: '0.x'
+      ref: 'fix/v2-nightly'
     secrets: inherit
 
   reusable_tests_v3:
