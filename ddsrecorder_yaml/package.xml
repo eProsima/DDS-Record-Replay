@@ -7,8 +7,8 @@
      *eprosima DDS Recorder* Yaml Module is a C++ implementation to read and parse YAML configuration files.
   </description>
   <maintainer email="RaulSanchezMateos@eprosima.com">Raul Sánchez-Mateos</maintainer>
-  <maintainer email="javierparis@eprosima.com">Javier París</maintainer>
   <maintainer email="juanlopez@eprosima.com">Juan López</maintainer>
+  <maintainer email="danielpizarro@eprosima.com">Daniel Pizarro</maintainer>
   <license file="LICENSE">Apache 2.0</license>
 
   <url type="website">https://www.eprosima.com/</url>

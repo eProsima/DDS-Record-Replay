@@ -257,7 +257,7 @@ Colcon installation (recommended)
         mkdir <path\to\user\workspace>\DDS-Record-Replay
         cd <path\to\user\workspace>\DDS-Record-Replay
         mkdir src
-        wget https://raw.githubusercontent.com/eProsima/DDS-Record-Replay/main/ddsrecordreplay.repos ddsrecordreplay.repos
+        wget https://raw.githubusercontent.com/eProsima/DDS-Record-Replay/v1.5.1/ddsrecordreplay.repos ddsrecordreplay.repos
         vcs import src --input ddsrecordreplay.repos
 
     .. note::
@@ -303,7 +303,7 @@ Local installation
         mkdir <path\to\user\workspace>\DDS-Record-Replay\src
         mkdir <path\to\user\workspace>\DDS-Record-Replay\build
         cd <path\to\user\workspace>\DDS-Record-Replay
-        wget https://raw.githubusercontent.com/eProsima/DDS-Record-Replay/main/ddsrecordreplay.repos ddsrecordreplay.repos
+        wget https://raw.githubusercontent.com/eProsima/DDS-Record-Replay/v1.5.1/ddsrecordreplay.repos ddsrecordreplay.repos
         vcs import src --input ddsrecordreplay.repos
 
 #.  Compile all dependencies using CMake_.
@@ -448,6 +448,17 @@ Local installation
             -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record-Replay\install -DBUILD_DDSRECORDER_CONTROLLER=ON
         cmake --build . --config Release --target install
 
+#.  Optionally, install the standalone MCAP conversion tool:
+
+    .. code-block:: bash
+
+        cd <path\to\user\workspace>\DDS-Record-Replay
+        mkdir build\mcap_convert_tool
+        cd build\mcap_convert_tool
+        cmake <path\to\user\workspace>\DDS-Record-Replay\src\ddsrecordreplay\converter\mcap_convert_tool -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record-Replay\install ^
+            -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record-Replay\install
+        cmake --build . --config Release --target install
+
 
 .. _windows_sources_global_installation:
 
@@ -460,7 +471,8 @@ To install |eddsrecord| system-wide instead of locally, remove all the flags tha
 Run an application
 ==================
 
-If |eddsrecord| was compiled using colcon, when running an instance of |ddsrecorder| or |ddsreplayer|, the colcon overlay built in the dedicated :code:`DDS-Record-Replay` directory must be sourced.
+If |eddsrecord| was compiled using colcon, when running an instance of |ddsrecorder|, |ddsreplayer|,
+or :code:`mcap-convert`, the colcon overlay built in the dedicated :code:`DDS-Record-Replay` directory must be sourced.
 There are two possibilities:
 
 * Every time a new shell is opened, prepare the environment locally by typing the command:
@@ -471,8 +483,10 @@ There are two possibilities:
 
 * Add the sourcing of the colcon overlay permanently, by opening the *Edit the system environment variables* control panel, and adding the installation path to the :code:`PATH`.
 
-However, when running a |ddsrecorder| or |ddsreplayer| compiled using CMake, it must be linked with its dependencies where the packages have been installed.
-This can be done by opening the *Edit system environment variables* control panel and adding to the ``PATH`` |eddsrecord| installation directory: ``<path\to\user\workspace>\DDS-Record-Replay\install``.
+However, when running a |ddsrecorder|, |ddsreplayer|, or :code:`mcap-convert` compiled using CMake,
+it must be linked with its dependencies where the packages have been installed.
+This can be done by opening the *Edit system environment variables* control panel and adding
+to the ``PATH`` |eddsrecord| installation directory: ``<path\to\user\workspace>\DDS-Record-Replay\install``.
 
 
 .. External links

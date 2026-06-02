@@ -1,6 +1,8 @@
 # eProsima DDS Replayer Tool Module
 This module create an executable that runs a DDS Replayer configured via *yaml* configuration file.
 
+MCAP-to-SQL conversion is exposed as the standalone `mcap-convert` tool and is no longer part of the `ddsreplayer` CLI.
+
 ---
 
 ## Example of usage

@@ -247,7 +247,7 @@ Colcon installation (recommended)
 
         mkdir -p ~/DDS-Record-Replay/src
         cd ~/DDS-Record-Replay
-        wget https://raw.githubusercontent.com/eProsima/DDS-Record-Replay/main/ddsrecordreplay.repos
+        wget https://raw.githubusercontent.com/eProsima/DDS-Record-Replay/v1.5.1/ddsrecordreplay.repos
         vcs import src < ddsrecordreplay.repos
 
     .. note::
@@ -291,7 +291,7 @@ Local installation
         mkdir -p ~/DDS-Record-Replay/src
         mkdir -p ~/DDS-Record-Replay/build
         cd ~/DDS-Record-Replay
-        wget https://raw.githubusercontent.com/eProsima/DDS-Record-Replay/main/ddsrecordreplay.repos
+        wget https://raw.githubusercontent.com/eProsima/DDS-Record-Replay/v1.5.1/ddsrecordreplay.repos
         vcs import src < ddsrecordreplay.repos
 
 #.  Compile all dependencies using CMake_.
@@ -426,6 +426,16 @@ Local installation
         cmake ~/DDS-Record-Replay/src/ddsrecorder/controller/controller_tool -DCMAKE_INSTALL_PREFIX=~/DDS-Record-Replay/install -DCMAKE_PREFIX_PATH=~/DDS-Record-Replay/install -DBUILD_DDSRECORDER_CONTROLLER=ON
         cmake --build . --target install
 
+#.  Optionally, install the standalone MCAP conversion tool:
+
+    .. code-block:: bash
+
+        cd ~/DDS-Record-Replay
+        mkdir build/mcap_convert_tool
+        cd build/mcap_convert_tool
+        cmake ~/DDS-Record-Replay/src/ddsrecordreplay/converter/mcap_convert_tool -DCMAKE_INSTALL_PREFIX=~/DDS-Record-Replay/install -DCMAKE_PREFIX_PATH=~/DDS-Record-Replay/install
+        cmake --build . --target install
+
 
 .. _global_installation_sl:
 
@@ -458,6 +468,14 @@ Likewise, to run the |ddsreplay|, source the installation path and execute the e
     # If built has been done using colcon, all projects could be sourced as follows
     source install/setup.bash
     ./<install-path>/ddsreplayer_tool/bin/ddsreplayer
+
+To run the standalone MCAP conversion tool, source the installation path and execute the executable file
+that has been installed in :code:`<install-path>/mcap_convert_tool/bin/mcap-convert`:
+
+.. code-block:: bash
+
+    source install/setup.bash
+    ./<install-path>/mcap_convert_tool/bin/mcap-convert -i /path/to/recording.mcap --sql-output /path/to/recording.db
 
 Be sure that these executables have execution permissions.
 

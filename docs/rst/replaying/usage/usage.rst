@@ -166,3 +166,15 @@ The |ddsreplayer| application supports several input arguments:
         - ``--log-filter``
         - String
         - ``"DDSREPLAYER"``
+
+MCAP to SQL conversion
+^^^^^^^^^^^^^^^^^^^^^^
+
+MCAP-to-SQL conversion is provided by the standalone :code:`mcap-convert` tool instead of the
+:code:`ddsreplayer` command-line interface.
+
+Example:
+
+.. code-block:: bash
+
+    mcap-convert -i /path/to/recorded_file.mcap --sql-output /path/to/recorded_file.db

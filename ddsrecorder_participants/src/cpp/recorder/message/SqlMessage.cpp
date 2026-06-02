@@ -18,6 +18,7 @@
 
 
 #include <map>
+#include <sstream>
 #include <string>
 
 #include <nlohmann/json.hpp>
@@ -37,68 +38,9 @@ namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
 
-std::atomic<std::uint64_t> SqlMessage::number_of_msgs = 0;
+namespace {
 
-SqlMessage::SqlMessage(
-        const ddspipe::core::types::RtpsPayloadData& payload,
-        std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
-        const ddspipe::core::types::DdsTopic& topic,
-        const std::string& key /* = "" */)
-    : BaseMessage(payload, payload_pool, topic)
-    , writer_guid(payload.source_guid)
-    , sequence_number(fastdds::rtps::SequenceNumber_t(number_of_msgs.fetch_add(1)))
-    , instance_handle(payload.instanceHandle)
-    , key(key)
-{
-}
-
-void SqlMessage::deserialize(
-        const fastdds::dds::DynamicType::_ref_type& dynamic_type)
-{
-    if (!data_json.empty())
-    {
-        // The payload has already been deserialized
-        return;
-    }
-
-    // Deserialize the payload
-    fastdds::dds::DynamicPubSubType pub_sub_type(dynamic_type);
-    auto dynamic_data = fastdds::dds::DynamicDataFactory::get_instance()->create_data(dynamic_type);
-
-    pub_sub_type.deserialize(payload, &dynamic_data);
-
-    // Serialize the payload into a JSON
-    std::stringstream data_json_stream;
-
-    const auto ret = fastdds::dds::json_serialize(
-        dynamic_data, fastdds::dds::DynamicDataJsonFormat::EPROSIMA, data_json_stream);
-
-    data_json = data_json_stream.str();
-
-    if (ret != fastdds::dds::RETCODE_OK)
-    {
-        EPROSIMA_LOG_WARNING(SQL_MESSAGE, "Failed to serialize payload into JSON");
-    }
-}
-
-void SqlMessage::set_key(
-        const fastdds::dds::DynamicType::_ref_type& dynamic_type)
-{
-    if (data_json.empty())
-    {
-        deserialize(dynamic_type);
-    }
-
-    nlohmann::json key_json = nlohmann::json::parse(data_json);
-
-    // Remove non-key values
-    remove_nonkey_values_(dynamic_type, key_json);
-
-    // Serialize the JSON back into a string
-    key = key_json.dump();
-}
-
-void SqlMessage::remove_nonkey_values_(
+void remove_nonkey_values_(
         const fastdds::dds::DynamicType::_ref_type& dynamic_type,
         nlohmann::json& key_json)
 {
@@ -135,6 +77,86 @@ void SqlMessage::remove_nonkey_values_(
             // Remove non-key value
             key_json.erase(member_name);
         }
+    }
+}
+
+} // namespace
+
+std::atomic<std::uint64_t> SqlMessage::number_of_msgs = 0;
+
+SqlMessage::SqlMessage(
+        const ddspipe::core::types::RtpsPayloadData& payload,
+        std::shared_ptr<ddspipe::core::PayloadPool> payload_pool,
+        const ddspipe::core::types::DdsTopic& topic,
+        const std::string& key /* = "" */)
+    : BaseMessage(payload, payload_pool, topic)
+    , writer_guid(payload.source_guid)
+    , sequence_number(fastdds::rtps::SequenceNumber_t(number_of_msgs.fetch_add(1)))
+    , instance_handle(payload.instanceHandle)
+    , key(key)
+{
+}
+
+void SqlMessage::deserialize(
+        const fastdds::dds::DynamicType::_ref_type& dynamic_type)
+{
+    if (!data_json.empty())
+    {
+        // The payload has already been deserialized
+        return;
+    }
+
+    // Deserialize the payload
+    fastdds::dds::DynamicPubSubType pub_sub_type(dynamic_type);
+    auto dynamic_data = fastdds::dds::DynamicDataFactory::get_instance()->create_data(dynamic_type);
+
+    if (!pub_sub_type.deserialize(payload, &dynamic_data))
+    {
+        EPROSIMA_LOG_WARNING(SQL_MESSAGE, "Failed to deserialize payload into DynamicData.");
+        return;
+    }
+
+    // Serialize the payload into a JSON
+    std::stringstream data_json_stream;
+
+    const auto ret = fastdds::dds::json_serialize(
+        dynamic_data, fastdds::dds::DynamicDataJsonFormat::EPROSIMA, data_json_stream);
+
+    if (ret != fastdds::dds::RETCODE_OK)
+    {
+        EPROSIMA_LOG_WARNING(SQL_MESSAGE, "Failed to serialize payload into JSON");
+        return;
+    }
+
+    data_json = data_json_stream.str();
+}
+
+void SqlMessage::set_key(
+        const fastdds::dds::DynamicType::_ref_type& dynamic_type)
+{
+    if (data_json.empty())
+    {
+        deserialize(dynamic_type);
+    }
+
+    if (data_json.empty())
+    {
+        return;
+    }
+
+    try
+    {
+        nlohmann::json key_json = nlohmann::json::parse(data_json);
+
+        // Remove non-key values
+        remove_nonkey_values_(dynamic_type, key_json);
+
+        // Serialize the JSON back into a string
+        key = key_json.dump();
+    }
+    catch (const std::exception& e)
+    {
+        EPROSIMA_LOG_WARNING(SQL_MESSAGE, "Failed to calculate message key from JSON payload: " << e.what());
     }
 }
 
