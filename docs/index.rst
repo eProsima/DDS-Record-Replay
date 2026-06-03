@@ -51,6 +51,7 @@
    /rst/replaying/getting_started/getting_started
    /rst/replaying/usage/usage
    /rst/replaying/usage/configuration
+   /rst/replaying/usage/mcap_convert
 
 
 .. _index_tutorials:

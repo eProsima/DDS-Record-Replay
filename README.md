@@ -60,4 +60,5 @@ You can access the documentation online, which is hosted on [Read the Docs](http
 
 * [Getting Started](https://dds-recorder.readthedocs.io/en/latest/rst/replaying/getting_started/getting_started.html)
 * [Usage](https://dds-recorder.readthedocs.io/en/latest/rst/replaying/usage/usage.html)
+* [MCAP Convert](https://dds-recorder.readthedocs.io/en/latest/rst/replaying/usage/mcap_convert.html)
 * [Configuration](https://dds-recorder.readthedocs.io/en/latest/rst/replaying/usage/configuration.html)
