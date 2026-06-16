@@ -54,7 +54,6 @@ set(MODULE_DEPENDENCIES
     $<IF:$<BOOL:${WIN32}>,$<IF:$<TARGET_EXISTS:zstd::libzstd_shared>,zstd::libzstd_shared,zstd::libzstd_static>,zstd>)
 
 set(MODULE_THIRDPARTY_HEADERONLY
-    filewatch
     mcap
     sqlite
     optionparser
