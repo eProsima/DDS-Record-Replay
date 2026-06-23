@@ -24,6 +24,7 @@ set(TEST_LIST
     missing_input
     custom_sql_batch_size_argument
     zero_sql_batch_size_argument_is_invalid
+    negative_sql_batch_size_argument_is_invalid
     default_output
     explicit_output
     ros2_output_exact_counts

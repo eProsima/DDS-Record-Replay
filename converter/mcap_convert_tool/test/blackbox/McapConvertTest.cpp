@@ -190,6 +190,26 @@ TEST_F(McapConvertTest, zero_sql_batch_size_argument_is_invalid)
     ASSERT_EQ(ret, eprosima::ddsrecorder::converter::ProcessReturnCode::incorrect_argument);
 }
 
+TEST_F(McapConvertTest, negative_sql_batch_size_argument_is_invalid)
+{
+    const auto input_file = recordings_root_() / "basic" / "configuration.mcap";
+    std::vector<std::string> args = {
+        "mcap-convert",
+        "--input-file",
+        input_file.string(),
+        "--sql-batch-size",
+        "-1"};
+    auto argv = argv_from_(args);
+    auto commandline_args = eprosima::ddsrecorder::converter::CommandlineArgsMcapConvert();
+
+    const auto ret = eprosima::ddsrecorder::converter::parse_arguments(
+        static_cast<int>(argv.size()),
+        argv.data(),
+        commandline_args);
+
+    ASSERT_EQ(ret, eprosima::ddsrecorder::converter::ProcessReturnCode::incorrect_argument);
+}
+
 TEST_F(McapConvertTest, default_output)
 {
     const auto source_input_file = recordings_root_() / "basic" / "configuration.mcap";
