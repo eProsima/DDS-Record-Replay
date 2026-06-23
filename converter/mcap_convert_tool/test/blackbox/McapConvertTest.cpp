@@ -187,6 +187,30 @@ TEST_F(McapConvertTest, explicit_output)
     ASSERT_GT(count_query_(output_file, "SELECT COUNT(*) FROM Messages WHERE key != '';"), 0);
 }
 
+TEST_F(McapConvertTest, ros2_output_exact_counts)
+{
+    const auto input_file = recordings_root_() / "ros2" / "ros2_talker.mcap";
+    const auto output_file = output_directory_ / "ros2_output.db";
+
+    commandline_args_.input_file = input_file.string();
+
+    eprosima::ddsrecorder::converter::McapToSqlConverter converter(
+        configuration_,
+        commandline_args_.input_file,
+        output_file.string());
+    converter.convert();
+
+    ASSERT_TRUE(std::filesystem::exists(output_file));
+    ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM Messages;"), 35);
+    ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM MessagesPartitions;"), 35);
+    ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM Topics;"), 4);
+    ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM Types;"), 20);
+    ASSERT_EQ(
+        count_query_(output_file, "SELECT COUNT(*) FROM Messages WHERE data_json IS NOT NULL AND data_json != '';"),
+        22);
+    ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM Messages WHERE key != '';"), 22);
+}
+
 int main(
         int argc,
         char** argv)

@@ -24,6 +24,7 @@ set(TEST_LIST
     missing_input
     default_output
     explicit_output
+    ros2_output_exact_counts
 )
 
 set(TEST_NEEDED_SOURCES
