@@ -44,6 +44,10 @@ struct Arg : public option::Arg
             const option::Option& option,
             bool msg);
 
+    static option::ArgStatus Numeric(
+            const option::Option& option,
+            bool msg);
+
     static option::ArgStatus String(
             const option::Option& option,
             bool msg);
@@ -70,6 +74,7 @@ enum optionIndex
     INPUT_FILE,
     CONFIGURATION_FILE,
     SQL_OUTPUT,
+    SQL_BATCH_SIZE,
     ACTIVATE_DEBUG,
     LOG_FILTER,
     LOG_VERBOSITY,

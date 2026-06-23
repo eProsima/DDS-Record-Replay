@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <string>
 
 #include <ddsrecorder_yaml/replayer/CommandlineArgsReplayer.hpp>
@@ -25,6 +26,7 @@ namespace converter {
 struct CommandlineArgsMcapConvert : public yaml::CommandlineArgsReplayer
 {
     std::string sql_output{""};
+    std::size_t sql_batch_size{4096u};
 
     bool is_valid(
             utils::Formatter& error_msg) const noexcept override
@@ -32,6 +34,12 @@ struct CommandlineArgsMcapConvert : public yaml::CommandlineArgsReplayer
         if (input_file.empty())
         {
             error_msg << "Option '-i' / '--input-file' is required.";
+            return false;
+        }
+
+        if (sql_batch_size == 0)
+        {
+            error_msg << "Option '--sql-batch-size' must be greater than 0.";
             return false;
         }
 

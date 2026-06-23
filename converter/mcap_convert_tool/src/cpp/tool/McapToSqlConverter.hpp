@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <string>
 
 #include <ddsrecorder_yaml/replayer/YamlReaderConfiguration.hpp>
@@ -29,7 +30,8 @@ public:
     McapToSqlConverter(
             const yaml::ReplayerConfiguration& configuration,
             const std::string& input_file,
-            const std::string& output_file = "");
+            const std::string& output_file = "",
+            const std::size_t batch_size = 4096u);
 
     void convert();
 
@@ -42,6 +44,7 @@ protected:
     const yaml::ReplayerConfiguration& configuration_;
     const std::string input_file_;
     const std::string output_file_;
+    const std::size_t batch_size_;
 };
 
 } /* namespace converter */

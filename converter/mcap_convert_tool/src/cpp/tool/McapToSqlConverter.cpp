@@ -60,7 +60,6 @@ namespace converter {
 
 namespace {
 
-constexpr auto kSqlWriteBatchSize = 4096u;
 constexpr auto kMinMessagesPerWorker = 512u;
 
 struct DynamicSerializationContext
@@ -329,10 +328,12 @@ void deserialize_payload_to_json_(
 McapToSqlConverter::McapToSqlConverter(
         const yaml::ReplayerConfiguration& configuration,
         const std::string& input_file,
-        const std::string& output_file)
+        const std::string& output_file,
+        const std::size_t batch_size)
     : configuration_(configuration)
     , input_file_(input_file)
     , output_file_(resolve_output_file(input_file, output_file))
+    , batch_size_(batch_size)
 {
 }
 
@@ -387,8 +388,8 @@ void McapToSqlConverter::convert()
     std::vector<participants::SqlMessage> pending_messages;
     std::vector<std::string> pending_type_names;
 
-    pending_messages.reserve(kSqlWriteBatchSize);
-    pending_type_names.reserve(kSqlWriteBatchSize);
+    pending_messages.reserve(batch_size_);
+    pending_type_names.reserve(batch_size_);
 
     sql_writer.enable();
 
@@ -396,22 +397,22 @@ void McapToSqlConverter::convert()
     {
         // Prepares a slice of messages
         const auto hydrate_message_range = [
-                &pending_messages, // messages (ith)
-                &pending_type_names, // dynamic_types for the message (ith)
-                &dynamic_types_by_name // lookup table from type_name to dynamic_type
-            ](const std::size_t begin, const std::size_t end) // Indices (example 0-512
+            &pending_messages,     // messages (ith)
+            &pending_type_names,     // dynamic_types for the message (ith)
+            &dynamic_types_by_name     // lookup table from type_name to dynamic_type
+                ](const std::size_t begin, const std::size_t end) // Indices (example 0-512
                 {
                     // Each worker keeps its own caches to avoid sharing mutable
                     // DynamicData/key state across threads
                     std::map<ddspipe::core::types::InstanceHandle, std::string> keys_by_instance_handle;
                     std::map<std::string, DynamicSerializationContext> serialization_contexts;
-                    
+
                     // Create the serialization context for types. Reducing the construction in every message
                     for (const auto& [type_name, dynamic_type] : dynamic_types_by_name)
                     {
                         serialization_contexts.try_emplace(type_name, dynamic_type);
                     }
-                    
+
                     // -- Messages --------------------------------------------
                     for (int i = begin; i < end; i++)
                     {
@@ -426,7 +427,7 @@ void McapToSqlConverter::convert()
                             // No type, it ca not be reconstructed
                             continue;
                         }
-                        
+
                         // Message type and context
                         const auto dynamic_type_it = dynamic_types_by_name.find(pending_type_names[i]);
                         auto serialization_context_it = serialization_contexts.find(pending_type_names[i]);
@@ -464,7 +465,7 @@ void McapToSqlConverter::convert()
                         }
                     }
                 };
-        
+
         // Run the preparation (possibly in parallel) and write the batch of messages in the SQL file
         const auto flush_pending_messages =
                 [&pending_messages, &pending_type_names, &hydrate_message_range, &sql_writer]()
@@ -481,7 +482,7 @@ void McapToSqlConverter::convert()
                     const auto worker_count = std::max<std::size_t>(
                         1u,
                         std::min<std::size_t>(
-                            hardware_threads, // 1. 
+                            hardware_threads, // 1.
                             (pending_messages.size() + kMinMessagesPerWorker - 1) / kMinMessagesPerWorker)); // 2.
 
                     if (worker_count == 1)
@@ -491,7 +492,7 @@ void McapToSqlConverter::convert()
                     }
                     else
                     {
-                        // Divide it in similar size slices                        
+                        // Divide it in similar size slices
                         const auto slice_size = (pending_messages.size() + worker_count - 1) / worker_count;
                         // Futures for each async jobg
                         std::vector<std::future<void>> futures;
@@ -614,7 +615,7 @@ void McapToSqlConverter::convert()
 
             pending_messages.push_back(sql_message);
 
-            if (pending_messages.size() == kSqlWriteBatchSize)
+            if (pending_messages.size() == batch_size_)
             {
                 flush_pending_messages();
             }
