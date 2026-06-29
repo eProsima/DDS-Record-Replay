@@ -51,7 +51,7 @@ public:
      *
      * @throws \c InconsistencyException if there is a database error
      */
-    template <typename T>
+    template<typename T>
     void write(
             const T& data);
 
@@ -129,7 +129,7 @@ protected:
      *
      * @throws \c InconsistencyException if there is a database error
      */
-    template <typename T>
+    template<typename T>
     void write_nts_(
             const T& data);
 

@@ -208,8 +208,7 @@ protected:
 
     std::filesystem::path get_output_file_path_(
             const std::string& output_file_name,
-            const test::FileTypes file_type
-            )
+            const test::FileTypes file_type)
     {
         if (file_type == test::FileTypes::SQL)
         {
@@ -246,10 +245,9 @@ protected:
 
         if (!is_acceptable)
         {
-            std::cout << "is_file_size_acceptable_: File " << file_path << " has an unacceptable size of " <<
-                file_size << " bytes, when limits: "
-                      << limits_->MIN_ACCEPTABLE_FILE_SIZE << " <= size <= " << limits_->MAX_ACCEPTABLE_FILE_SIZE <<
-                std::endl;
+            std::cout << "is_file_size_acceptable_: File " << file_path << " has an unacceptable size of "
+                      << file_size << " bytes, when limits: " << limits_->MIN_ACCEPTABLE_FILE_SIZE
+                      << " <= size <= " << limits_->MAX_ACCEPTABLE_FILE_SIZE << std::endl;
         }
         return is_acceptable;
     }
@@ -424,7 +422,8 @@ protected:
     {
         if (file_type == test::FileTypes::MCAP)
         {
-            ASSERT_TRUE(false) <<
+            ASSERT_TRUE(false)
+                <<
                 "This test is not useful. Maybe throw an exception if in MCAP the max_size and log_rotation is set but no max_file_size? It would overwriting the same file over and over";
             return;
         }
