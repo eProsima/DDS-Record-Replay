@@ -425,7 +425,7 @@ protected:
         if (file_type == test::FileTypes::MCAP)
         {
             ASSERT_TRUE(false) <<
-                "This test is not useful. Maybe throw an exception if in MCAP the max_size and log_rotation is set but no max_file_size? It would overwritting the same file over and over";
+                "This test is not useful. Maybe throw an exception if in MCAP the max_size and log_rotation is set but no max_file_size? It would overwriting the same file over and over";
             return;
         }
 

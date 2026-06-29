@@ -89,7 +89,7 @@ struct DDSRECORDER_PARTICIPANTS_DllAPI SqlMessage : public BaseMessage
     ddspipe::core::types::Guid writer_guid;
 
     // Cached string form of the writer GUID when already available
-    // Used to reduce the time complexity of writting in SQL files
+    // Used to reduce the time complexity of writing in SQL files
     std::string writer_guid_string;
 
     // Number of SqlMessages created
