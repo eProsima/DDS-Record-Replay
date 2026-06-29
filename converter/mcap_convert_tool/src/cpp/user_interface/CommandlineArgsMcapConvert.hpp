@@ -37,9 +37,18 @@ struct CommandlineArgsMcapConvert : public yaml::CommandlineArgsReplayer
             return false;
         }
 
+        constexpr std::size_t MAX_SQL_BATCH_SIZE = 160000001u;
+
         if (sql_batch_size == 0)
         {
             error_msg << "Option '--sql-batch-size' must be greater than 0.";
+            return false;
+        }
+
+        if (sql_batch_size > MAX_SQL_BATCH_SIZE)
+        {
+            error_msg << "Option '--sql-batch-size' (" << sql_batch_size
+                      << ") exceeds maximum allowed value (" << MAX_SQL_BATCH_SIZE << ").";
             return false;
         }
 

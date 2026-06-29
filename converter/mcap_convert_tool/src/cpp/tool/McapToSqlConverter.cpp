@@ -60,7 +60,7 @@ namespace converter {
 
 namespace {
 
-constexpr auto kMinMessagesPerWorker = 512u;
+constexpr auto MIN_MESSAGES_PER_WORKER = 512u;
 
 struct DynamicSerializationContext
 {
@@ -400,7 +400,7 @@ void McapToSqlConverter::convert()
             &pending_messages,     // messages (ith)
             &pending_type_names,     // dynamic_types for the message (ith)
             &dynamic_types_by_name     // lookup table from type_name to dynamic_type
-                ](const std::size_t begin, const std::size_t end) // Indices (example 0-512
+                ](const std::size_t begin, const std::size_t end) // Indices (example 0-512)
                 {
                     // Each worker keeps its own caches to avoid sharing mutable
                     // DynamicData/key state across threads
@@ -414,7 +414,7 @@ void McapToSqlConverter::convert()
                     }
 
                     // -- Messages --------------------------------------------
-                    for (int i = begin; i < end; i++)
+                    for (std::size_t i = begin; i < end; i++)
                     {
                         // SQL
                         auto& sql_message = pending_messages[i];
@@ -424,7 +424,7 @@ void McapToSqlConverter::convert()
 
                         if (pending_type_names[i].empty())
                         {
-                            // No type, it ca not be reconstructed
+                            // No type, it cannot be reconstructed
                             continue;
                         }
 
@@ -483,7 +483,7 @@ void McapToSqlConverter::convert()
                         1u,
                         std::min<std::size_t>(
                             hardware_threads, // 1.
-                            (pending_messages.size() + kMinMessagesPerWorker - 1) / kMinMessagesPerWorker)); // 2.
+                            (pending_messages.size() + MIN_MESSAGES_PER_WORKER - 1) / MIN_MESSAGES_PER_WORKER)); // 2.
 
                     if (worker_count == 1)
                     {
@@ -494,11 +494,11 @@ void McapToSqlConverter::convert()
                     {
                         // Divide it in similar size slices
                         const auto slice_size = (pending_messages.size() + worker_count - 1) / worker_count;
-                        // Futures for each async jobg
+                        // Futures for each async job
                         std::vector<std::future<void>> futures;
                         futures.reserve(worker_count);
 
-                        for (int i = 0; i < worker_count; i++)
+                        for (std::size_t i = 0; i < worker_count; i++)
                         {
                             const auto begin = i * slice_size;
                             if (begin >= pending_messages.size())
