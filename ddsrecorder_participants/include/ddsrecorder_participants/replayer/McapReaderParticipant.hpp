@@ -106,11 +106,13 @@ protected:
      *
      * @throws \c InitializationException if failed to open MCAP file.
      */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     void open_file_();
 
     /**
      * @brief Close the MCAP file.
      */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     void close_file_();
 
     /**

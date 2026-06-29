@@ -206,12 +206,12 @@ void write_topic_metadata_(
 {
     if (written_topics.insert(topic).second)
     {
-        sql_writer.write(topic);
+        sql_writer.write_topic(topic);
     }
 
     if (written_partitions.insert(partition).second)
     {
-        sql_writer.write(partition);
+        sql_writer.write_partition_name(partition);
     }
 
     const auto topic_partition_key = topic.topic_name() + topic.type_name + partition;
@@ -523,7 +523,7 @@ void McapToSqlConverter::convert()
 
                     // SQLite writes stay serialized; only the expensive message
                     // hydration step is parallelized.
-                    sql_writer.write(pending_messages);
+                    sql_writer.write_messages(pending_messages);
                     pending_messages.clear();
                     pending_type_names.clear();
                 };

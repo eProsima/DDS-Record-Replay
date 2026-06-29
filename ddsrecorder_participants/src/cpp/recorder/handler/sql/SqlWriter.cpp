@@ -66,6 +66,24 @@ void SqlWriter::update_dynamic_types(
     dynamic_types_.push_back(dynamic_type);
 }
 
+void SqlWriter::write_topic(
+        const ddspipe::core::types::DdsTopic& topic)
+{
+    write(topic);
+}
+
+void SqlWriter::write_partition_name(
+        const std::string& partition)
+{
+    write(partition);
+}
+
+void SqlWriter::write_messages(
+        const std::vector<SqlMessage>& messages)
+{
+    write(messages);
+}
+
 void SqlWriter::open_new_file_nts_(
         const std::uint64_t min_file_size)
 {

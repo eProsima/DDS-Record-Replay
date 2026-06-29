@@ -27,6 +27,7 @@
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/recorder/handler/BaseWriter.hpp>
 #include <ddsrecorder_participants/recorder/handler/sql/SqlHandlerConfiguration.hpp>
+#include <ddsrecorder_participants/recorder/message/SqlMessage.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -53,6 +54,24 @@ public:
     template <typename T>
     void write(
             const T& data);
+
+    /**
+     * @brief Writes topic metadata to the output file.
+     */
+    void write_topic(
+            const ddspipe::core::types::DdsTopic& topic);
+
+    /**
+     * @brief Writes a partition name to the output file.
+     */
+    void write_partition_name(
+            const std::string& partition);
+
+    /**
+     * @brief Writes a batch of SQL messages to the output file.
+     */
+    void write_messages(
+            const std::vector<SqlMessage>& messages);
 
     /**
      *

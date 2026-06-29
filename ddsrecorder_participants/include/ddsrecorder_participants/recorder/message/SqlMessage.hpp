@@ -42,7 +42,7 @@ namespace participants {
 /**
  * Structure extending a \c BaseMessage for SQLite.
  */
-struct SqlMessage : public BaseMessage
+struct DDSRECORDER_PARTICIPANTS_DllAPI SqlMessage : public BaseMessage
 {
     SqlMessage() = default;
 

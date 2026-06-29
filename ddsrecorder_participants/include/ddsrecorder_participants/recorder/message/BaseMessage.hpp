@@ -27,6 +27,8 @@
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 #include <ddspipe_core/efficiency/payload/PayloadPool.hpp>
 
+#include <ddsrecorder_participants/library/library_dll.h>
+
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -35,7 +37,7 @@ namespace participants {
 /**
  * Structure implementing a DDS Message with a Fast-DDS payload and its owner (a \c PayloadPool).
  */
-struct BaseMessage
+struct DDSRECORDER_PARTICIPANTS_DllAPI BaseMessage
 {
     BaseMessage() = default;
 
