@@ -21,6 +21,7 @@
 #include <ctime>
 #include <iomanip>
 #include <sstream>
+#include <stdexcept>
 
 #include <cpp_utils/time/time_utils.hpp>
 
@@ -33,6 +34,28 @@ namespace participants {
 
 const auto SQL_TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S";
 constexpr std::uint64_t NS_PER_SEC = 1000000000;
+
+namespace {
+
+bool fill_calendar_time_(
+        const std::time_t& time_seconds,
+        const bool local_time,
+        std::tm& calendar_time)
+{
+#if defined(_WIN32)
+    const auto ret = local_time ?
+            localtime_s(&calendar_time, &time_seconds) :
+            gmtime_s(&calendar_time, &time_seconds);
+    return ret == 0;
+#else
+    const auto* ret = local_time ?
+            localtime_r(&time_seconds, &calendar_time) :
+            gmtime_r(&time_seconds, &calendar_time);
+    return ret != nullptr;
+#endif // defined(_WIN32)
+}
+
+} // namespace
 
 utils::Timestamp to_std_timestamp(
         const mcap::Timestamp& time)
@@ -90,9 +113,15 @@ std::string to_sql_timestamp(
 {
     char datetime_str[30];
 
-    const std::time_t time_seconds = time.seconds();
-    const auto time_seconds_zone = local_time ? std::localtime(&time_seconds) : std::gmtime(&time_seconds);
-    std::strftime(datetime_str, sizeof(datetime_str), SQL_TIMESTAMP_FORMAT, time_seconds_zone);
+    const std::time_t time_seconds = static_cast<std::time_t>(time.seconds());
+    std::tm calendar_time{};
+
+    if (!fill_calendar_time_(time_seconds, local_time, calendar_time))
+    {
+        throw std::runtime_error("Failed to format SQL timestamp.");
+    }
+
+    std::strftime(datetime_str, sizeof(datetime_str), SQL_TIMESTAMP_FORMAT, &calendar_time);
 
     // Combine the date-time string with nanoseconds to form the full timestamp
     std::ostringstream oss;

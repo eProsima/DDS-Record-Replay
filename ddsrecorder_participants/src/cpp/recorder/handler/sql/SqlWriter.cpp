@@ -66,6 +66,24 @@ void SqlWriter::update_dynamic_types(
     dynamic_types_.push_back(dynamic_type);
 }
 
+void SqlWriter::write_topic(
+        const ddspipe::core::types::DdsTopic& topic)
+{
+    write(topic);
+}
+
+void SqlWriter::write_partition_name(
+        const std::string& partition)
+{
+    write(partition);
+}
+
+void SqlWriter::write_messages(
+        const std::vector<SqlMessage>& messages)
+{
+    write(messages);
+}
+
 void SqlWriter::open_new_file_nts_(
         const std::uint64_t min_file_size)
 {
@@ -230,7 +248,7 @@ void SqlWriter::open_new_file_nts_(
 }
 
 // (Tables: Types)
-template <>
+template<>
 void SqlWriter::write_nts_(
         const DynamicType& dynamic_type)
 {
@@ -318,7 +336,7 @@ void SqlWriter::write_nts_(
 }
 
 // (Tables: Messages and MessagesPartitions)
-template <>
+template<>
 void SqlWriter::write_nts_(
         const std::vector<SqlMessage>& messages)
 {
@@ -350,9 +368,9 @@ void SqlWriter::write_nts_(
 
     if (prep_ret != SQLITE_OK)
     {
-        const std::string error_msg = utils::Formatter() <<
-                "Failed to prepare SQL statement to write in Messages table: " <<
-                sqlite3_errmsg(database_);
+        const std::string error_msg = utils::Formatter()
+                << "Failed to prepare SQL statement to write in Messages table: "
+                << sqlite3_errmsg(database_);
         sqlite3_finalize(statement_message);
 
         EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_WRITE | " << error_msg);
@@ -366,9 +384,9 @@ void SqlWriter::write_nts_(
 
     if (prep_ret_partition != SQLITE_OK)
     {
-        const std::string error_msg = utils::Formatter() <<
-                "Failed to prepare SQL statement to write in MessagesPartitions table: " <<
-                sqlite3_errmsg(database_);
+        const std::string error_msg = utils::Formatter()
+                << "Failed to prepare SQL statement to write in MessagesPartitions table: "
+                << sqlite3_errmsg(database_);
         sqlite3_finalize(statement_message);
         sqlite3_finalize(statement_partition);
 
@@ -393,16 +411,21 @@ void SqlWriter::write_nts_(
         // (Table: Messages) Bind the SqlMessage to the SQL statement
 
         // Bind the sample identity
-        std::ostringstream writer_guid_ss;
-        std::string writer_guid_str;
-        writer_guid_ss << message.writer_guid;
-        writer_guid_str = writer_guid_ss.str();
+        // Get the writer_guid from the message if available, to reduce time complexity
+        std::string writer_guid_str = message.writer_guid_string;
+        if (writer_guid_str.empty())
+        {
+            std::ostringstream writer_guid_ss;
+            writer_guid_ss << message.writer_guid;
+            writer_guid_str = writer_guid_ss.str();
+        }
 
         sqlite3_bind_text(statement_message, 1, writer_guid_str.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int64(statement_message, 2, message.sequence_number.to64long());
 
         // Bind the sample data
-        std::string data_json = "";
+        static const std::string empty_string;
+        const std::string* data_json = &empty_string;
         // Empty data_cdr aux to avoid binding nullptr
         std::byte data_cdr_aux = std::byte(0);
         std::byte* data_cdr = &data_cdr_aux;
@@ -410,7 +433,7 @@ void SqlWriter::write_nts_(
 
         if (data_format_ == DataFormat::both || data_format_ == DataFormat::json)
         {
-            data_json = message.data_json;
+            data_json = &message.data_json;
         }
 
         if (data_format_ == DataFormat::both || data_format_ == DataFormat::cdr)
@@ -419,7 +442,7 @@ void SqlWriter::write_nts_(
             data_cdr_size = message.get_data_cdr_size();
         }
 
-        sqlite3_bind_text(statement_message, 3, data_json.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(statement_message, 3, data_json->c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_blob(statement_message, 4, data_cdr, data_cdr_size, SQLITE_TRANSIENT);
         sqlite3_bind_int64(statement_message, 5, data_cdr_size);
 
@@ -429,8 +452,12 @@ void SqlWriter::write_nts_(
         sqlite3_bind_text(statement_message, 8, message.key.c_str(), -1, SQLITE_TRANSIENT);
 
         // Bind the time data
-        sqlite3_bind_text(statement_message, 9, to_sql_timestamp(message.log_time).c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(statement_message, 10, to_sql_timestamp(message.publish_time).c_str(), -1, SQLITE_TRANSIENT);
+        const auto& log_time_str =
+                message.log_time_sql.empty() ? to_sql_timestamp(message.log_time) : message.log_time_sql;
+        const auto& publish_time_str =
+                message.publish_time_sql.empty() ? to_sql_timestamp(message.publish_time) : message.publish_time_sql;
+        sqlite3_bind_text(statement_message, 9, log_time_str.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(statement_message, 10, publish_time_str.c_str(), -1, SQLITE_TRANSIENT);
 
 
         // (Table: MessagesPartitions)
@@ -438,14 +465,14 @@ void SqlWriter::write_nts_(
         sqlite3_bind_text(statement_partition, 1, writer_guid_str.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int64(statement_partition, 2, message.sequence_number.to64long());
 
-        std::string partitions_set_string = "";
-
-        // Search for the partitions set with the writed_guid in the current Topic
-        auto it = message.topic.partition_name.find(writer_guid_str);
-        if (it != message.topic.partition_name.end())
+        // Get the partition from the message if available, to reduce time complexity
+        const auto& partitions_set_string = message.partition.empty() ? [&message,
+                        &writer_guid_str]()->const std::string &
         {
-            partitions_set_string = it->second;
-        }
+            static const std::string empty_partition;
+            const auto it = message.topic.partition_name.find(writer_guid_str);
+            return it != message.topic.partition_name.end() ? it->second : empty_partition;
+        } () : message.partition;
 
         sqlite3_bind_text(statement_partition, 3, partitions_set_string.c_str(), -1, SQLITE_TRANSIENT);
 
@@ -460,14 +487,14 @@ void SqlWriter::write_nts_(
         // (Table: Messages) Entry size
         entry_size_message += entry_size_writer_guid;
         entry_size_message += entry_size_sequence_number;
-        entry_size_message += data_json.size();
+        entry_size_message += data_json->size();
         entry_size_message += data_cdr_size;
         entry_size_message += calculate_int_storage_size(data_cdr_size);
         entry_size_message += message.topic.topic_name().size();
         entry_size_message += message.topic.type_name.size();
         entry_size_message += message.key.size();
-        entry_size_message += to_sql_timestamp(message.log_time).size();
-        entry_size_message += to_sql_timestamp(message.publish_time).size();
+        entry_size_message += log_time_str.size();
+        entry_size_message += publish_time_str.size();
 
         // (Table: MessagesPartitions) Entry size
         entry_size_partition += entry_size_writer_guid;
@@ -551,7 +578,7 @@ void SqlWriter::write_nts_(
 }
 
 // (Tables: Topics)
-template <>
+template<>
 void SqlWriter::write_nts_(
         const ddspipe::core::types::DdsTopic& topic)
 {
@@ -639,7 +666,7 @@ void SqlWriter::write_nts_(
 }
 
 // (Tables: Partitions)
-template <>
+template<>
 void SqlWriter::write_nts_(
         const std::string& partition_set)
 {

@@ -190,6 +190,7 @@ protected:
      * @param raw_data: Raw data to be encapsulated in the payload.
      * @param raw_data_size: Size of the raw data.
      */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     std::unique_ptr<ddspipe::core::types::RtpsPayloadData> create_payload_(
             const void* raw_data,
             const std::uint32_t raw_data_size);

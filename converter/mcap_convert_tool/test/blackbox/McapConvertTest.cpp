@@ -149,6 +149,67 @@ TEST_F(McapConvertTest, missing_input)
     ASSERT_EQ(ret, eprosima::ddsrecorder::converter::ProcessReturnCode::incorrect_argument);
 }
 
+TEST_F(McapConvertTest, custom_sql_batch_size_argument)
+{
+    const auto input_file = recordings_root_() / "basic" / "configuration.mcap";
+    std::vector<std::string> args = {
+        "mcap-convert",
+        "--input-file",
+        input_file.string(),
+        "--sql-batch-size",
+        "32"};
+    auto argv = argv_from_(args);
+    auto commandline_args = eprosima::ddsrecorder::converter::CommandlineArgsMcapConvert();
+
+    const auto ret = eprosima::ddsrecorder::converter::parse_arguments(
+        static_cast<int>(argv.size()),
+        argv.data(),
+        commandline_args);
+
+    ASSERT_EQ(ret, eprosima::ddsrecorder::converter::ProcessReturnCode::success);
+    ASSERT_EQ(commandline_args.sql_batch_size, 32u);
+}
+
+TEST_F(McapConvertTest, zero_sql_batch_size_argument_is_invalid)
+{
+    const auto input_file = recordings_root_() / "basic" / "configuration.mcap";
+    std::vector<std::string> args = {
+        "mcap-convert",
+        "--input-file",
+        input_file.string(),
+        "--sql-batch-size",
+        "0"};
+    auto argv = argv_from_(args);
+    auto commandline_args = eprosima::ddsrecorder::converter::CommandlineArgsMcapConvert();
+
+    const auto ret = eprosima::ddsrecorder::converter::parse_arguments(
+        static_cast<int>(argv.size()),
+        argv.data(),
+        commandline_args);
+
+    ASSERT_EQ(ret, eprosima::ddsrecorder::converter::ProcessReturnCode::incorrect_argument);
+}
+
+TEST_F(McapConvertTest, negative_sql_batch_size_argument_is_invalid)
+{
+    const auto input_file = recordings_root_() / "basic" / "configuration.mcap";
+    std::vector<std::string> args = {
+        "mcap-convert",
+        "--input-file",
+        input_file.string(),
+        "--sql-batch-size",
+        "-1"};
+    auto argv = argv_from_(args);
+    auto commandline_args = eprosima::ddsrecorder::converter::CommandlineArgsMcapConvert();
+
+    const auto ret = eprosima::ddsrecorder::converter::parse_arguments(
+        static_cast<int>(argv.size()),
+        argv.data(),
+        commandline_args);
+
+    ASSERT_EQ(ret, eprosima::ddsrecorder::converter::ProcessReturnCode::incorrect_argument);
+}
+
 TEST_F(McapConvertTest, default_output)
 {
     const auto source_input_file = recordings_root_() / "basic" / "configuration.mcap";
@@ -185,6 +246,56 @@ TEST_F(McapConvertTest, explicit_output)
     ASSERT_GT(count_query_(output_file,
             "SELECT COUNT(*) FROM Messages WHERE data_json IS NOT NULL AND data_json != '';"), 0);
     ASSERT_GT(count_query_(output_file, "SELECT COUNT(*) FROM Messages WHERE key != '';"), 0);
+}
+
+TEST_F(McapConvertTest, ros2_output_exact_counts)
+{
+    const auto input_file = recordings_root_() / "ros2" / "ros2_talker.mcap";
+    const auto output_file = output_directory_ / "ros2_output.db";
+
+    commandline_args_.input_file = input_file.string();
+
+    eprosima::ddsrecorder::converter::McapToSqlConverter converter(
+        configuration_,
+        commandline_args_.input_file,
+        output_file.string());
+    converter.convert();
+
+    ASSERT_TRUE(std::filesystem::exists(output_file));
+    ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM Messages;"), 35);
+    ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM MessagesPartitions;"), 35);
+    ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM Topics;"), 4);
+    ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM Types;"), 20);
+    ASSERT_EQ(
+        count_query_(output_file, "SELECT COUNT(*) FROM Messages WHERE data_json IS NOT NULL AND data_json != '';"),
+        22);
+    ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM Messages WHERE key != '';"), 22);
+}
+
+TEST_F(McapConvertTest, ros2_output_exact_counts_with_small_batch)
+{
+    const auto input_file = recordings_root_() / "ros2" / "ros2_talker.mcap";
+    const auto output_file = output_directory_ / "ros2_output_small_batch.db";
+
+    commandline_args_.input_file = input_file.string();
+    commandline_args_.sql_batch_size = 4u;
+
+    eprosima::ddsrecorder::converter::McapToSqlConverter converter(
+        configuration_,
+        commandline_args_.input_file,
+        output_file.string(),
+        commandline_args_.sql_batch_size);
+    converter.convert();
+
+    ASSERT_TRUE(std::filesystem::exists(output_file));
+    ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM Messages;"), 35);
+    ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM MessagesPartitions;"), 35);
+    ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM Topics;"), 4);
+    ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM Types;"), 20);
+    ASSERT_EQ(
+        count_query_(output_file, "SELECT COUNT(*) FROM Messages WHERE data_json IS NOT NULL AND data_json != '';"),
+        22);
+    ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM Messages WHERE key != '';"), 22);
 }
 
 int main(

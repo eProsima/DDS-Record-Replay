@@ -36,6 +36,18 @@ To write the converted output to a specific location, pass ``--sql-output``:
 
 If the value given to ``--sql-output`` has no extension, ``.db`` is appended automatically.
 
+To tune the conversion batch size, use ``--sql-batch-size``:
+
+.. code-block:: bash
+
+    source install/setup.bash
+    mcap-convert -i /path/to/recording.mcap --sql-batch-size 8192
+
+The batch size controls how many messages are processed before they are written to the SQLite
+output. The default value is ``4096``. Larger values can improve throughput at the cost of higher
+memory usage, while smaller values reduce memory usage and force more frequent flushes. The value
+must be greater than ``0``.
+
 Optional Configuration File
 ===========================
 
@@ -102,6 +114,14 @@ The ``mcap-convert`` application supports the following input arguments:
         - File path
         - Input file path with ``.db`` |br|
           extension
+
+    *   - SQL Batch Size
+        - Number of messages processed |br|
+          before flushing a batch into |br|
+          the SQLite output.
+        - ``--sql-batch-size``
+        - Integer greater than ``0``
+        - ``4096``
 
     *   - Debug
         - Enables the converter logs so the |br|

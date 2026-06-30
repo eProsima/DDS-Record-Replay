@@ -15,6 +15,7 @@
 #include "arguments_configuration.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <cstdlib>
 #include <exception>
 #include <iostream>
@@ -100,6 +101,16 @@ const option::Descriptor usage[] = {
         Arg::String,
         "  \t--sql-output\t  \t" \
         "Output SQLite file path. [Default: <input_file_stem>.db]."
+    },
+
+    {
+        optionIndex::SQL_BATCH_SIZE,
+        0,
+        "",
+        "sql-batch-size",
+        Arg::Numeric,
+        "  \t--sql-batch-size\t  \t" \
+        "Batch size used for SQL conversion. [Default: 4096]."
     },
 
     {
@@ -233,6 +244,10 @@ ProcessReturnCode parse_arguments(
                     commandline_args.sql_output = opt.arg;
                     break;
 
+                case optionIndex::SQL_BATCH_SIZE:
+                    commandline_args.sql_batch_size = static_cast<std::size_t>(std::strtoull(opt.arg, nullptr, 10));
+                    break;
+
                 case optionIndex::ACTIVATE_DEBUG:
                     commandline_args.log_filter[utils::VerbosityKind::Error].set_value("");
                     commandline_args.log_filter[utils::VerbosityKind::Warning].set_value("DDSREPLAYER");
@@ -304,6 +319,67 @@ option::ArgStatus Arg::Required(
     {
         EPROSIMA_LOG_ERROR(DDSREPLAYER_ARGS, "Option '" << option << "' required.");
     }
+    return option::ARG_ILLEGAL;
+}
+
+option::ArgStatus Arg::Numeric(
+        const option::Option& option,
+        bool msg)
+{
+    if (option.arg == nullptr || option.arg[0] == 0)
+    {
+        if (msg)
+        {
+            EPROSIMA_LOG_ERROR(DDSREPLAYER_ARGS, "Option '" << option << "' requires a numeric argument.");
+        }
+
+        return option::ARG_ILLEGAL;
+    }
+
+    const auto* value = option.arg;
+    if (*value == '+')
+    {
+        ++value;
+    }
+
+    if (*value == 0 || *value == '-')
+    {
+        if (msg)
+        {
+            EPROSIMA_LOG_ERROR(
+                DDSREPLAYER_ARGS,
+                "Option '" << option << "' requires a positive numeric argument.");
+        }
+
+        return option::ARG_ILLEGAL;
+    }
+
+    for (const auto* it = value; *it != 0; ++it)
+    {
+        if (!std::isdigit(static_cast<unsigned char>(*it)))
+        {
+            if (msg)
+            {
+                EPROSIMA_LOG_ERROR(DDSREPLAYER_ARGS, "Option '" << option << "' requires a numeric argument.");
+            }
+
+            return option::ARG_ILLEGAL;
+        }
+    }
+
+    char* endptr = nullptr;
+    std::strtoull(option.arg, &endptr, 10);
+
+    if (option.arg != nullptr && endptr != option.arg && *endptr == 0)
+    {
+        return option::ARG_OK;
+    }
+
+    if (msg)
+    {
+        EPROSIMA_LOG_ERROR(DDSREPLAYER_ARGS, "Option '" << option << "' requires a numeric argument.");
+    }
+
     return option::ARG_ILLEGAL;
 }
 

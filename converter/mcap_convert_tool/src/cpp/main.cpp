@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <chrono>
 #include <exception>
 #include <memory>
 
@@ -93,10 +94,16 @@ int main(
         eprosima::ddsrecorder::converter::McapToSqlConverter converter(
             *configuration,
             commandline_args.input_file,
-            output_file);
+            output_file,
+            commandline_args.sql_batch_size);
+        const auto conversion_start = std::chrono::steady_clock::now();
         converter.convert();
+        const auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - conversion_start);
 
-        logUser(DDSREPLAYER_EXECUTION, "MCAP-to-SQL conversion finished correctly.");
+        logUser(
+            DDSREPLAYER_EXECUTION,
+            "MCAP-to-SQL conversion finished correctly in " << elapsed_ms.count() << " ms.");
         logUser(DDSREPLAYER_EXECUTION, "Finishing MCAP Convert execution correctly.");
 
         eprosima::utils::Log::Flush();

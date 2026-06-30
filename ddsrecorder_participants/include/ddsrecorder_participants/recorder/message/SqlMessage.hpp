@@ -42,7 +42,7 @@ namespace participants {
 /**
  * Structure extending a \c BaseMessage for SQLite.
  */
-struct SqlMessage : public BaseMessage
+struct DDSRECORDER_PARTICIPANTS_DllAPI SqlMessage : public BaseMessage
 {
     SqlMessage() = default;
 
@@ -88,6 +88,10 @@ struct SqlMessage : public BaseMessage
     // Writer GUID
     ddspipe::core::types::Guid writer_guid;
 
+    // Cached string form of the writer GUID when already available
+    // Used to reduce the time complexity of writing in SQL files
+    std::string writer_guid_string;
+
     // Number of SqlMessages created
     static std::atomic<std::uint64_t> number_of_msgs;
 
@@ -102,6 +106,13 @@ struct SqlMessage : public BaseMessage
 
     // String containing the JSON-serialized instance key
     std::string key;
+
+    // Partition assigned to the message writer
+    std::string partition;
+
+    // Cached SQL-formatted timestamps when already available.
+    std::string log_time_sql;
+    std::string publish_time_sql;
 };
 
 } /* namespace participants */
