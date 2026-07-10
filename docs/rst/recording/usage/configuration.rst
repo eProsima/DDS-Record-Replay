@@ -141,6 +141,11 @@ Consider the following example:
 In this example, the data published in the topic ``AllowedTopic1`` with type ``Allowed`` and in the topic ``AllowedTopic2`` with any type will be recorded by the |ddsrecorder|.
 The data published in the topic ``HelloWorldTopic`` with type ``HelloWorld`` will be blocked, since the ``blocklist`` is blocking all topics with any name and with type ``HelloWorld``.
 
+.. note::
+
+    The ``allowlist`` and ``blocklist`` fields also permit a ``qos`` and ``filter`` tag, but they will be unused at the moment.
+
+
 .. _recorder_partition_filtering:
 
 Partition Filtering
@@ -602,7 +607,7 @@ By default:
 Resource Limits Configuration Rules
 """""""""""""""""""""""""""""""""""
 
-The relation between ``max-size`` and ``safety-margin`` introduces resource limits that dictate memory usage. The behavior depends on the enabled recorders:
+The relation between ``max-size`` and ``size-tolerance`` introduces resource limits that dictate memory usage. The behavior depends on the enabled recorders:
 
 A. If only one recorder is enabled
 
@@ -615,10 +620,10 @@ B. If both recorders are enabled
    * **One recorder with resource limits set**: The other recorder will use the remaining disk space.
    * **Both recorders with resource limits set**: Ensure the combined limits do not exceed the available disk space, returning an error otherwise.
 
-Size Margin
-"""""""""""
+Size Tolerance
+""""""""""""""
 
-The ``size-margin`` property is an optional parameter that establish the margin of error for the size of the output files.
+The ``size-tolerance`` property is an optional parameter that establishes the margin of error for the size of the output files.
 
 
 .. warning::
@@ -661,14 +666,14 @@ When the SQL ``log-rotation`` is enabled, the |ddsrecorder| will remove the olde
         max-file-size: 25MB
         max-size: 200MB
         log-rotation: true
-        size-margin: 2MB
+        size-tolerance: 2MB
 
     sql:
       enable: true
       resource-limits:
         max-size: 20MiB
         log-rotation: true
-        size-margin: 1MB
+        size-tolerance: 1MB
 
 .. _recorder_usage_configuration_sql:
 
@@ -721,7 +726,7 @@ The supported configurations are:
         - ``integer``
         - DDS domain being |br|
           recorded
-        - From ``0`` to ``255``
+        - From ``0`` to ``232``
 
     *   - Initial state
         - ``initial-state``

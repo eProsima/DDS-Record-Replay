@@ -13,7 +13,7 @@ DDS Replayer Configuration
 
 A |ddsreplayer| is configured by a *.yaml* configuration file.
 This *.yaml* file contains all the information regarding the DDS interface configuration, playback parameters, and |ddsreplayer| specifications.
-Thus, this file has four major configuration groups:
+Thus, this file has three major configuration groups:
 
 * ``dds``: configuration related to DDS communication.
 * ``replayer``: configuration with data playback parameters.
@@ -120,6 +120,11 @@ Consider the following example:
 
 In this example, the data published in the topic ``AllowedTopic1`` with type ``Allowed`` and in the topic ``AllowedTopic2`` with any type will be replayed by the |ddsreplayer|.
 The data published in the topic ``HelloWorldTopic`` with type ``HelloWorld`` will be blocked, since the ``blocklist`` is blocking all topics with any name and with type ``HelloWorld``.
+
+.. note::
+
+    The ``allowlist`` and ``blocklist`` fields also permit a ``qos`` and ``filter`` tag, but they will be unused at the moment.
+
 
 .. _replayer_partition_filtering:
 
