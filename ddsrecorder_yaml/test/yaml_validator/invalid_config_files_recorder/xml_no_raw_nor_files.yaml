@@ -1,0 +1,9 @@
+dds:
+  domain: 0
+
+  xml: {}
+
+recorder:
+  output:
+    filename: "output"
+    path: "."

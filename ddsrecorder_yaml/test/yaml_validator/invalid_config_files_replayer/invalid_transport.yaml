@@ -1,0 +1,6 @@
+dds:
+  domain: 0
+  transport: "tcp"
+
+replayer:
+  input-file: "input_file.mcap"

@@ -1,0 +1,10 @@
+dds:
+  domain: 0
+
+replayer:
+  input-file: "input_file.mcap"
+
+specs:
+  logging:
+    publish:
+      domain: 0

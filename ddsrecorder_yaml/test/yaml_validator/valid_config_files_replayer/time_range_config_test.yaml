@@ -1,0 +1,20 @@
+dds:
+  domain: 0
+
+replayer:
+  input-file: "session.mcap"
+
+  begin-time:
+    datetime: 2024-01-01_00-00-00
+    microseconds: 500
+
+  end-time:
+    format: "%Y-%m-%d_%H-%M-%S"
+    datetime: 2024-01-01_01-00-00
+
+  start-replay-time:
+    local: false
+    datetime: 2024-01-01_00-00-05
+    nanoseconds: 250
+
+  rate: 0.5

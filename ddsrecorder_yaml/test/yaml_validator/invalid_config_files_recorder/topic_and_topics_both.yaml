@@ -1,0 +1,13 @@
+dds:
+  domain: 0
+
+  topic:
+    name: "single_topic"
+
+  topics:
+    - name: "topic_a"
+
+recorder:
+  output:
+    filename: "output"
+    path: "."

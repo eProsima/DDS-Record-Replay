@@ -1,0 +1,5 @@
+dds:
+  domain: 300
+
+replayer:
+  input-file: "input_file.mcap"

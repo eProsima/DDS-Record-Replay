@@ -12,6 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(get_configuration)
-add_subdirectory(resource_limits)
-add_subdirectory(yaml_validator)
+set(TEST_NAME YamlResourceLimitsTest)
+
+set(TEST_SOURCES
+        YamlResourceLimitsTest.cpp
+    )
+
+set(TEST_LIST
+        none
+        full_config
+        sql_max_file_size
+        sql_log_rotation
+        mcap_max_size
+        mcap_file_rotation
+    )
+
+set(TEST_EXTRA_LIBRARIES
+        yaml-cpp
+        fastcdr
+        fastdds
+        cpp_utils
+        ddspipe_core
+        ddspipe_participants
+        ddspipe_yaml
+        ddsrecorder_yaml
+    )
+
+add_unittest_executable(
+    "${TEST_NAME}"
+    "${TEST_SOURCES}"
+    "${TEST_LIST}"
+    "${TEST_EXTRA_LIBRARIES}")

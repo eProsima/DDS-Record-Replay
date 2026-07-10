@@ -1,0 +1,7 @@
+dds:
+  domain: 0
+
+  xml: {}
+
+replayer:
+  input-file: "input_file.mcap"

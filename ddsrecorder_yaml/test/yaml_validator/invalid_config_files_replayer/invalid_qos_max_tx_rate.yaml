@@ -1,0 +1,10 @@
+dds:
+  domain: 0
+
+  topics:
+    - name: "topic_a"
+      qos:
+        max-tx-rate: -1
+
+replayer:
+  input-file: "input_file.mcap"

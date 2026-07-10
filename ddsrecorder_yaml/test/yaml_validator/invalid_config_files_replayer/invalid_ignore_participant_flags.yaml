@@ -1,0 +1,6 @@
+dds:
+  domain: 0
+  ignore-participant-flags: "invalid_flag"
+
+replayer:
+  input-file: "input_file.mcap"

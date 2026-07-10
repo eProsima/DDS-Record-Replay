@@ -91,14 +91,15 @@ std::unique_ptr<RecorderConfiguration> config_builder(
     std::string yml_str =
             "dds:\n"
             "  domain: 1\n"
-            "recorder:\n"
-            "  output:\n";
+            "recorder:\n";
+    // "  output:\n";  // yaml validator does not allow empty output section, it translates to null, not to an empty object
     // "    filename: test\n"
     // "    path: \"" + std::filesystem::current_path().string() + "\"\n";
 
     if (config.output.safety_margin > 0)
     {
         yml_str +=
+                "  output:\n"
                 "    safety-margin: \"" + std::to_string(config.output.safety_margin) + "B\"\n";
     }
 

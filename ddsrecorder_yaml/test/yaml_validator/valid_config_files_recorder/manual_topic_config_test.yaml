@@ -1,0 +1,31 @@
+dds:
+  domain: 5
+
+  topic:
+    name: "sensor_data"
+    type: "sensor_data::types::Temperature"
+    filter: "1"
+    participants:
+      - "participant_1"
+      - "participant_2"
+    qos:
+      durability: true
+      reliability: true
+      history-depth: 10
+
+recorder:
+  output:
+    filename: "sensor_recording"
+    path: "."
+    safety-margin: "500MB"
+
+  buffer-size: 100
+  only-with-type: true
+
+  sql:
+    enable: true
+    data-format: json
+    resource-limits:
+      max-size: "40MB"
+      size-tolerance: "4MB"
+      log-rotation: true

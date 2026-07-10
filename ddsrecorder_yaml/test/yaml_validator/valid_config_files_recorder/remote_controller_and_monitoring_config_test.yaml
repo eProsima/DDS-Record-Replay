@@ -1,0 +1,50 @@
+dds:
+  domain: 0
+
+recorder:
+  output:
+    filename: "output"
+    path: "."
+
+  mcap:
+    enable: false
+
+  sql:
+    enable: true
+    data-format: cdr
+    resource-limits:
+      max-size: "100MB"
+      log-rotation: false
+
+remote-controller:
+  enable: true
+  domain: 20
+  initial-state: "SUSPENDED"
+  command-topic-name: "/ddsrecorder/command"
+  status-topic-name: "/ddsrecorder/status"
+
+specs:
+  threads: 4
+  rtps: false
+
+  qos:
+    keyed: true
+    history-depth: 3
+
+  logging:
+    publish:
+      enable: false
+    stdout: true
+    verbosity: warning
+
+  monitor:
+    domain: 21
+    status:
+      enable: true
+      period: 5.0
+      topic-name: "/ddsrecorder/monitor/status"
+    topics:
+      enable: true
+      domain: 21
+      period: 10.0
+      topic-name: "/ddsrecorder/monitor/topics"

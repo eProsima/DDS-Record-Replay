@@ -1,0 +1,8 @@
+dds:
+  domain: 0
+
+replayer:
+  input-file: "input_file.mcap"
+
+  begin-time:
+    milliseconds: -5

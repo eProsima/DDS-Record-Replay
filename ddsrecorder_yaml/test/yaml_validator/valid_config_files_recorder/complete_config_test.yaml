@@ -1,0 +1,120 @@
+dds:
+  domain: 0
+
+  xml:
+    files:
+      - "my_xml_profile.xml"
+
+  recorder-profile: "recorder_profile_name"
+
+  whitelist-interfaces:
+    - "127.0.0.1"
+
+  partitions:
+    - "partition_1"
+
+  transport: shm
+
+  ros2-easy-mode: "127.0.0.1"
+
+  ignore-participant-flags: filter_same_process
+
+  allowlist:
+    - name: "topic_name"
+    - name: "HelloWorldTopic"
+      type: "HelloWorld"
+
+  blocklist:
+    - name: "topic_to_block"
+      type: "type_to_block"
+
+  builtin-topics:
+    - name: "HelloWorldTopic"
+      type: "HelloWorld"
+
+  topics:
+    - name: "temperature/*"
+      type: "temperature/types/*"
+      qos:
+        max-rx-rate: 15
+        downsampling: 2
+
+recorder:
+  output:
+    filename: "output"
+    path: "."
+    timestamp-format: "%Y-%m-%d_%H-%M-%S_%Z"
+    local-timestamp: false
+    safety-margin: "1GB"
+
+  buffer-size: 50
+  cleanup-period: 90
+  event-window: 60
+  max-pending-samples: 10
+  only-with-type: false
+  record-types: true
+  ros2-types: false
+
+  mcap:
+    enable: true
+    log-publish-time: false
+    compression:
+      algorithm: lz4
+      level: slowest
+      force: true
+    resource-limits:
+      max-file-size: "100KB"
+      max-size: "300KB"
+      log-rotation: false
+      size-tolerance: "1MB"
+
+  sql:
+    enable: true
+    data-format: both
+    resource-limits:
+      max-size: "2MB"
+      log-rotation: false
+      size-tolerance: "1MB"
+
+remote-controller:
+  enable: true
+  domain: 10
+  initial-state: "PAUSED"
+  command-topic-name: "/ddsrecorder/command"
+  status-topic-name: "/ddsrecorder/status"
+
+specs:
+  threads: 8
+  rtps: true
+
+  qos:
+    durability: true
+    reliability: true
+    ownership: false
+    partitions: true
+    history-depth: 5
+    keyed: false
+    max-rx-rate: 20
+    downsampling: 3
+
+  logging:
+    publish:
+      enable: true
+      domain: 5
+      topic-name: "/ddsrecorder/log"
+    stdout: true
+    verbosity: info
+    filter:
+      info: "DDSRECORDER"
+      warning: "DDSRECORDER"
+      error: "DDSRECORDER"
+
+  monitor:
+    domain: 15
+    status:
+      enable: true
+      domain: 15
+      period: 2.5
+      topic-name: "/ddsrecorder/monitor/status"
+    topics:
+      enable: false

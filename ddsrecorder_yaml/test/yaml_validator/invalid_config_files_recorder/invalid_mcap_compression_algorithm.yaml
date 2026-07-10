@@ -1,0 +1,12 @@
+dds:
+  domain: 0
+
+recorder:
+  output:
+    filename: "output"
+    path: "."
+
+  mcap:
+    enable: true
+    compression:
+      algorithm: "gzip"

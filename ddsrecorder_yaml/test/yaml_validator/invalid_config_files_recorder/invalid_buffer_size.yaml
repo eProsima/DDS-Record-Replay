@@ -1,0 +1,9 @@
+dds:
+  domain: 0
+
+recorder:
+  output:
+    filename: "output"
+    path: "."
+
+  buffer-size: 0
