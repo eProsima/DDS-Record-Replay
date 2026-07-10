@@ -29,9 +29,11 @@
 #include <ddspipe_yaml/yaml_configuration_tags.hpp>
 #include <ddspipe_yaml/Yaml.hpp>
 #include <ddspipe_yaml/YamlManager.hpp>
+#include <ddspipe_yaml/YamlValidator.hpp>
 
 #include <ddsrecorder_yaml/replayer/yaml_configuration_tags.hpp>
 #include <ddsrecorder_yaml/replayer/YamlReaderConfiguration.hpp>
+#include <ddsrecorder_yaml/replayer/DdsReplayerConfigSchema.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -63,6 +65,16 @@ void ReplayerConfiguration::load_ddsreplayer_configuration_(
         const Yaml& yml,
         const CommandlineArgsReplayer* args)
 {
+    // Ensure the Yaml is valid
+    ddspipe::yaml::YamlValidator validator = ddspipe::yaml::YamlValidator(
+        ddspipe::yaml::YamlValidator::InputType::FROM_STRING,
+        DDSREPLAYER_CONFIG_SCHEMA);
+    if (!validator.validate_YAML(yml))
+    {
+        throw eprosima::utils::ConfigurationException(
+                  utils::Formatter() << "Error, the provided yaml file is not a valid ddsreplayer configuration.\n");
+    }
+
     try
     {
         YamlReaderVersion version = LATEST;

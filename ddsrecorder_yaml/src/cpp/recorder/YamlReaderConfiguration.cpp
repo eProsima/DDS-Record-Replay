@@ -35,12 +35,14 @@
 #include <ddspipe_yaml/Yaml.hpp>
 #include <ddspipe_yaml/YamlManager.hpp>
 #include <ddspipe_yaml/YamlReader.hpp>
+#include <ddspipe_yaml/YamlValidator.hpp>
 
 #include <ddsrecorder_participants/recorder/output/OutputSettings.hpp>
 #include <ddsrecorder_participants/recorder/handler/sql/SqlHandlerConfiguration.hpp>
 
 #include <ddsrecorder_yaml/recorder/yaml_configuration_tags.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
+#include <ddsrecorder_yaml/recorder/DdsRecorderConfigSchema.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -125,6 +127,16 @@ void RecorderConfiguration::load_ddsrecorder_configuration_(
         const Yaml& yml,
         const CommandlineArgsRecorder* args)
 {
+    // Ensure the Yaml is valid
+    ddspipe::yaml::YamlValidator validator = ddspipe::yaml::YamlValidator(
+        ddspipe::yaml::YamlValidator::InputType::FROM_STRING,
+        DDSRECORDER_CONFIG_SCHEMA);
+    if (!validator.validate_YAML(yml))
+    {
+        throw eprosima::utils::ConfigurationException(
+                  utils::Formatter() << "Error, the provided yaml file is not a valid ddsrecorder configuration.\n");
+    }
+
     try
     {
         YamlReaderVersion version = LATEST;
@@ -374,10 +386,10 @@ void RecorderConfiguration::load_recorder_output_configuration_(
 
     /////
     // Get optional size tolerance
-    if (YamlReader::is_tag_present(yml, RECORDER_OUTPUT_TAG))
+    if (YamlReader::is_tag_present(yml, RECORDER_OUTPUT_SAFETY_MARGIN_TAG))
     {
         const auto& output_safety_margin_tmp = YamlReader::get<std::string>(yml,
-                        RECORDER_OUTPUT_TAG,
+                        RECORDER_OUTPUT_SAFETY_MARGIN_TAG,
                         version);
         output_safety_margin = eprosima::utils::to_bytes(output_safety_margin_tmp);
         if (output_safety_margin < OUTPUT_SAFETY_MARGIN_MIN)
