@@ -24,10 +24,14 @@ set(TEST_SOURCES
     )
 
 set(TEST_LIST
-        recorder_validation_passed
-        recorder_validation_failed
-        replayer_validation_passed
-        replayer_validation_failed
+        recorder_direct_validation_passed
+        recorder_direct_validation_failed
+        replayer_direct_validation_passed
+        replayer_direct_validation_failed
+        recorder_reader_validation_passed
+        recorder_reader_validation_failed
+        replayer_reader_validation_passed
+        replayer_reader_validation_failed
     )
 
 set(TEST_EXTRA_LIBRARIES
