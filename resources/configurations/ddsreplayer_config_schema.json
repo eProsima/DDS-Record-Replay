@@ -3,7 +3,7 @@
     "$ref":"#/definitions/BaseObject",
     "definitions":{
         "BaseObject":{
-            "type":"object",
+            "type":["object","null"],
             "additionalProperties":false,
             "properties":{
                 "dds":{
