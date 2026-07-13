@@ -664,23 +664,23 @@ void RecorderConfiguration::load_dds_configuration_(
 
     /////
     // Get optional topics
-    const char* topics_tag = nullptr;
+    std::list<ManualTopic> manual_topics;
+
     if (YamlReader::is_tag_present(yml, TOPICS_TAG))
     {
-        topics_tag = TOPICS_TAG;
+        manual_topics = YamlReader::get_list<ManualTopic>(yml, TOPICS_TAG, version);
     }
     else if (YamlReader::is_tag_present(yml, "topic"))
     {
-        // Backward compatibility: accept legacy singular tag.
-        topics_tag = "topic";
+        // Backward compatibility: accept legacy singular tag as a single manual topic.
         EPROSIMA_LOG_WARNING(
             YAML_READER_CONFIGURATION,
             "Detected deprecated <topic> tag in DDS configuration. Please migrate to <topics>.");
+        manual_topics.push_back(YamlReader::get<ManualTopic>(yml, "topic", version));
     }
 
-    if (topics_tag != nullptr)
+    if (!manual_topics.empty())
     {
-        const auto& manual_topics = YamlReader::get_list<ManualTopic>(yml, topics_tag, version);
         ddspipe_configuration.manual_topics =
                 std::vector<ManualTopic>(manual_topics.begin(), manual_topics.end());
 
