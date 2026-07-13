@@ -1,8 +1,9 @@
-topics:
-  - name: configuration_topic
-    type: Configuration
-    qos:
-      reliability: true       # Use QoS RELIABLE
+dds:
+  topics:
+    - name: configuration_topic
+      type: Configuration
+      qos:
+        reliability: true       # Use QoS RELIABLE
 
 replayer:
   replay-types: false
