@@ -26,6 +26,70 @@ using namespace eprosima;
 using namespace eprosima::ddsrecorder::yaml;
 
 /**
+ * Check CommandlineArgsRecorder::is_valid Domain ID validation.
+ *
+ * CASES:
+ *  Check that an unset Domain ID is valid.
+ *  Check that a Domain ID within the valid range [0, MAX_DOMAIN_ID] is valid.
+ *  Check that a Domain ID above MAX_DOMAIN_ID is invalid.
+ *
+ * NOTE: DomainId's own constructor already rejects out-of-range values, so an invalid
+ * domain can only reach is_valid() by mutating the underlying value directly (bypassing
+ * the constructor guard), which is what is_valid()'s check protects against.
+ */
+TEST(YamlGetConfigurationDdsRecorderReplayerTest, commandline_args_recorder_is_valid_domain)
+{
+    utils::Formatter error_msg;
+
+    // Domain not set
+    CommandlineArgsRecorder commandline_args_unset;
+    ASSERT_TRUE(commandline_args_unset.is_valid(error_msg));
+
+    // Domain set within valid bounds
+    CommandlineArgsRecorder commandline_args_valid;
+    commandline_args_valid.domain.set_value(ddspipe::core::types::DomainId::MAX_DOMAIN_ID);
+    ASSERT_TRUE(commandline_args_valid.is_valid(error_msg));
+
+    // Domain set above the maximum allowed value, bypassing DomainId's constructor guard
+    CommandlineArgsRecorder commandline_args_invalid;
+    commandline_args_invalid.domain.get_reference().domain_id = ddspipe::core::types::DomainId::MAX_DOMAIN_ID + 1;
+    commandline_args_invalid.domain.set_level(utils::FuzzyLevelValues::fuzzy_level_set);
+    ASSERT_FALSE(commandline_args_invalid.is_valid(error_msg));
+}
+
+/**
+ * Check CommandlineArgsReplayer::is_valid Domain ID validation.
+ *
+ * CASES:
+ *  Check that an unset Domain ID is valid.
+ *  Check that a Domain ID within the valid range [0, MAX_DOMAIN_ID] is valid.
+ *  Check that a Domain ID above MAX_DOMAIN_ID is invalid.
+ *
+ * NOTE: DomainId's own constructor already rejects out-of-range values, so an invalid
+ * domain can only reach is_valid() by mutating the underlying value directly (bypassing
+ * the constructor guard), which is what is_valid()'s check protects against.
+ */
+TEST(YamlGetConfigurationDdsRecorderReplayerTest, commandline_args_replayer_is_valid_domain)
+{
+    utils::Formatter error_msg;
+
+    // Domain not set
+    CommandlineArgsReplayer commandline_args_unset;
+    ASSERT_TRUE(commandline_args_unset.is_valid(error_msg));
+
+    // Domain set within valid bounds
+    CommandlineArgsReplayer commandline_args_valid;
+    commandline_args_valid.domain.set_value(ddspipe::core::types::DomainId::MAX_DOMAIN_ID);
+    ASSERT_TRUE(commandline_args_valid.is_valid(error_msg));
+
+    // Domain set above the maximum allowed value, bypassing DomainId's constructor guard
+    CommandlineArgsReplayer commandline_args_invalid;
+    commandline_args_invalid.domain.get_reference().domain_id = ddspipe::core::types::DomainId::MAX_DOMAIN_ID + 1;
+    commandline_args_invalid.domain.set_level(utils::FuzzyLevelValues::fuzzy_level_set);
+    ASSERT_FALSE(commandline_args_invalid.is_valid(error_msg));
+}
+
+/**
  * Check RecorderConfiguration structure creation.
  *
  * CASES:

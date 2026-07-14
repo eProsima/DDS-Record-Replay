@@ -1,4 +1,4 @@
-# Copyright 2023 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+# Copyright 2026 Proyectos y Sistemas de Mantenimiento SL (eProsima).
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,18 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(TEST_NAME YamlGetConfigurationDdsRecorderReplayerTest)
+set(TEST_NAME YamlReaderDdsRecorderReplayerTest)
 
 set(TEST_SOURCES
-        YamlGetConfigurationDdsRecorderReplayerTest.cpp
+        YamlReaderDdsRecorderReplayerTest.cpp
     )
 
 set(TEST_LIST
-        commandline_args_recorder_is_valid_domain
-        commandline_args_replayer_is_valid_domain
-        get_ddsrecorder_configuration_yaml_vs_commandline
-        get_ddsreplayer_configuration_yaml_vs_commandline
-        get_simple_participant_configuration_from_yaml
+        recorder_domain_cli_overrides_yaml
+        recorder_max_pending_samples_below_minus_one_throws
+        recorder_sql_resource_limits_max_size_copies_to_max_file_size
+        recorder_duplicate_manual_topic_overwrites_filter
+        recorder_malformed_file_throws
+        recorder_is_valid_defensive_checks
+        replayer_domain_cli_overrides_yaml
+        replayer_begin_time_after_end_time_throws
+        replayer_malformed_file_throws
     )
 
 set(TEST_EXTRA_LIBRARIES
@@ -36,10 +40,6 @@ set(TEST_EXTRA_LIBRARIES
         ddspipe_yaml
         ddsrecorder_yaml
     )
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/DdsConfiguration.yaml
-${CMAKE_CURRENT_BINARY_DIR}/DdsConfiguration.yaml
-COPYONLY)
 
 add_unittest_executable(
     "${TEST_NAME}"
