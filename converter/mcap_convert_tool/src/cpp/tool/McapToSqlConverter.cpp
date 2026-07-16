@@ -221,29 +221,6 @@ void write_topic_metadata_(
     }
 }
 
-bool is_dependency_type_name_(
-        const std::string& name,
-        const std::set<std::string>& type_names)
-{
-    const auto underscore_pos = name.rfind('_');
-    if (underscore_pos == std::string::npos || underscore_pos == name.size() - 1)
-    {
-        return false;
-    }
-
-    const auto suffix_begin = name.begin() + underscore_pos + 1;
-    if (!std::all_of(suffix_begin, name.end(), [](unsigned char c)
-            {
-                return std::isdigit(c) != 0;
-            }))
-    {
-        return false;
-    }
-
-    const auto parent = name.substr(0, underscore_pos);
-    return type_names.find(parent) != type_names.end();
-}
-
 participants::OutputSettings create_output_settings_(
         const std::string& output_file)
 {
@@ -528,19 +505,10 @@ void McapToSqlConverter::convert()
                     pending_type_names.clear();
                 };
 
-        std::set<std::string> dynamic_type_names;
+        // Write every type, including dependency fragments: composite types
+        // reference them by hash and can't be rebuilt without them.
         for (const auto& dynamic_type : dynamic_types_collection.dynamic_types())
         {
-            dynamic_type_names.insert(dynamic_type.type_name());
-        }
-
-        for (const auto& dynamic_type : dynamic_types_collection.dynamic_types())
-        {
-            if (is_dependency_type_name_(dynamic_type.type_name(), dynamic_type_names))
-            {
-                continue;
-            }
-
             sql_writer.update_dynamic_types(dynamic_type);
         }
 

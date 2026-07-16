@@ -81,11 +81,16 @@ void SqlHandler::add_schema(
 
     if (configuration_.record_types)
     {
-        // Add type to the collection of dynamic types
+        // store_dynamic_type_ appends the type plus its dependencies; forward
+        // all newly-added entries, not just the last, so composites stay whole.
+        const auto previous_size = dynamic_types_.dynamic_types().size();
         if (store_dynamic_type_(type_name, type_identifier))
         {
-            const auto dynamic_type = dynamic_types_.dynamic_types().back();
-            sql_writer_.update_dynamic_types(dynamic_type);
+            const auto& collection = dynamic_types_.dynamic_types();
+            for (auto i = previous_size; i < collection.size(); ++i)
+            {
+                sql_writer_.update_dynamic_types(collection[i]);
+            }
         }
     }
 
