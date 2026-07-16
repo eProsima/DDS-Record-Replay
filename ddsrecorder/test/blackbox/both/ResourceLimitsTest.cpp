@@ -261,7 +261,7 @@ protected:
     void wait_for_recording_to_settle_(
             const std::filesystem::path& output_file_path)
     {
-        // Temporary output 
+        // Temporary output
         const std::filesystem::path tmp_path(output_file_path.string() + ".tmp~");
         // Build the WAL sidecar path used by SQLite when write-ahead logging is enabled
         const std::filesystem::path wal_path(tmp_path.string() + "-wal");
@@ -277,13 +277,13 @@ protected:
                         // temp file exists
                         ret += std::filesystem::file_size(tmp_path, ec);
                     }
-                    
+
                     if (std::filesystem::exists(wal_path, ec))
                     {
                         // WAL sidecar exists
                         ret += std::filesystem::file_size(wal_path, ec);
                     }
-                    
+
                     return ret;
                 };
 
@@ -301,14 +301,14 @@ protected:
         {
             std::this_thread::sleep_for(POLL_PERIOD);
 
-            const auto size = recorded_size();            
+            const auto size = recorded_size();
             if (size != last_size)
             {
                 // Update the last observed size so the next iteration compares against the new value
                 last_size = size;
                 // Reset the stability timer because new output was still being produced
                 last_change = std::chrono::steady_clock::now();
-            }            
+            }
             else if (std::chrono::steady_clock::now() - last_change >= STABLE_PERIOD)
             {
                 // If the size has not changed long enough, assume the write pipeline has drained
