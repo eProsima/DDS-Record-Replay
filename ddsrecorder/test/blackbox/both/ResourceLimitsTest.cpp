@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <chrono>
 #include <cstdint>
 #include <filesystem>
+#include <system_error>
+#include <thread>
 
 #include <cpp_utils/testing/gtest_aux.hpp>
 #include <gtest/gtest.h>
@@ -252,6 +255,69 @@ protected:
         return is_acceptable;
     }
 
+    /**
+     * @brief Wait until the DDS Recorder has finished writing the received samples to disk.
+     */
+    void wait_for_recording_to_settle_(
+            const std::filesystem::path& output_file_path)
+    {
+        // Temporary output 
+        const std::filesystem::path tmp_path(output_file_path.string() + ".tmp~");
+        // Build the WAL sidecar path used by SQLite when write-ahead logging is enabled
+        const std::filesystem::path wal_path(tmp_path.string() + "-wal");
+
+        // Compute the total number of bytes currently persisted by the recorder.
+        const auto recorded_size = [&]() -> std::uintmax_t
+                {
+                    std::error_code ec;
+                    std::uintmax_t ret = 0;
+
+                    if (std::filesystem::exists(tmp_path, ec))
+                    {
+                        // temp file exists
+                        ret += std::filesystem::file_size(tmp_path, ec);
+                    }
+                    
+                    if (std::filesystem::exists(wal_path, ec))
+                    {
+                        // WAL sidecar exists
+                        ret += std::filesystem::file_size(wal_path, ec);
+                    }
+                    
+                    return ret;
+                };
+
+        // Sleep to avoid busy-waiting
+        constexpr auto POLL_PERIOD = std::chrono::milliseconds(200);
+        // Consider the recorder settled once the observed size stays unchanged for this long
+        constexpr auto STABLE_PERIOD = std::chrono::milliseconds(1000);
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
+
+        auto last_size = recorded_size();
+        auto last_change = std::chrono::steady_clock::now();
+
+        // Keep polling until the recording settles or the timeout expires
+        while (std::chrono::steady_clock::now() < deadline)
+        {
+            std::this_thread::sleep_for(POLL_PERIOD);
+
+            const auto size = recorded_size();            
+            if (size != last_size)
+            {
+                // Update the last observed size so the next iteration compares against the new value
+                last_size = size;
+                // Reset the stability timer because new output was still being produced
+                last_change = std::chrono::steady_clock::now();
+            }            
+            else if (std::chrono::steady_clock::now() - last_change >= STABLE_PERIOD)
+            {
+                // If the size has not changed long enough, assume the write pipeline has drained
+                // The recording has not grown for STABLE_PERIOD: the pipeline has drained
+                break;
+            }
+        }
+    }
+
     void test_max_file_size(
             const test::FileTypes file_type)
     {
@@ -281,6 +347,9 @@ protected:
 
         // Make sure the DDS Recorder has received all the messages
         ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), RETCODE_OK);
+
+        // Wait for the DDS Recorder to write the received messages before stopping it
+        wait_for_recording_to_settle_(OUTPUT_FILE_PATH);
 
         // All the messages have been sent. Stop the DDS Recorder.
         recorder.stop();
@@ -464,6 +533,9 @@ protected:
             // Make sure the DDS Recorder has received all the messages
             ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), RETCODE_OK);
         }
+
+        // Wait for the DDS Recorder to write the received messages before stopping it
+        wait_for_recording_to_settle_(OUTPUT_FILE_PATH);
 
         // All the messages have been sent. Stop the DDS Recorder.
         recorder.stop();
