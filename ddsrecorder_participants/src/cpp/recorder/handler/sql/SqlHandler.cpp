@@ -184,9 +184,9 @@ void SqlHandler::write_samples_(
             if (received_types_.find(sql_sample->topic.type_name) == received_types_.end())
             {
                 EPROSIMA_LOG_WARNING(DDSRECORDER_SQL_HANDLER,
-                        "Message on topic " << sql_sample->topic.m_topic_name <<
-                        " with type " << sql_sample->topic.type_name <<
-                        " cannot be formatted to JSON since the type has not been received.");
+                        "Message on topic " << sql_sample->topic.m_topic_name
+                                            << " with type " << sql_sample->topic.type_name
+                                            << " cannot be formatted to JSON since the type has not been received.");
             }
             else
             {
