@@ -69,9 +69,9 @@ public:
 
     void TearDown() override
     {
-        utils::Log::ClearConsumers();
-
         monitor_.reset(nullptr);
+        utils::Log::Flush();
+        utils::Log::ClearConsumers();
     }
 
 protected:
@@ -100,7 +100,7 @@ TEST_F(LogMonitorDdsRecorderStatusTest, type_mismatch)
     testing::internal::CaptureStdout();
 
     // Wait for the monitor to log the message
-    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS*3));
+    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS * 3));
     utils::Log::Flush();
 
     ASSERT_TRUE(contains_(testing::internal::GetCapturedStdout(),
@@ -121,7 +121,7 @@ TEST_F(LogMonitorDdsRecorderStatusTest, qos_mismatch)
     testing::internal::CaptureStdout();
 
     // Wait for the monitor to log the message
-    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS*3));
+    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS * 3));
     utils::Log::Flush();
 
     ASSERT_TRUE(contains_(testing::internal::GetCapturedStdout(),
@@ -142,7 +142,7 @@ TEST_F(LogMonitorDdsRecorderStatusTest, mcap_file_creation_failure)
     testing::internal::CaptureStdout();
 
     // Wait for the monitor to log the message
-    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS*2));
+    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS * 2));
     utils::Log::Flush();
 
     ASSERT_TRUE(contains_(testing::internal::GetCapturedStdout(),
@@ -163,7 +163,7 @@ TEST_F(LogMonitorDdsRecorderStatusTest, disk_full)
     testing::internal::CaptureStdout();
 
     // Wait for the monitor to log the message
-    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS*2));
+    std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS * 2));
     utils::Log::Flush();
 
     ASSERT_TRUE(contains_(testing::internal::GetCapturedStdout(),
