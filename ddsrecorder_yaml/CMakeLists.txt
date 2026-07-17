@@ -77,6 +77,10 @@ compile_test_library(
 ###############################################################################
 # Resources
 ###############################################################################
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${PROJECT_SOURCE_DIR}/../resources/configurations/ddsrecorder_config_schema.json"
+    "${PROJECT_SOURCE_DIR}/../resources/configurations/ddsreplayer_config_schema.json")
+
 # Put the json schema files into the C++ code to be able to use them in the
 # code without having to read them from disk
 file(READ "${PROJECT_SOURCE_DIR}/../resources/configurations/ddsrecorder_config_schema.json"

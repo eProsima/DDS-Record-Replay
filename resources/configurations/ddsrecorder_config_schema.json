@@ -282,7 +282,7 @@
                 },
                 "initial-state":{
                     "type":"string",
-                    "pattern":"^([Rr][Uu][Nn][Nn][In][Nn][Gg]|[Pp][Aa][Uu][Ss][Ee][Dd]|[Ss][Uu][Ss][Pp][Ee][Nn][Dd][Ee][Dd]|[Ss][Tt][Oo][Pp][Pp][Ee][Dd])$"
+                    "pattern":"^([Rr][Uu][Nn][Nn][Ii][Nn][Gg]|[Pp][Aa][Uu][Ss][Ee][Dd]|[Ss][Uu][Ss][Pp][Ee][Nn][Dd][Ee][Dd]|[Ss][Tt][Oo][Pp][Pp][Ee][Dd])$"
                 },
                 "command-topic-name":{
                     "type":"string"
