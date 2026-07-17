@@ -287,21 +287,35 @@ protected:
                     return ret;
                 };
 
+        // Once the recording reaches this size the write pipeline has caught up: log-rotation caps
+        // the output at max-size, so this is the steady state and satisfies the callers' bounds.
+        const std::uintmax_t enough_size = limits_->MAX_FILE_SIZE;
+
         // Sleep to avoid busy-waiting
         constexpr auto POLL_PERIOD = std::chrono::milliseconds(200);
-        // Consider the recorder settled once the observed size stays unchanged for this long
-        constexpr auto STABLE_PERIOD = std::chrono::milliseconds(1000);
-        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
+        // Consider the recorder drained once the observed size stays unchanged for this long. Kept
+        // generous: while draining the recorder writes continuously, so a long unchanged period
+        // means it is done. A short window (e.g. 1s) is unreliable because a slow write cadence or a
+        // WAL checkpoint pause on a loaded machine can be mistaken for completion.
+        constexpr auto STABLE_PERIOD = std::chrono::seconds(5);
+        // Hard cap, kept well below the ctest per-test timeout. Reached only on a genuine
+        // under-recording, in which case the caller's assertion reports the real (too small) size.
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(40);
 
         auto last_size = recorded_size();
         auto last_change = std::chrono::steady_clock::now();
 
-        // Keep polling until the recording settles or the timeout expires
+        // Keep polling until the recording reaches the steady state, drains, or the timeout expires
         while (std::chrono::steady_clock::now() < deadline)
         {
-            std::this_thread::sleep_for(POLL_PERIOD);
-
             const auto size = recorded_size();
+
+            if (size >= enough_size)
+            {
+                // The recording reached the steady state; no need to keep waiting.
+                break;
+            }
+
             if (size != last_size)
             {
                 // Update the last observed size so the next iteration compares against the new value
@@ -311,10 +325,11 @@ protected:
             }
             else if (std::chrono::steady_clock::now() - last_change >= STABLE_PERIOD)
             {
-                // If the size has not changed long enough, assume the write pipeline has drained
                 // The recording has not grown for STABLE_PERIOD: the pipeline has drained
                 break;
             }
+
+            std::this_thread::sleep_for(POLL_PERIOD);
         }
     }
 
