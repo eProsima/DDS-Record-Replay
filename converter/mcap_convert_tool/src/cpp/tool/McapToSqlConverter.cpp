@@ -387,6 +387,14 @@ void McapToSqlConverter::convert()
                     // Create the serialization context for types. Reducing the construction in every message
                     for (const auto& [type_name, dynamic_type] : dynamic_types_by_name)
                     {
+                        // Dependency fragments are stored under an internal key and are never a
+                        // topic's type, so they would never be looked up here. Skip them instead of
+                        // building a DynamicData for each.
+                        if (participants::is_dependency_type_key(type_name))
+                        {
+                            continue;
+                        }
+
                         serialization_contexts.try_emplace(type_name, dynamic_type);
                     }
 
