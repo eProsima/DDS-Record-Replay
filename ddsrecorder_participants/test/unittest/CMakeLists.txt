@@ -14,3 +14,4 @@
 
 add_subdirectory(recorder)
 add_subdirectory(monitoring)
+add_subdirectory(replayer)
