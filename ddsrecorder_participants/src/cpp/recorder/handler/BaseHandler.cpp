@@ -469,8 +469,8 @@ void BaseHandler::add_sample_to_buffer_nts_(
     else
     {
         EPROSIMA_LOG_WARNING(DDSRECORDER_BASE_HANDLER,
-                "The buffer's size (" << samples_buffer_.size() << ") exceeds its limit (" <<
-                configuration_.buffer_size << "). Writing to disk...");
+                "The buffer's size (" << samples_buffer_.size() << ") exceeds its limit ("
+                                      << configuration_.buffer_size << "). Writing to disk...");
     }
 
     write_samples_(samples_buffer_);
@@ -502,14 +502,14 @@ void BaseHandler::add_sample_to_pending_nts_(
         if (configuration_.only_with_schema)
         {
             EPROSIMA_LOG_WARNING(DDSRECORDER_BASE_HANDLER,
-                    "Dropping pending sample in type " << sample->topic.type_name << ": buffer limit (" <<
-                    configuration_.max_pending_samples << ") reached.");
+                    "Dropping pending sample in type " << sample->topic.type_name << ": buffer limit ("
+                                                       << configuration_.max_pending_samples << ") reached.");
         }
         else
         {
             EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER,
-                    "Buffer limit (" << configuration_.max_pending_samples <<  ") reached for type " <<
-                    sample->topic.type_name << ": writing oldest sample without schema.");
+                    "Buffer limit (" << configuration_.max_pending_samples <<  ") reached for type "
+                                     << sample->topic.type_name << ": writing oldest sample without schema.");
 
             add_sample_to_buffer_nts_(oldest_sample);
         }
