@@ -87,7 +87,7 @@ void SqlHandler::add_schema(
         if (store_dynamic_type_(type_name, type_identifier))
         {
             const auto& collection = dynamic_types_.dynamic_types();
-            for (auto i = previous_size; i < collection.size(); ++i)
+            for (std::size_t i = previous_size; i < collection.size(); ++i)
             {
                 sql_writer_.update_dynamic_types(collection[i]);
             }
