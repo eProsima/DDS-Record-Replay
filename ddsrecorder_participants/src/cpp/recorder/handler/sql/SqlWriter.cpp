@@ -263,7 +263,7 @@ void SqlWriter::write_nts_(
     // Define the SQL statement
     const char* insert_statement =
             R"(
-        INSERT INTO Types (name, information, object, is_ros2_type)
+        INSERT OR REPLACE INTO Types (name, information, object, is_ros2_type)
         VALUES (?, ?, ?, ?);
     )";
 

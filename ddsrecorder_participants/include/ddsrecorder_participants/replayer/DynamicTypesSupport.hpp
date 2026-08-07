@@ -30,6 +30,25 @@
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
+
+/**
+ * @brief Prefix marking a \c DynamicTypesCollection entry as an internal dependency fragment.
+ *
+ * Dependency fragments are stored under a key derived from their \c TypeIdentifier rather than
+ * under a DDS type name, because they are only ever resolved by TypeIdentifier hash through the
+ * type object registry. The \c '/' separator is not a legal IDL identifier character, so a genuine
+ * DDS type can never be mistaken for a fragment (nor collide with one).
+ */
+constexpr const char* DEPENDENCY_KEY_PREFIX = "__dep__/";
+
+/**
+ * @brief Whether a \c DynamicTypesCollection key denotes an internal dependency fragment rather
+ * than a real DDS type name.
+ */
+DDSRECORDER_PARTICIPANTS_DllAPI
+bool is_dependency_type_key(
+        const std::string& key);
+
 namespace detail {
 
 /**

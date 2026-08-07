@@ -31,6 +31,14 @@
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
+
+bool is_dependency_type_key(
+        const std::string& key)
+{
+    const std::string prefix(DEPENDENCY_KEY_PREFIX);
+    return key.compare(0, prefix.size(), prefix) == 0;
+}
+
 namespace detail {
 
 RegisteredDynamicTypes register_dynamic_types(

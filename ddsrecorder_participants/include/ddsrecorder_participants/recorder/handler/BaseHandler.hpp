@@ -23,6 +23,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <thread>
 #include <utility>
@@ -321,6 +322,23 @@ protected:
             const fastdds::dds::xtypes::TypeIdentifier& type_identifier,
             const fastdds::dds::xtypes::TypeObject& type_object);
 
+    /**
+     * @brief Build the internal key under which a dependency fragment is stored.
+     *
+     * Dependency fragments are never looked up by name: types are reassembled from their
+     * TypeObjects through the TypeIdentifier hash in the type object registry. Therefore the key
+     * only needs to be unique and unable to shadow a real DDS type name. Deriving it from the
+     * serialized TypeIdentifier makes it stable and self-deduplicating, and the
+     * \c DEPENDENCY_KEY_PREFIX separator is not a legal IDL identifier character, so a genuine
+     * type (e.g. one actually named \c Foo_0 ) can never collide with a fragment.
+     *
+     * @param [in] type_identifier Type identifier of the dependency.
+     *
+     * @return The fragment key, or an empty string if the identifier could not be serialized.
+     */
+    static std::string dependency_type_key_(
+            const fastdds::dds::xtypes::TypeIdentifier& type_identifier);
+
     //! Handler configuration
     const BaseHandlerConfiguration configuration_;
 
@@ -374,6 +392,9 @@ protected:
 
     //! Dynamic types collection
     DynamicTypesCollection dynamic_types_;
+
+    //! Keys already present in \c dynamic_types_ , used to keep insertions idempotent
+    std::set<std::string> stored_dynamic_types_;
 };
 
 } /* namespace participants */

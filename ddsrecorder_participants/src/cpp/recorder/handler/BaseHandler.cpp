@@ -29,6 +29,7 @@
 
 #include <ddsrecorder_participants/common/serialize/Serializer.hpp>
 #include <ddsrecorder_participants/recorder/handler/BaseHandler.hpp>
+#include <ddsrecorder_participants/replayer/DynamicTypesSupport.hpp>
 
 namespace eprosima {
 namespace ddsrecorder {
@@ -468,8 +469,8 @@ void BaseHandler::add_sample_to_buffer_nts_(
     else
     {
         EPROSIMA_LOG_WARNING(DDSRECORDER_BASE_HANDLER,
-                "The buffer's size (" << samples_buffer_.size() << ") exceeds its limit (" <<
-                configuration_.buffer_size << "). Writing to disk...");
+                "The buffer's size (" << samples_buffer_.size() << ") exceeds its limit ("
+                                      << configuration_.buffer_size << "). Writing to disk...");
     }
 
     write_samples_(samples_buffer_);
@@ -501,14 +502,14 @@ void BaseHandler::add_sample_to_pending_nts_(
         if (configuration_.only_with_schema)
         {
             EPROSIMA_LOG_WARNING(DDSRECORDER_BASE_HANDLER,
-                    "Dropping pending sample in type " << sample->topic.type_name << ": buffer limit (" <<
-                    configuration_.max_pending_samples << ") reached.");
+                    "Dropping pending sample in type " << sample->topic.type_name << ": buffer limit ("
+                                                       << configuration_.max_pending_samples << ") reached.");
         }
         else
         {
             EPROSIMA_LOG_INFO(DDSRECORDER_BASE_HANDLER,
-                    "Buffer limit (" << configuration_.max_pending_samples <<  ") reached for type " <<
-                    sample->topic.type_name << ": writing oldest sample without schema.");
+                    "Buffer limit (" << configuration_.max_pending_samples <<  ") reached for type "
+                                     << sample->topic.type_name << ": writing oldest sample without schema.");
 
             add_sample_to_buffer_nts_(oldest_sample);
         }
@@ -596,7 +597,6 @@ bool BaseHandler::store_dynamic_type_(
 
     // Store dependencies as dynamic types
     auto dependencies = type_information.complete().dependent_typeids();
-    unsigned int dependency_index = 0;
 
     for (auto dependency : dependencies)
     {
@@ -612,13 +612,25 @@ bool BaseHandler::store_dynamic_type_(
             return false;
         }
 
-        const auto dep_type_name = type_name + "_" + std::to_string(dependency_index);
+        // NOTE: dependencies are stored under an internal key derived from their TypeIdentifier,
+        // never under a name derived from the parent type. A parent-indexed name (e.g. "Foo_0")
+        // could shadow a genuine DDS type with that very name, and the SQL Types table is keyed
+        // only by name.
+        const auto dep_type_name = dependency_type_key_(dep_type_identifier);
+
+        if (dep_type_name.empty())
+        {
+            // Could not be serialized, already logged. Skip the fragment without aborting the
+            // parent type: an unusable fragment is better than losing the whole type.
+            continue;
+        }
 
         // Store dependency in dynamic_types collection
-        store_dynamic_type_(dep_type_name, dep_type_identifier, dep_type_object);
-
-        // Increment suffix counter
-        dependency_index++;
+        if (!store_dynamic_type_(dep_type_name, dep_type_identifier, dep_type_object))
+        {
+            EPROSIMA_LOG_WARNING(DDSRECORDER_BASE_HANDLER, "BASE_WRITE | Error storing dependency "
+                    << dep_type_name << " for type " << type_name);
+        }
     }
 
     fastdds::dds::xtypes::TypeObject type_object;
@@ -640,6 +652,13 @@ bool BaseHandler::store_dynamic_type_(
         const fastdds::dds::xtypes::TypeIdentifier& type_identifier,
         const fastdds::dds::xtypes::TypeObject& type_object)
 {
+    if (stored_dynamic_types_.find(type_name) != stored_dynamic_types_.end())
+    {
+        // Already stored. Storing it again would duplicate the entry, which the SQL Types table
+        // rejects (name is its primary key).
+        return true;
+    }
+
     DynamicType dynamic_type;
     dynamic_type.type_name(type_name);
 
@@ -662,7 +681,27 @@ bool BaseHandler::store_dynamic_type_(
     }
 
     dynamic_types_.dynamic_types().push_back(dynamic_type);
+    stored_dynamic_types_.insert(type_name);
+
     return true;
+}
+
+std::string BaseHandler::dependency_type_key_(
+        const fastdds::dds::xtypes::TypeIdentifier& type_identifier)
+{
+    try
+    {
+        std::string serialized_id;
+        Serializer::serialize(type_identifier, serialized_id);
+
+        return std::string(DEPENDENCY_KEY_PREFIX) + utils::base64_encode(serialized_id);
+    }
+    catch (const utils::InconsistencyException& e)
+    {
+        EPROSIMA_LOG_WARNING(DDSRECORDER_BASE_HANDLER,
+                "BASE_WRITE | Error serializing dependency TypeIdentifier. Error message:\n " << e.what());
+        return "";
+    }
 }
 
 } /* namespace participants */

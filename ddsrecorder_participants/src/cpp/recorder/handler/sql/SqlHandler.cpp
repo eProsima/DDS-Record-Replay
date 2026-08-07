@@ -81,11 +81,20 @@ void SqlHandler::add_schema(
 
     if (configuration_.record_types)
     {
-        // Add type to the collection of dynamic types
-        if (store_dynamic_type_(type_name, type_identifier))
+        // store_dynamic_type_ appends the type plus its dependencies; forward
+        // all newly-added entries, not just the last, so composites stay whole.
+        // NOTE: forward them even if store_dynamic_type_ failed. The failure may concern only the
+        // parent type, and any dependency already appended is valid and needed. Leaving them
+        // behind would strand them in dynamic_types_ unwritten, since the next call starts from a
+        // previous_size past them.
+        const auto previous_size = dynamic_types_.dynamic_types().size();
+        store_dynamic_type_(type_name, type_identifier);
+
+        const auto& collection = dynamic_types_.dynamic_types();
+
+        for (std::size_t i = previous_size; i < collection.size(); ++i)
         {
-            const auto dynamic_type = dynamic_types_.dynamic_types().back();
-            sql_writer_.update_dynamic_types(dynamic_type);
+            sql_writer_.update_dynamic_types(collection[i]);
         }
     }
 
@@ -179,9 +188,9 @@ void SqlHandler::write_samples_(
             if (received_types_.find(sql_sample->topic.type_name) == received_types_.end())
             {
                 EPROSIMA_LOG_WARNING(DDSRECORDER_SQL_HANDLER,
-                        "Message on topic " << sql_sample->topic.m_topic_name <<
-                        " with type " << sql_sample->topic.type_name <<
-                        " cannot be formatted to JSON since the type has not been received.");
+                        "Message on topic " << sql_sample->topic.m_topic_name
+                                            << " with type " << sql_sample->topic.type_name
+                                            << " cannot be formatted to JSON since the type has not been received.");
             }
             else
             {
