@@ -29,9 +29,10 @@ CommandlineArgsReplayer::CommandlineArgsReplayer()
 bool CommandlineArgsReplayer::is_valid(
         utils::Formatter& error_msg) const noexcept
 {
-    if (domain.is_set() && (domain.get_value() < 0 || domain.get_value() > 232))
+    if (domain.is_set() &&
+            (domain.get_value() < 0 || domain.get_value() > ddspipe::core::types::DomainId::MAX_DOMAIN_ID))
     {
-        error_msg << "Domain ID must be between 0 and 232";
+        error_msg << "Domain ID must be between 0 and " << ddspipe::core::types::DomainId::MAX_DOMAIN_ID;
         return false;
     }
 

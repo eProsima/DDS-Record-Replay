@@ -1,0 +1,12 @@
+dds:
+  domain: 0
+
+recorder:
+  output:
+    filename: "output"
+    path: "."
+
+specs:
+  logging:
+    publish:
+      domain: 0

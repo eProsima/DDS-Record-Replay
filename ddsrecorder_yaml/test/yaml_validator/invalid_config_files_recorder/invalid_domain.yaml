@@ -1,0 +1,7 @@
+dds:
+  domain: 300
+
+recorder:
+  output:
+    filename: "output"
+    path: "."

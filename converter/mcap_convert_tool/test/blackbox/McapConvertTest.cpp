@@ -100,9 +100,17 @@ protected:
         std::filesystem::remove_all(output_directory_, ec);
     }
 
+    // Use basic yaml config to pass yaml validator
+    eprosima::Yaml yml = YAML::Load(
+        "dds:\n"
+        "  domain: 0\n"
+        "\n"
+        "replayer:\n"
+        "  input-file: input_file.mcap\n");
+
     eprosima::ddsrecorder::converter::CommandlineArgsMcapConvert commandline_args_;
     eprosima::ddsrecorder::yaml::ReplayerConfiguration configuration_{
-        eprosima::Yaml(),
+        yml,
         &commandline_args_};
     std::filesystem::path output_directory_;
 };

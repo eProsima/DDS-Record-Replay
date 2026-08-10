@@ -1,0 +1,10 @@
+dds:
+  domain: 0
+
+  allowlist:
+    - type: "HelloWorld"
+
+recorder:
+  output:
+    filename: "output"
+    path: "."

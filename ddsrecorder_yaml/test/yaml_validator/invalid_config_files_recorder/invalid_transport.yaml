@@ -1,0 +1,8 @@
+dds:
+  domain: 0
+  transport: "tcp"
+
+recorder:
+  output:
+    filename: "output"
+    path: "."

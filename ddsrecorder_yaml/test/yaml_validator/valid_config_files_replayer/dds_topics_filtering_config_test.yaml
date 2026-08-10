@@ -1,0 +1,34 @@
+dds:
+  domain: 3
+
+  transport: udp
+
+  ignore-participant-flags: filter_different_host
+
+  whitelist-interfaces:
+    - "192.168.1.1"
+    - "127.0.0.1"
+
+  allowlist:
+    - name: "*"
+
+  blocklist:
+    - name: "topic_to_block"
+      type: "type_to_block"
+
+  topics:
+    - name: "image_topic"
+      type: "sensor_msgs::msg::dds_::Image_"
+      filter: "1"
+      participants:
+        - "participant_1"
+        - "participant_2"
+      qos:
+        max-tx-rate: 10
+        history-depth: 5
+        keyed: true
+
+replayer:
+  input-file: "recording.mcap"
+  rate: 2.0
+  replay-types: false

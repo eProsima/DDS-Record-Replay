@@ -1,0 +1,8 @@
+dds:
+  domain: 0
+
+replayer:
+  input-file: "input_file.mcap"
+
+specs:
+  wait-all-acked-timeout: -1

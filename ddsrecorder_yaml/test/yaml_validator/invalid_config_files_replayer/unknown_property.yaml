@@ -1,0 +1,7 @@
+dds:
+  domain: 0
+
+replayer:
+  input-file: "input_file.mcap"
+
+unknown-top-level-field: "not_allowed"

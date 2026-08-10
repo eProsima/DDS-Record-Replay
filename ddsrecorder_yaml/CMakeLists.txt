@@ -75,6 +75,60 @@ compile_test_library(
 )
 
 ###############################################################################
+# Resources
+###############################################################################
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${PROJECT_SOURCE_DIR}/../resources/configurations/ddsrecorder_config_schema.json"
+    "${PROJECT_SOURCE_DIR}/../resources/configurations/ddsreplayer_config_schema.json")
+
+# Put the json schema files into the C++ code to be able to use them in the
+# code without having to read them from disk
+file(READ "${PROJECT_SOURCE_DIR}/../resources/configurations/ddsrecorder_config_schema.json"
+    DDSRECORDER_CONFIG_SCHEMA_CONTENT)
+
+# Split into <=16000-char chunks to work around MSVC C2026 string literal size limit.
+# Adjacent string literals are concatenated by the compiler.
+string(LENGTH "${DDSRECORDER_CONFIG_SCHEMA_CONTENT}" _schema_len)
+set(_chunk_size 16000)
+set(DDSRECORDER_CONFIG_SCHEMA_CHUNKS "")
+set(_offset 0)
+while(_offset LESS _schema_len)
+    string(SUBSTRING "${DDSRECORDER_CONFIG_SCHEMA_CONTENT}" ${_offset} ${_chunk_size} _chunk)
+    string(APPEND DDSRECORDER_CONFIG_SCHEMA_CHUNKS "    R\"json(${_chunk})json\"\n")
+    math(EXPR _offset "${_offset} + ${_chunk_size}")
+endwhile()
+
+configure_file(
+    "${PROJECT_SOURCE_DIR}/include/ddsrecorder_yaml/recorder/DdsRecorderConfigSchema.hpp.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/include/ddsrecorder_yaml/recorder/DdsRecorderConfigSchema.hpp"
+    @ONLY
+)
+
+file(READ "${PROJECT_SOURCE_DIR}/../resources/configurations/ddsreplayer_config_schema.json"
+    DDSREPLAYER_CONFIG_SCHEMA_CONTENT)
+
+# Split into <=16000-char chunks to work around MSVC C2026 string literal size limit.
+# Adjacent string literals are concatenated by the compiler.
+string(LENGTH "${DDSREPLAYER_CONFIG_SCHEMA_CONTENT}" _schema_len)
+set(DDSREPLAYER_CONFIG_SCHEMA_CHUNKS "")
+set(_offset 0)
+while(_offset LESS _schema_len)
+    string(SUBSTRING "${DDSREPLAYER_CONFIG_SCHEMA_CONTENT}" ${_offset} ${_chunk_size} _chunk)
+    string(APPEND DDSREPLAYER_CONFIG_SCHEMA_CHUNKS "    R\"json(${_chunk})json\"\n")
+    math(EXPR _offset "${_offset} + ${_chunk_size}")
+endwhile()
+
+configure_file(
+    "${PROJECT_SOURCE_DIR}/include/ddsrecorder_yaml/replayer/DdsReplayerConfigSchema.hpp.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/include/ddsrecorder_yaml/replayer/DdsReplayerConfigSchema.hpp"
+    @ONLY
+)
+
+target_include_directories(${MODULE_NAME} PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+)
+
+###############################################################################
 # Packaging
 ###############################################################################
 # Install package

@@ -1,0 +1,10 @@
+dds:
+  domain: 0
+
+  builtin-topics:
+    - name: "HelloWorldTopic"
+
+recorder:
+  output:
+    filename: "output"
+    path: "."

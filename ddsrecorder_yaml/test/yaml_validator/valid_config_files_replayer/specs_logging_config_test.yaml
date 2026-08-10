@@ -1,0 +1,18 @@
+dds:
+  domain: 0
+
+replayer:
+  input-file: "output.mcap"
+
+specs:
+  threads: 2
+  rtps: false
+  wait-all-acked-timeout: 30
+
+  logging:
+    publish:
+      enable: false
+    stdout: false
+    verbosity: error
+    filter:
+      error: "DDSREPLAYER"

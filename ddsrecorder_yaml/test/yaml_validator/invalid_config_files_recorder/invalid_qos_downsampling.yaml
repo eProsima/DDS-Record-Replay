@@ -1,0 +1,12 @@
+dds:
+  domain: 0
+
+  topics:
+    - name: "topic_a"
+      qos:
+        downsampling: 0
+
+recorder:
+  output:
+    filename: "output"
+    path: "."
