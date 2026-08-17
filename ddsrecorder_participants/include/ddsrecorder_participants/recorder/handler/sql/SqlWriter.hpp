@@ -203,6 +203,17 @@ protected:
      */
     void check_file_size_();
 
+    /**
+     * @brief Size in bytes of the current database, including data still held in the WAL sidecar.
+     *
+     * The database is opened in WAL mode, so the size of the main database file on disk lags behind
+     * the committed content until a checkpoint runs. This reports \c page_count * \c page_size,
+     * which reflects the current read snapshot and therefore the size the resource limits bound.
+     *
+     * @return The logical database size in bytes, or 0 if it could not be determined.
+     */
+    std::uint64_t get_logical_file_size_();
+
     // The SQLite database
     sqlite3* database_;
 

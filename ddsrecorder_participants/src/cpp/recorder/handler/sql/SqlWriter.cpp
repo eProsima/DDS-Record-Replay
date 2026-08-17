@@ -16,6 +16,7 @@
  * @file SqlWriter.cpp
  */
 
+#include <algorithm>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
@@ -56,6 +57,32 @@ SqlWriter::SqlWriter(
     , check_interval_(configuration.resource_limits.size_tolerance_ / 2)
     , size_checkpoint_(configuration.resource_limits.size_tolerance_ / 4)
 {
+    // The size tolerance is a global setting, so with its 1MB default the derived thresholds can end
+    // up larger than the file they are supposed to police: check_interval_ greater than
+    // max_file_size_ makes the periodic size reconciliation in size_control_ unreachable, because
+    // written_sql_size_ never grows that far before rotation caps it. Clamp both thresholds so the
+    // size of the file is reconciled a few times per fill cycle regardless of the configured
+    // tolerance.
+    const std::uint64_t max_file_size = configuration.resource_limits.max_file_size_;
+
+    if (max_file_size > 0)
+    {
+        const std::uint64_t max_check_interval = max_file_size / 4;
+
+        if (check_interval_ > max_check_interval)
+        {
+            EPROSIMA_LOG_INFO(DDSRECORDER_SQL_WRITER,
+                    "Clamping the SQL size check interval from " << utils::from_bytes(check_interval_)
+                                                                 << " to " << utils::from_bytes(max_check_interval)
+                                                                 << " to keep it below the maximum file size ("
+                                                                 << utils::from_bytes(max_file_size) << ").");
+            check_interval_ = max_check_interval;
+        }
+
+        // Keep the WAL from holding a large fraction of the file's budget: the smaller it is, the
+        // closer the on-disk file stays to the logical size reported by get_logical_file_size_().
+        size_checkpoint_ = std::min(size_checkpoint_, max_file_size / 4);
+    }
 }
 
 void SqlWriter::update_dynamic_types(
@@ -139,8 +166,10 @@ void SqlWriter::open_new_file_nts_(
 
     sqlite3_finalize(stmt);
 
-    // Set autocheckpoint every size_checkpoint_ bytes
-    const int checkpoint_pages = size_checkpoint_ / page_size_;
+    // Set autocheckpoint every size_checkpoint_ bytes.
+    // NOTE: at least one page, since "PRAGMA wal_autocheckpoint = 0" disables checkpointing
+    // altogether and would let the WAL grow without bound.
+    const int checkpoint_pages = std::max<int>(1, static_cast<int>(size_checkpoint_ / page_size_));
     std::string pragma_cmd = "PRAGMA wal_autocheckpoint = " + std::to_string(checkpoint_pages) + ";";
     sqlite3_exec(database_, pragma_cmd.c_str(), nullptr, nullptr, nullptr);
 
@@ -1076,14 +1105,65 @@ void SqlWriter::size_control_(
 
 void SqlWriter::check_file_size_()
 {
-    const auto filename = file_tracker_->get_current_filename();
-    auto file_size = std::filesystem::file_size(filename);
+    // NOTE: the database runs in WAL mode (see open_new_file_nts_), so committed pages may still
+    // live in the -wal sidecar and have not been written to the main database file yet.
+    // std::filesystem::file_size() on the main file therefore undercounts the recording by up to
+    // the whole WAL, and using it here used to rewind written_sql_size_ to an arbitrary value that
+    // depended on when SQLite happened to checkpoint. That made every log-rotation decision, and
+    // hence the final file size, non-deterministic.
+    // PRAGMA page_count reports the size of the current read snapshot, WAL content included, which
+    // is what the resource limits are meant to bound.
+    const auto file_size = get_logical_file_size_();
+
+    if (file_size == 0)
+    {
+        // The size could not be determined. Keep the running estimate rather than corrupting it,
+        // and leave the checkpoint untouched so the next write retries the check.
+        return;
+    }
+
     if (checked_actual_sql_size_ != file_size)
     {
         checked_actual_sql_size_ = file_size;
         written_sql_size_ = file_size;
     }
     checked_written_sql_size_ = written_sql_size_;
+}
+
+std::uint64_t SqlWriter::get_logical_file_size_()
+{
+    if (nullptr == database_ || 0 == page_size_)
+    {
+        return 0;
+    }
+
+    sqlite3_stmt* stmt = nullptr;
+
+    if (sqlite3_prepare_v2(database_, "PRAGMA page_count;", -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER,
+                "FAIL_SQL_SIZE | Failed to prepare page_count, keeping the estimated size: "
+                << sqlite3_errmsg(database_));
+        sqlite3_finalize(stmt);
+        return 0;
+    }
+
+    std::uint64_t file_size = 0;
+
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        file_size = static_cast<std::uint64_t>(sqlite3_column_int64(stmt, 0)) * page_size_;
+    }
+    else
+    {
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER,
+                "FAIL_SQL_SIZE | Failed to read page_count, keeping the estimated size: "
+                << sqlite3_errmsg(database_));
+    }
+
+    sqlite3_finalize(stmt);
+
+    return file_size;
 }
 
 } /* namespace participants */
