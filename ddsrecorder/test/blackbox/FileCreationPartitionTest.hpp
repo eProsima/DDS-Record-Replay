@@ -14,9 +14,11 @@
 
 
 #include <chrono>
+#include <condition_variable>
 #include <cstdint>
 #include <filesystem>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <string>
 #include <thread>
@@ -45,6 +47,9 @@
 #include <fastdds/dds/xtypes/type_representation/ITypeObjectRegistry.hpp>
 #include <fastdds/dds/xtypes/utils.hpp>
 
+#include <cpp_utils/Log.hpp>
+#include <cpp_utils/logging/BaseLogConfiguration.hpp>
+#include <cpp_utils/logging/StdLogConsumer.hpp>
 #include <cpp_utils/ros2_mangling.hpp>
 
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
@@ -71,6 +76,52 @@ enum class EventKind
     EVENT_SUSPEND,
 };
 
+/**
+ * @brief Match notifier for a single DataWriter.
+ *
+ * When several DataWriters share one listener, a single match flag cannot tell which of them
+ * matched, so waiting on it may return while the writer about to send is still unmatched. Giving
+ * each writer its own listener makes the wait specific to that writer.
+ *
+ * This also avoids polling \c DataWriter::get_publication_matched_status() from the test thread:
+ * Fast DDS updates \c publication_matched_status_ from the discovery thread without holding the
+ * mutex that the getter takes, so polling it concurrently with endpoint discovery is a data race
+ * (reported by ThreadSanitizer). The status snapshot handed to this callback is built by Fast DDS
+ * under its own lock, so reading it here is safe.
+ */
+class WriterMatchListener : public fastdds::dds::DataWriterListener
+{
+public:
+
+    void on_publication_matched(
+            fastdds::dds::DataWriter* /*writer*/,
+            const fastdds::dds::PublicationMatchedStatus& info) override
+    {
+        {
+            std::lock_guard<std::mutex> lock(mtx_);
+            matched_ = info.current_count > 0;
+        }
+        cv_.notify_all();
+    }
+
+    //! @return whether the writer is matched with at least one reader within \c timeout
+    bool wait_for_matching(
+            const std::chrono::seconds timeout)
+    {
+        std::unique_lock<std::mutex> lock(mtx_);
+        return cv_.wait_for(lock, timeout, [this]()
+                       {
+                           return matched_;
+                       });
+    }
+
+private:
+
+    bool matched_{false};
+    std::mutex mtx_;
+    std::condition_variable cv_;
+};
+
 class FileCreationPartitionTest : public testing::Test,
     public fastdds::dds::DataWriterListener
 {
@@ -78,9 +129,17 @@ public:
 
     void SetUp() override
     {
-        // empty
-        // initialize in other function
-        // so the partitions can be established
+        // Route DDS Pipe / DDS Recorder diagnostics to the test output.
+        // NOTE: the log configuration is only ever applied by the tool's main(), so without this the
+        // blackbox tests run with no consumer registered at all and every library warning or error is
+        // silently discarded. That is why a dropped sample surfaces only as an unexplained
+        // message-count mismatch. The default configuration is Warning verbosity with an empty
+        // filter, which accepts every category.
+        utils::Log::ClearConsumers();
+        utils::Log::SetVerbosity(log_configuration_.verbosity);
+        utils::Log::RegisterConsumer(std::make_unique<utils::StdLogConsumer>(&log_configuration_));
+
+        // The rest is initialized in init_dds_data so the partitions can be established
         partition_wildcard_active_ = true;
     }
 
@@ -98,6 +157,10 @@ public:
         {
             delete_file_(path);
         }
+
+        // Flush before dropping the consumer, so entries queued during teardown are still printed
+        utils::Log::Flush();
+        utils::Log::ClearConsumers();
     }
 
     void on_publication_matched(
@@ -326,10 +389,32 @@ protected:
         send_messages_from_writer_(writer_, number_of_messages, NO_PARTITION_INDEX_BASE,
                 "Hello World!", sent_messages);
 
+        wait_for_acknowledgments_(writer_, number_of_messages);
+
         // Delete the DataWriter
         delete_datawriter_();
 
         return sent_messages;
+    }
+
+    /**
+     * @brief Block until the DDS Recorder has acknowledged every sample written by \c writer.
+     *
+     * A writer must not be deleted while samples are still unacknowledged: this history is
+     * RELIABLE / KEEP_ALL / TRANSIENT_LOCAL, so any change the DDS Recorder has not acknowledged yet
+     * is discarded together with the writer, and the recording ends up silently short.
+     */
+    void wait_for_acknowledgments_(
+            fastdds::dds::DataWriter* writer,
+            const unsigned int number_of_messages)
+    {
+        if (writer == nullptr || number_of_messages == 0)
+        {
+            return;
+        }
+
+        EXPECT_EQ(writer->wait_for_acknowledgments(test::MAX_WAITING_TIME), fastdds::dds::RETCODE_OK)
+            << "The DDS Recorder did not acknowledge all " << number_of_messages << " samples.";
     }
 
     std::vector<HelloWorld> send_messages_publishers_(
@@ -340,6 +425,10 @@ protected:
         {
             return sent_messages;
         }
+
+        // Declared before the writers so that every listener outlives the writer it belongs to
+        std::vector<std::unique_ptr<WriterMatchListener>> listeners;
+        listeners.reserve(publisher_configs.size());
 
         std::vector<fastdds::dds::Publisher*> publishers;
         publishers.reserve(publisher_configs.size());
@@ -377,7 +466,9 @@ protected:
 
             publishers.push_back(publisher);
 
-            auto writer = create_datawriter_(publisher);
+            listeners.push_back(std::make_unique<WriterMatchListener>());
+
+            auto writer = create_datawriter_(publisher, listeners.back().get());
             if (writer == nullptr)
             {
                 ADD_FAILURE() << "Failed to create writer for publisher " << i << ".";
@@ -391,9 +482,9 @@ protected:
         if (partition_wildcard_active_)
         {
             // Wait for all publishers to match to avoid losing first samples in wildcard mode.
-            for (const auto& writer : writers)
+            for (std::size_t i = 0; i < writers.size(); ++i)
             {
-                wait_for_matching(writer);
+                wait_for_matching(*listeners[i], i);
             }
         }
 
@@ -415,6 +506,12 @@ protected:
                 publisher_config.initial_index,
                 publisher_config.message_text,
                 sent_messages);
+        }
+
+        // Every writer must be acknowledged before cleanup_publishers() deletes it
+        for (std::size_t i = 0; i < writers.size(); ++i)
+        {
+            wait_for_acknowledgments_(writers[i], publisher_configs[i].number_of_messages);
         }
 
         cleanup_publishers();
@@ -524,12 +621,17 @@ protected:
 
     void create_datawriter_()
     {
+        // NOTE: the previous DataWriter is deliberately left alive and matched_ deliberately not reset.
+        // See the equivalent note in FileCreationTest::create_datawriter_(): deleting it makes the topic
+        // momentarily lose all of its writers, after which the DDS Recorder rebuilds the topic's
+        // partition snapshot without the new writer and silently discards everything it sends
         writer_ = create_datawriter_(publisher_);
         ASSERT_NE(writer_, nullptr);
     }
 
     fastdds::dds::DataWriter* create_datawriter_(
-            fastdds::dds::Publisher* publisher)
+            fastdds::dds::Publisher* publisher,
+            fastdds::dds::DataWriterListener* listener = nullptr)
     {
         // Configure the DataWriter's QoS to ensure that the DDS Recorder receives all the msgs
         fastdds::dds::DataWriterQos wqos = fastdds::dds::DATAWRITER_QOS_DEFAULT;
@@ -537,7 +639,9 @@ protected:
         wqos.durability().kind = fastdds::dds::TRANSIENT_LOCAL_DURABILITY_QOS;
         wqos.history().kind = fastdds::dds::KEEP_ALL_HISTORY_QOS;
 
-        return publisher->create_datawriter(topic_, wqos, this);
+        // Writers created for the multi-publisher cases pass their own listener, so that each one can
+        // be waited on individually
+        return publisher->create_datawriter(topic_, wqos, (listener != nullptr) ? listener : this);
     }
 
     void delete_datawriter_()
@@ -572,24 +676,17 @@ protected:
     }
 
     void wait_for_matching(
-            fastdds::dds::DataWriter* writer,
-            std::chrono::seconds timeout = std::chrono::seconds(2))
+            WriterMatchListener& listener,
+            const std::size_t writer_index,
+            const std::chrono::seconds timeout = std::chrono::seconds(2))
     {
-        const auto initial_time = std::chrono::steady_clock::now();
-        fastdds::dds::PublicationMatchedStatus status;
-
-        while (std::chrono::steady_clock::now() - initial_time < timeout)
-        {
-            writer->get_publication_matched_status(status);
-            if (status.current_count > 0)
-            {
-                return;
-            }
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        }
-
-        FAIL() << "DataWriter did not match any DataReader within the timeout.";
+        // NOTE: this used to poll writer->get_publication_matched_status() from this thread, which
+        // races with Fast DDS updating that status from the discovery thread. Waiting on the
+        // writer's own listener is both race-free and specific to that writer.
+        ASSERT_TRUE(listener.wait_for_matching(timeout))
+            << "DataWriter "
+            << writer_index
+            << " did not match any DataReader within the timeout.";
     }
 
     void send_messages_from_writer_(
@@ -653,6 +750,9 @@ protected:
     bool matched_{false};
     std::mutex mtx_;
     std::condition_variable cv_;
+
+    //! Warning verbosity with an empty (match-all) filter, see BaseLogConfiguration's constructor
+    utils::BaseLogConfiguration log_configuration_;
 
     bool partition_wildcard_active_;
 };
