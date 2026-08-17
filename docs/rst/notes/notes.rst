@@ -5,17 +5,25 @@
 .. include:: forthcoming_version.rst
 
 ##############
-Version v1.5.1
+Version v1.5.2
 ##############
+
+This release includes the following **features**:
+
+* Add a new ``mcap-convert`` tool to convert recordings from MCAP to SQL
+* Add a YAML configuration validator
 
 This release includes the following **bugfixes**:
 
-* Fix segfault when command receiver initialization fail
+* Fix macOS build issues in YAML parsing and CLI arguments
 
-This release includes the following **CI improvements**:
+This release includes the following **improvements**:
 
-* Fix Windows CI `vcpkg` cache environment for MCAP dependencies
-
+* Include dependency type rows in the SQL output
+* Improve ``mcap-convert`` tool performance with batched parallel processing
+* Add documentation for the converter tool
+* Remove unused ``FileWatch`` header
+* Remove v2 nightly
 
 This release includes the following **Dependencies Update**:
 
@@ -27,31 +35,31 @@ This release includes the following **Dependencies Update**:
         - Old Version
         - New Version
     *   - Foonathan Memory Vendor
-        - `eProsima/foonathan_memory_vendor <https://github.com/eProsima/foonathan_memory_vendor>`_
-        - `v1.3.1 <https://github.com/eProsima/foonathan_memory_vendor/releases/tag/v1.3.1>`_
-        - `v1.4.1 <https://github.com/eProsima/foonathan_memory_vendor/releases/tag/v1.4.1>`_
+        - `eProsima/foonathan_memory_vendor <https://github.com/eProsima/foonathan_memory_vendor>`__
+        - `v1.4.1 <https://github.com/eProsima/foonathan_memory_vendor/releases/tag/v1.4.1>`__
+        - `v1.4.1 <https://github.com/eProsima/foonathan_memory_vendor/releases/tag/v1.4.1>`__
     *   - Fast CDR
-        - `eProsima/Fast-CDR <https://github.com/eProsima/Fast-CDR>`_
-        - `v2.3.4 <https://github.com/eProsima/Fast-CDR/releases/tag/v2.3.4>`_
-        - `v2.3.5 <https://github.com/eProsima/Fast-CDR/releases/tag/v2.3.5>`_
+        - `eProsima/Fast-CDR <https://github.com/eProsima/Fast-CDR>`__
+        - `v2.3.5 <https://github.com/eProsima/Fast-CDR/releases/tag/v2.3.5>`__
+        - `v2.3.6 <https://github.com/eProsima/Fast-CDR/releases/tag/v2.3.6>`__
     *   - Fast DDS
-        - `eProsima/Fast-DDS <https://github.com/eProsima/Fast-DDS>`_
-        - `v3.6.0 <https://github.com/eProsima/Fast-DDS/releases/tag/v3.6.0>`_
-        - `v3.6.1 <https://github.com/eProsima/Fast-DDS/releases/tag/v3.6.1>`_
+        - `eProsima/Fast-DDS <https://github.com/eProsima/Fast-DDS>`__
+        - `v3.6.1 <https://github.com/eProsima/Fast-DDS/releases/tag/v3.6.1>`__
+        - `v3.6.2 <https://github.com/eProsima/Fast-DDS/releases/tag/v3.6.2>`__
     *   - Dev Utils
-        - `eProsima/dev-utils <https://github.com/eProsima/dev-utils>`_
-        - `v1.5.0 <https://github.com/eProsima/dev-utils/releases/tag/v1.5.0>`__
+        - `eProsima/dev-utils <https://github.com/eProsima/dev-utils>`__
         - `v1.5.1 <https://github.com/eProsima/dev-utils/releases/tag/v1.5.1>`__
+        - `v1.5.3 <https://github.com/eProsima/dev-utils/releases/tag/v1.5.3>`__
     *   - DDS Pipe
-        - `eProsima/DDS-Pipe <https://github.com/eProsima/DDS-Pipe.git>`_
-        - `v1.5.0 <https://github.com/eProsima/DDS-Pipe/releases/tag/v1.5.0>`__
+        - `eProsima/DDS-Pipe <https://github.com/eProsima/DDS-Pipe>`__
         - `v1.5.1 <https://github.com/eProsima/DDS-Pipe/releases/tag/v1.5.1>`__
-
+        - `v1.5.2 <https://github.com/eProsima/DDS-Pipe/releases/tag/v1.5.2>`__
 
 #################
 Previous Versions
 #################
 
+.. include:: previous_versions/v1.5.1.rst
 .. include:: previous_versions/v1.5.0.rst
 .. include:: previous_versions/v1.4.0.rst
 .. include:: previous_versions/v1.3.0.rst
