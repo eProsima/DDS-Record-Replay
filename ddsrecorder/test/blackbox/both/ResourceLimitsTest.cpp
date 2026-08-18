@@ -31,6 +31,12 @@
 #include <fastdds/dds/topic/Topic.hpp>
 #include <fastdds/dds/topic/TypeSupport.hpp>
 
+#include <sqlite/sqlite3.h>
+
+#include <cpp_utils/Log.hpp>
+#include <cpp_utils/logging/BaseLogConfiguration.hpp>
+#include <cpp_utils/logging/StdLogConsumer.hpp>
+
 #include <ddspipe_yaml/Yaml.hpp>
 #include <ddspipe_yaml/YamlReader.hpp>
 
@@ -54,6 +60,16 @@ public:
 
     void SetUp() override
     {
+        // Route DDS Pipe / DDS Recorder diagnostics to the test output.
+        // NOTE: the log configuration is only ever applied by the tool's main(), so the log_filter
+        // that reset_configuration_() sets below is parsed and then never used. Without a consumer
+        // registered here, everything the SQL writer reports while deciding to rotate or to free
+        // space -- FAIL_SQL_REMOVE, FAIL_SQL_SIZE, DISCARDED_SAMPLE -- is discarded, and an
+        // under-sized output file gives no clue as to why.
+        utils::Log::ClearConsumers();
+        utils::Log::SetVerbosity(log_configuration_.verbosity);
+        utils::Log::RegisterConsumer(std::make_unique<utils::StdLogConsumer>(&log_configuration_));
+
         limits_ = &mcap_limits_;
         // Create the participant
         DomainParticipantQos pqos;
@@ -92,6 +108,10 @@ public:
         {
             delete_file_(path);
         }
+
+        // Flush before dropping the consumer, so entries queued during teardown are still printed
+        utils::Log::Flush();
+        utils::Log::ClearConsumers();
     }
 
 protected:
@@ -251,8 +271,58 @@ protected:
             std::cout << "is_file_size_acceptable_: File " << file_path << " has an unacceptable size of "
                       << file_size << " bytes, when limits: " << limits_->MIN_ACCEPTABLE_FILE_SIZE
                       << " <= size <= " << limits_->MAX_ACCEPTABLE_FILE_SIZE << std::endl;
+
+            // An unexpected size on its own does not say whether samples never arrived or whether
+            // log rotation freed more space than it needed to. Report what the output actually
+            // holds so the two can be told apart from the CI log alone.
+            if (!mcap_file)
+            {
+                report_sql_contents_(file_path);
+            }
         }
         return is_acceptable;
+    }
+
+    /**
+     * @brief Print the row counts of an SQL output, to diagnose an unexpected file size.
+     *
+     * A low row count means samples never reached the writer; a high row count with a small file
+     * means log rotation reclaimed more space than expected.
+     */
+    void report_sql_contents_(
+            const std::filesystem::path& file_path)
+    {
+        sqlite3* database = nullptr;
+
+        if (sqlite3_open_v2(file_path.c_str(), &database, SQLITE_OPEN_READONLY, nullptr) != SQLITE_OK)
+        {
+            std::cout << "report_sql_contents_: could not open " << file_path << ": "
+                      << sqlite3_errmsg(database) << std::endl;
+            sqlite3_close(database);
+            return;
+        }
+
+        for (const auto* query : {"SELECT COUNT(*) FROM Messages;", "PRAGMA page_count;",
+                                  "PRAGMA page_size;", "PRAGMA freelist_count;"})
+        {
+            sqlite3_stmt* stmt = nullptr;
+
+            if (sqlite3_prepare_v2(database, query, -1, &stmt, nullptr) == SQLITE_OK
+                    && sqlite3_step(stmt) == SQLITE_ROW)
+            {
+                std::cout << "report_sql_contents_: " << query << " -> "
+                          << sqlite3_column_int64(stmt, 0) << std::endl;
+            }
+            else
+            {
+                std::cout << "report_sql_contents_: " << query << " failed: "
+                          << sqlite3_errmsg(database) << std::endl;
+            }
+
+            sqlite3_finalize(stmt);
+        }
+
+        sqlite3_close(database);
     }
 
     /**
@@ -577,6 +647,9 @@ protected:
     test::limits sql_limits_{300 * 1024,  300 * 1024, 0.2, 273};
 
     test::limits* limits_;
+
+    //! Warning verbosity with an empty (match-all) filter, see BaseLogConfiguration's constructor
+    eprosima::utils::BaseLogConfiguration log_configuration_;
 
 
 };
