@@ -102,16 +102,6 @@ jobs:
             "$env:WINDIR\System32\OpenSSH",
             $shim_dir
           ) + $tool_dirs
-          if (-not [string]::IsNullOrWhiteSpace($env:vcpkg_install_path)) {
-            $path_candidates += (Join-Path $env:vcpkg_install_path 'bin')
-            $vcpkg_debug_bin = Join-Path $env:vcpkg_install_path 'debug\bin'
-            if (Test-Path $vcpkg_debug_bin) {
-              $path_candidates += $vcpkg_debug_bin
-            }
-          }
-          if (-not [string]::IsNullOrWhiteSpace($env:RUNVCPKG_VCPKG_ROOT)) {
-            $path_candidates += $env:RUNVCPKG_VCPKG_ROOT
-          }
 
           $compact_paths = $path_candidates |
             Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
