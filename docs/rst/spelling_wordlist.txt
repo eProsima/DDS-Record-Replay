@@ -37,6 +37,7 @@ idl
 IPv
 kubernetes
 localhost
+macOS
 MCAP
 metatraffic
 microcontroller
