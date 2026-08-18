@@ -9,6 +9,16 @@ inputs:
     required: true
     default: Release
 
+  lz4_version:
+    description: 'Specify lz4 tag to download repository from https://github.com/lz4/lz4'
+    required: false
+    default: 'v1.10.0'
+
+  zstd_version:
+    description: 'Specify zstd tag to download repository from https://github.com/facebook/zstd'
+    required: false
+    default: 'v1.5.7'
+
 runs:
   using: composite
   steps:
@@ -21,48 +31,61 @@ runs:
         packages: liblz4-dev libzstd-dev
 
     # WINDOWS
-    - name: Download vcpkg
+    #
+    # Built from an upstream release tag and installed under 'C:\Program Files', following the same
+    # pattern as eProsima-CI's windows/install_yamlcpp and windows/install_gtest.
+    #
+    # NOTE: these used to be installed with vcpkg. The vcpkg lz4 port runs
+    # vcpkg_fixup_pkgconfig(), which makes vcpkg fetch pkgconf from MSYS2 at a package version
+    # hardcoded in the pinned vcpkg commit. MSYS2 mirrors only serve current packages, so that
+    # download starts returning 404 as soon as the version is rotated off the mirrors and every run
+    # fails at dependency installation. Building from a tag removes both that moving part and the
+    # vcpkg baseline pin, and lets the version be read directly here.
+    #
+    # Both are built static, so there are no DLLs to place on PATH for the tests.
+    - name: Install lz4 in windows
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
-        git clone https://github.com/Microsoft/vcpkg.git ${{ github.workspace }}\vcpkg
 
-    - name: Prepare vcpkg GitHub cache environment
+        "::group::Install lz4"
+
+        cmake --find-package -DNAME=lz4 -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST | Tee-Object -Variable res;
+        if ( $res -notlike '*lz4 found.*')
+        {
+          git clone --depth 1 --branch ${{ inputs.lz4_version }} https://github.com/lz4/lz4.git lz4;
+
+          # lz4 has no top-level CMakeLists.txt; its project lives in build/cmake
+          cmake -DCMAKE_INSTALL_PREFIX='C:\Program Files\lz4' -DBUILD_SHARED_LIBS=OFF -DLZ4_BUILD_CLI=OFF `
+            -B build\lz4 -A x64 -T host=x64 lz4\build\cmake
+          cmake --build build\lz4 --config ${{ inputs.cmake_build_type }} --target install
+          New-Item -ItemType File lz4/COLCON_IGNORE
+        }
+
+        echo "C:\Program Files\lz4" >> ${{ github.path }}
+
+        "::endgroup::"
+
+    - name: Install zstd in windows
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
-        $gha_cache_url = $env:ACTIONS_CACHE_URL
-        if ([string]::IsNullOrWhiteSpace($gha_cache_url) -and -not [string]::IsNullOrWhiteSpace($env:ACTIONS_RESULTS_URL)) {
-          $gha_cache_url = $env:ACTIONS_RESULTS_URL
-          "ACTIONS_CACHE_URL=$gha_cache_url" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+        "::group::Install zstd"
+
+        cmake --find-package -DNAME=zstd -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST | Tee-Object -Variable res;
+        if ( $res -notlike '*zstd found.*')
+        {
+          git clone --depth 1 --branch ${{ inputs.zstd_version }} https://github.com/facebook/zstd.git zstd;
+
+          # zstd has no top-level CMakeLists.txt either; its project lives in build/cmake
+          cmake -DCMAKE_INSTALL_PREFIX='C:\Program Files\zstd' -DZSTD_BUILD_SHARED=OFF -DZSTD_BUILD_STATIC=ON `
+            -DZSTD_BUILD_PROGRAMS=OFF -DZSTD_BUILD_TESTS=OFF `
+            -B build\zstd -A x64 -T host=x64 zstd\build\cmake
+          cmake --build build\zstd --config ${{ inputs.cmake_build_type }} --target install
+          New-Item -ItemType File zstd/COLCON_IGNORE
         }
 
-        if ([string]::IsNullOrWhiteSpace($env:ACTIONS_RUNTIME_TOKEN) -or [string]::IsNullOrWhiteSpace($gha_cache_url)) {
-          "VCPKG_BINARY_SOURCES=clear" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          Write-Host 'GitHub Actions cache variables are unavailable for vcpkg. Falling back to local binary caching.'
-        }
+        echo "C:\Program Files\zstd" >> ${{ github.path }}
 
-    - name: Install vcpkg
-      if: runner.os == 'Windows'
-      uses: lukka/run-vcpkg@v11
-      with:
-        vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-        # vcpkg release 2026.07.29.
-        #
-        # NOTE: this pin cannot be left to age. The lz4 port calls vcpkg_fixup_pkgconfig(), which
-        # makes vcpkg acquire pkgconf from MSYS2, and the MSYS2 package version is hardcoded in
-        # vcpkg's scripts/cmake/vcpkg_acquire_msys.cmake
-        vcpkgGitCommitId: '9e593bb18ea69cc5095e012465dcd675a822ed0d'
-
-    - name: Install lz4 and zstd
-      if: runner.os == 'Windows'
-      shell: pwsh
-      run: |
-        vcpkg install lz4 zstd --triplet x64-windows --vcpkg-root ${{ env.VCPKG_ROOT }}
-        "vcpkg_install_path=${{ github.workspace }}\vcpkg\installed\x64-windows" | Out-File -FilePath $env:GITHUB_ENV -Append
-        if ("${{ inputs.cmake_build_type }}" -eq "Release") {
-          "${{ github.workspace }}\vcpkg\installed\x64-windows\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-        } else {
-          "${{ github.workspace }}\vcpkg\installed\x64-windows\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          "${{ github.workspace }}\vcpkg\installed\x64-windows\debug\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-        }
+        "::endgroup::"
