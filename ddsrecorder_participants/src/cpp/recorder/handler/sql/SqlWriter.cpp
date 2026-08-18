@@ -1049,6 +1049,11 @@ void SqlWriter::size_control_(
     constexpr size_t SQLITE_ROW_OVERHEAD = 67;
     entry_size += SQLITE_ROW_OVERHEAD;
 
+    if (written_sql_size_ + entry_size > configuration_.resource_limits.max_file_size_ && !force)
+    {
+        check_file_size_();
+    }
+
     // Check if the entry fits in the current file or it has been forced
     if (written_sql_size_ + entry_size > configuration_.resource_limits.max_file_size_ && !force)
     {
