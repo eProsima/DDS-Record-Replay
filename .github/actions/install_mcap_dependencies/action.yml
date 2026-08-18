@@ -47,7 +47,12 @@ runs:
       uses: lukka/run-vcpkg@v11
       with:
         vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-        vcpkgGitCommitId: '6f29f12e82a8293156836ad81cc9bf5af41fe836'
+        # vcpkg release 2026.07.29.
+        #
+        # NOTE: this pin cannot be left to age. The lz4 port calls vcpkg_fixup_pkgconfig(), which
+        # makes vcpkg acquire pkgconf from MSYS2, and the MSYS2 package version is hardcoded in
+        # vcpkg's scripts/cmake/vcpkg_acquire_msys.cmake
+        vcpkgGitCommitId: '9e593bb18ea69cc5095e012465dcd675a822ed0d'
 
     - name: Install lz4 and zstd
       if: runner.os == 'Windows'
