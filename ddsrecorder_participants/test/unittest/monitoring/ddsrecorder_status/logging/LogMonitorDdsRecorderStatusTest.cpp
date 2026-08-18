@@ -69,12 +69,26 @@ public:
 
     void TearDown() override
     {
+        stop_monitoring_();
+    }
+
+protected:
+
+    /**
+     * @brief Stop everything that writes to stdout, and drain what it already produced.
+     *
+     * Two threads write to stdout while these tests run: the monitor's periodic producer, and the
+     * Fast DDS logging thread that hands entries to the registered StdLogConsumer. gtest's stdout
+     * capture is not thread safe  it redirects the descriptor and, in GetCapturedStdout(), restores
+     * it and deletes the temporary file. A write landing in that window corrupts the CRT state, which
+     * on Windows fails fast with exit code 0xc0000409 and kills the process mid-test.
+     */
+    void stop_monitoring_()
+    {
         monitor_.reset(nullptr);
         utils::Log::Flush();
         utils::Log::ClearConsumers();
     }
-
-protected:
 
     bool contains_(
             const std::string& str,
@@ -101,7 +115,9 @@ TEST_F(LogMonitorDdsRecorderStatusTest, type_mismatch)
 
     // Wait for the monitor to log the message
     std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS * 3));
-    utils::Log::Flush();
+
+    // Stop the monitor and the logging before the captured stdout is read back
+    stop_monitoring_();
 
     ASSERT_TRUE(contains_(testing::internal::GetCapturedStdout(),
             "DdsRecorder Monitoring Status: [TYPE_MISMATCH]"));
@@ -122,7 +138,9 @@ TEST_F(LogMonitorDdsRecorderStatusTest, qos_mismatch)
 
     // Wait for the monitor to log the message
     std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS * 3));
-    utils::Log::Flush();
+
+    // Stop the monitor and the logging before the captured stdout is read back
+    stop_monitoring_();
 
     ASSERT_TRUE(contains_(testing::internal::GetCapturedStdout(),
             "DdsRecorder Monitoring Status: [QOS_MISMATCH]"));
@@ -143,7 +161,9 @@ TEST_F(LogMonitorDdsRecorderStatusTest, mcap_file_creation_failure)
 
     // Wait for the monitor to log the message
     std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS * 2));
-    utils::Log::Flush();
+
+    // Stop the monitor and the logging before the captured stdout is read back
+    stop_monitoring_();
 
     ASSERT_TRUE(contains_(testing::internal::GetCapturedStdout(),
             "DdsRecorder Monitoring Status: [MCAP_FILE_CREATION_FAILURE]"));
@@ -164,7 +184,9 @@ TEST_F(LogMonitorDdsRecorderStatusTest, disk_full)
 
     // Wait for the monitor to log the message
     std::this_thread::sleep_for(std::chrono::milliseconds(test::monitor::PERIOD_MS * 2));
-    utils::Log::Flush();
+
+    // Stop the monitor and the logging before the captured stdout is read back
+    stop_monitoring_();
 
     ASSERT_TRUE(contains_(testing::internal::GetCapturedStdout(),
             "DdsRecorder Monitoring Status: [DISK_FULL]"));
