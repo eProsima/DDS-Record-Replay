@@ -294,7 +294,11 @@ protected:
     {
         sqlite3* database = nullptr;
 
-        if (sqlite3_open_v2(file_path.c_str(), &database, SQLITE_OPEN_READONLY, nullptr) != SQLITE_OK)
+        // NOTE: std::filesystem::path::c_str() yields const wchar_t* on Windows, so the path has to
+        // be narrowed explicitly. Keep it in a named local so it outlives the call.
+        const std::string file_path_str = file_path.string();
+
+        if (sqlite3_open_v2(file_path_str.c_str(), &database, SQLITE_OPEN_READONLY, nullptr) != SQLITE_OK)
         {
             std::cout << "report_sql_contents_: could not open " << file_path << ": "
                       << sqlite3_errmsg(database) << std::endl;
