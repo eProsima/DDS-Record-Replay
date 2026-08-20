@@ -237,7 +237,30 @@ protected:
             }
         }
 
+        // Give the recorder a chance to finish writing before it is destroyed below.
+        //
+        // wait_for_acknowledgments() in send_messages_ only proves the samples reached the
+        // reader's history; the pipe still has to take them and hand them to the handler. Anything
+        // untaken when the recorder is destroyed is lost, which under a sanitizer build is enough to
+        // leave a recording short of the messages that were sent.
+        wait_for_recording_to_drain_(file_name, sent_messages.size());
+
         return sent_messages;
+    }
+
+    /**
+     * @brief Wait until the recorder has written the messages it is going to write.
+     *
+     * Overridden where the output can be inspected while the recorder still holds it open.
+     *
+     * @param file_name  Name of the output file, without extension.
+     * @param expected   Number of messages sent, i.e. the most that could be recorded.
+     */
+    virtual void wait_for_recording_to_drain_(
+            const std::string& /* file_name */,
+            const std::size_t /* expected */)
+    {
+        // Nothing by default
     }
 
     std::vector<HelloWorld> send_messages_(
