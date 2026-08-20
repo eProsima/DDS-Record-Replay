@@ -249,18 +249,81 @@ protected:
     }
 
     /**
-     * @brief Wait until the recorder has written the messages it is going to write.
+     * @brief Wait until the recorder has stopped writing, before it is destroyed.
      *
-     * Overridden where the output can be inspected while the recorder still holds it open.
+     * Only needed when more messages were sent than the handler buffers. Below that the handler has
+     * not written anything yet and BaseHandler::stop() flushes the lot on destruction. Above it, at
+     * least one batch has been flushed and the pipe may still be taking the rest from the reader;
+     * whatever it has not taken when the recorder is destroyed is lost.
+     *
+     * NOTE: progress is measured from the size of the files the recorder is writing, deliberately
+     * never by opening the database. SQLite serialises cross-connection WAL access with file locks,
+     * which ThreadSanitizer cannot model as happens-before, so polling the database from here
+     * reports races in walIndexWriteHdr and fails the sanitizer builds.
      *
      * @param file_name  Name of the output file, without extension.
      * @param expected   Number of messages sent, i.e. the most that could be recorded.
      */
-    virtual void wait_for_recording_to_drain_(
-            const std::string& /* file_name */,
-            const std::size_t /* expected */)
+    void wait_for_recording_to_drain_(
+            const std::string& file_name,
+            const std::size_t expected)
     {
-        // Nothing by default
+        if (expected <= configuration_->buffer_size)
+        {
+            // Nothing has been written yet, so nothing can be left behind
+            return;
+        }
+
+        const auto base = (std::filesystem::current_path() / file_name).string();
+        const std::vector<std::string> outputs =
+        {
+            base + ".db.tmp~",
+            base + ".db.tmp~-wal",
+            base + ".mcap.tmp~"
+        };
+
+        const auto written_bytes = [&outputs]() -> std::uintmax_t
+                {
+                    std::error_code ec;
+                    std::uintmax_t total = 0;
+
+                    for (const auto& output : outputs)
+                    {
+                        if (std::filesystem::exists(output, ec))
+                        {
+                            total += std::filesystem::file_size(output, ec);
+                        }
+                    }
+
+                    return total;
+                };
+
+        constexpr auto POLL_PERIOD = std::chrono::milliseconds(100);
+        // Kept above the time one batch of buffer_size messages takes to publish, so a pause between
+        // flushes is not mistaken for the end of the recording
+        constexpr auto STABLE_PERIOD = std::chrono::milliseconds(1500);
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
+
+        auto last_size = written_bytes();
+        auto last_change = std::chrono::steady_clock::now();
+
+        while (std::chrono::steady_clock::now() < deadline)
+        {
+            std::this_thread::sleep_for(POLL_PERIOD);
+
+            const auto size = written_bytes();
+
+            if (size != last_size)
+            {
+                last_size = size;
+                last_change = std::chrono::steady_clock::now();
+            }
+            else if (std::chrono::steady_clock::now() - last_change >= STABLE_PERIOD)
+            {
+                // The recorder is no longer writing
+                return;
+            }
+        }
     }
 
     std::vector<HelloWorld> send_messages_(
