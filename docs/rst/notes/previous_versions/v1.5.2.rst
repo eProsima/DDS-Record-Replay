@@ -8,7 +8,7 @@ This release includes the following **features**:
 
 This release includes the following **bugfixes**:
 
-* Fix macOS build issues in YAML parsing and CLI arguments
+* Fix ``macOS`` build issues in YAML parsing and CLI arguments
 
 This release includes the following **improvements**:
 
