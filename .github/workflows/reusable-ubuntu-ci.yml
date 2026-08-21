@@ -70,6 +70,9 @@ on:
 env:
   # TODO: controller is not tested as it has no tests
   code_packages_names: 'ddsrecorder_participants ddsrecorder_yaml ddsrecorder_tool ddsreplayer_tool'
+  # Number of times ctest runs each test, all of which must pass. Raised above 1 to catch flaky
+  # tests: a single green run says little for a test that fails intermittently.
+  TEST_ITERATIONS: '20'
   docs_packages_names: 'ddsrecorder_docs'
 
 jobs:
@@ -117,17 +120,27 @@ jobs:
           dependencies_artifact_postfix: ${{ inputs.dependencies_artifact_postfix }}
           secret_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Compile and run tests
+      # NOTE: build and test are split so the tests can be repeated without a rebuild each time.
+      # See the note in reusable-workflow.yml.
+      - name: Compile
+        uses: eProsima/eProsima-CI/multiplatform/colcon_build@v0
+        env:
+          ASAN_OPTIONS: detect_odr_violation=0
+        with:
+          colcon_build_args: '--packages-up-to ${{ env.code_packages_names }}'
+          workspace_dependencies: './install'
+          cmake_build_type: Debug
+          cmake_args: -DBUILD_TESTS=ON -DASAN_BUILD=ON
+
+      - name: Run tests
         id: compile_and_test
-        uses: eProsima/eProsima-CI/multiplatform/colcon_build_test@v0
+        uses: eProsima/eProsima-CI/multiplatform/colcon_test@v0
         env:
           ASAN_OPTIONS: detect_odr_violation=0
         with:
           packages_names: ${{ env.code_packages_names }}
           workspace_dependencies: './install'
-          cmake_build_type: Debug
-          cmake_args: -DBUILD_TESTS=ON -DASAN_BUILD=ON
-          ctest_args: --label-exclude "xfail|xasan"
+          ctest_args: --label-exclude "xfail|xasan" --repeat until-fail:${{ env.TEST_ITERATIONS }}
           test_report_artifact: test_report_asan${{ inputs.dependencies_artifact_postfix }}_${{ inputs.custom_version_build }}
 
       - name: Test Report
@@ -162,20 +175,31 @@ jobs:
           dependencies_artifact_postfix: ${{ inputs.dependencies_artifact_postfix }}_tsan
           secret_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Compile and run tests
-        id: compile_and_test
-        uses: eProsima/eProsima-CI/multiplatform/colcon_build_test@v0
+      # NOTE: build and test are split so the tests can be repeated without a rebuild each time.
+      # See the note in reusable-workflow.yml.
+      - name: Compile
+        uses: eProsima/eProsima-CI/multiplatform/colcon_build@v0
         env:
           # GCC 11.3 (Ubuntu Jammy default) produces several false positives regarding timed synchronization protocols
           # These issues were fixed in GCC 12 so we upgrade to that version.
           CC: gcc-12
           CXX: g++-12
         with:
-          packages_names: ${{ env.code_packages_names }}
+          colcon_build_args: '--packages-up-to ${{ env.code_packages_names }}'
           workspace_dependencies: './install'
           cmake_build_type: Debug
           cmake_args: -DBUILD_TESTS=ON -DTSAN_BUILD=ON
-          ctest_args: --label-exclude "xfail|xtsan"
+
+      - name: Run tests
+        id: compile_and_test
+        uses: eProsima/eProsima-CI/multiplatform/colcon_test@v0
+        env:
+          CC: gcc-12
+          CXX: g++-12
+        with:
+          packages_names: ${{ env.code_packages_names }}
+          workspace_dependencies: './install'
+          ctest_args: --label-exclude "xfail|xtsan" --repeat until-fail:${{ env.TEST_ITERATIONS }}
           test_report_artifact: test_report_tsan${{ inputs.dependencies_artifact_postfix }}_${{ inputs.custom_version_build }}
 
       - name: Test Report

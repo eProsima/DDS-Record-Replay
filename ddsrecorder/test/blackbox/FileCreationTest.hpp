@@ -14,9 +14,11 @@
 
 
 #include <chrono>
+#include <condition_variable>
 #include <cstdint>
 #include <filesystem>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
@@ -44,6 +46,9 @@
 #include <fastdds/dds/xtypes/type_representation/ITypeObjectRegistry.hpp>
 #include <fastdds/dds/xtypes/utils.hpp>
 
+#include <cpp_utils/Log.hpp>
+#include <cpp_utils/logging/BaseLogConfiguration.hpp>
+#include <cpp_utils/logging/StdLogConsumer.hpp>
 #include <cpp_utils/ros2_mangling.hpp>
 
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
@@ -77,6 +82,16 @@ public:
 
     void SetUp() override
     {
+        // Route DDS Pipe / DDS Recorder diagnostics to the test output.
+        // NOTE: the log configuration is only ever applied by the tool's main(), so without this the
+        // blackbox tests run with no consumer registered at all and every library warning or error is
+        // silently discarded. That is why a dropped sample surfaces only as an unexplained
+        // message-count mismatch. The default configuration is Warning verbosity with an empty
+        // filter, which accepts every category.
+        utils::Log::ClearConsumers();
+        utils::Log::SetVerbosity(log_configuration_.verbosity);
+        utils::Log::RegisterConsumer(std::make_unique<utils::StdLogConsumer>(&log_configuration_));
+
         // Create the participant
         fastdds::dds::DomainParticipantQos pqos;
         pqos.name(test::PARTICIPANT_ID);
@@ -121,6 +136,11 @@ public:
         {
             delete_file_(path);
         }
+
+        // Flush before dropping the consumer,
+        // so entries queued during teardown are still printed
+        utils::Log::Flush();
+        utils::Log::ClearConsumers();
     }
 
     void on_publication_matched(
@@ -217,7 +237,93 @@ protected:
             }
         }
 
+        // Give the recorder a chance to finish writing before it is destroyed below.
+        //
+        // wait_for_acknowledgments() in send_messages_ only proves the samples reached the
+        // reader's history; the pipe still has to take them and hand them to the handler. Anything
+        // untaken when the recorder is destroyed is lost, which under a sanitizer build is enough to
+        // leave a recording short of the messages that were sent.
+        wait_for_recording_to_drain_(file_name, sent_messages.size());
+
         return sent_messages;
+    }
+
+    /**
+     * @brief Wait until the recorder has stopped writing, before it is destroyed.
+     *
+     * Only needed when more messages were sent than the handler buffers. Below that the handler has
+     * not written anything yet and BaseHandler::stop() flushes the lot on destruction. Above it, at
+     * least one batch has been flushed and the pipe may still be taking the rest from the reader;
+     * whatever it has not taken when the recorder is destroyed is lost.
+     *
+     * NOTE: progress is measured from the size of the files the recorder is writing, deliberately
+     * never by opening the database. SQLite serialises cross-connection WAL access with file locks,
+     * which ThreadSanitizer cannot model as happens-before, so polling the database from here
+     * reports races in walIndexWriteHdr and fails the sanitizer builds.
+     *
+     * @param file_name  Name of the output file, without extension.
+     * @param expected   Number of messages sent, i.e. the most that could be recorded.
+     */
+    void wait_for_recording_to_drain_(
+            const std::string& file_name,
+            const std::size_t expected)
+    {
+        if (expected <= configuration_->buffer_size)
+        {
+            // Nothing has been written yet, so nothing can be left behind
+            return;
+        }
+
+        const auto base = (std::filesystem::current_path() / file_name).string();
+        const std::vector<std::string> outputs =
+        {
+            base + ".db.tmp~",
+            base + ".db.tmp~-wal",
+            base + ".mcap.tmp~"
+        };
+
+        const auto written_bytes = [&outputs]() -> std::uintmax_t
+                {
+                    std::error_code ec;
+                    std::uintmax_t total = 0;
+
+                    for (const auto& output : outputs)
+                    {
+                        if (std::filesystem::exists(output, ec))
+                        {
+                            total += std::filesystem::file_size(output, ec);
+                        }
+                    }
+
+                    return total;
+                };
+
+        constexpr auto POLL_PERIOD = std::chrono::milliseconds(100);
+        // Kept above the time one batch of buffer_size messages takes to publish, so a pause between
+        // flushes is not mistaken for the end of the recording
+        constexpr auto STABLE_PERIOD = std::chrono::milliseconds(1500);
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
+
+        auto last_size = written_bytes();
+        auto last_change = std::chrono::steady_clock::now();
+
+        while (std::chrono::steady_clock::now() < deadline)
+        {
+            std::this_thread::sleep_for(POLL_PERIOD);
+
+            const auto size = written_bytes();
+
+            if (size != last_size)
+            {
+                last_size = size;
+                last_change = std::chrono::steady_clock::now();
+            }
+            else if (std::chrono::steady_clock::now() - last_change >= STABLE_PERIOD)
+            {
+                // The recorder is no longer writing
+                return;
+            }
+        }
     }
 
     std::vector<HelloWorld> send_messages_(
@@ -249,6 +355,15 @@ protected:
 
             // Wait for the message to be sent
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+
+        // Do not delete the DataWriter while samples are still unacknowledged. This history is
+        // RELIABLE / KEEP_ALL / TRANSIENT_LOCAL, so any change the DDS Recorder has not acknowledged
+        // yet is discarded together with the writer, and the recording ends up silently short.
+        if (number_of_messages > 0)
+        {
+            EXPECT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), fastdds::dds::RETCODE_OK)
+                << "The DDS Recorder did not acknowledge all " << number_of_messages << " samples.";
         }
 
         // Delete the DataWriter
@@ -329,6 +444,17 @@ protected:
 
     void create_datawriter_()
     {
+        // NOTE: the DataWriter created by SetUp() is deliberately left alive here, and matched_ is
+        // deliberately not reset. matched_ is therefore a latch shared by every writer created on this
+        // fixture, so wait_for_matching() only proves that *some* writer matched, not the one about to
+        // send. That is tolerable because this writer is RELIABLE / KEEP_ALL / TRANSIENT_LOCAL and
+        // send_messages_() now waits for acknowledgments before deleting it, so samples written before
+        // the match are still repaired and delivered.
+        //
+        // Deleting the previous writer here would be more precise, but it makes the topic momentarily
+        // lose all of its writers, and the DDS Recorder then rebuilds the topic's partition snapshot
+        // without the new writer in it and silently discards every sample the new writer sends.
+
         // Configure the DataWriter's QoS to ensure that the DDS Recorder receives all the msgs
         fastdds::dds::DataWriterQos wqos = fastdds::dds::DATAWRITER_QOS_DEFAULT;
         wqos.reliability().kind = fastdds::dds::RELIABLE_RELIABILITY_QOS;
@@ -346,6 +472,7 @@ protected:
         if (writer_ != nullptr)
         {
             publisher_->delete_datawriter(writer_);
+            writer_ = nullptr;
         }
     }
 
@@ -405,4 +532,7 @@ protected:
     bool matched_{false};
     std::mutex mtx_;
     std::condition_variable cv_;
+
+    //! Warning verbosity with an empty (match-all) filter, see BaseLogConfiguration's constructor
+    utils::BaseLogConfiguration log_configuration_;
 };

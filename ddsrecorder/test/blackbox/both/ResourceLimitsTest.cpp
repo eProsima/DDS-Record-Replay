@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <chrono>
 #include <cstdint>
 #include <filesystem>
+#include <system_error>
+#include <thread>
 
 #include <cpp_utils/testing/gtest_aux.hpp>
 #include <gtest/gtest.h>
@@ -27,6 +30,12 @@
 #include <fastdds/dds/topic/qos/TopicQos.hpp>
 #include <fastdds/dds/topic/Topic.hpp>
 #include <fastdds/dds/topic/TypeSupport.hpp>
+
+#include <sqlite/sqlite3.h>
+
+#include <cpp_utils/Log.hpp>
+#include <cpp_utils/logging/BaseLogConfiguration.hpp>
+#include <cpp_utils/logging/StdLogConsumer.hpp>
 
 #include <ddspipe_yaml/Yaml.hpp>
 #include <ddspipe_yaml/YamlReader.hpp>
@@ -51,6 +60,16 @@ public:
 
     void SetUp() override
     {
+        // Route DDS Pipe / DDS Recorder diagnostics to the test output.
+        // NOTE: the log configuration is only ever applied by the tool's main(), so the log_filter
+        // that reset_configuration_() sets below is parsed and then never used. Without a consumer
+        // registered here, everything the SQL writer reports while deciding to rotate or to free
+        // space -- FAIL_SQL_REMOVE, FAIL_SQL_SIZE, DISCARDED_SAMPLE -- is discarded, and an
+        // under-sized output file gives no clue as to why.
+        utils::Log::ClearConsumers();
+        utils::Log::SetVerbosity(log_configuration_.verbosity);
+        utils::Log::RegisterConsumer(std::make_unique<utils::StdLogConsumer>(&log_configuration_));
+
         limits_ = &mcap_limits_;
         // Create the participant
         DomainParticipantQos pqos;
@@ -89,6 +108,10 @@ public:
         {
             delete_file_(path);
         }
+
+        // Flush before dropping the consumer, so entries queued during teardown are still printed
+        utils::Log::Flush();
+        utils::Log::ClearConsumers();
     }
 
 protected:
@@ -248,8 +271,140 @@ protected:
             std::cout << "is_file_size_acceptable_: File " << file_path << " has an unacceptable size of "
                       << file_size << " bytes, when limits: " << limits_->MIN_ACCEPTABLE_FILE_SIZE
                       << " <= size <= " << limits_->MAX_ACCEPTABLE_FILE_SIZE << std::endl;
+
+            // An unexpected size on its own does not say whether samples never arrived or whether
+            // log rotation freed more space than it needed to. Report what the output actually
+            // holds so the two can be told apart from the CI log alone.
+            if (!mcap_file)
+            {
+                report_sql_contents_(file_path);
+            }
         }
         return is_acceptable;
+    }
+
+    /**
+     * @brief Print the row counts of an SQL output, to diagnose an unexpected file size.
+     *
+     * A low row count means samples never reached the writer; a high row count with a small file
+     * means log rotation reclaimed more space than expected.
+     */
+    void report_sql_contents_(
+            const std::filesystem::path& file_path)
+    {
+        sqlite3* database = nullptr;
+
+        // NOTE: std::filesystem::path::c_str() yields const wchar_t* on Windows, so the path has to
+        // be narrowed explicitly. Keep it in a named local so it outlives the call.
+        const std::string file_path_str = file_path.string();
+
+        if (sqlite3_open_v2(file_path_str.c_str(), &database, SQLITE_OPEN_READONLY, nullptr) != SQLITE_OK)
+        {
+            std::cout << "report_sql_contents_: could not open " << file_path << ": "
+                      << sqlite3_errmsg(database) << std::endl;
+            sqlite3_close(database);
+            return;
+        }
+
+        for (const auto* query : {"SELECT COUNT(*) FROM Messages;", "PRAGMA page_count;",
+                                  "PRAGMA page_size;", "PRAGMA freelist_count;"})
+        {
+            sqlite3_stmt* stmt = nullptr;
+
+            if (sqlite3_prepare_v2(database, query, -1, &stmt, nullptr) == SQLITE_OK
+                    && sqlite3_step(stmt) == SQLITE_ROW)
+            {
+                std::cout << "report_sql_contents_: " << query << " -> "
+                          << sqlite3_column_int64(stmt, 0) << std::endl;
+            }
+            else
+            {
+                std::cout << "report_sql_contents_: " << query << " failed: "
+                          << sqlite3_errmsg(database) << std::endl;
+            }
+
+            sqlite3_finalize(stmt);
+        }
+
+        sqlite3_close(database);
+    }
+
+    /**
+     * @brief Wait until the DDS Recorder has finished writing the received samples to disk.
+     */
+    void wait_for_recording_to_settle_(
+            const std::filesystem::path& output_file_path)
+    {
+        // Temporary output
+        const std::filesystem::path tmp_path(output_file_path.string() + ".tmp~");
+        // Build the WAL sidecar path used by SQLite when write-ahead logging is enabled
+        const std::filesystem::path wal_path(tmp_path.string() + "-wal");
+
+        // Compute the total number of bytes currently persisted by the recorder.
+        const auto recorded_size = [&]() -> std::uintmax_t
+                {
+                    std::error_code ec;
+                    std::uintmax_t ret = 0;
+
+                    if (std::filesystem::exists(tmp_path, ec))
+                    {
+                        // temp file exists
+                        ret += std::filesystem::file_size(tmp_path, ec);
+                    }
+
+                    if (std::filesystem::exists(wal_path, ec))
+                    {
+                        // WAL sidecar exists
+                        ret += std::filesystem::file_size(wal_path, ec);
+                    }
+
+                    return ret;
+                };
+
+        // NOTE: there is deliberately no size threshold to break out early on. recorded_size() sums
+        // the temporary output and its WAL sidecar, and that over-counts: the WAL holds page images
+        // that overwrite existing pages on checkpoint rather than extending the file. Treating that
+        // sum as "the recording reached max-size" stopped the recorder while the database was still
+        // short, and the caller then measured the smaller checkpointed file. Waiting for the writes
+        // to actually stop is the only signal here that means what it says.
+        //
+        // Progress is measured from file sizes rather than by querying the database, which would be
+        // a concurrent reader of a WAL-mode database and reports races under ThreadSanitizer.
+
+        // Sleep to avoid busy-waiting
+        constexpr auto POLL_PERIOD = std::chrono::milliseconds(200);
+        // Consider the recorder drained once the observed size stays unchanged for this long. Kept
+        // generous: while draining the recorder writes continuously, so a long unchanged period
+        // means it is done. A short window (e.g. 1s) is unreliable because a slow write cadence or a
+        // WAL checkpoint pause on a loaded machine can be mistaken for completion.
+        constexpr auto STABLE_PERIOD = std::chrono::seconds(5);
+        // Hard cap, kept well below the ctest per-test timeout. Reached only on a genuine
+        // under-recording, in which case the caller's assertion reports the real (too small) size.
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(40);
+
+        auto last_size = recorded_size();
+        auto last_change = std::chrono::steady_clock::now();
+
+        // Keep polling until the recording stops growing, or the timeout expires
+        while (std::chrono::steady_clock::now() < deadline)
+        {
+            const auto size = recorded_size();
+
+            if (size != last_size)
+            {
+                // Update the last observed size so the next iteration compares against the new value
+                last_size = size;
+                // Reset the stability timer because new output was still being produced
+                last_change = std::chrono::steady_clock::now();
+            }
+            else if (std::chrono::steady_clock::now() - last_change >= STABLE_PERIOD)
+            {
+                // The recording has not grown for STABLE_PERIOD: the pipeline has drained
+                break;
+            }
+
+            std::this_thread::sleep_for(POLL_PERIOD);
+        }
     }
 
     void test_max_file_size(
@@ -281,6 +436,9 @@ protected:
 
         // Make sure the DDS Recorder has received all the messages
         ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), RETCODE_OK);
+
+        // Wait for the DDS Recorder to write the received messages before stopping it
+        wait_for_recording_to_settle_(OUTPUT_FILE_PATH);
 
         // All the messages have been sent. Stop the DDS Recorder.
         recorder.stop();
@@ -465,6 +623,9 @@ protected:
             ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), RETCODE_OK);
         }
 
+        // Wait for the DDS Recorder to write the received messages before stopping it
+        wait_for_recording_to_settle_(OUTPUT_FILE_PATH);
+
         // All the messages have been sent. Stop the DDS Recorder.
         recorder.stop();
 
@@ -490,6 +651,9 @@ protected:
     test::limits sql_limits_{300 * 1024,  300 * 1024, 0.2, 273};
 
     test::limits* limits_;
+
+    //! Warning verbosity with an empty (match-all) filter, see BaseLogConfiguration's constructor
+    eprosima::utils::BaseLogConfiguration log_configuration_;
 
 
 };

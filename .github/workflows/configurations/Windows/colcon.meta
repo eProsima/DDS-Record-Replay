@@ -6,7 +6,7 @@
             "cmake-args":
             [
                 "-DCMAKE_CXX_FLAGS='/WX /EHsc'",
-                "-DCMAKE_PREFIX_PATH='${CMAKE_PREFIX_PATH};${vcpkg_install_path}'",
+                "-DCMAKE_PREFIX_PATH='${CMAKE_PREFIX_PATH};C:/Program Files/lz4;C:/Program Files/zstd'",
                 "-Ax64",
                 "-T host=x64"
             ]
@@ -17,7 +17,7 @@
             "cmake-args":
             [
                 "-DCMAKE_CXX_FLAGS='/WX /EHsc'",
-                "-DCMAKE_PREFIX_PATH='${CMAKE_PREFIX_PATH};${vcpkg_install_path}'",
+                "-DCMAKE_PREFIX_PATH='${CMAKE_PREFIX_PATH};C:/Program Files/lz4;C:/Program Files/zstd'",
                 "-Ax64",
                 "-T host=x64"
             ]
@@ -28,7 +28,7 @@
             "cmake-args":
             [
                 "-DCMAKE_CXX_FLAGS='/WX /EHsc'",
-                "-DCMAKE_PREFIX_PATH='${CMAKE_PREFIX_PATH};${vcpkg_install_path}'",
+                "-DCMAKE_PREFIX_PATH='${CMAKE_PREFIX_PATH};C:/Program Files/lz4;C:/Program Files/zstd'",
                 "-Ax64",
                 "-T host=x64"
             ]
@@ -39,7 +39,7 @@
             "cmake-args":
             [
                 "-DCMAKE_CXX_FLAGS='/WX /EHsc'",
-                "-DCMAKE_PREFIX_PATH='${CMAKE_PREFIX_PATH};${vcpkg_install_path}'",
+                "-DCMAKE_PREFIX_PATH='${CMAKE_PREFIX_PATH};C:/Program Files/lz4;C:/Program Files/zstd'",
                 "-Ax64",
                 "-T host=x64"
             ]
