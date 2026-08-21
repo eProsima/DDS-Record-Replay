@@ -114,13 +114,6 @@ public:
         configuration_ = std::make_unique<ddsrecorder::yaml::RecorderConfiguration>(yml);
         configuration_->dds_configuration->domain = test::DOMAIN;
         configuration_->dds_configuration->allowed_partition_list.insert("*");
-        // Write each sample as it arrives instead of in batches of buffer_size.
-        // NOTE: with the default of 100, the last partial batch stays in the handler's buffer and is
-        // invisible in the output until the recorder is destroyed. Nothing watching the output can
-        // then tell "the pipe is still working" from "the pipe is done and the tail is buffered",
-        // which is what let wait_for_recording_to_drain_ return early on a slow machine and leave a
-        // recording short. ResourceLimitsTest sets this for the same reason.
-        configuration_->buffer_size = 1;
 
         // Create the topic
         create_topic_();
@@ -273,8 +266,14 @@ protected:
      */
     void wait_for_recording_to_drain_(
             const std::string& file_name,
-            const std::size_t /* expected */)
+            const std::size_t expected)
     {
+        if (expected <= configuration_->buffer_size)
+        {
+            // Nothing has been written yet, so nothing can be left behind
+            return;
+        }
+
         const auto base = (std::filesystem::current_path() / file_name).string();
         const std::vector<std::string> outputs =
         {
@@ -300,9 +299,9 @@ protected:
                 };
 
         constexpr auto POLL_PERIOD = std::chrono::milliseconds(100);
-        // With buffer_size at 1 the output grows on every sample, so a short window is enough to
-        // tell that the recorder has stopped writing
-        constexpr auto STABLE_PERIOD = std::chrono::milliseconds(500);
+        // Kept above the time one batch of buffer_size messages takes to publish, so a pause between
+        // flushes is not mistaken for the end of the recording
+        constexpr auto STABLE_PERIOD = std::chrono::milliseconds(1500);
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
 
         auto last_size = written_bytes();
