@@ -1,12 +1,22 @@
-.. include:: ../exports/alias.include
+Version v1.5.2
+==============
 
-.. _notes:
+This release includes the following **features**:
 
-.. include:: forthcoming_version.rst
+* Add a new ``mcap-convert`` tool to convert recordings from MCAP to SQL
+* Add a YAML configuration validator
 
-##############
-Version v1.5.3
-##############
+This release includes the following **bugfixes**:
+
+* Fix ``macOS`` build issues in YAML parsing and CLI arguments
+
+This release includes the following **improvements**:
+
+* Include dependency type rows in the SQL output
+* Improve ``mcap-convert`` tool performance with batched parallel processing
+* Add documentation for the converter tool
+* Remove unused ``FileWatch`` header
+* Remove v2 nightly
 
 This release includes the following **Dependencies Update**:
 
@@ -23,34 +33,17 @@ This release includes the following **Dependencies Update**:
         - `v1.4.1 <https://github.com/eProsima/foonathan_memory_vendor/releases/tag/v1.4.1>`__
     *   - Fast CDR
         - `eProsima/Fast-CDR <https://github.com/eProsima/Fast-CDR>`__
-        - `v2.3.6 <https://github.com/eProsima/Fast-CDR/releases/tag/v2.3.6>`__
+        - `v2.3.5 <https://github.com/eProsima/Fast-CDR/releases/tag/v2.3.5>`__
         - `v2.3.6 <https://github.com/eProsima/Fast-CDR/releases/tag/v2.3.6>`__
     *   - Fast DDS
         - `eProsima/Fast-DDS <https://github.com/eProsima/Fast-DDS>`__
-        - `v3.6.2 <https://github.com/eProsima/Fast-DDS/releases/tag/v3.6.2>`__
+        - `v3.6.1 <https://github.com/eProsima/Fast-DDS/releases/tag/v3.6.1>`__
         - `v3.6.2 <https://github.com/eProsima/Fast-DDS/releases/tag/v3.6.2>`__
     *   - Dev Utils
         - `eProsima/dev-utils <https://github.com/eProsima/dev-utils>`__
-        - `v1.5.3 <https://github.com/eProsima/dev-utils/releases/tag/v1.5.3>`__
+        - `v1.5.1 <https://github.com/eProsima/dev-utils/releases/tag/v1.5.1>`__
         - `v1.5.3 <https://github.com/eProsima/dev-utils/releases/tag/v1.5.3>`__
     *   - DDS Pipe
         - `eProsima/DDS-Pipe <https://github.com/eProsima/DDS-Pipe>`__
+        - `v1.5.1 <https://github.com/eProsima/DDS-Pipe/releases/tag/v1.5.1>`__
         - `v1.5.2 <https://github.com/eProsima/DDS-Pipe/releases/tag/v1.5.2>`__
-        - `v1.5.3 <https://github.com/eProsima/DDS-Pipe/releases/tag/v1.5.3>`__
-
-#################
-Previous Versions
-#################
-
-.. include:: previous_versions/v1.5.2.rst
-.. include:: previous_versions/v1.5.1.rst
-.. include:: previous_versions/v1.5.0.rst
-.. include:: previous_versions/v1.4.0.rst
-.. include:: previous_versions/v1.3.0.rst
-.. include:: previous_versions/v1.2.0.rst
-.. include:: previous_versions/v1.1.0.rst
-.. include:: previous_versions/v1.0.0.rst
-.. include:: previous_versions/v0.4.0.rst
-.. include:: previous_versions/v0.3.0.rst
-.. include:: previous_versions/v0.2.0.rst
-.. include:: previous_versions/v0.1.0.rst
