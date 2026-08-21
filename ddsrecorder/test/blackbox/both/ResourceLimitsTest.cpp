@@ -361,9 +361,15 @@ protected:
                     return ret;
                 };
 
-        // Once the recording reaches this size the write pipeline has caught up: log-rotation caps
-        // the output at max-size, so this is the steady state and satisfies the callers' bounds.
-        const std::uintmax_t enough_size = limits_->MAX_FILE_SIZE;
+        // NOTE: there is deliberately no size threshold to break out early on. recorded_size() sums
+        // the temporary output and its WAL sidecar, and that over-counts: the WAL holds page images
+        // that overwrite existing pages on checkpoint rather than extending the file. Treating that
+        // sum as "the recording reached max-size" stopped the recorder while the database was still
+        // short, and the caller then measured the smaller checkpointed file. Waiting for the writes
+        // to actually stop is the only signal here that means what it says.
+        //
+        // Progress is measured from file sizes rather than by querying the database, which would be
+        // a concurrent reader of a WAL-mode database and reports races under ThreadSanitizer.
 
         // Sleep to avoid busy-waiting
         constexpr auto POLL_PERIOD = std::chrono::milliseconds(200);
@@ -379,16 +385,10 @@ protected:
         auto last_size = recorded_size();
         auto last_change = std::chrono::steady_clock::now();
 
-        // Keep polling until the recording reaches the steady state, drains, or the timeout expires
+        // Keep polling until the recording stops growing, or the timeout expires
         while (std::chrono::steady_clock::now() < deadline)
         {
             const auto size = recorded_size();
-
-            if (size >= enough_size)
-            {
-                // The recording reached the steady state; no need to keep waiting.
-                break;
-            }
 
             if (size != last_size)
             {
