@@ -115,6 +115,12 @@ public:
         configuration_->dds_configuration->domain = test::DOMAIN;
         configuration_->dds_configuration->allowed_partition_list.insert("*");
 
+        // Flush every sample to the handler. The drain helper below uses output-file progress
+        // to know when the recorder has consumed all samples; with the default batch size, a
+        // partially filled final batch is invisible and can be lost when the recorder is
+        // destroyed.
+        configuration_->buffer_size = 1;
+
         // Create the topic
         create_topic_();
 
