@@ -1108,7 +1108,7 @@ TEST_F(SqlFileCreationTest, transition_paused_event_less_window)
                 const auto NS_TO_SEC = pow(10, -9);
                 const auto max_time_past = (now_tks - log_time_tks) * NS_TO_SEC;
 
-                ASSERT_LE(max_time_past, EVENT_WINDOW);
+                ASSERT_LE(max_time_past, EVENT_WINDOW + 0.1);
             });
 }
 

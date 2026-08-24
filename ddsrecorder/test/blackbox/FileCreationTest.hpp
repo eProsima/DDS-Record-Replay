@@ -204,7 +204,7 @@ protected:
         recorder->update_filter(std::set<std::string>{partition_filter});
 
         // Send messages
-        auto sent_messages = send_messages_(messages1);
+        auto sent_messages = send_messages_(messages1, state1 == DdsRecorderState::RUNNING);
 
         if (state1 != state2)
         {
@@ -232,7 +232,7 @@ protected:
         std::this_thread::sleep_for(std::chrono::seconds(wait));
 
         // Send more messages
-        const auto sent_messages_after_transition = send_messages_(messages2);
+        const auto sent_messages_after_transition = send_messages_(messages2, state2 == DdsRecorderState::RUNNING);
         sent_messages.insert(sent_messages.end(),
                 sent_messages_after_transition.begin(), sent_messages_after_transition.end());
 
@@ -349,7 +349,8 @@ protected:
     }
 
     std::vector<HelloWorld> send_messages_(
-            const unsigned int number_of_messages)
+            const unsigned int number_of_messages,
+            const bool wait_for_pipe = false)
     {
         // Create the DataWriter
         create_datawriter_();
@@ -391,6 +392,13 @@ protected:
         {
             EXPECT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), fastdds::dds::RETCODE_OK)
                 << "The DDS Recorder did not acknowledge all " << number_of_messages << " samples.";
+
+            if (wait_for_pipe)
+            {
+                // Keep the writer alive while the pipe forwards acknowledged samples. DDS
+                // acknowledgment only proves that the samples reached the reader history.
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+            }
         }
 
         // Delete the DataWriter
