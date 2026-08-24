@@ -6,87 +6,67 @@
 Glossary
 ########
 
-Networking nomenclature
-=======================
-
 .. glossary::
 
-    LAN
-        **Local Area Network**
+   CDR
+      Common Data Representation, the binary serialization used for DDS
+      payloads. Replayer requires CDR data; decoded JSON alone is not enough.
 
-DDS Record & Replay nomenclature
-================================
+   DataReader
+      DDS endpoint that receives samples for a topic. A DataReader belongs to
+      one DomainParticipant.
 
-.. glossary::
+   DataWriter
+      DDS endpoint that publishes samples for a topic. A DataWriter belongs to
+      one DomainParticipant.
 
-    MCAP
-        Modular container file format for heterogeneous timestamped data.
+   DDS domain
+      Logical communication space identified by a domain ID. Participants in
+      different domains do not discover one another by default.
 
-DDS nomenclature
-================
+   DDS Pipe
+      Shared eProsima communication core that discovers endpoints and routes
+      serialized payloads between participants. Recorder, Replayer, DDS Router,
+      and Fast DDS Spy build product-specific workflows on this core.
 
-.. glossary::
+   DomainParticipant
+      Entry point for an application in one DDS domain and factory for DDS
+      publishers, subscribers, topics, and endpoints.
 
-    DataReader
-        DDS element that subscribes to a specific Topic.
-        It belong to one and only one Participant, and it is uniquely identified by a Guid.
+   DynamicTypes
+      DDS type representation that can be discovered and used at runtime
+      without generated application classes. Recorder uses it to store schemas
+      and decode SQL JSON.
 
-        See `Fast DDS documentation <https://fast-dds.docs.eprosima.com/en/v2.10.1/fastdds/dds_layer/subscriber/dataReader/dataReader.html>`__
-        for further information.
+   GUID
+      Globally unique identifier for a DDS entity. A GUID contains a GUID prefix
+      and an entity ID.
 
-    DataWriter
-        DDS entity that publish data in a specific Topic.
-        It belong to one and only one Participant, and it is uniquely identified by a Guid.
+   logTime
+      MCAP timestamp used by Replayer for ordering and delays. Recorder normally
+      uses receive time, or publication time when ``log-publish-time`` is true.
 
-        See `Fast DDS documentation <https://fast-dds.docs.eprosima.com/en/v2.10.1/fastdds/dds_layer/publisher/dataWriter/dataWriter.html>`__
-        for further information.
+   MCAP
+      Open container format for timestamped heterogeneous data. DDS Record &
+      Replay stores CDR messages, channels, schemas, and product metadata in it.
 
-    Domain Id
-        The Domain Id is a virtual partition for DDS networks.
-        Only DomainParticipants with the same Domain Id would be able to communicate to each other.
-        DomainParticipants  in different Domains will not even discover each other.
+   Partition
+      Named DDS routing scope within a domain. Publishers and subscribers
+      communicate only through matching partition expressions.
 
-        See `Fast DDS documentation <https://fast-dds.docs.eprosima.com/en/v2.10.1//fastdds/dds_layer/domain/domain.html>`__
-        for further information.
+   Publication timestamp
+      Source timestamp attached by a DDS writer. It can differ from the time
+      Recorder receives the sample.
 
-    DomainParticipant
-        A DomainParticipant is the entry point of the application to a DDS Domain.
-        Every DomainParticipant is linked to a single domain from its creation, and cannot change such domain.
-        It also acts as a factory for Publisher, Subscriber and Topic.
+   QoS
+      DDS Quality of Service policies controlling compatibility and behavior,
+      including reliability, durability, ownership, history, and partitions.
 
-        See `Fast DDS documentation <https://fast-dds.docs.eprosima.com/en/v2.10.1/fastdds/dds_layer/domain/domainParticipant/domainParticipant.html>`__
-        for further information.
+   SQLite
+      Embedded relational database format used for queryable recordings. The
+      project uses the ``.db`` extension and can store CDR, decoded JSON, or both.
 
-    Endpoint
-        DDS element that publish or subscribes in a specific Topic. Endpoint kinds are *DataWriter* or *DataReader*.
+   Topic
+      DDS communication subject identified by a topic name and type name.
 
-    Guid
-        Global Unique Identifier.
-        It contains a GuidPrefix and an EntityId.
-        The EntityId uniquely identifies sub-entities inside a Participant.
-        Identifies uniquely a DDS entity (DomainParticipant, DataWriter or DataReader).
-
-    GuidPrefix
-        Global Unique Identifier shared by a Participant and all its sub-entities.
-        Identifies uniquely a DDS Participant.
-
-    Topic
-        DDS isolation abstraction to encapsulate subscriptions and publications.
-        Each Topic is uniquely identified by a topic name and a topic type name (name of the data type it transmits).
-
-        See `Fast DDS documentation <https://fast-dds.docs.eprosima.com/en/v2.10.1/fastdds/dds_layer/topic/topic.html>`__
-        for further information.
-
-    Partition
-        Logical domain that helps organize communication between publishers and subscribers.
-        Each Partition is uniquely identified by a name.
-
-        See `Fast DDS documentation <https://fast-dds.docs.eprosima.com/en/v2.10.1/fastdds/dds_layer/domain/domainParticipant/partition.html>`__
-        for further information.
-
-    DynamicTypes
-        The dynamic topic types offer the possibility to work over DDS without the restrictions related to the IDLs.
-        Using them, the users can declare the different types that they need and manage the information directly, avoiding the additional step of updating the IDL file and the generation of C++ classes.
-
-        See `Fast DDS documentation <https://fast-dds.docs.eprosima.com/en/latest/fastdds/dynamic_types/dynamic_types.html>`__
-        for further information.
+For the full DDS entity model, see |FastDDSDocs|.

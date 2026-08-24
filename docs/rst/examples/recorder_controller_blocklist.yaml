@@ -1,0 +1,5 @@
+# schema: recorder
+dds:
+  blocklist:
+    - name: "/ddsrecorder/command"
+    - name: "/ddsrecorder/status"

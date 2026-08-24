@@ -1,76 +1,102 @@
-##########################################
-eProsima DDS Record & Replay Documentation
-##########################################
+###################
+DDS Record & Replay
+###################
 
-.. image:: /rst/figures/eprosima_logo.svg
-  :height: 100px
-  :width: 100px
-  :align: left
-  :alt: eProsima
-  :target: http://www.eprosima.com/
+*eProsima DDS Record & Replay* records live DDS traffic and publishes it again
+later while preserving message order and timing. It is designed for debugging,
+reproducible testing, demonstrations, and offline inspection of DDS systems.
 
-*eProsima DDS Record & Replay* is an end-user software application that efficiently saves DDS data published into a DDS environment in a MCAP format database.
-Thus, the exact playback of the recorded network events is possible as the data is linked to the timestamp at which the original data was published.
+Choose a workflow
+=================
 
-*eProsima DDS Record & Replay* is easily configurable and installed with a default setup, so that DDS topics, data types and entities are automatically discovered without the need to specify the types of data recorded.
-This is because the recording tool exploits the DynamicTypes functionality of `eProsima Fast DDS <https://fast-dds.docs.eprosima.com>`_, the C++ implementation of the `DDS (Data Distribution Service) Specification <https://www.omg.org/spec/DDS/About-DDS/>`_ defined by the `Object Management Group (OMG) <https://www.omg.org/>`_.
+.. list-table::
+   :header-rows: 1
+   :widths: 22 48 30
 
-##################
+   * - Goal
+     - Start here
+     - Tool
+   * - Capture and replay traffic
+     - :ref:`record_replay_quickstart`
+     - ``ddsrecorder`` and ``ddsreplayer``
+   * - Keep a rolling pre-event window
+     - :ref:`recorder_remote_control`
+     - ``ddsrecorder`` and Remote Controller
+   * - Inspect or query a recording
+     - :ref:`file_formats`
+     - MCAP tools or SQLite clients
+   * - Convert MCAP to SQLite
+     - :ref:`replayer_usage_mcap_convert`
+     - ``mcap-convert``
+   * - Configure DDS discovery and filtering
+     - :ref:`common_dds_configuration`
+     - Recorder or Replayer
+
+What is included
+================
+
+``ddsrecorder``
+    Discovers DDS topics and writes samples, topic metadata, partitions, QoS,
+    and available dynamic type information to MCAP and/or SQLite.
+
+``ddsreplayer``
+    Reads an MCAP or DDS Record & Replay SQLite ``.db`` file and publishes its
+    samples into a DDS domain. Playback can be filtered or shifted in time and
+    can run faster or slower than the original recording.
+
+Remote Controller
+    Controls Recorder state through DDS. It can start, pause, capture an event
+    window, suspend, stop, or close a Recorder. A graphical controller is
+    available when it is enabled at build time.
+
+``mcap-convert``
+    Converts an MCAP recording into the SQLite schema used by this project. It
+    does not publish DDS traffic.
+
+How the tools use DDS Pipe
+==========================
+
+DDS Pipe is the shared communication core. It discovers participants and
+topics, applies routing and filtering rules, and moves serialized payloads
+between endpoints. Recorder connects a DDS endpoint to storage writers;
+Replayer connects a recording reader to a DDS endpoint. DDS Router and Fast
+DDS Spy use the same core for their own products, so concepts such as topic
+filtering, transports, and participant QoS are intentionally consistent.
+
+.. figure:: /rst/figures/record-replay-architecture.svg
+   :align: center
+   :alt: DDS publishers and subscribers connect through the DDS Pipe core to Recorder and Replayer storage endpoints.
+
+   Recorder and Replayer data flow through the shared DDS Pipe core.
+
+Supported file workflows
+========================
+
+.. list-table::
+   :header-rows: 1
+   :widths: 18 18 18 18 28
+
+   * - Format
+     - Record
+     - Replay
+     - Convert from MCAP
+     - Best suited for
+   * - MCAP
+     - Yes; default
+     - Yes
+     - Source format
+     - Portable recordings and visualization tools
+   * - SQLite ``.db``
+     - Yes; optional
+     - Yes, when CDR data is stored
+     - Yes
+     - SQL queries and application-specific analysis
+
+The next step is the :ref:`record_replay_quickstart`. For a production setup,
+read :ref:`file_formats` before selecting an output format and resource limit.
+
 Commercial support
-##################
+==================
 
-Looking for commercial support? Write us to info@eprosima.com
-
-Find more about us at `eProsima's webpage <https://eprosima.com/>`__.
-
-########
-Overview
-########
-
-*eProsima DDS Record & Replay* includes the following tools:
-
-* **DDS Recorder tool**.
-  The main functionality of this tool is to save the data in a `MCAP <https://mcap.dev/>`_ database.
-  The database contains the records of the publication timestamp of the data, the serialized data, and the definition of the data serialization type and format.
-  The output MCAP file can be read with any user tool compatible with MCAP file reading since it contains all the necessary information for reading and reproducing the data.
-
-  .. figure:: /rst/figures/ddsrecord_overview.png
-    :align: center
-
-* **DDS Remote Controller tool**.
-  This application allows remote control of the recording tool.
-  Thus, a user can have the recording tool on a device and from another device send commands to start, stop or pause data recording.
-
-  .. figure:: /rst/figures/controller_interact.png
-    :align: center
-
-* **DDS Replay tool**.
-  This application allows to reproduce DDS traffic recorded with a *DDS Recorder*.
-  A user can specify which messages to replay by either setting a time range (begin/end times) out of which messages will be discarded, or directly by blocking/whitelisting a set of topics of interest.
-  It is also possible to choose a different playback rate, as well as to use topic QoS different to the ones recorded.
-
-  .. figure:: /rst/figures/ddsreplay_overview.png
-    :align: center
-
-#################################
-Contributing to the documentation
-#################################
-
-*DDS Record & Replay Documentation* is an open source project, and as such all contributions, both in the form of
-feedback and content generation, are most welcomed.
-To make such contributions, please refer to the
-`Contribution Guidelines <https://github.com/eProsima/all-docs/blob/master/CONTRIBUTING.md>`_ hosted in our GitHub
-repository.
-
-##############################
-Structure of the documentation
-##############################
-
-This documentation is organized into the sections below.
-
-* :ref:`Installation Manual <installation_manual_linux>`
-* :ref:`Recording application <recorder_getting_started_getting_started>`
-* :ref:`Replay application <replayer_getting_started_getting_started>`
-* :ref:`Tutorials <tutorials_foxglove>`
-* :ref:`Developer Manual <developer_manual_installation_sources_linux>`
-* :ref:`Release Notes <notes>`
+For commercial support, contact ``info@eprosima.com`` or visit
+`eProsima <https://www.eprosima.com/>`__.

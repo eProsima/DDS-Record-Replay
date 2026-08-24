@@ -1,180 +1,89 @@
 .. include:: ../../exports/alias.include
-.. include:: ../../exports/roles.include
 
 .. _replayer_usage_usage:
 
-#####
-Usage
-#####
+##################
+Using DDS Replayer
+##################
 
-|eddsreplayer| is a user application executed from command line.
+Replayer requires a readable MCAP or DDS Record & Replay SQLite ``.db`` file.
+The shortest invocation is:
 
+.. code-block:: console
 
-Starting Replay Application
----------------------------
+   $ ddsreplayer --input ./recording.mcap
 
-Docker Image
-^^^^^^^^^^^^
+The input can instead be set in YAML. If both are supplied, the CLI path wins:
 
-.. warning::
-    Currently, |ddsrecord| Docker image only contains |ddsrecorder| tool, |ddsreplay| application will be added soon.
+.. code-block:: console
 
-The recommended method to run the |ddsreplayer| is to instantiate a Docker container of the |ddsrecord| image.
-:ref:`Here <docker>` are the instructions to download the compressed |ddsrecord| Docker image and load it locally.
+   $ ddsreplayer --config-path ./replayer.yaml --input ./override.db
 
-To run the |ddsreplayer| from a Docker container execute the following command:
+Without ``--config-path``, ``./DDS_REPLAYER_CONFIGURATION.yaml`` is loaded only
+when it exists. An input file remains mandatory. Replayer publishes selected
+samples according to their recorded timing and exits after the last sample.
 
-.. code-block:: bash
+Useful invocations
+==================
 
-    docker run -it \
-        --net=host \
-        --ipc=host \
-        -v /<dds_replayer_ws>/DDS_REPLAYER_CONFIGURATION.yaml:/root/DDS_REPLAYER_CONFIGURATION.yaml \
-        ubuntu-ddsrecorder:v<X.X.X> ddsreplayer
+.. code-block:: console
 
+   # Replay on another domain without editing YAML.
+   $ ddsreplayer -i recording.mcap --domain 7
 
-Installation from sources
-^^^^^^^^^^^^^^^^^^^^^^^^^
+   # Reload topic and partition selection from a symlink every five seconds.
+   $ ddsreplayer -i recording.mcap -c current.yaml --reload-time 5
 
-|eddsrecord| depends on ``fastdds``, ``fastcdr`` and ``ddspipe`` libraries.
-In order to correctly execute the replayer, make sure that ``fastdds``, ``fastcdr`` and ``ddspipe`` are properly sourced.
-
-.. code-block:: bash
-
-    source <path-to-fastdds-installation>/install/setup.bash
-    source <path-to-ddspipe-installation>/install/setup.bash
-    source <path-to-ddsrecordreplay-installation>/install/setup.bash
-
-.. note::
-
-    If Fast DDS, DDS Pipe and DDS Record & Replay have been installed in the system, these libraries would be sourced by default.
-
-To start |eddsreplayer| with a default configuration, enter:
-
-.. code-block:: bash
-
-    ddsreplayer -i input_file.mcap
-
+See :ref:`replayer_usage_configuration` for playback timing and
+:ref:`common_dds_configuration` for filtering and QoS.
 
 .. _replayer_usage_close_replayer:
 
-Closing Replay Application
---------------------------
+Ending playback
+===============
 
-SIGINT
-^^^^^^
-
-To close |eddsreplayer|, press ``Ctrl+C``. |ddsreplayer| will perform a clean shutdown.
-
-SIGTERM
-^^^^^^^
-
-Write command ``kill <pid>`` in a different terminal, where ``<pid>`` is the id of the process running the |ddsreplayer|.
-Use ``ps`` or ``top`` programs to check the process ids.
+Normal playback ends after the last selected message and waits for queued work
+to complete. Press :kbd:`Ctrl+C` or send ``SIGTERM`` to stop early. For reliable
+writers, ``specs.wait-all-acked-timeout`` controls the acknowledgement wait when
+an endpoint closes.
 
 .. _replayer_usage_usage_application_arguments:
 
-Replay Service Command-Line Parameters
---------------------------------------
-
-The |ddsreplayer| application supports several input arguments:
+Command-line reference
+======================
 
 .. list-table::
-    :header-rows: 1
+   :header-rows: 1
+   :widths: 27 27 46
 
-    *   - Command
-        - Description
-        - Option
-        - Possible Values
-        - Default Value
-
-    *   - Help
-        - It shows the usage information |br|
-          of the application.
-        - ``-h`` |br|
-          ``--help``
-        -
-        -
-
-    *   - Version
-        - It shows the current version |br|
-          of the |ddsreplayer| and the |br|
-          hash of the last commit of |br|
-          the compiled code.
-        - ``-v`` |br|
-          ``--version``
-        -
-        -
-
-    *   - Input File
-        - Input MCAP file path.
-        - ``-i`` |br|
-          ``--input-file``
-        -
-        -
-
-    *   - Configuration File
-        - Configuration file path.
-        - ``-c`` |br|
-          ``--config-path``
-        -
-        - ``./DDS_REPLAYER_CONFIGURATION.yaml``
-
-    *   - Reload Timer
-        - The configuration file will be |br|
-          automatically reloaded |br|
-          according to the specified |br|
-          time period.
-        - ``-r`` |br|
-          ``--reload-time``
-        - Unsigned Integer
-        - ``0``
-
-    *   - Domain
-        - Set the domain to replay on
-        - ``--domain``
-        - Unsigned Integer [0-232]
-        - 0
-
-    *   - Debug
-        - Enables the |ddsreplayer| |br|
-          logs so the execution can be |br|
-          followed by internal |br|
-          debugging information. |br|
-          Sets ``Log Verbosity`` |br|
-          to ``info`` and |br|
-          ``Log Filter`` |br|
-          to ``DDSREPLAYER``.
-        - ``-d`` |br|
-          ``--debug``
-        -
-        -
-
-    *   - Log Verbosity
-        - Set the verbosity level so |br|
-          only log messages with equal |br|
-          or higher importance level |br|
-          are shown.
-        - ``--log-verbosity``
-        - ``info`` |br|
-          ``warning`` |br|
-          ``error``
-        - ``warning``
-
-    *   - Log Filter
-        - Set a regex string as filter.
-        - ``--log-filter``
-        - String
-        - ``"DDSREPLAYER"``
-
-MCAP to SQL conversion
-^^^^^^^^^^^^^^^^^^^^^^
-
-MCAP-to-SQL conversion is provided by the standalone :code:`mcap-convert` tool instead of the
-:code:`ddsreplayer` command-line interface.
-
-Example:
-
-.. code-block:: bash
-
-    mcap-convert -i /path/to/recorded_file.mcap --sql-output /path/to/recorded_file.db
+   * - Option
+     - Value/default
+     - Effect
+   * - ``-h``, ``--help``
+     - None
+     - Print usage and exit.
+   * - ``-v``, ``--version``
+     - None
+     - Print version and commit hash, then exit.
+   * - ``-i``, ``--input``
+     - Readable ``.mcap`` or ``.db`` path
+     - Input recording. Required by CLI or YAML.
+   * - ``-c``, ``--config-path``
+     - Readable YAML path
+     - Load this configuration instead of the optional conventional filename.
+   * - ``-r``, ``--reload-time``
+     - Seconds ≥ 0; ``0``
+     - Poll the loaded configuration at this interval.
+   * - ``--domain``
+     - ``0``–``232``; ``0``
+     - Override the replay DDS domain.
+   * - ``-d``, ``--debug``
+     - None
+     - Set informational logging with the Replayer category filter. Do not
+       combine with the two explicit logging options.
+   * - ``--log-filter``
+     - Regex; ``DDSREPLAYER``
+     - Filter informational and warning log categories.
+   * - ``--log-verbosity``
+     - ``info``, ``warning``, ``error``; ``warning``
+     - Minimum displayed severity, case-insensitive.

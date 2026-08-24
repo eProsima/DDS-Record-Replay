@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">DDS Record and Replay architecture</title>
+  <desc id="desc">DDS applications exchange traffic with Recorder and Replayer through the DDS Pipe core. Recorder writes MCAP or SQLite and Replayer reads those files.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#2457a6"/>
+    </marker>
+    <style>
+      .box{fill:#f7f9fc;stroke:#2457a6;stroke-width:3;rx:14}
+      .core{fill:#e7f1ff;stroke:#163b70;stroke-width:4;rx:16}
+      .store{fill:#eef8ee;stroke:#24733a;stroke-width:3;rx:14}
+      .shared{fill:#fff6de;stroke:#9b6b00;stroke-width:2;rx:12}
+      .title{font:700 25px sans-serif;fill:#15233b}
+      .label{font:600 20px sans-serif;fill:#15233b}
+      .small{font:16px sans-serif;fill:#34445f}
+      .flow{stroke:#2457a6;stroke-width:4;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1200" height="620" fill="#ffffff"/>
+  <rect class="box" x="35" y="145" width="230" height="270"/>
+  <text class="title" x="150" y="185" text-anchor="middle">DDS domain</text>
+  <text class="label" x="150" y="245" text-anchor="middle">Publishers</text>
+  <text class="small" x="150" y="280" text-anchor="middle">topics • types • QoS</text>
+  <text class="label" x="150" y="350" text-anchor="middle">Subscribers</text>
+  <text class="small" x="150" y="385" text-anchor="middle">live replay consumers</text>
+  <rect class="core" x="350" y="125" width="300" height="310"/>
+  <text class="title" x="500" y="175" text-anchor="middle">DDS Pipe core</text>
+  <text class="small" x="500" y="225" text-anchor="middle">discovery and participants</text>
+  <text class="small" x="500" y="265" text-anchor="middle">topic and partition filters</text>
+  <text class="small" x="500" y="305" text-anchor="middle">QoS and transports</text>
+  <text class="small" x="500" y="345" text-anchor="middle">serialized payload routing</text>
+  <text class="small" x="500" y="385" text-anchor="middle">dynamic type propagation</text>
+  <rect class="box" x="735" y="80" width="205" height="170"/>
+  <text class="title" x="838" y="125" text-anchor="middle">Recorder</text>
+  <text class="small" x="838" y="170" text-anchor="middle">DDS → storage</text>
+  <text class="small" x="838" y="205" text-anchor="middle">live or event window</text>
+  <rect class="box" x="735" y="315" width="205" height="170"/>
+  <text class="title" x="838" y="360" text-anchor="middle">Replayer</text>
+  <text class="small" x="838" y="405" text-anchor="middle">storage → DDS</text>
+  <text class="small" x="838" y="440" text-anchor="middle">timed and filtered</text>
+  <rect class="store" x="1000" y="170" width="165" height="220"/>
+  <text class="title" x="1082" y="220" text-anchor="middle">Storage</text>
+  <text class="label" x="1082" y="280" text-anchor="middle">MCAP</text>
+  <text class="label" x="1082" y="335" text-anchor="middle">SQLite .db</text>
+  <path class="flow" d="M265 230 H340"/>
+  <path class="flow" d="M350 360 H275"/>
+  <path class="flow" d="M650 190 H725"/>
+  <path class="flow" d="M735 420 H660"/>
+  <path class="flow" d="M940 165 H990"/>
+  <path class="flow" d="M1000 365 H950"/>
+  <rect class="shared" x="350" y="520" width="590" height="70"/>
+  <text class="label" x="645" y="550" text-anchor="middle">Shared foundation</text>
+  <text class="small" x="645" y="578" text-anchor="middle">DDS Record &amp; Replay • DDS Router • Fast DDS Spy</text>
+</svg>

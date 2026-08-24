@@ -1,48 +1,56 @@
-# eProsima DDS Record & Replay docs
+# DDS Record & Replay documentation
 
-This package generates the DDS Record & Replay documentation.
-[Here](https://dds-recorder.readthedocs.io/en/latest/) it can be seen the online documentation hosted in
-[readthedocs](https://readthedocs.org/).
-This packages is powered by [sphinx](https://www.sphinx-doc.org/en/master/).
+The user documentation is built with [Sphinx](https://www.sphinx-doc.org/) and
+published on [Read the Docs](https://dds-recorder.readthedocs.io/).
 
----
+## Local build
 
-## Documentation generation
-
-### Dependencies
-
-Before being able to build the documentation, some dependencies need to be installed:
+From the DDS Record & Replay repository root, create an isolated environment
+and install the pinned dependencies:
 
 ```bash
-sudo apt update
-sudo apt install -y \
-    doxygen \
-    python3 \
-    python3-pip \
-    python3-venv \
-    python3-sphinxcontrib.spelling \
-    imagemagick
-pip3 install -U -r src/ddsrecorder/docs/requirements.txt
+python3 -m venv .venv-docs
+. .venv-docs/bin/activate
+python -m pip install -r docs/requirements.txt
 ```
 
-### Build documentation
+Build HTML with missing references and warnings treated as errors:
 
-In order to install this package independently, use the following command:
 ```bash
-colcon build --packages-select ddsrecorder_docs
+sphinx-build -nW --keep-going -b html docs docs/_build/html
 ```
-In order to compile and execute the package **tests**, a specific CMake option is required: `BUILD_DOCS_TESTS`.
+
+Run the documentation checks:
 
 ```bash
-colcon build --packages-select ddsrecorder_docs --cmake-args -DBUILD_DOCS_TESTS=ON
+sphinx-build -W --keep-going -b spelling docs docs/_build/spelling
+doc8 --ignore D001 docs
+python docs/test/validate_examples.py
+```
+
+The external link audit requires network access and is kept separate from the
+deterministic checks:
+
+```bash
+sphinx-build -W --keep-going -b linkcheck docs docs/_build/linkcheck
+```
+
+## Colcon build
+
+In a complete imported workspace:
+
+```bash
+colcon build --packages-select ddsrecorder_docs --cmake-args -DBUILD_DOCS=ON -DBUILD_TESTS=ON
 colcon test --packages-select ddsrecorder_docs --event-handler console_direct+
+colcon test-result --verbose
 ```
 
----
+## Authoring rules
 
-## Library documentation
-
-This documentation is focused on the user manual for installing and working with DDS Recorder.
-To learn about the repository structure, design decisions, development guidelines, etc.,
-each package is documented separately and the source code is commented using Doxygen format.
-In directory `.dev` there is a generic `README.md` with the main information needed by a developer.
+* Ground behavior and defaults in the CLI parsers, YAML readers, schemas, and
+  runtime configuration constructors.
+* Put reusable YAML under `docs/rst/examples/` and include it with
+  `literalinclude`; the validation test checks every file in that directory.
+* Use SVG for architecture/state diagrams and real captures only for UI steps.
+* Preserve existing page paths and explicit Sphinx labels when moving content.
+* Do not add build-time downloads to `conf.py`; docs builds must work offline.

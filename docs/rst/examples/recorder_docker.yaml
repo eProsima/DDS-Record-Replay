@@ -1,0 +1,11 @@
+# schema: recorder
+dds:
+  domain: 0
+
+recorder:
+  output:
+    path: "/root/output"
+    filename: "docker_recording"
+    local-timestamp: true
+  mcap:
+    enable: true

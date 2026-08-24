@@ -1,0 +1,9 @@
+# schema: replayer
+replayer:
+  begin-time:
+    datetime: "2026-08-24_14-30-00"
+    format: "%Y-%m-%d_%H-%M-%S"
+    local: true
+    milliseconds: 125
+    microseconds: 0
+    nanoseconds: 0

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="650" viewBox="0 0 1100 650" role="img" aria-labelledby="title desc">
+  <title id="title">DDS Recorder state transitions</title>
+  <desc id="desc">Running, paused, and suspended are active states. Stop destroys recorder entities, close exits, and event writes the paused buffer.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#2457a6"/></marker>
+    <style>
+      .state{fill:#eef4ff;stroke:#2457a6;stroke-width:3;rx:16}
+      .terminal{fill:#f5eeee;stroke:#8f2d2d;stroke-width:3;rx:16}
+      .label{font:700 22px sans-serif;fill:#17243a}
+      .small{font:16px sans-serif;fill:#34445f}
+      .flow{stroke:#2457a6;stroke-width:3;fill:none;marker-end:url(#arrow)}
+      .close{stroke:#8f2d2d;stroke-width:3;fill:none;marker-end:url(#arrow)}
+      .event{stroke:#24733a;stroke-width:3;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1100" height="650" fill="#ffffff"/>
+  <rect class="state" x="70" y="90" width="230" height="125"/>
+  <text class="label" x="185" y="135" text-anchor="middle">RUNNING</text>
+  <text class="small" x="185" y="175" text-anchor="middle">writes live samples</text>
+  <rect class="state" x="435" y="90" width="230" height="125"/>
+  <text class="label" x="550" y="135" text-anchor="middle">PAUSED</text>
+  <text class="small" x="550" y="175" text-anchor="middle">buffers event window</text>
+  <rect class="state" x="800" y="90" width="230" height="125"/>
+  <text class="label" x="915" y="135" text-anchor="middle">SUSPENDED</text>
+  <text class="small" x="915" y="175" text-anchor="middle">discards samples</text>
+  <path class="flow" d="M300 130 H425"/>
+  <text class="small" x="362" y="118" text-anchor="middle">pause</text>
+  <path class="flow" d="M435 180 H310"/>
+  <text class="small" x="372" y="202" text-anchor="middle">start</text>
+  <path class="flow" d="M665 130 H790"/>
+  <text class="small" x="728" y="118" text-anchor="middle">suspend</text>
+  <path class="flow" d="M800 180 H675"/>
+  <text class="small" x="737" y="202" text-anchor="middle">pause</text>
+  <path class="event" d="M515 90 C450 25 650 25 585 90"/>
+  <text class="small" x="550" y="40" text-anchor="middle">event: write window; remain paused</text>
+  <rect class="state" x="435" y="335" width="230" height="125"/>
+  <text class="label" x="550" y="380" text-anchor="middle">STOPPED</text>
+  <text class="small" x="550" y="420" text-anchor="middle">entities destroyed</text>
+  <path class="flow" d="M185 215 C185 300 410 315 455 335"/>
+  <path class="flow" d="M550 215 V325"/>
+  <path class="flow" d="M915 215 C915 300 690 315 645 335"/>
+  <text class="small" x="335" y="298" text-anchor="middle">stop</text>
+  <text class="small" x="580" y="285" text-anchor="middle">stop</text>
+  <text class="small" x="765" y="298" text-anchor="middle">stop</text>
+  <path class="flow" d="M475 335 C340 260 250 270 220 225"/>
+  <path class="flow" d="M550 335 V225"/>
+  <path class="flow" d="M625 335 C760 260 850 270 880 225"/>
+  <text class="small" x="315" y="255" text-anchor="middle">start</text>
+  <text class="small" x="518" y="285" text-anchor="middle">pause</text>
+  <text class="small" x="785" y="255" text-anchor="middle">suspend</text>
+  <rect class="terminal" x="435" y="535" width="230" height="85"/>
+  <text class="label" x="550" y="585" text-anchor="middle">CLOSED</text>
+  <path class="close" d="M550 460 V525"/>
+  <text class="small" x="580" y="505">close</text>
+  <text class="small" x="1030" y="575" text-anchor="end">close from any state exits the process</text>
+</svg>

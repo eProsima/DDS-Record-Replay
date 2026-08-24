@@ -162,6 +162,9 @@
                     "minimum":0
                 }
             },
+            "required":[
+                "datetime"
+            ],
             "title":"TimeType"
         },
         "SpecsConfig":{
@@ -170,7 +173,7 @@
             "properties":{
                 "threads":{
                     "type":"integer",
-                    "minimum":0
+                    "exclusiveMinimum":0
                 },
                 "qos":{
                     "$ref":"#/definitions/QOSReplayer"

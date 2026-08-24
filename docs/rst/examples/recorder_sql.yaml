@@ -1,0 +1,15 @@
+# schema: recorder
+# use: replay
+dds:
+  domain: 0
+
+recorder:
+  output:
+    path: "."
+    filename: "shapesdemo"
+    local-timestamp: true
+  mcap:
+    enable: false
+  sql:
+    enable: true
+    data-format: both

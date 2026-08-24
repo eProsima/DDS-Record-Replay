@@ -1,0 +1,8 @@
+# schema: replayer
+dds:
+  domain: 0
+
+replayer:
+  input-file: "./recording.mcap"
+  rate: 1.0
+  replay-types: true

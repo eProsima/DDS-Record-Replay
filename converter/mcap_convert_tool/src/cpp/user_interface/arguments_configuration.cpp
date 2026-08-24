@@ -38,7 +38,7 @@ const option::Descriptor usage[] = {
         "",
         "",
         Arg::None,
-        "Usage: MCAP Convert \n" \
+        "Usage: mcap-convert \n" \
         "Convert an MCAP recording into the DDS Record & Replay SQLite schema.\n" \
         "General options:"
     },
@@ -125,8 +125,8 @@ const option::Descriptor usage[] = {
         "debug",
         Arg::None,
         "  -d \t--debug\t  \t" \
-        "Set log verbosity to Info \t" \
-        "(Using this option with --log-filter and/or --log-verbosity will head to undefined behaviour)."
+        "Set log verbosity to info and use the DDSREPLAYER category filter. " \
+        "Do not combine with --log-filter or --log-verbosity."
     },
 
     {
@@ -136,7 +136,7 @@ const option::Descriptor usage[] = {
         "log-filter",
         Arg::String,
         "  \t--log-filter\t  \t" \
-        "Set a Regex Filter to filter by category the info and warning log entries. " \
+        "Set a regex category filter for info and warning log entries. " \
         "[Default = \"DDSREPLAYER\"]. "
     },
 
@@ -147,8 +147,8 @@ const option::Descriptor usage[] = {
         "log-verbosity",
         Arg::Log_Kind_Correct_Argument,
         "  \t--log-verbosity\t  \t" \
-        "Set a Log Verbosity Level higher or equal the one given. " \
-        "(Values accepted: \"info\",\"warning\",\"error\" no Case Sensitive) " \
+        "Set the minimum log severity. " \
+        "Accepted values (case-insensitive): \"info\", \"warning\", \"error\". " \
         "[Default = \"warning\"]. "
     },
 
