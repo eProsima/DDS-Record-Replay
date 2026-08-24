@@ -1,0 +1,11 @@
+# schema: recorder
+dds:
+  domain: 0
+
+recorder:
+  output:
+    path: "."
+    filename: "shapesdemo"
+    local-timestamp: true
+  mcap:
+    enable: true

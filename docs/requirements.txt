@@ -2,6 +2,8 @@ doc8==0.10.1
 docutils==0.20.1
 furo==2024.8.6
 GitPython==3.1.44
+jsonschema==4.23.0
+PyYAML==6.0.2
 setuptools==75.8.2
 sphinx_rtd_theme==3.0.2
 sphinx-sitemap==2.6.0

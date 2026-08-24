@@ -1,0 +1,7 @@
+# schema: recorder
+recorder:
+  mcap:
+    enable: true
+  sql:
+    enable: true
+    data-format: both

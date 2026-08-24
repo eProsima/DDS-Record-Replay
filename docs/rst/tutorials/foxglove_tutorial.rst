@@ -3,92 +3,62 @@
 .. _tutorials_foxglove:
 
 ############################
-Visualize data with Foxglove
+Visualize MCAP with Foxglove
 ############################
 
-
-Background
-**********
-
-This tutorial explains how to record data with |ddsrecorder| tool and visualize it with `Foxglove Studio <https://foxglove.dev/studio>`__.
+This tutorial records schema-backed ShapesDemo data and opens the finalized
+MCAP in Foxglove. Foxglove's account and local-file requirements can change;
+consult its current
+`local data documentation <https://docs.foxglove.dev/docs/visualization/connecting/local-data>`__.
 
 Prerequisites
-*************
+=============
 
-It is required to have |eddsrecord| previously installed using one of the following installation methods:
-
-* :ref:`installation_manual_windows`
-* :ref:`installation_manual_linux`
-* :ref:`docker`
-
-Additionally, we will use `ShapesDemo <https://www.eprosima.com/index.php/products-all/eprosima-shapes-demo>`_ as a DDS Demo application to publish the data that will be recorded.
-This application is already prepared to use Fast DDS DynamicTypes, which is required when using the |ddsrecorder| tool.
-Download *eProsima Shapes Demo* from `eProsima website <https://www.eprosima.com/index.php/products-all/eprosima-shapes-demo>`_ or install it by following any of the methods described in the given links:
-
-* `Windows installation from binaries <https://eprosima-shapes-demo.readthedocs.io/en/latest/installation/windows_binaries.html>`_
-* `Linux installation from sources <https://eprosima-shapes-demo.readthedocs.io/en/latest/installation/linux_sources.html>`_
-* `Docker Image <https://eprosima-shapes-demo.readthedocs.io/en/latest/installation/docker_image.html>`_
+* DDS Record & Replay installed on :ref:`Linux <installation_manual_linux>` or
+  :ref:`Windows <installation_manual_windows>`.
+* `eProsima ShapesDemo <https://eprosima-shapes-demo.readthedocs.io/en/stable/>`__.
+* Access to the Foxglove web or desktop application.
 
 .. _tutorials_foxglove_configuring_recorder:
 
-Configuring DDS Recorder
-************************
-
-The DDS Recorder runs with default configuration parameters, but can also be configured via a YAML file.
-In this tutorial we will use a configuration file to change some default parameters and show how this file is loaded.
-The configuration file to be used is the following:
-
-.. literalinclude:: /resources/foxglove_tutorial/conf.yaml
-    :language: yaml
-
-The previous configuration file configures a recorder in DDS Domain ``0`` and save the output file as ``shapesdemo_data_<YYYY-MM-DD_hh-mm-ss>.mcap``, being ``<YYYY-MM-DD_hh-mm-ss>`` the timestamp of the time at which the |ddsrecorder| started recording.
-
-Create a new file named ``conf.yaml`` and copy the above snippet into this file.
-
-Running the application
-***********************
-
-Start ShapesDemo
-================
-
-Launch *eProsima Shapes Demo* application running the following command:
-
-.. code-block:: bash
-
-    ShapesDemo
-
-Start publishing in topics ``Square``, ``Triangle``, and ``Circle`` with default settings:
-
-.. figure:: /rst/figures/foxglove_shapesdemo.png
-    :align: center
-
-Recorder execution
+Configure Recorder
 ==================
 
-Launch the |ddsrecorder| tool passing the configuration file as an argument:
+Save this validated configuration as ``foxglove-recorder.yaml``:
 
-.. code-block:: bash
+.. literalinclude:: ../examples/recorder_foxglove.yaml
+   :language: yaml
+   :linenos:
 
-    ddsrecorder -c <path/to/config/file>/conf.yaml
+``only-with-type`` prevents schema-less channels, while ``record-types`` keeps
+the dynamic type data used by Replayer and inspection tools. This example uses
+raw DDS/OMG IDL conventions; set ``ros2-types: true`` when the source topics and
+consumer expect ROS 2 MCAP naming and schemas.
 
-Once you have all the desired data, close the |ddsrecorder| application with ``Ctrl+C``.
+Record ShapesDemo
+=================
 
-.. important::
+#. Start ShapesDemo on domain ``0``.
+#. Create publishers for ``Square``, ``Triangle``, or ``Circle``.
+#. Start Recorder:
 
-    Please remember to close the |ddsrecorder| application before accessing the output file as the *.mcap* file needs to be properly closed.
+   .. code-block:: console
 
-Visualize data with Foxglove Studio
-===================================
+      $ ddsrecorder --config-path foxglove-recorder.yaml
 
-Finally, we will show how to load the generated MCAP file into Foxglove Studio in order to display the saved data.
+#. Let the publishers run, then press :kbd:`Ctrl+C`.
+#. Select the finalized file named similarly to
+   ``2026-08-24_14-30-00_CEST_shapesdemo_data.mcap``. Do not select the
+   ``.mcap.tmp~`` file.
 
-1. Open `Foxglove Studio <https://studio.foxglove.dev/>`__ web application using Google Chrome or download the desktop application from their `Foxglove website <https://foxglove.dev/>`_.
-   We recommend to use the web application as the it is usually up to date with the latest features.
-2. Click ``Open local file`` and load the *.mcap* file previously created: ``shapesdemo_data.mcap``.
-3. Once the *.mcap* file is loaded, create your own layout with custom panels to visualize the recorded data.
-   The image below shows an example of a dashboard with several panels for data introspection.
+Open and inspect the recording
+==============================
 
-.. figure:: /rst/figures/foxglove_studio_shapesdemo.png
-    :align: center
+Open the local MCAP by dragging it into Foxglove, pressing :kbd:`Ctrl+O`, or
+choosing **Open local file(s)**. The channel list should contain the ShapesDemo
+topics. Add a raw-message or plot panel and select one of those channels.
 
-Feel free to further explore the number of possibilities that |eddsrecorder| and *Foxglove Studio* together have to offer.
+If a topic appears but its value cannot be decoded, inspect whether the channel
+has a non-empty schema and confirm ``record-types``/``ros2-types`` match the
+source system. Continue with :ref:`troubleshooting` for schema and temporary-file
+checks.

@@ -20,40 +20,40 @@ These options allow the developer to enable/disable certain |eddsrecord| setting
         - Description
         - Possible values
         - Default
-    *   - :class:`CMAKE_BUILD_TYPE`
+    *   - ``CMAKE_BUILD_TYPE``
         - CMake optimization build type.
         - ``Release`` |br|
           ``Debug``
         - ``Release``
-    *   - :class:`BUILD_DDSRECORDER_CONTROLLER`
+    *   - ``BUILD_DDSRECORDER_CONTROLLER``
         - Build the |ddsrecorder| remote |br| controller application. |br|
         - ``OFF`` |br|
           ``ON``
         - ``OFF``
-    *   - :class:`BUILD_DOCS`
+    *   - ``BUILD_DOCS``
         - Build the |eddsrecord| |br| documentation. |br|
         - ``OFF`` |br|
           ``ON``
         - ``OFF``
-    *   - :class:`BUILD_TESTS`
+    *   - ``BUILD_TESTS``
         - Build the |eddsrecord| tools and |br| documentation tests.
         - ``OFF`` |br|
           ``ON``
         - ``OFF``
-    *   - :class:`LOG_INFO`
+    *   - ``LOG_INFO``
         - Activate |eddsrecord| logs. It is |br|
-          set to ``ON`` if :class:`CMAKE_BUILD_TYPE` is set |br|
+          set to ``ON`` if ``CMAKE_BUILD_TYPE`` is set |br|
           to ``Debug``.
         - ``OFF`` |br|
           ``ON``
         - ``ON`` if ``Debug`` |br|
           ``OFF`` otherwise
-    *   - :class:`ASAN_BUILD`
+    *   - ``ASAN_BUILD``
         - Activate address sanitizer build.
         - ``OFF`` |br|
           ``ON``
         - ``OFF``
-    *   - :class:`TSAN_BUILD`
+    *   - ``TSAN_BUILD``
         - Activate thread sanitizer build.
         - ``OFF`` |br|
           ``ON``

@@ -1,206 +1,180 @@
 .. include:: ../../exports/alias.include
-.. include:: ../../exports/roles.include
 
 .. _recorder_remote_control:
 
-##############
-Remote Control
-##############
+###################
+Remote control
+###################
 
-The |ddsrecorder| application from |eddsrecord| allows remote control and monitoring of the tool via DDS.
-Thus it is possible both to monitor the execution status of the |ddsrecorder| and to control the execution status of this application.
+Recorder exposes a DDS command topic and a DDS status topic when
+``remote-controller.enable`` is true, which is the default. A custom DDS
+application or the optional graphical Remote Controller can use this interface.
 
-Moreover, eProsima provides a remote controlling tool that allows to visualize the status of a |ddsrecorder| and to send commands to it to change its current status.
+Recorder states
+===============
 
-This section explains the different execution states of a |ddsrecorder|, how to create your own tool using the DDS topics that the application defines to control its behavior, and the presentation of the eProsima user application for the remote control of the |ddsrecorder|.
+.. list-table::
+   :header-rows: 1
+   :widths: 18 27 28 27
 
-DDS Recorder Statuses
-=====================
+   * - State
+     - DDS entities
+     - Incoming samples
+     - Output file
+   * - ``RUNNING``
+     - Active
+     - Written in batches
+     - Open and growing
+   * - ``PAUSED``
+     - Active
+     - Kept in a rolling ``event-window`` buffer
+     - Written only by ``event``
+   * - ``SUSPENDED``
+     - Active
+     - Received and discarded
+     - Finalized
+   * - ``STOPPED``
+     - Recorder entities destroyed; controller remains
+     - Not received
+     - Finalized
+   * - ``CLOSED``
+     - Destroyed
+     - Not received
+     - Finalized; process exits
 
-The |ddsrecorder| application may have the following states:
+Starting from STOPPED recreates Recorder and reloads every non-controller YAML
+setting. This is the way to apply output, transport, QoS, logging, or other
+settings that cannot be hot-reloaded.
 
-* **CLOSED**: The application is not running.
-  To start running the application it is required to launch it from the terminal by executing ``ddsrecorder``.
-  Once the ``ddsrecorder`` application is executed, it will automatically go into recording mode (``RUNNING`` state), although this can be modified through the `.yaml` configuration file.
-  Please refer to the |ddsrecorder| :ref:`remote controller configuration section <recorder_usage_configuration_remote_controller>` for more options on the initial state of the application.
-* **RUNNING**: The application is running and recording data in the database.
-* **PAUSED**: The application is running but not recording data in the database.
-  In this state, the application stores the data it has received in a time window prior to the current time.
-  The data will not be saved to the database until an event arrives from the remote controller.
-* **SUSPENDED**: The application is running but not recording data. Internal entities are created and samples received but discarded (advantage: lower latency in transition to ``RUNNING/PAUSED`` states).
-* **STOPPED**: The application is running but not recording data. Internal entities are not created and thus no samples are received.
+.. figure:: /rst/figures/recorder-states.svg
+   :align: center
+   :alt: Recorder can move among running, paused, suspended, and stopped states; close ends the process and event captures the paused window.
 
-To change from one state to another, commands can be sent to the application through the `Controller Command` DDS topic to be defined later.
-The commands that the application accepts are as follows:
+   Recorder states. The transition table below is authoritative.
 
-* **start**: Changes to ``RUNNING`` state if it was not in it.
-* **pause**: Changes to ``PAUSED`` state if it was not in it.
-* **event**: Triggers a recording event to save the data of the time window prior to the event.
-  This command can take the next state as an argument, so it is possible to trigger an event and change the state with the same command.
-  This is useful when the recorder is in a paused state, the user wants to record all the data collected in the current time window and then immediately switch to ``RUNNING`` state to start recording data.
-  It could also be the case that the user wants to capture the event, save the data and then stop the recorder to inspect the output file.
-  The arguments are sent as a serialized `json` in string format.
-* **suspend**: Changes to ``SUSPENDED`` state if it was not in it.
-* **stop**: Changes to ``STOPPED`` state if it was not in it.
-* **close**: Closes the |ddsrecorder| application.
+Commands and transitions
+========================
 
-The following is the state diagram of the |ddsrecorder| application with all the available commands and the state change effect they cause.
+Commands are case-insensitive. ``args`` is either empty or a JSON object
+serialized as a string.
 
-.. figure:: /rst/figures/recorder_state_diagram.png
-    :align: center
+.. list-table::
+   :header-rows: 1
+   :widths: 17 25 23 35
+
+   * - Command
+     - Valid source
+     - Result
+     - Arguments and notes
+   * - ``start``
+     - RUNNING, PAUSED, SUSPENDED, STOPPED
+     - RUNNING
+     - Creates Recorder first when source is STOPPED.
+   * - ``pause``
+     - RUNNING, PAUSED, SUSPENDED, STOPPED
+     - PAUSED
+     - Begins or continues the rolling event buffer.
+   * - ``event``
+     - PAUSED only
+     - PAUSED by default
+     - Flushes the current event window. Optional ``next_state`` is ``RUNNING``,
+       ``SUSPENDED``, or ``STOPPED``.
+   * - ``suspend``
+     - RUNNING, PAUSED, SUSPENDED, STOPPED
+     - SUSPENDED
+     - Keeps DDS entities ready but discards received samples.
+   * - ``stop``
+     - RUNNING, PAUSED, SUSPENDED
+     - STOPPED
+     - Optional ``avoid_overwriting_output: true`` detaches finalized files
+       from the next Recorder instance's rotation tracking.
+   * - ``close``
+     - Any state
+     - CLOSED
+     - Finalizes output and terminates the process.
+
+Examples of serialized ``args`` values:
+
+.. code-block:: json
+
+   {"next_state": "STOPPED"}
+
+.. code-block:: json
+
+   {"avoid_overwriting_output": true}
+
+An unsupported command, an ``event`` outside PAUSED, or an invalid argument is
+logged and does not change the current state.
 
 .. _recorder_remote_controller_data_types:
 
-DDS Controller Data Types
-=========================
+DDS interface
+=============
 
-The |ddsrecorder| contains a DDS subscriber in the `Controller Command` topic and a DDS publisher in the `Controller Status` topic.
-These topics' names are by default ``/ddsrecorder/command`` and ``/ddsrecorder/status``, respectively, but can also be specified by users via the ``command-topic-name`` and ``status-topic-name`` configuration tags.
-Therefore, any user can create his own application to control the |ddsrecorder| remotely by creating a publisher in the `Controller Command` topic, which sends commands to the recorder, and a subscriber in the `Controller Status` topic to monitor its status.
+The controller domain defaults to the recording domain. Topic names can be
+changed under ``remote-controller``.
 
-.. note::
+.. list-table::
+   :header-rows: 1
+   :widths: 25 35 40
 
-    Status and command topics are not blocked by default, i.e. messages on this topics will be recorded if listening on the same domain the controller is launched.
-    If willing to avoid this, include these topics in the :ref:`blocklist <recorder_topic_filtering>`:
+   * - Direction
+     - Default topic
+     - Type
+   * - Controller → Recorder
+     - ``/ddsrecorder/command``
+     - ``DdsRecorderCommand``; reliable, volatile, depth 1
+   * - Recorder → Controller
+     - ``/ddsrecorder/status``
+     - ``DdsRecorderStatus``; reliable, transient-local, depth 1
 
-    .. code-block:: yaml
+.. code-block:: idl
 
-      dds:
-        blocklist:
-          - type: DdsRecorderStatus
-          - type: DdsRecorderCommand
+   struct DdsRecorderCommand
+   {
+       string command;
+       string args;
+   };
 
-The following is a description of the aforementioned control topics.
+   struct DdsRecorderStatus
+   {
+       string previous;
+       string current;
+       string info;
+   };
 
-* Command topic:
+``previous`` and ``current`` contain the uppercase state names. ``info`` is
+reserved and currently unused.
 
-  * Topic name: Specified in ``command-topic-name`` configuration parameter (Default: ``/ddsrecorder/command``)
-  * Topic type name: ``DdsRecorderCommand``
-  * Type description:
+If the controller uses the same domain as Recorder, its command and status
+topics are ordinary discovered topics and may be recorded. Exclude them when
+that traffic is not useful:
 
-    * IDL definition
-
-    .. code::
-
-        struct DdsRecorderCommand
-        {
-            string command;
-            string args;
-        };
-
-    * DdsRecorderCommand type description:
-
-      .. list-table::
-            :header-rows: 1
-
-            *   - Argument
-                - Description
-                - Data type
-                - Possible values
-            *   - ``command``
-                - Command to send.
-                - ``string``
-                - ``start`` |br|
-                  ``pause`` |br|
-                  ``event`` |br|
-                  ``suspend`` |br|
-                  ``stop`` |br|
-                  ``close``
-            *   - ``args``
-                - Arguments of the command. This arguments |br|
-                  should contain a JSON serialized string.
-                - ``string``
-                - * ``event`` command: |br|
-                    ``{"next_state": "RUNNING"}`` |br|
-                    ``{"next_state": "SUSPENDED"}`` |br|
-                    ``{"next_state": "STOPPED"}``
-
-* Status topic:
-
-  * Topic name: Specified in ``status-topic-name`` configuration parameter (Default: ``/ddsrecorder/status``)
-  * Topic type name: ``DdsRecorderStatus``
-  * Type description:
-
-    * IDL definition
-
-    .. code::
-
-        struct DdsRecorderStatus
-        {
-            string previous;
-            string current;
-            string info;
-        };
-
-    * DdsRecorderStatus type description:
-
-      .. list-table::
-            :header-rows: 1
-
-            *   - Argument
-                - Description
-                - Data type
-                - Possible values
-            *   - ``previous``
-                - Previous status of the |ddsrecorder|.
-                - ``string``
-                - ``RUNNING`` |br|
-                  ``PAUSED`` |br|
-                  ``SUSPENDED`` |br|
-                  ``STOPPED``
-            *   - ``current``
-                - Current status of the |ddsrecorder|.
-                - ``string``
-                - ``RUNNING`` |br|
-                  ``PAUSED`` |br|
-                  ``SUSPENDED`` |br|
-                  ``STOPPED``
-            *   - ``info``
-                - Additional information related to the state change. (Unused)
-                - ``string``
-                - \-
+.. literalinclude:: ../../examples/recorder_controller_blocklist.yaml
+   :language: yaml
+   :linenos:
 
 .. _recorder_remote_controller:
 
-DDS Recorder remote controller application
-==========================================
+Graphical Remote Controller
+===========================
 
-|eddsrecord| provides a graphical user application that implements a remote controller for the |ddsrecorder|.
-Thus the user can control a |ddsrecorder| instance using this application without having to implement their own.
+Build with ``-DBUILD_DDSRECORDER_CONTROLLER=ON`` and install Python 3 and
+PyQt6, then run:
 
-.. note::
+.. code-block:: console
 
-    If installing |eddsrecord| from sources, compilation flag ``-DBUILD_DDSRECORDER_CONTROLLER=ON`` is required to build this application. And a python environment with ``PyQt6`` installed.
+   $ ddsrecorder_controller
 
-Its interface is quite simple and intuitive.
-Once the application is launched, a layout as the following one should be visible:
-
-.. figure:: /rst/figures/controller_init.png
-    :align: center
-
-If the controller should function in a domain different than the default one (``0``), change it by clicking ``File->DDS Domain`` and introducing the one desired:
-
-.. figure:: /rst/figures/controller_domain.png
-    :align: center
-
-It is also possible to use non-default status and command topic names through the ``File->DDS Topics`` dialog.
-
-When a |ddsrecorder| instance is found in the domain, a message is displayed in the logging panel:
-
-.. figure:: /rst/figures/controller_found.png
-    :align: center
-
-From this point on, it is possible to interact with the recorder application by pushing any of the buttons appearing on the left.
-Every command sent is reflected in the logging panel and, additionally, the recorder application publishes its current status with every state transition undergone.
-This can be observed in the `eProsima DDS Recorder status` placeholder, located in the upper part of the layout:
+Choose the controller DDS domain and, when needed, custom command/status topic
+names from the **File** menu. Once a Recorder is discovered, the state display
+and buttons reflect commands and status updates.
 
 .. figure:: /rst/figures/controller_interact.png
-    :align: center
+   :align: center
+   :alt: DDS Recorder Remote Controller displaying a discovered recorder and state control buttons.
 
-By clicking on ``Suspend`` / ``Stop`` button, the recorder application ceases recording, but can be commanded to ``Start`` / ``Pause`` whenever wished.
-Once the user has finished all recording activity, it is possible to ``Close`` the recorder and free all resources used by the application:
+   The graphical controller after discovering a Recorder.
 
-.. figure:: /rst/figures/controller_close.png
-    :align: center
-
-Note that once ``CLOSED`` state has been reached, commands will no longer have an effect on the recorder application as its process is terminated when a ``close`` command is received.
+After ``close``, the Recorder process no longer exists and cannot receive more
+commands; start a new ``ddsrecorder`` process to continue.

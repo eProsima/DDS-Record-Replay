@@ -1,0 +1,9 @@
+# schema: replayer
+dds:
+  partitions:
+    - "robot-A"
+replayer:
+  begin-time:
+    datetime: "2026-08-24_14-30-00"
+  end-time:
+    datetime: "2026-08-24_14-35-00"

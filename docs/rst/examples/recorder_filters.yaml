@@ -1,0 +1,10 @@
+# schema: recorder
+dds:
+  allowlist:
+    - name: "telemetry/*"
+    - name: "Square"
+      type: "ShapeType"
+  blocklist:
+    - name: "telemetry/private/*"
+  partitions:
+    - "robot-A"

@@ -40,9 +40,9 @@ const option::Descriptor usage[] = {
         "",
         "",
         Arg::None,
-        "Usage: DDS Replayer \n" \
-        "Playback traffic recorded by eProsima DDS Recorder.\n" \
-        "To stop the execution gracefully use SIGINT (C^) or SIGTERM (kill) signals.\n" \
+        "Usage: ddsreplayer \n" \
+        "Replay DDS traffic from an MCAP or DDS Record & Replay SQLite file.\n" \
+        "To stop gracefully, press Ctrl+C (SIGINT) or send SIGTERM.\n" \
         "General options:"
     },
 
@@ -86,8 +86,8 @@ const option::Descriptor usage[] = {
         "i",
         "input",
         Arg::Readable_File,
-        "  -i \t--input-file\t  \t" \
-        "Path to the input MCAP File."
+        "  -i \t--input\t  \t" \
+        "Path to a finalized input MCAP or SQLite .db file."
     },
 
     {
@@ -97,7 +97,8 @@ const option::Descriptor usage[] = {
         "config-path",
         Arg::Readable_File,
         "  -c \t--config-path\t  \t" \
-        "Path to the Configuration File (yaml format) [Default: ./DDS_REPLAYER_CONFIGURATION.yaml]."
+        "Path to a YAML configuration file. When omitted, " \
+        "./DDS_REPLAYER_CONFIGURATION.yaml is loaded only if it exists."
     },
 
     {
@@ -138,8 +139,8 @@ const option::Descriptor usage[] = {
         "debug",
         Arg::None,
         "  -d \t--debug\t  \t" \
-        "Set log verbosity to Info \t" \
-        "(Using this option with --log-filter and/or --log-verbosity will head to undefined behaviour)."
+        "Set log verbosity to info and use the DDSREPLAYER category filter. " \
+        "Do not combine with --log-filter or --log-verbosity."
     },
 
     {
@@ -149,7 +150,7 @@ const option::Descriptor usage[] = {
         "log-filter",
         Arg::String,
         "  \t--log-filter\t  \t" \
-        "Set a Regex Filter to filter by category the info and warning log entries. " \
+        "Set a regex category filter for info and warning log entries. " \
         "[Default = \"DDSREPLAYER\"]. "
     },
 
@@ -160,8 +161,8 @@ const option::Descriptor usage[] = {
         "log-verbosity",
         Arg::Log_Kind_Correct_Argument,
         "  \t--log-verbosity\t  \t" \
-        "Set a Log Verbosity Level higher or equal the one given. " \
-        "(Values accepted: \"info\",\"warning\",\"error\" no Case Sensitive) " \
+        "Set the minimum log severity. " \
+        "Accepted values (case-insensitive): \"info\", \"warning\", \"error\". " \
         "[Default = \"warning\"]. "
     },
 

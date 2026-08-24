@@ -140,7 +140,7 @@ void parse_command(
     {
         EPROSIMA_LOG_WARNING(DDSRECORDER_EXECUTION,
                 "Command " << command_str
-                           << " is not a valid command (only start/pause/suspend/stop/close).");
+                           << " is not a valid command (only start/pause/event/suspend/stop/close).");
     }
 
     if (args_str != "")

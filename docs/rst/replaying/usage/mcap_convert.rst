@@ -1,152 +1,94 @@
 .. include:: ../../exports/alias.include
-.. include:: ../../exports/roles.include
 
 .. _replayer_usage_mcap_convert:
 
-############
-MCAP Convert
-############
+MCAP-to-SQL convert
+###################
 
-``mcap-convert`` is a standalone command-line tool that converts an MCAP recording into the SQLite
-``.db`` format used by DDS Record & Replay.
+``mcap-convert`` reads an MCAP recording and creates a DDS Record & Replay
+SQLite database. It does not publish DDS traffic.
 
-Unlike |ddsreplayer|, this tool does not publish data back into a DDS domain.
-Instead, it reads an existing MCAP file and generates a SQLite output file for workflows that
-require SQL output.
+Basic conversion
+================
 
-Using MCAP Convert
-==================
+.. code-block:: console
 
-After installing the standalone conversion tool, source the installation environment and run:
+   $ mcap-convert --input-file ./recording.mcap
 
-.. code-block:: bash
+The default output is ``./recording.db``. Set another path with
+``--sql-output``; ``.db`` is appended when the value has no extension:
 
-    source install/setup.bash
-    mcap-convert -i /path/to/recording.mcap
+.. code-block:: console
 
-If ``--sql-output`` is not provided, the tool writes the output next to the input file using the
-same base name and the ``.db`` extension.
+   $ mcap-convert -i ./recording.mcap --sql-output ./converted/session.db
 
-To write the converted output to a specific location, pass ``--sql-output``:
+The converter preserves message timestamps and MCAP file order. It always
+stores CDR and attempts to add JSON when recorded dynamic type information can
+decode the payload. Missing type information therefore affects JSON and key
+extraction, not the CDR copy.
 
-.. code-block:: bash
+Configuration subset
+====================
 
-    source install/setup.bash
-    mcap-convert -i /path/to/recording.mcap --sql-output /path/to/recording.db
+``--config-path`` accepts the Replayer YAML shape, but conversion uses only:
 
-If the value given to ``--sql-output`` has no extension, ``.db`` is appended automatically.
+* ``dds.partitions`` to select recorded writer partitions;
+* ``replayer.begin-time`` and ``replayer.end-time`` to select log times; and
+* ``specs.logging`` for log output.
 
-To tune the conversion batch size, use ``--sql-batch-size``:
+Replayer input, domain, allow/block lists, rate, start time, replay-types, QoS,
+transports, acknowledgement timeout, and worker count do not affect conversion.
+The MCAP input must always be passed with ``--input-file``.
 
-.. code-block:: bash
+.. literalinclude:: ../../examples/converter_selection.yaml
+   :language: yaml
+   :linenos:
 
-    source install/setup.bash
-    mcap-convert -i /path/to/recording.mcap --sql-batch-size 8192
+Batch size
+==========
 
-The batch size controls how many messages are processed before they are written to the SQLite
-output. The default value is ``4096``. Larger values can improve throughput at the cost of higher
-memory usage, while smaller values reduce memory usage and force more frequent flushes. The value
-must be greater than ``0``.
+``--sql-batch-size`` controls how many messages are hydrated and committed per
+batch. The default is ``4096``; the accepted range is ``1`` through
+``160000001``. Larger batches may improve throughput but use more memory.
 
-Optional Configuration File
-===========================
-
-The converter accepts an optional YAML configuration file through ``--config-path``.
-
-This file uses the same structure as the |ddsreplayer| configuration file.
-See :ref:`Replay configuration <replayer_usage_configuration>` for the available settings.
-
-If type information is not available for a topic in the input MCAP file, the converter still stores
-the CDR payload in the SQLite output, but deserialized type data cannot be generated for that topic.
-
-MCAP Convert Command-Line Parameters
-====================================
-
-The ``mcap-convert`` application supports the following input arguments:
+Command-line reference
+======================
 
 .. list-table::
-    :header-rows: 1
+   :header-rows: 1
+   :widths: 29 27 44
 
-    *   - Command
-        - Description
-        - Option
-        - Possible Values
-        - Default Value
+   * - Option
+     - Value/default
+     - Effect
+   * - ``-h``, ``--help``
+     - None
+     - Print usage and exit.
+   * - ``-v``, ``--version``
+     - None
+     - Print version and commit hash, then exit.
+   * - ``-i``, ``--input-file``
+     - Readable MCAP; required
+     - Source recording.
+   * - ``-c``, ``--config-path``
+     - Readable YAML path
+     - Apply the supported selection/logging subset above.
+   * - ``--sql-output``
+     - Path; input stem plus ``.db``
+     - Destination database. Prefer a ``.db`` extension for Replayer detection.
+   * - ``--sql-batch-size``
+     - Integer; ``4096``
+     - Conversion batch size.
+   * - ``-d``, ``--debug``
+     - None
+     - Enable informational logging. Do not combine with explicit logging
+       options.
+   * - ``--log-filter``
+     - Regex; ``DDSREPLAYER``
+     - Filter informational and warning categories.
+   * - ``--log-verbosity``
+     - ``info``, ``warning``, ``error``; ``warning``
+     - Minimum displayed severity.
 
-    *   - Help
-        - It shows the usage information |br|
-          of the application.
-        - ``-h`` |br|
-          ``--help``
-        -
-        -
-
-    *   - Version
-        - It shows the current version |br|
-          of DDS Record & Replay and the |br|
-          hash of the last commit of |br|
-          the compiled code.
-        - ``-v`` |br|
-          ``--version``
-        -
-        -
-
-    *   - Input File
-        - Input MCAP file path.
-        - ``-i`` |br|
-          ``--input-file``
-        - Readable file path
-        - Required
-
-    *   - Configuration File
-        - Optional YAML configuration |br|
-          file path.
-        - ``-c`` |br|
-          ``--config-path``
-        - Readable file path
-        - -
-
-    *   - SQL Output
-        - Output SQLite file path. If the |br|
-          path has no extension, ``.db`` |br|
-          is appended automatically.
-        - ``--sql-output``
-        - File path
-        - Input file path with ``.db`` |br|
-          extension
-
-    *   - SQL Batch Size
-        - Number of messages processed |br|
-          before flushing a batch into |br|
-          the SQLite output.
-        - ``--sql-batch-size``
-        - Integer greater than ``0``
-        - ``4096``
-
-    *   - Debug
-        - Enables the converter logs so the |br|
-          execution can be followed by |br|
-          internal debugging information. |br|
-          Sets ``Log Verbosity`` to ``info`` |br|
-          and ``Log Filter`` to ``DDSREPLAYER``.
-        - ``-d`` |br|
-          ``--debug``
-        -
-        -
-
-    *   - Log Verbosity
-        - Set the verbosity level so |br|
-          only log messages with equal |br|
-          or higher importance level |br|
-          are shown.
-        - ``--log-verbosity``
-        - ``info`` |br|
-          ``warning`` |br|
-          ``error``
-        - ``warning``
-
-    *   - Log Filter
-        - Set a regex string as filter.
-        - ``--log-filter``
-        - String
-        - ``"DDSREPLAYER"``
+The destination uses ``.db.tmp~`` until the conversion completes. Inspect or
+replay only the final database.

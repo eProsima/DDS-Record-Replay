@@ -1,82 +1,104 @@
 .. eProsima DDS Record & Replay documentation master file.
 
+.. _product_overview:
+
 .. include:: rst/formalia/titlepage.rst
 
-
-.. _index_introduction:
-
 .. toctree::
-   :caption: Introduction
+   :caption: Overview
    :maxdepth: 2
    :hidden:
 
-   /rst/formalia/titlepage
-
+   Overview </rst/formalia/titlepage>
 
 .. _index_installation:
 
 .. toctree::
-   :caption: Installation Manual
+   :caption: Installation
    :maxdepth: 2
-   :numbered: 5
    :hidden:
 
-   Windows </rst/installation/windows.rst>
-   Linux </rst/installation/linux.rst>
-   Docker Image </rst/installation/docker.rst>
+   Linux </rst/installation/linux>
+   Windows </rst/installation/windows>
+   Docker (Recorder only) </rst/installation/docker>
 
+.. toctree::
+   :caption: Record-and-Replay Quickstart
+   :maxdepth: 2
+   :hidden:
+
+   Record and replay in five minutes </rst/workflows/record-replay>
 
 .. _index_recording_application:
 
 .. toctree::
-   :caption: Recording application
+   :caption: Recorder
    :maxdepth: 2
-   :numbered: 5
    :hidden:
 
    /rst/recording/getting_started/getting_started
    /rst/recording/usage/usage
-   /rst/recording/usage/configuration
-   /rst/recording/remote_control/remote_control
-
 
 .. _index_replay_application:
 
 .. toctree::
-   :caption: Replay application
+   :caption: Replayer
    :maxdepth: 2
-   :numbered: 5
    :hidden:
 
    /rst/replaying/getting_started/getting_started
    /rst/replaying/usage/usage
-   /rst/replaying/usage/configuration
-   /rst/replaying/usage/mcap_convert
 
+.. toctree::
+   :caption: Remote Control
+   :maxdepth: 2
+   :hidden:
+
+   /rst/recording/remote_control/remote_control
+
+.. toctree::
+   :caption: File Formats and Converter
+   :maxdepth: 2
+   :hidden:
+
+   /rst/formats/file-formats
+   /rst/replaying/usage/mcap_convert
 
 .. _index_tutorials:
 
 .. toctree::
    :caption: Tutorials
    :maxdepth: 2
-   :numbered: 5
    :hidden:
 
    /rst/tutorials/foxglove_tutorial
 
+.. toctree::
+   :caption: Configuration Reference
+   :maxdepth: 2
+   :hidden:
+
+   /rst/configuration/common
+   Recorder configuration </rst/recording/usage/configuration>
+   Replayer configuration </rst/replaying/usage/configuration>
+
+.. toctree::
+   :caption: Troubleshooting
+   :maxdepth: 2
+   :hidden:
+
+   /rst/troubleshooting/troubleshooting
 
 .. _index_developer_manual:
 
 .. toctree::
-   :caption: Developer Manual
+   :caption: Developer Build
    :maxdepth: 2
-   :numbered: 5
    :hidden:
 
    /rst/developer_manual/installation/sources/linux
    /rst/developer_manual/installation/sources/windows
    /rst/developer_manual/installation/configuration/cmake_options
-
 
 .. _index_notes:
 
@@ -90,7 +112,7 @@
 .. _index_appendix:
 
 .. toctree::
-   :caption: Appendixes
+   :caption: Glossary
    :maxdepth: 2
    :hidden:
 

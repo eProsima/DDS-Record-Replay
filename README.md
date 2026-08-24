@@ -32,11 +32,11 @@
 
 <br><br>
 
-*eProsima DDS Record & Replay* is an end-user software application that efficiently saves DDS data published in a DDS environment into a MCAP format database.
-Thus, the exact playback of the recorded network events is possible as the data is linked to the timestamp at which the original data was published.
+*eProsima DDS Record & Replay* records live DDS traffic into MCAP and/or SQLite and publishes it again later with its recorded timing.
+It includes DDS Recorder, DDS Replayer, the optional graphical Remote Controller, and the `mcap-convert` utility.
 
-*eProsima DDS Record & Replay* is easily configurable and installed with a default setup, so that DDS topics, data types and entities are automatically discovered without the need to specify the types of data recorded.
-This is because the recording tool exploits the DynamicTypes functionality of [eProsima Fast DDS](https://fast-dds.docs.eprosima.com), the C++ implementation of the [DDS (Data Distribution Service) Specification](https://www.omg.org/spec/DDS/About-DDS/) defined by the [Object Management Group (OMG)](https://www.omg.org/).
+DDS Pipe provides the shared discovery, filtering, QoS, transport, and payload-routing core used by the tools.
+Recorder uses the DynamicTypes functionality of [eProsima Fast DDS](https://fast-dds.docs.eprosima.com) to store type information when it is available.
 
 ## Commercial support
 
@@ -48,17 +48,10 @@ Find more about us at [eProsima’s webpage](https://eprosima.com/).
 
 You can access the documentation online, which is hosted on [Read the Docs](https://dds-recorder.readthedocs.io/).
 
-* [Introduction](https://dds-recorder.readthedocs.io/en/latest/)
-
-**Recording application**
-
-* [Getting Started](https://dds-recorder.readthedocs.io/en/latest/rst/recording/getting_started/getting_started.html)
-* [Usage](https://dds-recorder.readthedocs.io/en/latest/rst/recording/usage/usage.html)
-* [Configuration](https://dds-recorder.readthedocs.io/en/latest/rst/recording/usage/configuration.html)
-
-**Replay application**
-
-* [Getting Started](https://dds-recorder.readthedocs.io/en/latest/rst/replaying/getting_started/getting_started.html)
-* [Usage](https://dds-recorder.readthedocs.io/en/latest/rst/replaying/usage/usage.html)
-* [MCAP Convert](https://dds-recorder.readthedocs.io/en/latest/rst/replaying/usage/mcap_convert.html)
-* [Configuration](https://dds-recorder.readthedocs.io/en/latest/rst/replaying/usage/configuration.html)
+* [Overview](https://dds-recorder.readthedocs.io/en/latest/)
+* [Record and replay in five minutes](https://dds-recorder.readthedocs.io/en/latest/rst/workflows/record-replay.html)
+* [Use DDS Recorder](https://dds-recorder.readthedocs.io/en/latest/rst/recording/usage/usage.html)
+* [Use DDS Replayer](https://dds-recorder.readthedocs.io/en/latest/rst/replaying/usage/usage.html)
+* [Recording files and formats](https://dds-recorder.readthedocs.io/en/latest/rst/formats/file-formats.html)
+* [Common DDS configuration](https://dds-recorder.readthedocs.io/en/latest/rst/configuration/common.html)
+* [Troubleshooting](https://dds-recorder.readthedocs.io/en/latest/rst/troubleshooting/troubleshooting.html)

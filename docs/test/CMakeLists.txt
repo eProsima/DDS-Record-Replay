@@ -18,10 +18,7 @@
 
 message(STATUS "Building the eProsima DDS Record & Replay documentation tests.")
 
-find_package(Python COMPONENTS Interpreter Development)
-if(NOT(${Python_FOUND} AND (${Python_VERSION} VERSION_GREATER "3.6")))
-    message(FATAL_ERROR "Building the documentation tests requires Python 3.7")
-endif()
+find_package(Python 3.7 REQUIRED COMPONENTS Interpreter)
 
 # Check docs style
 find_program(DOC8 doc8 DOC "path to doc8 executable")
@@ -42,3 +39,17 @@ add_test(NAME documentation.spell_check
     -d "${PROJECT_BINARY_DOCS_DIR}/doctrees"
     ${PROJECT_SOURCE_DOCS_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}/spelling)
+
+# Build HTML with missing references and warnings treated as errors.
+add_test(NAME documentation.html
+    COMMAND
+    ${SPHINX_EXECUTABLE} -nW --keep-going
+    -b html
+    -d "${PROJECT_BINARY_DOCS_DIR}/doctrees-html"
+    ${PROJECT_SOURCE_DOCS_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR}/html)
+
+# Validate the exact YAML files included by the user documentation.
+add_test(NAME documentation.yaml_examples
+    COMMAND
+    ${Python_EXECUTABLE} ${PROJECT_SOURCE_DOCS_DIR}/test/validate_examples.py)

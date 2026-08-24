@@ -240,7 +240,7 @@ int main(
             {
                 EPROSIMA_LOG_ERROR(
                     DDSREPLAYER_ARGS,
-                    "An input file must be provided through argument '-i' / '--input-file' "
+                    "An input file must be provided through argument '-i' / '--input' "
                         << "or under 'input-file' YAML tag.");
                 return static_cast<int>(ProcessReturnCode::required_argument_failed);
             }

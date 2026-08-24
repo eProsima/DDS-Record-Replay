@@ -228,6 +228,9 @@
                     "$ref":"#/definitions/ResourceLimitConfig"
                 }
             },
+            "required":[
+                "enable"
+            ],
             "title":"MCAPConfig"
         },
         "SQLConfig":{
@@ -249,6 +252,9 @@
                     "$ref":"#/definitions/ResourceLimitConfig"
                 }
             },
+            "required":[
+                "enable"
+            ],
             "title":"SQLConfig"
         },
         "ResourceLimitConfig":{
@@ -299,7 +305,7 @@
             "properties":{
                 "threads":{
                     "type":"integer",
-                    "minimum":0
+                    "exclusiveMinimum":0
                 },
                 "qos":{
                     "$ref":"#/definitions/QOSRecorder"
