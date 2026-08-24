@@ -204,7 +204,10 @@ protected:
         recorder->update_filter(std::set<std::string>{partition_filter});
 
         // Send messages
-        auto sent_messages = send_messages_(messages1, state1 == DdsRecorderState::RUNNING);
+        auto sent_messages = send_messages_(
+                messages1,
+                state1 == DdsRecorderState::RUNNING,
+                state1 == DdsRecorderState::RUNNING && (state1 != state2 || messages1 >= 128));
 
         if (state1 != state2)
         {
@@ -232,7 +235,10 @@ protected:
         std::this_thread::sleep_for(std::chrono::seconds(wait));
 
         // Send more messages
-        const auto sent_messages_after_transition = send_messages_(messages2, state2 == DdsRecorderState::RUNNING);
+        const auto sent_messages_after_transition = send_messages_(
+                messages2,
+                state2 == DdsRecorderState::RUNNING,
+                state2 == DdsRecorderState::RUNNING && messages2 >= 128);
         sent_messages.insert(sent_messages.end(),
                 sent_messages_after_transition.begin(), sent_messages_after_transition.end());
 
@@ -352,7 +358,8 @@ protected:
 
     std::vector<HelloWorld> send_messages_(
             const unsigned int number_of_messages,
-            const bool wait_for_pipe = false)
+            const bool wait_for_pipe = false,
+            const bool extended_wait = false)
     {
         // Create the DataWriter
         create_datawriter_();
@@ -399,7 +406,7 @@ protected:
             {
                 // Keep the writer alive while the pipe forwards acknowledged samples. DDS
                 // acknowledgment only proves that the samples reached the reader history.
-                const auto drain_time = number_of_messages >= 128 ?
+                const auto drain_time = extended_wait ?
                         std::chrono::seconds(3) : std::chrono::seconds(1);
                 std::this_thread::sleep_for(drain_time);
             }
