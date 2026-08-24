@@ -1094,7 +1094,7 @@ TEST_F(SqlFileCreationTest, transition_paused_event_less_window)
                 ASSERT_EQ(recorded_messages, NUMBER_OF_MESSAGES_1 + NUMBER_OF_MESSAGES_2);
             });
 
-    const auto now = utils::now();
+    const auto now = event_trigger_time_;
     const auto now_tks = ddsrecorder::participants::to_ticks(now);
 
     // Find the oldest recorded message

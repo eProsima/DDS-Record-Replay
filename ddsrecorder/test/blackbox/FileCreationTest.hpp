@@ -257,6 +257,8 @@ protected:
                 default:
                     break;
             }
+
+            event_trigger_time_ = std::chrono::system_clock::now();
         }
 
         // Give the recorder a chance to finish writing before it is destroyed below.
@@ -397,7 +399,9 @@ protected:
             {
                 // Keep the writer alive while the pipe forwards acknowledged samples. DDS
                 // acknowledgment only proves that the samples reached the reader history.
-                std::this_thread::sleep_for(std::chrono::seconds(1));
+                const auto drain_time = number_of_messages >= 128 ?
+                        std::chrono::seconds(3) : std::chrono::seconds(1);
+                std::this_thread::sleep_for(drain_time);
             }
         }
 
@@ -542,6 +546,8 @@ protected:
     std::vector<std::filesystem::path> paths_;
 
     std::unique_ptr<ddsrecorder::yaml::RecorderConfiguration> configuration_;
+
+    std::chrono::system_clock::time_point event_trigger_time_{};
 
     FileCreationWriterMatchListener* writer_match_listener_ = nullptr;
     std::vector<std::unique_ptr<FileCreationWriterMatchListener>> writer_match_listeners_;
