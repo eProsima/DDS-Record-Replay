@@ -75,8 +75,45 @@ enum class EventKind
     EVENT_SUSPEND,
 };
 
-class FileCreationTest : public testing::Test,
-    public fastdds::dds::DataWriterListener
+/**
+ * @brief Match notifier owned by one DataWriter.
+ *
+ * The fixture creates a fresh writer for every message batch. A shared listener flag can be
+ * signalled by an older writer and let the test publish before the current writer is matched.
+ */
+class FileCreationWriterMatchListener : public fastdds::dds::DataWriterListener
+{
+public:
+
+    void on_publication_matched(
+            fastdds::dds::DataWriter* /*writer*/,
+            const fastdds::dds::PublicationMatchedStatus& info) override
+    {
+        {
+            std::lock_guard<std::mutex> lock(mtx_);
+            matched_ = info.current_count > 0;
+        }
+        cv_.notify_all();
+    }
+
+    bool wait_for_matching(
+            const std::chrono::seconds timeout)
+    {
+        std::unique_lock<std::mutex> lock(mtx_);
+        return cv_.wait_for(lock, timeout, [this]()
+                       {
+                           return matched_;
+                       });
+    }
+
+private:
+
+    bool matched_{false};
+    std::mutex mtx_;
+    std::condition_variable cv_;
+};
+
+class FileCreationTest : public testing::Test
 {
 public:
 
@@ -147,27 +184,6 @@ public:
         // so entries queued during teardown are still printed
         utils::Log::Flush();
         utils::Log::ClearConsumers();
-    }
-
-    void on_publication_matched(
-            fastdds::dds::DataWriter* /*writer*/,
-            const fastdds::dds::PublicationMatchedStatus& info) override
-    {
-        if (info.current_count_change > 0)
-        {
-            {
-                std::lock_guard<std::mutex> lock(mtx_);
-                matched_ = true;
-            }
-            cv_.notify_one();
-        }
-        else if (info.current_count == 0)
-        {
-            {
-                std::lock_guard<std::mutex> lock(mtx_);
-                matched_ = false;
-            }
-        }
     }
 
 protected:
@@ -339,7 +355,12 @@ protected:
         create_datawriter_();
 
         // Wait for the DataWriter to match the DataReader
-        wait_for_matching();
+        if (!writer_match_listener_->wait_for_matching(std::chrono::seconds(2)))
+        {
+            ADD_FAILURE() << "DataWriter did not match any DataReader within the timeout.";
+            delete_datawriter_();
+            return {};
+        }
 
         // Send the messages
         std::vector<HelloWorld> sent_messages;
@@ -450,25 +471,19 @@ protected:
 
     void create_datawriter_()
     {
-        // NOTE: the DataWriter created by SetUp() is deliberately left alive here, and matched_ is
-        // deliberately not reset. matched_ is therefore a latch shared by every writer created on this
-        // fixture, so wait_for_matching() only proves that *some* writer matched, not the one about to
-        // send. That is tolerable because this writer is RELIABLE / KEEP_ALL / TRANSIENT_LOCAL and
-        // send_messages_() now waits for acknowledgments before deleting it, so samples written before
-        // the match are still repaired and delivered.
-        //
-        // Deleting the previous writer here would be more precise, but it makes the topic momentarily
-        // lose all of its writers, and the DDS Recorder then rebuilds the topic's partition snapshot
-        // without the new writer in it and silently discards every sample the new writer sends.
-
         // Configure the DataWriter's QoS to ensure that the DDS Recorder receives all the msgs
         fastdds::dds::DataWriterQos wqos = fastdds::dds::DATAWRITER_QOS_DEFAULT;
         wqos.reliability().kind = fastdds::dds::RELIABLE_RELIABILITY_QOS;
         wqos.durability().kind = fastdds::dds::TRANSIENT_LOCAL_DURABILITY_QOS;
         wqos.history().kind = fastdds::dds::KEEP_ALL_HISTORY_QOS;
 
-        // Create the writer
-        writer_ = publisher_->create_datawriter(topic_, wqos, this);
+        // Keep each listener alive for the lifetime of its writer. Older writers are deliberately
+        // kept alive to avoid a transient loss of all writers on the topic between batches.
+        auto match_listener = std::make_unique<FileCreationWriterMatchListener>();
+        writer_match_listener_ = match_listener.get();
+        writer_match_listeners_.push_back(std::move(match_listener));
+
+        writer_ = publisher_->create_datawriter(topic_, wqos, writer_match_listener_);
 
         ASSERT_NE(writer_, nullptr);
     }
@@ -479,21 +494,6 @@ protected:
         {
             publisher_->delete_datawriter(writer_);
             writer_ = nullptr;
-        }
-    }
-
-    void wait_for_matching(
-            std::chrono::seconds timeout = std::chrono::seconds(2))
-    {
-        std::unique_lock<std::mutex> lock(mtx_);
-        cv_.wait_for(lock, timeout, [this]()
-                {
-                    return matched_;
-                });
-
-        if (!matched_)
-        {
-            FAIL() << "DataWriter did not match any DataReader within the timeout.";
         }
     }
 
@@ -535,9 +535,8 @@ protected:
 
     std::unique_ptr<ddsrecorder::yaml::RecorderConfiguration> configuration_;
 
-    bool matched_{false};
-    std::mutex mtx_;
-    std::condition_variable cv_;
+    FileCreationWriterMatchListener* writer_match_listener_ = nullptr;
+    std::vector<std::unique_ptr<FileCreationWriterMatchListener>> writer_match_listeners_;
 
     //! Warning verbosity with an empty (match-all) filter, see BaseLogConfiguration's constructor
     utils::BaseLogConfiguration log_configuration_;
