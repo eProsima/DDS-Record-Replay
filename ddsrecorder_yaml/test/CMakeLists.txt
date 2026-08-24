@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#add_subdirectory(get_configuration)
-#add_subdirectory(resource_limits)
-#add_subdirectory(yaml_validator)
-#add_subdirectory(yaml_reader)
+add_subdirectory(get_configuration)
+add_subdirectory(resource_limits)
+add_subdirectory(yaml_validator)
+add_subdirectory(yaml_reader)
