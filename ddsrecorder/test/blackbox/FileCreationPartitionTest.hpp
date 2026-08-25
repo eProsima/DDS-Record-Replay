@@ -370,7 +370,7 @@ protected:
                     }
 
                     return total;
-        };
+                };
 
         constexpr auto POLL_PERIOD = std::chrono::milliseconds(100);
         constexpr auto STABLE_PERIOD = std::chrono::milliseconds(1500);

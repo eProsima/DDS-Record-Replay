@@ -205,9 +205,9 @@ protected:
 
         // Send messages
         auto sent_messages = send_messages_(
-                messages1,
-                state1 == DdsRecorderState::RUNNING,
-                state1 == DdsRecorderState::RUNNING && (state1 != state2 || messages1 >= 128));
+            messages1,
+            state1 == DdsRecorderState::RUNNING,
+            state1 == DdsRecorderState::RUNNING && (state1 != state2 || messages1 >= 128));
 
         if (state1 != state2)
         {
@@ -236,9 +236,9 @@ protected:
 
         // Send more messages
         const auto sent_messages_after_transition = send_messages_(
-                messages2,
-                state2 == DdsRecorderState::RUNNING,
-                state2 == DdsRecorderState::RUNNING && messages2 >= 128);
+            messages2,
+            state2 == DdsRecorderState::RUNNING,
+            state2 == DdsRecorderState::RUNNING && messages2 >= 128);
         sent_messages.insert(sent_messages.end(),
                 sent_messages_after_transition.begin(), sent_messages_after_transition.end());
 
