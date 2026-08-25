@@ -217,6 +217,9 @@ public:
         configuration_ = std::make_unique<ddsrecorder::yaml::RecorderConfiguration>(yml);
         configuration_->dds_configuration->domain = test::DOMAIN;
 
+        // Flush every sample so file-size progress reflects samples consumed by the recorder.
+        configuration_->buffer_size = 1;
+
         // Create the topic
         create_topic_();
 
@@ -270,7 +273,7 @@ protected:
         }
 
         // Send messages
-        auto sent_messages = send_messages_(messages1);
+        auto sent_messages = send_messages_(messages1, file_name);
 
         if (state1 != state2)
         {
@@ -298,7 +301,7 @@ protected:
         std::this_thread::sleep_for(std::chrono::seconds(wait));
 
         // Send more messages
-        const auto sent_messages_after_transition = send_messages_(messages2);
+        const auto sent_messages_after_transition = send_messages_(messages2, file_name);
         sent_messages.insert(sent_messages.end(),
                 sent_messages_after_transition.begin(), sent_messages_after_transition.end());
 
@@ -326,6 +329,72 @@ protected:
         }
 
         return sent_messages;
+    }
+
+    /**
+     * @brief Wait until the recorder's temporary output files stop growing.
+     *
+     * DDS acknowledgment only proves that samples reached the reader history. The recorder may
+     * still have them queued in the pipe, and destroying it at that point can lose the tail of a
+     * recording. The buffer size is one in this fixture, so a stable output size means that the
+     * recorder has consumed the samples sent by the test.
+     */
+    void wait_for_recording_to_drain_(
+            const std::string& file_name,
+            const std::size_t expected)
+    {
+        if (expected < 128)
+        {
+            return;
+        }
+
+        const auto base = (std::filesystem::current_path() / file_name).string();
+        const std::vector<std::string> outputs =
+        {
+            base + ".db.tmp~",
+            base + ".db.tmp~-wal",
+            base + ".mcap.tmp~"
+        };
+
+        const auto written_bytes = [&outputs]() -> std::uintmax_t
+                {
+                    std::error_code ec;
+                    std::uintmax_t total = 0;
+
+                    for (const auto& output : outputs)
+                    {
+                        if (std::filesystem::exists(output, ec))
+                        {
+                            total += std::filesystem::file_size(output, ec);
+                        }
+                    }
+
+                    return total;
+                };
+
+        constexpr auto POLL_PERIOD = std::chrono::milliseconds(100);
+        constexpr auto STABLE_PERIOD = std::chrono::milliseconds(1500);
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
+
+        auto last_size = written_bytes();
+        auto last_change = std::chrono::steady_clock::now();
+
+        while (std::chrono::steady_clock::now() < deadline)
+        {
+            std::this_thread::sleep_for(POLL_PERIOD);
+
+            const auto size = written_bytes();
+
+            if (size != last_size)
+            {
+                last_size = size;
+                last_change = std::chrono::steady_clock::now();
+            }
+            else if (std::chrono::steady_clock::now() - last_change >= STABLE_PERIOD)
+            {
+                return;
+            }
+        }
     }
 
     std::vector<HelloWorld> record_messages_publishers_(
@@ -369,7 +438,8 @@ protected:
     }
 
     std::vector<HelloWorld> send_messages_(
-            const unsigned int number_of_messages)
+            const unsigned int number_of_messages,
+            const std::string& file_name)
     {
         // Create the DataWriter
         create_datawriter_();
@@ -390,6 +460,10 @@ protected:
                 "Hello World!", sent_messages);
 
         wait_for_acknowledgments_(writer_, number_of_messages);
+
+        // Wait while the writer is still alive: deleting it can stop the recorder before samples
+        // acknowledged by the reader have been consumed by the pipe.
+        wait_for_recording_to_drain_(file_name, number_of_messages);
 
         // Delete the DataWriter
         delete_datawriter_();
