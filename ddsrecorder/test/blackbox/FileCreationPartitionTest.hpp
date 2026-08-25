@@ -370,11 +370,10 @@ protected:
                     }
 
                     return total;
-                };
+        };
 
         constexpr auto POLL_PERIOD = std::chrono::milliseconds(100);
-        const auto stable_period = expected >= 128 ?
-                std::chrono::milliseconds(1500) : std::chrono::milliseconds(500);
+        constexpr auto STABLE_PERIOD = std::chrono::milliseconds(1500);
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
 
         auto last_size = written_bytes();
@@ -391,7 +390,7 @@ protected:
                 last_size = size;
                 last_change = std::chrono::steady_clock::now();
             }
-            else if (std::chrono::steady_clock::now() - last_change >= stable_period)
+            else if (std::chrono::steady_clock::now() - last_change >= STABLE_PERIOD)
             {
                 return;
             }
