@@ -343,7 +343,7 @@ protected:
             const std::string& file_name,
             const std::size_t expected)
     {
-        if (expected < 128)
+        if (expected <= 1)
         {
             return;
         }
@@ -373,7 +373,8 @@ protected:
                 };
 
         constexpr auto POLL_PERIOD = std::chrono::milliseconds(100);
-        constexpr auto STABLE_PERIOD = std::chrono::milliseconds(1500);
+        const auto stable_period = expected >= 128 ?
+                std::chrono::milliseconds(1500) : std::chrono::milliseconds(500);
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
 
         auto last_size = written_bytes();
@@ -390,7 +391,7 @@ protected:
                 last_size = size;
                 last_change = std::chrono::steady_clock::now();
             }
-            else if (std::chrono::steady_clock::now() - last_change >= STABLE_PERIOD)
+            else if (std::chrono::steady_clock::now() - last_change >= stable_period)
             {
                 return;
             }
@@ -412,7 +413,7 @@ protected:
 
         partition_wildcard_active_ = partition_filter == "*";
 
-        return send_messages_publishers_(publisher_configs);
+        return send_messages_publishers_(file_name, publisher_configs);
     }
 
     std::vector<HelloWorld> record_messages_two_publishers_(
@@ -492,6 +493,7 @@ protected:
     }
 
     std::vector<HelloWorld> send_messages_publishers_(
+            const std::string& file_name,
             const std::vector<PublisherMessagesConfig>& publisher_configs)
     {
         std::vector<HelloWorld> sent_messages;
@@ -588,16 +590,21 @@ protected:
             wait_for_acknowledgments_(writers[i], publisher_configs[i].number_of_messages);
         }
 
+        // Keep the writers alive while the recorder consumes the acknowledged samples.
+        wait_for_recording_to_drain_(file_name, total_messages);
+
         cleanup_publishers();
 
         return sent_messages;
     }
 
     std::vector<HelloWorld> send_messages_two_publishers_(
+            const std::string& file_name,
             const unsigned int no_partition_messages,
             const unsigned int a_partition_messages)
     {
         return send_messages_publishers_(
+            file_name,
             std::vector<PublisherMessagesConfig>{
                 PublisherMessagesConfig{
                     {""},
