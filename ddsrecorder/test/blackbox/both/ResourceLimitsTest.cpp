@@ -528,6 +528,59 @@ protected:
         ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), RETCODE_OK);
     }
 
+    void wait_for_file_rotation_(
+            const std::vector<std::filesystem::path>& output_file_paths,
+            const std::uint32_t file_index)
+    {
+        const auto expected_file = [this, file_index](const std::size_t index)
+                {
+                    return file_index >= index && file_index - index < limits_->MAX_FILES - 1;
+                };
+
+        const auto files_are_ready = [&]()
+                {
+                    for (std::size_t i = 0; i < output_file_paths.size(); ++i)
+                    {
+                        std::error_code ec;
+                        const bool exists = std::filesystem::exists(output_file_paths[i], ec);
+
+                        if (expected_file(i))
+                        {
+                            if (!exists)
+                            {
+                                return false;
+                            }
+
+                            const auto size = std::filesystem::file_size(output_file_paths[i], ec);
+                            if (ec || size < limits_->MIN_ACCEPTABLE_FILE_SIZE
+                                    || size > limits_->MAX_ACCEPTABLE_FILE_SIZE)
+                            {
+                                return false;
+                            }
+                        }
+                        else if (exists)
+                        {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                };
+
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
+        constexpr auto POLL_PERIOD = std::chrono::milliseconds(100);
+
+        while (std::chrono::steady_clock::now() < deadline)
+        {
+            if (files_are_ready())
+            {
+                return;
+            }
+
+            std::this_thread::sleep_for(POLL_PERIOD);
+        }
+    }
+
     void test_file_rotation(
             const test::FileTypes file_type)
     {
@@ -559,6 +612,10 @@ protected:
         {
             // Send more messages than can be stored in a file with a size of max-file-size
             fill_file(OUTPUT_FILE_PATHS, i);
+
+            // DDS acknowledgment may precede the asynchronous MCAP close/rename and rotation.
+            // Wait for the expected filesystem state before checking it.
+            wait_for_file_rotation_(OUTPUT_FILE_PATHS, i);
 
             // Verify that the DDS Recorder has created the expected number of output files with the expected size
             for (std::int32_t j = 0; j < NUMBER_OF_FILES; j++)

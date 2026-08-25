@@ -273,7 +273,7 @@ protected:
         }
 
         // Send messages
-        auto sent_messages = send_messages_(messages1, file_name);
+        auto sent_messages = send_messages_(messages1, file_name, state1 != DdsRecorderState::PAUSED);
 
         if (state1 != state2)
         {
@@ -301,7 +301,8 @@ protected:
         std::this_thread::sleep_for(std::chrono::seconds(wait));
 
         // Send more messages
-        const auto sent_messages_after_transition = send_messages_(messages2, file_name);
+        const auto sent_messages_after_transition = send_messages_(messages2, file_name,
+                        state2 != DdsRecorderState::PAUSED);
         sent_messages.insert(sent_messages.end(),
                 sent_messages_after_transition.begin(), sent_messages_after_transition.end());
 
@@ -327,6 +328,10 @@ protected:
                     break;
             }
         }
+
+        // The event can enqueue the paused samples asynchronously. Keep the recorder alive until
+        // the output stops growing, otherwise its destruction may discard the event tail.
+        wait_for_recording_to_drain_(file_name, sent_messages.size());
 
         return sent_messages;
     }
@@ -439,7 +444,8 @@ protected:
 
     std::vector<HelloWorld> send_messages_(
             const unsigned int number_of_messages,
-            const std::string& file_name)
+            const std::string& file_name,
+            const bool wait_for_recording_to_drain)
     {
         // Create the DataWriter
         create_datawriter_();
@@ -462,8 +468,13 @@ protected:
         wait_for_acknowledgments_(writer_, number_of_messages);
 
         // Wait while the writer is still alive: deleting it can stop the recorder before samples
-        // acknowledged by the reader have been consumed by the pipe.
-        wait_for_recording_to_drain_(file_name, number_of_messages);
+        // acknowledged by the reader have been consumed by the pipe. Paused samples stay in the
+        // event buffer, so waiting for a stable output here would unnecessarily age the event
+        // window before trigger_event() is called.
+        if (wait_for_recording_to_drain)
+        {
+            wait_for_recording_to_drain_(file_name, number_of_messages);
+        }
 
         // Delete the DataWriter
         delete_datawriter_();
