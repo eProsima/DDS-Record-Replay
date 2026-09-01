@@ -72,7 +72,7 @@ void McapReaderParticipant::update_partition_list(
 
     for (const auto& [topic_id, topic] : topics_)
     {
-        for (const auto& [writer, writer_partition] : topic.partition_name)
+        for (const auto& [writer, writer_partition] : recorded_writer_partitions_)
         {
             bool pass_partition_filter = allowed_partition_list_.empty();
 
@@ -216,7 +216,14 @@ void McapReaderParticipant::process_summary(
             }
 
             // add to the topic, the pair (writer_guid, partitions)
-            topic->partition_name[writer] = writer_partition;
+            recorded_writer_partitions_[writer] = writer_partition;
+
+            // Q1 for the replayer: the recording is the authority here, since the recorded writers
+            // no longer exist and cannot be queried from the DiscoveryDatabase.
+            if (!writer_partition.empty())
+            {
+                topic->topic_qos.use_partitions.set_value(true);
+            }
 
             // -- Partitions filter -------------------------------------------
 
@@ -400,10 +407,10 @@ void McapReaderParticipant::process_messages()
 
         // add the topic partitions, in the writer_qos
         std::string partition_name = "";
-        auto it_partition = topic.partition_name.find(writer_guid);
+        auto it_partition = recorded_writer_partitions_.find(writer_guid);
 
         // check if the message (using the writer_guid) has partitions
-        if (it_partition != topic.partition_name.end())
+        if (it_partition != recorded_writer_partitions_.end())
         {
 
             // check if the message is already added in the dictionary of PartitionsQos
