@@ -494,14 +494,9 @@ void SqlWriter::write_nts_(
         sqlite3_bind_text(statement_partition, 1, writer_guid_str.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int64(statement_partition, 2, message.sequence_number.to64long());
 
-        // Get the partition from the message if available, to reduce time complexity
-        const auto& partitions_set_string = message.partition.empty() ? [&message,
-                        &writer_guid_str]()->const std::string &
-        {
-            static const std::string empty_partition;
-            const auto it = message.topic.partition_name.find(writer_guid_str);
-            return it != message.topic.partition_name.end() ? it->second : empty_partition;
-        } () : message.partition;
+        // The partitions of the producing writer travel with the sample, so there is no lookup
+        // and no fallback: this is the partition this very sample was published in.
+        const std::string& partitions_set_string = message.partitions;
 
         sqlite3_bind_text(statement_partition, 3, partitions_set_string.c_str(), -1, SQLITE_TRANSIENT);
 

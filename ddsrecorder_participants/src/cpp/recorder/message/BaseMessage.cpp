@@ -54,6 +54,15 @@ BaseMessage::BaseMessage(
     this->topic = topic;
     ddspipe::core::types::DataTime::now(log_time);
     publish_time = data.source_timestamp;
+
+    for (const auto& partition : data.writer_qos.partitions.names())
+    {
+        if (!partitions.empty())
+        {
+            partitions += "|";
+        }
+        partitions += partition;
+    }
 }
 
 BaseMessage::BaseMessage(
@@ -63,6 +72,7 @@ BaseMessage::BaseMessage(
     topic = msg.topic;
     log_time = msg.log_time;
     publish_time = msg.publish_time;
+    partitions = msg.partitions;
 }
 
 BaseMessage::~BaseMessage()

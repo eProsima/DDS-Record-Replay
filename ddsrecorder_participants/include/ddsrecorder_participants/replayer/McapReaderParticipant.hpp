@@ -142,6 +142,15 @@ protected:
     mcap::KeyValueMap sequence_by_source_guid_index_;
 
     //! Dictionary of PartitionsQos to reduce time complexity <writer_guid, partitions>
+    /**
+     * @brief Partitions announced by each recorded writer, keyed by writer GUID string.
+     *
+     * The replayer's writers do not exist any more, so their partitions cannot be queried from the
+     * DiscoveryDatabase. They come from the recording instead, and live here rather than on the
+     * Topic, which no longer carries partition state.
+     */
+    std::map<std::string, std::string> recorded_writer_partitions_;
+
     std::map<std::string, eprosima::fastdds::dds::PartitionQosPolicy> partitions_qos_dict_;
 
     //! Set of allowed partitions, used to filter the writer guids.
