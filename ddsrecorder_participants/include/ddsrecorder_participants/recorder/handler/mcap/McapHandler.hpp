@@ -199,6 +199,18 @@ protected:
     std::map<std::string, mcap::Schema> schemas_;
 
     //! Channels map
+    /**
+     * @brief Partitions seen per topic, as <writer GUID string, partitions>.
+     *
+     * Fed from each sample's own \c writer_qos, which is stamped by the Reader from the
+     * DiscoveryDatabase. Used to build the channel's PARTITIONS metadata.
+     *
+     * @note An MCAP channel is written once per topic, so this metadata remains a snapshot taken
+     * when the first sample of the topic arrives. Writers appearing later are not reflected in the
+     * already-written channel.
+     */
+    std::map<std::string, std::map<std::string, std::string>> topic_partitions_;
+
     std::map<ddspipe::core::types::DdsTopic, mcap::Channel> channels_;
 
     //! Channels map by id

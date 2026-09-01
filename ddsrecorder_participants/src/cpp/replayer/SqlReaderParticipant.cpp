@@ -262,7 +262,11 @@ void SqlReaderParticipant::process_summary(
             // (empty partition list) adds the partitions set if is not empty
             if (topic_partitions != "")
             {
-                topic->partition_name[writer_guid] = topic_partitions;
+                recorded_writer_partitions_[writer_guid] = topic_partitions;
+
+            // Q1 for the replayer: the recording is the authority here, since the recorded writers
+            // no longer exist and cannot be queried from the DiscoveryDatabase.
+                topic->topic_qos.use_partitions.set_value(true);
             }
 
             // Store the topic in the cache
@@ -279,8 +283,7 @@ void SqlReaderParticipant::process_summary(
                     if (t->type_name == type_name && t->m_topic_name == topic_name)
                     {
                         // adds in the map the writer_guid and the partitions set
-                        t->partition_name[writer_guid] = topic_partitions;
-                        topics_[topic_id].partition_name[writer_guid] = topic_partitions;
+                        recorded_writer_partitions_[writer_guid] = topic_partitions;
                         return;
                     }
                 }
@@ -446,10 +449,10 @@ void SqlReaderParticipant::process_messages()
 
             // add the topic partitions, in the writer_qos
             std::string partition_name = "";
-            auto it = topic.partition_name.find(writer_guid);
+            auto it = recorded_writer_partitions_.find(writer_guid);
 
             // check if the message (using the writer_guid) has partitions
-            if (it != topic.partition_name.end())
+            if (it != recorded_writer_partitions_.end())
             {
 
                 // check if the message is already added in the dictionary of PartitionsQos

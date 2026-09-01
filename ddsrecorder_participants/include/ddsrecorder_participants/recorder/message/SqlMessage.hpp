@@ -108,7 +108,6 @@ struct DDSRECORDER_PARTICIPANTS_DllAPI SqlMessage : public BaseMessage
     std::string key;
 
     // Partition assigned to the message writer
-    std::string partition;
 
     // Cached SQL-formatted timestamps when already available.
     std::string log_time_sql;

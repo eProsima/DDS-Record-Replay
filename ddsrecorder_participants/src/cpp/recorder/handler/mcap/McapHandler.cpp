@@ -34,6 +34,8 @@
 #include <ddsrecorder_participants/recorder/handler/mcap/McapHandler.hpp>
 #include <ddsrecorder_participants/recorder/message/McapMessage.hpp>
 
+#include <sstream>
+
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
@@ -178,6 +180,25 @@ void McapHandler::add_data(
 {
     std::unique_lock<std::mutex> lock(mtx_);
 
+    // Record the partitions of the writer that produced this sample. They travel with the sample,
+    // so they are always the partitions this very sample was published in.
+    {
+        std::ostringstream writer_guid_ss;
+        writer_guid_ss << data.source_guid;
+
+        std::string sample_partitions;
+        for (const auto& partition : data.writer_qos.partitions.names())
+        {
+            if (!sample_partitions.empty())
+            {
+                sample_partitions += "|";
+            }
+            sample_partitions += partition;
+        }
+
+        topic_partitions_[topic.topic_unique_name()][writer_guid_ss.str()] = sample_partitions;
+    }
+
     // Add channel to data
     mcap::ChannelId channel_id;
 
@@ -278,9 +299,13 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     metadata[ROS2_TYPES] = is_topic_ros2_type ? "true" : "false";
 
     std::string topic_partitions = "";
-    for (const auto& pair: topic.partition_name)
+    const auto partitions_it = topic_partitions_.find(topic.topic_unique_name());
+    if (partitions_it != topic_partitions_.end())
     {
-        topic_partitions += pair.first + ":" + pair.second + ";";
+        for (const auto& pair : partitions_it->second)
+        {
+            topic_partitions += pair.first + ":" + pair.second + ";";
+        }
     }
 
     metadata[PARTITIONS] = topic_partitions;
