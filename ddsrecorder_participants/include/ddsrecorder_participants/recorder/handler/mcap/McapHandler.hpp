@@ -180,6 +180,15 @@ protected:
             const mcap::SchemaId& new_schema_id);
 
     /**
+     * @brief Update the current channel when the observed writer partitions change.
+     *
+     * MCAP channel metadata is immutable once a channel has been written, so a new channel
+     * version is created when the partition metadata changes.
+     */
+    mcap::ChannelId update_channel_partitions_nts_(
+            const ddspipe::core::types::DdsTopic& topic);
+
+    /**
      * @brief Attempt to get schema with name \c schema_name.
      *
      * @throw InconsistencyException if not found.
@@ -205,9 +214,9 @@ protected:
      * Fed from each sample's own \c writer_qos, which is stamped by the Reader from the
      * DiscoveryDatabase. Used to build the channel's PARTITIONS metadata.
      *
-     * @note An MCAP channel is written once per topic, so this metadata remains a snapshot taken
-     * when the first sample of the topic arrives. Writers appearing later are not reflected in the
-     * already-written channel.
+     * @note MCAP channel metadata is immutable once a channel has been written. When a new writer
+     * or partition configuration is observed, a new channel version is created and the old one is
+     * kept for samples already associated with it.
      */
     std::map<std::string, std::map<std::string, std::string>> topic_partitions_;
 
