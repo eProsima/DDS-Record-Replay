@@ -70,7 +70,6 @@ ddspipe::core::types::TopicQoS BaseReaderParticipant::topic_qos() const noexcept
     return configuration_->topic_qos;
 }
 
-
 std::shared_ptr<ddspipe::core::IWriter> BaseReaderParticipant::create_writer(
         const ddspipe::core::ITopic& /* topic */)
 {
@@ -185,10 +184,6 @@ void BaseReaderParticipant::wait_until_timestamp_(
             return stop_ || (utils::now() >= timepoint);
         });
 }
-
-
-
-
 
 void BaseReaderParticipant::set_partition_filter(
         const std::set<std::string>& partitions)
