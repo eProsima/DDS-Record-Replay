@@ -264,8 +264,8 @@ void SqlReaderParticipant::process_summary(
             {
                 recorded_writer_partitions_[writer_guid] = topic_partitions;
 
-            // Q1 for the replayer: the recording is the authority here, since the recorded writers
-            // no longer exist and cannot be queried from the DiscoveryDatabase.
+                // Q1 for the replayer: the recording is the authority here, since the recorded writers
+                // no longer exist and cannot be queried from the DiscoveryDatabase.
                 topic->topic_qos.use_partitions.set_value(true);
             }
 
