@@ -84,10 +84,10 @@ const option::Descriptor usage[] = {
         optionIndex::INPUT_FILE,
         0,
         "i",
-        "input",
+        "input-file",
         Arg::Readable_File,
         "  -i \t--input-file\t  \t" \
-        "Path to the input MCAP File."
+        "Path to the input file: an MCAP file, or an SQL database if the path ends in .db."
     },
 
     {
