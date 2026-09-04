@@ -16,7 +16,6 @@ It is required to have |eddsrecord| previously installed using one of the follow
 
 * :ref:`installation_manual_windows`
 * :ref:`installation_manual_linux`
-* :ref:`docker`
 
 Additionally, `ShapesDemo <https://www.eprosima.com/index.php/products-all/eprosima-shapes-demo>`_ is required to publish and subscribe shapes of different colors and sizes.
 Install it by following any of the methods described in the given links:
