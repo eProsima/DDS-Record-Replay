@@ -19,7 +19,6 @@
 #define MCAP_IMPLEMENTATION  // Define this in exactly one .cpp file
 
 #include <string>
-#include <set>
 
 #include <mcap/reader.hpp>
 #include <fastdds/dds/core/policy/QosPolicies.hpp>
@@ -340,35 +339,22 @@ mcap::ChannelId McapHandler::update_channel_partitions_nts_(
     assert(channel_it != channels_.end());
 
     std::string topic_partitions;
-    std::set<std::string> observed_partitions;
     const auto partitions_it = topic_partitions_.find(topic.topic_unique_name());
     if (partitions_it != topic_partitions_.end())
     {
         for (const auto& pair : partitions_it->second)
         {
             topic_partitions += pair.first + ":" + pair.second + ";";
-            observed_partitions.insert(pair.second);
         }
     }
 
     const auto metadata_it = channel_it->second.metadata.find(PARTITIONS);
     if (metadata_it != channel_it->second.metadata.end())
     {
-        std::set<std::string> channel_partitions;
-        std::istringstream metadata_stream(metadata_it->second);
-        std::string writer_partition;
-        while (std::getline(metadata_stream, writer_partition, ';'))
-        {
-            const auto separator = writer_partition.find(':');
-            if (separator != std::string::npos)
-            {
-                channel_partitions.insert(writer_partition.substr(separator + 1));
-            }
-        }
-
-        // A new writer with the same partition configuration does not change the channel's
-        // partition semantics. Avoid creating redundant channel versions in that case.
-        if (channel_partitions == observed_partitions)
+        // The channel metadata includes the writer GUID as well as its partition set. A new
+        // writer must therefore create a new channel version even when it uses the same
+        // partitions as an existing writer, otherwise its GUID is lost from the MCAP file.
+        if (metadata_it->second == topic_partitions)
         {
             return channel_it->second.id;
         }
