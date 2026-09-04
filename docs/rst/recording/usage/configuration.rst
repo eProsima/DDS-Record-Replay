@@ -20,6 +20,12 @@ Thus, this file has four major configuration groups:
 * ``remote-controller``: configuration of the remote controller of the |ddsrecorder|.
 * ``specs``: configuration of the internal operation of the |ddsrecorder|.
 
+.. warning::
+
+    The configuration file is validated against a schema before it is loaded, and only the tags documented on this page are accepted.
+    An unknown or misspelled tag is an error: the |ddsrecorder| reports that the file is not a valid configuration and does not start.
+    Configuration files written for earlier versions may therefore need to be updated.
+
 
 .. _recorder_dds_recorder_configuration_dds_configuration:
 
@@ -422,9 +428,18 @@ The recorder output file does support the following configuration settings under
         - ``boolean``
         - ``true``
 
-When DDS Recorder application is launched (or when remotely controlled, every time a ``start/pause`` command is received while in ``SUSPENDED/STOPPED`` state), a temporary file with ``filename`` name (+timestamp prefix) and ``.mcap.tmp~`` extension is created in ``path``.
+    *   - Safety margin
+        - ``safety-margin``
+        - Amount of disk space that must be left free, shared by both outputs. A value below the minimum accepted is raised to it. See :ref:`Safety Margin <recorder_usage_configuration_safety_margin>`.
+        - ``string``
+        - ``10MB``
+
+When DDS Recorder application is launched (or when remotely controlled, every time a ``start/pause`` command is received while in ``SUSPENDED/STOPPED`` state), a temporary file with ``filename`` name (+timestamp prefix) is created in ``path``: with the ``.mcap.tmp~`` extension for the MCAP output, and with the ``.db.tmp~`` extension for the SQL output.
 This file is not readable until the application terminates, receives a ``suspend/stop/close`` command, or the file reaches its maximum size (see :ref:`Resource Limits <recorder_usage_configuration_resource_limits>`).
-On such event, the temporal file is renamed to have ``.mcap`` extension in the same location, and is then ready to be processed.
+On such event, the temporal file is renamed to have the ``.mcap`` or the ``.db`` extension in the same location, and is then ready to be processed.
+When both outputs are enabled, one temporary file is created for each of them (see :ref:`Output Selection <recorder_usage_configuration_output_selection>`).
+
+.. _recorder_usage_configuration_buffer_size:
 
 Buffer size
 ^^^^^^^^^^^
@@ -488,7 +503,8 @@ However, a user can enforce that **only** samples whose type is received are rec
 Record Types
 ^^^^^^^^^^^^
 
-By default, all type information received during execution is stored in a dedicated MCAP file section.
+By default, all type information received during execution is stored: in a dedicated section of the MCAP file, and in the ``Types`` table of the SQL database (see :ref:`Database Schema <recorder_usage_configuration_sql_schema>`).
+Every type is stored together with the types it depends on, so that it can be resolved on its own.
 This information is then leveraged by |ddsreplayer| on playback, publishing recorded types in addition to data samples, which may be required for receiver applications relying on :term:`Dynamic Types<DynamicTypes>` (see :ref:`Replay Types <replayer_replay_configuration_replaytypes>`).
 However, a user may choose to disable this feature by setting ``record-types: false``.
 
@@ -501,6 +517,8 @@ The optional ``ros2-types`` tag enables specification of the format for storing 
 When set to ``true``, schemas are stored in ROS 2 message format (.msg).
 If set to ``false``, schemas are stored in OMG IDL format (.idl).
 By default it is set to ``false``.
+
+In the SQL output this tag has a further effect: topic and type names are converted to ROS 2 naming, and the ``is_ros2_topic`` and ``is_ros2_type`` columns record whether that conversion applied to each entry (see :ref:`Database Schema <recorder_usage_configuration_sql_schema>`).
 
 .. _recorder_usage_configuration_output_selection:
 
@@ -793,7 +811,11 @@ Safety Margin
 """""""""""""
 
 The ``safety-margin`` property is shared between the SQL and MCAP outputs and is configured in the ``output`` section. This parameter reserves a buffer of free disk space, ensuring that at least ``safety-margin`` bytes remain available to prevent the system from running out of memory. This applies regardless of whether one or both recorders are enabled.
-By default, the safety margin is set to ``10MB``.
+By default, the safety margin is set to ``10MB``, which is also the minimum accepted value.
+
+.. note::
+
+    A ``safety-margin`` lower than ``10MB`` does not stop the |ddsrecorder| from starting: the value is raised to ``10MB`` and an error is logged.
 
 Output-Specific Behavior
 """"""""""""""""""""""""
