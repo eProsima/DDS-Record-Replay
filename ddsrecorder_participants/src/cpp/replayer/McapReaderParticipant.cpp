@@ -147,66 +147,63 @@ void McapReaderParticipant::update_partition_list(
     allowed_partition_list_ = allowed_partition_list;
     filtered_writersguid_list_.clear();
 
-    for (const auto& [topic_id, topic] : topics_)
+    for (const auto& [writer, writer_partition] : recorded_writer_partitions_)
     {
-        for (const auto& [writer, writer_partition] : recorded_writer_partitions_)
+        bool pass_partition_filter = allowed_partition_list_.empty();
+
+        if (writer_partition == "*" || pass_partition_filter)
         {
-            bool pass_partition_filter = allowed_partition_list_.empty();
-
-            if (writer_partition == "*" || pass_partition_filter)
+            pass_partition_filter = true;
+        }
+        else
+        {
+            std::string curr_partition;
+            std::vector<std::string> partition_vector;
+            int j = 0, writer_partition_n = writer_partition.size();
+            while (j < writer_partition_n)
             {
-                pass_partition_filter = true;
-            }
-            else
-            {
-                std::string curr_partition;
-                std::vector<std::string> partition_vector;
-                int j = 0, writer_partition_n = writer_partition.size();
-                while (j < writer_partition_n)
-                {
-                    if (writer_partition[j] == '|')
-                    {
-                        partition_vector.push_back(curr_partition);
-                        curr_partition.clear();
-                    }
-                    else
-                    {
-                        curr_partition += writer_partition[j];
-                    }
-                    j++;
-                }
-
-                if (!curr_partition.empty())
+                if (writer_partition[j] == '|')
                 {
                     partition_vector.push_back(curr_partition);
+                    curr_partition.clear();
                 }
-                else if (writer_partition_n == 0 ||
-                        writer_partition[writer_partition_n - 1] == '|')
+                else
                 {
-                    partition_vector.push_back("");
+                    curr_partition += writer_partition[j];
                 }
+                j++;
+            }
 
-                for (const std::string& partition : partition_vector)
+            if (!curr_partition.empty())
+            {
+                partition_vector.push_back(curr_partition);
+            }
+            else if (writer_partition_n == 0 ||
+                    writer_partition[writer_partition_n - 1] == '|')
+            {
+                partition_vector.push_back("");
+            }
+
+            for (const std::string& partition : partition_vector)
+            {
+                for (const std::string& allowed_partition : allowed_partition_list_)
                 {
-                    for (const std::string& allowed_partition : allowed_partition_list_)
+                    if (utils::match_pattern(allowed_partition, partition))
                     {
-                        if (utils::match_pattern(allowed_partition, partition))
-                        {
-                            pass_partition_filter = true;
-                            break;
-                        }
-                    }
-                    if (pass_partition_filter)
-                    {
+                        pass_partition_filter = true;
                         break;
                     }
                 }
+                if (pass_partition_filter)
+                {
+                    break;
+                }
             }
+        }
 
-            if (!pass_partition_filter)
-            {
-                filtered_writersguid_list_.insert(writer);
-            }
+        if (!pass_partition_filter)
+        {
+            filtered_writersguid_list_.insert(writer);
         }
     }
 }
