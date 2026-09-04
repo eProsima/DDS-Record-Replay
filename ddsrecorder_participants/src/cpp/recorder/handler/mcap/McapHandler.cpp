@@ -82,7 +82,6 @@ void McapHandler::disable()
 
     // Clear the channels after a disable so the old channels are not rewritten in every new file
     channels_.clear();
-    channels_by_id_.clear();
     topic_partitions_.clear();
 }
 
@@ -312,7 +311,6 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
 
     auto channel_id = new_channel.id;
     channels_[topic] = new_channel;
-    channels_by_id_[channel_id] = new_channel;
     EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
             "MCAP_WRITE | Channel created: " << topic << ".");
 
@@ -373,7 +371,6 @@ mcap::ChannelId McapHandler::update_channel_partitions_nts_(
 
     const auto channel_id = new_channel.id;
     channel_it->second = new_channel;
-    channels_by_id_[channel_id] = new_channel;
 
     EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
             "MCAP_WRITE | Updated partition metadata for channel in topic " << topic << ".");
