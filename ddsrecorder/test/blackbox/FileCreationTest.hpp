@@ -14,9 +14,11 @@
 
 
 #include <chrono>
+#include <condition_variable>
 #include <cstdint>
 #include <filesystem>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
@@ -44,6 +46,9 @@
 #include <fastdds/dds/xtypes/type_representation/ITypeObjectRegistry.hpp>
 #include <fastdds/dds/xtypes/utils.hpp>
 
+#include <cpp_utils/Log.hpp>
+#include <cpp_utils/logging/BaseLogConfiguration.hpp>
+#include <cpp_utils/logging/StdLogConsumer.hpp>
 #include <cpp_utils/ros2_mangling.hpp>
 
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
@@ -70,13 +75,60 @@ enum class EventKind
     EVENT_SUSPEND,
 };
 
-class FileCreationTest : public testing::Test,
-    public fastdds::dds::DataWriterListener
+/**
+ * @brief Match notifier owned by one DataWriter.
+ *
+ * The fixture creates a fresh writer for every message batch. A shared listener flag can be
+ * signalled by an older writer and let the test publish before the current writer is matched.
+ */
+class FileCreationWriterMatchListener : public fastdds::dds::DataWriterListener
+{
+public:
+
+    void on_publication_matched(
+            fastdds::dds::DataWriter* /*writer*/,
+            const fastdds::dds::PublicationMatchedStatus& info) override
+    {
+        {
+            std::lock_guard<std::mutex> lock(mtx_);
+            matched_ = info.current_count > 0;
+        }
+        cv_.notify_all();
+    }
+
+    bool wait_for_matching(
+            const std::chrono::seconds timeout)
+    {
+        std::unique_lock<std::mutex> lock(mtx_);
+        return cv_.wait_for(lock, timeout, [this]()
+                       {
+                           return matched_;
+                       });
+    }
+
+private:
+
+    bool matched_{false};
+    std::mutex mtx_;
+    std::condition_variable cv_;
+};
+
+class FileCreationTest : public testing::Test
 {
 public:
 
     void SetUp() override
     {
+        // Route DDS Pipe / DDS Recorder diagnostics to the test output.
+        // NOTE: the log configuration is only ever applied by the tool's main(), so without this the
+        // blackbox tests run with no consumer registered at all and every library warning or error is
+        // silently discarded. That is why a dropped sample surfaces only as an unexplained
+        // message-count mismatch. The default configuration is Warning verbosity with an empty
+        // filter, which accepts every category.
+        utils::Log::ClearConsumers();
+        utils::Log::SetVerbosity(log_configuration_.verbosity);
+        utils::Log::RegisterConsumer(std::make_unique<utils::StdLogConsumer>(&log_configuration_));
+
         // Create the participant
         fastdds::dds::DomainParticipantQos pqos;
         pqos.name(test::PARTICIPANT_ID);
@@ -121,30 +173,18 @@ public:
         {
             delete_file_(path);
         }
-    }
 
-    void on_publication_matched(
-            fastdds::dds::DataWriter* /*writer*/,
-            const fastdds::dds::PublicationMatchedStatus& info) override
-    {
-        if (info.current_count_change > 0)
-        {
-            {
-                std::lock_guard<std::mutex> lock(mtx_);
-                matched_ = true;
-            }
-            cv_.notify_one();
-        }
-        else if (info.current_count == 0)
-        {
-            {
-                std::lock_guard<std::mutex> lock(mtx_);
-                matched_ = false;
-            }
-        }
+        // Flush before dropping the consumer,
+        // so entries queued during teardown are still printed
+        utils::Log::Flush();
+        utils::Log::ClearConsumers();
     }
 
 protected:
+
+    // Publishing 128 or more samples takes long enough for the asynchronous recorder pipeline to
+    // need the extended drain wait. This is a test timing threshold, not a recorder limitation.
+    static constexpr std::uint32_t EXTENDED_WAIT_MESSAGE_THRESHOLD = 128;
 
     std::vector<HelloWorld> record_messages_(
             const std::string& file_name,
@@ -162,7 +202,11 @@ protected:
         recorder->update_filter(std::set<std::string>{partition_filter});
 
         // Send messages
-        auto sent_messages = send_messages_(messages1);
+        auto sent_messages = send_messages_(
+            messages1,
+            state1 == DdsRecorderState::RUNNING,
+            state1 == DdsRecorderState::RUNNING &&
+            (state1 != state2 || messages1 >= EXTENDED_WAIT_MESSAGE_THRESHOLD));
 
         if (state1 != state2)
         {
@@ -190,7 +234,10 @@ protected:
         std::this_thread::sleep_for(std::chrono::seconds(wait));
 
         // Send more messages
-        const auto sent_messages_after_transition = send_messages_(messages2);
+        const auto sent_messages_after_transition = send_messages_(
+            messages2,
+            state2 == DdsRecorderState::RUNNING,
+            state2 == DdsRecorderState::RUNNING && messages2 >= EXTENDED_WAIT_MESSAGE_THRESHOLD);
         sent_messages.insert(sent_messages.end(),
                 sent_messages_after_transition.begin(), sent_messages_after_transition.end());
 
@@ -215,19 +262,114 @@ protected:
                 default:
                     break;
             }
+
+            event_trigger_time_ = std::chrono::system_clock::now();
         }
+
+        // Give the recorder a chance to finish writing before it is destroyed below.
+        //
+        // wait_for_acknowledgments() in send_messages_ only proves the samples reached the
+        // reader's history; the pipe still has to take them and hand them to the handler. Anything
+        // untaken when the recorder is destroyed is lost, which under a sanitizer build is enough to
+        // leave a recording short of the messages that were sent.
+        wait_for_recording_to_drain_(file_name, sent_messages.size());
 
         return sent_messages;
     }
 
+    /**
+     * @brief Wait until the recorder has stopped writing, before it is destroyed.
+     *
+     * Only needed when more messages were sent than the handler buffers. Below that the handler has
+     * not written anything yet and BaseHandler::stop() flushes the lot on destruction. Above it, at
+     * least one batch has been flushed and the pipe may still be taking the rest from the reader;
+     * whatever it has not taken when the recorder is destroyed is lost.
+     *
+     * NOTE: progress is measured from the size of the files the recorder is writing, deliberately
+     * never by opening the database. SQLite serialises cross-connection WAL access with file locks,
+     * which ThreadSanitizer cannot model as happens-before, so polling the database from here
+     * reports races in walIndexWriteHdr and fails the sanitizer builds.
+     *
+     * @param file_name  Name of the output file, without extension.
+     * @param expected   Number of messages sent, i.e. the most that could be recorded.
+     */
+    void wait_for_recording_to_drain_(
+            const std::string& file_name,
+            const std::size_t expected)
+    {
+        if (expected <= configuration_->buffer_size)
+        {
+            // Nothing has been written yet, so nothing can be left behind
+            return;
+        }
+
+        const auto base = (std::filesystem::current_path() / file_name).string();
+        const std::vector<std::string> outputs =
+        {
+            base + ".db.tmp~",
+            base + ".db.tmp~-wal",
+            base + ".mcap.tmp~"
+        };
+
+        const auto written_bytes = [&outputs]() -> std::uintmax_t
+                {
+                    std::error_code ec;
+                    std::uintmax_t total = 0;
+
+                    for (const auto& output : outputs)
+                    {
+                        if (std::filesystem::exists(output, ec))
+                        {
+                            total += std::filesystem::file_size(output, ec);
+                        }
+                    }
+
+                    return total;
+                };
+
+        constexpr auto POLL_PERIOD = std::chrono::milliseconds(100);
+        // Kept above the time one batch of buffer_size messages takes to publish, so a pause between
+        // flushes is not mistaken for the end of the recording
+        constexpr auto STABLE_PERIOD = std::chrono::milliseconds(1500);
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
+
+        auto last_size = written_bytes();
+        auto last_change = std::chrono::steady_clock::now();
+
+        while (std::chrono::steady_clock::now() < deadline)
+        {
+            std::this_thread::sleep_for(POLL_PERIOD);
+
+            const auto size = written_bytes();
+
+            if (size != last_size)
+            {
+                last_size = size;
+                last_change = std::chrono::steady_clock::now();
+            }
+            else if (std::chrono::steady_clock::now() - last_change >= STABLE_PERIOD)
+            {
+                // The recorder is no longer writing
+                return;
+            }
+        }
+    }
+
     std::vector<HelloWorld> send_messages_(
-            const unsigned int number_of_messages)
+            const unsigned int number_of_messages,
+            const bool wait_for_pipe = false,
+            const bool extended_wait = false)
     {
         // Create the DataWriter
         create_datawriter_();
 
         // Wait for the DataWriter to match the DataReader
-        wait_for_matching();
+        if (!writer_match_listener_->wait_for_matching(std::chrono::seconds(2)))
+        {
+            ADD_FAILURE() << "DataWriter did not match any DataReader within the timeout.";
+            delete_datawriter_();
+            return {};
+        }
 
         // Send the messages
         std::vector<HelloWorld> sent_messages;
@@ -249,6 +391,24 @@ protected:
 
             // Wait for the message to be sent
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+
+        // Do not delete the DataWriter while samples are still unacknowledged. This history is
+        // RELIABLE / KEEP_ALL / TRANSIENT_LOCAL, so any change the DDS Recorder has not acknowledged
+        // yet is discarded together with the writer, and the recording ends up silently short.
+        if (number_of_messages > 0)
+        {
+            EXPECT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), fastdds::dds::RETCODE_OK)
+                << "The DDS Recorder did not acknowledge all " << number_of_messages << " samples.";
+
+            if (wait_for_pipe)
+            {
+                // Keep the writer alive while the pipe forwards acknowledged samples. DDS
+                // acknowledgment only proves that the samples reached the reader history.
+                const auto drain_time = extended_wait ?
+                        std::chrono::seconds(3) : std::chrono::seconds(1);
+                std::this_thread::sleep_for(drain_time);
+            }
         }
 
         // Delete the DataWriter
@@ -335,8 +495,13 @@ protected:
         wqos.durability().kind = fastdds::dds::TRANSIENT_LOCAL_DURABILITY_QOS;
         wqos.history().kind = fastdds::dds::KEEP_ALL_HISTORY_QOS;
 
-        // Create the writer
-        writer_ = publisher_->create_datawriter(topic_, wqos, this);
+        // Keep each listener alive for the lifetime of its writer. Older writers are deliberately
+        // kept alive to avoid a transient loss of all writers on the topic between batches.
+        auto match_listener = std::make_unique<FileCreationWriterMatchListener>();
+        writer_match_listener_ = match_listener.get();
+        writer_match_listeners_.push_back(std::move(match_listener));
+
+        writer_ = publisher_->create_datawriter(topic_, wqos, writer_match_listener_);
 
         ASSERT_NE(writer_, nullptr);
     }
@@ -346,21 +511,7 @@ protected:
         if (writer_ != nullptr)
         {
             publisher_->delete_datawriter(writer_);
-        }
-    }
-
-    void wait_for_matching(
-            std::chrono::seconds timeout = std::chrono::seconds(2))
-    {
-        std::unique_lock<std::mutex> lock(mtx_);
-        cv_.wait_for(lock, timeout, [this]()
-                {
-                    return matched_;
-                });
-
-        if (!matched_)
-        {
-            FAIL() << "DataWriter did not match any DataReader within the timeout.";
+            writer_ = nullptr;
         }
     }
 
@@ -402,7 +553,11 @@ protected:
 
     std::unique_ptr<ddsrecorder::yaml::RecorderConfiguration> configuration_;
 
-    bool matched_{false};
-    std::mutex mtx_;
-    std::condition_variable cv_;
+    std::chrono::system_clock::time_point event_trigger_time_{};
+
+    FileCreationWriterMatchListener* writer_match_listener_ = nullptr;
+    std::vector<std::unique_ptr<FileCreationWriterMatchListener>> writer_match_listeners_;
+
+    //! Warning verbosity with an empty (match-all) filter, see BaseLogConfiguration's constructor
+    utils::BaseLogConfiguration log_configuration_;
 };
