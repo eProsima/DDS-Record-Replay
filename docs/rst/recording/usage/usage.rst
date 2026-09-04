@@ -13,23 +13,6 @@ Usage
 Starting Recording Application
 ------------------------------
 
-Docker Image
-^^^^^^^^^^^^
-
-The recommended method to run the |ddsrecorder| is to instantiate a Docker container of the |ddsrecord| image.
-:ref:`Here <docker>` are the instructions to download the compressed |ddsrecord| Docker image and load it locally.
-
-To run the |ddsrecorder| from a Docker container execute the following command:
-
-.. code-block:: bash
-
-    docker run -it \
-        --net=host \
-        --ipc=host \
-        -v /<dds_recorder_ws>/DDS_RECORDER_CONFIGURATION.yaml:/root/DDS_RECORDER_CONFIGURATION.yaml \
-        ubuntu-ddsrecorder:v<X.X.X> ddsrecorder
-
-
 Installation from sources
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
