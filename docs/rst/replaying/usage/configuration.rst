@@ -477,6 +477,13 @@ This improves the performance of the internal data communications.
 This value should be set by each user depending on each system characteristics.
 In case this value is not set, the default number of threads used is :code:`12`.
 
+RTPS Participant
+^^^^^^^^^^^^^^^^
+
+``specs`` supports an ``rtps`` **optional** tag that selects the kind of internal participant the |ddsreplayer| creates to communicate with the DDS network.
+By default it is set to ``false``, and a DDS participant is created, which is the one that applies the Fast DDS XML profiles described in the *Load XML Configuration* section.
+Setting ``rtps: true`` creates a plain RTPS participant instead, in which case XML profiles are not applied.
+
 Wait-for-acknowledgement Timeout
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
