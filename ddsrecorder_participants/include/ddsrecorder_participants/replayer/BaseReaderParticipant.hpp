@@ -86,9 +86,6 @@ public:
     DDSRECORDER_PARTICIPANTS_DllAPI
     ddspipe::core::types::TopicQoS topic_qos() const noexcept override;
 
-    //! Override topic_partitions() IParticipant method
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    std::map<std::string, std::map<std::string, std::string>> topic_partitions() const noexcept override;
 
     //! Override create_writer_() IParticipant method
     DDSRECORDER_PARTICIPANTS_DllAPI
@@ -100,34 +97,13 @@ public:
     std::shared_ptr<ddspipe::core::IReader> create_reader(
             const ddspipe::core::ITopic& topic) override;
 
-    //! Override add_topic_partition() IParticipant method
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    bool add_topic_partition(
-            const std::string& topic_name,
-            const std::string& writer_guid,
-            const std::string& partition) override;
 
-    //! Override update_topic_partition() IParticipant method
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    bool update_topic_partition(
-            const std::string& topic_name,
-            const std::string& writer_guid,
-            const std::string& partition) override;
 
-    //! Override delete_topic_partition() IParticipant method
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    bool delete_topic_partition(
-            const std::string& topic_name,
-            const std::string& writer_guid,
-            const std::string& partition) override;
 
-    //! Override clear_topic_partitions() IParticipant method
-    DDSRECORDER_PARTICIPANTS_DllAPI
-    void clear_topic_partitions() override;
 
-    //! Override update_partitions() IParticipant method
+    //! Override set_partition_filter() IParticipant method
     DDSRECORDER_PARTICIPANTS_DllAPI
-    virtual void update_partitions(
+    virtual void set_partition_filter(
             const std::set<std::string>& partitions) override;
 
     //! Override update_content_topicfilter() IParticipant method
@@ -249,8 +225,6 @@ protected:
     //! Scheduling condition variable mutex
     std::mutex scheduling_cv_mtx_;
 
-    //! <Topics <Writer_guid, Partitions set>>
-    std::map<std::string, std::map<std::string, std::string>> partition_names;
 };
 
 } /* namespace participants */

@@ -34,6 +34,8 @@
 #include <ddsrecorder_participants/recorder/handler/mcap/McapHandler.hpp>
 #include <ddsrecorder_participants/recorder/message/McapMessage.hpp>
 
+#include <sstream>
+
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
@@ -80,6 +82,7 @@ void McapHandler::disable()
 
     // Clear the channels after a disable so the old channels are not rewritten in every new file
     channels_.clear();
+    topic_partitions_.clear();
 }
 
 void McapHandler::add_schema(
@@ -178,6 +181,25 @@ void McapHandler::add_data(
 {
     std::unique_lock<std::mutex> lock(mtx_);
 
+    // Record the partitions of the writer that produced this sample. They travel with the sample,
+    // so they are always the partitions this very sample was published in.
+    {
+        std::ostringstream writer_guid_ss;
+        writer_guid_ss << data.source_guid;
+
+        std::string sample_partitions;
+        for (const auto& partition : data.writer_qos.partitions.names())
+        {
+            if (!sample_partitions.empty())
+            {
+                sample_partitions += "|";
+            }
+            sample_partitions += partition;
+        }
+
+        topic_partitions_[topic.topic_unique_name()][writer_guid_ss.str()] = sample_partitions;
+    }
+
     // Add channel to data
     mcap::ChannelId channel_id;
 
@@ -198,19 +220,12 @@ void McapHandler::add_data(
 
         process_new_sample_nts_(mcap_sample);
 
-        const auto it_channel = channels_by_id_.find(channel_id);
-        if (it_channel != channels_by_id_.end())
-        {
-            mcap::Channel channel = channels_by_id_[channel_id];
+        std::ostringstream guid_ss;
+        guid_ss << data.source_guid;
 
-            std::ostringstream guid_ss;
-            guid_ss << data.source_guid;
+        uint32_t sequence_number = mcap_sample->number_of_msgs - 1;
 
-            std::string source_guid = guid_ss.str();
-            uint32_t sequence_number = mcap_sample->number_of_msgs - 1;
-
-            mcap_writer_.add_message_sourceguid(sequence_number, guid_ss.str());
-        }
+        mcap_writer_.add_message_sourceguid(sequence_number, guid_ss.str());
     }
 }
 
@@ -280,9 +295,13 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     metadata[ROS2_TYPES] = is_topic_ros2_type ? "true" : "false";
 
     std::string topic_partitions = "";
-    for (const auto& pair: topic.partition_name)
+    const auto partitions_it = topic_partitions_.find(topic.topic_unique_name());
+    if (partitions_it != topic_partitions_.end())
     {
-        topic_partitions += pair.first + ":" + pair.second + ";";
+        for (const auto& pair : partitions_it->second)
+        {
+            topic_partitions += pair.first + ":" + pair.second + ";";
+        }
     }
 
     metadata[PARTITIONS] = topic_partitions;
@@ -291,8 +310,7 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
     mcap_writer_.write(new_channel);
 
     auto channel_id = new_channel.id;
-    channels_.insert({topic, std::move(new_channel)});
-    channels_by_id_.insert({channel_id, std::move(new_channel)});
+    channels_[topic] = new_channel;
     EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
             "MCAP_WRITE | Channel created: " << topic << ".");
 
@@ -305,11 +323,59 @@ mcap::ChannelId McapHandler::get_channel_id_nts_(
     auto it = channels_.find(topic);
     if (it != channels_.end())
     {
-        return it->second.id;
+        return update_channel_partitions_nts_(topic);
     }
 
     // If it does not exist yet, create it (call it with mutex taken)
     return create_channel_id_nts_(topic);
+}
+
+mcap::ChannelId McapHandler::update_channel_partitions_nts_(
+        const DdsTopic& topic)
+{
+    auto channel_it = channels_.find(topic);
+    assert(channel_it != channels_.end());
+
+    std::string topic_partitions;
+    const auto partitions_it = topic_partitions_.find(topic.topic_unique_name());
+    if (partitions_it != topic_partitions_.end())
+    {
+        for (const auto& pair : partitions_it->second)
+        {
+            topic_partitions += pair.first + ":" + pair.second + ";";
+        }
+    }
+
+    const auto metadata_it = channel_it->second.metadata.find(PARTITIONS);
+    if (metadata_it != channel_it->second.metadata.end())
+    {
+        // The channel metadata includes the writer GUID as well as its partition set. A new
+        // writer must therefore create a new channel version even when it uses the same
+        // partitions as an existing writer, otherwise its GUID is lost from the MCAP file.
+        if (metadata_it->second == topic_partitions)
+        {
+            return channel_it->second.id;
+        }
+    }
+
+    auto metadata = channel_it->second.metadata;
+    metadata[PARTITIONS] = topic_partitions;
+
+    mcap::Channel new_channel(
+        channel_it->second.topic,
+        channel_it->second.messageEncoding,
+        channel_it->second.schemaId,
+        metadata);
+
+    mcap_writer_.write(new_channel);
+
+    const auto channel_id = new_channel.id;
+    channel_it->second = new_channel;
+
+    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
+            "MCAP_WRITE | Updated partition metadata for channel in topic " << topic << ".");
+
+    return channel_id;
 }
 
 void McapHandler::update_channels_nts_(
