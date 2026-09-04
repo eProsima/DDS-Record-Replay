@@ -152,12 +152,6 @@ public:
         configuration_->dds_configuration->domain = test::DOMAIN;
         configuration_->dds_configuration->allowed_partition_list.insert("*");
 
-        // Flush every sample to the handler. The drain helper below uses output-file progress
-        // to know when the recorder has consumed all samples; with the default batch size, a
-        // partially filled final batch is invisible and can be lost when the recorder is
-        // destroyed.
-        configuration_->buffer_size = 1;
-
         // Create the topic
         create_topic_();
 
@@ -188,6 +182,10 @@ public:
 
 protected:
 
+    // Publishing 128 or more samples takes long enough for the asynchronous recorder pipeline to
+    // need the extended drain wait. This is a test timing threshold, not a recorder limitation.
+    static constexpr std::uint32_t EXTENDED_WAIT_MESSAGE_THRESHOLD = 128;
+
     std::vector<HelloWorld> record_messages_(
             const std::string& file_name,
             const unsigned int messages1,
@@ -207,7 +205,8 @@ protected:
         auto sent_messages = send_messages_(
             messages1,
             state1 == DdsRecorderState::RUNNING,
-            state1 == DdsRecorderState::RUNNING && (state1 != state2 || messages1 >= 128));
+            state1 == DdsRecorderState::RUNNING &&
+            (state1 != state2 || messages1 >= EXTENDED_WAIT_MESSAGE_THRESHOLD));
 
         if (state1 != state2)
         {
@@ -238,7 +237,7 @@ protected:
         const auto sent_messages_after_transition = send_messages_(
             messages2,
             state2 == DdsRecorderState::RUNNING,
-            state2 == DdsRecorderState::RUNNING && messages2 >= 128);
+            state2 == DdsRecorderState::RUNNING && messages2 >= EXTENDED_WAIT_MESSAGE_THRESHOLD);
         sent_messages.insert(sent_messages.end(),
                 sent_messages_after_transition.begin(), sent_messages_after_transition.end());
 

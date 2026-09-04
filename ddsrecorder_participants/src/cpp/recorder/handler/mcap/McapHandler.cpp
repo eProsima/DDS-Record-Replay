@@ -226,6 +226,8 @@ void McapHandler::write_samples_(
         if (mcap_sample == nullptr)
         {
             EPROSIMA_LOG_WARNING(DDSRECORDER_MCAP_HANDLER, "Error downcasting sample to McapMessage. Skipping...");
+            // Remove invalid samples before continuing, otherwise the loop never advances.
+            samples.pop_front();
             continue;
         }
 
