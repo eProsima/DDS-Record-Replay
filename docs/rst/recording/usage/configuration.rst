@@ -502,12 +502,59 @@ When set to ``true``, schemas are stored in ROS 2 message format (.msg).
 If set to ``false``, schemas are stored in OMG IDL format (.idl).
 By default it is set to ``false``.
 
+.. _recorder_usage_configuration_output_selection:
+
+Output Selection
+^^^^^^^^^^^^^^^^
+
+The |ddsrecorder| can write its output as an MCAP file, as an SQL database, or as both at the same time.
+Each output is configured under its own tag, ``mcap`` and ``sql``, and is turned on or off with an ``enable`` tag.
+
+.. list-table::
+    :header-rows: 1
+
+    *   - Output
+        - Tag
+        - Enabled by default
+
+    *   - MCAP file
+        - ``mcap``
+        - ``true``
+
+    *   - SQL database
+        - ``sql``
+        - ``false``
+
+By default the |ddsrecorder| records to an MCAP file only.
+Setting ``enable: true`` under the ``sql`` tag turns the SQL output on and, unless the ``mcap`` tag also sets ``enable: true``, turns the MCAP output off.
+To record both outputs at the same time, enable both of them explicitly:
+
+.. code-block:: yaml
+
+    recorder:
+      mcap:
+        enable: true
+
+      sql:
+        enable: true
+
+.. note::
+
+    The order in which the ``mcap`` and ``sql`` tags appear in the configuration file is irrelevant: the |ddsrecorder| always resolves the ``sql`` tag before the ``mcap`` one.
+
+.. warning::
+
+    The ``enable`` tag is mandatory whenever a ``mcap`` or a ``sql`` section is present.
+    Such a section without it is accepted by the configuration schema, but the |ddsrecorder| fails to start.
+    At least one of the two outputs must end up enabled, otherwise the configuration is rejected.
+
 .. _recorder_usage_configuration_mcap:
 
 MCAP Configuration
 ^^^^^^^^^^^^^^^^^^
 
 The ``enable`` tag allows users to enable or disable whether to record data in an MCAP file.
+See :ref:`Output Selection <recorder_usage_configuration_output_selection>` for how this tag interacts with the ``sql`` output, and :ref:`Resource Limits <recorder_usage_configuration_resource_limits>` for the limits that can be set on the generated files.
 
 .. _recorder_usage_configuration_logpublishtime:
 
@@ -575,6 +622,7 @@ SQL Configuration
 ^^^^^^^^^^^^^^^^^
 
 The ``enable`` tag allows users to enable or disable whether to record data in an SQL database.
+See :ref:`Output Selection <recorder_usage_configuration_output_selection>` for how this tag interacts with the ``mcap`` output, and :ref:`Resource Limits <recorder_usage_configuration_resource_limits>` for the limits that can be set on the database.
 
 .. _recorder_usage_configuration_sql_data_format:
 
@@ -583,6 +631,120 @@ Data Format
 
 The ``data-format`` tag allows users to specify the format in which data is stored in the SQL database.
 The data can be stored in ``cdr`` (which makes the data replayable by the |ddsreplayer|), in ``json`` (which makes the data human-readable), or in ``both`` (default).
+
+.. warning::
+
+    A database recorded with ``data-format: json`` cannot be played back by the |ddsreplayer|.
+    Playback reads the ``data_cdr`` column, which is only populated when the format is ``cdr`` or ``both``.
+
+.. _recorder_usage_configuration_sql_schema:
+
+Database Schema
+"""""""""""""""
+
+The SQL output is a `SQLite <https://www.sqlite.org>`_ database, so it can be inspected with any standard SQLite client.
+It contains the six tables described below.
+
+The ``Types`` table holds one row per data type whose information has been received, plus one row for each type those types depend on.
+It is only populated when ``record-types`` is enabled.
+The ``is_ros2_type`` column records whether the type name was converted to ROS 2 naming, which depends on the ``ros2-types`` tag.
+
+.. code-block:: sql
+
+    CREATE TABLE Types (
+        name TEXT PRIMARY KEY NOT NULL,
+        information TEXT NOT NULL,
+        object TEXT NOT NULL,
+        is_ros2_type TEXT NOT NULL
+    );
+
+The ``Topics`` table holds one row per recorded topic, with its serialized :ref:`Topic QoS <recorder_topic_qos>`.
+
+.. code-block:: sql
+
+    CREATE TABLE Topics (
+        name TEXT NOT NULL,
+        type TEXT NOT NULL,
+        qos TEXT NOT NULL,
+        is_ros2_topic TEXT NOT NULL,
+        PRIMARY KEY(name, type),
+        FOREIGN KEY(type) REFERENCES Types(name)
+    );
+
+The ``Messages`` table holds the recorded data.
+Each message is identified by the GUID of the DataWriter that published it and its sequence number.
+The ``data_json`` and ``data_cdr`` columns are populated according to the ``data-format`` tag, and ``log_time`` and ``publish_time`` store the reception and publication timestamps respectively.
+
+.. code-block:: sql
+
+    CREATE TABLE Messages (
+        writer_guid TEXT NOT NULL,
+        sequence_number INTEGER NOT NULL,
+        data_json TEXT,
+        data_cdr BLOB,
+        data_cdr_size INTEGER,
+        topic TEXT NOT NULL,
+        type TEXT NOT NULL,
+        key TEXT NOT NULL,
+        log_time DATETIME NOT NULL,
+        publish_time DATETIME NOT NULL,
+        PRIMARY KEY(writer_guid, sequence_number),
+        FOREIGN KEY(topic, type) REFERENCES Topics(name, type)
+    );
+
+The ``Partitions`` table holds every :ref:`partition <recorder_partition_filtering>` seen during the recording.
+
+.. code-block:: sql
+
+    CREATE TABLE Partitions (
+        name TEXT NOT NULL,
+        PRIMARY KEY(name)
+    );
+
+The ``TopicsPartitions`` and ``MessagesPartitions`` tables associate topics and messages with the partitions they were published on.
+
+.. code-block:: sql
+
+    CREATE TABLE TopicsPartitions (
+        topic TEXT NOT NULL,
+        type TEXT NOT NULL,
+        partition TEXT NOT NULL,
+        PRIMARY KEY(topic, type, partition),
+        FOREIGN KEY (topic, type) REFERENCES Topics(name, type) ON DELETE CASCADE,
+        FOREIGN KEY (partition) REFERENCES Partitions(name) ON DELETE CASCADE
+    );
+
+    CREATE TABLE MessagesPartitions (
+        writer_guid TEXT NOT NULL,
+        sequence_number INTEGER NOT NULL,
+        partition TEXT NOT NULL,
+        PRIMARY KEY (writer_guid, sequence_number, partition),
+        FOREIGN KEY (writer_guid, sequence_number) REFERENCES Messages(writer_guid, sequence_number) ON DELETE CASCADE,
+        FOREIGN KEY (partition) REFERENCES Partitions(name) ON DELETE CASCADE
+    );
+
+**Example of usage**
+
+Retrieve every message recorded on a given topic, most recent first:
+
+.. code-block:: sql
+
+    SELECT log_time, publish_time, data_json
+    FROM Messages
+    WHERE topic = 'HelloWorldTopic'
+    ORDER BY log_time DESC;
+
+.. _recorder_usage_configuration_sql_storage_engine:
+
+Storage Engine
+""""""""""""""
+
+The database is opened in `write-ahead logging <https://www.sqlite.org/wal.html>`_ mode, so that changes are appended to a separate file before being applied to the database itself.
+This reduces the risk of corrupting the database if the |ddsrecorder| terminates unexpectedly.
+A checkpoint, which applies those pending changes, is written automatically every quarter of the configured :ref:`Size Tolerance <recorder_usage_configuration_size_tolerance>`, and once more when the database is closed.
+
+The database also runs in incremental auto-vacuum mode, which lets the |ddsrecorder| reclaim free pages gradually rather than rewriting the whole database at once.
+This matters when :ref:`Log Rotation <recorder_usage_configuration_log_rotation>` is enabled, since the space freed by deleting old entries is returned in small increments as the recording proceeds.
 
 .. _recorder_usage_configuration_resource_limits:
 
