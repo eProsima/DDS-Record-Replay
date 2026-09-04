@@ -385,6 +385,39 @@ Recorder Configuration
 ----------------------
 
 Configuration of data writing in the database.
+The tags accepted under ``recorder`` are arranged as follows:
+
+.. code-block:: yaml
+
+    recorder:
+
+      output:                  # where and how the output files are named
+        path: ...
+        filename: ...
+        timestamp-format: ...
+        local-timestamp: ...
+        safety-margin: ...     # free disk space to preserve, shared by both outputs
+
+      buffer-size: ...         # settings common to both outputs
+      cleanup-period: ...
+      event-window: ...
+      max-pending-samples: ...
+      only-with-type: ...
+      record-types: ...
+      ros2-types: ...
+
+      mcap:                    # settings of the MCAP output
+        enable: ...
+        log-publish-time: ...
+        compression: ...
+        resource-limits: ...   # size limits of the MCAP output
+
+      sql:                     # settings of the SQL output
+        enable: ...
+        data-format: ...
+        resource-limits: ...   # size limits of the SQL output, set independently
+
+The sections below follow this order, except for :ref:`Resource Limits <recorder_usage_configuration_resource_limits>`, which is documented once because the ``mcap`` and the ``sql`` outputs accept exactly the same tags under it.
 
 .. _recorder_usage_configuration_outputfile:
 
@@ -430,7 +463,7 @@ The recorder output file does support the following configuration settings under
 
     *   - Safety margin
         - ``safety-margin``
-        - Amount of disk space that must be left free, shared by both outputs. A value below the minimum accepted is raised to it. See :ref:`Safety Margin <recorder_usage_configuration_safety_margin>`.
+        - Amount of disk space that must be left free, shared by both outputs. See :ref:`Safety Margin <recorder_usage_configuration_safety_margin>`.
         - ``string``
         - ``10MB``
 
@@ -438,6 +471,21 @@ When DDS Recorder application is launched (or when remotely controlled, every ti
 This file is not readable until the application terminates, receives a ``suspend/stop/close`` command, or the file reaches its maximum size (see :ref:`Resource Limits <recorder_usage_configuration_resource_limits>`).
 On such event, the temporal file is renamed to have the ``.mcap`` or the ``.db`` extension in the same location, and is then ready to be processed.
 When both outputs are enabled, one temporary file is created for each of them (see :ref:`Output Selection <recorder_usage_configuration_output_selection>`).
+
+.. _recorder_usage_configuration_safety_margin:
+
+Safety Margin
+"""""""""""""
+
+The ``safety-margin`` tag reserves a buffer of free disk space, ensuring that at least ``safety-margin`` bytes remain available to prevent the system from running out of memory.
+It is set once, under the ``output`` tag, and is shared by the MCAP and the SQL outputs: it applies regardless of whether one or both of them are enabled.
+By default, the safety margin is set to ``10MB``, which is also the minimum accepted value.
+
+.. note::
+
+    A ``safety-margin`` lower than ``10MB`` does not stop the |ddsrecorder| from starting: the value is raised to ``10MB`` and an error is logged.
+
+The interaction between the safety margin and the size limits of each output is described in :ref:`Disk-Space Allocation Rules <recorder_usage_configuration_resource_limits>`.
 
 .. _recorder_usage_configuration_buffer_size:
 
@@ -770,7 +818,27 @@ Resource Limits
 ^^^^^^^^^^^^^^^
 
 The ``resource-limits`` tag allows users to control the size of the *DDS Recorder's* output by setting limits on disk usage.
-It is available under both the ``mcap`` and the ``sql`` tags, so each output can be limited independently, while the ``safety-margin`` set in the ``output`` section is shared between them.
+
+.. important::
+
+    ``resource-limits`` is not a tag of its own under ``recorder``.
+    It is set inside ``mcap`` and inside ``sql``, and the two are independent: each output has its own limits, and setting them for one does not affect the other.
+    Both accept the same four tags, which is why they are documented once here.
+
+    .. code-block:: yaml
+
+        recorder:
+          mcap:
+            enable: true
+            resource-limits:
+              max-size: 200MB
+
+          sql:
+            enable: true
+            resource-limits:
+              max-size: 20MiB
+
+The ``safety-margin`` that the two outputs do share is set under the ``output`` tag instead, and is described in :ref:`Safety Margin <recorder_usage_configuration_safety_margin>`.
 
 .. list-table::
     :header-rows: 1
@@ -804,18 +872,6 @@ It is available under both the ``mcap`` and the ``sql`` tags, so each output can
         - Margin of error allowed when tracking the size of the output.
         - ``string``
         - ``1MB``
-
-.. _recorder_usage_configuration_safety_margin:
-
-Safety Margin
-"""""""""""""
-
-The ``safety-margin`` property is shared between the SQL and MCAP outputs and is configured in the ``output`` section. This parameter reserves a buffer of free disk space, ensuring that at least ``safety-margin`` bytes remain available to prevent the system from running out of memory. This applies regardless of whether one or both recorders are enabled.
-By default, the safety margin is set to ``10MB``, which is also the minimum accepted value.
-
-.. note::
-
-    A ``safety-margin`` lower than ``10MB`` does not stop the |ddsrecorder| from starting: the value is raised to ``10MB`` and an error is logged.
 
 Output-Specific Behavior
 """"""""""""""""""""""""
