@@ -35,6 +35,12 @@ To start |eddsreplayer| with a default configuration, enter:
 
     ddsreplayer -i input_file.mcap
 
+The input file may also be an SQL database recorded by a |ddsrecorder|, which is selected by the ``.db`` extension:
+
+.. code-block:: bash
+
+    ddsreplayer -i input_file.db
+
 
 .. _replayer_usage_close_replayer:
 
@@ -87,7 +93,7 @@ The |ddsreplayer| application supports several input arguments:
         -
 
     *   - Input File
-        - Input MCAP file path.
+        - Input file path. An MCAP file, or an SQL database if the path ends in ``.db``.
         - ``-i`` |br|
           ``--input-file``
         -

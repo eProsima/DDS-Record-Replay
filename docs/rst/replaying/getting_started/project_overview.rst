@@ -13,7 +13,9 @@ A user can configure a |ddsreplayer| instance differently depending on the scena
 Among its many :ref:`configuration <replayer_usage_configuration>` options, the user is able to allow/block a set of topics, allow a set of partitions, and/or define specific QoS (other than the recorded ones) to be applied to certain topics.
 It is also possible to publish samples at a rate different than the original one, filter messages according to its timestamp, or define a publication begin time, among others.
 
-In addition, |eddsreplayer| is able to automatically send the type information recorded in a MCAP file, which might be required for applications relying on :term:`Dynamic Types<DynamicTypes>`.
+A |ddsreplayer| reads both of the formats written by a |ddsrecorder|, MCAP files and SQL databases, selecting one or the other from the extension of the input file (see :ref:`Input File <replayer_replay_configuration_inputfile>`).
+
+In addition, |eddsreplayer| is able to automatically send the type information stored in the recording, which might be required for applications relying on :term:`Dynamic Types<DynamicTypes>`.
 
 Usage Description
 =================
