@@ -697,5 +697,5 @@ A complete example of all the configurations described on this page can be found
         publish:
           enable: true
           domain: 84
-          topic-name: "FastDdsSpyLogs"
+          topic-name: "DdsReplayerLogs"
         stdout: true
