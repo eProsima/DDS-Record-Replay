@@ -46,15 +46,25 @@ To tune the conversion batch size, use ``--sql-batch-size``:
 The batch size controls how many messages are processed before they are written to the SQLite
 output. The default value is ``4096``. Larger values can improve throughput at the cost of higher
 memory usage, while smaller values reduce memory usage and force more frequent flushes. The value
-must be greater than ``0``.
+must be between ``0`` and ``160000001``.
 
 Optional Configuration File
 ===========================
 
 The converter accepts an optional YAML configuration file through ``--config-path``.
 
-This file uses the same structure as the |ddsreplayer| configuration file.
+This file is a |ddsreplayer| configuration file, and it is validated against the |ddsreplayer| schema:
+a |ddsrecorder| configuration file is rejected.
 See :ref:`Replay configuration <replayer_usage_configuration>` for the available settings.
+
+Only a subset of those settings affects the conversion, since no data is published to a DDS network:
+
+* ``begin-time`` and ``end-time`` restrict the range of messages that are converted.
+* ``partitions`` restricts the conversion to the messages published on the listed partitions.
+* ``logging`` configures the traces of the conversion itself.
+
+The remaining settings, such as ``rate`` or ``start-replay-time``, are accepted by the schema but
+have no effect on the conversion.
 
 If type information is not available for a topic in the input MCAP file, the converter still stores
 the CDR payload in the SQLite output, but deserialized type data cannot be generated for that topic.
