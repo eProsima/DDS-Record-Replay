@@ -133,7 +133,6 @@ protected:
     // Link a topic name and a type name to a DdsTopic instance
     std::map<std::pair<std::string, std::string>, ddspipe::core::types::DdsTopic> topics_;
 
-    //! Dictionary of PartitionsQos to reduce time complexity <writer_guid, partitions>
     /**
      * @brief Partitions announced by each recorded writer, keyed by writer GUID string.
      *
@@ -142,8 +141,6 @@ protected:
      * Topic, which no longer carries partition state.
      */
     std::map<std::string, std::string> recorded_writer_partitions_;
-
-    std::map<std::string, eprosima::fastdds::dds::PartitionQosPolicy> partitions_qos_dict_;
 
     //! Set of allowed partitions, used to filter the writer guids.
     std::set<std::string> allowed_partition_list_;

@@ -141,7 +141,6 @@ protected:
     // The indexation dictionary for the source_guid_indx-sequence
     mcap::KeyValueMap sequence_by_source_guid_index_;
 
-    //! Dictionary of PartitionsQos to reduce time complexity <writer_guid, partitions>
     /**
      * @brief Partitions announced by each recorded writer, keyed by writer GUID string.
      *
@@ -150,8 +149,6 @@ protected:
      * Topic, which no longer carries partition state.
      */
     std::map<std::string, std::string> recorded_writer_partitions_;
-
-    std::map<std::string, eprosima::fastdds::dds::PartitionQosPolicy> partitions_qos_dict_;
 
     //! Set of allowed partitions, used to filter the writer guids.
     std::set<std::string> allowed_partition_list_;
