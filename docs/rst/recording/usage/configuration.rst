@@ -610,9 +610,8 @@ To record both outputs at the same time, enable both of them explicitly:
 
 .. warning::
 
-    The ``enable`` tag is mandatory whenever a ``mcap`` or a ``sql`` section is present.
-    Such a section without it is accepted by the configuration schema, but the |ddsrecorder| fails to start.
-    At least one of the two outputs must end up enabled, otherwise the configuration is rejected.
+    The ``enable`` tag is mandatory whenever a ``mcap`` or a ``sql`` section is present: a section without it is rejected.
+    At least one of the two outputs must end up enabled, otherwise the configuration is rejected as well.
 
 .. _recorder_usage_configuration_mcap:
 
