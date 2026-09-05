@@ -228,6 +228,9 @@
                     "$ref":"#/definitions/ResourceLimitConfig"
                 }
             },
+            "required":[
+                "enable"
+            ],
             "title":"MCAPConfig"
         },
         "SQLConfig":{
@@ -249,6 +252,9 @@
                     "$ref":"#/definitions/ResourceLimitConfig"
                 }
             },
+            "required":[
+                "enable"
+            ],
             "title":"SQLConfig"
         },
         "ResourceLimitConfig":{

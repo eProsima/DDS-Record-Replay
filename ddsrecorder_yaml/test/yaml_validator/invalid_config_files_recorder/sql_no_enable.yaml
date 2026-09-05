@@ -1,0 +1,10 @@
+dds:
+  domain: 0
+
+recorder:
+  output:
+    filename: "output"
+    path: "."
+
+  sql:
+    data-format: "both"
