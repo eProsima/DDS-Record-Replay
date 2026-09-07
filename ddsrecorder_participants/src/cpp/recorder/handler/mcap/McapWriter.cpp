@@ -34,6 +34,25 @@ namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
 
+/**
+ * @brief Whether \c entries a ";"-terminated concatenation of "<guid>:<partitions>;" already
+ * contains \c entry.
+ */
+static bool contains_partition_entry(
+        const std::string& entries,
+        const std::string& entry)
+{
+    for (auto pos = entries.find(entry); pos != std::string::npos; pos = entries.find(entry, pos + 1))
+    {
+        if (pos == 0 || entries[pos - 1] == ';')
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 McapWriter::McapWriter(
         const OutputSettings& configuration,
         const mcap::McapWriterOptions& mcap_configuration,
@@ -49,7 +68,18 @@ void McapWriter::disable()
     BaseWriter::disable();
 
     // Clear the channels when disabling the writer so the old channels are not rewritten in every new file
-    channels_.clear();
+    if (channels_ != nullptr)
+    {
+        channels_->clear();
+    }
+}
+
+void McapWriter::set_channels(
+        std::map<ddspipe::core::types::DdsTopic, mcap::Channel>& channels)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    channels_ = &channels;
 }
 
 void McapWriter::add_message_sourceguid(
@@ -162,7 +192,7 @@ void McapWriter::open_new_file_nts_(
     // NOTE: These writes should never fail since the minimum size accounts for them.
     write_metadata_version_nts_();
     write_schemas_nts_();
-    write_channels_nts_();
+    reset_channel_partitions_nts_();
 
     if (record_types_ && dynamic_types_.length() > 0)
     {
@@ -231,9 +261,6 @@ void McapWriter::write_nts_(
     // Ideally, the channels and schemas should be shared between the McapHandler and McapWriter.
     // Right now, the data is duplicated in both classes, which uses more memory and can lead to inconsistencies.
     // TODO: Share the channels and schemas between the McapHandler and McapWriter.
-
-    // Store the channel to write it on new MCAP files
-    channels_[channel.id] = channel;
 }
 
 template <>
@@ -249,8 +276,30 @@ void McapWriter::write_nts_(
 
     EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER, "Writing message: " << utils::from_bytes(msg.dataSize) << ".");
 
+    // Record this sample's writer and partitions first, so the channel it is written on already
+    // describes where the sample came from. This also writes the topic's channel into the file the
+    // first time the file sees a sample for it.
+    ensure_channel_partitions_nts_(msg);
+
+    // Resolve the channel from the sample's own topic rather than trusting the id the sample was
+    // stamped with. Channel ids are assigned per file, and a sample can be written into a later
+    // file than the one that was open when it was created a buffered sample when the file
+    // rotates, or a pending sample waiting for its schema. Its stamped id would then name a
+    // different channel, or none at all.
+    mcap::Message to_write = msg;
+
+    if (channels_ != nullptr)
+    {
+        const auto it = channels_->find(msg.topic);
+
+        if (it != channels_->end())
+        {
+            to_write.channelId = it->second.id;
+        }
+    }
+
     size_tracker_.message_to_write(msg.dataSize);
-    const auto status = writer_.write(msg);
+    const auto status = writer_.write(to_write);
 
     if (!status.ok())
     {
@@ -314,21 +363,59 @@ void McapWriter::write_attachment_nts_()
     write_nts_(attachment);
 }
 
-void McapWriter::write_channels_nts_()
+void McapWriter::reset_channel_partitions_nts_()
 {
-    if (channels_.empty())
+    if (channels_ == nullptr)
     {
         return;
     }
 
-    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,
-            "MCAP_WRITE | Writing received channels.");
-
-    // Write channels to MCAP file
-    for (const auto& [_, channel] : channels_)
+    for (auto& [_, channel] : *channels_)
     {
-        write_nts_(channel);
+        channel.metadata[PARTITIONS] = "";
     }
+}
+
+void McapWriter::ensure_channel_partitions_nts_(
+        const McapMessage& msg)
+{
+    if (channels_ == nullptr)
+    {
+        return;
+    }
+
+    const auto it = channels_->find(msg.topic);
+
+    if (it == channels_->end())
+    {
+        return;
+    }
+
+    auto& channel = it->second;
+    const std::string entry = msg.writer_guid_string + ":" + msg.partitions + ";";
+    const auto metadata_it = channel.metadata.find(PARTITIONS);
+    const std::string recorded =
+            metadata_it != channel.metadata.end() ? metadata_it->second : std::string();
+
+    if (contains_partition_entry(recorded, entry))
+    {
+        return;
+    }
+
+    // The metadata carries the writer GUID as well as its partitions, so a new writer needs a new
+    // version of the channel even when it publishes in the same partitions as an existing one
+    // otherwise its GUID is lost from the file. Channel metadata is immutable once written.
+    //
+    // Entries accumulate within a file so that a sample always lands on a version that describes
+    // its own writer, and reset_channel_partitions_nts_ empties them again on the next file.
+    auto metadata = channel.metadata;
+    metadata[PARTITIONS] = recorded + entry;
+
+    mcap::Channel new_channel(channel.topic, channel.messageEncoding, channel.schemaId, metadata);
+
+    write_nts_(new_channel);
+
+    channel = new_channel;
 }
 
 void McapWriter::write_metadata_version_nts_()
