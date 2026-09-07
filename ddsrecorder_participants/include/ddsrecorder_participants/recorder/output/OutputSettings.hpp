@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <string>
 
+#include <cpp_utils/Log.hpp>
 #include <cpp_utils/macros/custom_enumeration.hpp>
 
 #include <ddsrecorder_participants/recorder/output/ResourceLimits.hpp>

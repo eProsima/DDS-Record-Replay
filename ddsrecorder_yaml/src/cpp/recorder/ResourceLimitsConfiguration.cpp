@@ -49,6 +49,14 @@ ResourceLimitsConfiguration::ResourceLimitsConfiguration(
     }
 
     /////
+    // Get optional inclusion of the files already present in the output directory
+    if (YamlReader::is_tag_present(yml, RECORDER_RESOURCE_LIMITS_INCLUDE_EXISTING_FILES_TAG))
+    {
+        resource_limits_struct.include_existing_files_ = YamlReader::get<bool>(yml,
+                        RECORDER_RESOURCE_LIMITS_INCLUDE_EXISTING_FILES_TAG, version);
+    }
+
+    /////
     // Get optional max size
     if (YamlReader::is_tag_present(yml, RECORDER_RESOURCE_LIMITS_MAX_SIZE_TAG))
     {
@@ -124,6 +132,12 @@ bool ResourceLimitsConfiguration::are_limits_valid(
             error_msg << "Both max size and safety_margin cannot be unlimited when file rotation is enabled.";
             return false;
         }
+    }
+    else if (resource_limits_struct.include_existing_files_)
+    {
+        error_msg << "The files already present in the output directory can only be included when file rotation is "
+            "enabled.";
+        return false;
     }
 
     return true;
