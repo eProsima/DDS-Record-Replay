@@ -17,18 +17,18 @@ set(TEST_EXTRA_LIBRARIES
         ddspipe_core
         ddspipe_participants
         ddsrecorder_participants
-    )
+)
 
 set(TEST_NAME DynamicTypesSupportTest)
 
 set(TEST_SOURCES
         DynamicTypesSupportTest.cpp
-    )
+)
 
 set(TEST_LIST
         dependency_keys_are_recognized
         real_type_names_are_not_dependency_keys
-    )
+)
 
 add_unittest_executable(
         "${TEST_NAME}"
@@ -53,4 +53,30 @@ add_unittest_executable(
         "${TEST_SOURCES}"
         "${TEST_LIST}"
         "${TEST_EXTRA_LIBRARIES}"
-    )
+)
+
+set(TEST_NAME SqlReaderParticipantTest)
+
+set(TEST_SOURCES
+        SqlReaderParticipantTest.cpp
+)
+
+set(TEST_LIST
+        topic_without_samples_is_processed
+        topic_without_samples_with_partitions_is_processed
+        topic_without_samples_is_filtered_out
+)
+
+set(TEST_EXTRA_LIBRARIES
+        cpp_utils
+        ddspipe_core
+        ddspipe_participants
+        ddsrecorder_participants
+)
+
+add_unittest_executable(
+        "${TEST_NAME}"
+        "${TEST_SOURCES}"
+        "${TEST_LIST}"
+        "${TEST_EXTRA_LIBRARIES}"
+)
