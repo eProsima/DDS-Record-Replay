@@ -178,11 +178,23 @@ protected:
         configuration_->buffer_size = 1;
     }
 
-    void reset_datawriter_()
+    /**
+     * @brief Create the DataWriter that every batch of messages is published through.
+     *
+     * The same DataWriter is deliberately kept for the whole test instead of being recreated per
+     * batch. A new DataWriter means a new writer GUID, and the recorder writes a new MCAP channel
+     * version for every writer GUID it sees on a topic, each one carrying the partition metadata of
+     * every writer seen so far. A writer per batch would therefore grow the per-file overhead batch
+     * after batch, so a batch of FILE_OVERFLOW_THRESHOLD messages would stop filling exactly one
+     * output file and the file-by-file expectations below would no longer hold. Nothing here needs
+     * the writer's history cleared: no reader rematches it, and the older samples are already
+     * acknowledged when wait_for_acknowledgments() is called for a later batch.
+     */
+    void create_datawriter_()
     {
         if (writer_ != nullptr)
         {
-            publisher_->delete_datawriter(writer_);
+            return;
         }
 
         // Configure the DataWriter's QoS to ensure that the DDS Recorder receives all the msgs
@@ -200,8 +212,7 @@ protected:
     void publish_msgs_(
             const std::uint32_t num_msgs)
     {
-        // Reset the DataWriter to clear its history
-        reset_datawriter_();
+        create_datawriter_();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
