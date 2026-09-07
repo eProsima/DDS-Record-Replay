@@ -90,7 +90,10 @@ ResourceLimitsConfiguration::ResourceLimitsConfiguration(
         if (eprosima::utils::to_bytes(size_tolerance_str) < resource_limits_struct.size_tolerance_)
         {
             EPROSIMA_LOG_ERROR(YAML_READER_CONFIGURATION,
-                    "NOT VALID VALUE | SIZE TOLERANCE " << RECORDER_RESOURCE_LIMITS_SIZE_TOLERANCE_TAG << " must be greater than the minimum value accepted. Defaulting to (Mb): " << resource_limits_struct.size_tolerance_ /
+                    "NOT VALID VALUE | SIZE TOLERANCE " << RECORDER_RESOURCE_LIMITS_SIZE_TOLERANCE_TAG
+                                                        <<
+                                " must be greater than the minimum value accepted. Defaulting to (Mb): "
+                                                        << resource_limits_struct.size_tolerance_ /
                     (1024 * 1024));
         }
         else
