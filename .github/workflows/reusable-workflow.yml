@@ -154,7 +154,9 @@ jobs:
         with:
           packages_names: ${{ env.code_packages_names }}
           workspace_dependencies: './install'
-          ctest_args: --label-exclude "xfail" --repeat until-fail:20
+          # TEMPORARY: restrict the run to the test under investigation. Revert this line to
+          # re-enable the whole suite.
+          ctest_args: --tests-regex "^ResourceLimitsTest.mcap_file_rotation" --label-exclude "xfail" --repeat until-fail:20
           colcon_meta_file: ./src/.github/workflows/configurations/${{ runner.os }}/colcon.meta
           test_report_artifact: test_report${{ inputs.dependencies_artifact_postfix }}_${{ inputs.custom_version_build }}_${{ inputs.os }}_${{ matrix.cmake_build_type }}
 
