@@ -58,6 +58,10 @@ McapHandler::McapHandler(
     // Set the BaseHandler's writer
     writer_ = &mcap_writer_;
 
+    // Let the writer use this handler's channels, so that there is a single collection of them and
+    // a superseded channel version cannot linger in the writer
+    mcap_writer_.set_channels(channels_);
+
     // Initialize the BaseHandler
     init(init_state, on_disk_full_lambda);
 }
@@ -82,7 +86,6 @@ void McapHandler::disable()
 
     // Clear the channels after a disable so the old channels are not rewritten in every new file
     channels_.clear();
-    topic_partitions_.clear();
 }
 
 void McapHandler::add_schema(
@@ -181,24 +184,9 @@ void McapHandler::add_data(
 {
     std::unique_lock<std::mutex> lock(mtx_);
 
-    // Record the partitions of the writer that produced this sample. They travel with the sample,
-    // so they are always the partitions this very sample was published in.
-    {
-        std::ostringstream writer_guid_ss;
-        writer_guid_ss << data.source_guid;
-
-        std::string sample_partitions;
-        for (const auto& partition : data.writer_qos.partitions.names())
-        {
-            if (!sample_partitions.empty())
-            {
-                sample_partitions += "|";
-            }
-            sample_partitions += partition;
-        }
-
-        topic_partitions_[topic.topic_unique_name()][writer_guid_ss.str()] = sample_partitions;
-    }
+    // the partitions of the current data, and the GUID that published it, travel
+    // with the sample (BaseMessage::partitions and McapMessage::writer_guid_string)
+    // They are recorded into the channel metadata when the sample is written, in write_samples_    
 
     // Add channel to data
     mcap::ChannelId channel_id;
@@ -294,17 +282,9 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
 
     metadata[ROS2_TYPES] = is_topic_ros2_type ? "true" : "false";
 
-    std::string topic_partitions = "";
-    const auto partitions_it = topic_partitions_.find(topic.topic_unique_name());
-    if (partitions_it != topic_partitions_.end())
-    {
-        for (const auto& pair : partitions_it->second)
-        {
-            topic_partitions += pair.first + ":" + pair.second + ";";
-        }
-    }
-
-    metadata[PARTITIONS] = topic_partitions;
+    // No partition entries yet: the writer adds one per writer as this file's own samples are
+    // written, so the metadata describes the writers whose samples are actually in the file.
+    metadata[PARTITIONS] = "";
     mcap::Channel new_channel(topic_name, "cdr", schema_id, metadata);
 
     mcap_writer_.write(new_channel);
@@ -323,59 +303,11 @@ mcap::ChannelId McapHandler::get_channel_id_nts_(
     auto it = channels_.find(topic);
     if (it != channels_.end())
     {
-        return update_channel_partitions_nts_(topic);
+        return it->second.id;
     }
 
     // If it does not exist yet, create it (call it with mutex taken)
     return create_channel_id_nts_(topic);
-}
-
-mcap::ChannelId McapHandler::update_channel_partitions_nts_(
-        const DdsTopic& topic)
-{
-    auto channel_it = channels_.find(topic);
-    assert(channel_it != channels_.end());
-
-    std::string topic_partitions;
-    const auto partitions_it = topic_partitions_.find(topic.topic_unique_name());
-    if (partitions_it != topic_partitions_.end())
-    {
-        for (const auto& pair : partitions_it->second)
-        {
-            topic_partitions += pair.first + ":" + pair.second + ";";
-        }
-    }
-
-    const auto metadata_it = channel_it->second.metadata.find(PARTITIONS);
-    if (metadata_it != channel_it->second.metadata.end())
-    {
-        // The channel metadata includes the writer GUID as well as its partition set. A new
-        // writer must therefore create a new channel version even when it uses the same
-        // partitions as an existing writer, otherwise its GUID is lost from the MCAP file.
-        if (metadata_it->second == topic_partitions)
-        {
-            return channel_it->second.id;
-        }
-    }
-
-    auto metadata = channel_it->second.metadata;
-    metadata[PARTITIONS] = topic_partitions;
-
-    mcap::Channel new_channel(
-        channel_it->second.topic,
-        channel_it->second.messageEncoding,
-        channel_it->second.schemaId,
-        metadata);
-
-    mcap_writer_.write(new_channel);
-
-    const auto channel_id = new_channel.id;
-    channel_it->second = new_channel;
-
-    EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
-            "MCAP_WRITE | Updated partition metadata for channel in topic " << topic << ".");
-
-    return channel_id;
 }
 
 void McapHandler::update_channels_nts_(
