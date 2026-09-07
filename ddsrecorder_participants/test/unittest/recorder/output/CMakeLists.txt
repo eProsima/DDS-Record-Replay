@@ -1,4 +1,4 @@
-# Copyright 2025 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+# Copyright 2026 Proyectos y Sistemas de Mantenimiento SL (eProsima).
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,22 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(handlers)
-add_subdirectory(output)
-
-set(TEST_NAME McapWriterTest)
+set(TEST_NAME FileTrackerTest)
 
 set(TEST_SOURCES
-        McapWriterTest.cpp
+        FileTrackerTest.cpp
     )
 
 set(TEST_LIST
-        partition_repeated
+        existing_files_not_tracked_by_default
+        existing_files_tracked
+        unrelated_files_not_tracked
+        timestamped_existing_files_tracked
+        oldest_existing_file_removed
+        existing_files_exceeding_max_size_removed
     )
 
 set(TEST_EXTRA_LIBRARIES
         cpp_utils
         ddspipe_core
+        ddspipe_participants
         ddsrecorder_participants
     )
 

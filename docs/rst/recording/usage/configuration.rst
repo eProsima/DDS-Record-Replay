@@ -578,6 +578,7 @@ The ``resource-limits`` tag allows users to control the size of the *DDS Recorde
 
 - **``max-file-size``**: Specifies the maximum size of each output file. Applicable only to the MCAP recorder, as the SQL recorder uses a single database file.
 - **``max-size``**: Specifies the maximum aggregate size of all output files. For the SQL recorder, this defines the maximum size of the database file. For the MCAP recorder, this determines the total size of all generated files.
+- **``include-existing-files``**: Specifies whether the output files already present in the output directory are taken into account by the ``log-rotation``. It is disabled by default. See :ref:`Include Existing Files <recorder_usage_configuration_include_existing_files>`.
 
 Safety Margin
 """""""""""""
@@ -643,6 +644,37 @@ SQL Log-Rotation Behavior
 
 When the SQL ``log-rotation`` is enabled, the |ddsrecorder| will remove the oldest entries of the database whenever ``max-size`` is reached.
 
+.. _recorder_usage_configuration_include_existing_files:
+
+Include Existing Files
+""""""""""""""""""""""
+
+By default, the |ddsrecorder| only accounts for the output files that it creates itself, so the output files of a
+previous execution are neither added to the aggregate output size nor removed by the ``log-rotation``.
+Consequently, restarting the |ddsrecorder| with the same configuration (e.g. after a machine reboot) leaves the
+previous output files untouched and the size of the output directory may grow beyond ``max-size``.
+
+The optional ``include-existing-files`` tag makes the |ddsrecorder| scan its output directory on start-up.
+Every output file already present in the directory is added to the aggregate output size and becomes a candidate for
+removal, following the same oldest-file-first policy as the files created in the current execution.
+This way, the size of the output directory remains bounded by ``max-size`` across restarts.
+
+An existing file is considered an output file of the |ddsrecorder| when its name matches the configured ``filename``
+and the extension of the output format (``.mcap`` or ``.db``), optionally preceded by a timestamp prefix and optionally
+followed by the file's id.
+Therefore, the temporary files of an interrupted execution (``.tmp~``) and any other file in the output directory are
+never removed.
+
+.. note::
+
+    ``include-existing-files`` requires ``log-rotation`` to be enabled, since the |ddsrecorder| only removes previous
+    output files when the ``log-rotation`` is active.
+
+.. warning::
+
+    When ``include-existing-files`` is enabled, the output files of a previous execution may be deleted to make room
+    for the new ones. Move the recordings that must be preserved out of the output directory.
+
 .. note::
 
     To keep the |ddsrecorder| from overwriting previous output files, users can set ``{"avoid_overwriting_output": true}`` as the argument (``"args"``) of the ``stop`` command (see :ref:`Control Commands <recorder_remote_controller_data_types>`).
@@ -666,6 +698,7 @@ When the SQL ``log-rotation`` is enabled, the |ddsrecorder| will remove the olde
         max-file-size: 25MB
         max-size: 200MB
         log-rotation: true
+        include-existing-files: true
         size-tolerance: 2MB
 
     sql:
@@ -1050,6 +1083,7 @@ A complete example of all the configurations described on this page can be found
           max-file-size: 250KB
           max-size: 2MiB
           log-rotation: true
+          include-existing-files: false
           size-tolerance: 10KB
 
         compression:
