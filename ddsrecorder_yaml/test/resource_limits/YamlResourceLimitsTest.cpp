@@ -33,6 +33,7 @@ struct ResourceLimits
     uint64_t max_file_size = 7 * 1024;    // Default max file size
     uint64_t size_tolerance = 2 * 1024;   // Default size tolerance
     bool log_rotation = true;             // Default log rotation
+    bool include_existing_files = false;  // Default inclusion of the existing output files
 };
 
 struct RecorderConfig
@@ -81,6 +82,11 @@ void resource_limits_builder(
     {
         yml_str +=
                 "      log-rotation: true\n";
+    }
+    if (resource_limits.include_existing_files)
+    {
+        yml_str +=
+                "      include-existing-files: true\n";
     }
 }
 
@@ -316,6 +322,58 @@ TEST(YamlResourceLimitsTest, mcap_file_rotation)
 }
 
 
+/**
+ * Check RecorderConfiguration MCAP structure creation.
+ *
+ * CASE
+ * A Including the existing output files with file rotation enabled leads to a valid configuration
+ * B Including the existing output files without file rotation leads to an invalid configuration
+ */
+TEST(YamlResourceLimitsTest, mcap_include_existing_files)
+{
+    // A
+    RecorderConfig config;
+    config.mcap.enable = true;
+    config.mcap.resource_limits.include_existing_files = true;
+
+    std::unique_ptr<RecorderConfiguration> configuration = config_builder(config);
+
+    utils::Formatter error_msg_A;
+
+    ASSERT_TRUE(configuration->is_valid(error_msg_A));
+    ASSERT_EQ(std::string(error_msg_A).size(), 0);
+    ASSERT_TRUE(configuration->mcap_resource_limits.resource_limits_struct.include_existing_files_);
+
+    // B
+    config.mcap.resource_limits.log_rotation = false;
+
+    configuration = config_builder(config);
+
+    utils::Formatter error_msg_B;
+
+    ASSERT_FALSE(configuration->is_valid(error_msg_B));
+    ASSERT_GE(std::string(error_msg_B).size(), 0);
+}
+
+/**
+ * Check RecorderConfiguration MCAP structure creation.
+ *
+ * CASE
+ * The existing output files are not included unless the user requests it
+ */
+TEST(YamlResourceLimitsTest, mcap_include_existing_files_disabled_by_default)
+{
+    RecorderConfig config;
+    config.mcap.enable = true;
+
+    std::unique_ptr<RecorderConfiguration> configuration = config_builder(config);
+
+    utils::Formatter error_msg;
+
+    ASSERT_TRUE(configuration->is_valid(error_msg));
+    ASSERT_EQ(std::string(error_msg).size(), 0);
+    ASSERT_FALSE(configuration->mcap_resource_limits.resource_limits_struct.include_existing_files_);
+}
 
 int main(
         int argc,

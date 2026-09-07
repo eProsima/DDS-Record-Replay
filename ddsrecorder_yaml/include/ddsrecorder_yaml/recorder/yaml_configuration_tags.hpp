@@ -96,6 +96,7 @@ constexpr const char* RECORDER_RESOURCE_LIMITS_LOG_ROTATION_TAG("log-rotation");
 constexpr const char* RECORDER_RESOURCE_LIMITS_MAX_SIZE_TAG("max-size");
 constexpr const char* RECORDER_RESOURCE_LIMITS_MAX_FILE_SIZE_TAG("max-file-size");
 constexpr const char* RECORDER_RESOURCE_LIMITS_SIZE_TOLERANCE_TAG("size-tolerance");
+constexpr const char* RECORDER_RESOURCE_LIMITS_INCLUDE_EXISTING_FILES_TAG("include-existing-files");
 
 ////////////////////////////////////
 // Remote controller related tags //

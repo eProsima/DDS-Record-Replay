@@ -129,7 +129,8 @@ protected:
             std::string output_file_name = "output",
             std::uint32_t max_size = 0,
             std::uint32_t max_file_size = 0,
-            bool log_rotation = false)
+            bool log_rotation = false,
+            bool include_existing_files = false)
     {
         const std::string maxFileSize = std::to_string(max_file_size) + "B";
         const std::string maxSize = std::to_string(max_size) + "B";
@@ -171,6 +172,11 @@ protected:
         {
             yml_str +=
                     "      log-rotation: true\n";
+        }
+        if (include_existing_files)
+        {
+            yml_str +=
+                    "      include-existing-files: true\n";
         }
         #if defined(_WIN32) // On windows, the path separator is '\', but the yaml parser expects '/'.
         std::replace(yml_str.begin(), yml_str.end(), '\\', '/');
@@ -257,6 +263,52 @@ protected:
             return std::filesystem::current_path() / (output_file_name + ".db");
         }
         return std::filesystem::current_path() / (output_file_name + ".mcap");
+    }
+
+    /**
+     * @brief Lists the output files of \c output_file_name present in the output directory.
+     *
+     * The output filename may be prepended a timestamp and appended the file's id, so the files are looked up by the
+     * output filename and their extension.
+     */
+    std::vector<std::filesystem::path> get_existing_output_files_(
+            const std::string& output_file_name,
+            const test::FileTypes file_type)
+    {
+        const std::string extension = (file_type == test::FileTypes::SQL) ? ".db" : ".mcap";
+        std::vector<std::filesystem::path> existing_files;
+
+        for (const auto& entry : std::filesystem::directory_iterator(std::filesystem::current_path()))
+        {
+            if (!entry.is_regular_file())
+            {
+                continue;
+            }
+
+            const auto filename = entry.path().filename().string();
+
+            if (filename.find(output_file_name) != std::string::npos &&
+                    entry.path().extension().string() == extension)
+            {
+                existing_files.push_back(entry.path());
+            }
+        }
+
+        return existing_files;
+    }
+
+    std::uint64_t get_aggregate_output_size_(
+            const std::string& output_file_name,
+            const test::FileTypes file_type)
+    {
+        std::uint64_t aggregate_size = 0;
+
+        for (const auto& file_path : get_existing_output_files_(output_file_name, file_type))
+        {
+            aggregate_size += std::filesystem::file_size(file_path);
+        }
+
+        return aggregate_size;
     }
 
     bool delete_file_(
@@ -847,6 +899,87 @@ protected:
         }
     }
 
+    void test_file_rotation_with_existing_files(
+            const test::FileTypes file_type)
+    {
+        if (file_type != test::FileTypes::MCAP)
+        {
+            ASSERT_TRUE(false) << "Only the MCAP recorder creates multiple output files";
+            return;
+        }
+
+        const std::string OUTPUT_FILE_NAME = "existing_files_rotation_test_mcap";
+
+        // Remove the output files that a previous run of the test may have left behind
+        for (const auto& path : get_existing_output_files_(OUTPUT_FILE_NAME, file_type))
+        {
+            ASSERT_TRUE(delete_file_(path));
+        }
+
+        reset_configuration_(file_type, OUTPUT_FILE_NAME, limits_->MAX_SIZE, limits_->MAX_FILE_SIZE, true, true);
+
+        // Fill the output directory in a first execution of the DDS Recorder.
+        // NOTE: The output filename is prepended a timestamp, so the second execution doesn't overwrite these files.
+        {
+            ddsrecorder::recorder::DdsRecorder recorder(*configuration_,
+                    ddsrecorder::recorder::DdsRecorderStateCode::RUNNING);
+
+            for (std::uint32_t i = 0; i < limits_->MAX_FILES - 1; i++)
+            {
+                publish_msgs_(limits_->FILE_OVERFLOW_THRESHOLD);
+
+                // Make sure the DDS Recorder has received all the messages
+                ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), RETCODE_OK);
+            }
+
+            recorder.stop();
+        }
+
+        const auto files_before_restart = get_existing_output_files_(OUTPUT_FILE_NAME, file_type);
+        paths_.insert(paths_.end(), files_before_restart.begin(), files_before_restart.end());
+
+        ASSERT_GT(files_before_restart.size(), 1u);
+
+        // Restart the DDS Recorder with the same configuration, as it would happen after a machine reboot
+        {
+            ddsrecorder::recorder::DdsRecorder recorder(*configuration_,
+                    ddsrecorder::recorder::DdsRecorderStateCode::RUNNING);
+
+            for (std::uint32_t i = 0; i < limits_->MAX_FILES; i++)
+            {
+                publish_msgs_(limits_->FILE_OVERFLOW_THRESHOLD);
+
+                // Make sure the DDS Recorder has received all the messages
+                ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), RETCODE_OK);
+            }
+
+            recorder.stop();
+        }
+
+        const auto files_after_restart = get_existing_output_files_(OUTPUT_FILE_NAME, file_type);
+        paths_.insert(paths_.end(), files_after_restart.begin(), files_after_restart.end());
+
+        // The output files of the first execution are rotated, so the output directory doesn't grow with every restart.
+        // NOTE: The file being written is closed before the rotation frees space for the next one, so the output
+        // directory may hold one file more than the max-size allows.
+        ASSERT_LE(files_after_restart.size(), limits_->MAX_FILES + 1);
+        ASSERT_LE(get_aggregate_output_size_(OUTPUT_FILE_NAME, file_type),
+                limits_->MAX_SIZE + limits_->MAX_ACCEPTABLE_FILE_SIZE);
+
+        // At least one output file of the first execution has been removed to make room for the new ones
+        std::size_t kept_files = 0;
+
+        for (const auto& path : files_before_restart)
+        {
+            if (std::filesystem::exists(path))
+            {
+                kept_files++;
+            }
+        }
+
+        ASSERT_LT(kept_files, files_before_restart.size());
+    }
+
     void test_log_rotation(
             test::FileTypes file_type)
     {
@@ -1416,6 +1549,23 @@ TEST_F(ResourceLimitsTest, mcap_file_rotation_multiple_writers)
             << "the fullest file holds " << most << " messages and the emptiest " << fewest
             << ": the number of messages a file holds falls off as more writers appear";
     }
+}
+
+/**
+ * @brief Test that the DDS Recorder applies the file rotation to the output files of a previous execution when the
+ * \c include-existing-files option is enabled.
+ *
+ * A first DDS Recorder fills the output directory and stops. A second DDS Recorder is then created with the same
+ * configuration, reproducing a restart of the application, and receives more data.
+ *
+ * CASES:
+ * - check that the output files of the previous execution are removed when there is no room for the new ones.
+ * - check that the aggregate size of the output directory doesn't exceed the max-size after the restart.
+ */
+TEST_F(ResourceLimitsTest, mcap_file_rotation_with_existing_files)
+{
+    limits_ = &mcap_limits_;
+    test_file_rotation_with_existing_files(test::FileTypes::MCAP);
 }
 
 int main(

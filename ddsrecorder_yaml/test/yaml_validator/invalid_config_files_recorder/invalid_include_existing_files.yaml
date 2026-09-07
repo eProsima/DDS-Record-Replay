@@ -1,0 +1,15 @@
+dds:
+  domain: 0
+
+recorder:
+  output:
+    filename: "output"
+    path: "."
+
+  mcap:
+    enable: true
+    resource-limits:
+      max-file-size: "100KB"
+      max-size: "300KB"
+      log-rotation: true
+      include-existing-files: "yes"

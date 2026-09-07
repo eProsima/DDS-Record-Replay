@@ -258,6 +258,9 @@
                 "log-rotation":{
                     "type":"boolean"
                 },
+                "include-existing-files":{
+                    "type":"boolean"
+                },
                 "max-file-size":{
                     "type":"string"
                 },

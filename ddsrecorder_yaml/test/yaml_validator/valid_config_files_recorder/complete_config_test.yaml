@@ -66,6 +66,7 @@ recorder:
       max-file-size: "100KB"
       max-size: "300KB"
       log-rotation: false
+      include-existing-files: false
       size-tolerance: "2MB"
 
   sql:
