@@ -140,6 +140,19 @@ void SqlWriter::open_new_file_nts_(
         throw utils::InitializationException(error_msg);
     }
 
+    // Enable foreign-key actions so deleting a message also deletes its related partition entries.
+    const auto foreign_keys_ret = sqlite3_exec(database_, "PRAGMA foreign_keys = ON;", nullptr, nullptr, nullptr);
+
+    if (foreign_keys_ret != SQLITE_OK)
+    {
+        const std::string error_msg = utils::Formatter() << "Failed to enable SQL foreign keys: "
+                                                         << sqlite3_errmsg(database_);
+        sqlite3_close(database_);
+
+        EPROSIMA_LOG_ERROR(DDSRECORDER_SQL_WRITER, "FAIL_SQL_OPEN | " << error_msg);
+        throw utils::InitializationException(error_msg);
+    }
+
     // Enable WAL mode: appends changes to a separate file before applying them to the main database, reducing the risk of corruption in the event of a crash
     sqlite3_exec(database_, "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
 
@@ -203,8 +216,7 @@ void SqlWriter::open_new_file_nts_(
             type TEXT NOT NULL,
             qos TEXT NOT NULL,
             is_ros2_topic TEXT NOT NULL,
-            PRIMARY KEY(name, type),
-            FOREIGN KEY(type) REFERENCES Types(name)
+            PRIMARY KEY(name, type)
         );
     )"};
 
