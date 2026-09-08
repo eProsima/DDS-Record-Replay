@@ -450,6 +450,8 @@ void SqlWriter::write_nts_(
     for (const auto& message : messages)
     {
         // (Table: Messages) Bind the SqlMessage to the SQL statement
+        const auto topic_name = ros2_types_ ? utils::demangle_if_ros_topic(message.topic.topic_name()) :
+                message.topic.topic_name();
 
         // Bind the sample identity
         // Get the writer_guid from the message if available, to reduce time complexity
@@ -488,7 +490,7 @@ void SqlWriter::write_nts_(
         sqlite3_bind_int64(statement_message, 5, data_cdr_size);
 
         // Bind the topic data
-        sqlite3_bind_text(statement_message, 6, message.topic.topic_name().c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(statement_message, 6, topic_name.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(statement_message, 7, message.topic.type_name.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(statement_message, 8, message.key.c_str(), -1, SQLITE_TRANSIENT);
 
@@ -526,7 +528,7 @@ void SqlWriter::write_nts_(
         entry_size_message += data_json->size();
         entry_size_message += data_cdr_size;
         entry_size_message += calculate_int_storage_size(data_cdr_size);
-        entry_size_message += message.topic.topic_name().size();
+        entry_size_message += topic_name.size();
         entry_size_message += message.topic.type_name.size();
         entry_size_message += message.key.size();
         entry_size_message += log_time_str.size();
@@ -648,12 +650,13 @@ void SqlWriter::write_nts_(
     }
 
     // Bind the Topic to the SQL statement
-    const auto topic_name = ros2_types_ ? utils::demangle_if_ros_topic(topic.topic_name()) : topic.topic_name();
+    const auto database_topic_name = ros2_types_ ? utils::demangle_if_ros_topic(topic.topic_name()) :
+            topic.topic_name();
     std::string topic_qos_serialized;
     Serializer::serialize(topic.topic_qos, topic_qos_serialized);
-    const auto is_topic_ros2_type = ros2_types_ && topic_name != topic.topic_name();
+    const auto is_topic_ros2_type = ros2_types_ && database_topic_name != topic.topic_name();
 
-    sqlite3_bind_text(statement, 1, topic_name.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 1, database_topic_name.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(statement, 2, topic.type_name.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(statement, 3, topic_qos_serialized.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(statement, 4, is_topic_ros2_type ? "true" : "false", -1, SQLITE_TRANSIENT);
@@ -661,7 +664,7 @@ void SqlWriter::write_nts_(
     // Calculate the estimated size of this entry
     size_t entry_size = 0;
 
-    entry_size += topic_name.size();
+    entry_size += database_topic_name.size();
     entry_size += topic.type_name.size();
     entry_size += topic_qos_serialized.size();
     entry_size += sizeof("false");
@@ -814,15 +817,16 @@ void SqlWriter::write_nts_(
         throw utils::InconsistencyException(error_msg);
     }
 
+    const auto database_topic_name = ros2_types_ ? utils::demangle_if_ros_topic(topic_name) : topic_name;
 
-    sqlite3_bind_text(statement, 1, topic_name.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 1, database_topic_name.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(statement, 2, topic_type.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(statement, 3, topic_partition.c_str(), -1, SQLITE_TRANSIENT);
 
     // Calculate the estimated size of this entry
     size_t entry_size = 0;
 
-    entry_size += topic_name.size();
+    entry_size += database_topic_name.size();
     entry_size += topic_type.size();
     entry_size += topic_partition.size();
 
