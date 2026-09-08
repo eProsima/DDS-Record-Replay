@@ -349,6 +349,60 @@ protected:
     }
 
     /**
+     * @brief Check that SQL log rotation does not leave orphaned partition rows.
+     */
+    bool sql_has_no_orphaned_partition_rows_(
+            const std::filesystem::path& file_path)
+    {
+        sqlite3* database = nullptr;
+        const std::string file_path_str = file_path.string();
+
+        if (sqlite3_open_v2(file_path_str.c_str(), &database, SQLITE_OPEN_READONLY, nullptr) != SQLITE_OK)
+        {
+            std::cout << "sql_has_no_orphaned_partition_rows_: could not open " << file_path << ": "
+                      << sqlite3_errmsg(database) << std::endl;
+            sqlite3_close(database);
+            return false;
+        }
+
+        const char* query =
+                "SELECT COUNT(*) FROM MessagesPartitions AS mp "
+                "LEFT JOIN Messages AS m ON m.writer_guid = mp.writer_guid "
+                "AND m.sequence_number = mp.sequence_number "
+                "WHERE m.writer_guid IS NULL;";
+        sqlite3_stmt* stmt = nullptr;
+
+        if (sqlite3_prepare_v2(database, query, -1, &stmt, nullptr) != SQLITE_OK)
+        {
+            std::cout << "sql_has_no_orphaned_partition_rows_: query failed: " << sqlite3_errmsg(database)
+                      << std::endl;
+            sqlite3_finalize(stmt);
+            sqlite3_close(database);
+            return false;
+        }
+
+        const bool query_succeeded = sqlite3_step(stmt) == SQLITE_ROW;
+        const auto orphaned_rows = query_succeeded ? sqlite3_column_int64(stmt, 0) : -1;
+
+        sqlite3_finalize(stmt);
+        sqlite3_close(database);
+
+        if (!query_succeeded)
+        {
+            return false;
+        }
+
+        if (orphaned_rows != 0)
+        {
+            std::cout << "sql_has_no_orphaned_partition_rows_: found " << orphaned_rows
+                      << " orphaned rows in " << file_path << std::endl;
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * @brief What one output MCAP file holds, for the assertions on how a recording was split.
      */
     struct McapContents
@@ -849,6 +903,12 @@ protected:
 
         // Verify that the DDS Recorder has created the expected number of output files
         ASSERT_TRUE(is_file_size_acceptable_(OUTPUT_FILE_PATH));
+
+        // SQL rotation must remove the partition rows associated with removed messages as well.
+        if (file_type == test::FileTypes::SQL)
+        {
+            EXPECT_TRUE(sql_has_no_orphaned_partition_rows_(OUTPUT_FILE_PATH));
+        }
 
         // Verify that the DDS Recorder hasn't created any extra files
         for (std::uint32_t j = 0; j < NUMBER_OF_FILES; j++)
