@@ -273,9 +273,9 @@ TEST_F(McapConvertTest, ros2_output_exact_counts)
     ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM Messages;"), 35);
     ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM MessagesPartitions;"), 35);
     ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM Topics;"), 4);
-    // Every type the recording carries, dependency fragments included: 
-    // since #219 Include dependency types in sql 
-    // theconverter no longer filters them out, because a composite 
+    // Every type the recording carries, dependency fragments included:
+    // since #219 Include dependency types in sql
+    // theconverter no longer filters them out, because a composite
     // type references them by hash and cannot be rebuilt without them.
     ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM Types;"), 43);
     ASSERT_EQ(
@@ -303,9 +303,9 @@ TEST_F(McapConvertTest, ros2_output_exact_counts_with_small_batch)
     ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM Messages;"), 35);
     ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM MessagesPartitions;"), 35);
     ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM Topics;"), 4);
-    // Every type the recording carries, dependency fragments included: 
-    // since #219 Include dependency types in sql 
-    // theconverter no longer filters them out, because a composite 
+    // Every type the recording carries, dependency fragments included:
+    // since #219 Include dependency types in sql
+    // theconverter no longer filters them out, because a composite
     // type references them by hash and cannot be rebuilt without them.
     ASSERT_EQ(count_query_(output_file, "SELECT COUNT(*) FROM Types;"), 43);
     ASSERT_EQ(

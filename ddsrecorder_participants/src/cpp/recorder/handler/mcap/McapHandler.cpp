@@ -186,7 +186,7 @@ void McapHandler::add_data(
 
     // the partitions of the current data, and the GUID that published it, travel
     // with the sample (BaseMessage::partitions and McapMessage::writer_guid_string)
-    // They are recorded into the channel metadata when the sample is written, in write_samples_    
+    // They are recorded into the channel metadata when the sample is written, in write_samples_
 
     // Add channel to data
     mcap::ChannelId channel_id;

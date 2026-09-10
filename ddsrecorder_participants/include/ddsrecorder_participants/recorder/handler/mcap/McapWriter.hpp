@@ -76,7 +76,7 @@ public:
      * new one.
      * - @throws \c InitializationException if the MCAP library fails to open a new file.
      */
-    template <typename T>
+    template<typename T>
     void write(
             const T& data);
 
@@ -152,7 +152,7 @@ protected:
      * @param data The data to be written.
      * @throws \c FullFileException if the MCAP file is full.
      */
-    template <typename T>
+    template<typename T>
     void write_nts_(
             const T& data);
 

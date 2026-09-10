@@ -116,17 +116,17 @@ void McapWriter::update_dynamic_types(
                 if (dynamic_types_.empty())
                 {
                     EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,
-                            "MCAP_WRITE | Setting the dynamic types payload to " <<
-                            utils::from_bytes(dynamic_types.length()) << ".");
+                            "MCAP_WRITE | Setting the dynamic types payload to "
+                            << utils::from_bytes(dynamic_types.length()) << ".");
 
                     size_tracker_.attachment_to_write(dynamic_types.length());
                 }
                 else
                 {
                     EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,
-                            "MCAP_WRITE | Updating the dynamic types payload from " <<
-                            utils::from_bytes(dynamic_types_.length()) << " to " <<
-                            utils::from_bytes(dynamic_types.length()) << ".");
+                            "MCAP_WRITE | Updating the dynamic types payload from "
+                            << utils::from_bytes(dynamic_types_.length()) << " to "
+                            << utils::from_bytes(dynamic_types.length()) << ".");
 
                     size_tracker_.attachment_to_write(dynamic_types.length(), dynamic_types_.length());
                 }
@@ -223,13 +223,13 @@ void McapWriter::close_current_file_nts_()
     file_tracker_->close_file();
 }
 
-template <>
+template<>
 void McapWriter::write_nts_(
         const mcap::Attachment& attachment)
 {
     EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,
-            "MCAP_WRITE | Writing attachment: " << attachment.name << " (" << utils::from_bytes(attachment.dataSize) <<
-            ").");
+            "MCAP_WRITE | Writing attachment: " << attachment.name << " (" << utils::from_bytes(attachment.dataSize)
+                                                << ").");
 
     // NOTE: There is no need to check if the MCAP is full, since it is checked when adding a new dynamic_type.
     const auto status = writer_.write(const_cast<mcap::Attachment&>(attachment));
@@ -245,7 +245,7 @@ void McapWriter::write_nts_(
     file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
 }
 
-template <>
+template<>
 void McapWriter::write_nts_(
         const mcap::Channel& channel)
 {
@@ -263,7 +263,7 @@ void McapWriter::write_nts_(
     // TODO: Share the channels and schemas between the McapHandler and McapWriter.
 }
 
-template <>
+template<>
 void McapWriter::write_nts_(
         const McapMessage& msg)
 {
@@ -312,7 +312,7 @@ void McapWriter::write_nts_(
     file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
 }
 
-template <>
+template<>
 void McapWriter::write_nts_(
         const mcap::Metadata& metadata)
 {
@@ -333,7 +333,7 @@ void McapWriter::write_nts_(
     file_tracker_->set_current_file_size(size_tracker_.get_potential_mcap_size());
 }
 
-template <>
+template<>
 void McapWriter::write_nts_(
         const mcap::Schema& schema)
 {

@@ -1125,8 +1125,8 @@ TEST_F(ResourceLimitsTest, mcap_file_rotation_message_split)
     }
 
     EXPECT_TRUE(missing.empty()) << missing.size() << " of " << NUMBER_OF_MESSAGES
-                                 << " messages are in none of the output files, the first being " <<
-        (missing.empty() ? 0 : missing.front());
+                                 << " messages are in none of the output files, the first being "
+                                 << (missing.empty() ? 0 : missing.front());
     EXPECT_TRUE(duplicated.empty()) << duplicated.size() << " messages are in more than one output file, "
         "the first being " << (duplicated.empty() ? 0 : duplicated.front());
     EXPECT_EQ(times_seen.size(), NUMBER_OF_MESSAGES);
