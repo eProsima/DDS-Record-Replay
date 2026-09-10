@@ -458,7 +458,7 @@ This can be accomplished through the playback ``rate`` tag, which accepts positi
 Replay Types
 ^^^^^^^^^^^^
 
-By default, a |ddsreplayer| instance automatically sends all type information found in the provided MCAP file, which might be required for applications relying on :term:`Dynamic Types<DynamicTypes>`.
+By default, a |ddsreplayer| instance automatically sends all type information found in the provided input file, which might be required for applications relying on :term:`Dynamic Types<DynamicTypes>`.
 Nonetheless, a user can choose to avoid this by setting ``replay-types: false``, so only data samples are sent while their associated type information is disregarded.
 
 Specs Configuration

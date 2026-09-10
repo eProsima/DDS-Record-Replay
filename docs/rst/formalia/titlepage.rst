@@ -9,7 +9,7 @@ eProsima DDS Record & Replay Documentation
   :alt: eProsima
   :target: http://www.eprosima.com/
 
-*eProsima DDS Record & Replay* is an end-user software application that efficiently saves DDS data published into a DDS environment in a MCAP format database.
+*eProsima DDS Record & Replay* is an end-user software application that efficiently saves DDS data published into a DDS environment in a MCAP format database, in an SQL database, or in both at the same time.
 Thus, the exact playback of the recorded network events is possible as the data is linked to the timestamp at which the original data was published.
 
 *eProsima DDS Record & Replay* is easily configurable and installed with a default setup, so that DDS topics, data types and entities are automatically discovered without the need to specify the types of data recorded.
@@ -30,9 +30,9 @@ Overview
 *eProsima DDS Record & Replay* includes the following tools:
 
 * **DDS Recorder tool**.
-  The main functionality of this tool is to save the data in a `MCAP <https://mcap.dev/>`_ database.
+  The main functionality of this tool is to save the data in a `MCAP <https://mcap.dev/>`_ database, in a `SQLite <https://www.sqlite.org>`_ database, or in both at the same time.
   The database contains the records of the publication timestamp of the data, the serialized data, and the definition of the data serialization type and format.
-  The output MCAP file can be read with any user tool compatible with MCAP file reading since it contains all the necessary information for reading and reproducing the data.
+  Either output can be read with any user tool compatible with the corresponding format, since both contain all the necessary information for reading and reproducing the data.
 
   .. figure:: /rst/figures/ddsrecord_overview.png
     :align: center
