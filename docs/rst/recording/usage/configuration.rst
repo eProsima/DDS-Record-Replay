@@ -1386,7 +1386,7 @@ Fast DDS Configuration
 ======================
 
 |ddsrecorder| instance stores (by default) all data regardless of whether their associated data type is received or not.
-Some applications rely on this information being recorded and written in the resulting MCAP file, which requires that the user application is configured to send the necessary type information.
+Some applications rely on this information being recorded and written in the resulting output, which requires that the user application is configured to send the necessary type information.
 By default, *Fast DDS* automatically sends the data type information, so no additional configuration is required.
 
 Feel free to review `this <https://github.com/eProsima/Fast-DDS/tree/v1.5.1/examples/cpp/xtypes>`_ section, where it is explained in detail how to configure a Fast DDS Publisher/Subscriber leveraging :term:`Dynamic Types<DynamicTypes>`.

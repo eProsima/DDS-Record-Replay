@@ -22,6 +22,10 @@ DDS Record & Replay nomenclature
     MCAP
         Modular container file format for heterogeneous timestamped data.
 
+    SQLite
+        Self-contained relational database engine that stores a whole database in a single file.
+        It is the format of the SQL output of the |ddsrecorder|.
+
 DDS nomenclature
 ================
 
