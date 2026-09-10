@@ -242,7 +242,7 @@ bool BaseReaderParticipant::update_topic_partition(
 bool BaseReaderParticipant::delete_topic_partition(
         const std::string& topic_name,
         const std::string& writer_guid,
-        const std::string& partition)
+        const std::string& /* partition */)
 {
     if (partition_names.find(topic_name) == partition_names.end())
     {
@@ -257,6 +257,12 @@ bool BaseReaderParticipant::delete_topic_partition(
 
     // delete [writer, partition] in the topic
     partition_names[topic_name].erase(writer_guid);
+
+    // remove the topic entry entirely once it has no writers left
+    if (partition_names[topic_name].empty())
+    {
+        partition_names.erase(topic_name);
+    }
 
     return true;
 }

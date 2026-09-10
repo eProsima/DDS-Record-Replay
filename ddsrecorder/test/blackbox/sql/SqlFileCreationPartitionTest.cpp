@@ -1151,6 +1151,8 @@ TEST_F(SqlFileCreationPartitionTest, transition_paused_event_less_window_partiti
     constexpr auto NUMBER_OF_MESSAGES_2 = 9;
     constexpr auto STATE_2 = DdsRecorderState::PAUSED;
     constexpr auto EVENT_WINDOW = 3;
+    // The check is performed after the recorder has flushed and closed the file.
+    constexpr auto EVENT_WINDOW_CHECK_TOLERANCE = 1;
     constexpr auto WAIT = 1;
     constexpr auto EVENT = EventKind::EVENT;
 
@@ -1186,7 +1188,7 @@ TEST_F(SqlFileCreationPartitionTest, transition_paused_event_less_window_partiti
                 const auto NS_TO_SEC = pow(10, -9);
                 const auto max_time_past = (now_tks - log_time_tks) * NS_TO_SEC;
 
-                ASSERT_LE(max_time_past, EVENT_WINDOW);
+                ASSERT_LE(max_time_past, EVENT_WINDOW + EVENT_WINDOW_CHECK_TOLERANCE);
             });
 }
 

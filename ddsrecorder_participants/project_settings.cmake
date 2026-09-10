@@ -53,7 +53,7 @@ set(MODULE_DEPENDENCIES
     cpp_utils
     ddspipe_core
     ddspipe_participants
-    $<IF:$<BOOL:${WIN32}>,lz4::lz4,lz4>
+    $<IF:$<BOOL:${WIN32}>,$<IF:$<TARGET_EXISTS:LZ4::lz4>,LZ4::lz4,lz4::lz4>,lz4>
     $<IF:$<BOOL:${WIN32}>,$<IF:$<TARGET_EXISTS:zstd::libzstd_shared>,zstd::libzstd_shared,zstd::libzstd_static>,zstd>)
 
 set(MODULE_CPP_VERSION

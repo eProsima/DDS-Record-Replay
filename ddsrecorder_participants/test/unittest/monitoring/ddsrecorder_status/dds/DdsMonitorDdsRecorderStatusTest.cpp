@@ -101,6 +101,9 @@ public:
             participant_->delete_contained_entities();
             DomainParticipantFactory::get_instance()->delete_participant(participant_);
         }
+
+        utils::Log::Flush();
+        utils::Log::ClearConsumers();
     }
 
 protected:

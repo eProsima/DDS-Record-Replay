@@ -128,6 +128,8 @@ void SqlHandler::write_samples_(
         if (sql_sample == nullptr)
         {
             EPROSIMA_LOG_WARNING(DDSRECORDER_SQL_HANDLER, "Error downcasting sample to SqlMessage. Skipping...");
+            // NOTE: the sample must be removed before continuing, otherwise this loop never advances.
+            samples.pop_front();
             continue;
         }
 
@@ -156,8 +158,17 @@ void SqlHandler::write_samples_(
         }
         else
         {
-            // (writers with the empty partition do not enters here,
-            // the topic partition would be "")
+            // The writer is not present in the topic's partition snapshot, so the sample cannot be
+            // attributed to a partition and is dropped. This is data loss
+            // NOTE: Writers with an empty partition do not reach this branch. Their entry exists in
+            // the snapshot with an empty partition name.
+            EPROSIMA_LOG_WARNING(DDSRECORDER_SQL_HANDLER,
+                    "DISCARDED_SAMPLE | Dropping sample on topic "
+                    << topic.m_topic_name << ": writer " << guid_ss.str()
+                    << " is not present in the topic's partition map ("
+                    << topic.partition_name.size()
+                    << " known writers).");
+
             samples.pop_front();
             continue;
         }
@@ -188,9 +199,10 @@ void SqlHandler::write_samples_(
             if (received_types_.find(sql_sample->topic.type_name) == received_types_.end())
             {
                 EPROSIMA_LOG_WARNING(DDSRECORDER_SQL_HANDLER,
-                        "Message on topic " << sql_sample->topic.m_topic_name
-                                            << " with type " << sql_sample->topic.type_name
-                                            << " cannot be formatted to JSON since the type has not been received.");
+                        "Message on topic "
+                        << sql_sample->topic.m_topic_name
+                        << " with type " << sql_sample->topic.type_name
+                        << " cannot be formatted to JSON since the type has not been received.");
             }
             else
             {

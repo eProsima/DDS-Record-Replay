@@ -40,9 +40,17 @@ void DdsRecorderMonitor::monitor_status()
 {
     EPROSIMA_LOG_INFO(DDSRECORDER_MONITOR, "MONITOR | Registering DdsRecorder Status Monitor Producer.");
 
-    // Initialize the Status Monitor Producer with the DDS Recorder Status
-    static auto ddsrecorder_status_producer =
-            std::make_unique<ddsrecorder::participants::DdsRecorderStatusMonitorProducer>();
+    // Ensure the Status Monitor Producer singleton is a DdsRecorderStatusMonitorProducer.
+    // NOTE: init_instance only stores the passed instance the first time it is called (while the
+    // singleton has not been created yet); on any later call it is a no-op. Therefore the producer
+    // must always be retrieved afterwards with get_instance() instead of relying on the local
+    // instance passed in. Otherwise, calling this method more than once per process would dereference
+    // a moved-from pointer.
+    ddspipe::core::StatusMonitorProducer::init_instance(
+        std::make_unique<ddsrecorder::participants::DdsRecorderStatusMonitorProducer>());
+
+    auto* ddsrecorder_status_producer = static_cast<ddsrecorder::participants::DdsRecorderStatusMonitorProducer*>(
+        ddspipe::core::StatusMonitorProducer::get_instance());
 
     // Register the type
     fastdds::dds::TypeSupport type(new DdsRecorderMonitoringStatusPubSubType());
@@ -56,17 +64,14 @@ void DdsRecorderMonitor::monitor_status()
 
     if (configuration_.consumers.count(ddspipe::core::STATUS_MONITOR_PRODUCER_ID) > 0)
     {
-        ddsrecorder_status_producer->register_consumer(std::make_unique<ddspipe::core::DdsMonitorConsumer<DdsRecorderMonitoringStatus>>(
-                    configuration_.consumers[ddspipe::core::STATUS_MONITOR_PRODUCER_ID], registry_,
-                    type));
+        ddsrecorder_status_producer->register_consumer(
+            std::make_unique<ddspipe::core::DdsMonitorConsumer<DdsRecorderMonitoringStatus>>(
+                configuration_.consumers[ddspipe::core::STATUS_MONITOR_PRODUCER_ID], registry_,
+                type));
     }
 
-    ddspipe::core::StatusMonitorProducer::init_instance(std::move(ddsrecorder_status_producer));
-
     // Register the Status Monitor Producer
-    auto status_producer = ddspipe::core::StatusMonitorProducer::get_instance();
-
-    register_producer_(status_producer);
+    register_producer_(ddsrecorder_status_producer);
 }
 
 } //namespace participants

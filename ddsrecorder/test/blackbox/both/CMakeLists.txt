@@ -22,6 +22,8 @@ file(
     GLOB_RECURSE TEST_SOURCES
     ResourceLimitsTest.cpp
     "${PROJECT_SOURCE_DIR}/test/resources/types/hello_world/*.c*"
+    # Needed by report_sql_contents_, which inspects the SQL output when its size is unexpected
+    "${PROJECT_SOURCE_DIR}/../thirdparty/sqlite/*.c"
     )
 
 set(TEST_LIBRARY_SOURCES

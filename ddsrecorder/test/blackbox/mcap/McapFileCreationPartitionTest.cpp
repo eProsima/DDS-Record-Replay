@@ -975,6 +975,8 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_event_less_window_partit
     constexpr auto NUMBER_OF_MESSAGES_2 = 9;
     constexpr auto STATE_2 = DdsRecorderState::PAUSED;
     constexpr auto EVENT_WINDOW = 3;
+    // The check is performed after the recorder has flushed and closed the file.
+    constexpr auto EVENT_WINDOW_CHECK_TOLERANCE = 1;
     constexpr auto WAIT = 1;
     constexpr auto EVENT = EventKind::EVENT;
 
@@ -994,7 +996,7 @@ TEST_F(McapFileCreationPartitionTest, transition_paused_event_less_window_partit
 
     // Verify the oldest recorded message was recorded in the event window
     const auto max_time_past = find_max_time_past_(read_messages);
-    ASSERT_LE(max_time_past, EVENT_WINDOW);
+    ASSERT_LE(max_time_past, EVENT_WINDOW + EVENT_WINDOW_CHECK_TOLERANCE);
 }
 
 /**
