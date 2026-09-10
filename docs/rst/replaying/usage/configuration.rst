@@ -19,6 +19,12 @@ Thus, this file has three major configuration groups:
 * ``replayer``: configuration with data playback parameters.
 * ``specs``: configuration of the internal operation of the |ddsreplayer|.
 
+.. warning::
+
+    The configuration file is validated against a schema before it is loaded, and only the tags documented on this page are accepted.
+    An unknown or misspelled tag is an error: the |ddsreplayer| reports that the file is not a valid configuration and does not start.
+    Configuration files written for earlier versions may therefore need to be updated.
+
 
 .. _replayer_dds_recorder_configuration_dds_configuration:
 
@@ -37,7 +43,7 @@ The way to load these XML configurations is using the *DDS Replayer* YAML config
 The YAML Configuration supports an ``xml`` optional tag that contains certain options to load Fast DDS XML configurations.
 XML configurations are then used to configure the internal DomainParticipant.
 
-To specify which profile to use, the ``dds-profile`` tag should be set with the name of the desired profile.
+To specify which profile to use, the ``replayer-profile`` tag should be set with the name of the desired profile.
 
 Load XML Files
 ^^^^^^^^^^^^^^
@@ -349,18 +355,27 @@ Replay Configuration
 Configuration of data playback settings.
 
 
+.. _replayer_replay_configuration_inputfile:
+
 Input File
 ^^^^^^^^^^
 
 The path to the file, set through the ``input-file`` configuration tag.
 When the input file is specified both through CLI argument and YAML configuration file, the former takes precedence.
 
+The |ddsreplayer| plays back both of the formats written by the |ddsrecorder|, and selects which one to read from the extension of the input file: a file ending in ``.db`` is read as an SQL database, and any other file is read as an MCAP file.
+
+.. warning::
+
+    An SQL database recorded with ``data-format: json`` cannot be played back, and the |ddsreplayer| publishes no data from it.
+    Playback reads the serialized data stored in the ``data_cdr`` column, which is only populated when the recording is made with ``data-format: cdr`` or ``data-format: both`` (see :ref:`Data Format <recorder_usage_configuration_sql_data_format>`).
+
 .. _replayer_replay_configuration_begintime:
 
 Begin Time
 ^^^^^^^^^^
 
-By default, all data stored in the provided MCAP file is played back.
+By default, all data stored in the provided input file is played back.
 However, a user might be interested in only replaying data relative to a specific time frame.
 ``begin-time`` and ``end-time`` configuration options can be leveraged for this purpose, and their format is as follows:
 
@@ -443,7 +458,7 @@ This can be accomplished through the playback ``rate`` tag, which accepts positi
 Replay Types
 ^^^^^^^^^^^^
 
-By default, a |ddsreplayer| instance automatically sends all type information found in the provided MCAP file, which might be required for applications relying on :term:`Dynamic Types<DynamicTypes>`.
+By default, a |ddsreplayer| instance automatically sends all type information found in the provided input file, which might be required for applications relying on :term:`Dynamic Types<DynamicTypes>`.
 Nonetheless, a user can choose to avoid this by setting ``replay-types: false``, so only data samples are sent while their associated type information is disregarded.
 
 Specs Configuration
@@ -461,6 +476,13 @@ This improves the performance of the internal data communications.
 
 This value should be set by each user depending on each system characteristics.
 In case this value is not set, the default number of threads used is :code:`12`.
+
+RTPS Participant
+^^^^^^^^^^^^^^^^
+
+``specs`` supports an ``rtps`` **optional** tag that selects the kind of internal participant the |ddsreplayer| creates to communicate with the DDS network.
+By default it is set to ``false``, and a DDS participant is created, which is the one that applies the Fast DDS XML profiles described in the *Load XML Configuration* section.
+Setting ``rtps: true`` creates a plain RTPS participant instead, in which case XML profiles are not applied.
 
 Wait-for-acknowledgement Timeout
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -571,13 +593,13 @@ The type of the logs published is defined as follows:
     logging:
       verbosity: info
       filter:
-        error: "DDSPIPE|FASTDDSSPY"
-        warning: "DDSPIPE|FASTDDSSPY"
-        info: "FASTDDSSPY"
+        error: "DDSPIPE|DDSREPLAYER"
+        warning: "DDSPIPE|DDSREPLAYER"
+        info: "DDSREPLAYER"
       publish:
         enable: true
         domain: 84
-        topic-name: "FastDdsSpyLogs"
+        topic-name: "DdsReplayerLogs"
       stdout: true
 
 .. _replayer_usage_configuration_general_example:
@@ -675,5 +697,5 @@ A complete example of all the configurations described on this page can be found
         publish:
           enable: true
           domain: 84
-          topic-name: "FastDdsSpyLogs"
+          topic-name: "DdsReplayerLogs"
         stdout: true

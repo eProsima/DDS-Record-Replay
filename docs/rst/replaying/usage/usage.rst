@@ -13,26 +13,6 @@ Usage
 Starting Replay Application
 ---------------------------
 
-Docker Image
-^^^^^^^^^^^^
-
-.. warning::
-    Currently, |ddsrecord| Docker image only contains |ddsrecorder| tool, |ddsreplay| application will be added soon.
-
-The recommended method to run the |ddsreplayer| is to instantiate a Docker container of the |ddsrecord| image.
-:ref:`Here <docker>` are the instructions to download the compressed |ddsrecord| Docker image and load it locally.
-
-To run the |ddsreplayer| from a Docker container execute the following command:
-
-.. code-block:: bash
-
-    docker run -it \
-        --net=host \
-        --ipc=host \
-        -v /<dds_replayer_ws>/DDS_REPLAYER_CONFIGURATION.yaml:/root/DDS_REPLAYER_CONFIGURATION.yaml \
-        ubuntu-ddsrecorder:v<X.X.X> ddsreplayer
-
-
 Installation from sources
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -54,6 +34,12 @@ To start |eddsreplayer| with a default configuration, enter:
 .. code-block:: bash
 
     ddsreplayer -i input_file.mcap
+
+The input file may also be an SQL database recorded by a |ddsrecorder|, which is selected by the ``.db`` extension:
+
+.. code-block:: bash
+
+    ddsreplayer -i input_file.db
 
 
 .. _replayer_usage_close_replayer:
@@ -107,7 +93,7 @@ The |ddsreplayer| application supports several input arguments:
         -
 
     *   - Input File
-        - Input MCAP file path.
+        - Input file path. An MCAP file, or an SQL database if the path ends in ``.db``.
         - ``-i`` |br|
           ``--input-file``
         -

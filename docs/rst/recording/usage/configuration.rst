@@ -20,6 +20,12 @@ Thus, this file has four major configuration groups:
 * ``remote-controller``: configuration of the remote controller of the |ddsrecorder|.
 * ``specs``: configuration of the internal operation of the |ddsrecorder|.
 
+.. warning::
+
+    The configuration file is validated against a schema before it is loaded, and only the tags documented on this page are accepted.
+    An unknown or misspelled tag is an error: the |ddsrecorder| reports that the file is not a valid configuration and does not start.
+    Configuration files written for earlier versions may therefore need to be updated.
+
 
 .. _recorder_dds_recorder_configuration_dds_configuration:
 
@@ -379,6 +385,39 @@ Recorder Configuration
 ----------------------
 
 Configuration of data writing in the database.
+The tags accepted under ``recorder`` are arranged as follows:
+
+.. code-block:: yaml
+
+    recorder:
+
+      output:                  # where and how the output files are named
+        path: ...
+        filename: ...
+        timestamp-format: ...
+        local-timestamp: ...
+        safety-margin: ...     # free disk space to preserve, shared by both outputs
+
+      buffer-size: ...         # settings common to both outputs
+      cleanup-period: ...
+      event-window: ...
+      max-pending-samples: ...
+      only-with-type: ...
+      record-types: ...
+      ros2-types: ...
+
+      mcap:                    # settings of the MCAP output
+        enable: ...
+        log-publish-time: ...
+        compression: ...
+        resource-limits: ...   # size limits of the MCAP output
+
+      sql:                     # settings of the SQL output
+        enable: ...
+        data-format: ...
+        resource-limits: ...   # size limits of the SQL output, set independently
+
+The sections below follow this order, except for :ref:`Resource Limits <recorder_usage_configuration_resource_limits>`, which is documented once because the ``mcap`` and the ``sql`` outputs accept exactly the same tags under it.
 
 .. _recorder_usage_configuration_outputfile:
 
@@ -422,9 +461,33 @@ The recorder output file does support the following configuration settings under
         - ``boolean``
         - ``true``
 
-When DDS Recorder application is launched (or when remotely controlled, every time a ``start/pause`` command is received while in ``SUSPENDED/STOPPED`` state), a temporary file with ``filename`` name (+timestamp prefix) and ``.mcap.tmp~`` extension is created in ``path``.
+    *   - Safety margin
+        - ``safety-margin``
+        - Amount of disk space that must be left free, shared by both outputs. See :ref:`Safety Margin <recorder_usage_configuration_safety_margin>`.
+        - ``string``
+        - ``10MB``
+
+When DDS Recorder application is launched (or when remotely controlled, every time a ``start/pause`` command is received while in ``SUSPENDED/STOPPED`` state), a temporary file with ``filename`` name (+timestamp prefix) is created in ``path``: with the ``.mcap.tmp~`` extension for the MCAP output, and with the ``.db.tmp~`` extension for the SQL output.
 This file is not readable until the application terminates, receives a ``suspend/stop/close`` command, or the file reaches its maximum size (see :ref:`Resource Limits <recorder_usage_configuration_resource_limits>`).
-On such event, the temporal file is renamed to have ``.mcap`` extension in the same location, and is then ready to be processed.
+On such event, the temporal file is renamed to have the ``.mcap`` or the ``.db`` extension in the same location, and is then ready to be processed.
+When both outputs are enabled, one temporary file is created for each of them (see :ref:`Output Selection <recorder_usage_configuration_output_selection>`).
+
+.. _recorder_usage_configuration_safety_margin:
+
+Safety Margin
+"""""""""""""
+
+The ``safety-margin`` tag reserves a buffer of free disk space, ensuring that at least ``safety-margin`` bytes remain available to prevent the system from running out of memory.
+It is set once, under the ``output`` tag, and is shared by the MCAP and the SQL outputs: it applies regardless of whether one or both of them are enabled.
+By default, the safety margin is set to ``10MB``, which is also the minimum accepted value.
+
+.. note::
+
+    A ``safety-margin`` lower than ``10MB`` does not stop the |ddsrecorder| from starting: the value is raised to ``10MB`` and an error is logged.
+
+The interaction between the safety margin and the size limits of each output is described in :ref:`Disk-Space Allocation Rules <recorder_usage_configuration_resource_limits>`.
+
+.. _recorder_usage_configuration_buffer_size:
 
 Buffer size
 ^^^^^^^^^^^
@@ -488,7 +551,8 @@ However, a user can enforce that **only** samples whose type is received are rec
 Record Types
 ^^^^^^^^^^^^
 
-By default, all type information received during execution is stored in a dedicated MCAP file section.
+By default, all type information received during execution is stored: in a dedicated section of the MCAP file, and in the ``Types`` table of the SQL database (see :ref:`Database Schema <recorder_usage_configuration_sql_schema>`).
+Every type is stored together with the types it depends on, so that it can be resolved on its own.
 This information is then leveraged by |ddsreplayer| on playback, publishing recorded types in addition to data samples, which may be required for receiver applications relying on :term:`Dynamic Types<DynamicTypes>` (see :ref:`Replay Types <replayer_replay_configuration_replaytypes>`).
 However, a user may choose to disable this feature by setting ``record-types: false``.
 
@@ -502,12 +566,60 @@ When set to ``true``, schemas are stored in ROS 2 message format (.msg).
 If set to ``false``, schemas are stored in OMG IDL format (.idl).
 By default it is set to ``false``.
 
+In the SQL output this tag has a further effect: topic and type names are converted to ROS 2 naming, and the ``is_ros2_topic`` and ``is_ros2_type`` columns record whether that conversion applied to each entry (see :ref:`Database Schema <recorder_usage_configuration_sql_schema>`).
+
+.. _recorder_usage_configuration_output_selection:
+
+Output Selection
+^^^^^^^^^^^^^^^^
+
+The |ddsrecorder| can write its output as an MCAP file, as an SQL database, or as both at the same time.
+Each output is configured under its own tag, ``mcap`` and ``sql``, and is turned on or off with an ``enable`` tag.
+
+.. list-table::
+    :header-rows: 1
+
+    *   - Output
+        - Tag
+        - Enabled by default
+
+    *   - MCAP file
+        - ``mcap``
+        - ``true``
+
+    *   - SQL database
+        - ``sql``
+        - ``false``
+
+By default the |ddsrecorder| records to an MCAP file only.
+Setting ``enable: true`` under the ``sql`` tag turns the SQL output on and, unless the ``mcap`` tag also sets ``enable: true``, turns the MCAP output off.
+To record both outputs at the same time, enable both of them explicitly:
+
+.. code-block:: yaml
+
+    recorder:
+      mcap:
+        enable: true
+
+      sql:
+        enable: true
+
+.. note::
+
+    The order in which the ``mcap`` and ``sql`` tags appear in the configuration file is irrelevant: the |ddsrecorder| always resolves the ``sql`` tag before the ``mcap`` one.
+
+.. warning::
+
+    The ``enable`` tag is mandatory whenever a ``mcap`` or a ``sql`` section is present: a section without it is rejected.
+    At least one of the two outputs must end up enabled, otherwise the configuration is rejected as well.
+
 .. _recorder_usage_configuration_mcap:
 
 MCAP Configuration
 ^^^^^^^^^^^^^^^^^^
 
 The ``enable`` tag allows users to enable or disable whether to record data in an MCAP file.
+See :ref:`Output Selection <recorder_usage_configuration_output_selection>` for how this tag interacts with the ``sql`` output, and :ref:`Resource Limits <recorder_usage_configuration_resource_limits>` for the limits that can be set on the generated files.
 
 .. _recorder_usage_configuration_logpublishtime:
 
@@ -569,43 +681,213 @@ The supported compression options are:
         - ``true`` |br|
           ``false``
 
+.. _recorder_usage_configuration_sql:
+
+SQL Configuration
+^^^^^^^^^^^^^^^^^
+
+The ``enable`` tag allows users to enable or disable whether to record data in an SQL database.
+See :ref:`Output Selection <recorder_usage_configuration_output_selection>` for how this tag interacts with the ``mcap`` output, and :ref:`Resource Limits <recorder_usage_configuration_resource_limits>` for the limits that can be set on the database.
+
+.. _recorder_usage_configuration_sql_data_format:
+
+Data Format
+"""""""""""
+
+The ``data-format`` tag allows users to specify the format in which data is stored in the SQL database.
+The data can be stored in ``cdr`` (which makes the data replayable by the |ddsreplayer|), in ``json`` (which makes the data human-readable), or in ``both`` (default).
+
+.. warning::
+
+    A database recorded with ``data-format: json`` cannot be played back by the |ddsreplayer|.
+    Playback reads the ``data_cdr`` column, which is only populated when the format is ``cdr`` or ``both``.
+
+.. _recorder_usage_configuration_sql_schema:
+
+Database Schema
+"""""""""""""""
+
+The SQL output is a `SQLite <https://www.sqlite.org>`_ database, so it can be inspected with any standard SQLite client.
+It contains the six tables described below.
+
+The ``Types`` table holds one row per data type whose information has been received, plus one row for each type those types depend on.
+It is only populated when ``record-types`` is enabled.
+The ``is_ros2_type`` column records whether the type name was converted to ROS 2 naming, which depends on the ``ros2-types`` tag.
+
+.. code-block:: sql
+
+    CREATE TABLE Types (
+        name TEXT PRIMARY KEY NOT NULL,
+        information TEXT NOT NULL,
+        object TEXT NOT NULL,
+        is_ros2_type TEXT NOT NULL
+    );
+
+The ``Topics`` table holds one row per recorded topic, with its serialized :ref:`Topic QoS <recorder_topic_qos>`.
+
+.. code-block:: sql
+
+    CREATE TABLE Topics (
+        name TEXT NOT NULL,
+        type TEXT NOT NULL,
+        qos TEXT NOT NULL,
+        is_ros2_topic TEXT NOT NULL,
+        PRIMARY KEY(name, type),
+        FOREIGN KEY(type) REFERENCES Types(name)
+    );
+
+The ``Messages`` table holds the recorded data.
+Each message is identified by the GUID of the DataWriter that published it and its sequence number.
+The ``data_json`` and ``data_cdr`` columns are populated according to the ``data-format`` tag, and ``log_time`` and ``publish_time`` store the reception and publication timestamps respectively.
+
+.. code-block:: sql
+
+    CREATE TABLE Messages (
+        writer_guid TEXT NOT NULL,
+        sequence_number INTEGER NOT NULL,
+        data_json TEXT,
+        data_cdr BLOB,
+        data_cdr_size INTEGER,
+        topic TEXT NOT NULL,
+        type TEXT NOT NULL,
+        key TEXT NOT NULL,
+        log_time DATETIME NOT NULL,
+        publish_time DATETIME NOT NULL,
+        PRIMARY KEY(writer_guid, sequence_number),
+        FOREIGN KEY(topic, type) REFERENCES Topics(name, type)
+    );
+
+The ``Partitions`` table holds every :ref:`partition <recorder_partition_filtering>` seen during the recording.
+
+.. code-block:: sql
+
+    CREATE TABLE Partitions (
+        name TEXT NOT NULL,
+        PRIMARY KEY(name)
+    );
+
+The ``TopicsPartitions`` and ``MessagesPartitions`` tables associate topics and messages with the partitions they were published on.
+
+.. code-block:: sql
+
+    CREATE TABLE TopicsPartitions (
+        topic TEXT NOT NULL,
+        type TEXT NOT NULL,
+        partition TEXT NOT NULL,
+        PRIMARY KEY(topic, type, partition),
+        FOREIGN KEY (topic, type) REFERENCES Topics(name, type) ON DELETE CASCADE,
+        FOREIGN KEY (partition) REFERENCES Partitions(name) ON DELETE CASCADE
+    );
+
+    CREATE TABLE MessagesPartitions (
+        writer_guid TEXT NOT NULL,
+        sequence_number INTEGER NOT NULL,
+        partition TEXT NOT NULL,
+        PRIMARY KEY (writer_guid, sequence_number, partition),
+        FOREIGN KEY (writer_guid, sequence_number) REFERENCES Messages(writer_guid, sequence_number) ON DELETE CASCADE,
+        FOREIGN KEY (partition) REFERENCES Partitions(name) ON DELETE CASCADE
+    );
+
+**Example of usage**
+
+Retrieve every message recorded on a given topic, most recent first:
+
+.. code-block:: sql
+
+    SELECT log_time, publish_time, data_json
+    FROM Messages
+    WHERE topic = 'HelloWorldTopic'
+    ORDER BY log_time DESC;
+
+.. _recorder_usage_configuration_sql_storage_engine:
+
+Storage Engine
+""""""""""""""
+
+The database is opened in `write-ahead logging <https://www.sqlite.org/wal.html>`_ mode, so that changes are appended to a separate file before being applied to the database itself.
+This reduces the risk of corrupting the database if the |ddsrecorder| terminates unexpectedly.
+A checkpoint, which applies those pending changes, is written automatically every quarter of the configured :ref:`Size Tolerance <recorder_usage_configuration_size_tolerance>`, and once more when the database is closed.
+
+The database also runs in incremental auto-vacuum mode, which lets the |ddsrecorder| reclaim free pages gradually rather than rewriting the whole database at once.
+This matters when :ref:`Log Rotation <recorder_usage_configuration_log_rotation>` is enabled, since the space freed by deleting old entries is returned in small increments as the recording proceeds.
+
 .. _recorder_usage_configuration_resource_limits:
 
 Resource Limits
-"""""""""""""""
+^^^^^^^^^^^^^^^
 
-The ``resource-limits`` tag allows users to control the size of the *DDS Recorder's* output by setting limits on disk usage. This configuration allows distinct limits for the MCAP and SQL outputs while maintaining a shared safety margin to ensure stable memory usage.
+The ``resource-limits`` tag allows users to control the size of the *DDS Recorder's* output by setting limits on disk usage.
 
-- **``max-file-size``**: Specifies the maximum size of each output file. Applicable only to the MCAP recorder, as the SQL recorder uses a single database file.
-- **``max-size``**: Specifies the maximum aggregate size of all output files. For the SQL recorder, this defines the maximum size of the database file. For the MCAP recorder, this determines the total size of all generated files.
+.. important::
 
-Safety Margin
-"""""""""""""
+    ``resource-limits`` is not a tag of its own under ``recorder``.
+    It is set inside ``mcap`` and inside ``sql``, and the two are independent: each output has its own limits, and setting them for one does not affect the other.
+    Both accept the same four tags, which is why they are documented once here.
 
-The ``safety-margin`` property is shared between the SQL and MCAP outputs and is configured in the ``output`` section. This parameter reserves a buffer of free disk space, ensuring that at least ``safety-margin`` bytes remain available to prevent the system from running out of memory. This applies regardless of whether one or both recorders are enabled.
-By default, the safety margin is set to ``10MB``.
+    .. code-block:: yaml
 
-MCAP Recorder Behavior
-""""""""""""""""""""""
+        recorder:
+          mcap:
+            enable: true
+            resource-limits:
+              max-size: 200MB
 
-If the ``max-size`` is greater than the ``max-file-size``, the |ddsrecorder| will create multiple files, each with a size up to the value of ``max-file-size``, until the total size reaches ``max-size``.
+          sql:
+            enable: true
+            resource-limits:
+              max-size: 20MiB
 
-SQL Recorder Behavior
-"""""""""""""""""""""
+The ``safety-margin`` that the two outputs do share is set under the ``output`` tag instead, and is described in :ref:`Safety Margin <recorder_usage_configuration_safety_margin>`.
+
+.. list-table::
+    :header-rows: 1
+
+    *   - Parameter
+        - Tag
+        - Description
+        - Data type
+        - Default value
+
+    *   - Maximum file size
+        - ``max-file-size``
+        - Maximum size of each individual output file. Only meaningful for the MCAP output, since the SQL output is always a single database file.
+        - ``string``
+        - ``0B`` (unlimited)
+
+    *   - Maximum size
+        - ``max-size``
+        - Maximum aggregate size of the output. For MCAP it is the total size of all generated files; for SQL it is the size of the database file.
+        - ``string``
+        - ``0B`` (unlimited)
+
+    *   - Log rotation
+        - ``log-rotation``
+        - Whether to keep recording once ``max-size`` is reached by discarding the oldest data.
+        - ``boolean``
+        - ``false``
+
+    *   - Size tolerance
+        - ``size-tolerance``
+        - Margin of error allowed when tracking the size of the output.
+        - ``string``
+        - ``1MB``
+
+Output-Specific Behavior
+""""""""""""""""""""""""
+
+Both limits are interpreted differently by each output.
+
+For the MCAP recorder, if the ``max-size`` is greater than the ``max-file-size``, the |ddsrecorder| will create multiple files, each with a size up to the value of ``max-file-size``, until the total size reaches ``max-size``.
 
 For the SQL recorder:
-- The database is always stored in a single file.
-- **Both ``max-file-size`` and ``max-size`` control the same parameter, i.e., total size of the database**. This is why setting just one of them is sufficient as the other will be automatically set to the same value. If both are set to different values, an error will be returned.
 
-Default Behavior
-""""""""""""""""
+* The database is always stored in a single file.
+* The fields ``max-file-size`` and ``max-size`` control the same parameter: the total size of the database.
+  Setting just one of them is sufficient, as the other is automatically set to the same value.
+  If both are set to different values, an error is returned.
 
-By default:
-- ``max-file-size`` is unlimited (``0B``).
-- ``max-size`` is equal to ``max-file-size``, which means the |ddsrecorder| creates a single output file of unlimited size.
-
-Resource Limits Configuration Rules
-"""""""""""""""""""""""""""""""""""
+Disk-Space Allocation Rules
+"""""""""""""""""""""""""""
 
 The relation between ``max-size`` and ``size-tolerance`` introduces resource limits that dictate memory usage. The behavior depends on the enabled recorders:
 
@@ -620,28 +902,28 @@ B. If both recorders are enabled
    * **One recorder with resource limits set**: The other recorder will use the remaining disk space.
    * **Both recorders with resource limits set**: Ensure the combined limits do not exceed the available disk space, returning an error otherwise.
 
+.. warning::
+
+    If the ``max-file-size`` or the ``max-size`` are set to a value higher than the available space in the disk (counting for the safety-margin), an error will be returned.
+
+.. _recorder_usage_configuration_size_tolerance:
+
 Size Tolerance
 """"""""""""""
 
 The ``size-tolerance`` property is an optional parameter that establishes the margin of error for the size of the output files.
 
+.. _recorder_usage_configuration_log_rotation:
 
-.. warning::
-
-    If the ``max-file-size`` or the ``max-size`` are set to a value higher than the available space in the disk (counting for the safety-margin), an error will be returned.
+Log Rotation
+""""""""""""
 
 To keep the |ddsrecorder| recording after reaching the ``max-size``, users can set the ``log-rotation`` tag to ``true``.
-Enabling ``log-rotation`` allows the |ddsrecorder| to overwrite old files to free space for new ones.
+Enabling ``log-rotation`` allows the |ddsrecorder| to discard the oldest data to make room for new data.
+The mechanism depends on the output:
 
-MCAP Log-Rotation Behavior
-""""""""""""""""""""""""""
-
-When the MCAP ``log-rotation`` is enabled, the |ddsrecorder| will remove the oldest file whenever ``max-size`` is reached.
-
-SQL Log-Rotation Behavior
-"""""""""""""""""""""""""
-
-When the SQL ``log-rotation`` is enabled, the |ddsrecorder| will remove the oldest entries of the database whenever ``max-size`` is reached.
+* **MCAP**: the |ddsrecorder| removes the oldest file whenever ``max-size`` is reached.
+* **SQL**: the |ddsrecorder| removes the oldest entries of the database whenever ``max-size`` is reached.
 
 .. note::
 
@@ -674,21 +956,6 @@ When the SQL ``log-rotation`` is enabled, the |ddsrecorder| will remove the olde
         max-size: 20MiB
         log-rotation: true
         size-tolerance: 1MB
-
-.. _recorder_usage_configuration_sql:
-
-SQL Configuration
-^^^^^^^^^^^^^^^^^
-
-The ``enable`` tag allows users to enable or disable whether to record data in an SQL database.
-
-.. _recorder_usage_configuration_sql_data_format:
-
-Data Format
-"""""""""""
-
-The ``data-format`` tag allows users to specify the format in which data is stored in the SQL database.
-The data can be stored in ``cdr`` (which makes the data replayable by the |ddsreplayer|), in ``json`` (which makes the data human-readable), or in ``both`` (default).
 
 .. _recorder_usage_configuration_remote_controller:
 
@@ -770,6 +1037,13 @@ This improves the performance of the internal data communications.
 
 This value should be set by each user depending on each system characteristics.
 In case this value is not set, the default number of threads used is :code:`12`.
+
+RTPS Participant
+^^^^^^^^^^^^^^^^
+
+``specs`` supports an ``rtps`` **optional** tag that selects the kind of internal participant the |ddsrecorder| creates to communicate with the DDS network.
+By default it is set to ``false``, and a DDS participant is created, which is the one that applies the Fast DDS XML profiles described in the *Load XML Configuration* section.
+Setting ``rtps: true`` creates a plain RTPS participant instead, in which case XML profiles are not applied.
 
 .. _recorder_specs_topic_qos:
 
@@ -1112,7 +1386,7 @@ Fast DDS Configuration
 ======================
 
 |ddsrecorder| instance stores (by default) all data regardless of whether their associated data type is received or not.
-Some applications rely on this information being recorded and written in the resulting MCAP file, which requires that the user application is configured to send the necessary type information.
+Some applications rely on this information being recorded and written in the resulting output, which requires that the user application is configured to send the necessary type information.
 By default, *Fast DDS* automatically sends the data type information, so no additional configuration is required.
 
 Feel free to review `this <https://github.com/eProsima/Fast-DDS/tree/v1.5.1/examples/cpp/xtypes>`_ section, where it is explained in detail how to configure a Fast DDS Publisher/Subscriber leveraging :term:`Dynamic Types<DynamicTypes>`.

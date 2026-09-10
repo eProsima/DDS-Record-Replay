@@ -1,0 +1,11 @@
+dds:
+  domain: 0
+
+recorder:
+  output:
+    filename: "output"
+    path: "."
+
+  mcap:
+    compression:
+      algorithm: lz4

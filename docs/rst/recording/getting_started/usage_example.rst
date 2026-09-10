@@ -16,7 +16,6 @@ It is required to have |eddsrecord| previously installed using one of the follow
 
 * :ref:`installation_manual_windows`
 * :ref:`installation_manual_linux`
-* :ref:`docker`
 
 Additionally, `ShapesDemo <https://www.eprosima.com/index.php/products-all/eprosima-shapes-demo>`_ is required to publish and subscribe shapes of different colors and sizes.
 ShapesDemo application is already prepared to use Fast DDS DynamicTypes, which is required when using the DDS Recorder.
@@ -40,6 +39,7 @@ Recorder configuration
 
 |ddsrecorder| runs with default configuration settings.
 This default configuration records all messages of all DDS Topics found in DDS Domain ``0`` in the ``output_YYYY-MM-DD-DD_hh-mm-ss.mcap`` file.
+The recording can also be written to an SQL database instead of, or in addition to, the MCAP file (see :ref:`Output Selection <recorder_usage_configuration_output_selection>`).
 
 Additionally, it is possible to change the default configuration parameters by means of a YAML configuration file.
 
