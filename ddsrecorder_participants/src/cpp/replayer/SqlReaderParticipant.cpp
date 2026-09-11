@@ -16,7 +16,6 @@
  * @file SqlReaderParticipant.cpp
  */
 
-#include <cstring>
 #include <exception>
 #include <map>
 #include <sstream>
@@ -73,6 +72,22 @@ static fastdds::rtps::InstanceHandle_t compute_instance_handle_from_seed_(
     }
 
     return handle;
+}
+
+/**
+ * @brief Read a TEXT column as a \c std::string, mapping a SQL NULL to an empty string.
+ *
+ * Columns coming from a LEFT JOIN or from an aggregate such as GROUP_CONCAT are NULL whenever no row
+ * matched (e.g. a topic that was announced but for which no sample was ever captured). In that case
+ * \c sqlite3_column_text returns \c nullptr, and building a \c std::string out of it is undefined
+ * behaviour, so the NULL must be translated explicitly.
+ */
+static std::string column_text_(
+        sqlite3_stmt* stmt,
+        const int column)
+{
+    const auto* text = reinterpret_cast<const char*>(sqlite3_column_text(stmt, column));
+    return text != nullptr ? std::string(text) : std::string();
 }
 
 SqlReaderParticipant::SqlReaderParticipant(
@@ -145,25 +160,26 @@ void SqlReaderParticipant::process_summary(
             sqlite3_stmt* stmt)
         {
             // Create a DdsTopic to publish the message
-            const std::string topic_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-            const std::string type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-            const bool is_topic_ros2_type =
-            strcmp(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)), "true") == 0;
+            const std::string topic_name = column_text_(stmt, 0);
+            const std::string type_name = column_text_(stmt, 1);
+            const bool is_topic_ros2_type = column_text_(stmt, 3) == "true";
 
             const auto topic = utils::Heritable<ddspipe::core::types::DdsTopic>::make_heritable(
                 create_topic_(topic_name, type_name, is_topic_ros2_type));
 
             // Apply the QoS stored in the SQL file as if they were the discovered QoS.
-            const auto topic_qos_str = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+            const auto topic_qos_str = column_text_(stmt, 2);
             ddspipe::core::types::TopicQoS topic_qos;
             Serializer::deserialize<ddspipe::core::types::TopicQoS>(topic_qos_str, topic_qos);
 
             topic->topic_qos.set_qos(topic_qos, utils::FuzzyLevelValues::fuzzy_level_fuzzy);
 
             // get the partitions set string from the querys row
-            const std::string topic_partitions = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+            // NOTE: NULL when the topic has no partitions registered
+            const std::string topic_partitions = column_text_(stmt, 4);
             // get the writer guid string from the querys row
-            const std::string writer_guid = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+            // NOTE: NULL when no sample was captured for the topic, e.g. when only its readers were discovered
+            const std::string writer_guid = column_text_(stmt, 5);
 
             // check the partitions filter
             bool pass_partition_filter = allowed_partition_list_.empty();
@@ -224,6 +240,12 @@ void SqlReaderParticipant::process_summary(
             {
                 // the sql row did not pass the filter
 
+                if (writer_guid.empty())
+                {
+                    // no sample was captured for this topic, so there is no writer guid to filter out
+                    return;
+                }
+
                 // check if the sql query has more than one writer_guid in the row
                 if (writer_guid.size() < 50)
                 {
@@ -260,7 +282,8 @@ void SqlReaderParticipant::process_summary(
             }
 
             // (empty partition list) adds the partitions set if is not empty
-            if (topic_partitions != "")
+            // NOTE: the partitions are indexed by writer guid, so they are only of use when a writer is known
+            if (topic_partitions != "" && !writer_guid.empty())
             {
                 topic->partition_name[writer_guid] = topic_partitions;
             }
@@ -278,9 +301,12 @@ void SqlReaderParticipant::process_summary(
                     // search for the same topic and type
                     if (t->type_name == type_name && t->m_topic_name == topic_name)
                     {
-                        // adds in the map the writer_guid and the partitions set
-                        t->partition_name[writer_guid] = topic_partitions;
-                        topics_[topic_id].partition_name[writer_guid] = topic_partitions;
+                        if (!writer_guid.empty())
+                        {
+                            // adds in the map the writer_guid and the partitions set
+                            t->partition_name[writer_guid] = topic_partitions;
+                            topics_[topic_id].partition_name[writer_guid] = topic_partitions;
+                        }
                         return;
                     }
                 }
@@ -300,11 +326,10 @@ void SqlReaderParticipant::process_summary(
     exec_sql_statement_("SELECT name, information, object, is_ros2_type FROM Types;", {}, [&](sqlite3_stmt* stmt)
             {
                 // Read the type data from the database
-                const std::string type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-                const std::string type_information = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-                const std::string type_object = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
-                const bool is_type_ros2_type =
-                strcmp(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)), "true") == 0;
+                const std::string type_name = column_text_(stmt, 0);
+                const std::string type_information = column_text_(stmt, 1);
+                const std::string type_object = column_text_(stmt, 2);
+                const bool is_type_ros2_type = column_text_(stmt, 3) == "true";
 
                 // Create a DynamicType to store the type data
                 DynamicType type;
@@ -353,7 +378,7 @@ void SqlReaderParticipant::process_messages()
         {begin_time, end_time},
         [&](sqlite3_stmt* stmt)
         {
-            const auto log_time = to_std_timestamp(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
+            const auto log_time = to_std_timestamp(column_text_(stmt, 0));
 
             // Store the timestamp of the first recorded message in this replay execution.
             if (!first_message_timestamp_set)
@@ -364,12 +389,11 @@ void SqlReaderParticipant::process_messages()
 
             // Create a DdsTopic to publish the message
             ddspipe::core::types::DdsTopic topic;
-            const std::string topic_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-            const std::string type_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+            const std::string topic_name = column_text_(stmt, 1);
+            const std::string type_name = column_text_(stmt, 2);
 
-            const std::string writer_guid = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
-            const auto* key_col = sqlite3_column_text(stmt, 6);
-            const std::string key = key_col ? reinterpret_cast<const char*>(key_col) : "";
+            const std::string writer_guid = column_text_(stmt, 5);
+            const std::string key = column_text_(stmt, 6);
             const auto sequence_number = sqlite3_column_int64(stmt, 7);
 
             const auto topic_id = std::make_pair(topic_name, type_name);
