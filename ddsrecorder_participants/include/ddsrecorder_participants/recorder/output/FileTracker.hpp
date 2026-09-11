@@ -20,6 +20,7 @@
 
 #include <cstdint>
 #include <mutex>
+#include <regex>
 #include <string>
 #include <vector>
 
@@ -112,6 +113,29 @@ public:
             const std::uint64_t size) noexcept;
 
 protected:
+
+    /**
+     * @brief Adds the output files already present in the output directory to the tracker.
+     *
+     * The existing files are added as closed files, sorted from the oldest to the most recently modified one, so that
+     * their size is taken into account in the aggregate output size and they are the first candidates to be removed
+     * when the file rotation frees space.
+     *
+     * Neither the temporary files of an interrupted execution nor the files that do not match the configured output
+     * filename are added to the tracker.
+     */
+    void add_existing_files_nts_() noexcept;
+
+    /**
+     * @brief Generates the regular expression that the name of an existing output file must match.
+     *
+     * The expected format is <timestamp>_<filename>_<id><extension>, where the timestamp is only expected when
+     * \c prepend_timestamp is set, and where the id is only present when multiple output files may be created.
+     * The id, when present, is captured in the first group of the regular expression.
+     *
+     * @return The regular expression matching the names of the existing output files.
+     */
+    std::regex existing_filename_pattern_() const;
 
     /**
      * @brief Removes the oldest file from the tracker.

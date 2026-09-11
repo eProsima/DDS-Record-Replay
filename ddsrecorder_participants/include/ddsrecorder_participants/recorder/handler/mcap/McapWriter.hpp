@@ -20,12 +20,17 @@
 
 #include <cstdint>
 
+#include <map>
+
 #include <mcap/mcap.hpp>
 
 #include <fastdds/rtps/common/SerializedPayload.hpp>
 
+#include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
+
 #include <ddsrecorder_participants/library/library_dll.h>
 #include <ddsrecorder_participants/recorder/handler/mcap/McapSizeTracker.hpp>
+#include <ddsrecorder_participants/recorder/message/McapMessage.hpp>
 #include <ddsrecorder_participants/recorder/handler/BaseWriter.hpp>
 
 namespace eprosima {
@@ -71,7 +76,7 @@ public:
      * new one.
      * - @throws \c InitializationException if the MCAP library fails to open a new file.
      */
-    template <typename T>
+    template<typename T>
     void write(
             const T& data);
 
@@ -89,6 +94,21 @@ public:
      */
     void update_dynamic_types(
             const std::string& dynamic_types_payload);
+
+    /**
+     * @brief Share the handler's topic-to-channel map with the writer.
+     *
+     * The writer needs the map for two things: to know which channels to re-create when it opens a
+     * new file, and to resolve the channel a sample belongs to when the sample is written. It is
+     * the handler's map the writer keeps no channel collection of its own, so a channel version
+     * that the handler has superseded cannot survive in the writer and be re-written forever.
+     *
+     * Must be called before the writer is enabled.
+     *
+     * @param channels The handler's channels, keyed by topic.
+     */
+    void set_channels(
+            std::map<ddspipe::core::types::DdsTopic, mcap::Channel>& channels);
 
     /**
      * @brief Adds the pair sequence_number, source guid in the dictionary.
@@ -132,7 +152,7 @@ protected:
      * @param data The data to be written.
      * @throws \c FullFileException if the MCAP file is full.
      */
-    template <typename T>
+    template<typename T>
     void write_nts_(
             const T& data);
 
@@ -147,11 +167,28 @@ protected:
     void write_attachment_nts_();
 
     /**
-     * @brief Writes the channels to the MCAP file.
+     * @brief Mark every channel as not yet written to the file that has just been opened.
+     *
+     * Clears each channel's PARTITIONS metadata, which does two things. It scopes the partition
+     * metadata to one file the entries are re-added, one per writer, as the file's own samples
+     * are written and, because a cleared channel can never already contain a sample's entry, it
+     * guarantees that the first sample of each topic re-writes that topic's channel into the new
+     * file. Channels are therefore written lazily, on first use, so a file carries exactly the
+     * channels its own messages need.
+     */
+    void reset_channel_partitions_nts_();
+
+    /**
+     * @brief Make sure the channel of \c msg 's topic records that its writer published in its
+     * partitions, writing a new version of the channel if it does not say so yet.
+     *
+     * Called for every sample as it is written, which is after any file rotation the sample's own
+     * write triggered so the entry lands in the file the sample is actually written to.
      *
      * @throws \c FullFileException if the MCAP file is full.
      */
-    void write_channels_nts_();
+    void ensure_channel_partitions_nts_(
+            const McapMessage& msg);
 
     /**
      * @brief Writes the version metadata to the MCAP file.
@@ -199,8 +236,8 @@ protected:
     // The (Auxiliar) dictionary of guid-sequence
     mcap::KeyValueMap sequence_by_source_guid_index_;
 
-    // The channels that have been written
-    std::map<mcap::ChannelId, mcap::Channel> channels_;
+    // The handler's channels, keyed by topic and holding one (the newest)
+    std::map<ddspipe::core::types::DdsTopic, mcap::Channel>* channels_{nullptr};
 
     // The schemas that have been written
     std::map<mcap::SchemaId, mcap::Schema> schemas_;

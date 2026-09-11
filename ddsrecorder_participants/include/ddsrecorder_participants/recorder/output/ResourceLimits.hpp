@@ -34,6 +34,15 @@ struct ResourceLimitsStruct
     std::uint64_t max_file_size_{0};
     std::uint64_t size_tolerance_{1024 * 1024};     // Force the system to have a minimum tolerance of 1MB
     bool file_rotation_{false};
+
+    /**
+     * Whether the output files already present in the output directory are taken into account when initializing the
+     * file rotation.
+     *
+     * When enabled, the size of those files is added to the aggregate output size and they become candidates for
+     * removal, following the same oldest-file-first policy as the files created in the current execution.
+     */
+    bool include_existing_files_{false};
 };
 
 } /* namespace participants */

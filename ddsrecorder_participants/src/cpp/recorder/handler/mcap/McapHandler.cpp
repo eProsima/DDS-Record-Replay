@@ -34,6 +34,8 @@
 #include <ddsrecorder_participants/recorder/handler/mcap/McapHandler.hpp>
 #include <ddsrecorder_participants/recorder/message/McapMessage.hpp>
 
+#include <sstream>
+
 namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
@@ -55,6 +57,10 @@ McapHandler::McapHandler(
 
     // Set the BaseHandler's writer
     writer_ = &mcap_writer_;
+
+    // Let the writer use this handler's channels, so that there is a single collection of them and
+    // a superseded channel version cannot linger in the writer
+    mcap_writer_.set_channels(channels_);
 
     // Initialize the BaseHandler
     init(init_state, on_disk_full_lambda);
@@ -178,6 +184,10 @@ void McapHandler::add_data(
 {
     std::unique_lock<std::mutex> lock(mtx_);
 
+    // the partitions of the current data, and the GUID that published it, travel
+    // with the sample (BaseMessage::partitions and McapMessage::writer_guid_string)
+    // They are recorded into the channel metadata when the sample is written, in write_samples_
+
     // Add channel to data
     mcap::ChannelId channel_id;
 
@@ -198,19 +208,12 @@ void McapHandler::add_data(
 
         process_new_sample_nts_(mcap_sample);
 
-        const auto it_channel = channels_by_id_.find(channel_id);
-        if (it_channel != channels_by_id_.end())
-        {
-            mcap::Channel channel = channels_by_id_[channel_id];
+        std::ostringstream guid_ss;
+        guid_ss << data.source_guid;
 
-            std::ostringstream guid_ss;
-            guid_ss << data.source_guid;
+        uint32_t sequence_number = mcap_sample->number_of_msgs - 1;
 
-            std::string source_guid = guid_ss.str();
-            uint32_t sequence_number = mcap_sample->number_of_msgs - 1;
-
-            mcap_writer_.add_message_sourceguid(sequence_number, guid_ss.str());
-        }
+        mcap_writer_.add_message_sourceguid(sequence_number, guid_ss.str());
     }
 }
 
@@ -279,20 +282,15 @@ mcap::ChannelId McapHandler::create_channel_id_nts_(
 
     metadata[ROS2_TYPES] = is_topic_ros2_type ? "true" : "false";
 
-    std::string topic_partitions = "";
-    for (const auto& pair: topic.partition_name)
-    {
-        topic_partitions += pair.first + ":" + pair.second + ";";
-    }
-
-    metadata[PARTITIONS] = topic_partitions;
+    // No partition entries yet: the writer adds one per writer as this file's own samples are
+    // written, so the metadata describes the writers whose samples are actually in the file.
+    metadata[PARTITIONS] = "";
     mcap::Channel new_channel(topic_name, "cdr", schema_id, metadata);
 
     mcap_writer_.write(new_channel);
 
     auto channel_id = new_channel.id;
-    channels_.insert({topic, std::move(new_channel)});
-    channels_by_id_.insert({channel_id, std::move(new_channel)});
+    channels_[topic] = new_channel;
     EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_HANDLER,
             "MCAP_WRITE | Channel created: " << topic << ".");
 

@@ -13,3 +13,5 @@
 # limitations under the License.
 
 add_subdirectory(handlers)
+
+add_subdirectory(output)

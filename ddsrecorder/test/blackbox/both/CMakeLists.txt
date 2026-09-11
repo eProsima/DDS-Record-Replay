@@ -36,6 +36,10 @@ set(TEST_LIST
         sql_max_size
         mcap_file_rotation
         sql_log_rotation
+        mcap_file_rotation_message_split
+        mcap_file_rotation_keeps_newest_messages
+        mcap_file_rotation_multiple_writers
+        mcap_file_rotation_with_existing_files
     )
 
 set(TEST_NEEDED_SOURCES
