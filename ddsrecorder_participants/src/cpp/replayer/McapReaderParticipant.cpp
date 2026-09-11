@@ -70,7 +70,7 @@ static void set_writer_partitions_(
     }
 }
 
-static bool get_writer_partition_from_channel_(
+bool McapReaderParticipant::get_writer_partition_from_channel_(
         const mcap::Channel& channel,
         const std::string& writer_guid,
         std::string& partition_name)

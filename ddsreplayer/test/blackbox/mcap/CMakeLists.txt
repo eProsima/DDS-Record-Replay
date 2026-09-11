@@ -57,6 +57,35 @@ add_blackbox_executable(
     "${TEST_EXTRA_HEADERS}"
 )
 
+###################################
+# McapPartitionFileReadTest       #
+###################################
+
+set(TEST_NAME McapPartitionFileReadTest)
+
+set(TEST_SOURCES
+    McapPartitionFileReadTest.cpp
+    )
+
+set(TEST_LIST
+    partition_switch
+    )
+
+set(TEST_NEEDED_SOURCES
+    ../../resources/recordings/basic/one_writer_change_partition.mcap
+    )
+
+set(TEST_EXTRA_HEADERS
+    )
+
+add_blackbox_executable(
+    "${TEST_NAME}"
+    "${TEST_SOURCES}"
+    "${TEST_LIST}"
+    "${TEST_NEEDED_SOURCES}"
+    "${TEST_EXTRA_HEADERS}"
+    )
+
 ############################
 # McapFileReadWithTypeTest #
 ############################

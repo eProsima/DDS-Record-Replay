@@ -124,6 +124,18 @@ protected:
     void read_mcap_summary_();
 
     /**
+     * @brief Get the partition active for a writer in a channel version.
+     *
+     * A channel may contain multiple entries for the same writer when the writer changes its
+     * partition. The last entry is the active one for that channel version.
+     */
+    DDSRECORDER_PARTICIPANTS_DllAPI
+    static bool get_writer_partition_from_channel_(
+            const mcap::Channel& channel,
+            const std::string& writer_guid,
+            std::string& partition_name);
+
+    /**
      * @brief Read the MCAP file messages.
      *
      * @return A \c LinearMessageView instance with the messages read.
