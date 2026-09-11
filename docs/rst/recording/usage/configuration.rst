@@ -44,7 +44,7 @@ The way to load these XML configurations is using the *DDS Recorder* YAML config
 The YAML Configuration supports an ``xml`` optional tag that contains certain options to load Fast DDS XML configurations.
 XML configurations are then used to configure the internal DomainParticipant.
 
-To specify which profile to use, the ``dds-profile`` tag should be set with the name of the desired profile.
+To specify which profile to use, the ``recorder-profile`` tag should be set with the name of the desired profile.
 
 Load XML Files
 ^^^^^^^^^^^^^^
@@ -99,11 +99,11 @@ The ``builtin-topics`` must specify a ``name`` and ``type`` without wildcard cha
 
 **Example of usage:**
 
-    .. code-block:: yaml
+.. code-block:: yaml
 
-        builtin-topics:
-          - name: HelloWorldTopic
-            type: HelloWorld
+    builtin-topics:
+      - name: HelloWorldTopic
+        type: HelloWorld
 
 .. _recorder_topic_filtering:
 
@@ -465,7 +465,7 @@ The recorder output file does support the following configuration settings under
         - ``safety-margin``
         - Amount of disk space that must be left free, shared by both outputs. See :ref:`Safety Margin <recorder_usage_configuration_safety_margin>`.
         - ``string``
-        - ``10MB``
+        - ``10MiB``
 
 When DDS Recorder application is launched (or when remotely controlled, every time a ``start/pause`` command is received while in ``SUSPENDED/STOPPED`` state), a temporary file with ``filename`` name (+timestamp prefix) is created in ``path``: with the ``.mcap.tmp~`` extension for the MCAP output, and with the ``.db.tmp~`` extension for the SQL output.
 This file is not readable until the application terminates, receives a ``suspend/stop/close`` command, or the file reaches its maximum size (see :ref:`Resource Limits <recorder_usage_configuration_resource_limits>`).
@@ -479,11 +479,12 @@ Safety Margin
 
 The ``safety-margin`` tag reserves a buffer of free disk space, ensuring that at least ``safety-margin`` bytes remain available to prevent the system from running out of memory.
 It is set once, under the ``output`` tag, and is shared by the MCAP and the SQL outputs: it applies regardless of whether one or both of them are enabled.
-By default, the safety margin is set to ``10MB``, which is also the minimum accepted value.
+By default, the safety margin is set to ``10MiB``, which is also the minimum accepted value.
 
 .. note::
 
-    A ``safety-margin`` lower than ``10MB`` does not stop the |ddsrecorder| from starting: the value is raised to ``10MB`` and an error is logged.
+    A ``safety-margin`` lower than ``10MiB`` does not stop the |ddsrecorder| from starting: the value is raised to ``10MiB`` and an error is logged.
+    Note that ``MB`` is interpreted as 10\ :sup:`6` bytes and ``MiB`` as 2\ :sup:`20` bytes, so ``10MB`` is *below* the minimum and is raised to ``10MiB``.
 
 The interaction between the safety margin and the size limits of each output is described in :ref:`Disk-Space Allocation Rules <recorder_usage_configuration_resource_limits>`.
 
@@ -874,9 +875,12 @@ The ``safety-margin`` that the two outputs do share is set under the ``output`` 
 
     *   - Size tolerance
         - ``size-tolerance``
-        - Margin of error allowed when tracking the size of the output.
+        - Margin of error allowed when tracking the size of the output. ``1MiB`` is also the minimum accepted value.
         - ``string``
-        - ``1MB``
+        - ``1MiB``
+
+Setting ``max-size`` alone also sets ``max-file-size`` to the same value.
+For the MCAP output this means a single file is produced: to split the output across several files, set ``max-file-size`` explicitly to a smaller value than ``max-size``.
 
 Output-Specific Behavior
 """"""""""""""""""""""""
@@ -993,7 +997,7 @@ never removed.
       resource-limits:
         max-size: 20MiB
         log-rotation: true
-        size-tolerance: 1MB
+        size-tolerance: 1MiB
 
 .. _recorder_usage_configuration_remote_controller:
 
@@ -1359,11 +1363,11 @@ A complete example of all the configurations described on this page can be found
         log-publish-time: false
 
         resource-limits:
-          max-file-size: 250KB
-          max-size: 2MiB
+          max-file-size: 25MB
+          max-size: 200MB
           log-rotation: true
           include-existing-files: false
-          size-tolerance: 10KB
+          size-tolerance: 2MB
 
         compression:
           algorithm: lz4
@@ -1375,9 +1379,9 @@ A complete example of all the configurations described on this page can be found
         data-format: "json"
 
         resource-limits:
-          max-size: 2MiB
+          max-size: 20MiB
           log-rotation: true
-          size-tolerance: 10KB
+          size-tolerance: 1MiB
 
     remote-controller:
       enable: true
