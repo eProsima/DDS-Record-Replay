@@ -85,6 +85,7 @@ static bool get_writer_partition_from_channel_(
     std::size_t begin = 0;
     std::size_t entries = 0;
     std::string only_partition;
+    bool found_writer = false;
 
     while (begin < channel_partitions.size())
     {
@@ -105,7 +106,9 @@ static bool get_writer_partition_from_channel_(
         if (current_writer == writer_guid)
         {
             partition_name = current_partition;
-            return true;
+            // The recorder appends a new entry when a writer changes its partition
+            // Keep parsing so the last entry represents the partition active for this channel
+            found_writer = true;
         }
 
         if (end == std::string::npos)
@@ -113,6 +116,11 @@ static bool get_writer_partition_from_channel_(
             break;
         }
         begin = end + 1;
+    }
+
+    if (found_writer)
+    {
+        return true;
     }
 
     // Older recordings may not contain the source GUID metadata. If this channel has only one
