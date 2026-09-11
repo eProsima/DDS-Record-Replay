@@ -46,7 +46,7 @@ To tune the conversion batch size, use ``--sql-batch-size``:
 The batch size controls how many messages are processed before they are written to the SQLite
 output. The default value is ``4096``. Larger values can improve throughput at the cost of higher
 memory usage, while smaller values reduce memory usage and force more frequent flushes. The value
-must be between ``0`` and ``160000001``.
+must be between ``1`` and ``160000001``.
 
 Optional Configuration File
 ===========================
