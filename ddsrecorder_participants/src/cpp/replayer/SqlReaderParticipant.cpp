@@ -75,6 +75,26 @@ static fastdds::rtps::InstanceHandle_t compute_instance_handle_from_seed_(
     return handle;
 }
 
+static void set_writer_partitions_(
+        fastdds::dds::PartitionQosPolicy& partitions,
+        const std::string& partition_name)
+{
+    std::size_t begin = 0;
+    while (begin <= partition_name.size())
+    {
+        const auto end = partition_name.find('|', begin);
+        const auto partition_end = end == std::string::npos ? partition_name.size() : end;
+        partitions.push_back(partition_name.substr(begin, partition_end - begin).c_str());
+
+        if (end == std::string::npos)
+        {
+            break;
+        }
+
+        begin = end + 1;
+    }
+}
+
 SqlReaderParticipant::SqlReaderParticipant(
         const std::shared_ptr<BaseReaderParticipantConfiguration>& configuration,
         const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
@@ -262,7 +282,11 @@ void SqlReaderParticipant::process_summary(
             // (empty partition list) adds the partitions set if is not empty
             if (topic_partitions != "")
             {
-                topic->partition_name[writer_guid] = topic_partitions;
+                recorded_writer_partitions_[writer_guid] = topic_partitions;
+
+                // Q1 for the replayer: the recording is the authority here, since the recorded writers
+                // no longer exist and cannot be queried from the DiscoveryDatabase.
+                topic->topic_qos.use_partitions.set_value(true);
             }
 
             // Store the topic in the cache
@@ -279,8 +303,7 @@ void SqlReaderParticipant::process_summary(
                     if (t->type_name == type_name && t->m_topic_name == topic_name)
                     {
                         // adds in the map the writer_guid and the partitions set
-                        t->partition_name[writer_guid] = topic_partitions;
-                        topics_[topic_id].partition_name[writer_guid] = topic_partitions;
+                        recorded_writer_partitions_[writer_guid] = topic_partitions;
                         return;
                     }
                 }
@@ -347,9 +370,17 @@ void SqlReaderParticipant::process_messages()
     utils::Timestamp first_message_timestamp{};
 
     exec_sql_statement_(
-        "SELECT log_time, topic, type, data_cdr, data_cdr_size, writer_guid, key, sequence_number FROM Messages "
-        "WHERE log_time >= ? AND log_time <= ? AND data_cdr_size > 0 "
-        "ORDER BY log_time, writer_guid, sequence_number;",
+        R"SQL(
+        SELECT
+            m.log_time, m.topic, m.type, m.data_cdr, m.data_cdr_size, m.writer_guid, m.key, m.sequence_number,
+            (SELECT GROUP_CONCAT(mp.partition, '|')
+             FROM MessagesPartitions mp
+             WHERE mp.writer_guid = m.writer_guid
+               AND mp.sequence_number = m.sequence_number) AS message_partitions
+        FROM Messages m
+        WHERE m.log_time >= ? AND m.log_time <= ? AND m.data_cdr_size > 0
+        ORDER BY m.log_time, m.writer_guid, m.sequence_number;
+        )SQL",
         {begin_time, end_time},
         [&](sqlite3_stmt* stmt)
         {
@@ -444,57 +475,29 @@ void SqlReaderParticipant::process_messages()
             // NOTE: this is important for QoS such as LifespanQosPolicy
             data->source_timestamp = fastdds::dds::Time_t(to_ticks(time_to_write) / 1e9);
 
-            // add the topic partitions, in the writer_qos
-            std::string partition_name = "";
-            auto it = topic.partition_name.find(writer_guid);
-
-            // check if the message (using the writer_guid) has partitions
-            if (it != topic.partition_name.end())
+            // A writer can change partitions while recording. Read the partition set attached to
+            // this message instead of caching one value per writer GUID.
+            std::string partition_name;
+            bool has_partition = sqlite3_column_type(stmt, 8) != SQLITE_NULL;
+            if (has_partition)
             {
-
-                // check if the message is already added in the dictionary of PartitionsQos
-                // (optimize the search of partitions in the message by storing the PartitionQos of the writer_guid)
-                if (partitions_qos_dict_.find(writer_guid) != partitions_qos_dict_.end())
-                {
-                    data->writer_qos.partitions = partitions_qos_dict_[writer_guid];
-                }
-                else
+                partition_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 8));
+            }
+            else
+            {
+                // Keep compatibility with databases created before MessagesPartitions was used
+                // for per-message partition data
+                const auto it = recorded_writer_partitions_.find(writer_guid);
+                if (it != recorded_writer_partitions_.end())
                 {
                     partition_name = it->second;
-                    if (!partition_name.empty())
-                    {
-                        int i = 0, partition_name_n = partition_name.size();
-                        std::string tmp = "";
-                        while (i < partition_name_n)
-                        {
-                            if (partition_name[i] == '|')
-                            {
-                                data->writer_qos.partitions.push_back(tmp.c_str());
-                                tmp = "";
-                            }
-                            else
-                            {
-                                tmp += partition_name[i];
-                            }
-
-                            i++;
-                        }
-                        // add the last partition in the set of partitions.
-                        // e.g.: "A|B" adds the "B" partition
-                        if (!tmp.empty() || partition_name[partition_name_n - 1] == '|')
-                        {
-                            data->writer_qos.partitions.push_back(tmp.c_str());
-                        }
-
-                    }
-                    // Empty partition ("")
-                    else
-                    {
-                        data->writer_qos.partitions.push_back("");
-                    }
-
-                    partitions_qos_dict_[writer_guid] = data->writer_qos.partitions;
+                    has_partition = true;
                 }
+            }
+
+            if (has_partition)
+            {
+                set_writer_partitions_(data->writer_qos.partitions, partition_name);
             }
 
             // Wait until it's time to write the message

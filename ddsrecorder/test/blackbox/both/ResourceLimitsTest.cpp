@@ -12,9 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <cstring>
 #include <filesystem>
+#include <map>
+#include <set>
+#include <vector>
 #include <system_error>
 #include <thread>
 
@@ -31,6 +36,8 @@
 #include <fastdds/dds/topic/Topic.hpp>
 #include <fastdds/dds/topic/TypeSupport.hpp>
 
+#include <mcap/reader.hpp>
+
 #include <sqlite/sqlite3.h>
 
 #include <cpp_utils/Log.hpp>
@@ -40,6 +47,7 @@
 #include <ddspipe_yaml/Yaml.hpp>
 #include <ddspipe_yaml/YamlReader.hpp>
 
+#include <ddsrecorder_participants/constants.hpp>
 #include <ddsrecorder_participants/recorder/output/FileTracker.hpp>
 #include <ddsrecorder_yaml/recorder/CommandlineArgsRecorder.hpp>
 #include <ddsrecorder_yaml/recorder/YamlReaderConfiguration.hpp>
@@ -178,11 +186,23 @@ protected:
         configuration_->buffer_size = 1;
     }
 
-    void reset_datawriter_()
+    /**
+     * @brief Create the DataWriter that every batch of messages is published through.
+     *
+     * The same DataWriter is deliberately kept for the whole test instead of being recreated per
+     * batch. A new DataWriter means a new writer GUID, and the recorder writes a new MCAP channel
+     * version for every writer GUID it sees on a topic, each one carrying the partition metadata of
+     * every writer seen so far. A writer per batch would therefore grow the per-file overhead batch
+     * after batch, so a batch of FILE_OVERFLOW_THRESHOLD messages would stop filling exactly one
+     * output file and the file-by-file expectations below would no longer hold. Nothing here needs
+     * the writer's history cleared: no reader rematches it, and the older samples are already
+     * acknowledged when wait_for_acknowledgments() is called for a later batch.
+     */
+    void create_datawriter_()
     {
         if (writer_ != nullptr)
         {
-            publisher_->delete_datawriter(writer_);
+            return;
         }
 
         // Configure the DataWriter's QoS to ensure that the DDS Recorder receives all the msgs
@@ -200,8 +220,7 @@ protected:
     void publish_msgs_(
             const std::uint32_t num_msgs)
     {
-        // Reset the DataWriter to clear its history
-        reset_datawriter_();
+        create_datawriter_();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -330,6 +349,146 @@ protected:
     }
 
     /**
+     * @brief Check that SQL log rotation does not leave orphaned partition rows.
+     */
+    bool sql_has_no_orphaned_partition_rows_(
+            const std::filesystem::path& file_path)
+    {
+        sqlite3* database = nullptr;
+        const std::string file_path_str = file_path.string();
+
+        if (sqlite3_open_v2(file_path_str.c_str(), &database, SQLITE_OPEN_READONLY, nullptr) != SQLITE_OK)
+        {
+            std::cout << "sql_has_no_orphaned_partition_rows_: could not open " << file_path << ": "
+                      << sqlite3_errmsg(database) << std::endl;
+            sqlite3_close(database);
+            return false;
+        }
+
+        const char* query =
+                "SELECT COUNT(*) FROM MessagesPartitions AS mp "
+                "LEFT JOIN Messages AS m ON m.writer_guid = mp.writer_guid "
+                "AND m.sequence_number = mp.sequence_number "
+                "WHERE m.writer_guid IS NULL;";
+        sqlite3_stmt* stmt = nullptr;
+
+        if (sqlite3_prepare_v2(database, query, -1, &stmt, nullptr) != SQLITE_OK)
+        {
+            std::cout << "sql_has_no_orphaned_partition_rows_: query failed: " << sqlite3_errmsg(database)
+                      << std::endl;
+            sqlite3_finalize(stmt);
+            sqlite3_close(database);
+            return false;
+        }
+
+        const bool query_succeeded = sqlite3_step(stmt) == SQLITE_ROW;
+        const auto orphaned_rows = query_succeeded ? sqlite3_column_int64(stmt, 0) : -1;
+
+        sqlite3_finalize(stmt);
+        sqlite3_close(database);
+
+        if (!query_succeeded)
+        {
+            return false;
+        }
+
+        if (orphaned_rows != 0)
+        {
+            std::cout << "sql_has_no_orphaned_partition_rows_: found " << orphaned_rows
+                      << " orphaned rows in " << file_path << std::endl;
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @brief What one output MCAP file holds, for the assertions on how a recording was split.
+     */
+    struct McapContents
+    {
+        //! HelloWorld::index of every message in the file, in the order they were read
+        std::vector<std::uint32_t> indices;
+        //! Number of messages on each channel the file's messages refer to
+        std::map<mcap::ChannelId, std::size_t> messages_per_channel;
+        //! Every channel the file declares, whether or not any message uses it
+        std::set<mcap::ChannelId> declared_channels;
+        //! PARTITIONS metadata of each declared channel
+        std::map<mcap::ChannelId, std::string> channel_partitions;
+    };
+
+    HelloWorld deserialize_hello_world_(
+            const mcap::Message& message)
+    {
+        fastdds::rtps::SerializedPayload_t payload(static_cast<std::uint32_t>(message.dataSize));
+        payload.length = static_cast<std::uint32_t>(message.dataSize);
+
+        std::memcpy(
+            payload.data,
+            reinterpret_cast<const unsigned char*>(message.data),
+            payload.length);
+
+        HelloWorld data;
+        HelloWorldPubSubType pubsub_type;
+        EXPECT_TRUE(pubsub_type.deserialize(payload, &data));
+
+        return data;
+    }
+
+    McapContents read_mcap_contents_(
+            const std::filesystem::path& file_path)
+    {
+        McapContents contents;
+
+        mcap::McapReader reader;
+        const auto status = reader.open(file_path.string());
+        EXPECT_TRUE(status.ok()) << "Could not open " << file_path << ": " << status.message;
+
+        if (!status.ok())
+        {
+            return contents;
+        }
+
+        for (const auto& read_message : reader.readMessages())
+        {
+            contents.indices.push_back(deserialize_hello_world_(read_message.message).index());
+            contents.messages_per_channel[read_message.message.channelId]++;
+        }
+
+        // Read after the messages so that a file without a summary section has been scanned
+        for (const auto& [channel_id, channel] : reader.channels())
+        {
+            contents.declared_channels.insert(channel_id);
+
+            const auto partitions_it =
+                    channel->metadata.find(eprosima::ddsrecorder::participants::PARTITIONS);
+            contents.channel_partitions[channel_id] =
+                    partitions_it != channel->metadata.end() ? partitions_it->second : std::string();
+        }
+
+        reader.close();
+
+        return contents;
+    }
+
+    //! The output files that exist, in file-id order
+    std::vector<std::filesystem::path> existing_files_(
+            const std::vector<std::filesystem::path>& candidates)
+    {
+        std::vector<std::filesystem::path> existing;
+
+        for (const auto& path : candidates)
+        {
+            if (std::filesystem::exists(path))
+            {
+                existing.push_back(path);
+            }
+        }
+
+        return existing;
+    }
+
+    /**
      * @brief Wait until the DDS Recorder has finished writing the received samples to disk.
      */
     void wait_for_recording_to_settle_(
@@ -400,6 +559,62 @@ protected:
             else if (std::chrono::steady_clock::now() - last_change >= STABLE_PERIOD)
             {
                 // The recording has not grown for STABLE_PERIOD: the pipeline has drained
+                break;
+            }
+
+            std::this_thread::sleep_for(POLL_PERIOD);
+        }
+    }
+
+    /**
+     * @brief Wait until the recording stops growing, following it across file rotations.
+     *
+     * \c wait_for_recording_to_settle_ watches one file's temporary output, which a rotating
+     * recording leaves behind as soon as it moves on to the next file. This one watches the total
+     * of every output file and temporary, so it keeps up.
+     */
+    void wait_for_rotation_to_settle_(
+            const std::vector<std::filesystem::path>& candidates)
+    {
+        const auto recorded_size = [&candidates]() -> std::uintmax_t
+                {
+                    std::error_code ec;
+                    std::uintmax_t total = 0;
+
+                    for (const auto& path : candidates)
+                    {
+                        for (const auto& variant : {path, std::filesystem::path(path.string() + ".tmp~")})
+                        {
+                            if (std::filesystem::exists(variant, ec))
+                            {
+                                total += std::filesystem::file_size(variant, ec);
+                            }
+                        }
+                    }
+
+                    return total;
+                };
+
+        constexpr auto POLL_PERIOD = std::chrono::milliseconds(200);
+        // Generous, for the same reason as in wait_for_recording_to_settle_: while draining, the
+        // recorder writes continuously, so a long unchanged period means it is done.
+        constexpr auto STABLE_PERIOD = std::chrono::seconds(5);
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(40);
+
+        auto last_size = recorded_size();
+        auto last_change = std::chrono::steady_clock::now();
+
+        while (std::chrono::steady_clock::now() < deadline)
+        {
+            const auto size = recorded_size();
+
+            if (size != last_size)
+            {
+                last_size = size;
+                last_change = std::chrono::steady_clock::now();
+            }
+            else if (std::chrono::steady_clock::now() - last_change >= STABLE_PERIOD)
+            {
                 break;
             }
 
@@ -689,6 +904,12 @@ protected:
         // Verify that the DDS Recorder has created the expected number of output files
         ASSERT_TRUE(is_file_size_acceptable_(OUTPUT_FILE_PATH));
 
+        // SQL rotation must remove the partition rows associated with removed messages as well.
+        if (file_type == test::FileTypes::SQL)
+        {
+            EXPECT_TRUE(sql_has_no_orphaned_partition_rows_(OUTPUT_FILE_PATH));
+        }
+
         // Verify that the DDS Recorder hasn't created any extra files
         for (std::uint32_t j = 0; j < NUMBER_OF_FILES; j++)
         {
@@ -784,6 +1005,417 @@ TEST_F(ResourceLimitsTest, sql_log_rotation)
 {
     limits_ = &sql_limits_;
     test_log_rotation(test::FileTypes::SQL);
+}
+
+/**
+ * @brief Verify how a recording is split across output files.
+ *
+ * The other resource-limits tests only look at the size of the output files and at which of them
+ * exist. That says nothing about what ended up inside them, so a recorder that splits a recording
+ * into correctly-sized files while losing samples, duplicating them, or filling each successive
+ * file with less data than the one before, passes them all.
+ *
+ * Here the DDS Recorder is given a max-file-size that a single batch of messages overflows, and a
+ * max-size large enough that no file is ever reclaimed. The messages therefore have to be spread
+ * over several files, and all of them have to be there afterwards.
+ *
+ * CASES:
+ * - the recording is split over more than one file.
+ * - every published message is in exactly one of them: none lost, none duplicated.
+ * - the files hold comparable numbers of messages, i.e. a file does not hold less than the one
+ *   before it because of per-file overhead that grows as the recording goes on.
+ * - a file does not declare channels it never uses.
+ * - every channel a file's messages are on says which writer they came from.
+ */
+TEST_F(ResourceLimitsTest, mcap_file_rotation_message_split)
+{
+    limits_ = &mcap_limits_;
+
+    constexpr std::uint32_t MAX_FILES = 10;
+    // Three batches' worth, so that several files are filled and the trend across them is visible
+    const std::uint32_t NUMBER_OF_MESSAGES = limits_->FILE_OVERFLOW_THRESHOLD * 3;
+
+    const std::string OUTPUT_FILE_NAME = "rotation_split_test_mcap";
+    const auto OUTPUT_FILE_PATHS = get_output_file_paths_(MAX_FILES, OUTPUT_FILE_NAME, test::FileTypes::MCAP);
+
+    for (const auto& path : OUTPUT_FILE_PATHS)
+    {
+        ASSERT_TRUE(delete_file_(path));
+    }
+
+    // max-size deliberately far above what the recording needs, so log rotation never reclaims a
+    // file and every message published must still be on disk at the end.
+    reset_configuration_(
+        test::FileTypes::MCAP, OUTPUT_FILE_NAME, limits_->MAX_FILE_SIZE * MAX_FILES, limits_->MAX_FILE_SIZE, true);
+
+    {
+        ddsrecorder::recorder::DdsRecorder recorder(*configuration_,
+                ddsrecorder::recorder::DdsRecorderStateCode::RUNNING,
+                OUTPUT_FILE_NAME);
+
+        // A single call, so the indices of the messages are 0 .. NUMBER_OF_MESSAGES - 1 and each
+        // one identifies its message uniquely across the whole recording.
+        publish_msgs_(NUMBER_OF_MESSAGES);
+
+        ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), RETCODE_OK);
+
+        wait_for_rotation_to_settle_(OUTPUT_FILE_PATHS);
+
+        recorder.stop();
+    }
+
+    // -- The recording was split ---------------------------------------------
+    const auto files = existing_files_(OUTPUT_FILE_PATHS);
+    ASSERT_GT(files.size(), 1u) << "the recording was not split: a single file holds it all";
+
+    // -- Every message is present exactly once -------------------------------
+    std::map<std::uint32_t, std::size_t> times_seen;
+    std::vector<std::size_t> messages_per_file;
+
+    for (const auto& path : files)
+    {
+        const auto contents = read_mcap_contents_(path);
+
+        messages_per_file.push_back(contents.indices.size());
+
+        for (const auto index : contents.indices)
+        {
+            times_seen[index]++;
+        }
+
+        // -- A file only declares the channels it uses -----------------------
+        std::size_t unused_channels = 0;
+
+        for (const auto channel_id : contents.declared_channels)
+        {
+            if (contents.messages_per_channel.count(channel_id) == 0)
+            {
+                unused_channels++;
+                continue;
+            }
+
+            // -- ... and those channels record where their messages came from -
+            EXPECT_FALSE(contents.channel_partitions.at(channel_id).empty())
+                << path << " channel " << channel_id << " carries "
+                << contents.messages_per_channel.at(channel_id)
+                << " messages but records no writer in its partition metadata";
+        }
+
+        // NOTE: at most one, rather than none: the channel of a topic is created when the topic is
+        // discovered, which for the first output file happens before any of its samples is written.
+        EXPECT_LE(unused_channels, 1u)
+            << path << " declares " << unused_channels << " channels that none of its messages use";
+    }
+
+    std::vector<std::uint32_t> missing;
+    std::vector<std::uint32_t> duplicated;
+
+    for (std::uint32_t index = 0; index < NUMBER_OF_MESSAGES; index++)
+    {
+        const auto it = times_seen.find(index);
+
+        if (it == times_seen.end())
+        {
+            missing.push_back(index);
+        }
+        else if (it->second > 1)
+        {
+            duplicated.push_back(index);
+        }
+    }
+
+    EXPECT_TRUE(missing.empty()) << missing.size() << " of " << NUMBER_OF_MESSAGES
+                                 << " messages are in none of the output files, the first being "
+                                 << (missing.empty() ? 0 : missing.front());
+    EXPECT_TRUE(duplicated.empty()) << duplicated.size() << " messages are in more than one output file, "
+        "the first being " << (duplicated.empty() ? 0 : duplicated.front());
+    EXPECT_EQ(times_seen.size(), NUMBER_OF_MESSAGES);
+
+    // -- The files hold comparable amounts -----------------------------------
+    // The last file is skipped: it holds whatever was left over, not a full file's worth.
+    if (messages_per_file.size() > 2)
+    {
+        const auto full_files_end = messages_per_file.end() - 1;
+        const auto fewest = *std::min_element(messages_per_file.begin(), full_files_end);
+        const auto most = *std::max_element(messages_per_file.begin(), full_files_end);
+
+        // The same 20% margin the file-size bounds use.
+        EXPECT_GE(fewest, static_cast<std::size_t>(most * (1 - limits_->ACCEPTABLE_ERROR)))
+            << "the fullest file holds " << most << " messages and the emptiest " << fewest
+            << ": the number of messages a file holds falls off as the recording goes on";
+    }
+}
+
+/**
+ * @brief Verify that log rotation reclaims the oldest output files and keeps the newest.
+ *
+ * The DDS Recorder is given a max-size that only fits a few files and is sent more data than that,
+ * so log rotation has to reclaim files while recording. What has to survive is the end of the
+ * recording: rotation is only useful if what it keeps is the most recent data.
+ *
+ * CASES:
+ * - the output is kept within max-size.
+ * - the messages that survive are the ones published last.
+ * - they are an unbroken run: rotation reclaims whole files from the oldest end, so it cannot
+ *   leave a hole in the middle of the recording.
+ */
+TEST_F(ResourceLimitsTest, mcap_file_rotation_keeps_newest_messages)
+{
+    limits_ = &mcap_limits_;
+
+    constexpr std::uint32_t CANDIDATE_FILES = 20;
+    // Well past what max-size can hold, so files have to be reclaimed while recording
+    const std::uint32_t NUMBER_OF_MESSAGES = limits_->FILE_OVERFLOW_THRESHOLD * 6;
+
+    const std::string OUTPUT_FILE_NAME = "rotation_newest_test_mcap";
+    const auto OUTPUT_FILE_PATHS = get_output_file_paths_(CANDIDATE_FILES, OUTPUT_FILE_NAME, test::FileTypes::MCAP);
+
+    for (const auto& path : OUTPUT_FILE_PATHS)
+    {
+        ASSERT_TRUE(delete_file_(path));
+    }
+
+    reset_configuration_(
+        test::FileTypes::MCAP, OUTPUT_FILE_NAME, limits_->MAX_SIZE, limits_->MAX_FILE_SIZE, true);
+
+    {
+        ddsrecorder::recorder::DdsRecorder recorder(*configuration_,
+                ddsrecorder::recorder::DdsRecorderStateCode::RUNNING,
+                OUTPUT_FILE_NAME);
+
+        publish_msgs_(NUMBER_OF_MESSAGES);
+
+        ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), RETCODE_OK);
+
+        wait_for_rotation_to_settle_(OUTPUT_FILE_PATHS);
+
+        recorder.stop();
+    }
+
+    const auto files = existing_files_(OUTPUT_FILE_PATHS);
+    ASSERT_FALSE(files.empty());
+
+    std::set<std::uint32_t> retained;
+    std::uintmax_t total_size = 0;
+
+    for (const auto& path : files)
+    {
+        total_size += std::filesystem::file_size(path);
+
+        for (const auto index : read_mcap_contents_(path).indices)
+        {
+            retained.insert(index);
+        }
+    }
+
+    // -- Rotation happened, and kept the output within max-size --------------
+    ASSERT_LT(retained.size(), NUMBER_OF_MESSAGES)
+        << "nothing was reclaimed: the whole recording fit, so this test proves nothing about rotation";
+    // NOTE: the same margin the per-file bounds use, and for the same reason. FileTracker decides
+    // whether another file fits from McapSizeTracker's estimate of the size of the one it is
+    // closing, and that estimate is known to be short of what actually reaches disk -- hence the
+    // "Written size exceeds potential one" warning and the disabled assertions in McapSizeTracker.
+    // So the aggregate overshoots max-size by a few percent: measured at 39077 bytes against a
+    // 35840 max-size, unchanged by anything this test covers. The bound is still worth asserting,
+    // to catch rotation keeping far more than max-size allows.
+    const auto max_acceptable_size =
+            static_cast<std::uintmax_t>(limits_->MAX_SIZE * (1 + limits_->ACCEPTABLE_ERROR));
+    EXPECT_LE(total_size, max_acceptable_size)
+        << "the output files add up to " << total_size << " bytes, more than the max-size of "
+        << limits_->MAX_SIZE << " plus the margin the size estimate needs (" << max_acceptable_size << ")";
+
+    // -- What survived is the end of the recording ---------------------------
+    EXPECT_EQ(*retained.rbegin(), NUMBER_OF_MESSAGES - 1)
+        << "the last message published is not in the output: rotation kept the oldest data, not the newest";
+
+    // -- ... and it has no holes ---------------------------------------------
+    const auto oldest_retained = *retained.begin();
+    EXPECT_EQ(retained.size(), NUMBER_OF_MESSAGES - oldest_retained)
+        << "the surviving messages run from " << oldest_retained << " to " << *retained.rbegin()
+        << " but only " << retained.size() << " of those " << (NUMBER_OF_MESSAGES - oldest_retained)
+        << " are present: rotation left a hole in the middle of the recording";
+}
+
+/**
+ * @brief Verify how a recording is split when several writers publish on the same topic.
+ *
+ * A new writer on a topic makes the DDS Recorder write a new version of that topic's MCAP channel,
+ * because the channel metadata names the writers that published on it and MCAP channel metadata is
+ * immutable once written. What that must not do is accumulate: if every version a recording ever
+ * created is carried into each new output file, and each version names every writer seen so far,
+ * the room left for actual data shrinks file after file until the per-file overhead no longer fits
+ * in max-file-size and recording stops.
+ *
+ * Publishers come and go on a topic in normal use -- a restarted node, a relaunched process -- so
+ * this is the shape of a real recording, not an artificial one. Each writer here publishes from a
+ * disjoint index range, so every message can be traced to the writer that produced it.
+ *
+ * CASES:
+ * - every published message is in exactly one output file: none lost, none duplicated.
+ * - the files hold comparable numbers of messages: what a file can hold does not fall off as more
+ *   writers appear.
+ * - a file does not declare channels it never uses.
+ * - a file's channels name the writers whose messages are in that file, and no others.
+ */
+TEST_F(ResourceLimitsTest, mcap_file_rotation_multiple_writers)
+{
+    limits_ = &mcap_limits_;
+
+    constexpr std::uint32_t NUMBER_OF_WRITERS = 5;
+    constexpr std::uint32_t INDEX_BASE_STEP = 1000;
+    constexpr std::uint32_t CANDIDATE_FILES = 20;
+    const std::uint32_t MESSAGES_PER_WRITER = limits_->FILE_OVERFLOW_THRESHOLD;
+
+    const std::string OUTPUT_FILE_NAME = "rotation_writers_test_mcap";
+    const auto OUTPUT_FILE_PATHS = get_output_file_paths_(CANDIDATE_FILES, OUTPUT_FILE_NAME, test::FileTypes::MCAP);
+
+    for (const auto& path : OUTPUT_FILE_PATHS)
+    {
+        ASSERT_TRUE(delete_file_(path));
+    }
+
+    // max-size deliberately far above what the recording needs, so no file is ever reclaimed and
+    // every message published must still be on disk at the end.
+    reset_configuration_(
+        test::FileTypes::MCAP, OUTPUT_FILE_NAME, limits_->MAX_FILE_SIZE * CANDIDATE_FILES,
+        limits_->MAX_FILE_SIZE, true);
+
+    {
+        ddsrecorder::recorder::DdsRecorder recorder(*configuration_,
+                ddsrecorder::recorder::DdsRecorderStateCode::RUNNING,
+                OUTPUT_FILE_NAME);
+
+        for (std::uint32_t w = 0; w < NUMBER_OF_WRITERS; w++)
+        {
+            // A new DataWriter, so a new writer GUID on the same topic. Note this is deliberate
+            // here and deliberately absent from publish_msgs_, which keeps one writer so that the
+            // other tests measure rotation rather than writer discovery.
+            if (writer_ != nullptr)
+            {
+                publisher_->delete_datawriter(writer_);
+                writer_ = nullptr;
+            }
+
+            create_datawriter_();
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            for (std::uint32_t i = 0; i < MESSAGES_PER_WRITER; i++)
+            {
+                HelloWorld hello;
+                // Disjoint per writer, so a message identifies both itself and its writer
+                hello.index((w * INDEX_BASE_STEP) + i);
+                writer_->write(&hello);
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+
+            ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), RETCODE_OK);
+        }
+
+        wait_for_rotation_to_settle_(OUTPUT_FILE_PATHS);
+
+        recorder.stop();
+    }
+
+    const auto files = existing_files_(OUTPUT_FILE_PATHS);
+    ASSERT_GT(files.size(), 1u) << "the recording was not split: a single file holds it all";
+
+    std::map<std::uint32_t, std::size_t> times_seen;
+    std::vector<std::size_t> messages_per_file;
+
+    for (const auto& path : files)
+    {
+        const auto contents = read_mcap_contents_(path);
+
+        messages_per_file.push_back(contents.indices.size());
+
+        // Which writers actually put messages in this file, by their index range
+        std::set<std::uint32_t> writers_in_file;
+
+        for (const auto index : contents.indices)
+        {
+            times_seen[index]++;
+            writers_in_file.insert(index / INDEX_BASE_STEP);
+        }
+
+        // Which writer GUIDs this file's channels name
+        std::set<std::string> writers_named;
+        std::size_t unused_channels = 0;
+
+        for (const auto channel_id : contents.declared_channels)
+        {
+            if (contents.messages_per_channel.count(channel_id) == 0)
+            {
+                unused_channels++;
+            }
+
+            const auto& partitions = contents.channel_partitions.at(channel_id);
+
+            // metadata[partitions] is "<guid>:<partition set>;" per writer, concatenated
+            for (std::size_t begin = 0; begin < partitions.size(); )
+            {
+                const auto separator = partitions.find(':', begin);
+
+                if (separator == std::string::npos)
+                {
+                    break;
+                }
+
+                writers_named.insert(partitions.substr(begin, separator - begin));
+
+                const auto end = partitions.find(';', separator);
+                begin = end == std::string::npos ? partitions.size() : end + 1;
+            }
+        }
+
+        // NOTE: at most one, rather than none: the channel of a topic is created when the topic is
+        // discovered, which for the first output file happens before any of its samples is written.
+        EXPECT_LE(unused_channels, 1u)
+            << path << " declares " << unused_channels << " channels that none of its messages use";
+
+        EXPECT_EQ(writers_named.size(), writers_in_file.size())
+            << path << " holds messages from " << writers_in_file.size() << " writer(s) but its channels name "
+            << writers_named.size()
+            << ": a file should describe the writers whose messages it holds, and only those";
+    }
+
+    const auto total_messages = NUMBER_OF_WRITERS * MESSAGES_PER_WRITER;
+
+    std::size_t missing = 0;
+    std::size_t duplicated = 0;
+
+    for (std::uint32_t w = 0; w < NUMBER_OF_WRITERS; w++)
+    {
+        for (std::uint32_t i = 0; i < MESSAGES_PER_WRITER; i++)
+        {
+            const auto it = times_seen.find((w * INDEX_BASE_STEP) + i);
+
+            if (it == times_seen.end())
+            {
+                missing++;
+            }
+            else if (it->second > 1)
+            {
+                duplicated++;
+            }
+        }
+    }
+
+    EXPECT_EQ(missing, 0u) << missing << " of " << total_messages << " messages are in none of the output files";
+    EXPECT_EQ(duplicated, 0u) << duplicated << " messages are in more than one output file";
+
+    // The last file is skipped: it holds whatever was left over, not a full file's worth.
+    if (messages_per_file.size() > 2)
+    {
+        const auto full_files_end = messages_per_file.end() - 1;
+        const auto fewest = *std::min_element(messages_per_file.begin(), full_files_end);
+        const auto most = *std::max_element(messages_per_file.begin(), full_files_end);
+
+        EXPECT_GE(fewest, static_cast<std::size_t>(most * (1 - limits_->ACCEPTABLE_ERROR)))
+            << "the fullest file holds " << most << " messages and the emptiest " << fewest
+            << ": the number of messages a file holds falls off as more writers appear";
+    }
 }
 
 int main(
