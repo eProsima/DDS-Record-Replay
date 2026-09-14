@@ -158,9 +158,9 @@ public:
         fastdds::dds::xtypes::TypeObject type_object;
         std::unique_lock<std::mutex> lock(reader_mutex_);
         if (!reader_cv_.wait_until(lock, deadline, [this]()
-                       {
-                           return reader_ != nullptr || writer_discovered_;
-                       }))
+                {
+                    return reader_ != nullptr || writer_discovered_;
+                }))
         {
             return false;
         }
