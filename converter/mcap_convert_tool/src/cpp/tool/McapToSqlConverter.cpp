@@ -543,8 +543,8 @@ void McapToSqlConverter::convert()
 
             if (has_partition && configuration_.replayer_configuration &&
                     !reader.partition_passes_filter_(
-                    partition_name,
-                    configuration_.replayer_configuration->allowed_partition_list))
+                        partition_name,
+                        configuration_.replayer_configuration->allowed_partition_list))
             {
                 continue;
             }

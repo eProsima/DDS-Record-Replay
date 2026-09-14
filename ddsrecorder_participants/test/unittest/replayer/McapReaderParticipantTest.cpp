@@ -46,9 +46,9 @@ TEST(McapReaderParticipantTest, latest_partition_entry_is_used)
 
     std::string partition;
     ASSERT_TRUE(McapReaderParticipantAccessor::get_writer_partition_from_channel_(
-                        channel,
-                        "writer",
-                        partition));
+                channel,
+                "writer",
+                partition));
     ASSERT_EQ(partition, "B");
 }
 
@@ -68,15 +68,15 @@ TEST(McapReaderParticipantTest, latest_entry_is_selected_per_writer)
 
     std::string partition;
     ASSERT_TRUE(McapReaderParticipantAccessor::get_writer_partition_from_channel_(
-                        channel,
-                        "writer_a",
-                        partition));
+                channel,
+                "writer_a",
+                partition));
     ASSERT_EQ(partition, "B");
 
     ASSERT_TRUE(McapReaderParticipantAccessor::get_writer_partition_from_channel_(
-                        channel,
-                        "writer_b",
-                        partition));
+                channel,
+                "writer_b",
+                partition));
     ASSERT_EQ(partition, "C");
 }
 
