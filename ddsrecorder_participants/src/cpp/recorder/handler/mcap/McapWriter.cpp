@@ -35,22 +35,43 @@ namespace ddsrecorder {
 namespace participants {
 
 /**
- * @brief Whether \c entries a ";"-terminated concatenation of "<guid>:<partitions>;" already
- * contains \c entry.
+ * @brief Whether the latest entry for \c writer_guid in \c entries is \c entry.
+ *
+ * A writer may return to a partition set it used earlier in the same file. That transition must
+ * still create a new channel version. Entries from other writers may be interleaved, so the
+ * comparison must be made with the latest entry belonging to this writer rather than with the
+ * last entry in the complete metadata string.
  */
-static bool contains_partition_entry(
+static bool writer_partition_is_current(
         const std::string& entries,
+        const std::string& writer_guid,
         const std::string& entry)
 {
-    for (auto pos = entries.find(entry); pos != std::string::npos; pos = entries.find(entry, pos + 1))
+    bool writer_found = false;
+    bool current_entry_matches = false;
+    std::size_t entry_begin = 0;
+
+    while (entry_begin < entries.size())
     {
-        if (pos == 0 || entries[pos - 1] == ';')
+        const auto entry_end = entries.find(';', entry_begin);
+        if (entry_end == std::string::npos)
         {
-            return true;
+            break;
         }
+
+        const auto guid_end = entries.find(':', entry_begin);
+        if (guid_end != std::string::npos && guid_end < entry_end &&
+                entries.compare(entry_begin, guid_end - entry_begin, writer_guid) == 0)
+        {
+            writer_found = true;
+            current_entry_matches = entries.compare(
+                entry_begin, entry_end - entry_begin + 1, entry) == 0;
+        }
+
+        entry_begin = entry_end + 1;
     }
 
-    return false;
+    return writer_found && current_entry_matches;
 }
 
 McapWriter::McapWriter(
@@ -397,7 +418,7 @@ void McapWriter::ensure_channel_partitions_nts_(
     const std::string recorded =
             metadata_it != channel.metadata.end() ? metadata_it->second : std::string();
 
-    if (contains_partition_entry(recorded, entry))
+    if (writer_partition_is_current(recorded, msg.writer_guid_string, entry))
     {
         return;
     }

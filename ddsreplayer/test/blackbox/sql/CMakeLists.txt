@@ -33,6 +33,7 @@ set(TEST_LIST
         begin_time
         end_time
         start_replay_time_earlier
+        partition_filter_follows_five_changes
     )
 
 set(TEST_NEEDED_SOURCES
@@ -43,6 +44,7 @@ set(TEST_NEEDED_SOURCES
         ../../resources/config/basic/config_file_end_time.yaml
         ../../resources/config/basic/config_file_start_replay_time_earlier.yaml
         ../../resources/recordings/basic/configuration.db
+        ../../resources/recordings/basic/partitions_5_changes.db
     )
 
 set(TEST_EXTRA_HEADERS

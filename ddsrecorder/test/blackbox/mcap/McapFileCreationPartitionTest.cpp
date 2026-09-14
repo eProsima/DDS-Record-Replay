@@ -348,6 +348,49 @@ TEST_F(McapFileCreationPartitionTest, mcap_data_num_msgs_partition)
     ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES);
 }
 
+/**
+ * Verify that a writer's partition is recorded per sample when its Publisher changes partition.
+ *
+ * The partition sequence is A -> B -> C -> D -> B -> A. In particular, A and B are revisited,
+ * which requires a new MCAP channel version for each return.
+ */
+TEST_F(McapFileCreationPartitionTest, mcap_data_num_msgs_partition_five_changes)
+{
+    init_dds_data(std::vector<std::string>{"A"}, false);
+
+    const std::string OUTPUT_FILE_NAME = "mcap_data_num_msgs_partition_five_changes";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    constexpr auto MESSAGES_PER_PARTITION = 10u;
+    constexpr auto TOTAL_MESSAGES = MESSAGES_PER_PARTITION * 6;
+
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    record_messages_partition_changes_(OUTPUT_FILE_NAME, MESSAGES_PER_PARTITION);
+
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
+    const std::vector<std::string> expected_partitions{"A", "B", "C", "D", "B", "A"};
+    unsigned int read_message_count = 0;
+
+    for (const auto& read_message : read_messages)
+    {
+        ASSERT_LT(read_message_count, TOTAL_MESSAGES);
+        const auto hello_world = deserialize_hello_world_(read_message.message);
+        ASSERT_EQ(hello_world.index(), read_message_count + 1);
+
+        const auto partitions_it = read_message.channel->metadata.find(
+            eprosima::ddsrecorder::participants::PARTITIONS);
+        ASSERT_NE(partitions_it, read_message.channel->metadata.end());
+
+        const auto writer_partitions = parse_partitions_metadata_(partitions_it->second);
+        ASSERT_EQ(writer_partitions.size(), 1u);
+        ASSERT_EQ(writer_partitions.begin()->second,
+                expected_partitions[read_message_count / MESSAGES_PER_PARTITION]);
+        ++read_message_count;
+    }
+
+    ASSERT_EQ(read_message_count, TOTAL_MESSAGES);
+}
+
 TEST_F(McapFileCreationPartitionTest, mcap_data_num_msgs_downsampling_partition)
 {
     // adds the partition A in the publisher

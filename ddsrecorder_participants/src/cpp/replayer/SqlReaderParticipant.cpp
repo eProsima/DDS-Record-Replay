@@ -95,6 +95,40 @@ static void set_writer_partitions_(
     }
 }
 
+static bool partition_passes_filter_(
+        const std::string& partition_name,
+        const std::set<std::string>& allowed_partition_list)
+{
+    if (allowed_partition_list.empty() || partition_name == "*")
+    {
+        return true;
+    }
+
+    std::size_t begin = 0;
+    while (begin <= partition_name.size())
+    {
+        const auto end = partition_name.find('|', begin);
+        const auto partition_end = end == std::string::npos ? partition_name.size() : end;
+        const auto partition = partition_name.substr(begin, partition_end - begin);
+
+        for (const auto& allowed_partition : allowed_partition_list)
+        {
+            if (utils::match_pattern(allowed_partition, partition))
+            {
+                return true;
+            }
+        }
+
+        if (end == std::string::npos)
+        {
+            break;
+        }
+        begin = end + 1;
+    }
+
+    return false;
+}
+
 SqlReaderParticipant::SqlReaderParticipant(
         const std::shared_ptr<BaseReaderParticipantConfiguration>& configuration,
         const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
@@ -110,7 +144,7 @@ SqlReaderParticipant::~SqlReaderParticipant()
 void SqlReaderParticipant::add_partition_list(
         std::set<std::string> allowed_partition_list)
 {
-    // adds the allowed partitions list to the class
+    std::lock_guard<std::mutex> lock(filter_mutex_);
     allowed_partition_list_ = allowed_partition_list;
 }
 
@@ -120,7 +154,11 @@ void SqlReaderParticipant::update_partition_list(
     std::set<utils::Heritable<ddspipe::core::types::DdsTopic>> topics;
     participants::DynamicTypesCollection types;
 
-    allowed_partition_list_ = allowed_partition_list;
+    {
+        std::lock_guard<std::mutex> lock(filter_mutex_);
+        filter_updating_ = true;
+        allowed_partition_list_ = std::move(allowed_partition_list);
+    }
     process_summary(topics, types);
 }
 
@@ -185,97 +223,10 @@ void SqlReaderParticipant::process_summary(
             // get the writer guid string from the querys row
             const std::string writer_guid = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
 
-            // check the partitions filter
-            bool pass_partition_filter = allowed_partition_list_.empty();
-
-
-            // -- Search all the partitions of the current sql row ----------------
-
-            std::string curr_partition = "";
-            int i = 0, curr_partition_n = topic_partitions.size();
-            while (i < curr_partition_n)
+            // Keep topics that have at least one allowed recorded partition. Individual messages
+            // are filtered later using the partition attached to that message.
+            if (!partition_passes_filter_(topic_partitions, allowed_partition_list_))
             {
-                // gets a partition from the string of partitions set
-                while (i < curr_partition_n && topic_partitions[i] != '|')
-                {
-                    curr_partition += topic_partitions[i++];
-                }
-
-                // -- Partitions filter -------------------------------------------
-
-                // checks if the writer partition is the wildcard or the
-                // allowed partition list is empty
-                if (curr_partition == "*" || pass_partition_filter)
-                {
-                    pass_partition_filter = true;
-                    break;
-                }
-
-                // check if the current partition is in the filter of partitions
-                for (std::string allowed_partition: allowed_partition_list_)
-                {
-                    if (utils::match_pattern(allowed_partition, curr_partition))
-                    {
-                        pass_partition_filter = true;
-                        break;
-                    }
-                }
-
-                i++;
-                curr_partition = "";
-            }
-
-            // check if the writer has the empty partition
-            if (topic_partitions == "")
-            {
-                // check if the empty partition is in the allowed partitions
-                for (std::string allowed_partition: allowed_partition_list_)
-                {
-                    if (utils::match_pattern(allowed_partition, ""))
-                    {
-                        // the empty partition is allowed
-                        pass_partition_filter = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!pass_partition_filter)
-            {
-                // the sql row did not pass the filter
-
-                // check if the sql query has more than one writer_guid in the row
-                if (writer_guid.size() < 50)
-                {
-                    filtered_writersguid_list_.insert(writer_guid);
-                }
-                else
-                {
-                    // more than one writer guid in the same row
-                    // adds all the writer guids in the filtered list
-                    std::string tmp = "";
-                    int i = 0, n = writer_guid.size();
-                    while (i < n)
-                    {
-                        if (writer_guid[i] == ',')
-                        {
-                            filtered_writersguid_list_.insert(tmp);
-                            tmp = "";
-                        }
-                        else
-                        {
-                            tmp += writer_guid[i];
-                        }
-
-                        i++;
-                    }
-
-                    if (tmp != "")
-                    {
-                        filtered_writersguid_list_.insert(tmp);
-                    }
-                }
-
                 return;
             }
 
@@ -403,6 +354,25 @@ void SqlReaderParticipant::process_messages()
             const std::string key = key_col ? reinterpret_cast<const char*>(key_col) : "";
             const auto sequence_number = sqlite3_column_int64(stmt, 7);
 
+            std::string partition_name;
+            bool has_partition = sqlite3_column_type(stmt, 8) != SQLITE_NULL;
+            if (has_partition)
+            {
+                partition_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 8));
+            }
+            else
+            {
+                // Keep compatibility with databases created before MessagesPartitions was used
+                // for per-message partition data.
+                std::lock_guard<std::mutex> partition_lock(filter_mutex_);
+                const auto it = recorded_writer_partitions_.find(writer_guid);
+                if (it != recorded_writer_partitions_.end())
+                {
+                    partition_name = it->second;
+                    has_partition = true;
+                }
+            }
+
             const auto topic_id = std::make_pair(topic_name, type_name);
 
             {
@@ -413,9 +383,10 @@ void SqlReaderParticipant::process_messages()
                     return !filter_updating_;
                 });
 
-                if (filtered_writersguid_list_.find(writer_guid) != filtered_writersguid_list_.end())
+                if (!partition_passes_filter_(partition_name, allowed_partition_list_))
                 {
-                    // current row do not pass the filter
+                    // The partition of the current message, rather than the writer GUID, decides
+                    // whether this sample passes. A writer may change partitions in one file.
                     return;
                 }
 
@@ -474,26 +445,6 @@ void SqlReaderParticipant::process_messages()
             // Set source timestamp
             // NOTE: this is important for QoS such as LifespanQosPolicy
             data->source_timestamp = fastdds::dds::Time_t(to_ticks(time_to_write) / 1e9);
-
-            // A writer can change partitions while recording. Read the partition set attached to
-            // this message instead of caching one value per writer GUID.
-            std::string partition_name;
-            bool has_partition = sqlite3_column_type(stmt, 8) != SQLITE_NULL;
-            if (has_partition)
-            {
-                partition_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 8));
-            }
-            else
-            {
-                // Keep compatibility with databases created before MessagesPartitions was used
-                // for per-message partition data
-                const auto it = recorded_writer_partitions_.find(writer_guid);
-                if (it != recorded_writer_partitions_.end())
-                {
-                    partition_name = it->second;
-                    has_partition = true;
-                }
-            }
 
             if (has_partition)
             {

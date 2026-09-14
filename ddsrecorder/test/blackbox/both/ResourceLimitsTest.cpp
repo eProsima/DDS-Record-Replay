@@ -701,12 +701,6 @@ protected:
             // Make sure the DDS Recorder has received all the messages
             ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), RETCODE_OK);
 
-            // Verify that the DDS Recorder has created the expected number of output files and that their size is close
-            // but doesn't exceed the max-file-size
-            for (std::uint32_t j = 0; j <= i; j++)
-            {
-                ASSERT_TRUE(is_file_size_acceptable_(OUTPUT_FILE_PATHS[j]));
-            }
         }
 
         // Send more messages than can be stored in a file with a size of max-file-size
@@ -714,6 +708,11 @@ protected:
 
         // Make sure the DDS Recorder has received all the messages
         ASSERT_EQ(writer_->wait_for_acknowledgments(test::MAX_WAITING_TIME), RETCODE_OK);
+
+        // DDS acknowledgements only mean that the samples reached the recorder reader. The
+        // recorder can still be flushing the current file or completing a rotation, so wait until
+        // all output files stop changing before inspecting their final sizes.
+        wait_for_rotation_to_settle_(OUTPUT_FILE_PATHS);
 
         // All the messages have been sent. Stop the DDS Recorder.
         recorder.stop();

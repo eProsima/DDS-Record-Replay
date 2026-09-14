@@ -14,7 +14,9 @@
 
 #pragma once
 
+#include <condition_variable>
 #include <map>
+#include <mutex>
 #include <set>
 #include <string>
 #include <utility>
@@ -142,15 +144,11 @@ protected:
      */
     std::map<std::string, std::string> recorded_writer_partitions_;
 
-    //! Set of allowed partitions, used to filter the writer guids.
+    //! Set of allowed partitions, used to filter each message's recorded partition.
     std::set<std::string> allowed_partition_list_;
 
-    //! Set of writers guid that do not pass the partitions filter.
-    std::set<std::string> filtered_writersguid_list_;
-
-    //! Mutex used to update the filtered_writersguid_list_ (when the configuration.yml is modified during runtime)
+    //! Synchronizes partition filter updates with summary/message processing.
     std::mutex filter_mutex_;
-    //! Condition variable used to wait if the filtered_writersguid_list_ is updating
     std::condition_variable filter_cv_;
     bool filter_updating_ = false;
 };

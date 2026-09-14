@@ -69,10 +69,13 @@ set(TEST_SOURCES
 
 set(TEST_LIST
     partition_switch
+    partition_filter_follows_switch
+    partition_filter_follows_five_changes
     )
 
 set(TEST_NEEDED_SOURCES
     ../../resources/recordings/basic/one_writer_change_partition.mcap
+    ../../resources/recordings/basic/partitions_5_changes.mcap
     )
 
 set(TEST_EXTRA_HEADERS

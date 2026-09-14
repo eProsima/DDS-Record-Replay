@@ -483,6 +483,58 @@ protected:
     }
 
     /**
+     * @brief Record samples while changing the Publisher partition five times.
+     *
+     * The DataWriter is kept alive while its Publisher QoS changes, so every sample belongs to the
+     * same writer and the recorder must carry the partition that was active when that sample was
+     * received.
+     */
+    void record_messages_partition_changes_(
+            const std::string& file_name,
+            const unsigned int messages_per_partition = 10)
+    {
+        configuration_->dds_configuration->allowed_partition_list.clear();
+        configuration_->dds_configuration->allowed_partition_list.insert("*");
+
+        auto recorder = std::make_unique<ddsrecorder::recorder::DdsRecorder>(
+            *configuration_, DdsRecorderState::RUNNING, file_name);
+        recorder->update_filter(std::set<std::string>{"*"});
+
+        wait_for_matching();
+
+        const std::vector<std::string> partitions{"A", "B", "C", "D", "B", "A"};
+        std::vector<HelloWorld> sent_messages;
+        sent_messages.reserve(partitions.size() * messages_per_partition);
+
+        for (std::size_t partition_index = 0; partition_index < partitions.size(); ++partition_index)
+        {
+            if (partition_index != 0)
+            {
+                auto publisher_qos = publisher_->get_qos();
+                publisher_qos.partition().clear();
+                publisher_qos.partition().push_back(partitions[partition_index].c_str());
+
+                ASSERT_EQ(publisher_->set_qos(publisher_qos), fastdds::dds::RETCODE_OK);
+
+                // Allow the updated partition QoS to be propagated through discovery before the
+                // next batch is written.
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+
+            send_messages_from_writer_(
+                writer_,
+                messages_per_partition,
+                static_cast<std::uint32_t>(partition_index * messages_per_partition + 1),
+                "Hello World! partition " + partitions[partition_index],
+                sent_messages);
+            wait_for_acknowledgments_(writer_, messages_per_partition);
+            wait_for_recording_to_drain_(file_name, sent_messages.size());
+        }
+
+        wait_for_recording_to_drain_(file_name, sent_messages.size());
+    }
+
+    /**
      * @brief Block until the DDS Recorder has acknowledged every sample written by \c writer.
      *
      * A writer must not be deleted while samples are still unacknowledged: this history is

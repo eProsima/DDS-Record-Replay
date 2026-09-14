@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <mutex>
 #include <set>
 #include <string>
 
@@ -136,6 +137,13 @@ protected:
             std::string& partition_name);
 
     /**
+     * @brief Check whether a serialized partition set matches the allowed partition filter.
+     */
+    static bool partition_passes_filter_(
+            const std::string& partition_name,
+            const std::set<std::string>& allowed_partition_list);
+
+    /**
      * @brief Read the MCAP file messages.
      *
      * @return A \c LinearMessageView instance with the messages read.
@@ -162,11 +170,11 @@ protected:
      */
     std::map<std::string, std::string> recorded_writer_partitions_;
 
-    //! Set of allowed partitions, used to filter the writer guids.
+    //! Set of allowed partitions used to filter replayed messages.
     std::set<std::string> allowed_partition_list_;
 
-    //! Set of writers guid that do not pass the partitions filter.
-    std::set<std::string> filtered_writersguid_list_;
+    //! Protects partition filter state and its recording metadata during replay.
+    std::mutex partition_filter_mutex_;
 };
 
 } /* namespace participants */

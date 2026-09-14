@@ -84,7 +84,9 @@ public:
 
     using participants::BaseReaderParticipant::create_payload_;
     using participants::McapReaderParticipant::close_file_;
+    using participants::McapReaderParticipant::get_writer_partition_from_channel_;
     using participants::McapReaderParticipant::open_file_;
+    using participants::McapReaderParticipant::partition_passes_filter_;
     using participants::McapReaderParticipant::read_mcap_messages_;
 
     McapReaderParticipantAccessor(
@@ -116,11 +118,6 @@ public:
                                DDSREPLAYER_MCAP_READER_PARTICIPANT,
                                "An error occurred while reading MCAP messages: " << status.message << ".");
                        }, read_options);
-    }
-
-    const std::set<std::string>& filtered_writersguid_list() const noexcept
-    {
-        return filtered_writersguid_list_;
     }
 
     std::shared_ptr<ddspipe::core::PayloadPool> payload_pool() const noexcept
@@ -186,47 +183,6 @@ ddspipe::core::types::Guid to_guid_(
             "Failed to parse writer GUID '" << writer_guid_str << "': " << e.what());
         return {};
     }
-}
-
-//! Partitions recorded for each writer, parsed from the MCAP channel PARTITIONS metadata.
-using RecordedWriterPartitions = std::map<std::string, std::string>;
-
-std::string get_writer_partition_(
-        const RecordedWriterPartitions& recorded_writer_partitions,
-        const std::string& writer_guid_str)
-{
-    const auto partition_it = recorded_writer_partitions.find(writer_guid_str);
-    return partition_it == recorded_writer_partitions.end() ? std::string() : partition_it->second;
-}
-
-//! Parse a channel's "<guid>:<partitions>;..." metadata into a writer GUID -> partitions map.
-RecordedWriterPartitions parse_channel_partitions_(
-        const std::string& channel_partitions)
-{
-    RecordedWriterPartitions result;
-
-    std::size_t pos = 0;
-    while (pos < channel_partitions.size())
-    {
-        const auto sep = channel_partitions.find(':', pos);
-        if (sep == std::string::npos)
-        {
-            break;
-        }
-
-        auto end = channel_partitions.find(';', sep);
-        if (end == std::string::npos)
-        {
-            end = channel_partitions.size();
-        }
-
-        result[channel_partitions.substr(pos, sep - pos)] =
-                channel_partitions.substr(sep + 1, end - sep - 1);
-
-        pos = end + 1;
-    }
-
-    return result;
 }
 
 void write_topic_metadata_(
@@ -579,17 +535,16 @@ void McapToSqlConverter::convert()
 
             const auto writer_guid_str = get_writer_guid_string_(reader, message);
 
-            // Partitions come from this channel's own recorded metadata, parsed on demand. The
-            // Topic no longer carries partition state.
-            RecordedWriterPartitions recorded_writer_partitions;
-            const auto channel_partitions_it =
-                    message.channel->metadata.find(eprosima::ddsrecorder::participants::PARTITIONS);
-            if (channel_partitions_it != message.channel->metadata.end())
-            {
-                recorded_writer_partitions = parse_channel_partitions_(channel_partitions_it->second);
-            }
+            // Partitions come from this channel's own recorded metadata. Apply the partition filter
+            // to the same channel version as the message, rather than to the writer globally.
+            std::string partition_name;
+            const bool has_partition = reader.get_writer_partition_from_channel_(
+                *message.channel, writer_guid_str, partition_name);
 
-            if (reader.filtered_writersguid_list().find(writer_guid_str) != reader.filtered_writersguid_list().end())
+            if (has_partition && configuration_.replayer_configuration &&
+                    !reader.partition_passes_filter_(
+                    partition_name,
+                    configuration_.replayer_configuration->allowed_partition_list))
             {
                 continue;
             }
@@ -607,7 +562,7 @@ void McapToSqlConverter::convert()
             sql_message.publish_time = fastdds::dds::Time_t(
                 static_cast<int32_t>(message.message.publishTime / 1000000000ULL),
                 static_cast<uint32_t>(message.message.publishTime % 1000000000ULL));
-            sql_message.partitions = get_writer_partition_(recorded_writer_partitions, writer_guid_str);
+            sql_message.partitions = partition_name;
 
             write_topic_metadata_(
                 sql_writer,
