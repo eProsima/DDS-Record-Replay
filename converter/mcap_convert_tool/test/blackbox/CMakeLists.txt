@@ -14,9 +14,11 @@
 
 set(TEST_NAME McapConvertTest)
 
-set(TEST_SOURCES
+file(
+    GLOB_RECURSE TEST_SOURCES
     McapConvertTest.cpp
-)
+    "${PROJECT_SOURCE_DIR}/../../thirdparty/sqlite/*.c"
+    )
 
 set(TEST_LIST
     help_argument
