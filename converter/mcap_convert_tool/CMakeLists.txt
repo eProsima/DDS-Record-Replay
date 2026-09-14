@@ -17,6 +17,7 @@
 ###############################################################################
 cmake_minimum_required(VERSION 3.5)
 
+enable_language(C)
 enable_language(CXX)
 
 find_package(cmake_utils REQUIRED)

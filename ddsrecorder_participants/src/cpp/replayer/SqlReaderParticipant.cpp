@@ -386,7 +386,7 @@ void SqlReaderParticipant::process_messages()
                 if (has_partition && !partition_passes_filter_(partition_name, allowed_partition_list_))
                 {
                     // Apply the filter only when the message has partition information, as in the
-                    // MCAP reader. 
+                    // MCAP reader.
                     // The partition of the current message, rather than the writer GUID, decides
                     // whether this sample passes. A writer may change partitions in one file.
                     return;
