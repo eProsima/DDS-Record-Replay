@@ -101,7 +101,8 @@ public:
     {
         {
             std::lock_guard<std::mutex> lock(reader_mutex_);
-            if (info.topic_name.to_string() != topic_name_ || reader_ != nullptr)
+            if (info.topic_name.to_string() != topic_name_ || reader_ != nullptr ||
+                    writer_discovered_ || reader_creation_started_)
             {
                 return;
             }
@@ -115,36 +116,13 @@ public:
             return;
         }
 
-        auto dynamic_type = fastdds::dds::DynamicTypeBuilderFactory::get_instance()->create_type_w_type_object(
-            type_object)->build();
-        if (!dynamic_type)
-        {
-            return;
-        }
-
-        fastdds::dds::TypeSupport type(new fastdds::dds::DynamicPubSubType(dynamic_type));
-        if (type.register_type(participant_) != fastdds::dds::RETCODE_OK)
-        {
-            return;
-        }
-
-        topic_ = participant_->create_topic(
-            topic_name_, dynamic_type->get_name().to_string(), fastdds::dds::TOPIC_QOS_DEFAULT);
-        if (topic_ == nullptr)
-        {
-            return;
-        }
-
-        fastdds::dds::DataReaderQos reader_qos = fastdds::dds::DATAREADER_QOS_DEFAULT;
-        reader_qos.reliability().kind = fastdds::dds::RELIABLE_RELIABILITY_QOS;
-        reader_qos.durability().kind = fastdds::dds::TRANSIENT_LOCAL_DURABILITY_QOS;
-        reader_qos.history().kind = fastdds::dds::KEEP_ALL_HISTORY_QOS;
-
-        dynamic_type_ = dynamic_type;
-        auto reader = subscriber_->create_datareader(topic_, reader_qos, this);
         {
             std::lock_guard<std::mutex> lock(reader_mutex_);
-            reader_ = reader;
+            if (reader_ == nullptr && !writer_discovered_ && !reader_creation_started_)
+            {
+                pending_type_object_ = type_object;
+                writer_discovered_ = true;
+            }
         }
         reader_cv_.notify_all();
     }
@@ -176,11 +154,38 @@ public:
     bool wait_for_reader(
             const std::chrono::seconds timeout)
     {
+        const auto deadline = std::chrono::steady_clock::now() + timeout;
+        fastdds::dds::xtypes::TypeObject type_object;
         std::unique_lock<std::mutex> lock(reader_mutex_);
-        return reader_cv_.wait_for(lock, timeout, [this]()
+        if (!reader_cv_.wait_until(lock, deadline, [this]()
                        {
-                           return reader_ != nullptr;
-                       });
+                           return reader_ != nullptr || writer_discovered_;
+                       }))
+        {
+            return false;
+        }
+
+        if (reader_ != nullptr)
+        {
+            return true;
+        }
+
+        if (reader_creation_started_)
+        {
+            return reader_cv_.wait_until(lock, deadline, [this]()
+                           {
+                               return reader_ != nullptr;
+                           });
+        }
+
+        reader_creation_started_ = true;
+        type_object = pending_type_object_;
+        lock.unlock();
+
+        create_reader_(type_object);
+
+        lock.lock();
+        return reader_ != nullptr;
     }
 
     bool wait_for_messages(
@@ -202,11 +207,52 @@ public:
 
 private:
 
+    void create_reader_(
+            const fastdds::dds::xtypes::TypeObject& type_object)
+    {
+        auto dynamic_type = fastdds::dds::DynamicTypeBuilderFactory::get_instance()->create_type_w_type_object(
+            type_object)->build();
+        if (!dynamic_type)
+        {
+            return;
+        }
+
+        fastdds::dds::TypeSupport type(new fastdds::dds::DynamicPubSubType(dynamic_type));
+        if (type.register_type(participant_) != fastdds::dds::RETCODE_OK)
+        {
+            return;
+        }
+
+        auto topic = participant_->create_topic(
+            topic_name_, dynamic_type->get_name().to_string(), fastdds::dds::TOPIC_QOS_DEFAULT);
+        if (topic == nullptr)
+        {
+            return;
+        }
+
+        fastdds::dds::DataReaderQos reader_qos = fastdds::dds::DATAREADER_QOS_DEFAULT;
+        reader_qos.reliability().kind = fastdds::dds::RELIABLE_RELIABILITY_QOS;
+        reader_qos.durability().kind = fastdds::dds::TRANSIENT_LOCAL_DURABILITY_QOS;
+        reader_qos.history().kind = fastdds::dds::KEEP_ALL_HISTORY_QOS;
+
+        dynamic_type_ = dynamic_type;
+        topic_ = topic;
+        auto reader = subscriber_->create_datareader(topic_, reader_qos, this);
+        {
+            std::lock_guard<std::mutex> lock(reader_mutex_);
+            reader_ = reader;
+        }
+        reader_cv_.notify_all();
+    }
+
     fastdds::dds::DomainParticipant* participant_{nullptr};
     fastdds::dds::Subscriber* subscriber_{nullptr};
     fastdds::dds::Topic* topic_{nullptr};
     fastdds::dds::DataReader* reader_{nullptr};
     fastdds::dds::DynamicType::_ref_type dynamic_type_;
+    fastdds::dds::xtypes::TypeObject pending_type_object_;
+    bool writer_discovered_{false};
+    bool reader_creation_started_{false};
     std::string topic_name_;
 
     mutable std::mutex reader_mutex_;
