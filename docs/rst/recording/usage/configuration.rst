@@ -709,7 +709,12 @@ Database Schema
 """""""""""""""
 
 The SQL output is a `SQLite <https://www.sqlite.org>`_ database, so it can be inspected with any standard SQLite client.
-It contains the six tables described below.
+It contains the six tables described below: ``Types`` and ``Topics`` describe what was recorded, ``Messages`` holds the recorded data, and ``Partitions`` together with the two junction tables ``TopicsPartitions`` and ``MessagesPartitions`` relate topics and messages to the partitions they were published on.
+
+.. figure:: /rst/figures/ddsrecorder_database_UML_schema.png
+    :align: center
+
+    Schema of the SQL database written by the |ddsrecorder|.
 
 The ``Types`` table holds one row per data type whose information has been received, plus one row for each type those types depend on.
 It is only populated when ``record-types`` is enabled.
