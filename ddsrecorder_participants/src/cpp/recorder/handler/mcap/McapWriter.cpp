@@ -245,7 +245,7 @@ void McapWriter::close_current_file_nts_()
 }
 
 template<>
-void McapWriter::write_nts_(
+DDSRECORDER_PARTICIPANTS_DllAPI void McapWriter::write_nts_(
         const mcap::Attachment& attachment)
 {
     EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,
@@ -267,7 +267,7 @@ void McapWriter::write_nts_(
 }
 
 template<>
-void McapWriter::write_nts_(
+DDSRECORDER_PARTICIPANTS_DllAPI void McapWriter::write_nts_(
         const mcap::Channel& channel)
 {
     EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,
@@ -285,7 +285,7 @@ void McapWriter::write_nts_(
 }
 
 template<>
-void McapWriter::write_nts_(
+DDSRECORDER_PARTICIPANTS_DllAPI void McapWriter::write_nts_(
         const McapMessage& msg)
 {
     if (!enabled_)
@@ -334,7 +334,7 @@ void McapWriter::write_nts_(
 }
 
 template<>
-void McapWriter::write_nts_(
+DDSRECORDER_PARTICIPANTS_DllAPI void McapWriter::write_nts_(
         const mcap::Metadata& metadata)
 {
     EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,
@@ -355,7 +355,7 @@ void McapWriter::write_nts_(
 }
 
 template<>
-void McapWriter::write_nts_(
+DDSRECORDER_PARTICIPANTS_DllAPI void McapWriter::write_nts_(
         const mcap::Schema& schema)
 {
     EPROSIMA_LOG_INFO(DDSRECORDER_MCAP_WRITER,

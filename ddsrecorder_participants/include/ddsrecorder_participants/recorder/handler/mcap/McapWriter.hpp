@@ -250,4 +250,24 @@ protected:
 } /* namespace ddsrecorder */
 } /* namespace eprosima */
 
+template<>
+DDSRECORDER_PARTICIPANTS_DllAPI void eprosima::ddsrecorder::participants::McapWriter::write_nts_(
+        const mcap::Attachment& attachment);
+
+template<>
+DDSRECORDER_PARTICIPANTS_DllAPI void eprosima::ddsrecorder::participants::McapWriter::write_nts_(
+        const mcap::Channel& channel);
+
+template<>
+DDSRECORDER_PARTICIPANTS_DllAPI void eprosima::ddsrecorder::participants::McapWriter::write_nts_(
+        const eprosima::ddsrecorder::participants::McapMessage& message);
+
+template<>
+DDSRECORDER_PARTICIPANTS_DllAPI void eprosima::ddsrecorder::participants::McapWriter::write_nts_(
+        const mcap::Metadata& metadata);
+
+template<>
+DDSRECORDER_PARTICIPANTS_DllAPI void eprosima::ddsrecorder::participants::McapWriter::write_nts_(
+        const mcap::Schema& schema);
+
 #include <ddsrecorder_participants/recorder/handler/mcap/impl/McapWriter.ipp>

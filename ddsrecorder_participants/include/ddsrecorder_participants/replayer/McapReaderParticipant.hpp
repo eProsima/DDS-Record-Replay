@@ -139,6 +139,7 @@ protected:
     /**
      * @brief Check whether a serialized partition set matches the allowed partition filter.
      */
+    DDSRECORDER_PARTICIPANTS_DllAPI
     static bool partition_passes_filter_(
             const std::string& partition_name,
             const std::set<std::string>& allowed_partition_list);
