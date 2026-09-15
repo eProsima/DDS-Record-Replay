@@ -62,7 +62,7 @@
    :numbered: 5
    :hidden:
 
-   /rst/tutorials/foxglove_tutorial
+   /rst/tutorials/dds_monitor_tutorial
 
 
 .. _index_developer_manual:
