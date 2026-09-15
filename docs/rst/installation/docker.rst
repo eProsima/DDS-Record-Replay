@@ -7,7 +7,7 @@
 Docker Image
 ############
 
-eProsima no longer distributes a standalone Docker image of |ddsrecord|. However, the *Fast DDS Suite* Docker image 
+eProsima no longer distributes a standalone Docker image of |ddsrecord|. However, the *Fast DDS Suite* Docker image
 is provided for those who want a Docker image with a set of eProsima's tools and libraries running on an Ubuntu platform.
 It can be downloaded from `eProsima's Downloads Page <https://www.eprosima.com/index.php/downloads-all>`__.
 
