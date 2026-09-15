@@ -5,7 +5,7 @@
 
     <a href="https://forms.eprosima.com/reach/form/CommercialSupportRequest/formperma/Ac8GwewD7PTDadQZIV92qDEzNFfMlJnYmA029mSJtJ8" target="_blank">Commercial Support form</a>
 
-.. _tutorials_foxglove:
+.. _tutorials_dds_monitor:
 
 ###################################
 Visualize data with DDS Monitor Pro
@@ -36,7 +36,7 @@ Download *eProsima Shapes Demo* from `eProsima website <https://www.eprosima.com
 * `Linux installation from sources <https://eprosima-shapes-demo.readthedocs.io/en/latest/installation/linux_sources.html>`_
 * `Docker Image <https://eprosima-shapes-demo.readthedocs.io/en/latest/installation/docker_image.html>`_
 
-.. _tutorials_foxglove_configuring_recorder:
+.. _tutorials_dds_monitor_configuring_recorder:
 
 Configuring DDS Recorder
 ************************
