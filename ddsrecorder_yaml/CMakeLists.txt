@@ -77,9 +77,16 @@ compile_test_library(
 ###############################################################################
 # Resources
 ###############################################################################
+# NOTE: the paths must be normalized (no "..") so that they match the ones registered by
+# configure_file. The Ninja generator emits every CMake input in a single build statement and
+# canonicalizes the paths, so two spellings of the same file would collide with
+# "multiple rules generate <file>".
+get_filename_component(_RESOURCES_CONFIGURATIONS_DIR
+    "${PROJECT_SOURCE_DIR}/../resources/configurations" ABSOLUTE)
+
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
-    "${PROJECT_SOURCE_DIR}/../resources/configurations/ddsrecorder_config_schema.json"
-    "${PROJECT_SOURCE_DIR}/../resources/configurations/ddsreplayer_config_schema.json")
+    "${_RESOURCES_CONFIGURATIONS_DIR}/ddsrecorder_config_schema.json"
+    "${_RESOURCES_CONFIGURATIONS_DIR}/ddsreplayer_config_schema.json")
 
 # Put the json schema files into the C++ code to be able to use them in the
 # code without having to read them from disk
