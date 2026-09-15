@@ -35,18 +35,18 @@ add_unittest_executable(
         "${TEST_SOURCES}"
         "${TEST_LIST}"
         "${TEST_EXTRA_LIBRARIES}"
-    )
+)
 
 set(TEST_NAME McapReaderParticipantTest)
 
 set(TEST_SOURCES
         McapReaderParticipantTest.cpp
-    )
+)
 
 set(TEST_LIST
         latest_partition_entry_is_used
         latest_entry_is_selected_per_writer
-    )
+)
 
 add_unittest_executable(
         "${TEST_NAME}"
@@ -61,7 +61,7 @@ file(
     GLOB_RECURSE TEST_SOURCES
     SqlReaderParticipantTest.cpp
     "${PROJECT_SOURCE_DIR}/../thirdparty/sqlite/sqlite/*.c"
-    )
+)
 
 set(TEST_LIST
         topic_without_samples_is_processed

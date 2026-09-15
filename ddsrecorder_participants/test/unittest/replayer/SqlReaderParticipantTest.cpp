@@ -26,7 +26,6 @@
 #include <ddspipe_core/efficiency/payload/FastPayloadPool.hpp>
 #include <ddspipe_core/types/topic/dds/DdsTopic.hpp>
 
-#include <ddsrecorder_participants/common/serialize/Serializer.hpp>
 #include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
 #include <ddsrecorder_participants/replayer/BaseReaderParticipantConfiguration.hpp>
 #include <ddsrecorder_participants/replayer/SqlReaderParticipant.hpp>
@@ -39,6 +38,10 @@ namespace {
 constexpr const char* TEST_TYPE_NAME = "TestType";
 constexpr const char* TOPIC_WITH_SAMPLES = "TopicWithSamples";
 constexpr const char* READER_ONLY_TOPIC = "ReaderOnlyTopic";
+
+//! A default \c TopicQoS as serialized in the Topics table, in flow style so that it fits a SQL literal
+constexpr const char* TEST_TOPIC_QOS =
+        "{reliability: false, durability: false, ownership: false, keyed: false}";
 
 /**
  * @brief Minimal SQL recording with two topics: one with a captured sample, and one that was only
@@ -76,10 +79,7 @@ public:
         exec("CREATE TABLE MessagesPartitions (writer_guid TEXT NOT NULL, sequence_number INTEGER NOT NULL, "
                 "partition TEXT NOT NULL, PRIMARY KEY(writer_guid, sequence_number, partition));");
 
-        const ddspipe::core::types::TopicQoS default_qos{};
-        std::string qos_str;
-        ASSERT_TRUE(Serializer::serialize<ddspipe::core::types::TopicQoS>(default_qos, qos_str));
-        qos_str = sql_escaped(qos_str);
+        const std::string qos_str(TEST_TOPIC_QOS);
 
         exec("INSERT INTO Types VALUES ('" + std::string(TEST_TYPE_NAME) + "', '', '', 'false');");
         exec("INSERT INTO Partitions VALUES ('PartitionA');");
@@ -119,22 +119,6 @@ public:
     }
 
 protected:
-
-    //! Escape a value so that it can be embedded in a SQL string literal
-    static std::string sql_escaped(
-            const std::string& value)
-    {
-        std::string escaped;
-        for (const auto character : value)
-        {
-            escaped += character;
-            if (character == '\'')
-            {
-                escaped += character;
-            }
-        }
-        return escaped;
-    }
 
     void exec(
             const std::string& statement)
