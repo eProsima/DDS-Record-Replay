@@ -61,6 +61,13 @@ project(
 # - Configure log depending on LOG_INFO flag and CMake type
 configure_project_cpp()
 
+# Suppress C4251 on MSVC: the vendored header-only mcap library marks its
+# structs with __declspec(dllimport/dllexport) while exposing std:: members,
+# which is safe here since every module is built with the same toolchain/CRT.
+if(MSVC)
+    add_compile_options(/wd4251)
+endif()
+
 file(
     GLOB_RECURSE SOURCES_FILES
         "${PROJECT_SOURCE_DIR}/src/cpp/*.c*"
