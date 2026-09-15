@@ -1,16 +1,21 @@
 .. include:: ../exports/alias.include
+.. include:: ../exports/roles.include
+
+.. |commercial_support_form| raw:: html
+
+    <a href="https://forms.eprosima.com/reach/form/CommercialSupportRequest/formperma/Ac8GwewD7PTDadQZIV92qDEzNFfMlJnYmA029mSJtJ8" target="_blank">Commercial Support form</a>
 
 .. _tutorials_foxglove:
 
-############################
-Visualize data with Foxglove
-############################
+###################################
+Visualize data with DDS Monitor Pro
+###################################
 
 
 Background
 **********
 
-This tutorial explains how to record data with |ddsrecorder| tool and visualize it with `Foxglove Studio <https://foxglove.dev/studio>`__.
+This tutorial explains how to record data with |ddsrecorder| tool and visualize it using |eddsmonitorpro|.
 
 Prerequisites
 *************
@@ -19,6 +24,9 @@ It is required to have |eddsrecord| previously installed using one of the follow
 
 * :ref:`installation_manual_windows`
 * :ref:`installation_manual_linux`
+
+We will also use `eProsima DDS Monitor Pro <https://dds-monitor.docs.eprosima.com/en/latest/rst/formalia/titlepage.html#dds-monitor-pro>`_ to visualize the recorded data.
+This software is distributed with a *Fast DDS Pro* license, which can be requested through the |commercial_support_form|.
 
 Additionally, we will use `ShapesDemo <https://www.eprosima.com/index.php/products-all/eprosima-shapes-demo>`_ as a DDS Demo application to publish the data that will be recorded.
 This application is already prepared to use Fast DDS DynamicTypes, which is required when using the |ddsrecorder| tool.
@@ -37,10 +45,12 @@ The DDS Recorder runs with default configuration parameters, but can also be con
 In this tutorial we will use a configuration file to change some default parameters and show how this file is loaded.
 The configuration file to be used is the following:
 
-.. literalinclude:: /resources/foxglove_tutorial/conf.yaml
+.. literalinclude:: /resources/dds_monitor_tutorial/conf.yaml
     :language: yaml
 
-The previous configuration file configures a recorder in DDS Domain ``0`` and save the output file as ``shapesdemo_data_<YYYY-MM-DD_hh-mm-ss>.mcap``, being ``<YYYY-MM-DD_hh-mm-ss>`` the timestamp of the time at which the |ddsrecorder| started recording.
+The previous configuration file configures a recorder in DDS Domain ``0`` and saves the output file as: |br|
+``<yyyy-MM-dd_HH-mm-ss_zzz>_shapesdemo_data.mcap`` |br|
+being ``<yyyy-MM-dd_HH-mm-ss_zzz>`` the timestamp of the time at which the |ddsrecorder| started recording.
 
 Create a new file named ``conf.yaml`` and copy the above snippet into this file.
 
@@ -58,7 +68,7 @@ Launch *eProsima Shapes Demo* application running the following command:
 
 Start publishing in topics ``Square``, ``Triangle``, and ``Circle`` with default settings:
 
-.. figure:: /rst/figures/foxglove_shapesdemo.png
+.. figure:: /rst/figures/dds_monitor_shapesdemo.png
     :align: center
 
 Recorder execution
@@ -76,18 +86,27 @@ Once you have all the desired data, close the |ddsrecorder| application with ``C
 
     Please remember to close the |ddsrecorder| application before accessing the output file as the *.mcap* file needs to be properly closed.
 
-Visualize data with Foxglove Studio
+Visualize data with DDS Monitor Pro
 ===================================
 
-Finally, we will show how to load the generated MCAP file into Foxglove Studio in order to display the saved data.
+Finally, we will show how to load the generated MCAP file into DDS Monitor Pro in order to display the saved data. 
 
-1. Open `Foxglove Studio <https://studio.foxglove.dev/>`__ web application using Google Chrome or download the desktop application from their `Foxglove website <https://foxglove.dev/>`_.
-   We recommend to use the web application as the it is usually up to date with the latest features.
-2. Click ``Open local file`` and load the *.mcap* file previously created: ``shapesdemo_data.mcap``.
-3. Once the *.mcap* file is loaded, create your own layout with custom panels to visualize the recorded data.
-   The image below shows an example of a dashboard with several panels for data introspection.
+1. Open |eddsmonitorpro| and press the ``Start monitoring!`` button.
+2. Click ``Open a recording instead...`` and load the *.mcap* file previously created: |br|
+   ``<yyyy-MM-dd_HH-mm-ss_zzz>_shapesdemo_data.mcap``
 
-.. figure:: /rst/figures/foxglove_studio_shapesdemo.png
+.. figure:: /rst/figures/dds_monitor_open_recording.png
     :align: center
 
-Feel free to further explore the number of possibilities that |eddsrecorder| and *Foxglove Studio* together have to offer.
+.. note::
+
+    The recording can also be opened by going to the ``File`` menu and selecting ``Open Recording...``.
+
+3. Once the *.mcap* file is loaded, create your own layout with custom panels to visualize the recorded data.
+   The image below shows an example of a dashboard with several panels for data introspection, in particular a time chart of the *X* coordinates, a *X-Y* chart of the shapes, a panel to spy on the circle samples, and another one to inspect the IDL.
+
+.. figure:: /rst/figures/dds_monitor_shapesdemo_dashboard.png
+    :align: center
+
+Feel free to further explore the number of possibilities that |eddsrecorder| and |eddsmonitorpro| together have to offer.
+For a complete description of the available panels and visualization features, please refer to the |DDSMonitorDocs|.

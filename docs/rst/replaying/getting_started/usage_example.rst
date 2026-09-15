@@ -54,7 +54,7 @@ Launching a |ddsreplayer| instance is as easy as executing the following command
 
 .. code-block:: bash
 
-    ddsreplayer -i output_YYYY-MM-DD-DD_hh-mm-ss.mcap
+    ddsreplayer -i <yyyy-MM-dd_HH-mm-ss_zzz>_output.mcap
 
 In order to know all the possible arguments supported by this tool, use the command:
 
