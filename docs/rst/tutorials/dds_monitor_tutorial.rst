@@ -22,8 +22,9 @@ Prerequisites
 
 It is required to have |eddsrecord| previously installed using one of the following installation methods:
 
-* :ref:`installation_manual_windows`
 * :ref:`installation_manual_linux`
+* :ref:`installation_manual_windows`
+* :ref:`docker`
 
 We will also use `eProsima DDS Monitor Pro <https://dds-monitor.docs.eprosima.com/en/latest/rst/formalia/titlepage.html#dds-monitor-pro>`_ to visualize the recorded data.
 This software is distributed with a *Fast DDS Pro* license, which can be requested through the |commercial_support_form|.
