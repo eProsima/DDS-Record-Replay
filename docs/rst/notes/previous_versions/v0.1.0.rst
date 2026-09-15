@@ -30,7 +30,7 @@ This release includes the following **Configuration features**:
 This release includes the following **Tutorials**:
 
 * `Configuring Fast DDS DynamicTypes for data recording <https://dds-recorder.readthedocs.io/en/v0.4.0/rst/tutorials/dynamic_types.html>`__.
-* :ref:`Visualize recorded data with Foxglove <tutorials_foxglove>`.
+* `Visualize recorded data with Foxglove <https://dds-recorder.readthedocs.io/en/v0.4.0/rst/tutorials/foxglove_tutorial.html>`__.
 
 This release includes the following **Documentation features**:
 
