@@ -57,9 +57,11 @@ add_unittest_executable(
 
 set(TEST_NAME SqlReaderParticipantTest)
 
-set(TEST_SOURCES
-        SqlReaderParticipantTest.cpp
-)
+file(
+    GLOB_RECURSE TEST_SOURCES
+    SqlReaderParticipantTest.cpp
+    "${PROJECT_SOURCE_DIR}/../thirdparty/sqlite/sqlite/*.c"
+    )
 
 set(TEST_LIST
         topic_without_samples_is_processed
