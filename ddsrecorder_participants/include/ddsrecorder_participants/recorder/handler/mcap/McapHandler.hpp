@@ -192,17 +192,15 @@ protected:
     //! Configuration
     const McapHandlerConfiguration configuration_;
 
+    //! Channels map, holding one (the newest) channel per topic
+    std::map<ddspipe::core::types::DdsTopic, mcap::Channel> channels_;
+
     //! MCAP writer
     McapWriter mcap_writer_;
 
     //! Schemas map
     std::map<std::string, mcap::Schema> schemas_;
 
-    //! Channels map
-    std::map<ddspipe::core::types::DdsTopic, mcap::Channel> channels_;
-
-    //! Channels map by id
-    std::map<mcap::ChannelId, mcap::Channel> channels_by_id_;
 };
 
 } /* namespace participants */

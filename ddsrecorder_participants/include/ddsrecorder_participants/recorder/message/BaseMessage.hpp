@@ -110,6 +110,15 @@ struct DDSRECORDER_PARTICIPANTS_DllAPI BaseMessage
 
     //! When the message was initially published
     ddspipe::core::types::DataTime publish_time;
+
+    /**
+     * @brief Partitions of the DataWriter that produced this sample, '|' separated.
+     *
+     * Stamped by the Reader from the DiscoveryDatabase and carried with the sample, so it is
+     * correct for this specific sample even if the writer later changes its PartitionQos or is
+     * replaced by another writer with different partitions.
+     */
+    std::string partitions;
 };
 
 } /* namespace participants */

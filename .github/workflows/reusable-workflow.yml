@@ -41,7 +41,7 @@ on:
 
 env:
   # TODO: controller is not tested as it has no tests
-  code_packages_names: 'ddsrecorder_participants ddsrecorder_yaml ddsrecorder_tool ddsreplayer_tool'
+  code_packages_names: 'ddsrecorder_participants ddsrecorder_yaml ddsrecorder_tool ddsreplayer_tool mcap_convert_tool'
   docs_packages_names: 'ddsrecorder_docs'
 
 jobs:

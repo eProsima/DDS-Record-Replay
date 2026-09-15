@@ -21,6 +21,7 @@
 #include <atomic>
 #include <cstdint>
 #include <memory>
+#include <string>
 
 #include <mcap/types.hpp>
 
@@ -60,6 +61,9 @@ struct McapMessage : public BaseMessage, public mcap::Message
 
     // Number of McapMessages created
     static std::atomic<std::uint32_t> number_of_msgs;
+
+    // GUID of the writer that published this sample, as a string.
+    std::string writer_guid_string;
 };
 
 } /* namespace participants */

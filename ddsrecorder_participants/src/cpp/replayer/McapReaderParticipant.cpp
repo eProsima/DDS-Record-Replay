@@ -49,6 +49,126 @@ namespace eprosima {
 namespace ddsrecorder {
 namespace participants {
 
+
+static void set_writer_partitions_(
+        fastdds::dds::PartitionQosPolicy& partitions,
+        const std::string& partition_name)
+{
+    std::size_t begin = 0;
+    while (begin <= partition_name.size())
+    {
+        const auto end = partition_name.find('|', begin);
+        const auto partition_end = end == std::string::npos ? partition_name.size() : end;
+        partitions.push_back(partition_name.substr(begin, partition_end - begin).c_str());
+
+        if (end == std::string::npos)
+        {
+            break;
+        }
+
+        begin = end + 1;
+    }
+}
+
+bool McapReaderParticipant::partition_passes_filter_(
+        const std::string& partition_name,
+        const std::set<std::string>& allowed_partition_list)
+{
+    if (allowed_partition_list.empty() || partition_name == "*")
+    {
+        return true;
+    }
+
+    std::size_t begin = 0;
+    while (begin <= partition_name.size())
+    {
+        const auto end = partition_name.find('|', begin);
+        const auto partition_end = end == std::string::npos ? partition_name.size() : end;
+        const auto partition = partition_name.substr(begin, partition_end - begin);
+
+        for (const auto& allowed_partition : allowed_partition_list)
+        {
+            if (utils::match_pattern(allowed_partition, partition))
+            {
+                return true;
+            }
+        }
+
+        if (end == std::string::npos)
+        {
+            break;
+        }
+
+        begin = end + 1;
+    }
+
+    return false;
+}
+
+bool McapReaderParticipant::get_writer_partition_from_channel_(
+        const mcap::Channel& channel,
+        const std::string& writer_guid,
+        std::string& partition_name)
+{
+    const auto partitions_it = channel.metadata.find(PARTITIONS);
+    if (partitions_it == channel.metadata.end())
+    {
+        return false;
+    }
+
+    const auto& channel_partitions = partitions_it->second;
+    std::size_t begin = 0;
+    std::size_t entries = 0;
+    std::string only_partition;
+    bool found_writer = false;
+
+    while (begin < channel_partitions.size())
+    {
+        const auto separator = channel_partitions.find(':', begin);
+        if (separator == std::string::npos)
+        {
+            break;
+        }
+
+        const auto end = channel_partitions.find(';', separator + 1);
+        const auto entry_end = end == std::string::npos ? channel_partitions.size() : end;
+        const auto current_writer = channel_partitions.substr(begin, separator - begin);
+        const auto current_partition = channel_partitions.substr(
+            separator + 1, entry_end - separator - 1);
+
+        ++entries;
+        only_partition = current_partition;
+        if (current_writer == writer_guid)
+        {
+            partition_name = current_partition;
+            // The recorder appends a new entry when a writer changes its partition
+            // Keep parsing so the last entry represents the partition active for this channel
+            found_writer = true;
+        }
+
+        if (end == std::string::npos)
+        {
+            break;
+        }
+        begin = end + 1;
+    }
+
+    if (found_writer)
+    {
+        return true;
+    }
+
+    // Older recordings may not contain the source GUID metadata. If this channel has only one
+    // writer, its partition is still unambiguous.
+    if (entries == 1)
+    {
+        partition_name = only_partition;
+        return true;
+    }
+
+    return false;
+}
+
 McapReaderParticipant::McapReaderParticipant(
         const std::shared_ptr<BaseReaderParticipantConfiguration>& configuration,
         const std::shared_ptr<ddspipe::core::PayloadPool>& payload_pool,
@@ -60,6 +180,8 @@ McapReaderParticipant::McapReaderParticipant(
 void McapReaderParticipant::add_partition_list(
         std::set<std::string> allowed_partition_list)
 {
+    std::lock_guard<std::mutex> lock(partition_filter_mutex_);
+
     // adds the allowed partitions list to the class
     allowed_partition_list_ = allowed_partition_list;
 }
@@ -67,77 +189,19 @@ void McapReaderParticipant::add_partition_list(
 void McapReaderParticipant::update_partition_list(
         std::set<std::string> allowed_partition_list)
 {
+    std::lock_guard<std::mutex> lock(partition_filter_mutex_);
+
     allowed_partition_list_ = allowed_partition_list;
-    filtered_writersguid_list_.clear();
-
-    for (const auto& [topic_id, topic] : topics_)
-    {
-        for (const auto& [writer, writer_partition] : topic.partition_name)
-        {
-            bool pass_partition_filter = allowed_partition_list_.empty();
-
-            if (writer_partition == "*" || pass_partition_filter)
-            {
-                pass_partition_filter = true;
-            }
-            else
-            {
-                std::string curr_partition;
-                std::vector<std::string> partition_vector;
-                int j = 0, writer_partition_n = writer_partition.size();
-                while (j < writer_partition_n)
-                {
-                    if (writer_partition[j] == '|')
-                    {
-                        partition_vector.push_back(curr_partition);
-                        curr_partition.clear();
-                    }
-                    else
-                    {
-                        curr_partition += writer_partition[j];
-                    }
-                    j++;
-                }
-
-                if (!curr_partition.empty())
-                {
-                    partition_vector.push_back(curr_partition);
-                }
-                else if (writer_partition_n == 0 ||
-                        writer_partition[writer_partition_n - 1] == '|')
-                {
-                    partition_vector.push_back("");
-                }
-
-                for (const std::string& partition : partition_vector)
-                {
-                    for (const std::string& allowed_partition : allowed_partition_list_)
-                    {
-                        if (utils::match_pattern(allowed_partition, partition))
-                        {
-                            pass_partition_filter = true;
-                            break;
-                        }
-                    }
-                    if (pass_partition_filter)
-                    {
-                        break;
-                    }
-                }
-            }
-
-            if (!pass_partition_filter)
-            {
-                filtered_writersguid_list_.insert(writer);
-            }
-        }
-    }
 }
 
 void McapReaderParticipant::process_summary(
         std::set<utils::Heritable<ddspipe::core::types::DdsTopic>>& topics,
         DynamicTypesCollection& types)
 {
+    // The summary populates recorded_writer_partitions_, which is used as a compatibility fallback
+    // by process_messages(). Keep it synchronized with a possible runtime configuration update.
+    std::lock_guard<std::mutex> filter_lock(partition_filter_mutex_);
+
     open_file_();
 
     read_mcap_summary_();
@@ -182,9 +246,7 @@ void McapReaderParticipant::process_summary(
                              << " has no serialized QoS metadata. Using default QoS.");
         }
 
-        std::string writer = "";
         std::string writer_partition = "";
-        bool pass_partition_filter;
 
         std::string channel_partitions;
         const auto partitions_it = channel->metadata.find(PARTITIONS);
@@ -199,10 +261,8 @@ void McapReaderParticipant::process_summary(
         int i = 0, partitions_n = channel_partitions.size();
         while (i < partitions_n)
         {
-            // resets the filter condition
-            pass_partition_filter = allowed_partition_list_.empty();
-
             // -- Writer (get one of the possible writers) --------------------
+            std::string writer;
             while (i < partitions_n && channel_partitions[i] != ':')
             {
                 writer += channel_partitions[i++];
@@ -216,76 +276,16 @@ void McapReaderParticipant::process_summary(
             }
 
             // add to the topic, the pair (writer_guid, partitions)
-            topic->partition_name[writer] = writer_partition;
+            recorded_writer_partitions_[writer] = writer_partition;
 
-            // -- Partitions filter -------------------------------------------
-
-            // checks if the writer partition is the wildcard or the
-            // allowed partition list is empty
-            if (writer_partition == "*" || pass_partition_filter)
+            // Q1 for the replayer: the recording is the authority here, since the recorded writers
+            // no longer exist and cannot be queried from the DiscoveryDatabase.
+            if (!writer_partition.empty())
             {
-                pass_partition_filter = true;
-            }
-            else
-            {
-                // get all the partitions
-                std::string curr_partition = "";
-                std::vector<std::string> partition_vector;
-                int j = 0, writer_partition_n = writer_partition.size();
-                while (j < writer_partition_n)
-                {
-                    if (writer_partition[j] == '|')
-                    {
-                        // adds the partitions and continue the search
-                        partition_vector.push_back(curr_partition);
-                        curr_partition = "";
-                    }
-                    else
-                    {
-                        curr_partition += writer_partition[j];
-                    }
-
-                    j++;
-                }
-
-                // adds the last partition
-                if (curr_partition != "")
-                {
-                    partition_vector.push_back(curr_partition);
-                }
-                // check if have the empty partition.
-                else if (writer_partition_n == 0 ||
-                        writer_partition[writer_partition_n - 1] == '|')
-                {
-                    // e.g.:    Partitions: "" only have the empty partition
-                    //          Partitions: "A|" have two partitions "A" and "".
-                    partition_vector.push_back("");
-                }
-
-                // check if the partitions of the writer match with an allowed partition
-                for (std::string partition: partition_vector)
-                {
-                    // check if the current partition is in the filter of partitions
-                    for (std::string allowed_partition: allowed_partition_list_)
-                    {
-                        if (utils::match_pattern(allowed_partition, partition))
-                        {
-                            pass_partition_filter = true;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            if (!pass_partition_filter)
-            {
-                // the writer did not pass the partition filter
-                filtered_writersguid_list_.insert(writer);
+                topic->topic_qos.use_partitions.set_value(true);
             }
 
             i++;
-
-            writer = "";
             writer_partition = "";
         }
 
@@ -358,12 +358,6 @@ void McapReaderParticipant::process_messages()
             }
         }
 
-        if (filtered_writersguid_list_.find(writer_guid) != filtered_writersguid_list_.end())
-        {
-            // current message do not pass the filter
-            continue;
-        }
-
         const auto readers_it = readers_.find(topic);
 
         if (readers_it == readers_.end())
@@ -398,57 +392,37 @@ void McapReaderParticipant::process_messages()
         // NOTE: this is important for QoS such as LifespanQosPolicy
         data->source_timestamp = fastdds::dds::Time_t(to_ticks(scheduled_write_ts) / 1e9);
 
-        // add the topic partitions, in the writer_qos
-        std::string partition_name = "";
-        auto it_partition = topic.partition_name.find(writer_guid);
-
-        // check if the message (using the writer_guid) has partitions
-        if (it_partition != topic.partition_name.end())
+        // A writer can change partitions while recording. Resolve the partition from the channel
+        // version associated with this message instead of caching one value per writer GUID.
+        std::string partition_name;
+        bool has_partition = get_writer_partition_from_channel_(*it.channel, writer_guid, partition_name);
+        if (!has_partition)
         {
-
-            // check if the message is already added in the dictionary of PartitionsQos
-            // (optimize the search of partitions in the message by storing the PartitionQos of the writer_guid)
-            if (partitions_qos_dict_.find(writer_guid) != partitions_qos_dict_.end())
+            // Keep compatibility with recordings that do not carry channel partition metadata.
             {
-                data->writer_qos.partitions = partitions_qos_dict_[writer_guid];
+                std::lock_guard<std::mutex> lock(partition_filter_mutex_);
+                const auto it_partition = recorded_writer_partitions_.find(writer_guid);
+                if (it_partition != recorded_writer_partitions_.end())
+                {
+                    partition_name = it_partition->second;
+                    has_partition = true;
+                }
             }
-            else
+        }
+
+        if (has_partition)
+        {
+            std::lock_guard<std::mutex> lock(partition_filter_mutex_);
+            if (!partition_passes_filter_(partition_name, allowed_partition_list_))
             {
-                partition_name = it_partition->second;
-                if (!partition_name.empty())
-                {
-                    int i = 0, partition_name_n = partition_name.size();
-                    std::string tmp = "";
-                    while (i < partition_name_n)
-                    {
-                        if (partition_name[i] == '|')
-                        {
-                            data->writer_qos.partitions.push_back(tmp.c_str());
-                            tmp = "";
-                        }
-                        else
-                        {
-                            tmp += partition_name[i];
-                        }
-
-                        i++;
-                    }
-                    // add the last partition in the set of partitions.
-                    // e.g.: "A|B" adds the "B" partition
-                    if (!tmp.empty() || partition_name[partition_name_n - 1] == '|')
-                    {
-                        data->writer_qos.partitions.push_back(tmp.c_str());
-                    }
-
-                }
-                // Empty partition set ("") must still be represented with one empty partition.
-                else
-                {
-                    data->writer_qos.partitions.push_back("");
-                }
-
-                partitions_qos_dict_[writer_guid] = data->writer_qos.partitions;
+                // The partition associated with this channel version is not allowed.
+                continue;
             }
+        }
+
+        if (has_partition)
+        {
+            set_writer_partitions_(data->writer_qos.partitions, partition_name);
         }
 
         // Wait until it's time to write the message

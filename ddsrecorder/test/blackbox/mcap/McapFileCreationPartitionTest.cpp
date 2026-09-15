@@ -16,6 +16,7 @@
 #include <cstring>
 #include <filesystem>
 #include <map>
+#include <set>
 #include <string>
 
 #include <mcap/reader.hpp>
@@ -345,6 +346,49 @@ TEST_F(McapFileCreationPartitionTest, mcap_data_num_msgs_partition)
     // Verify the recorded messages count
     const auto read_messages_count = count_messages_(read_messages);
     ASSERT_EQ(read_messages_count, NUMBER_OF_MESSAGES);
+}
+
+/**
+ * Verify that a writer's partition is recorded per sample when its Publisher changes partition.
+ *
+ * The partition sequence is A -> B -> C -> D -> B -> A. In particular, A and B are revisited,
+ * which requires a new MCAP channel version for each return.
+ */
+TEST_F(McapFileCreationPartitionTest, mcap_data_num_msgs_partition_five_changes)
+{
+    init_dds_data(std::vector<std::string>{"A"}, false);
+
+    const std::string OUTPUT_FILE_NAME = "mcap_data_num_msgs_partition_five_changes";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+    constexpr auto MESSAGES_PER_PARTITION = 10u;
+    constexpr auto TOTAL_MESSAGES = MESSAGES_PER_PARTITION * 6;
+
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    record_messages_partition_changes_(OUTPUT_FILE_NAME, MESSAGES_PER_PARTITION);
+
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
+    const std::vector<std::string> expected_partitions{"A", "B", "C", "D", "B", "A"};
+    unsigned int read_message_count = 0;
+
+    for (const auto& read_message : read_messages)
+    {
+        ASSERT_LT(read_message_count, TOTAL_MESSAGES);
+        const auto hello_world = deserialize_hello_world_(read_message.message);
+        ASSERT_EQ(hello_world.index(), read_message_count + 1);
+
+        const auto partitions_it = read_message.channel->metadata.find(
+            eprosima::ddsrecorder::participants::PARTITIONS);
+        ASSERT_NE(partitions_it, read_message.channel->metadata.end());
+
+        const auto writer_partitions = parse_partitions_metadata_(partitions_it->second);
+        ASSERT_EQ(writer_partitions.size(), 1u);
+        ASSERT_EQ(writer_partitions.begin()->second,
+                expected_partitions[read_message_count / MESSAGES_PER_PARTITION]);
+        ++read_message_count;
+    }
+
+    ASSERT_EQ(read_message_count, TOTAL_MESSAGES);
 }
 
 TEST_F(McapFileCreationPartitionTest, mcap_data_num_msgs_downsampling_partition)
@@ -2374,6 +2418,43 @@ TEST_F(McapFileCreationPartitionTest, mcap_data_num_msgs_two_publishers_partitio
     ASSERT_EQ(received_a_partition_messages, MESSAGES_PER_WRITER);
     ASSERT_TRUE(metadata_has_no_partition);
     ASSERT_TRUE(metadata_has_a_partition);
+}
+
+TEST_F(McapFileCreationPartitionTest, mcap_data_num_msgs_two_publishers_same_partition)
+{
+    init_dds_data(std::vector<std::string>{"A"}, false);
+
+    const std::string OUTPUT_FILE_NAME = "mcap_data_num_msgs_two_publishers_same_partition";
+    const std::string OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".mcap");
+
+    constexpr auto MESSAGES_PER_WRITER = 5;
+
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+
+    const auto sent_messages = record_messages_publishers_(
+        OUTPUT_FILE_NAME,
+        std::vector<PublisherMessagesConfig>{
+            PublisherMessagesConfig{{"A"}, MESSAGES_PER_WRITER, NO_PARTITION_INDEX_BASE},
+            PublisherMessagesConfig{{"A"}, MESSAGES_PER_WRITER, A_PARTITION_INDEX_BASE}});
+    ASSERT_EQ(sent_messages.size(), MESSAGES_PER_WRITER * 2);
+
+    auto read_messages = read_messages_(OUTPUT_FILE_PATH);
+    std::set<std::string> writer_guids;
+
+    for (const auto& read_message : read_messages)
+    {
+        const auto partitions_it = read_message.channel->metadata.find(
+            eprosima::ddsrecorder::participants::PARTITIONS);
+        ASSERT_NE(partitions_it, read_message.channel->metadata.end());
+
+        const auto writer_partitions = parse_partitions_metadata_(partitions_it->second);
+        for (const auto& writer_partition : writer_partitions)
+        {
+            writer_guids.insert(writer_partition.first);
+        }
+    }
+
+    ASSERT_EQ(writer_guids.size(), 2u);
 }
 
 TEST_F(McapFileCreationPartitionTest, mcap_data_num_msgs_four_publishers_partition_split)

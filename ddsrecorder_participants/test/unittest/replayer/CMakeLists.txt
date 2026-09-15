@@ -12,6 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(TEST_EXTRA_LIBRARIES
+        cpp_utils
+        ddspipe_core
+        ddspipe_participants
+        ddsrecorder_participants
+    )
+
 set(TEST_NAME DynamicTypesSupportTest)
 
 set(TEST_SOURCES
@@ -23,11 +30,22 @@ set(TEST_LIST
         real_type_names_are_not_dependency_keys
     )
 
-set(TEST_EXTRA_LIBRARIES
-        cpp_utils
-        ddspipe_core
-        ddspipe_participants
-        ddsrecorder_participants
+add_unittest_executable(
+        "${TEST_NAME}"
+        "${TEST_SOURCES}"
+        "${TEST_LIST}"
+        "${TEST_EXTRA_LIBRARIES}"
+    )
+
+set(TEST_NAME McapReaderParticipantTest)
+
+set(TEST_SOURCES
+        McapReaderParticipantTest.cpp
+    )
+
+set(TEST_LIST
+        latest_partition_entry_is_used
+        latest_entry_is_selected_per_writer
     )
 
 add_unittest_executable(

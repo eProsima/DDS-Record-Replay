@@ -135,7 +135,6 @@ void SqlHandler::write_samples_(
 
         const auto topic = sql_sample->topic;
 
-        std::ostringstream guid_ss;
         std::string writer_partitions;
 
         // - (Table: Topics) Write the topic if it hasn't been written before -
@@ -147,31 +146,9 @@ void SqlHandler::write_samples_(
             written_topics_.insert(topic);
         }
 
-        // get the writer guid
-        guid_ss << sql_sample->writer_guid;
-
-        // search for the partitions of the current writer guid
-        auto it = topic.partition_name.find(guid_ss.str());
-        if (it != topic.partition_name.end())
-        {
-            writer_partitions = it->second;
-        }
-        else
-        {
-            // The writer is not present in the topic's partition snapshot, so the sample cannot be
-            // attributed to a partition and is dropped. This is data loss
-            // NOTE: Writers with an empty partition do not reach this branch. Their entry exists in
-            // the snapshot with an empty partition name.
-            EPROSIMA_LOG_WARNING(DDSRECORDER_SQL_HANDLER,
-                    "DISCARDED_SAMPLE | Dropping sample on topic "
-                    << topic.m_topic_name << ": writer " << guid_ss.str()
-                    << " is not present in the topic's partition map ("
-                    << topic.partition_name.size()
-                    << " known writers).");
-
-            samples.pop_front();
-            continue;
-        }
+        // The partitions of the producing writer travel with the sample. There is no topic-level
+        // snapshot to miss, so a sample can no longer be dropped for an unknown writer.
+        writer_partitions = sql_sample->partitions;
 
         // -- (Table: Partitions) Write the partition set ---------------------
 

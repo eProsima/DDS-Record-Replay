@@ -17,6 +17,8 @@
  */
 
 #include <ddsrecorder_participants/common/time_utils.hpp>
+#include <sstream>
+
 #include <ddsrecorder_participants/recorder/message/McapMessage.hpp>
 
 
@@ -37,6 +39,10 @@ McapMessage::McapMessage(
 {
     sequence = number_of_msgs.fetch_add(1);
     channelId = channel_id;
+
+    std::ostringstream writer_guid_ss;
+    writer_guid_ss << data.source_guid;
+    writer_guid_string = writer_guid_ss.str();
 
     this->data = get_data_cdr();
     dataSize = get_data_cdr_size();

@@ -13,3 +13,26 @@
 # limitations under the License.
 
 add_subdirectory(handlers)
+
+set(TEST_NAME McapWriterTest)
+
+set(TEST_SOURCES
+        McapWriterTest.cpp
+    )
+
+set(TEST_LIST
+        partition_repeated
+    )
+
+set(TEST_EXTRA_LIBRARIES
+        cpp_utils
+        ddspipe_core
+        ddsrecorder_participants
+    )
+
+add_unittest_executable(
+        "${TEST_NAME}"
+        "${TEST_SOURCES}"
+        "${TEST_LIST}"
+        "${TEST_EXTRA_LIBRARIES}"
+    )

@@ -182,7 +182,7 @@ DdsRecorder::DdsRecorder(
         );
 
     const auto effective_partitions = effective_partitions_(configuration_.dds_configuration->allowed_partition_list);
-    dyn_participant_->update_partitions(effective_partitions);
+    dyn_participant_->set_partition_filter(effective_partitions);
     apply_content_filters_(configuration_.dds_configuration->content_topic_filter_dict, {}, dyn_participant_);
     applied_content_filters_ = configuration_.dds_configuration->content_topic_filter_dict;
 
@@ -251,7 +251,7 @@ DdsRecorder::DdsRecorder(
         thread_pool_);
 
     // Apply partition configuration to active readers/tracks as well
-    pipe_->update_partitions(effective_partitions);
+    pipe_->set_partition_filter(effective_partitions);
     apply_content_filters_(
         configuration_.dds_configuration->content_topic_filter_dict,
         {},
@@ -291,8 +291,8 @@ utils::ReturnCode DdsRecorder::reload_configuration(
         // update the filter partition set
         const auto effective_partitions = effective_partitions_(
             new_configuration.dds_configuration->allowed_partition_list);
-        dyn_participant_->update_partitions(effective_partitions);
-        pipe_->update_partitions(effective_partitions);
+        dyn_participant_->set_partition_filter(effective_partitions);
+        pipe_->set_partition_filter(effective_partitions);
 
         // Update topic content filters in both future and active readers
         apply_content_filters_(
@@ -310,7 +310,7 @@ void DdsRecorder::update_filter(
         const std::set<std::string> new_filter)
 {
     // function used in the tests
-    pipe_->update_filter(new_filter);
+    pipe_->set_partition_filter(new_filter);
 }
 
 void DdsRecorder::start()

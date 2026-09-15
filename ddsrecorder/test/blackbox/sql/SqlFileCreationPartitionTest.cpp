@@ -450,6 +450,46 @@ TEST_F(SqlFileCreationPartitionTest, sql_data_num_msgs_partition)
 }
 
 /**
+ * Verify that a writer's partition is stored per sample when its Publisher changes partition.
+ *
+ * The partition sequence is A -> B -> C -> D -> B -> A.
+ */
+TEST_F(SqlFileCreationPartitionTest, sql_data_num_msgs_partition_five_changes)
+{
+    init_dds_data(std::vector<std::string>{"A"}, true);
+
+    const std::string OUTPUT_FILE_NAME = "sql_data_num_msgs_partition_five_changes";
+    const auto OUTPUT_FILE_PATH = get_output_file_path_(OUTPUT_FILE_NAME + ".db");
+    constexpr auto MESSAGES_PER_PARTITION = 10u;
+    constexpr auto TOTAL_MESSAGES = MESSAGES_PER_PARTITION * 6;
+
+    ASSERT_TRUE(delete_file_(OUTPUT_FILE_PATH));
+    ASSERT_TRUE(delete_file_(get_output_file_path_(OUTPUT_FILE_NAME + ".mcap")));
+
+    record_messages_partition_changes_(OUTPUT_FILE_NAME, MESSAGES_PER_PARTITION);
+
+    const std::vector<std::string> expected_partitions{"A", "B", "C", "D", "B", "A"};
+    std::vector<std::string> recorded_partitions;
+    exec_sql_statement_(
+        OUTPUT_FILE_PATH,
+        "SELECT mp.partition FROM Messages AS m "
+        "JOIN MessagesPartitions AS mp ON m.writer_guid = mp.writer_guid "
+        "AND m.sequence_number = mp.sequence_number "
+        "WHERE m.topic = ? ORDER BY m.sequence_number;",
+        {topic_->get_name()},
+        [&](sqlite3_stmt* stmt)
+        {
+            recorded_partitions.emplace_back(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
+        });
+
+    ASSERT_EQ(recorded_partitions.size(), TOTAL_MESSAGES);
+    for (std::size_t i = 0; i < recorded_partitions.size(); ++i)
+    {
+        EXPECT_EQ(recorded_partitions[i], expected_partitions[i / MESSAGES_PER_PARTITION]);
+    }
+}
+
+/**
  * @brief Verify that the DDS Recorder records every message in an SQL file with DOWNSAMPLING.
  *
  * Writer publish with partition = "A"
