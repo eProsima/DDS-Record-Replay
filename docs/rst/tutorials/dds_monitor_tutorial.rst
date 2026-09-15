@@ -90,7 +90,7 @@ Once you have all the desired data, close the |ddsrecorder| application with ``C
 Visualize data with DDS Monitor Pro
 ===================================
 
-Finally, we will show how to load the generated MCAP file into DDS Monitor Pro in order to display the saved data. 
+Finally, we will show how to load the generated MCAP file into DDS Monitor Pro in order to display the saved data.
 
 1. Open |eddsmonitorpro| and press the ``Start monitoring!`` button.
 2. Click ``Open a recording instead...`` and load the *.mcap* file previously created: |br|
