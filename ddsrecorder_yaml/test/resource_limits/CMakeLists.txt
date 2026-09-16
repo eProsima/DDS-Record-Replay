@@ -25,6 +25,8 @@ set(TEST_LIST
         sql_log_rotation
         mcap_max_size
         mcap_file_rotation
+        mcap_include_existing_files
+        mcap_include_existing_files_disabled_by_default
     )
 
 set(TEST_EXTRA_LIBRARIES
