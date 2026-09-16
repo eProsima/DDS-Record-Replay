@@ -39,6 +39,7 @@ set(TEST_LIST
         mcap_file_rotation_message_split
         mcap_file_rotation_keeps_newest_messages
         mcap_file_rotation_multiple_writers
+        mcap_file_rotation_with_existing_files
     )
 
 set(TEST_NEEDED_SOURCES
