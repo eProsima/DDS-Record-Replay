@@ -292,7 +292,7 @@ void FileTracker::add_existing_files_nts_() noexcept
                 }
             }
 
-            existing_files.push_back({write_time, File{id, configuration_.filepath + "/" + filename, file_size}});
+            existing_files.push_back({write_time, File{id, entry.path().string(), file_size}});
         }
 
         // Sort the existing files from the oldest to the most recently modified one
@@ -388,7 +388,7 @@ std::string FileTracker::generate_filename_(
 {
     static const std::string SEPARATOR = "_";
 
-    auto filename = configuration_.filepath + "/";
+    std::string filename;
 
     if (configuration_.prepend_timestamp)
     {
@@ -410,7 +410,8 @@ std::string FileTracker::generate_filename_(
 
     filename += configuration_.extension;
 
-    return filename;
+    // Join the output directory and the filename with the platform's preferred separator
+    return (std::filesystem::path(configuration_.filepath) / filename).string();
 }
 
 std::string FileTracker::make_filename_tmp_(
