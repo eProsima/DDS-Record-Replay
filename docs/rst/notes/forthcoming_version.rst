@@ -6,13 +6,6 @@
 Forthcoming Version
 ###################
 
-.. warning::
-
-    The DDS Replayer long argument ``--input`` has been renamed to ``--input-file``, which is the name that both
-    the documentation and the application's help text have always shown.
-    The short form ``-i`` is unaffected.
-    Scripts relying on ``--input`` must be updated, as it is now reported as an unknown argument.
-
 Next release will include the following **features**:
 
 * Add the ``include-existing-files`` configuration option, which makes the *DDS Recorder* account for the output files
