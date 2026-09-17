@@ -14,8 +14,8 @@ Prerequisites
 
 It is required to have |eddsrecord| previously installed using one of the following installation methods:
 
-* :ref:`installation_manual_windows`
 * :ref:`installation_manual_linux`
+* :ref:`installation_manual_windows`
 * :ref:`docker`
 
 Additionally, `ShapesDemo <https://www.eprosima.com/index.php/products-all/eprosima-shapes-demo>`_ is required to publish and subscribe shapes of different colors and sizes.
@@ -39,7 +39,8 @@ Recorder configuration
 ======================
 
 |ddsrecorder| runs with default configuration settings.
-This default configuration records all messages of all DDS Topics found in DDS Domain ``0`` in the ``output_YYYY-MM-DD-DD_hh-mm-ss.mcap`` file.
+This default configuration records all messages of all DDS Topics found in DDS Domain ``0`` in the ``<yyyy-MM-dd_HH-mm-ss_zzz>_output.mcap`` file.
+The recording can also be written to an SQL database instead of, or in addition to, the MCAP file (see :ref:`Output Selection <recorder_usage_configuration_output_selection>`).
 
 Additionally, it is possible to change the default configuration parameters by means of a YAML configuration file.
 
@@ -68,6 +69,6 @@ Stop the recorder with ``Ctrl+C`` and check that the MCAP file exists.
 Next Steps
 ==========
 
-Explore section :ref:`Tutorials <tutorials_foxglove>` for more information on how to configure and set up a recorder, as well as to discover multiple scenarios where |ddsrecorder| may serve as a useful tool.
+Explore section :ref:`Tutorials <tutorials_dds_monitor>` for more information on how to configure and set up a recorder, as well as to discover multiple scenarios where |ddsrecorder| may serve as a useful tool.
 Also, feel free to check out :ref:`this <replayer_getting_started_usage_example>` example, where a |ddsreplayer| is used to reproduce the traffic recorded following the steps in this tutorial.
 
