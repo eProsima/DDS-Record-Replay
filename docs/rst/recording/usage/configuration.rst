@@ -738,8 +738,7 @@ The ``Topics`` table holds one row per recorded topic, with its serialized :ref:
         type TEXT NOT NULL,
         qos TEXT NOT NULL,
         is_ros2_topic TEXT NOT NULL,
-        PRIMARY KEY(name, type),
-        FOREIGN KEY(type) REFERENCES Types(name)
+        PRIMARY KEY(name, type)
     );
 
 The ``Messages`` table holds the recorded data.
