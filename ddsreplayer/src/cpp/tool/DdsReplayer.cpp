@@ -21,6 +21,7 @@
 
 #include <fastdds/rtps/common/CDRMessage_t.h>
 #include <fastdds/rtps/common/SerializedPayload.h>
+#include <fastdds/rtps/messages/CDRMessage.h>
 #include <fastrtps/types/TypeObjectFactory.h>
 
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
