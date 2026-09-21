@@ -326,14 +326,14 @@ Local installation
             cd ~/DDS-Record-Replay
             mkdir build/cmake_utils
             cd build/cmake_utils
-            cmake ~/DDS-Record-Replay/src/dev-utils/cmake_utils -DCMAKE_INSTALL_PREFIX=~/DDS-Record-Replay/install -DCMAKE_PREFIX_PATH=~/DDS-Record-Replay/install
+            cmake ~/DDS-Record-Replay/src/dev_utils/cmake_utils -DCMAKE_INSTALL_PREFIX=~/DDS-Record-Replay/install -DCMAKE_PREFIX_PATH=~/DDS-Record-Replay/install
             cmake --build . --target install
 
             # C++ Utils
             cd ~/DDS-Record-Replay
             mkdir build/cpp_utils
             cd build/cpp_utils
-            cmake ~/DDS-Record-Replay/src/dev-utils/cpp_utils -DCMAKE_INSTALL_PREFIX=~/DDS-Record-Replay/install -DCMAKE_PREFIX_PATH=~/DDS-Record-Replay/install
+            cmake ~/DDS-Record-Replay/src/dev_utils/cpp_utils -DCMAKE_INSTALL_PREFIX=~/DDS-Record-Replay/install -DCMAKE_PREFIX_PATH=~/DDS-Record-Replay/install
             cmake --build . --target install
 
     * `DDS Pipe <https://github.com/eProsima/DDS-Pipe>`_

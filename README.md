@@ -1,12 +1,17 @@
 # eProsima DDS Record & Replay
 
-<a href="http://www.eprosima.com"><img src="https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSd0PDlVz1U_7MgdTe0FRIWD0Jc9_YH-gGi0ZpLkr-qgCI6ZEoJZ5GBqQ" align="left" hspace="8" vspace="2" width="100" height="100" ></a>
+> [!WARNING]
+> **The `0.x` branch has reached its End-of-Life (EOL).**
+> This version of *eProsima DDS Record & Replay* is no longer maintained and will receive no further releases, bugfixes or security updates.
+> Please migrate to the [latest release](https://github.com/eProsima/DDS-Record-Replay/releases/latest), which is still compatible with applications running with *eProsima Fast DDS* v2.
 
 [![License](https://img.shields.io/github/license/eProsima/DDS-Recorder.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Issues](https://img.shields.io/github/issues/eProsima/DDS-Recorder.svg)](https://github.com/eProsima/DDS-Recorder/issues)
 [![Forks](https://img.shields.io/github/forks/eProsima/DDS-Recorder.svg)](https://github.com/eProsima/DDS-Recorder/network/members)
 [![Stars](https://img.shields.io/github/stars/eProsima/DDS-Recorder.svg)](https://github.com/eProsima/DDS-Recorder/stargazers)
 [![test](https://github.com/eProsima/DDS-Recorder/actions/workflows/test.yml/badge.svg)](https://github.com/eProsima/DDS-Recorder/actions/workflows/test.yml)
+
+<a href="http://www.eprosima.com"><img src="resources/images/eprosima_logo.svg" alt="eProsima" width="100"></a>
 
 *eProsima DDS Record & Replay* is an end-user software application that efficiently saves DDS data published in a DDS environment into a MCAP format database.
 Thus, the exact playback of the recorded network events is possible as the data is linked to the timestamp at which the original data was published.
