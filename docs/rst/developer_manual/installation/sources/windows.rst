@@ -354,7 +354,7 @@ Local installation
             cd <path\to\user\workspace>\DDS-Record-Replay
             mkdir build\cmake_utils
             cd build\cmake_utils
-            cmake <path\to\user\workspace>\DDS-Record-Replay\src\dev-utils\cmake_utils -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record-Replay\install ^
+            cmake <path\to\user\workspace>\DDS-Record-Replay\src\dev_utils\cmake_utils -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record-Replay\install ^
                 -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record-Replay\install
             cmake --build . --config Release --target install
 
@@ -362,7 +362,7 @@ Local installation
             cd <path\to\user\workspace>\DDS-Record-Replay
             mkdir build\cpp_utils
             cd build\cpp_utils
-            cmake <path\to\user\workspace>\DDS-Record-Replay\src\dev-utils\cpp_utils -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record-Replay\install ^
+            cmake <path\to\user\workspace>\DDS-Record-Replay\src\dev_utils\cpp_utils -DCMAKE_INSTALL_PREFIX=<path\to\user\workspace>\DDS-Record-Replay\install ^
                 -DCMAKE_PREFIX_PATH=<path\to\user\workspace>\DDS-Record-Replay\install
             cmake --build . --config Release --target install
 
