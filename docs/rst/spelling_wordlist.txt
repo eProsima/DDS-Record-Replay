@@ -3,9 +3,11 @@ allowlist
 allowlisting
 Asio
 blocklist
+bugfixes
 Chocolatey
 CMake
 Colcon
+colcon
 cpp
 dataflow
 datagram
@@ -34,6 +36,7 @@ Gtest
 guid
 IDL
 idl
+infos
 IPv
 kubernetes
 localhost
@@ -50,6 +53,7 @@ Redistributable
 replayable
 replayer
 Requiredness
+reStructuredText
 ROS
 runtime
 scalable

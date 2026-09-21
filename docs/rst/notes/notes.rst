@@ -31,7 +31,7 @@ This release includes the following **CI improvements**:
 * Upgrade to Ubuntu Noble (24.04).
 * Remove Ubuntu Focal (20.04) from the CI.
 * Support multiple versions of Fast DDS in the CI.
-* Fix the ``lz4`` and ``zstd`` vcpkg installation on Windows.
+* Fix the ``lz4`` and ``zstd`` ``vcpkg`` installation on Windows.
 * Empty the XTSAN tests list.
 
 This release includes the following **Dependencies Update**:
