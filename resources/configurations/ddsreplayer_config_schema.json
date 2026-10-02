@@ -214,6 +214,9 @@
                 "max-tx-rate":{
                     "type":"number",
                     "minimum": 0
+                },
+                "endpoint-profile-name":{
+                    "type":"string"
                 }
             },
             "title": "QOSReplayer"
