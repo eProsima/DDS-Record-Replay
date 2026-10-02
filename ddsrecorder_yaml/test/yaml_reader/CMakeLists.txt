@@ -23,9 +23,11 @@ set(TEST_LIST
         recorder_max_pending_samples_below_minus_one_throws
         recorder_sql_resource_limits_max_size_copies_to_max_file_size
         recorder_duplicate_manual_topic_overwrites_filter
+        recorder_manual_topic_endpoint_profile_name
         recorder_malformed_file_throws
         recorder_is_valid_defensive_checks
         replayer_domain_cli_overrides_yaml
+        replayer_manual_topic_endpoint_profile_name
         replayer_begin_time_after_end_time_throws
         replayer_malformed_file_throws
     )

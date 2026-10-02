@@ -1,0 +1,17 @@
+dds:
+  domain: 0
+
+  topics:
+    - name: "rt/chatter"
+      type: "std_msgs::msg::dds_::String_"
+      qos:
+        endpoint-profile-name: "chatter_profile"
+
+recorder:
+  output:
+    filename: "output"
+    path: "."
+
+specs:
+  qos:
+    endpoint-profile-name: "default_profile"
