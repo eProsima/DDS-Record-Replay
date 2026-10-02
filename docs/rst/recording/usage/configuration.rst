@@ -42,7 +42,7 @@ These XML files contain different profiles that set specific QoS, and entities c
 
 The way to load these XML configurations is using the *DDS Recorder* YAML configuration.
 The YAML Configuration supports an ``xml`` optional tag that contains certain options to load Fast DDS XML configurations.
-XML configurations are then used to configure the internal DomainParticipant.
+XML configurations are then used to configure the internal DomainParticipant and, through :ref:`Endpoint Profiles <recorder_usage_configuration_xml_endpoint_profiles>`, its DataReaders.
 
 To specify which profile to use, the ``recorder-profile`` tag should be set with the name of the desired profile.
 
@@ -74,6 +74,70 @@ The XML content must follow the same format as an XML file and will be loaded as
           </profiles>
 
     recorder-profile: "participant_profile"
+
+.. _recorder_usage_configuration_xml_endpoint_profiles:
+
+Endpoint Profiles
+^^^^^^^^^^^^^^^^^
+
+When the |ddsrecorder| creates a :term:`DataReader` for a topic, it looks for a loaded XML ``data_reader`` profile to configure it.
+By default, it looks for a profile **whose name matches the topic name**.
+If a matching profile is found, the DataReader is configured with that profile's QoS, giving the user control over fields such as history, memory policy or transport.
+If no matching profile exists, the DataReader is configured as usual, with QoS derived from the YAML configuration and from discovery.
+
+.. note::
+
+    Endpoint profiles are only applied by the DDS participant of the |ddsrecorder|, so they are ignored when the :ref:`RTPS Participant <recorder_specs_rtps>` is selected.
+
+.. note::
+
+    The |ddsrecorder| always sets ``expects_inline_qos`` on the DataReaders of keyed topics, regardless of the XML profile.
+
+The following example loads a profile that is automatically applied to the DataReader of the topic ``my_topic``:
+
+.. code-block:: xml
+
+    <?xml version="1.0" encoding="UTF-8" ?>
+    <profiles xmlns="http://www.eprosima.com">
+        <data_reader profile_name="my_topic">
+            <historyMemoryPolicy>DYNAMIC</historyMemoryPolicy>
+        </data_reader>
+    </profiles>
+
+Selecting a Profile Explicitly
+""""""""""""""""""""""""""""""
+
+Instead of relying on the topic name, a specific profile can be selected with the ``endpoint-profile-name`` tag of the :ref:`Topic QoS <recorder_topic_qos>`.
+When set, the |ddsrecorder| looks up the ``data_reader`` profile with that name instead of the topic name:
+
+.. code-block:: yaml
+
+    topics:
+      - name: "rt/chatter"
+        qos:
+          endpoint-profile-name: "chatter_profile"
+
+The ``endpoint-profile-name`` tag can also be set in the :ref:`Specs Topic QoS <recorder_specs_topic_qos>` to use the same profile for every topic, and the :ref:`Manual Topics <recorder_manual_topics>` take precedence over it.
+If no profile with that name is loaded, the |ddsrecorder| does not look for a profile named after the topic; the DataReader is configured as if no profile were loaded.
+
+Overriding Profile QoS from the YAML Configuration
+""""""""""""""""""""""""""""""""""""""""""""""""""
+
+When a profile is applied, the following :ref:`Topic QoS <recorder_topic_qos>` override the corresponding values of the profile, but only if they are explicitly set in the YAML configuration, either in the :ref:`Manual Topics <recorder_manual_topics>` or in the :ref:`Specs Topic QoS <recorder_specs_topic_qos>`:
+``durability``, ``reliability``, ``ownership`` and ``history-depth``.
+Every other field keeps the value from the XML profile.
+
+The QoS that the |ddsrecorder| learns from the remote DataWriters during discovery never override the profile.
+Fields that are set neither in the profile nor in the YAML configuration therefore take the |fastdds| default values (e.g. ``KEEP_LAST`` history with depth ``1``), instead of being adapted to the discovered DataWriters.
+
+.. warning::
+
+    Setting ``history-depth`` in the Specs Topic QoS overrides the history of every matching profile, even when it is set to its default value of ``5000``.
+    Likewise, if the remote DataWriters use ``EXCLUSIVE_OWNERSHIP_QOS``, set ``ownership`` either in the profile or in the YAML configuration, otherwise the DataReader will not match them.
+
+.. note::
+
+    The QoS stored in the recording for each topic are still those derived from discovery and the YAML configuration, not the QoS of the DataReader configured with the profile.
 
 .. _recorder_usage_configuration_domain_id:
 
@@ -239,6 +303,12 @@ For more information on topics, please read the `Fast DDS Topic <https://fast-dd
         - *unsigned integer*
         - ``1``
         - :ref:`recorder_downsampling`
+
+    *   - Endpoint Profile Name
+        - ``endpoint-profile-name``
+        - *string*
+        - Topic name
+        - :ref:`recorder_usage_configuration_xml_endpoint_profiles`
 
 .. warning::
 
@@ -1084,12 +1154,14 @@ This improves the performance of the internal data communications.
 This value should be set by each user depending on each system characteristics.
 In case this value is not set, the default number of threads used is :code:`12`.
 
+.. _recorder_specs_rtps:
+
 RTPS Participant
 ^^^^^^^^^^^^^^^^
 
 ``specs`` supports an ``rtps`` **optional** tag that selects the kind of internal participant the |ddsrecorder| creates to communicate with the DDS network.
 By default it is set to ``false``, and a DDS participant is created, which is the one that applies the Fast DDS XML profiles described in the *Load XML Configuration* section.
-Setting ``rtps: true`` creates a plain RTPS participant instead, in which case XML profiles are not applied.
+Setting ``rtps: true`` creates a plain RTPS participant instead, in which case XML profiles are not applied, including the :ref:`Endpoint Profiles <recorder_usage_configuration_xml_endpoint_profiles>`.
 
 .. _recorder_specs_topic_qos:
 
@@ -1312,6 +1384,9 @@ A complete example of all the configurations described on this page can be found
                     <domainId>1</domainId>
                     <rtps></rtps>
                 </participant>
+                <data_reader profile_name="custom_endpoint_profile">
+                    <historyMemoryPolicy>DYNAMIC</historyMemoryPolicy>
+                </data_reader>
             </profiles>
 
       recorder-profile: "participant_profile"
@@ -1339,6 +1414,7 @@ A complete example of all the configurations described on this page can be found
           qos:
             max-rx-rate: 15
             downsampling: 2
+            endpoint-profile-name: "custom_endpoint_profile"
 
       ignore-participant-flags: no_filter
       transport: builtin

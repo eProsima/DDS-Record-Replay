@@ -41,7 +41,7 @@ These XML files contain different profiles that set specific QoS, and entities c
 
 The way to load these XML configurations is using the *DDS Replayer* YAML configuration.
 The YAML Configuration supports an ``xml`` optional tag that contains certain options to load Fast DDS XML configurations.
-XML configurations are then used to configure the internal DomainParticipant.
+XML configurations are then used to configure the internal DomainParticipant and, through :ref:`Endpoint Profiles <replayer_usage_configuration_xml_endpoint_profiles>`, its DataWriters.
 
 To specify which profile to use, the ``replayer-profile`` tag should be set with the name of the desired profile.
 
@@ -73,6 +73,68 @@ The XML content must follow the same format as an XML file and will be loaded as
           </profiles>
 
     replayer-profile: "participant_profile"
+
+.. _replayer_usage_configuration_xml_endpoint_profiles:
+
+Endpoint Profiles
+^^^^^^^^^^^^^^^^^
+
+When the |ddsreplayer| creates a :term:`DataWriter` for a topic, it looks for a loaded XML ``data_writer`` profile to configure it.
+By default, it looks for a profile **whose name matches the topic name**.
+If a matching profile is found, the DataWriter is configured with that profile's QoS, giving the user control over fields such as history, memory policy or transport.
+If no matching profile exists, the DataWriter is configured as usual, with QoS derived from the YAML configuration and from the QoS stored in the input file.
+
+.. note::
+
+    Endpoint profiles are only applied by the DDS participant of the |ddsreplayer|, so they are ignored when the :ref:`RTPS Participant <replayer_specs_rtps>` is selected.
+
+.. note::
+
+    Certain QoS are always enforced by the |ddsreplayer| on its DataWriters, regardless of the XML profile:
+    ``deadline`` (set to the minimum value so it matches any DataReader) and ``autodispose_unregistered_instances`` (set to ``false`` so that dispose and unregister messages are replayed as recorded).
+
+The following example loads a profile that is automatically applied to the DataWriter of the topic ``my_topic``:
+
+.. code-block:: xml
+
+    <?xml version="1.0" encoding="UTF-8" ?>
+    <profiles xmlns="http://www.eprosima.com">
+        <data_writer profile_name="my_topic">
+            <historyMemoryPolicy>DYNAMIC</historyMemoryPolicy>
+        </data_writer>
+    </profiles>
+
+Selecting a Profile Explicitly
+""""""""""""""""""""""""""""""
+
+Instead of relying on the topic name, a specific profile can be selected with the ``endpoint-profile-name`` tag of the :ref:`Topic QoS <replayer_topic_qos>`.
+When set, the |ddsreplayer| looks up the ``data_writer`` profile with that name instead of the topic name:
+
+.. code-block:: yaml
+
+    topics:
+      - name: "rt/chatter"
+        qos:
+          endpoint-profile-name: "chatter_profile"
+
+The ``endpoint-profile-name`` tag can also be set in the :ref:`Specs Topic QoS <replayer_specs_topic_qos>` to use the same profile for every topic, and the :ref:`Manual Topics <replayer_manual_topics>` take precedence over it.
+If no profile with that name is loaded, the |ddsreplayer| does not look for a profile named after the topic; the DataWriter is configured as if no profile were loaded.
+
+Overriding Profile QoS from the YAML Configuration
+""""""""""""""""""""""""""""""""""""""""""""""""""
+
+When a profile is applied, the following :ref:`Topic QoS <replayer_topic_qos>` override the corresponding values of the profile, but only if they are explicitly set in the YAML configuration, either in the :ref:`Manual Topics <replayer_manual_topics>` or in the :ref:`Specs Topic QoS <replayer_specs_topic_qos>`:
+``durability``, ``reliability``, ``ownership`` and ``history-depth``.
+Every other field keeps the value from the XML profile.
+
+The QoS stored in the input file never override the profile.
+Fields that are set neither in the profile nor in the YAML configuration therefore take the |fastdds| default values (e.g. ``KEEP_LAST`` history with depth ``1``), instead of the values recorded for that topic.
+
+.. warning::
+
+    When a profile is applied, the recorded ``durability``, ``reliability``, ``ownership`` and history of the topic are lost unless they are set in the profile or in the YAML configuration.
+    Setting ``history-depth`` in the Specs Topic QoS overrides the history of every matching profile, even when it is set to its default value of ``5000``.
+    Likewise, if the topic was recorded with ``EXCLUSIVE_OWNERSHIP_QOS``, set ``ownership`` either in the profile or in the YAML configuration, otherwise the DataWriter will not match the DataReaders that use exclusive ownership.
 
 .. _replayer_usage_configuration_domain_id:
 
@@ -214,6 +276,12 @@ For more information on topics, please read the `Fast DDS Topic <https://fast-dd
         - *float*
         - ``0`` (unlimited)
         - :ref:`replayer_max_tx_rate`
+
+    *   - Endpoint Profile Name
+        - ``endpoint-profile-name``
+        - *string*
+        - Topic name
+        - :ref:`replayer_usage_configuration_xml_endpoint_profiles`
 
 .. warning::
 
@@ -477,12 +545,14 @@ This improves the performance of the internal data communications.
 This value should be set by each user depending on each system characteristics.
 In case this value is not set, the default number of threads used is :code:`12`.
 
+.. _replayer_specs_rtps:
+
 RTPS Participant
 ^^^^^^^^^^^^^^^^
 
 ``specs`` supports an ``rtps`` **optional** tag that selects the kind of internal participant the |ddsreplayer| creates to communicate with the DDS network.
 By default it is set to ``false``, and a DDS participant is created, which is the one that applies the Fast DDS XML profiles described in the *Load XML Configuration* section.
-Setting ``rtps: true`` creates a plain RTPS participant instead, in which case XML profiles are not applied.
+Setting ``rtps: true`` creates a plain RTPS participant instead, in which case XML profiles are not applied, including the :ref:`Endpoint Profiles <replayer_usage_configuration_xml_endpoint_profiles>`.
 
 Wait-for-acknowledgement Timeout
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -629,6 +699,9 @@ A complete example of all the configurations described on this page can be found
                     <domainId>1</domainId>
                     <rtps></rtps>
                 </participant>
+                <data_writer profile_name="custom_endpoint_profile">
+                    <historyMemoryPolicy>DYNAMIC</historyMemoryPolicy>
+                </data_writer>
             </profiles>
 
       replayer-profile: "participant_profile"
@@ -651,6 +724,7 @@ A complete example of all the configurations described on this page can be found
           type: "temperature/types/*"
           qos:
             max-tx-rate: 15
+            endpoint-profile-name: "custom_endpoint_profile"
 
       ignore-participant-flags: no_filter
       transport: builtin
