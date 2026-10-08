@@ -112,10 +112,11 @@ When set, the |ddsreplayer| looks up the ``data_writer`` profile with that name 
 
 .. code-block:: yaml
 
-    topics:
-      - name: "rt/chatter"
-        qos:
-          endpoint-profile-name: "chatter_profile"
+    dds:
+      topics:
+        - name: "rt/chatter"
+          qos:
+            endpoint-profile-name: "chatter_profile"
 
 The ``endpoint-profile-name`` tag can also be set in the :ref:`Specs Topic QoS <replayer_specs_topic_qos>` to use the same profile for every topic, and the :ref:`Manual Topics <replayer_manual_topics>` take precedence over it.
 If no profile with that name is loaded, the |ddsreplayer| does not look for a profile named after the topic; the DataWriter is configured as if no profile were loaded.
