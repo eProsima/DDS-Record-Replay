@@ -135,6 +135,30 @@ TEST(YamlReaderDdsRecorderReplayerTest, recorder_duplicate_manual_topic_overwrit
 }
 
 /**
+ * Check that the 'endpoint-profile-name' Topic QoS of a manual topic is accepted and loaded.
+ */
+TEST(YamlReaderDdsRecorderReplayerTest, recorder_manual_topic_endpoint_profile_name)
+{
+    const char* yml_str =
+            R"(
+            dds:
+              topics:
+                - name: "rt/chatter"
+                  qos:
+                    endpoint-profile-name: "chatter_profile"
+        )";
+
+    Yaml yml = YAML::Load(yml_str);
+
+    RecorderConfiguration configuration(yml);
+
+    ASSERT_EQ(configuration.ddspipe_configuration.manual_topics.size(), 1u);
+    const auto& topic_qos = configuration.ddspipe_configuration.manual_topics[0].first->topic_qos.get_value();
+    ASSERT_TRUE(topic_qos.endpoint_profile_name.is_set());
+    ASSERT_EQ(topic_qos.endpoint_profile_name.get_value(), "chatter_profile");
+}
+
+/**
  * Check that loading the DDS Recorder configuration from a malformed (unparseable) YAML file throws
  * a ConfigurationException wrapping the underlying parse error.
  */
@@ -200,6 +224,32 @@ TEST(YamlReaderDdsRecorderReplayerTest, replayer_domain_cli_overrides_yaml)
     ReplayerConfiguration configuration(yml, &commandline_args);
 
     ASSERT_EQ(configuration.replayer_configuration->domain, ddspipe::core::types::DomainId(10u));
+}
+
+/**
+ * Check that the 'endpoint-profile-name' Topic QoS of a manual topic is accepted and loaded.
+ */
+TEST(YamlReaderDdsRecorderReplayerTest, replayer_manual_topic_endpoint_profile_name)
+{
+    const char* yml_str =
+            R"(
+            dds:
+              topics:
+                - name: "rt/chatter"
+                  qos:
+                    endpoint-profile-name: "chatter_profile"
+            replayer:
+              input-file: "session.mcap"
+        )";
+
+    Yaml yml = YAML::Load(yml_str);
+
+    ReplayerConfiguration configuration(yml);
+
+    ASSERT_EQ(configuration.ddspipe_configuration.manual_topics.size(), 1u);
+    const auto& topic_qos = configuration.ddspipe_configuration.manual_topics[0].first->topic_qos.get_value();
+    ASSERT_TRUE(topic_qos.endpoint_profile_name.is_set());
+    ASSERT_EQ(topic_qos.endpoint_profile_name.get_value(), "chatter_profile");
 }
 
 /**

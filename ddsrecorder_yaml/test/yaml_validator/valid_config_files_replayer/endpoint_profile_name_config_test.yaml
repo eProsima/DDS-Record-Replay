@@ -1,0 +1,15 @@
+dds:
+  domain: 0
+
+  topics:
+    - name: "rt/chatter"
+      type: "std_msgs::msg::dds_::String_"
+      qos:
+        endpoint-profile-name: "chatter_profile"
+
+replayer:
+  input-file: input_file.mcap
+
+specs:
+  qos:
+    endpoint-profile-name: "default_profile"
