@@ -161,9 +161,15 @@ void SqlReaderParticipant::process_summary(
             topic->topic_qos.set_qos(topic_qos, utils::FuzzyLevelValues::fuzzy_level_fuzzy);
 
             // get the partitions set string from the querys row
-            const std::string topic_partitions = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+            // NOTE: both GROUP_CONCAT columns are NULL for a topic without TopicsPartitions rows or
+            // without messages (a topic described in the file but recorded without samples).
+            const auto* partitions_column = sqlite3_column_text(stmt, 4);
+            const std::string topic_partitions =
+                    partitions_column ? reinterpret_cast<const char*>(partitions_column) : "";
             // get the writer guid string from the querys row
-            const std::string writer_guid = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+            const auto* writer_guid_column = sqlite3_column_text(stmt, 5);
+            const std::string writer_guid =
+                    writer_guid_column ? reinterpret_cast<const char*>(writer_guid_column) : "";
 
             // check the partitions filter
             bool pass_partition_filter = allowed_partition_list_.empty();
@@ -260,7 +266,8 @@ void SqlReaderParticipant::process_summary(
             }
 
             // (empty partition list) adds the partitions set if is not empty
-            if (topic_partitions != "")
+            // NOTE: a topic without messages has no writer to associate the partitions with
+            if (topic_partitions != "" && writer_guid != "")
             {
                 topic->partition_name[writer_guid] = topic_partitions;
             }
