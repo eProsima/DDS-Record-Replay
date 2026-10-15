@@ -178,6 +178,9 @@
                 "ros2-types":{
                     "type":"boolean"
                 },
+                "idl-types-path":{
+                    "type":"string"
+                },
                 "mcap":{
                     "$ref":"#/definitions/MCAPConfig"
                 },

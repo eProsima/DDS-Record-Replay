@@ -174,6 +174,7 @@ DdsRecorder::DdsRecorder(
         std::dynamic_pointer_cast<DynTypesParticipant>(dyn_participant_)->init();
     }
 
+    load_idl_types_();
 
     // Populate Participant Database
     participants_database_->add_participant(
@@ -367,6 +368,27 @@ void DdsRecorder::load_internal_topics_(
 
         configuration.ddspipe_configuration.allowlist.insert(
             utils::Heritable<WildcardDdsFilterTopic>::make_heritable(internal_topic));
+    }
+}
+
+void DdsRecorder::load_idl_types_()
+{
+    const auto& idl_types_path = configuration_.idl_types_path;
+
+    if (idl_types_path.empty())
+    {
+        return;
+    }
+
+    const auto ret = configuration_.dds_enabled ?
+            std::dynamic_pointer_cast<XmlDynTypesParticipant>(dyn_participant_)->load_idl_types(idl_types_path) :
+            std::dynamic_pointer_cast<DynTypesParticipant>(dyn_participant_)->load_idl_types(idl_types_path);
+
+    // Other failures only affect some types, and are already logged
+    if (ret == utils::ReturnCode::RETCODE_PRECONDITION_NOT_MET)
+    {
+        throw InitializationException(
+                  utils::Formatter() << "Failed to load the types of IDL types path " << idl_types_path << ".");
     }
 }
 

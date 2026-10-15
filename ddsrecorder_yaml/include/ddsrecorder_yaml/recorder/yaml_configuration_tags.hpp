@@ -44,6 +44,7 @@ constexpr const char* RECORDER_MAX_PENDING_SAMPLES_TAG("max-pending-samples");
 constexpr const char* RECORDER_ONLY_WITH_TYPE_TAG("only-with-type");
 constexpr const char* RECORDER_RECORD_TYPES_TAG("record-types");
 constexpr const char* RECORDER_ROS2_TYPES_TAG("ros2-types");
+constexpr const char* RECORDER_IDL_TYPES_PATH_TAG("idl-types-path");
 
 // Output related tags
 constexpr const char* RECORDER_OUTPUT_TAG("output");

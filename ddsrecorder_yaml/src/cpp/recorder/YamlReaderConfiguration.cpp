@@ -322,6 +322,13 @@ void RecorderConfiguration::load_recorder_configuration_(
     }
 
     /////
+    // Get optional idl_types_path
+    if (YamlReader::is_tag_present(yml, RECORDER_IDL_TYPES_PATH_TAG))
+    {
+        idl_types_path = YamlReader::get<std::string>(yml, RECORDER_IDL_TYPES_PATH_TAG, version);
+    }
+
+    /////
     // Get optional output configuration
     if (YamlReader::is_tag_present(yml, RECORDER_OUTPUT_TAG))
     {
