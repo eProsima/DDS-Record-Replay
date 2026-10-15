@@ -55,13 +55,21 @@ runs:
       with:
         cmake_build_type: ${{ inputs.cmake_build_type }}
 
-    # In DDS Pipe artifact they are included Fast DDS and dev-utils
+    # TODO: Revert to the DDS Pipe artifact once the DDS Pipe feature/load-types-from-idl branch is merged and
+    # included in the nightly artifacts. Until then, DDS Pipe is built from that branch on top of Fast DDS and dev-utils
     - name: Download dependencies artifact
       uses: eProsima/eProsima-CI/multiplatform/download_dependency@v0
       with:
-        artifact_name: build_ddspipe_${{ inputs.custom_version_build }}_${{ inputs.os }}_${{ inputs.cmake_build_type }}${{ inputs.dependencies_artifact_postfix }}
-        workflow_source: build_ddspipe.yml
+        artifact_name: build_dev_utils_${{ inputs.custom_version_build }}_${{ inputs.os }}_${{ inputs.cmake_build_type }}${{ inputs.dependencies_artifact_postfix }}
+        workflow_source: build_dev_utils.yml
         workflow_source_repository: eProsima/eProsima-CI
         target_workspace: ${{ inputs.target_workspace }}
         secret_token: ${{ inputs.secret_token }}
         workflow_conclusion: completed
+
+    - name: Checkout DDS Pipe
+      uses: eProsima/eProsima-CI/external/checkout@v0
+      with:
+        repository: eProsima/DDS-Pipe
+        path: src/ddspipe
+        ref: feature/load-types-from-idl
