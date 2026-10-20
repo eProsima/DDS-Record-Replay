@@ -3,6 +3,9 @@
 #include "errors.hpp"
 #include "visibility.hpp"
 #include <cstddef>
+// eProsima patch: GCC 15's libstdc++ no longer pulls in <cstdint>
+// through <memory>, as GCC 13/14 used to do.
+#include <cstdint>
 #include <functional>
 #include <limits>
 #include <memory>
