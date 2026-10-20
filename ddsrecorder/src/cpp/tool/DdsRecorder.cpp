@@ -162,6 +162,7 @@ DdsRecorder::DdsRecorder(
             payload_pool_,
             discovery_database_);
 
+        load_idl_types_();
         std::dynamic_pointer_cast<XmlDynTypesParticipant>(dyn_participant_)->init();
     }
     else
@@ -171,10 +172,10 @@ DdsRecorder::DdsRecorder(
             payload_pool_,
             discovery_database_);
 
+        load_idl_types_();
         std::dynamic_pointer_cast<DynTypesParticipant>(dyn_participant_)->init();
     }
 
-    load_idl_types_();
 
     // Populate Participant Database
     participants_database_->add_participant(
@@ -381,8 +382,8 @@ void DdsRecorder::load_idl_types_()
     }
 
     const auto ret = configuration_.dds_enabled ?
-            std::dynamic_pointer_cast<XmlDynTypesParticipant>(dyn_participant_)->load_idl_types(idl_types_path) :
-            std::dynamic_pointer_cast<DynTypesParticipant>(dyn_participant_)->load_idl_types(idl_types_path);
+            std::dynamic_pointer_cast<XmlDynTypesParticipant>(dyn_participant_)->load_idl_types({idl_types_path}, {}) :
+            std::dynamic_pointer_cast<DynTypesParticipant>(dyn_participant_)->load_idl_types({idl_types_path}, {});
 
     // Other failures only affect some types, and are already logged
     if (ret == utils::ReturnCode::RETCODE_PRECONDITION_NOT_MET)
