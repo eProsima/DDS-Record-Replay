@@ -322,13 +322,6 @@ void RecorderConfiguration::load_recorder_configuration_(
     }
 
     /////
-    // Get optional idl_types_path
-    if (YamlReader::is_tag_present(yml, RECORDER_IDL_TYPES_PATH_TAG))
-    {
-        idl_types_path = YamlReader::get<std::string>(yml, RECORDER_IDL_TYPES_PATH_TAG, version);
-    }
-
-    /////
     // Get optional output configuration
     if (YamlReader::is_tag_present(yml, RECORDER_OUTPUT_TAG))
     {
@@ -621,6 +614,21 @@ void RecorderConfiguration::load_dds_configuration_(
     {
         dds_configuration->allowed_partition_list = YamlReader::get_set<std::string>(yml, PARTITIONLIST_TAG,
                         version);
+    }
+
+    /////
+    // Get optional IDL types paths
+    if (YamlReader::is_tag_present(yml, IDL_TYPES_PATHS_TAG))
+    {
+        dds_configuration->idl_types_paths = YamlReader::get_set<std::string>(yml, IDL_TYPES_PATHS_TAG, version);
+    }
+
+    /////
+    // Get optional IDL include paths, kept in order as it is the search order
+    if (YamlReader::is_tag_present(yml, IDL_INCLUDE_PATHS_TAG))
+    {
+        const auto idl_include_paths = YamlReader::get_list<std::string>(yml, IDL_INCLUDE_PATHS_TAG, version);
+        dds_configuration->idl_include_paths = {idl_include_paths.begin(), idl_include_paths.end()};
     }
 
     // Optional get Transport protocol

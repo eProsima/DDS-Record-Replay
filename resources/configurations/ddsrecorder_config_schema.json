@@ -71,6 +71,18 @@
                         "type":"string"
                     }
                 },
+                "idl-types-paths":{
+                    "type":"array",
+                    "items":{
+                        "type":"string"
+                    }
+                },
+                "idl-include-paths":{
+                    "type":"array",
+                    "items":{
+                        "type":"string"
+                    }
+                },
                 "transport":{
                     "type":"string",
                     "enum":[
@@ -177,9 +189,6 @@
                 },
                 "ros2-types":{
                     "type":"boolean"
-                },
-                "idl-types-path":{
-                    "type":"string"
                 },
                 "mcap":{
                     "$ref":"#/definitions/MCAPConfig"

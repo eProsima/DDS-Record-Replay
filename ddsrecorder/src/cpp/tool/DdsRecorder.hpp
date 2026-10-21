@@ -138,15 +138,6 @@ protected:
     void load_internal_topics_(
             yaml::RecorderConfiguration& configuration);
 
-    /**
-     * Load the types of the IDL types path into the DynTypes participant, if set.
-     *
-     * @pre Must be called before initializing the DynTypes participant.
-     *
-     * @throw InitializationException if the IDL types path does not exist or cannot be read.
-     */
-    void load_idl_types_();
-
     static participants::BaseHandlerStateCode recorder_to_handler_state_(
             const DdsRecorderStateCode& recorder_state);
 

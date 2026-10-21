@@ -94,7 +94,6 @@ public:
     bool only_with_type = false;
     bool record_types = true;
     bool ros2_types = false;
-    std::string idl_types_path{};  // IDL file or directory to load types from, empty <-> disabled
 
     // Output file params
     std::string output_filepath = ".";
