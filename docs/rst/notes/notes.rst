@@ -21,15 +21,6 @@ This release includes the following **features**:
   (see the :ref:`DDS Recorder <recorder_usage_configuration_xml_endpoint_profiles>` and
   :ref:`DDS Replayer <replayer_usage_configuration_xml_endpoint_profiles>` Endpoint Profiles sections)
 
-This release includes the following **bugfixes**:
-
-* Fix a crash in the SQL replayer when reading a recording that contains a topic with no samples
-* Accept the documented ``--input-file`` argument in the DDS Replayer
-* Fix ``DdsRecorderMonitor`` crash when ``monitor_status()`` runs more than once
-* Fix SQL size accounting in WAL mode and report discarded samples
-* Refactor partitions logic, fixing MCAP channel metadata on partition changes, SQL log rotation with partitions and preservation of partition changes during replay
-* Add missing ``<cstdint>`` include to the bundled MCAP library to build with GCC 15
-
 This release includes the following **improvements**:
 
 * Require the ``enable`` tag within the ``mcap`` and ``sql`` configuration tags
@@ -38,17 +29,20 @@ This release includes the following **improvements**:
 * Run the ``Python linters`` workflow only in PRs
 * Keep the documentation sidebar scroll position between pages
 
+This release includes the following **bugfixes**:
+
+* Fix a crash in the SQL replayer when reading a recording that contains a topic with no samples
+* Accept the documented ``--input-file`` argument in the DDS Replayer
+* Fix ``DdsRecorderMonitor`` crash when ``monitor_status()`` runs more than once
+* Fix SQL size accounting in WAL mode and report discarded samples
+* Refactor partitions logic
+* Add missing ``<cstdint>`` include to the bundled MCAP library to build with GCC 15
+
 This release includes the following **documentation updates**:
 
-* Document the SQL output of the DDS Recorder, including its database schema and storage engine
-* Document that the DDS Replayer plays back SQL databases as well as MCAP files
-* Document the ``safety-margin``, ``size-tolerance`` and ``specs: rtps`` configuration tags
-* Document the resource limits separately from the MCAP output, as they apply to both outputs
-* Warn that the configuration file is validated against a schema and that unknown tags are rejected
-* Document the XML endpoint profiles of the DDS Recorder and the DDS Replayer
-* Update the Docker image installation instructions to use eProsima's Fast DDS Suite
-* The Foxglove tutorial is updated to use the DDS Monitor tool instead
-* The Installation Manual is merged with the Developer Manual, and the latter is removed
+* Rework the documentation: include missing features; the configuration page contains now more detailed
+  information of the tags, and it warns that unknown tags are rejected by schema validation; the tutorials
+  are updated; and the Installation Manual is updated and merged with the Developer Manual
 
 This release includes the following **Dependencies Update**:
 
