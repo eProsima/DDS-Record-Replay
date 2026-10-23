@@ -631,6 +631,13 @@ void RecorderConfiguration::load_dds_configuration_(
         dds_configuration->idl_include_paths = {idl_include_paths.begin(), idl_include_paths.end()};
     }
 
+    /////
+    // Get optional IDL types priority
+    if (YamlReader::is_tag_present(yml, IDL_TYPES_PRIORITY_TAG))
+    {
+        dds_configuration->idl_types_priority = YamlReader::get<bool>(yml, IDL_TYPES_PRIORITY_TAG, version);
+    }
+
     // Optional get Transport protocol
     if (YamlReader::is_tag_present(yml, TRANSPORT_DESCRIPTORS_TRANSPORT_TAG))
     {

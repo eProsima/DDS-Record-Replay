@@ -83,6 +83,9 @@
                         "type":"string"
                     }
                 },
+                "idl-types-priority":{
+                    "type":"boolean"
+                },
                 "transport":{
                     "type":"string",
                     "enum":[
