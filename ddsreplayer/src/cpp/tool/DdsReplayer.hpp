@@ -96,6 +96,16 @@ protected:
     std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair> register_dynamic_types_(
             const participants::DynamicTypesCollection& dynamic_types);
 
+    /**
+     * @brief Register the types of the configured IDL types paths that are not in \c registered_types.
+     *
+     * The recorded types are kept, as they are the ones the recorded data was serialized with.
+     *
+     * @param registered_types: The registered types, completed with the ones loaded from IDL.
+     */
+    void register_idl_types_(
+            std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair>& registered_types);
+
     //! Replayer Configuration
     const yaml::ReplayerConfiguration configuration_;
 
