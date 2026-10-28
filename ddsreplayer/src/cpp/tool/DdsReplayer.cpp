@@ -16,6 +16,7 @@
 #include <regex>
 #include <set>
 #include <string>
+#include <vector>
 
 #include <fastdds/dds/core/policy/QosPolicies.hpp>
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
@@ -25,6 +26,8 @@
 #include <fastdds/dds/publisher/qos/PublisherQos.hpp>
 #include <fastdds/dds/topic/qos/TopicQos.hpp>
 #include <fastdds/dds/topic/TypeSupport.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
+#include <fastdds/dds/xtypes/type_representation/ITypeObjectRegistry.hpp>
 
 #include <cpp_utils/exception/InitializationException.hpp>
 #include <cpp_utils/Log.hpp>
@@ -40,6 +43,7 @@
 
 #include <cpp_utils/exception/InconsistencyException.hpp>
 #include <ddspipe_core/efficiency/payload/FastPayloadPool.hpp>
+#include <ddspipe_participants/utils/idl_types.hpp>
 
 #include <ddsrecorder_participants/common/types/dynamic_types_collection/DynamicTypesCollection.hpp>
 #include <ddsrecorder_participants/constants.hpp>
@@ -156,6 +160,14 @@ DdsReplayer::DdsReplayer(
     {
         // Register the dynamic types
         registered_types = register_dynamic_types_(types);
+
+        // Complete them with the types loaded from IDL
+        register_idl_types_(registered_types);
+    }
+    else if (!configuration.replayer_configuration->idl_types_paths.empty())
+    {
+        EPROSIMA_LOG_WARNING(DDSREPLAYER_EXECUTION,
+                "The IDL types paths are ignored, as the types are not replayed.");
     }
 
     // Store the topics as built-in topics
@@ -210,6 +222,45 @@ std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair> DdsReplayer::reg
         const participants::DynamicTypesCollection& dynamic_types)
 {
     return participants::detail::type_identifiers_from(participants::detail::register_dynamic_types(dynamic_types));
+}
+
+void DdsReplayer::register_idl_types_(
+        std::map<std::string, fastdds::dds::xtypes::TypeIdentifierPair>& registered_types)
+{
+    const auto& idl_types_paths = configuration_.replayer_configuration->idl_types_paths;
+
+    if (idl_types_paths.empty())
+    {
+        return;
+    }
+
+    // Problems are logged while loading, and the types that could be loaded are still used
+    std::vector<fastdds::dds::DynamicType::_ref_type> idl_types;
+    ddspipe::participants::load_idl_types({idl_types_paths.begin(), idl_types_paths.end()},
+            configuration_.replayer_configuration->idl_include_paths, idl_types);
+
+    auto& type_object_registry = fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry();
+
+    for (const auto& type : idl_types)
+    {
+        const auto type_name = type->get_name().to_string();
+
+        // The recorded types are kept, as the recorded data was serialized with them
+        if (registered_types.find(type_name) != registered_types.end())
+        {
+            continue;
+        }
+
+        fastdds::dds::xtypes::TypeIdentifierPair type_identifiers;
+
+        if (fastdds::dds::RETCODE_OK != type_object_registry.register_typeobject_w_dynamic_type(type, type_identifiers))
+        {
+            EPROSIMA_LOG_WARNING(DDSREPLAYER_EXECUTION, "Failed to register type " << type_name << " loaded from IDL.");
+            continue;
+        }
+
+        registered_types[type_name] = type_identifiers;
+    }
 }
 
 } /* namespace replayer */

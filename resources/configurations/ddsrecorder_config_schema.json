@@ -71,6 +71,21 @@
                         "type":"string"
                     }
                 },
+                "idl-types-paths":{
+                    "type":"array",
+                    "items":{
+                        "type":"string"
+                    }
+                },
+                "idl-include-paths":{
+                    "type":"array",
+                    "items":{
+                        "type":"string"
+                    }
+                },
+                "idl-types-priority":{
+                    "type":"boolean"
+                },
                 "transport":{
                     "type":"string",
                     "enum":[

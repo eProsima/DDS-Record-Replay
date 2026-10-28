@@ -308,6 +308,21 @@ void ReplayerConfiguration::load_dds_configuration_(
                         version);
     }
 
+    /////
+    // Get optional IDL types paths
+    if (YamlReader::is_tag_present(yml, IDL_TYPES_PATHS_TAG))
+    {
+        replayer_configuration->idl_types_paths = YamlReader::get_set<std::string>(yml, IDL_TYPES_PATHS_TAG, version);
+    }
+
+    /////
+    // Get optional IDL include paths, kept in order as it is the search order
+    if (YamlReader::is_tag_present(yml, IDL_INCLUDE_PATHS_TAG))
+    {
+        const auto idl_include_paths = YamlReader::get_list<std::string>(yml, IDL_INCLUDE_PATHS_TAG, version);
+        replayer_configuration->idl_include_paths = {idl_include_paths.begin(), idl_include_paths.end()};
+    }
+
     // Optional get Transport protocol
     if (YamlReader::is_tag_present(yml, TRANSPORT_DESCRIPTORS_TRANSPORT_TAG))
     {
