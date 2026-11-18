@@ -1,0 +1,6 @@
+dds:
+  idl-types-paths:
+    - 3
+
+replayer:
+  input-file: "input_file.mcap"

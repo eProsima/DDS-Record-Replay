@@ -1,0 +1,4 @@
+struct Unrelated
+{
+    unsigned long value;
+};

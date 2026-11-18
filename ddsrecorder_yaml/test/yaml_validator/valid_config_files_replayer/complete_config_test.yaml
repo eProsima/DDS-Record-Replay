@@ -13,6 +13,12 @@ dds:
   partitions:
     - "partition_1"
 
+  idl-types-paths:
+    - "types/HelloWorld.idl"
+
+  idl-include-paths:
+    - "types/include"
+
   transport: shm
 
   ros2-easy-mode: "127.0.0.1"

@@ -1,0 +1,7 @@
+dds:
+  idl-types-priority: "yes"
+
+recorder:
+  output:
+    filename: "output"
+    path: "."

@@ -24,6 +24,8 @@ set(TEST_LIST
         get_ddsrecorder_configuration_yaml_vs_commandline
         get_ddsreplayer_configuration_yaml_vs_commandline
         get_simple_participant_configuration_from_yaml
+        get_idl_types_priority_from_yaml
+        get_idl_types_defaults
     )
 
 set(TEST_EXTRA_LIBRARIES

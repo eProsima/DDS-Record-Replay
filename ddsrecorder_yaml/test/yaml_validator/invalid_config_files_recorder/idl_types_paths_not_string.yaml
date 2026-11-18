@@ -1,0 +1,8 @@
+dds:
+  idl-types-paths:
+    - 3
+
+recorder:
+  output:
+    filename: "output"
+    path: "."

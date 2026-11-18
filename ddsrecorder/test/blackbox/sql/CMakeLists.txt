@@ -222,3 +222,51 @@ add_blackbox_executable(
     "${EXTRA_LIBRARIES}"
     "${TEST_EXTRA_HEADERS}"
 )
+
+###################
+# SqlIdlTypesTest #
+###################
+
+set(TEST_NAME SqlIdlTypesTest)
+
+file(
+    GLOB_RECURSE TEST_SOURCES
+    SqlIdlTypesTest.cpp
+    "${PROJECT_SOURCE_DIR}/test/resources/types/hello_world/*.c*"
+    "${PROJECT_SOURCE_DIR}/../thirdparty/sqlite/*.c"
+    )
+
+set(TEST_LIBRARY_SOURCES
+    )
+
+set(TEST_LIST
+        no_idl_types
+        idl_types_resolve_type
+        idl_types_missing_file
+        idl_types_empty_path
+        idl_types_malformed_file
+        idl_types_unrelated_file
+        idl_types_missing_and_valid_files
+        idl_types_malformed_and_valid_files
+        idl_types_several_invalid_paths
+        idl_types_malformed_file_keeps_discovered_type
+    )
+
+set(TEST_NEEDED_SOURCES
+        ../../resources/types/hello_world/HelloWorld.idl
+        ../../resources/types/idl/Malformed.idl
+        ../../resources/types/idl/Unrelated.idl
+    )
+
+set(TEST_EXTRA_HEADERS
+    ${PROJECT_SOURCE_DIR}/test/resources/types/hello_world/
+    )
+
+add_blackbox_executable(
+    "${TEST_NAME}"
+    "${TEST_SOURCES}"
+    "${TEST_LIST}"
+    "${TEST_NEEDED_SOURCES}"
+    "${TEST_EXTRA_HEADERS}"
+    "${TEST_LIBRARY_SOURCES}"
+)

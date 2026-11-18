@@ -1,0 +1,7 @@
+dds:
+  idl-types-paths: "types/HelloWorld.idl"
+
+recorder:
+  output:
+    filename: "output"
+    path: "."

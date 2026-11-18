@@ -132,6 +132,7 @@ public:
         // Create the participant
         fastdds::dds::DomainParticipantQos pqos;
         pqos.name(test::PARTICIPANT_ID);
+        configure_participant_qos_(pqos);
 
         participant_ = fastdds::dds::DomainParticipantFactory::get_instance()->create_participant(test::DOMAIN, pqos);
 
@@ -181,6 +182,12 @@ public:
     }
 
 protected:
+
+    //! Hook for derived fixtures to adjust the QoS of the publishing participant before it is created
+    virtual void configure_participant_qos_(
+            fastdds::dds::DomainParticipantQos& /*pqos*/)
+    {
+    }
 
     // Publishing 128 or more samples takes long enough for the asynchronous recorder pipeline to
     // need the extended drain wait. This is a test timing threshold, not a recorder limitation.
