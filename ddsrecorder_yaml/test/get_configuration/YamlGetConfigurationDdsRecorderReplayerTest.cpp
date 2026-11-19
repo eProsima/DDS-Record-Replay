@@ -210,6 +210,67 @@ TEST(YamlGetConfigurationDdsRecorderReplayerTest, get_simple_participant_configu
     ASSERT_EQ(replayer_config.replayer_configuration->easy_mode_ip, "2.2.2.2");
     ASSERT_EQ(replayer_config.replayer_configuration->ignore_participant_flags,
             ddspipe::core::types::IgnoreParticipantFlags::no_filter);
+
+    // The include paths keep their order, as it is the search order
+    const std::set<std::string> idl_types_paths{"types/First.idl", "types/Second.idl"};
+    const std::vector<std::string> idl_include_paths{"include/z", "include/a"};
+
+    ASSERT_EQ(recorder_config.dds_configuration->idl_types_paths, idl_types_paths);
+    ASSERT_EQ(recorder_config.dds_configuration->idl_include_paths, idl_include_paths);
+
+    ASSERT_EQ(replayer_config.replayer_configuration->idl_types_paths, idl_types_paths);
+    ASSERT_EQ(replayer_config.replayer_configuration->idl_include_paths, idl_include_paths);
+}
+
+/**
+ * Check the IDL types configuration of the recorder.
+ *
+ * CASES:
+ *  Check that the IDL types priority is read from the YAML.
+ */
+TEST(YamlGetConfigurationDdsRecorderReplayerTest, get_idl_types_priority_from_yaml)
+{
+    const char* yml_str =
+            R"(
+            dds:
+              idl-types-paths:
+                - "types/HelloWorld.idl"
+              idl-types-priority: false
+        )";
+
+    Yaml yml = YAML::Load(yml_str);
+
+    RecorderConfiguration configuration(yml);
+
+    ASSERT_EQ(configuration.dds_configuration->idl_types_paths, std::set<std::string>{"types/HelloWorld.idl"});
+    ASSERT_FALSE(configuration.dds_configuration->idl_types_priority);
+}
+
+/**
+ * Check the default IDL types configuration.
+ *
+ * CASES:
+ *  Check that without IDL types tags no IDL types are loaded and the IDL types have priority in the recorder.
+ */
+TEST(YamlGetConfigurationDdsRecorderReplayerTest, get_idl_types_defaults)
+{
+    const char* yml_str =
+            R"(
+            dds:
+              domain: 0
+        )";
+
+    Yaml yml = YAML::Load(yml_str);
+
+    RecorderConfiguration recorder_config(yml);
+    ReplayerConfiguration replayer_config(yml);
+
+    ASSERT_TRUE(recorder_config.dds_configuration->idl_types_paths.empty());
+    ASSERT_TRUE(recorder_config.dds_configuration->idl_include_paths.empty());
+    ASSERT_TRUE(recorder_config.dds_configuration->idl_types_priority);
+
+    ASSERT_TRUE(replayer_config.replayer_configuration->idl_types_paths.empty());
+    ASSERT_TRUE(replayer_config.replayer_configuration->idl_include_paths.empty());
 }
 
 int main(

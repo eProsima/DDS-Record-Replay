@@ -1,0 +1,7 @@
+dds:
+  idl-include-paths: "types/include"
+
+recorder:
+  output:
+    filename: "output"
+    path: "."

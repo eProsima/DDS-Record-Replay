@@ -38,11 +38,6 @@
 using namespace eprosima;
 using namespace fastdds::dds;
 
-std::atomic<bool> TestDynTypesSubscriber::type_discovered_(false);
-std::atomic<bool> TestDynTypesSubscriber::type_registered_(false);
-std::mutex TestDynTypesSubscriber::type_discovered_cv_mtx_;
-std::condition_variable TestDynTypesSubscriber::type_discovered_cv_;
-
 TestDynTypesSubscriber::TestDynTypesSubscriber(
         const std::string& topic_name,
         const std::string& type_name,
@@ -218,9 +213,9 @@ void TestDynTypesSubscriber::notify_type_discovered_(
     // First check if the topic received is the one we are expecting
     if (topic_name.to_string() != topic_name_)
     {
-        std::cout <<
-            "Discovered type information from topic < " << topic_name.to_string() <<
-            " > while expecting < " << topic_name_ << " >. Skipping..." << std::endl;
+        std::cout
+            << "Discovered type information from topic < " << topic_name.to_string()
+            << " > while expecting < " << topic_name_ << " >. Skipping..." << std::endl;
         return;
     }
 
@@ -295,13 +290,13 @@ void TestDynTypesSubscriber::register_remote_type_callback_(
         rqos,
         this);
 
-    std::cout <<
-        "Participant < " << participant_->guid() <<
-        " > in domain < " << participant_->get_domain_id() <<
-        " > created reader < " << datareader_->guid() <<
-        " > in topic < " << topic_name_ <<
-        " > with data type < " << dynamic_type->get_name() << " > " <<
-        std::endl;
+    std::cout
+        << "Participant < " << participant_->guid()
+        << " > in domain < " << participant_->get_domain_id()
+        << " > created reader < " << datareader_->guid()
+        << " > in topic < " << topic_name_
+        << " > with data type < " << dynamic_type->get_name() << " > "
+        << std::endl;
 
     // Update TestDynTypesSubscriber members
     dynamic_type_ = dynamic_type;

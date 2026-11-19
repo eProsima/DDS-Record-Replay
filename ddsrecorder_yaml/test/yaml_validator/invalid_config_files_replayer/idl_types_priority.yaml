@@ -1,0 +1,5 @@
+dds:
+  idl-types-priority: true
+
+replayer:
+  input-file: "input_file.mcap"

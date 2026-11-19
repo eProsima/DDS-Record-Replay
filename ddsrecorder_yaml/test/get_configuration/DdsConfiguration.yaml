@@ -7,3 +7,9 @@ dds:
   ros2-easy-mode: "2.2.2.2"
   whitelist-interfaces:
     - "127.0.0.1"
+  idl-types-paths:
+    - "types/Second.idl"
+    - "types/First.idl"
+  idl-include-paths:
+    - "include/z"
+    - "include/a"
