@@ -126,14 +126,14 @@ protected:
     Configuration configuration_;
 
     //! Atomic variables to check whether the type has been discovered and registered
-    static std::atomic<bool> type_discovered_;
-    static std::atomic<bool> type_registered_;
+    std::atomic<bool> type_discovered_{false};
+    std::atomic<bool> type_registered_{false};
 
     //! Protects type_discovered condition variable
-    static std::mutex type_discovered_cv_mtx_;
+    std::mutex type_discovered_cv_mtx_;
     //! Waits until a type has been discovered
-    static std::condition_variable type_discovered_cv_;
-    
+    std::condition_variable type_discovered_cv_;
+
     //! Flag to obtain the message index
     bool hello_world_{false};
 

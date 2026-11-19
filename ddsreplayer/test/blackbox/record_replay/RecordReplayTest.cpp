@@ -53,10 +53,15 @@ using namespace eprosima;
 
 namespace test {
 
-// The recording and the replay use different domains, so one cannot reach the other
-constexpr std::uint32_t RECORD_DOMAIN = 81;
+// The recordings use their own domains, so they cannot reach each other nor the replays
+constexpr std::uint32_t RECORD_WITHOUT_IDL_TYPES_DOMAIN = 81;
+constexpr std::uint32_t RECORD_WITH_IDL_TYPES_DOMAIN = 82;
 
 constexpr unsigned int RECORD_REPLAY_MESSAGES = 10;
+
+// Written by the recording tests and read by the replay tests, which CTest runs afterwards in other processes
+const std::string RECORDING_WITHOUT_IDL_TYPES = "record_replay_without_idl_types";
+const std::string RECORDING_WITH_IDL_TYPES = "record_replay_with_idl_types";
 
 const std::string REPLAYER_CONFIGURATION = "../../resources/config/type/config_file.yaml";
 const std::string CONFIGURATION_IDL = "../../resources/types/configuration/Configuration.idl";
@@ -65,37 +70,34 @@ const std::string MISSING_IDL = "../../resources/types/configuration/Missing.idl
 } // namespace test
 
 /**
- * Publishes, records and replays the same data, so the types the recorder stores are the ones the replayer announces.
+ * Records data whose type is not shared, and replays the recordings.
  *
- * The publisher does not share its type, so the type can only come from the IDL files given to the recorder or
- * to the replayer.
+ * The recordings and the replays are different tests, so CTest runs them in different processes. Registering the
+ * type to publish fills the type registry of the process, so a replay in the same process could find the type
+ * without loading it from IDL.
  */
 class RecordReplayTest : public testing::Test
 {
-public:
-
-    void TearDown() override
-    {
-        for (const auto& path : paths_)
-        {
-            std::filesystem::remove(path);
-        }
-    }
-
 protected:
 
+    static std::string recording_path_(
+            const std::string& file_name)
+    {
+        return (std::filesystem::current_path() / (file_name + ".db")).string();
+    }
+
     //! Publish the messages without sharing their type, while recording them
-    std::string record_(
+    void record_(
             const std::string& file_name,
+            const std::uint32_t domain,
             const std::vector<std::string>& idl_types_paths)
     {
-        const auto file_path = (std::filesystem::current_path() / (file_name + ".db")).string();
-        paths_.push_back(file_path);
+        const auto file_path = recording_path_(file_name);
         std::filesystem::remove(file_path);
 
         Yaml yml;
         ddsrecorder::yaml::RecorderConfiguration configuration(yml);
-        configuration.dds_configuration->domain = test::RECORD_DOMAIN;
+        configuration.dds_configuration->domain = domain;
         configuration.dds_configuration->allowed_partition_list.insert("*");
         configuration.dds_configuration->idl_types_paths = {idl_types_paths.begin(), idl_types_paths.end()};
         configuration.sql_enabled = true;
@@ -105,21 +107,32 @@ protected:
         auto recorder = std::make_unique<ddsrecorder::recorder::DdsRecorder>(
             configuration, ddsrecorder::recorder::DdsRecorderStateCode::RUNNING, file_name);
 
-        publish_();
+        publish_(domain);
 
         // Destroying the recorder writes the file
         recorder.reset();
 
-        return file_path;
+        // The logs are consumed asynchronously
+        utils::Log::Flush();
+
+        ASSERT_TRUE(std::filesystem::exists(file_path));
     }
 
-    //! Replay the recording, receiving the messages with a subscriber that needs the type to be announced
+    //! Replay a recording, receiving the messages with a subscriber that needs the type to be announced
     DataToCheck replay_(
-            const std::string& file_path,
+            const std::string& file_name,
             const std::vector<std::string>& idl_types_paths,
             const bool type_announced = true)
     {
         DataToCheck data;
+
+        const auto file_path = recording_path_(file_name);
+
+        if (!std::filesystem::exists(file_path))
+        {
+            ADD_FAILURE() << "Recording " << file_path << " not found, the test recording it must run first.";
+            return data;
+        }
 
         std::unique_ptr<fastdds::dds::DomainParticipantListener> subscriber;
 
@@ -154,13 +167,14 @@ protected:
         return data;
     }
 
-    void publish_()
+    void publish_(
+            const std::uint32_t domain)
     {
         fastdds::dds::DomainParticipantQos pqos;
         pqos.properties().properties().emplace_back("fastdds.type_propagation", "disabled");
 
         auto factory = fastdds::dds::DomainParticipantFactory::get_instance();
-        auto participant = factory->create_participant(test::RECORD_DOMAIN, pqos);
+        auto participant = factory->create_participant(domain, pqos);
         ASSERT_NE(participant, nullptr);
 
         fastdds::dds::TypeSupport type(new ConfigurationPubSubType());
@@ -217,17 +231,38 @@ protected:
         ASSERT_EQ(data.max_index_msg, static_cast<int>(test::RECORD_REPLAY_MESSAGES));
     }
 
-    std::vector<std::string> paths_;
 };
 
 /**
- * Without IDL files neither the recorder nor the replayer have a type to announce.
+ * Record data whose type is not shared, without IDL files, so the recording does not have its type.
  */
-TEST_F(RecordReplayTest, no_idl_types)
+TEST_F(RecordReplayTest, record_without_idl_types)
 {
-    const auto file_path = record_("record_replay_no_idl_types", {});
+    utils::testing::LogChecker log_checker(utils::Log::Kind::Error, 0, 0);
 
-    const auto data = replay_(file_path, {});
+    record_(test::RECORDING_WITHOUT_IDL_TYPES, test::RECORD_WITHOUT_IDL_TYPES_DOMAIN, {});
+
+    ASSERT_TRUE(log_checker.check_valid());
+}
+
+/**
+ * Record data whose type is not shared, with an IDL file, so the recording has the type loaded from it.
+ */
+TEST_F(RecordReplayTest, record_with_idl_types)
+{
+    utils::testing::LogChecker log_checker(utils::Log::Kind::Error, 0, 0);
+
+    record_(test::RECORDING_WITH_IDL_TYPES, test::RECORD_WITH_IDL_TYPES_DOMAIN, {test::CONFIGURATION_IDL});
+
+    ASSERT_TRUE(log_checker.check_valid());
+}
+
+/**
+ * Without IDL files the replayer has no type to announce for a recording that does not have it.
+ */
+TEST_F(RecordReplayTest, replay_no_idl_types)
+{
+    const auto data = replay_(test::RECORDING_WITHOUT_IDL_TYPES, {});
 
     ASSERT_EQ(data.n_received_msgs, 0u);
 }
@@ -235,13 +270,11 @@ TEST_F(RecordReplayTest, no_idl_types)
 /**
  * The replayer announces the type loaded from IDL for a recording that does not have it.
  */
-TEST_F(RecordReplayTest, idl_types_in_replayer)
+TEST_F(RecordReplayTest, replay_idl_types)
 {
-    const auto file_path = record_("record_replay_idl_types_in_replayer", {});
-
     utils::testing::LogChecker log_checker(utils::Log::Kind::Error, 0, 0);
 
-    const auto data = replay_(file_path, {test::CONFIGURATION_IDL});
+    const auto data = replay_(test::RECORDING_WITHOUT_IDL_TYPES, {test::CONFIGURATION_IDL});
 
     ASSERT_TRUE(log_checker.check_valid());
     check_all_received_(data);
@@ -250,13 +283,11 @@ TEST_F(RecordReplayTest, idl_types_in_replayer)
 /**
  * The type loaded from IDL by the recorder is stored, and announced by the replayer without IDL files.
  */
-TEST_F(RecordReplayTest, idl_types_in_recorder)
+TEST_F(RecordReplayTest, replay_types_recorded_from_idl)
 {
     utils::testing::LogChecker log_checker(utils::Log::Kind::Error, 0, 0);
 
-    const auto file_path = record_("record_replay_idl_types_in_recorder", {test::CONFIGURATION_IDL});
-
-    const auto data = replay_(file_path, {});
+    const auto data = replay_(test::RECORDING_WITH_IDL_TYPES, {});
 
     ASSERT_TRUE(log_checker.check_valid());
     check_all_received_(data);
@@ -265,13 +296,11 @@ TEST_F(RecordReplayTest, idl_types_in_recorder)
 /**
  * A file that does not exist is reported once, and the replayer still replays the data.
  */
-TEST_F(RecordReplayTest, idl_types_missing_file_in_replayer)
+TEST_F(RecordReplayTest, replay_missing_idl_file)
 {
-    const auto file_path = record_("record_replay_idl_types_missing_file_in_replayer", {});
-
     utils::testing::LogChecker log_checker(utils::Log::Kind::Error, 1, 1);
 
-    const auto data = replay_(file_path, {test::MISSING_IDL}, false);
+    const auto data = replay_(test::RECORDING_WITHOUT_IDL_TYPES, {test::MISSING_IDL}, false);
 
     ASSERT_TRUE(log_checker.check_valid());
     check_all_received_(data);
@@ -280,13 +309,11 @@ TEST_F(RecordReplayTest, idl_types_missing_file_in_replayer)
 /**
  * A file that does not exist does not stop the replayer from announcing the type of the other files.
  */
-TEST_F(RecordReplayTest, idl_types_missing_and_valid_files_in_replayer)
+TEST_F(RecordReplayTest, replay_missing_and_valid_idl_files)
 {
-    const auto file_path = record_("record_replay_idl_types_missing_and_valid_files_in_replayer", {});
-
     utils::testing::LogChecker log_checker(utils::Log::Kind::Error, 1, 1);
 
-    const auto data = replay_(file_path, {test::MISSING_IDL, test::CONFIGURATION_IDL});
+    const auto data = replay_(test::RECORDING_WITHOUT_IDL_TYPES, {test::MISSING_IDL, test::CONFIGURATION_IDL});
 
     ASSERT_TRUE(log_checker.check_valid());
     check_all_received_(data);
