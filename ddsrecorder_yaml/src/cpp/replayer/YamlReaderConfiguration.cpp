@@ -286,6 +286,13 @@ void ReplayerConfiguration::load_dds_configuration_(
         replayer_configuration->participant_profile = YamlReader::get<std::string>(yml, REPLAYER_PROFILE_TAG, version);
     }
 
+    // Get optional endpoint QoS mode
+    if (YamlReader::is_tag_present(yml, ENDPOINT_QOS_MODE_TAG))
+    {
+        replayer_configuration->endpoint_qos_mode =
+                YamlReader::get<ddspipe::participants::EndpointQoSMode>(yml, ENDPOINT_QOS_MODE_TAG, version);
+    }
+
     // Get optional DDS domain
     if (YamlReader::is_tag_present(yml, DOMAIN_ID_TAG))
     {
