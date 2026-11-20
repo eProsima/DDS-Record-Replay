@@ -1,0 +1,6 @@
+dds:
+  replayer-profile: "replayer_profile_name"
+  endpoint-qos-mode: xml-only
+
+replayer:
+  input-file: "input_file.mcap"
