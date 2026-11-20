@@ -83,6 +83,7 @@ Endpoint Profiles
 When the |ddsrecorder| creates a :term:`DataReader` for a topic, it looks for a loaded XML ``data_reader`` profile to configure it.
 By default, it looks for a profile **whose name matches the topic name**.
 If a matching profile is found, the DataReader is configured with that profile's QoS, giving the user control over fields such as history, memory policy or transport.
+By default, ``durability``, ``reliability``, ``ownership`` and ``history`` are still taken from the YAML configuration and from discovery; see :ref:`recorder_usage_configuration_endpoint_qos_mode` to use the profile as is.
 If no matching profile exists, the DataReader is configured as usual, with QoS derived from the YAML configuration and from discovery.
 
 .. note::
@@ -121,20 +122,45 @@ When set, the |ddsrecorder| looks up the ``data_reader`` profile with that name 
 The ``endpoint-profile-name`` tag can also be set in the :ref:`Specs Topic QoS <recorder_specs_topic_qos>` to use the same profile for every topic, and the :ref:`Manual Topics <recorder_manual_topics>` take precedence over it.
 If no profile with that name is loaded, the |ddsrecorder| does not look for a profile named after the topic; the DataReader is configured as if no profile were loaded.
 
-Overriding Profile QoS from the YAML Configuration
-""""""""""""""""""""""""""""""""""""""""""""""""""
+.. _recorder_usage_configuration_endpoint_qos_mode:
 
-When a profile is applied, the following :ref:`Topic QoS <recorder_topic_qos>` override the corresponding values of the profile, but only if they are explicitly set in the YAML configuration, either in the :ref:`Manual Topics <recorder_manual_topics>` or in the :ref:`Specs Topic QoS <recorder_specs_topic_qos>`:
-``durability``, ``reliability``, ``ownership`` and ``history-depth``.
-Every other field keeps the value from the XML profile.
+Endpoint QoS Mode
+"""""""""""""""""
 
-The QoS that the |ddsrecorder| learns from the remote DataWriters during discovery never override the profile.
-Fields that are set neither in the profile nor in the YAML configuration therefore take the |fastdds| default values (e.g. ``KEEP_LAST`` history with depth ``1``), instead of being adapted to the discovered DataWriters.
+The ``endpoint-qos-mode`` tag sets how a matching XML endpoint profile is applied:
+
+.. list-table::
+    :header-rows: 1
+
+    *   - Value
+        - Behavior
+
+    *   - ``xml-overridable`` (default)
+        - The XML profile is used as base.
+          ``durability``, ``reliability``, ``ownership`` and ``history`` are taken from the :ref:`Topic QoS <recorder_topic_qos>`, with priority:
+          YAML configuration (:ref:`Manual Topics <recorder_manual_topics>` or :ref:`Specs Topic QoS <recorder_specs_topic_qos>`) > QoS discovered from the remote DataWriters > |ddsrecorder| defaults.
+          Every other policy keeps the value of the XML profile.
+
+    *   - ``xml-standalone``
+        - The XML profile is used as is.
+          Neither the YAML configuration nor the discovered QoS override it.
+
+When no profile is found, the DataReader takes ``durability``, ``reliability``, ``ownership`` and ``history`` from the Topic QoS in both modes.
+No profile is looked up when the :ref:`RTPS Participant <recorder_specs_rtps>` is selected, so ``endpoint-qos-mode`` has no effect then.
+
+.. code-block:: yaml
+
+    dds:
+      xml:
+        files:
+          - "./xml_configuration.xml"
+      recorder-profile: "participant_profile"
+      endpoint-qos-mode: xml-standalone
 
 .. warning::
 
-    Setting ``history-depth`` in the Specs Topic QoS overrides the history of every matching profile, even when it is set to its default value of ``5000``.
-    Likewise, if the remote DataWriters use ``EXCLUSIVE_OWNERSHIP_QOS``, set ``ownership`` either in the profile or in the YAML configuration, otherwise the DataReader will not match them.
+    With ``xml-standalone``, the DataReaders do not adapt to the QoS of the remote DataWriters.
+    Make sure the XML profile is compatible with them; e.g. if the remote DataWriters use ``EXCLUSIVE_OWNERSHIP_QOS``, set it in the profile, otherwise the DataReader will not match them.
 
 .. note::
 
@@ -1162,7 +1188,7 @@ RTPS Participant
 
 ``specs`` supports an ``rtps`` **optional** tag that selects the kind of internal participant the |ddsrecorder| creates to communicate with the DDS network.
 By default it is set to ``false``, and a DDS participant is created, which is the one that applies the Fast DDS XML profiles described in the *Load XML Configuration* section.
-Setting ``rtps: true`` creates a plain RTPS participant instead, in which case XML profiles are not applied, including the :ref:`Endpoint Profiles <recorder_usage_configuration_xml_endpoint_profiles>`.
+Setting ``rtps: true`` creates a plain RTPS participant instead, in which case XML profiles are not applied, including the :ref:`Endpoint Profiles <recorder_usage_configuration_xml_endpoint_profiles>`, and the :ref:`endpoint-qos-mode <recorder_usage_configuration_endpoint_qos_mode>` tag has no effect.
 
 .. _recorder_specs_topic_qos:
 
@@ -1391,6 +1417,8 @@ A complete example of all the configurations described on this page can be found
             </profiles>
 
       recorder-profile: "participant_profile"
+
+      endpoint-qos-mode: xml-overridable
 
       domain: 0
 

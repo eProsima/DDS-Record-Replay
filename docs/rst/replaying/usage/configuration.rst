@@ -82,6 +82,7 @@ Endpoint Profiles
 When the |ddsreplayer| creates a :term:`DataWriter` for a topic, it looks for a loaded XML ``data_writer`` profile to configure it.
 By default, it looks for a profile **whose name matches the topic name**.
 If a matching profile is found, the DataWriter is configured with that profile's QoS, giving the user control over fields such as history, memory policy or transport.
+By default, ``durability``, ``reliability``, ``ownership`` and ``history`` are still taken from the YAML configuration and from the input file; see :ref:`replayer_usage_configuration_endpoint_qos_mode` to use the profile as is.
 If no matching profile exists, the DataWriter is configured as usual, with QoS derived from the YAML configuration and from the QoS stored in the input file.
 
 .. note::
@@ -121,21 +122,45 @@ When set, the |ddsreplayer| looks up the ``data_writer`` profile with that name 
 The ``endpoint-profile-name`` tag can also be set in the :ref:`Specs Topic QoS <replayer_specs_topic_qos>` to use the same profile for every topic, and the :ref:`Manual Topics <replayer_manual_topics>` take precedence over it.
 If no profile with that name is loaded, the |ddsreplayer| does not look for a profile named after the topic; the DataWriter is configured as if no profile were loaded.
 
-Overriding Profile QoS from the YAML Configuration
-""""""""""""""""""""""""""""""""""""""""""""""""""
+.. _replayer_usage_configuration_endpoint_qos_mode:
 
-When a profile is applied, the following :ref:`Topic QoS <replayer_topic_qos>` override the corresponding values of the profile, but only if they are explicitly set in the YAML configuration, either in the :ref:`Manual Topics <replayer_manual_topics>` or in the :ref:`Specs Topic QoS <replayer_specs_topic_qos>`:
-``durability``, ``reliability``, ``ownership`` and ``history-depth``.
-Every other field keeps the value from the XML profile.
+Endpoint QoS Mode
+"""""""""""""""""
 
-The QoS stored in the input file never override the profile.
-Fields that are set neither in the profile nor in the YAML configuration therefore take the |fastdds| default values (e.g. ``KEEP_LAST`` history with depth ``1``), instead of the values recorded for that topic.
+The ``endpoint-qos-mode`` tag sets how a matching XML endpoint profile is applied:
+
+.. list-table::
+    :header-rows: 1
+
+    *   - Value
+        - Behavior
+
+    *   - ``xml-overridable`` (default)
+        - The XML profile is used as base.
+          ``durability``, ``reliability``, ``ownership`` and ``history`` are taken from the :ref:`Topic QoS <replayer_topic_qos>`, with priority:
+          YAML configuration (:ref:`Manual Topics <replayer_manual_topics>` or :ref:`Specs Topic QoS <replayer_specs_topic_qos>`) > QoS stored in the input file for that topic > |ddsreplayer| defaults.
+          Every other policy keeps the value of the XML profile.
+
+    *   - ``xml-standalone``
+        - The XML profile is used as is.
+          Neither the YAML configuration nor the QoS stored in the input file override it.
+
+When no profile is found, the DataWriter takes ``durability``, ``reliability``, ``ownership`` and ``history`` from the Topic QoS in both modes.
+No profile is looked up when the :ref:`RTPS Participant <replayer_specs_rtps>` is selected, so ``endpoint-qos-mode`` has no effect then.
+
+.. code-block:: yaml
+
+    dds:
+      xml:
+        files:
+          - "./xml_configuration.xml"
+      replayer-profile: "participant_profile"
+      endpoint-qos-mode: xml-standalone
 
 .. warning::
 
-    When a profile is applied, the recorded ``durability``, ``reliability``, ``ownership`` and history of the topic are lost unless they are set in the profile or in the YAML configuration.
-    Setting ``history-depth`` in the Specs Topic QoS overrides the history of every matching profile, even when it is set to its default value of ``5000``.
-    Likewise, if the topic was recorded with ``EXCLUSIVE_OWNERSHIP_QOS``, set ``ownership`` either in the profile or in the YAML configuration, otherwise the DataWriter will not match the DataReaders that use exclusive ownership.
+    With ``xml-standalone``, the DataWriters do not keep the ``durability``, ``reliability``, ``ownership`` and history recorded for the topic.
+    Make sure the XML profile is compatible with the DataReaders that will receive the data; e.g. if the topic was recorded with ``EXCLUSIVE_OWNERSHIP_QOS``, set it in the profile, otherwise the DataWriter will not match the DataReaders that use exclusive ownership.
 
 .. _replayer_usage_configuration_domain_id:
 
@@ -553,7 +578,7 @@ RTPS Participant
 
 ``specs`` supports an ``rtps`` **optional** tag that selects the kind of internal participant the |ddsreplayer| creates to communicate with the DDS network.
 By default it is set to ``false``, and a DDS participant is created, which is the one that applies the Fast DDS XML profiles described in the *Load XML Configuration* section.
-Setting ``rtps: true`` creates a plain RTPS participant instead, in which case XML profiles are not applied, including the :ref:`Endpoint Profiles <replayer_usage_configuration_xml_endpoint_profiles>`.
+Setting ``rtps: true`` creates a plain RTPS participant instead, in which case XML profiles are not applied, including the :ref:`Endpoint Profiles <replayer_usage_configuration_xml_endpoint_profiles>`, and the :ref:`endpoint-qos-mode <replayer_usage_configuration_endpoint_qos_mode>` tag has no effect.
 
 Wait-for-acknowledgement Timeout
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -706,6 +731,8 @@ A complete example of all the configurations described on this page can be found
             </profiles>
 
       replayer-profile: "participant_profile"
+
+      endpoint-qos-mode: xml-overridable
 
       domain: 0
 
