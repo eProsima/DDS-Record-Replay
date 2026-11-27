@@ -192,6 +192,17 @@ TEST(YamlReaderDdsRecorderReplayerTest, recorder_endpoint_qos_mode)
     {
         Yaml yml = YAML::Load(R"(
             dds:
+              recorder-profile: "participant_profile"
+              endpoint-qos-mode: disabled
+        )");
+        RecorderConfiguration configuration(yml);
+        ASSERT_EQ(configuration.dds_configuration->endpoint_qos_mode,
+                ddspipe::participants::EndpointQoSMode::XML_DISABLED);
+    }
+
+    {
+        Yaml yml = YAML::Load(R"(
+            dds:
               endpoint-qos-mode: xml-only
         )");
         ASSERT_THROW(RecorderConfiguration configuration(yml), eprosima::utils::ConfigurationException);
@@ -325,6 +336,19 @@ TEST(YamlReaderDdsRecorderReplayerTest, replayer_endpoint_qos_mode)
         ReplayerConfiguration configuration(yml);
         ASSERT_EQ(configuration.replayer_configuration->endpoint_qos_mode,
                 ddspipe::participants::EndpointQoSMode::XML_STANDALONE);
+    }
+
+    {
+        Yaml yml = YAML::Load(R"(
+            dds:
+              replayer-profile: "participant_profile"
+              endpoint-qos-mode: disabled
+            replayer:
+              input-file: "session.mcap"
+        )");
+        ReplayerConfiguration configuration(yml);
+        ASSERT_EQ(configuration.replayer_configuration->endpoint_qos_mode,
+                ddspipe::participants::EndpointQoSMode::XML_DISABLED);
     }
 
     {
