@@ -145,7 +145,11 @@ The ``endpoint-qos-mode`` tag sets how a matching XML endpoint profile is applie
         - The XML profile is used as is.
           Neither the YAML configuration nor the discovered QoS override it.
 
-When no profile is found, the DataReader takes ``durability``, ``reliability``, ``ownership`` and ``history`` from the Topic QoS in both modes.
+    *   - ``disabled``
+        - No XML endpoint profile is looked up, as if none were loaded: the DataReaders take their QoS from the :ref:`Topic QoS <recorder_topic_qos>`.
+          Useful to stop applying the XML endpoint profiles without removing them from the XML configuration.
+
+When no profile is found, the DataReader takes ``durability``, ``reliability``, ``ownership`` and ``history`` from the Topic QoS with ``xml-overridable`` and ``xml-standalone``.
 No profile is looked up when the :ref:`RTPS Participant <recorder_specs_rtps>` is selected, so ``endpoint-qos-mode`` has no effect then.
 
 .. code-block:: yaml

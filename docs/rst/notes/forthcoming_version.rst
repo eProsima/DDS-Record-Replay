@@ -13,4 +13,5 @@ Next release will include the following **features**:
   :ref:`DDS Replayer <replayer_usage_configuration_endpoint_qos_mode>`).
   By default (``xml-overridable``), the profile is used as base and its durability, reliability, ownership and history
   are taken from the YAML configuration, or from the discovered DataWriters (*DDS Recorder*) and the input file
-  (*DDS Replayer*); ``xml-standalone`` applies the profile as is.
+  (*DDS Replayer*); ``xml-standalone`` applies the profile as is; ``disabled`` does not look up any XML endpoint
+  profile.
