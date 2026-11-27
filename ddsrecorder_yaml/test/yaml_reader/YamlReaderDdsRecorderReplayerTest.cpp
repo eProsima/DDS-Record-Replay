@@ -159,6 +159,57 @@ TEST(YamlReaderDdsRecorderReplayerTest, recorder_manual_topic_endpoint_profile_n
 }
 
 /**
+ * Check that the endpoint QoS mode of the DDS Recorder participant is read from the YAML.
+ *
+ * CASES:
+ * - Not set          -> XML_OVERRIDABLE (default)
+ * - xml-standalone   -> XML_STANDALONE
+ * - Unknown value    -> ConfigurationException
+ */
+TEST(YamlReaderDdsRecorderReplayerTest, recorder_endpoint_qos_mode)
+{
+    {
+        Yaml yml = YAML::Load(R"(
+            dds:
+              recorder-profile: "participant_profile"
+        )");
+        RecorderConfiguration configuration(yml);
+        ASSERT_EQ(configuration.dds_configuration->endpoint_qos_mode,
+                ddspipe::participants::EndpointQoSMode::XML_OVERRIDABLE);
+    }
+
+    {
+        Yaml yml = YAML::Load(R"(
+            dds:
+              recorder-profile: "participant_profile"
+              endpoint-qos-mode: xml-standalone
+        )");
+        RecorderConfiguration configuration(yml);
+        ASSERT_EQ(configuration.dds_configuration->endpoint_qos_mode,
+                ddspipe::participants::EndpointQoSMode::XML_STANDALONE);
+    }
+
+    {
+        Yaml yml = YAML::Load(R"(
+            dds:
+              recorder-profile: "participant_profile"
+              endpoint-qos-mode: disabled
+        )");
+        RecorderConfiguration configuration(yml);
+        ASSERT_EQ(configuration.dds_configuration->endpoint_qos_mode,
+                ddspipe::participants::EndpointQoSMode::XML_DISABLED);
+    }
+
+    {
+        Yaml yml = YAML::Load(R"(
+            dds:
+              endpoint-qos-mode: xml-only
+        )");
+        ASSERT_THROW(RecorderConfiguration configuration(yml), eprosima::utils::ConfigurationException);
+    }
+}
+
+/**
  * Check that loading the DDS Recorder configuration from a malformed (unparseable) YAML file throws
  * a ConfigurationException wrapping the underlying parse error.
  */
@@ -250,6 +301,65 @@ TEST(YamlReaderDdsRecorderReplayerTest, replayer_manual_topic_endpoint_profile_n
     const auto& topic_qos = configuration.ddspipe_configuration.manual_topics[0].first->topic_qos.get_value();
     ASSERT_TRUE(topic_qos.endpoint_profile_name.is_set());
     ASSERT_EQ(topic_qos.endpoint_profile_name.get_value(), "chatter_profile");
+}
+
+/**
+ * Check that the endpoint QoS mode of the DDS Replayer participant is read from the YAML.
+ *
+ * CASES:
+ * - Not set          -> XML_OVERRIDABLE (default)
+ * - xml-standalone   -> XML_STANDALONE
+ * - Unknown value    -> ConfigurationException
+ */
+TEST(YamlReaderDdsRecorderReplayerTest, replayer_endpoint_qos_mode)
+{
+    {
+        Yaml yml = YAML::Load(R"(
+            dds:
+              replayer-profile: "participant_profile"
+            replayer:
+              input-file: "session.mcap"
+        )");
+        ReplayerConfiguration configuration(yml);
+        ASSERT_EQ(configuration.replayer_configuration->endpoint_qos_mode,
+                ddspipe::participants::EndpointQoSMode::XML_OVERRIDABLE);
+    }
+
+    {
+        Yaml yml = YAML::Load(R"(
+            dds:
+              replayer-profile: "participant_profile"
+              endpoint-qos-mode: xml-standalone
+            replayer:
+              input-file: "session.mcap"
+        )");
+        ReplayerConfiguration configuration(yml);
+        ASSERT_EQ(configuration.replayer_configuration->endpoint_qos_mode,
+                ddspipe::participants::EndpointQoSMode::XML_STANDALONE);
+    }
+
+    {
+        Yaml yml = YAML::Load(R"(
+            dds:
+              replayer-profile: "participant_profile"
+              endpoint-qos-mode: disabled
+            replayer:
+              input-file: "session.mcap"
+        )");
+        ReplayerConfiguration configuration(yml);
+        ASSERT_EQ(configuration.replayer_configuration->endpoint_qos_mode,
+                ddspipe::participants::EndpointQoSMode::XML_DISABLED);
+    }
+
+    {
+        Yaml yml = YAML::Load(R"(
+            dds:
+              endpoint-qos-mode: xml-only
+            replayer:
+              input-file: "session.mcap"
+        )");
+        ASSERT_THROW(ReplayerConfiguration configuration(yml), eprosima::utils::ConfigurationException);
+    }
 }
 
 /**

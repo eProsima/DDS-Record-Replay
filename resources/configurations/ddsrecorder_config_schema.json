@@ -56,6 +56,14 @@
                 "recorder-profile":{
                     "type":"string"
                 },
+                "endpoint-qos-mode":{
+                    "type":"string",
+                    "enum":[
+                        "xml-overridable",
+                        "xml-standalone",
+                        "disabled"
+                    ]
+                },
                 "domain":{
                     "$ref":"#/definitions/DdsDomain"
                 },

@@ -1,0 +1,8 @@
+dds:
+  recorder-profile: "recorder_profile_name"
+  endpoint-qos-mode: xml-only
+
+recorder:
+  output:
+    filename: "output"
+    path: "."

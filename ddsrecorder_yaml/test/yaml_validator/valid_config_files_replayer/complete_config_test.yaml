@@ -7,6 +7,8 @@ dds:
 
   replayer-profile: "replayer_profile_name"
 
+  endpoint-qos-mode: xml-standalone
+
   whitelist-interfaces:
     - "127.0.0.1"
 
